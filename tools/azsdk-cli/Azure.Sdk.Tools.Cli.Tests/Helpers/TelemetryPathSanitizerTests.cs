@@ -9,6 +9,8 @@ public class TelemetryPathSanitizerTests
     [TestCase("azure-rest-api-specs/specification/service", "[PATH REDACTED]/azure-rest-api-specs/specification/service")]
     [TestCase("/Users/ben/specification/service", "[PATH REDACTED]/specification/service")]
     [TestCase(@"C:\Users\ben\azure-sdk-for-net\sdk\storage", @"[PATH REDACTED]\azure-sdk-for-net\sdk\storage")]
+    [TestCase("C:/Users/ben/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
+    [TestCase("~/specification/service", "[PATH REDACTED]/specification/service")]
     public void Sanitize_PreservesAllowlistedSegments(string input, string expected)
     {
         var sanitized = TelemetryPathSanitizer.Sanitize(input);
@@ -34,6 +36,45 @@ public class TelemetryPathSanitizerTests
         var sanitized = TelemetryPathSanitizer.Sanitize(input);
 
         Assert.That(sanitized, Is.EqualTo(input));
+    }
+
+    [TestCase("")]
+    [TestCase("  ")]
+    public void Sanitize_PreservesEmptyOrWhitespace(string input)
+    {
+        var sanitized = TelemetryPathSanitizer.Sanitize(input);
+
+        Assert.That(sanitized, Is.EqualTo(input));
+    }
+
+    [Test]
+    public void Sanitize_RedactsUncPath()
+    {
+        var input = @"\\server\share\folder\file.txt";
+
+        var sanitized = TelemetryPathSanitizer.Sanitize(input);
+
+        Assert.That(sanitized, Is.EqualTo(TelemetryPathSanitizer.Redacted));
+    }
+
+    [Test]
+    public void Sanitize_HandlesMixedSeparators()
+    {
+        var input = @"/Users/ben\specification\service";
+
+        var sanitized = TelemetryPathSanitizer.Sanitize(input);
+
+        Assert.That(sanitized, Is.EqualTo("[PATH REDACTED]/specification/service"));
+    }
+
+    [Test]
+    public void Sanitize_RedactsMultiplePaths()
+    {
+        var input = "see /Users/ben/private/file.txt and C:\\Users\\ben\\private\\file.txt";
+
+        var sanitized = TelemetryPathSanitizer.Sanitize(input);
+
+        Assert.That(sanitized, Is.EqualTo("see [PATH REDACTED] and [PATH REDACTED]"));
     }
 
     [Test]

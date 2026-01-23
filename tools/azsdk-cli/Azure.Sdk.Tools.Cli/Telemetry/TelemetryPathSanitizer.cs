@@ -52,12 +52,12 @@ public static class TelemetryPathSanitizer
         {
             return;
         }
-        if (segment.StartsWith(AzureSdkPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
 
         AllowlistedSegmentSet.TryAdd(segment, 0);
+        if (segment.StartsWith(AzureSdkPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            KnownRoots.TryAdd(segment, 0);
+        }
     }
 
     public static string Sanitize(string input)
@@ -290,12 +290,13 @@ public static class TelemetryPathSanitizer
                     return $"{Redacted}{sep}{root}{remainder}";
                 }
 
-                if (remainder[0] != '/' && remainder[0] != '\\')
+                var trimmedRemainder = remainder.TrimStart('/', '\\');
+                if (string.IsNullOrEmpty(trimmedRemainder))
                 {
-                    return $"{Redacted}{sep}{remainder}";
+                    return Redacted + sep;
                 }
 
-                return Redacted + remainder;
+                return $"{Redacted}{sep}{trimmedRemainder}";
             }
         }
 

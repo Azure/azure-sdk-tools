@@ -91,7 +91,7 @@ extends:
                 displayName: 'install requirements'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - script: |
-                  python evals_run.py --evaluation_name_prefix $(Build.BuildId) --evaluators "similarity,groundedness,response_completeness,reference_match" --cache_result full
+                  python evals_run.py --evaluation_name_prefix $(Build.BuildId) --evaluators "similarity,groundedness,response_completeness,reference_match,knowledge_match" --cache_result full
                 displayName: 'Run Evals'
                 workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
                 env:

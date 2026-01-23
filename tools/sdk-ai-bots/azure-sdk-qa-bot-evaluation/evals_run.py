@@ -133,7 +133,8 @@ if __name__ == "__main__":
             }
         )
 
-        knowledge_evaluator = AzureBotReferenceEvaluator(result_key="knowledge_match")
+        knowledge_evaluator_threshold = float(evaluate_threshold)/5.0
+        knowledge_evaluator = AzureBotReferenceEvaluator(result_key="knowledge_match", threshold=knowledge_evaluator_threshold)
         knowledge_evaluator_class = EvaluatorClass(
             "knowledge_match",
             knowledge_evaluator,

@@ -158,6 +158,24 @@ class Guideline(BaseModel):
         description="List of tags that classify the guideline.",
     )
 
+    # Content tracking fields for change detection
+    content_hash: Optional[str] = Field(
+        None,
+        description="SHA-256 hash of the normalized content for change detection.",
+    )
+    source_file_path: Optional[str] = Field(
+        None,
+        description="Path to the source file in the azure-sdk repo (e.g., 'docs/python/design.md').",
+    )
+    source_commit_sha: Optional[str] = Field(
+        None,
+        description="Git commit SHA from which this guideline was extracted.",
+    )
+    last_synced_at: Optional[datetime] = Field(
+        None,
+        description="Timestamp of the last successful sync for this guideline.",
+    )
+
     # Relationship fields
     related_guidelines: List[str] = Field(
         default_factory=list, description="List of guideline IDs that are related to this guideline."
@@ -201,6 +219,24 @@ class Example(BaseModel):
         description="List of tags that classify the guideline.",
     )
     example_type: ExampleType = Field(description="Whether this example is 'good' or 'bad'.")
+
+    # Content tracking fields for change detection
+    content_hash: Optional[str] = Field(
+        None,
+        description="SHA-256 hash of the normalized content for change detection.",
+    )
+    source_file_path: Optional[str] = Field(
+        None,
+        description="Path to the source file (e.g., 'docs/python/design.md').",
+    )
+    source_commit_sha: Optional[str] = Field(
+        None,
+        description="Git commit SHA from which this example was extracted.",
+    )
+    last_synced_at: Optional[datetime] = Field(
+        None,
+        description="Timestamp of the last successful sync for this example.",
+    )
 
     # Relationship fields
     guideline_ids: List[str] = Field(

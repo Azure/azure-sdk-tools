@@ -83,6 +83,24 @@ class SettingsManager:
             cache_key = (key, self.label)
             self._cache.pop(cache_key, None)
 
+    def set(self, key: str, value: str) -> None:
+        """
+        Set a configuration value in Azure App Configuration.
+        This updates both the remote store and the local cache.
+
+        Args:
+            key: The configuration key to set.
+            value: The value to set.
+        """
+        from azure.appconfiguration import ConfigurationSetting
+
+        key = key.strip().lower()
+        setting = ConfigurationSetting(key=key, label=self.label, value=value)
+        self.app_config_client.set_configuration_setting(setting)
+        # Update the local cache
+        cache_key = (key, self.label)
+        self._cache[cache_key] = value
+
     def _get_secret_from_keyvault(self, secret_uri):
         # Parse the Key Vault URI
         # Example: https://<vault-name>.vault.azure.net/secrets/<secret-name>/<version>

@@ -735,16 +735,10 @@
             ]
         },
         "actual": {
-<<<<<<< HEAD
-            "answer": "No, TypeSpec does not support conditional imports in main.tsp based on API version. All imports are static and processed at compile time, so you cannot conditionally include or exclude a resource type file based on the API version. Instead, the recommended and supported way to exclude a resource type from a new API version is to use the versioning decorators provided by the @typespec/versioning library. Specifically, you should mark the types, models, interfaces, or operations that you want to remove with the `@removed(version)` decorator, indicating in which version they are removed. This approach ensures that those types are only present in the versions where they should exist and are excluded from the OpenAPI output for newer versions.\n\nIf you are working with a preview version and the policy is to only have a single preview version in the spec repository, you may also simply delete the resource type if it should not be included at all in the new version.\n\nIn summary, manage version-specific inclusions and removals through decorators, not conditional imports.\n",
-            "reference_urls": [
-                "https://typespec.io/docs/getting-started/getting-started-rest/06-versioning"
-=======
             "answer": "No, TypeSpec does not support conditional imports in main.tsp based on API version. All imports in main.tsp are static and are included in every version compiled from that entry point. To handle resource types or models that should only exist in specific API versions, you should use versioning decorators such as @added and @removed from the @typespec/versioning library. \n\nThis means you must import all your resource files in main.tsp, and then use @removed(<version>) on the types, operations, or models you want to exclude from newer API versions. This will ensure that the generated OpenAPI and client code for the new version does not include the unwanted resource, while still preserving it for older versions. If you're in a preview-only phase and need to remove a resource entirely, you may also delete it from the spec, but for long-term versioned APIs, using the decorators is the recommended and correct approach.\n\nExample:\n\n```typespec\nmodel MyResource {\n  // ...\n}\n\n// Remove from 2025-01-01 version and onward\n@removed(Versions.v2025_01_01)\nmodel OldResource {\n  // ...\n}\n```\n\nThis approach is in line with Azure API guidelines and TypeSpec best practices.",
             "reference_urls": [
                 "https://typespec.io/docs/language-basics/imports",
                 "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
->>>>>>> ba8d750f6e6ba712e064999f03ef7dad0927ebb5
             ]
         },
         "similarity": 5.0,
@@ -759,21 +753,7 @@
         "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
-<<<<<<< HEAD
-        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, accurately reflecting both main points without missing any claims or statements.",
-        "reference_match": 0.0,
-        "reference_match_exact_matches": [],
-        "reference_match_unexpected_refs": [
-            "https://typespec.io/docs/language-basics/imports",
-            "https://typespec.io/docs/getting-started/getting-started-rest/06-versioning"
-        ],
-        "reference_match_missing_refs": [
-            "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
-        ],
-        "reference_match_result": "fail",
-=======
         "response_completeness_reason": "The response fully covers all necessary and relevant information from the ground truth, including both the use of decorators and the deletion policy for preview versions.",
->>>>>>> ba8d750f6e6ba712e064999f03ef7dad0927ebb5
         "overall_score": 7.0
     },
     {
@@ -783,11 +763,7 @@
             "reference_urls": []
         },
         "actual": {
-<<<<<<< HEAD
-            "answer": "For documentation-only changes (like updating a model's description), the best practice is to apply the update across all API versions in your TypeSpec project\u2014even for older versions\u2014since documentation changes are not considered breaking changes and help ensure accuracy throughout your specs. You do not need to restrict your output in tspconfig.yaml to only the current version; it's preferable to regenerate all versions so your documentation remains consistent and correct for consumers of any version.\n\nIf the TypeSpec validation is failing because you haven't applied the description update to older versions, the solution is simply to update those versions as well. This is not considered a breaking change, and most reviewers will approve such updates, as confirmed in expert Q&A. Restricting the output to only the current version is not recommended because it can cause confusion and inconsistencies in your repository.\n\nSummary:\n- Update descriptions in all relevant API versions\n- Regenerate specs for all versions\n- No need to change tspconfig.yaml output path\n- Documentation-only changes are safe and recommended\n\nThis approach keeps your specs accurate and avoids unnecessary suppression or output restrictions.",
-=======
             "answer": "The recommended approach for documentation (description/comment) changes in TypeSpec is to simply update your documentation\u2014even if that means older generated specs will reflect the improved or clarified descriptions. Documentation-only changes are not considered breaking and should not be treated as such. If TypeSpec validation fails because older specs are now updated with the new description, you should update those older specs as well to keep the documentation consistent across all versions.\n\nIt is NOT recommended to restrict your tspconfig.yaml output path to only generate the current API version as a workaround for documentation changes. This would defeat the purpose of version tracking and could cause confusion or drift between actual service behavior and documented API versions.\n\nSo, the best practice is:\n- Update your descriptions in the TypeSpec source.\n- Accept that older versions will have improved docs (this is not a breaking change).\n- Let the validation pass with these changes. Any breaking-change checks related only to documentation will be accepted in review.\n\nIn summary: Just update your docs and let the older versions benefit from the improved description. Do not try to hide previous versions from the output as a workaround.",
->>>>>>> ba8d750f6e6ba712e064999f03ef7dad0927ebb5
             "reference_urls": []
         },
         "similarity": 5.0,
@@ -802,18 +778,8 @@
         "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 3,
-<<<<<<< HEAD
-        "response_completeness_reason": "The response fully includes all necessary and relevant information from the ground truth, with no omissions.",
-        "reference_match": 1.0,
-        "reference_match_exact_matches": NaN,
-        "reference_match_unexpected_refs": NaN,
-        "reference_match_missing_refs": NaN,
-        "reference_match_result": "pass",
-        "overall_score": 7.0
-=======
         "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with no omissions and accurate representation of the claims.",
         "overall_score": 0.0
->>>>>>> ba8d750f6e6ba712e064999f03ef7dad0927ebb5
     },
     {
         "testcase": "Quantum RP, add new filter to offering API",

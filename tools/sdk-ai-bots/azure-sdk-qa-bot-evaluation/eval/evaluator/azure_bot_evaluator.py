@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, Dict, Set
+from typing import Any, Dict
 from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from .constants import QA_BOT_EVALS_WEIGHT, EVALUATION_PASS_FAIL_MAPPING
 

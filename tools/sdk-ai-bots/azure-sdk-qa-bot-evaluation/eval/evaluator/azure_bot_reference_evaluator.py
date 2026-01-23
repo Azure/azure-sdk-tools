@@ -1,4 +1,4 @@
-from typing import Any, Dict, Set
+from typing import Any, Dict
 from .constants import EVALUATION_PASS_FAIL_MAPPING
 
 class AzureBotReferenceEvaluator:
@@ -47,7 +47,7 @@ class AzureBotReferenceEvaluator:
         # Reconstruct without fragments and filtered query
         normalized = urlunparse((scheme, netloc, path, parsed.params, query, ""))
         return normalized
-    def _get_reference_matches(self, expected: list[Dict[str, Any]], actual: list[Dict[str, Any]]) -> tuple[Set, Set, Set, float]:
+    def _get_reference_matches(self, expected: list[Dict[str, Any]], actual: list[Dict[str, Any]]) -> tuple[list, list, list, float]:
         """Compare reference between expected and actual lists."""
         
         expected_in_actual = []
@@ -77,7 +77,6 @@ class AzureBotReferenceEvaluator:
     
     def __call__(self, references: list[str], expected_references: list[str] | None = None):
         # Calculate reference matching if expected references are provided
-        reference_match_score = 1.0  # Default to perfect match if no expected references
 
         result: dict[str, Any] = {}
         base_key = f"{self._result_key}"
@@ -102,4 +101,5 @@ class AzureBotReferenceEvaluator:
                     result[result_key] = EVALUATION_PASS_FAIL_MAPPING[True]
                 else:
                     result[result_key] = EVALUATION_PASS_FAIL_MAPPING[False]
+
         return result

@@ -54,17 +54,23 @@ def extract_title_and_link_from_context(context: str) -> List[Dict[str, Any]]:
     
     docs = []
 
-    docs_obj = json.loads(context)
-    for doc in docs_obj:
-        title: str = ""
-        link: str = ""
-        if isinstance(doc, dict) and "document_title" in doc and doc["document_title"]:
-            title = doc["document_title"]
-        
-        if isinstance(doc, dict) and "document_link" in doc and doc["document_link"]:
-            link = doc["document_link"]
-        
-        docs.append({"title": title, "link": link})
+    try:
+        docs_obj = json.loads(context)
+        for doc in docs_obj:
+            title: str = ""
+            link: str = ""
+            if isinstance(doc, dict) and "document_title" in doc and doc["document_title"]:
+                title = doc["document_title"]
+            
+            if isinstance(doc, dict) and "document_link" in doc and doc["document_link"]:
+                link = doc["document_link"]
+            
+            docs.append({"title": title, "link": link})
+    except (json.JSONDecodeError, TypeError) as exc:
+        logging.warning(
+            "Failed to parse context JSON in extract_title_and_link_from_context: %s",
+            exc,
+        )
     return docs
 
 # class EvaluatorConfig:

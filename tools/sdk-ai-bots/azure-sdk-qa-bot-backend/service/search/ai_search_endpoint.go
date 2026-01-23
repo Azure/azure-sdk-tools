@@ -64,6 +64,14 @@ func (s *SearchClient) QueryIndex(ctx context.Context, req *model.QueryIndexRequ
 	return httpResp, nil
 }
 
+// SearchOptions contains common parameters for search operations
+type SearchOptions struct {
+	Sources      []model.Source
+	SourceFilter map[model.Source]string
+	Scope        *model.Scope
+	Plane        *model.Plane
+}
+
 func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([]model.Index, error) {
 	var filters []string
 	for _, id := range chunkIDs {
@@ -102,7 +110,7 @@ func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([
 	return httpResp.Value, nil
 }
 
-func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source, sourceFilter map[model.Source]string, scope *model.Scope, plane *model.Plane) ([]model.Index, error) {
+func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, opts SearchOptions) ([]model.Index, error) {
 	// Base request template
 	baseReq := model.QueryIndexRequest{
 		Search: query,
@@ -122,9 +130,9 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	}
 
 	// If no sources specified, search all at once
-	if len(sources) == 0 {
+	if len(opts.Sources) == 0 {
 		baseReq.Top = k
-		baseReq.Filter = s.buildFilter(nil, sourceFilter, scope, plane)
+		baseReq.Filter = s.buildFilter(nil, opts.SourceFilter, opts.Scope, opts.Plane)
 		resp, err := s.QueryIndex(context.Background(), &baseReq)
 		if err != nil {
 			return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
@@ -139,13 +147,13 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 	sourceResults := make(map[model.Source][]model.Index)
 
 	// Query each source separately
-	for _, source := range sources {
+	for _, source := range opts.Sources {
 		req := baseReq
 		req.Top = k
 		if val, ok := config.SourceTopK[source]; ok {
 			req.Top = val
 		}
-		req.Filter = s.buildFilter([]model.Source{source}, sourceFilter, scope, plane)
+		req.Filter = s.buildFilter([]model.Source{source}, opts.SourceFilter, opts.Scope, opts.Plane)
 
 		resp, err := s.QueryIndex(context.Background(), &req)
 		if err != nil {
@@ -175,7 +183,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		allResults = allResults[:k]
 	}
 
-	log.Printf("Returning %d weighted search results from %d sources", len(allResults), len(sources))
+	log.Printf("Returning %d weighted search results from %d sources", len(allResults), len(opts.Sources))
 
 	return allResults, nil
 }
@@ -357,11 +365,17 @@ func (s *SearchClient) FetchHierarchicalSubChunks(chunk model.Index, hierarchy m
 	return subChunks
 }
 
-func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, sourceFilter map[model.Source]string, agenticSearchPrompt string, scope *model.Scope, plane *model.Plane) (*model.AgenticSearchResponse, error) {
+// AgenticSearchOptions contains parameters specific to agentic search
+type AgenticSearchOptions struct {
+	SearchOptions
+	Prompt string
+}
+
+func (s *SearchClient) AgenticSearch(ctx context.Context, query string, opts AgenticSearchOptions) (*model.AgenticSearchResponse, error) {
 	var messages []model.KnowledgeAgentMessage
 
 	// Use custom prompt if provided, otherwise fall back to default
-	promptText := agenticSearchPrompt
+	promptText := opts.Prompt
 	if promptText == "" {
 		promptText = "You are a TypeSpec expert assistant. You are deeply knowledgeable about TypeSpec syntax, decorators, patterns, and best practices. you must extract every single questions of user's query, and answer every question about TypeSpec"
 	}
@@ -389,7 +403,7 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 		{
 			KnowledgeSourceName: config.AppConfig.AI_SEARCH_KNOWLEDGE_SOURCE,
 			Kind:                model.KnowledgeSourceKindSearchIndex,
-			FilterAddOn:         s.buildFilter(sources, sourceFilter, scope, plane),
+			FilterAddOn:         s.buildFilter(opts.Sources, opts.SourceFilter, opts.Scope, opts.Plane),
 			RerankerThreshold:   to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
 			IncludeReferences:   to.Ptr(true),
 		},

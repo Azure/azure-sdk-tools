@@ -514,7 +514,15 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		sourceFilter = tenantConfig.SourceFilter
 	}
 
-	resp, err := s.searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt, intention.Scope, intention.Plane)
+	resp, err := s.searchClient.AgenticSearch(ctx, query, search.AgenticSearchOptions{
+		SearchOptions: search.SearchOptions{
+			Sources:      req.Sources,
+			SourceFilter: sourceFilter,
+			Scope:        intention.Scope,
+			Plane:        intention.Plane,
+		},
+		Prompt: agenticSearchPrompt,
+	})
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -608,7 +616,12 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 		sourceFilter = tenantConfig.SourceFilter
 	}
 
-	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter, intention.Scope, intention.Plane)
+	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, search.SearchOptions{
+		Sources:      req.Sources,
+		SourceFilter: sourceFilter,
+		Scope:        intention.Scope,
+		Plane:        intention.Plane,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}

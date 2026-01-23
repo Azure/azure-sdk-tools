@@ -5,16 +5,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 public class TelemetryPathSanitizerTests
 {
-    [TestCase("specification/service", "[PATH REDACTED]/specification/service")]
-    [TestCase("azure-rest-api-specs/specification/service", "[PATH REDACTED]/azure-rest-api-specs/specification/service")]
+    [TestCase("azure-rest-api-specs/specification/service", "azure-rest-api-specs/specification/service")]
     [TestCase("/azure-rest-api-specs/specification/service", "[PATH REDACTED]/azure-rest-api-specs/specification/service")]
     [TestCase("/Users/ben/specification/service", "[PATH REDACTED]/specification/service")]
-    [TestCase(@"C:\Users\ben\sdk\azure-sdk-for-net\sdk\storage", @"[PATH REDACTED]\azure-sdk-for-net\sdk\storage")]
-    [TestCase("C:/Users/ben/sdk/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
-    [TestCase("/home/ben/sdk/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
-    [TestCase("/home/ben/sdk/azure-sdk-for-go/sdk/resourcemanager/advisor/armadvisor", "[PATH REDACTED]/azure-sdk-for-go/sdk/resourcemanager/advisor/armadvisor")]
+    [TestCase(@"C:\Users\ben\sdk\azure-sdk-for-net\sdk\storage", @"[PATH REDACTED]\sdk\azure-sdk-for-net\sdk\storage")]
+    [TestCase("C:/Users/ben/repos/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
+    [TestCase("/home/ben/repos/azure-sdk-for-net/sdk/storage", "[PATH REDACTED]/azure-sdk-for-net/sdk/storage")]
     [TestCase("~/specification/service", "[PATH REDACTED]/specification/service")]
     public void Sanitize_PreservesAllowlistedSegments(string input, string expected)
+    {
+        var sanitized = TelemetryPathSanitizer.Sanitize(input);
+
+        Assert.That(sanitized, Is.EqualTo(expected));
+    }
+
+    [TestCase("sdk/resourcemanager/advisor/armadvisor", "sdk/resourcemanager/advisor/armadvisor")]
+    [TestCase("github.com/Azure/azure-sdk-for-go/sdk/azcore", "github.com/Azure/azure-sdk-for-go/sdk/azcore")]
+    [TestCase("@azure/storage-blob", "@azure/storage-blob")]
+    [TestCase("@azure-rest/core-client", "@azure-rest/core-client")]
+    public void Sanitize_PreservesAllowlistedSegmentsForPackageNamingConventions(string input, string expected)
     {
         var sanitized = TelemetryPathSanitizer.Sanitize(input);
 

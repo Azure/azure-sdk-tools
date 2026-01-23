@@ -18,6 +18,15 @@ public static class TelemetryPathSanitizer
     [
         "azure-rest-api-specs",
         "specification",
+        // 'sdk' and 'github.com' must be allowed so we don't redact golang package names
+        // which look like 'sdk/resourcemanager/advisor/armadvisor'
+        // or 'github.com/Azure/azure-sdk-for-go/sdk/azcore'
+        "sdk",
+        "github.com",
+        // '@azure*' must be allowed so we don't fully redact js/ts package names
+        // which look like `@azure/storage-blob`
+        "@azure",
+        "@azure-rest",
     ];
 
     private const string AzureSdkPrefix = "azure-sdk-";
@@ -275,25 +284,34 @@ public static class TelemetryPathSanitizer
     {
         var sepChar = GetSeparator(token);
         var trimmed = token;
+        var hasPrefix = false;
         if (token.StartsWith(@"\\", StringComparison.Ordinal))
         {
+            hasPrefix = true;
             trimmed = token[2..];
         }
         else if (IsDriveLetterPath(token))
         {
+            hasPrefix = true;
             trimmed = token[3..];
         }
         else if (IsTildePath(token))
         {
+            hasPrefix = true;
             trimmed = token[2..];
         }
         else if (token.StartsWith("/", StringComparison.Ordinal))
         {
+            hasPrefix = true;
             trimmed = token[1..];
         }
 
         var segments = trimmed.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
-        
+        if (!hasPrefix && segments.Length > 0 && IsAllowlistedSegment(segments[0]))
+        {
+            return token;
+        }
+
         // First check if any segment is a known root
         for (int i = 0; i < segments.Length; i++)
         {

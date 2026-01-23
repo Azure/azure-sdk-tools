@@ -88,7 +88,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     {
         "python" => "https://github.com/Azure/autorest.python/blob/main/docs/customizations.md",
         "java" => "https://github.com/Azure/autorest.java/blob/main/customization-base/README.md",
-        "csharp" or "dotnet" => "https://github.com/microsoft/typespec/blob/main/packages/http-client-csharp/.tspd/docs/customization.md",
+        "dotnet" => "https://github.com/microsoft/typespec/blob/main/packages/http-client-csharp/.tspd/docs/customization.md",
         "go" => "https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/development/generate.md",
         "javascript" or "typescript" => "https://github.com/Azure/azure-sdk-for-js/wiki/Modular-(DPG)-Customization-Guide",
         _ => "https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md"

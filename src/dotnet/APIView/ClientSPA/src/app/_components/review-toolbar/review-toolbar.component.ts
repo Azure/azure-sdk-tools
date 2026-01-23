@@ -18,7 +18,7 @@ import { APIRevision } from 'src/app/_models/revision';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getTypeClass, TREE_DIFF_STYLE, AUTOMATIC_ICON, MANUAL_ICON, PR_ICON } from 'src/app/_helpers/common-helpers';
-import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
+import { DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 
@@ -301,21 +301,23 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
 
   navigateSearch(direction: number) {
     const searchInfo = this.codeLineSearchInfo;
-    if (searchInfo && searchInfo.currentMatch && searchInfo.totalMatchCount !== undefined) {
+    if (searchInfo && searchInfo.currentMatch && searchInfo.totalMatchCount !== undefined && direction !== 0) {
       let newMatch = searchInfo.currentMatch;
       
       if (direction > 0) {
-        newMatch = newMatch.next || searchInfo.currentMatch;
-        if (!newMatch.next && direction > 0) {
-          while (!newMatch.isHead()) {
-            newMatch = newMatch.prev!;
+        if (newMatch.next) {
+          newMatch = newMatch.next;
+        } else {
+          while (newMatch.prev) {
+            newMatch = newMatch.prev;
           }
         }
       } else {
-        newMatch = newMatch.prev || searchInfo.currentMatch;
-        if (!newMatch.prev && direction < 0) {
-          while (!newMatch.isTail()) {
-            newMatch = newMatch.next!;
+        if (newMatch.prev) {
+          newMatch = newMatch.prev;
+        } else {
+          while (newMatch.next) {
+            newMatch = newMatch.next;
           }
         }
       }

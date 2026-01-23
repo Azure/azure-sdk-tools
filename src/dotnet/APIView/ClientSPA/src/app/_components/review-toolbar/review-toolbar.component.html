@@ -104,20 +104,20 @@
         </div>
         <div *ngIf="showSearchControls">
             <p-buttongroup>
-                <p-button (onClick)="navigateSearch(-1)" [text]="true" size="small" data-clarity-region="toolbar-review-search-up">
+                <p-button (onClick)="navigateSearch(-1)" [text]="true" size="small" data-clarity-region="toolbar-review-search-up" ariaLabel="Previous match" title="Previous match">
                     <i class="bi bi-chevron-up"></i>
                 </p-button>
-                <p-button (onClick)="navigateSearch(1)" [text]="true" size="small" data-clarity-region="toolbar-review-search-down">
+                <p-button (onClick)="navigateSearch(1)" [text]="true" size="small" data-clarity-region="toolbar-review-search-down" ariaLabel="Next match" title="Next match">
                     <i class="bi bi-chevron-down"></i>
                 </p-button>
-                <p-button (onClick)="clearReviewSearch()" [text]="true" size="small" data-clarity-region="toolbar-review-search-clear">
+                <p-button (onClick)="clearReviewSearch()" [text]="true" size="small" data-clarity-region="toolbar-review-search-clear" ariaLabel="Clear search" title="Clear search">
                     <i class="bi bi-x-lg"></i>
                 </p-button>
             </p-buttongroup>
         </div>
         
         <!-- Settings Gear Icon with Popover -->
-        <button type="button" class="search-nav-btn settings-btn" (click)="settingsPanel.toggle($event)" data-clarity-region="toolbar-settings-button">
+        <button type="button" class="search-nav-btn settings-btn" (click)="settingsPanel.toggle($event)" data-clarity-region="toolbar-settings-button" aria-label="Page settings" title="Page settings">
             <i class="bi bi-gear"></i>
         </button>
     </div>

@@ -126,17 +126,11 @@
             <p-multiSelect
                 [options]="preferredApprovers"
                 [(ngModel)]="selectedApprovers"
-                placeholder="Request Reviewers"
+                placeholder="Add Reviewers"
                 [showClear]="true"
                 (onPanelHide)="handleAssignedReviewersChange()"
                 styleClass="full-width-input"
                 data-clarity-region="reviewers-multiselect">
-                    <ng-template pTemplate="selectedItems">
-                        <div *ngIf="selectedApprovers && selectedApprovers.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
-                        <span>{{ formatSelectedApprovers(selectedApprovers) }}</span>
-                        </div>
-                        <div *ngIf="!selectedApprovers || selectedApprovers.length === 0">Select Reviewers</div>
-                    </ng-template>
                     <ng-template let-approver pTemplate="item">
                         <div class="flex align-items-center gap-2">
                             <img

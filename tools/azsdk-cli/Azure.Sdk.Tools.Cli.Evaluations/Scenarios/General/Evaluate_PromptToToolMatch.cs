@@ -88,21 +88,16 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 "azsdk_example_azure_service",
                 "azsdk_example_ai_service",
                 "azsdk_example_error_handling",
-                "azsdk_example_microagent_fibonacci"
+                "azsdk_example_microagent_fibonacci",
+                "azsdk_example_github_service",
+                "azsdk_example_devops_service"
             };
 
             var missingTools = toolsWithoutPrompts
                 .Where(t => !exemptTools.Contains(t))
                 .ToList();
 
-            if (missingTools.Any())
-            {
-                Assert.Warn($"The following {missingTools.Count} tool(s) have no test prompts in TestPrompts.md. " +
-                    $"Tool owners should add 2-3 prompt variations for each:\n" +
-                    $"  - {string.Join("\n  - ", missingTools)}");
-            }
-
-            // Log coverage statistics
+            // Log coverage statistics first (always useful to see)
             var promptCounts = s_promptRegistry.GetPromptCountsByTool();
             var totalPrompts = s_promptRegistry.Prompts.Count;
             var toolsWithPrompts = promptCounts.Count;
@@ -113,6 +108,15 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             TestContext.WriteLine($"Tools with prompts: {toolsWithPrompts}/{totalTools} ({(double)toolsWithPrompts / totalTools:P0})");
             TestContext.WriteLine($"Tools without prompts: {missingTools.Count}");
             TestContext.WriteLine($"Average prompts per tool: {(double)totalPrompts / toolsWithPrompts:F1}");
+
+            // FAIL if any tools are missing prompts - enforces tool owners to add prompts
+            if (missingTools.Any())
+            {
+                Assert.Fail($"Coverage gap: {missingTools.Count} tool(s) have no test prompts in TestPrompts.md. " +
+                    $"Tool owners must add 2-3 prompt variations for each:\n" +
+                    $"  - {string.Join("\n  - ", missingTools)}\n\n" +
+                    $"To add prompts, edit: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.md");
+            }
         }
 
         /// <summary>

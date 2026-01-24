@@ -23,10 +23,10 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): ReviewToken[] {
     tokens.push({ Kind: TokenKind.MemberName, Value: item.displayName, IsDeprecated: deprecated, HasSuffixSpace: false });
 
     if (item.isOptional) {
-        tokens.push({ Kind: TokenKind.Punctuation, Value: "?", HasSuffixSpace: false });
+        tokens.push({ Kind: TokenKind.Punctuation, Value: "?", HasSuffixSpace: false, HasPrefixSpace: false, IsDeprecated: deprecated });
     }
 
-    tokens.push({ Kind: TokenKind.Punctuation, Value: ":", HasSuffixSpace: true });
+    tokens.push({ Kind: TokenKind.Punctuation, Value: ":", HasSuffixSpace: true, HasPrefixSpace: false, IsDeprecated: deprecated });
 
     tokens.push({ Kind: TokenKind.TypeName, Value: item.propertyTypeExcerpt.text.trim(), IsDeprecated: deprecated });
 

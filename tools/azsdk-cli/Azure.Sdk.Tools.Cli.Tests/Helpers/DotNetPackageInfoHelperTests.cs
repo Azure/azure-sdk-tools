@@ -170,7 +170,7 @@ public class DotNetPackageInfoHelperTests
     public async Task GetPackageInfo_ParsesSdkTypeFromMSBuild(string sdkTypeValue, SdkType expectedSdkType)
     {
         // Arrange
-        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
+        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = await CreateTestPackageAsync();
 
         // Create a .csproj with the GetPackageInfo target
         var csprojContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">

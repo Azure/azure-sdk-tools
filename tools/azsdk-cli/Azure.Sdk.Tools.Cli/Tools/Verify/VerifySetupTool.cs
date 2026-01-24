@@ -206,7 +206,7 @@ public class VerifySetupTool : LanguageMcpTool
         {
             foreach (var lang in languages)
             {
-                languageSvs.Add(await GetLanguageServiceAsync(lang, ct));
+                languageSvs.Add(GetLanguageService(lang));
             }
         }
 

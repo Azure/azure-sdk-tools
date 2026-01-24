@@ -103,7 +103,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             {
                 return new CustomizedCodeUpdateResponse { ErrorCode = "1", ResponseError = "Commit SHA is required." };
             }
-            var languageService = GetLanguageService(packagePath);
+            var languageService = await GetLanguageServiceAsync(packagePath, ct);
             if (!languageService.IsCustomizedCodeUpdateSupported)
             {
                 return new CustomizedCodeUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };

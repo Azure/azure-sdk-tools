@@ -21,11 +21,11 @@ public class DotNetPackageInfoHelperTests
     [TearDown]
     public void TearDown() => _tempDir.Dispose();
 
-    private (string packagePath, GitHelper gitHelper, IProcessHelper, IPowershellHelper, ICommonValidationHelpers) CreateTestPackage()
+    private async Task<(string packagePath, GitHelper gitHelper, IProcessHelper, IPowershellHelper, ICommonValidationHelpers)> CreateTestPackageAsync()
     {
         var repoRoot = Path.Combine(_tempDir.DirectoryPath, "test-repo");
         Directory.CreateDirectory(repoRoot);
-        if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { GitTestHelper.GitInit(repoRoot); }
+        if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { await GitTestHelper.GitInitAsync(repoRoot); }
         var packagePath = Path.Combine(repoRoot, "sdk", "storage", "storage-blob");
         Directory.CreateDirectory(packagePath);
         var ghMock = new Mock<IGitHubService>();
@@ -52,7 +52,7 @@ public class DotNetPackageInfoHelperTests
     public async Task FindSamplesDirectory_WithSampleFiles_ReturnsSamplesDirectory()
     {
         // Arrange
-        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
+        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = await CreateTestPackageAsync();
 
         CreateTestFile(packagePath, "tests/samples/Sample01_Basic.cs", "#region Snippet:BasicSample\nnamespace Test; public class Sample01_Basic { }\n#endregion");
         CreateTestFile(packagePath, "tests/samples/BasicSample.cs", "#region Snippet:AnotherSample\nnamespace Test; public class BasicSample { }\n#endregion");
@@ -73,7 +73,7 @@ public class DotNetPackageInfoHelperTests
     public async Task FindSamplesDirectory_WithSnippetFiles_ReturnsSamplesDirectory()
     {
         // Arrange
-        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
+        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = await CreateTestPackageAsync();
 
         // Create snippet files that should be detected
         CreateTestFile(packagePath, "tests/snippets/Snippet01_Basic.cs", "#region Snippet:BasicSnippet\nnamespace Test; public class Snippet01_Basic { }\n#endregion");
@@ -95,7 +95,7 @@ public class DotNetPackageInfoHelperTests
     public async Task FindSamplesDirectory_WithNoSampleFiles_ReturnsDefaultPath()
     {
         // Arrange
-        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
+        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = await CreateTestPackageAsync();
 
         // Create non-sample files only
         CreateTestFile(packagePath, "tests/unit/other.cs", "namespace Test; public class NotASample { }");
@@ -113,7 +113,7 @@ public class DotNetPackageInfoHelperTests
     public async Task FindSamplesDirectory_WithNoTestsDirectory_ReturnsDefaultPath()
     {
         // Arrange
-        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
+        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = await CreateTestPackageAsync();
 
         var helper = new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>());
 
@@ -128,7 +128,7 @@ public class DotNetPackageInfoHelperTests
     public async Task FindSamplesDirectory_WithSnippetRegions_ReturnsCorrectDirectory()
     {
         // Arrange
-        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
+        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = await CreateTestPackageAsync();
 
         // Create files with snippet regions
         CreateTestFile(packagePath, "tests/examples/SAMPLE_Basic.cs", "#region Snippet:ExampleSnippet\nnamespace Test; public class SAMPLE_Basic { }\n#endregion");
@@ -147,7 +147,7 @@ public class DotNetPackageInfoHelperTests
     public async Task FindSamplesDirectory_WithMultipleDirectories_ReturnsFirstFoundDirectory()
     {
         // Arrange
-        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = CreateTestPackage();
+        var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = await CreateTestPackageAsync();
 
         // Create files with snippet regions in multiple directories
         CreateTestFile(packagePath, "tests/examples/BasicSample.cs", "#region Snippet:ExampleSnippet\nnamespace Test; public class BasicSample { }\n#endregion");

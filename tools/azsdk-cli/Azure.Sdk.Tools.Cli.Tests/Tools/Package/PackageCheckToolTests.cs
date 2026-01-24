@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             _mockPythonHelper = new Mock<IPythonHelper>();
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
-            _mockGitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-python");
+            _mockGitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-python");
             _mockPythonLogger = new Mock<ILogger<PythonLanguageService>>();
             _mockCommonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
@@ -220,8 +220,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             await File.WriteAllTextAsync(cspellConfigPath, "{}"); // Create minimal cspell config
 
             // Setup mocks
-            _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
-                         .Returns(mockRepoRoot);
+            _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                         .ReturnsAsync(mockRepoRoot);
             
             // Setup mock to return spelling errors for cspell check (exit code 1 indicates errors found)
             var cspellErrorResult = new ProcessResult { ExitCode = 1 };

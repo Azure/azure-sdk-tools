@@ -41,8 +41,8 @@ internal class VerifySetupToolTests
         _mockGitHelper = new Mock<IGitHelper>();
         _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
-        _mockGitHelper.Setup(x => x.GetRepoName(It.IsAny<string>()))
-        .Returns((string path) =>
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync((string path, CancellationToken _) =>
         {
             if (path.Contains("python", StringComparison.OrdinalIgnoreCase))
             { return "azure-sdk-for-python"; }

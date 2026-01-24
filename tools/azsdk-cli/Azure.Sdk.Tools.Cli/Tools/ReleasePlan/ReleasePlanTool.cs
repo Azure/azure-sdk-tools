@@ -318,7 +318,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private void ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
         {
             ValidatePullRequestUrl(specPullRequestUrl);            
 
@@ -346,7 +346,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
 
                 // Ensure a release plan is created only if the API specs pull request is in a public repository.
-                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
+                if (!await typeSpecHelper.IsRepoPathForPublicSpecRepoAsync(repoRoot))
                 {
                     throw new Exception("""
                         SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
@@ -383,7 +383,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     sdkReleaseType = mappedType;
                 }
 
-                ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
 
                 // Check environment variable to determine if this should be a test release plan
                 var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
@@ -802,10 +802,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 // Get current branch name
                 var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectRoot);
-                var branchName = gitHelper.GetBranchName(repoRootPath);
+                var branchName = await gitHelper.GetBranchNameAsync(repoRootPath);
 
                 // Check if current repo is private or public repo
-                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRootPath))
+                if (!await typeSpecHelper.IsRepoPathForPublicSpecRepoAsync(repoRootPath))
                 {
                     response.Details.AddRange([
                         $"Current repo root path '{repoRootPath}' is not a GitHub clone of 'Azure/azure-rest-api-specs' repo. SDK can be generated only if your TypeSpec changes are in public Azure/azure-rest-api-specs repo. ",

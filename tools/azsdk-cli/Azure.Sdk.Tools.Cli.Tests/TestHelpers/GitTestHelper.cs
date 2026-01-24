@@ -1,27 +1,32 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Diagnostics;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 /// <summary>
 /// Utility methods for git operations in tests.
-/// Uses git CLI directly instead of LibGit2Sharp for better compatibility
-/// with worktrees and to avoid native library dependencies.
+/// Uses GitCommandHelper for git CLI execution.
 /// </summary>
 public static class GitTestHelper
 {
+    private static readonly IGitCommandHelper GitCommandHelper = new GitCommandHelper(
+        NullLogger<GitCommandHelper>.Instance, 
+        Mock.Of<IRawOutputHelper>());
+
     /// <summary>
     /// Initializes a new git repository in the specified directory.
     /// </summary>
     /// <param name="directory">The directory to initialize as a git repository</param>
-    public static void GitInit(string directory)
+    public static async Task GitInitAsync(string directory)
     {
-        RunGit(directory, "init");
+        await GitCommandHelper.Run(new GitOptions("init", directory), CancellationToken.None);
         // Configure user for commits (required for git commit to work)
-        RunGit(directory, "config user.email \"test@test.com\"");
-        RunGit(directory, "config user.name \"Test User\"");
+        await GitCommandHelper.Run(new GitOptions(["config", "user.email", "test@test.com"], directory), CancellationToken.None);
+        await GitCommandHelper.Run(new GitOptions(["config", "user.name", "Test User"], directory), CancellationToken.None);
     }
 
     /// <summary>
@@ -30,9 +35,9 @@ public static class GitTestHelper
     /// <param name="directory">The git repository directory</param>
     /// <param name="remoteName">The name of the remote (e.g., "origin")</param>
     /// <param name="url">The URL of the remote</param>
-    public static void GitRemoteAdd(string directory, string remoteName, string url)
+    public static async Task GitRemoteAddAsync(string directory, string remoteName, string url)
     {
-        RunGit(directory, $"remote add {remoteName} {url}");
+        await GitCommandHelper.Run(new GitOptions($"remote add {remoteName} {url}", directory), CancellationToken.None);
     }
 
     /// <summary>
@@ -40,9 +45,9 @@ public static class GitTestHelper
     /// </summary>
     /// <param name="directory">The git repository directory</param>
     /// <param name="branchName">The name of the branch to create</param>
-    public static void GitCreateBranch(string directory, string branchName)
+    public static async Task GitCreateBranchAsync(string directory, string branchName)
     {
-        RunGit(directory, $"checkout -b {branchName}");
+        await GitCommandHelper.Run(new GitOptions($"checkout -b {branchName}", directory), CancellationToken.None);
     }
 
     /// <summary>
@@ -50,12 +55,10 @@ public static class GitTestHelper
     /// </summary>
     /// <param name="directory">The git repository directory</param>
     /// <param name="message">The commit message</param>
-    public static void GitCommit(string directory, string message)
+    public static async Task GitCommitAsync(string directory, string message)
     {
-        // Escape double quotes in the message
-        var escapedMessage = string.IsNullOrEmpty(message) ? string.Empty : message.Replace("\"", "\\\"");
-        RunGit(directory, "add -A");
-        RunGit(directory, $"commit -m \"{escapedMessage}\" --allow-empty");
+        await GitCommandHelper.Run(new GitOptions("add -A", directory), CancellationToken.None);
+        await GitCommandHelper.Run(new GitOptions(["commit", "-m", message, "--allow-empty"], directory), CancellationToken.None);
     }
 
     /// <summary>
@@ -63,46 +66,8 @@ public static class GitTestHelper
     /// </summary>
     /// <param name="directory">The git repository directory</param>
     /// <param name="branchName">The name of the branch to switch to</param>
-    public static void GitCheckout(string directory, string branchName)
+    public static async Task GitCheckoutAsync(string directory, string branchName)
     {
-        RunGit(directory, $"checkout {branchName}");
-    }
-
-    /// <summary>
-    /// Runs a git command in the specified directory.
-    /// </summary>
-    /// <param name="workingDirectory">The directory to run the command in</param>
-    /// <param name="arguments">The git command arguments (without 'git' prefix)</param>
-    /// <exception cref="InvalidOperationException">Thrown when the git command fails</exception>
-    private static void RunGit(string workingDirectory, string arguments)
-    {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "git",
-            Arguments = arguments,
-            WorkingDirectory = workingDirectory,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true, // Prevent stdin blocking in test environments
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(startInfo);
-        if (process == null)
-        {
-            throw new InvalidOperationException($"Failed to start git process for command: git {arguments}");
-        }
-
-        var stderr = process.StandardError.ReadToEnd();
-        process.WaitForExit();
-
-        if (process.ExitCode != 0)
-        {
-            throw new InvalidOperationException(
-                $"Git command failed with exit code {process.ExitCode}: git {arguments}\n" +
-                $"Working directory: {workingDirectory}\n" +
-                $"Error: {stderr}");
-        }
+        await GitCommandHelper.Run(new GitOptions($"checkout {branchName}", directory), CancellationToken.None);
     }
 }

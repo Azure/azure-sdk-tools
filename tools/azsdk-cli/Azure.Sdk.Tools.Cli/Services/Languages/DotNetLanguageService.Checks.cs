@@ -30,7 +30,7 @@ public partial class DotnetLanguageService : LanguageService
                 return new PackageCheckResponse(1, "", "Failed to determine service directory from the provided package path.");
             }
 
-            var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "CodeChecks.ps1");
             if (!File.Exists(scriptPath))
             {
@@ -88,7 +88,7 @@ public partial class DotnetLanguageService : LanguageService
                 return new PackageCheckResponse(0, "AOT compatibility check skipped - AotCompatOptOut is set to true in project file");
             }
 
-            var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
             if (!File.Exists(scriptPath))
             {

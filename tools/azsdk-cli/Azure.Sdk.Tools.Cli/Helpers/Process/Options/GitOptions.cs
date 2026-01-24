@@ -44,4 +44,20 @@ public class GitOptions : ProcessOptions, IProcessOptions
     {
         SubCommand = args.Length > 0 ? args[0] : string.Empty;
     }
+
+    /// <summary>
+    /// Creates options for running a git command from a single argument string.
+    /// </summary>
+    /// <param name="arguments">Space-separated arguments to pass to git (e.g., "rev-parse --show-toplevel")</param>
+    /// <param name="workingDirectory">Working directory for the git command</param>
+    /// <param name="logOutputStream">Whether to log output streams</param>
+    /// <param name="timeout">Optional timeout (defaults to 2 minutes from base class)</param>
+    public GitOptions(
+        string arguments,
+        string workingDirectory,
+        bool logOutputStream = false,
+        TimeSpan? timeout = null
+    ) : this(arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries), workingDirectory, logOutputStream, timeout)
+    {
+    }
 }

@@ -107,11 +107,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [TestCase("git@github.com:Azure/azure-rest-api-specs.git")]
         [TestCase("git@github.com:myuser/azure-rest-api-specs.git")]
         [Test]
-        public void Test_IsRepoPathForSpecRepo(Uri repo)
+        public async Task Test_IsRepoPathForSpecRepo(Uri repo)
         {
             var gitHelper = CreateGitHelper(repo);
             var helper = new TypeSpecHelper(gitHelper);
-            Assert.That(helper.IsRepoPathForSpecRepo("unused because of mock"), "is a specs repo (public or private)");
+            Assert.That(await helper.IsRepoPathForSpecRepoAsync("unused because of mock"), "is a specs repo (public or private)");
         }
 
         [TestCase("https://github.com/Azure/azure-rest-api-specs-pr.git")]
@@ -120,16 +120,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [TestCase("git@github.com:myuser/azure-rest-api-specs-pr.git")]
         [TestCase("git@github.com:Azure/azure-sdk-for-php.git")]
         [Test]
-        public void Test_IsRepoPathForPublicSpecRepo(Uri repo)
+        public async Task Test_IsRepoPathForPublicSpecRepo(Uri repo)
         {
             var helper = new TypeSpecHelper(CreateGitHelper(repo));
-            Assert.That(!helper.IsRepoPathForPublicSpecRepo("unused because of the mock"), "not the public specs repo");
+            Assert.That(!await helper.IsRepoPathForPublicSpecRepoAsync("unused because of the mock"), "not the public specs repo");
         }
 
         private static IGitHelper CreateGitHelper(Uri getRepoRemoteUri)
         {
             var gitHelperMock = new Mock<IGitHelper>();
-            gitHelperMock.Setup(ghm => ghm.GetRepoRemoteUri(It.IsAny<string>())).Returns(getRepoRemoteUri);
+            gitHelperMock.Setup(ghm => ghm.GetRepoRemoteUriAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(getRepoRemoteUri);
             return gitHelperMock.Object;
         }
     }

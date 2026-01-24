@@ -5,6 +5,7 @@ import { functionTokenGenerator } from "./function";
 import { interfaceTokenGenerator } from "./interfaces";
 import { classTokenGenerator } from "./class";
 import { methodTokenGenerator } from "./method";
+import { propertyTokenGenerator } from "./property";
 
 /**
  * Interface for token generators that create ReviewTokens from ApiItems.
@@ -32,4 +33,7 @@ export const generators: TokenGenerator[] = [
   functionTokenGenerator,
   interfaceTokenGenerator,
   methodTokenGenerator,
+  propertyTokenGenerator,
 ];
+
+export { propertyTokenGenerator } from "./property";

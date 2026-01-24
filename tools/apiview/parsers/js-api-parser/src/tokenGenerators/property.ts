@@ -20,10 +20,10 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): ReviewToken[] {
         tokens.push({ Kind: TokenKind.Keyword, Value: "readonly", HasSuffixSpace: true, IsDeprecated: deprecated });
     }
 
-    tokens.push({ Kind: TokenKind.MemberName, Value: item.displayName, IsDeprecated: deprecated });
+    tokens.push({ Kind: TokenKind.MemberName, Value: item.displayName, IsDeprecated: deprecated, HasSuffixSpace: false });
 
     if (item.isOptional) {
-        tokens.push({ Kind: TokenKind.Punctuation, Value: "?" });
+        tokens.push({ Kind: TokenKind.Punctuation, Value: "?", HasSuffixSpace: false });
     }
 
     tokens.push({ Kind: TokenKind.Punctuation, Value: ":", HasSuffixSpace: true });

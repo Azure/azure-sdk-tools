@@ -5,11 +5,11 @@ namespace UtilityLibraries;
 
 public class ExtraLabelValidation : IValidation
 {
-    private IPlaywright _playwright;
+    private IBrowser _browser;
 
-    public ExtraLabelValidation(IPlaywright playwright)
+    public ExtraLabelValidation(IBrowser browser)
     {
-        _playwright = playwright ?? throw new ArgumentNullException(nameof(playwright));
+        _browser = browser ?? throw new ArgumentNullException(nameof(browser));
     }
     public async Task<TResult> Validate(string testLink)
     {
@@ -35,9 +35,8 @@ public class ExtraLabelValidation : IValidation
             "&apos",
         };
 
-        // Create a browser instance.
-        var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
+        // Create a new page from the shared browser instance.
+        var page = await _browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
         // Get all text content of the current html.
@@ -56,17 +55,19 @@ public class ExtraLabelValidation : IValidation
             while ((index = htmlText.IndexOf(label, index)) != -1)
             {
                 // Check if the label is followed by a self-closing tag pattern
-                string selfClosingPattern = $@"{label}\s(.*)?\/>";
-                if (Regex.IsMatch(htmlText.Substring(index), selfClosingPattern))
+                string selfClosingPattern = $@"{Regex.Escape(label)}\s.*?\/>";
+                var match = Regex.Match(htmlText.Substring(index), selfClosingPattern);
+                if (match.Success)
                 {
                     // This is a self-closing tag, skip it
-                    index += label.Length + 2;
+                    index += match.Length;
                     continue;
                 }
 
                 if (ignoreList.Any(ignore => htmlText.Contains(ignore.IgnoreText)))
                 {
                     // If the label is in the ignore list, skip it
+                    index += label.Length;
                     continue;
                 }
 
@@ -91,7 +92,7 @@ public class ExtraLabelValidation : IValidation
             res.LocationsOfErrors = errorList;
         }
 
-        await browser.CloseAsync();
+        await page.CloseAsync();
 
         return res;
     }

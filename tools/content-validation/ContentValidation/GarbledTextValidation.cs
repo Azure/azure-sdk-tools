@@ -5,13 +5,13 @@ namespace UtilityLibraries;
 
 public class GarbledTextValidation : IValidation
 {
-    private IPlaywright _playwright;
+    private IBrowser _browser;
 
     public List<IgnoreItem> ignoreList = IgnoreData.GetIgnoreList("GarbledTextValidation", "contains");
 
-    public GarbledTextValidation(IPlaywright playwright)
+    public GarbledTextValidation(IBrowser browser)
     {
-        _playwright = playwright ?? throw new ArgumentNullException(nameof(playwright));
+        _browser = browser ?? throw new ArgumentNullException(nameof(browser));
     }
 
     public async Task<TResult> Validate(string testLink)
@@ -19,18 +19,19 @@ public class GarbledTextValidation : IValidation
         var res = new TResult();
         var errorList = new List<string>();
 
-        //Create a browser instance.
-        var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
+        //Create a new page from the shared browser instance.
+        var page = await _browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
-        // Get all text content of the current html.
+        // Get visible text to check for text-based garbled content like ":param:", ":ivar:", etc.
         var htmlText = await page.Locator("html").InnerTextAsync();
 
-        // Usage: This regular expression is used to extract the garbled characters in the format of ":ivar:request_id:/:param cert_file:/:param str proxy_addr:" from the text.
+        // Usage: This regular expression is used to extract the garbled characters:
+        // 1. ":ivar:request_id:" / ":param cert_file:" / ":param str proxy_addr:" format
+        // 2. Dictionary with special characters like "Dictionary of <...·...>"
         // Example: Initializer for X509 Certificate :param cert_file: The file path to contents of the certificate (or certificate chain)used to authenticate the device.
         // Link: https://learn.microsoft.com/en-us/python/api/azure-iot-device/azure.iot.device?view=azure-python
-        string pattern = @":[\w]+(?:\s+[\w]+){0,2}:|Dictionary of <[^>]*·[^>]*>|Dictionary of <[^>]*\uFFFD[^>]*>";
+        string pattern = @":[\w]+(?:\s+[\w]+){0,2}:|Dictionary of <[^>]*·[^>]*>|Dictionary of <[^>]*\uFFFD[^>]*>|<xref[^>]*>";
         MatchCollection matches = Regex.Matches(htmlText, pattern);
 
         // Add the results of regular matching to errorList in a loop.
@@ -60,7 +61,7 @@ public class GarbledTextValidation : IValidation
             res.LocationsOfErrors = formattedList;
         }
 
-        await browser.CloseAsync();
+        await page.CloseAsync();
 
         return res;
     }

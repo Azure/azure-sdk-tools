@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 using System.Text.Json;
@@ -37,33 +35,39 @@ public class VerifySetupTool : LanguageMcpTool
         SharedCommandGroups.Verify,
     ];
 
-    private readonly Option<List<SdkLanguage>> languagesParam = new("--languages", "-l")
+    private static readonly HashSet<string> supportedSdkLanguages = [ "All", .. Enum.GetNames<SdkLanguage>()
+            .Where(n => n != nameof(SdkLanguage.Unknown))];
+
+    private readonly Option<List<string>> languagesParam = new("--languages", "-l")
     {
-        Description = $"List of space-separated SDK languages to check requirements for ({string.Join(" ", Enum.GetNames(typeof(SdkLanguage)))}). Defaults to current repo's language.",
+        Description = $"List of space-separated SDK languages ({string.Join(" ", supportedSdkLanguages.OrderBy(n => n))}) to check requirements for. Defaults to current repo's language.",
+        Validators =
+        {
+            result =>
+            {
+                var badLanguages = (result.GetValueOrDefault<List<string>>() ?? [])
+                    .Except(supportedSdkLanguages, StringComparer.OrdinalIgnoreCase);
+
+                foreach (var value in badLanguages)
+                {
+                    result.AddError($"Invalid language '{value}'");
+                }
+            }
+        },
         Required = false,
         AllowMultipleArgumentsPerToken = true
-    };
-
-
-    private readonly Option<bool> allLangOption = new("--all")
-    {
-        Description = "Check requirements for all supported languages.",
-        DefaultValueFactory = _ => false
     };
 
     protected override Command GetCommand() =>
         new McpCommand("setup", "Verify environment setup for MCP release tools", VerifySetupToolName)
         {
             languagesParam,
-            allLangOption,
             SharedOptions.PackagePath
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var langs = parseResult.GetValue(languagesParam);
-        var allLangs = parseResult.GetValue(allLangOption);
-        var parsed = allLangs ? Enum.GetValues<SdkLanguage>().ToHashSet() : langs.ToHashSet();
+        var parsed = GetLanguagesFromOption(parseResult);
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
         return await VerifySetup(parsed, packagePath, ct);
     }
@@ -82,7 +86,7 @@ public class VerifySetupTool : LanguageMcpTool
 
             // Start all checks concurrently
             var checkTasks = new List<Task<(SetupRequirements.Requirement req, DefaultCommandResponse result)>>();
-            
+
             foreach (var req in reqsToCheck)
             {
                 logger.LogInformation("Checking requirement: {Requirement}",
@@ -98,7 +102,7 @@ public class VerifySetupTool : LanguageMcpTool
             {
                 if (result.ExitCode != 0)
                 {
-                    response.ResponseErrors ??= new List<string>() ;
+                    response.ResponseErrors ??= new List<string>();
                     response.ResponseErrors.Add($"Requirement failed: {req.requirement}. Error: {result.ResponseError}");
 
                     response.Results.Add(new RequirementCheckResult
@@ -106,7 +110,8 @@ public class VerifySetupTool : LanguageMcpTool
                         Requirement = req.requirement,
                         Instructions = req.instructions,
                     });
-                } else if (result.Message != null)
+                }
+                else if (result.Message != null)
                 {
                     response.Results.Add(new RequirementCheckResult
                     {
@@ -115,14 +120,14 @@ public class VerifySetupTool : LanguageMcpTool
                         RequirementStatusDetails = result.Message,
                         Reason = req.reason
                     });
-                } 
+                }
             }
             return response;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error verifying setup for {input}", langs);
-            return new ()
+            return new()
             {
                 ResponseError = $"Error processing request: {ex.Message}"
             };
@@ -201,7 +206,7 @@ public class VerifySetupTool : LanguageMcpTool
         {
             foreach (var lang in languages)
             {
-                languageSvs.Add(GetLanguageService(lang));
+                languageSvs.Add(await GetLanguageServiceAsync(lang, ct));
             }
         }
 
@@ -253,7 +258,7 @@ public class VerifySetupTool : LanguageMcpTool
     {
         // Return empty string if version requirement is satisfied, else return version to upgrade to        
         var match = System.Text.RegularExpressions.Regex.Match(req.requirement, REQ_VERSION_PATTERN);
-        
+
         if (!match.Success)
         {
             // No version specified in the requirement
@@ -293,5 +298,17 @@ public class VerifySetupTool : LanguageMcpTool
 
         logger.LogWarning("Failed to parse requirement versions as System.Version.");
         return requiredVersion;
+    }
+
+    private HashSet<SdkLanguage> GetLanguagesFromOption(ParseResult parseResult)
+    {
+        var langs = parseResult.GetValue(languagesParam) ?? [];
+
+        if (langs.Contains("All", StringComparer.OrdinalIgnoreCase))
+        {
+            return [.. Enum.GetValues<SdkLanguage>().Where(l => l != SdkLanguage.Unknown)];
+        }
+
+        return [.. langs.Select(lang => Enum.Parse<SdkLanguage>(lang, ignoreCase: true))];
     }
 }

@@ -10,10 +10,16 @@ namespace SearchIndexCreator
     public class IssueTriageContentIndex
     {
         private readonly IConfiguration _config;
+        private readonly string _embeddingModelName;
+        private readonly int _vectorDimensions;
 
         public IssueTriageContentIndex(IConfiguration config)
         {
             _config = config;
+            _embeddingModelName = _config["EmbeddingModelName"];
+            _vectorDimensions = _embeddingModelName?.Equals("text-embedding-3-large", StringComparison.OrdinalIgnoreCase) == true
+                ? 3072
+                : 1536;
         }
         
         /// <summary>
@@ -35,19 +41,24 @@ namespace SearchIndexCreator
                 //Create a data source
                 Console.WriteLine("Creating/Updating the data source...");
                 var dataSource = GetDataSource();
-                indexerClient.CreateOrUpdateDataSourceConnection(dataSource);
+                await indexerClient.CreateOrUpdateDataSourceConnectionAsync(dataSource);
                 Console.WriteLine("Data Source Created/Updated!");
 
                 //Create a skillset
                 Console.WriteLine("Creating/Updating the skillset...");
-                var skillset = GetSkillset();
+                
+                var repo = _config["repo"];
+                var isMcpRepo = repo?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true;
+                var skillset = isMcpRepo ? GetSkillsetForMcp() : GetSkillset();
+                
+                Console.WriteLine($"Using {(isMcpRepo ? "MCP-optimized" : "Azure SDK")} skillset...");
                 await indexerClient.CreateOrUpdateSkillsetAsync(skillset).ConfigureAwait(false);
                 Console.WriteLine("Skillset Created/Updated!");
 
                 // Create or update the indexer
                 Console.WriteLine("Creating/Updating the indexer...");
                 var indexer = GetSearchIndexer(dataSource, skillset);
-                indexerClient.CreateOrUpdateIndexer(indexer);
+                await indexerClient.CreateOrUpdateIndexerAsync(indexer);
                 Console.WriteLine("Indexer Created/Updated!");
             }
             catch (Exception ex)
@@ -106,8 +117,8 @@ namespace SearchIndexCreator
                             Parameters = new AzureOpenAIVectorizerParameters()
                             {
                                 ResourceUri = new Uri(_config["OpenAIEndpoint"]),
-                                DeploymentName = _config["EmbeddingModelName"],
-                                ModelName = _config["EmbeddingModelName"]
+                                DeploymentName = _embeddingModelName,
+                                ModelName = _embeddingModelName
                             }
                         }
                     },
@@ -145,8 +156,6 @@ namespace SearchIndexCreator
 
         private IList<SearchField> CreateFields()
         {
-
-            const int modelDimensions = 1536;
             const string vectorSearchHnswProfile = "issue-vector-profile";
 
             return new List<SearchField>
@@ -169,7 +178,7 @@ namespace SearchIndexCreator
                     new SearchField("TextVector", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                     {
                         IsSearchable = true,
-                        VectorSearchDimensions = modelDimensions,
+                        VectorSearchDimensions = _vectorDimensions,
                         VectorSearchProfileName = vectorSearchHnswProfile
                     },
                     new SearchField("Id", SearchFieldDataType.String)
@@ -182,6 +191,14 @@ namespace SearchIndexCreator
                         IsFilterable = true
                     },
                     new SearchableField("Category")
+                    {
+                        IsFilterable = true
+                    },
+                    new SearchableField("Server")
+                    {
+                        IsFilterable = true
+                    },
+                    new SearchableField("Tool")
                     {
                         IsFilterable = true
                     },
@@ -230,7 +247,9 @@ namespace SearchIndexCreator
             )
             {
                 DataChangeDetectionPolicy = new HighWaterMarkChangeDetectionPolicy("metadata_storage_last_modified"),
-                DataDeletionDetectionPolicy = new NativeBlobSoftDeleteDeletionDetectionPolicy()
+                DataDeletionDetectionPolicy = new NativeBlobSoftDeleteDeletionDetectionPolicy(),
+                IndexerPermissionOptions = new List<IndexerPermissionOption>()
+
             };
         }
 
@@ -267,8 +286,8 @@ namespace SearchIndexCreator
                 {
                     Context = "/document/pages/*",
                     ResourceUri = new Uri(_config["OpenAIEndpoint"]),
-                    ModelName = _config["EmbeddingModelName"],
-                    DeploymentName = _config["EmbeddingModelName"]
+                    ModelName = _embeddingModelName,
+                    DeploymentName = _embeddingModelName
                 }
             })
             {
@@ -330,6 +349,79 @@ namespace SearchIndexCreator
                             Source = "/document/MetadataStorageLastModified"
                         }
                     })
+                })
+                {
+                    Parameters = new SearchIndexerIndexProjectionsParameters
+                    {
+                        ProjectionMode = IndexProjectionMode.SkipIndexingParentDocuments
+                    }
+                }
+            };
+        }
+
+        private SearchIndexerSkillset GetSkillsetForMcp()
+        {
+            return new SearchIndexerSkillset(
+                $"{_config["ContainerName"]}-skillset",
+                new List<SearchIndexerSkill>
+                {
+                    new SplitSkill(
+                        inputs: new List<InputFieldMappingEntry>
+                        {
+                            new InputFieldMappingEntry("text") { Source = "/document/Body" }
+                        },
+                        outputs: new List<OutputFieldMappingEntry>
+                        {
+                            new OutputFieldMappingEntry("textItems") { TargetName = "pages" }
+                        }
+                    )
+                    {
+                        Context = "/document",
+                        TextSplitMode = TextSplitMode.Pages,
+                        MaximumPageLength = 2200,
+                        PageOverlapLength = 250
+                    },
+
+                    new AzureOpenAIEmbeddingSkill(
+                        inputs: new List<InputFieldMappingEntry>
+                        {
+                            new InputFieldMappingEntry("text") { Source = "/document/pages/*" }
+                        },
+                        outputs: new List<OutputFieldMappingEntry>
+                        {
+                            new OutputFieldMappingEntry("embedding") { TargetName = "TextVector" }
+                        }
+                    )
+                    {
+                        Context = "/document/pages/*",
+                        ResourceUri = new Uri(_config["OpenAIEndpoint"]),
+                        ModelName = _embeddingModelName,
+                        DeploymentName = _embeddingModelName
+                    }
+                })
+            {
+                IndexProjection = new SearchIndexerIndexProjection(new[]
+                {
+                    new SearchIndexerIndexProjectionSelector(
+                        targetIndexName: _config["IndexName"],
+                        parentKeyFieldName: "ParentId",
+                        sourceContext: "/document/pages/*",
+                        mappings: new[]
+                        {
+                            new InputFieldMappingEntry("TextVector") { Source = "/document/pages/*/TextVector" },
+                            new InputFieldMappingEntry("Chunk") { Source = "/document/pages/*" },
+                            new InputFieldMappingEntry("Id") { Source = "/document/Id" },
+                            new InputFieldMappingEntry("Title") { Source = "/document/Title" },
+                            new InputFieldMappingEntry("Server") { Source = "/document/Server" },
+                            new InputFieldMappingEntry("Tool") { Source = "/document/Tool" },
+                            new InputFieldMappingEntry("Author") { Source = "/document/Author" },
+                            new InputFieldMappingEntry("Repository") { Source = "/document/Repository" },
+                            new InputFieldMappingEntry("CreatedAt") { Source = "/document/CreatedAt" },
+                            new InputFieldMappingEntry("Url") { Source = "/document/Url" },
+                            new InputFieldMappingEntry("CodeOwner") { Source = "/document/CodeOwner" },
+                            new InputFieldMappingEntry("DocumentType") { Source = "/document/DocumentType" },
+                            new InputFieldMappingEntry("MetadataStorageLastModified") { Source = "/document/MetadataStorageLastModified" }
+                        })
                 })
                 {
                     Parameters = new SearchIndexerIndexProjectionsParameters

@@ -32,7 +32,12 @@ function commandPreamble(argv: any) {
 
 /** Ensure the output directory exists and allow interactive users to confirm or override the value. */
 export function resolveOutputDir(argv: any): string {
-  let outputDir = resolvePath(process.cwd(), argv["output-dir"]);
+  let outputDir;
+  if (argv["output-dir"] === undefined) {
+    outputDir = process.cwd();
+  } else {
+    outputDir = resolvePath(process.cwd(), argv["output-dir"]);
+  }
   const usePrompt = argv["prompt"];
 
   let useOutputDir;
@@ -73,7 +78,7 @@ const parser = yargs(hideBin(process.argv))
     alias: "o",
     type: "string",
     description: "Specify an alternate output directory for the generated files.",
-    default: ".",
+    default: undefined,
   })
   .option("no-prompt", {
     alias: "y",

@@ -148,7 +148,7 @@ public class Program
             var repoConfig = configWrapper.GetForRepository(repository);
 
             var openAIClient = new OpenAIClient(
-            new BearerTokenPolicy(credential, "https://ai.azure.com/.default"),
+            new BearerTokenPolicy(credential, "https://cognitiveservices.azure.com/.default"),
             new OpenAIClientOptions
             {
                 Endpoint = new Uri($"{openAiEndpoint.TrimEnd('/')}/openai/v1/")

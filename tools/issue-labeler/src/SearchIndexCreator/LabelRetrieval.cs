@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Octokit;
-using Microsoft.Extensions.Configuration;
-using Azure.Storage.Blobs;
 using System.Text.Json;
 using Azure.Identity;
+using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Configuration;
+using Octokit;
 
 namespace SearchIndexCreator
 {

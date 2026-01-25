@@ -3,24 +3,24 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <!-- Libs -->
-    <OctokitVersion>13.0.1</OctokitVersion>
+    <OctokitVersion>14.0.0</OctokitVersion>
     <MicrosoftAutoMLVersion>0.21.1</MicrosoftAutoMLVersion>
     <MicrosoftMLVersion>3.0.1</MicrosoftMLVersion>
     <PollyVersion>8.4.2</PollyVersion>
     <MicrosoftExtensionsLoggingAbstractionsVersion>8.0.2</MicrosoftExtensionsLoggingAbstractionsVersion>
-    <AzureAIOpenAIVersion>2.2.0-beta.1</AzureAIOpenAIVersion>
-    <AzureIdentityVersion>1.13.1</AzureIdentityVersion>
+    <AzureIdentityVersion>1.17.1</AzureIdentityVersion>
+    <OpenAIVersion>2.8.0</OpenAIVersion>
     <AzureSearchDocumentsVersion>11.7.0-beta.4</AzureSearchDocumentsVersion>
-    <AzureStorageBlobsVersion>12.23.0</AzureStorageBlobsVersion>
-    <NewtonsoftJsonVersion>13.0.3</NewtonsoftJsonVersion>
-    <MicrosoftExtensionsConfigurationVersion>9.0.0</MicrosoftExtensionsConfigurationVersion>
-    <MicrosoftExtensionsLoggingVersion>9.0.0</MicrosoftExtensionsLoggingVersion>
+    <AzureStorageBlobsVersion>12.27.0</AzureStorageBlobsVersion>
+    <NewtonsoftJsonVersion>13.0.4</NewtonsoftJsonVersion>
+    <MicrosoftExtensionsConfigurationVersion>10.0.2</MicrosoftExtensionsConfigurationVersion>
+    <MicrosoftExtensionsLoggingVersion>10.0.2</MicrosoftExtensionsLoggingVersion>
     <MicrosoftAzureFunctionsWorkerVersion>1.23.0</MicrosoftAzureFunctionsWorkerVersion>
     <MicrosoftAzureFunctionsWorkerSdkVersion>1.18.1</MicrosoftAzureFunctionsWorkerSdkVersion>
     <MicrosoftAzureFunctionsWorkerExtensionsHttpAspNetCoreVersion>1.3.2</MicrosoftAzureFunctionsWorkerExtensionsHttpAspNetCoreVersion>
     <MicrosoftApplicationInsightsWorkerServiceVersion>2.22.0</MicrosoftApplicationInsightsWorkerServiceVersion>
     <MicrosoftAzureFunctionsWorkerApplicationInsightsVersion>1.4.0</MicrosoftAzureFunctionsWorkerApplicationInsightsVersion>
-    <MicrosoftExtensionsConfigurationAzureAppConfigurationVersion>8.1.1</MicrosoftExtensionsConfigurationAzureAppConfigurationVersion>
+    <MicrosoftExtensionsConfigurationAzureAppConfigurationVersion>8.4.0</MicrosoftExtensionsConfigurationAzureAppConfigurationVersion>
     <MicrosoftExtensionsConfigurationFileExtensionsVersion>10.0.2</MicrosoftExtensionsConfigurationFileExtensionsVersion>
     <MicrosoftExtensionsConfigurationJsonVersion>10.0.2</MicrosoftExtensionsConfigurationJsonVersion>
     <MicrosoftExtensionsLoggingConsoleVersion>10.0.2</MicrosoftExtensionsLoggingConsoleVersion>

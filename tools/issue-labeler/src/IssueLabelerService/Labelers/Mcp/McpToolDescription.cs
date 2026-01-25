@@ -15,10 +15,10 @@ namespace IssueLabelerService
         {
             // Infrastructure & Core
             ["tools-Core"] = "MCP server infrastructure and system-wide behavior: startup/shutdown, protocol (stdio, JSON-RPC), consolidated mode, CLI framework, cross-cutting issues affecting MULTIPLE tools, tool routing/dispatch when MULTIPLE tools affected, parameter handling affecting multiple tools, help content generation, new framework capabilities, MCP client behavior issues (e.g., tool call loops, repeated invocations). Use for [CONSOLIDATED] issues. NOT for single tool's implementation bugs - if ONE tool returns wrong data, use that tool's label. NOT for tool-specific output size/truncation/formatting issues - use the specific tool label (e.g., tools-ARM for subscription list output issues). NOT for Azure AI Foundry agents (use tools-Foundry).",
-            
+
             // Authentication & Security
             ["tools-Auth"] = "Authentication framework: credential configuration, credential types (DefaultAzureCredential, ChainedTokenCredential, ManagedIdentityCredential), login flows, RBAC framework (local), auth documentation. NOT tool-specific auth errors that occur after tool invocation, NOT remote RBAC (use remote-mcp).",
-            
+
             // Packaging & Distribution
             ["tools-npx"] = "npm/npx packaging: @azure/mcp package, npm install issues, node_modules, JavaScript/TypeScript packaging problems. NOT general installation UX.",
             ["tools-NuGet"] = ".NET/NuGet packaging: dotnet tool install, NuGet gallery listings, .nupkg files, NuGet README, server.json in NuGet packages, CONTRIBUTING.md for NuGet.",

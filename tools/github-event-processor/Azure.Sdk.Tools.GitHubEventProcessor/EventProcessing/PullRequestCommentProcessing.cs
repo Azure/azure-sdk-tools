@@ -1,17 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
-using Octokit.Internal;
 using Octokit;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     public class PullRequestCommentProcessing
     {
+        private readonly ILogger<PullRequestCommentProcessing> Logger;
+        public PullRequestCommentProcessing(ILogger<PullRequestCommentProcessing> logger)
+        {
+            Logger = logger;
+        }
+
         /// <summary>
         /// Every rule will have it's own function that will be called here, the rule configuration will determine
         /// which rules will execute.
@@ -21,8 +23,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prCommentPayload">IssueCommentPayload deserialized from the json event payload</param>
-        public static async Task ProcessPullRequestCommentEvent(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
+        public async Task ProcessPullRequestCommentEvent(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
         {
+            Logger.LogInformation("Processing pull request comment event. Action: {Action}, PR: {PullRequestNumber}, Repository: {Repository}",
+                prCommentPayload.Action, prCommentPayload.Issue.Number, prCommentPayload.Repository.FullName);
+
             await ResetPullRequestActivity(gitHubEventClient, prCommentPayload);
             await ReopenPullRequest(gitHubEventClient, prCommentPayload);
 
@@ -46,7 +51,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prCommentPayload">IssueCommentPayload deserialized from the json event payload</param>
-        public static async Task ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
+        public async Task ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
                                                           IssueCommentPayload prCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetPullRequestActivity))
@@ -80,6 +85,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                         if (removeLabel)
                         {
+                            Logger.LogInformation("ResetPullRequestActivity: Removing '{NoRecentActivity}' label from PR #{PullRequestNumber} due to comment from {User}",
+                                TriageLabelConstants.NoRecentActivity, prCommentPayload.Issue.Number, prCommentPayload.Sender.Login);
                             gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
                         }
                     }
@@ -104,7 +111,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prCommentPayload">IssueCommentPayload deserialized from the json event payload</param>
-        public static async Task ReopenPullRequest(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
+        public async Task ReopenPullRequest(GitHubEventClient gitHubEventClient, IssueCommentPayload prCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ReopenPullRequest))
             {
@@ -129,11 +136,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         }
                         if (reOpen)
                         {
+                            Logger.LogInformation("ReopenPullRequest: Reopening PR #{PullRequestNumber} per /reopen command from {User}",
+                                prCommentPayload.Issue.Number, prCommentPayload.Sender.Login);
                             gitHubEventClient.SetIssueState(prCommentPayload.Issue, ItemState.Open);
                             gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
                         }
                         else
                         {
+                            Logger.LogInformation("ReopenPullRequest: User {User} attempted /reopen on PR #{PullRequestNumber} but is not the author and lacks permissions",
+                                prCommentPayload.Sender.Login, prCommentPayload.Issue.Number);
                             string prComment = $"Sorry, @{prCommentPayload.Sender.Login}, only the original author can reopen this pull request.";
                             gitHubEventClient.CreateComment(prCommentPayload.Repository.Id, prCommentPayload.Issue.Number, prComment);
                         }

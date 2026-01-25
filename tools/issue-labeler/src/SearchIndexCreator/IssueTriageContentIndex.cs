@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using OpenAI;
-using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Indexes.Models;
 using Microsoft.Extensions.Configuration;
+using OpenAI;
 using SearchIndexCreator.RepositoryIndexConfigs;
 
 namespace SearchIndexCreator

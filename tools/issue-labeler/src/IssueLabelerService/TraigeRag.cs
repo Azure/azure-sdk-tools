@@ -1,29 +1,29 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Azure.Search.Documents;
-using Microsoft.Extensions.Logging;
+using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Models;
+using Microsoft.Extensions.Logging;
 using OpenAI;
 using OpenAI.Chat;
-using Azure.Search.Documents.Indexes;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using System;
 
 namespace IssueLabelerService
 {
     public class TriageRag
     {
-        private readonly OpenAIClient _openAiClient;
-        private readonly SearchIndexClient _searchIndexClient;
-        private readonly ILogger<TriageRag> _logger;
-
+        private readonly OpenAIClient OpenAiClient;
+        private readonly SearchIndexClient SearchIndexClient;
+        private readonly ILogger<TriageRag> Logger;
+        
         public TriageRag(ILogger<TriageRag> logger, OpenAIClient openAiClient, SearchIndexClient searchIndexClient)
         {
-            _openAiClient = openAiClient;
-            _logger = logger;
-            _searchIndexClient = searchIndexClient;
+            OpenAiClient = openAiClient;
+            Logger = logger;
+            SearchIndexClient = searchIndexClient;
         }
 
         public async Task<List<IndexContent>> IssueTriageContentIndexAsync(
@@ -55,7 +55,7 @@ namespace IssueLabelerService
                     filteredIssues.Add(issue);
                 }
             }
-            
+
             return filteredIssues;
         }
 
@@ -67,9 +67,9 @@ namespace IssueLabelerService
             int count,
             string filter = null)
         {
-            SearchClient searchClient = _searchIndexClient.GetSearchClient(indexName);
+            SearchClient searchClient = SearchIndexClient.GetSearchClient(indexName);
 
-            _logger.LogInformation($"Searching for related {typeof(T).Name.ToLower()}s...");
+            Logger.LogInformation($"Searching for related {typeof(T).Name.ToLower()}s...");
             SearchOptions options = new SearchOptions
             {
                 Size = count,
@@ -99,7 +99,7 @@ namespace IssueLabelerService
                 query,
                 options);
 
-            _logger.LogInformation($"{typeof(T).Name}s found.");
+            Logger.LogInformation($"{typeof(T).Name}s found.");
 
             List<(T, double)> results = new List<(T, double)>();
             foreach (SearchResult<T> result in response.GetResults())
@@ -112,9 +112,9 @@ namespace IssueLabelerService
 
         public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, string contextBlock = null, BinaryData structure = null)
         {
-            _logger.LogInformation($"\n\nWaiting for an Open AI response...");
-            ChatClient chatClient = _openAiClient.GetChatClient(modelName);
-            
+            Logger.LogInformation($"\n\nWaiting for an Open AI response...");
+            ChatClient chatClient = OpenAiClient.GetChatClient(modelName);
+
             ChatCompletionOptions options = new ChatCompletionOptions();
 
             if (modelName.Contains("gpt"))
@@ -148,7 +148,7 @@ namespace IssueLabelerService
 
             ChatCompletion result = await chatClient.CompleteChatAsync(chatMessages, options);
 
-            _logger.LogInformation($"\n\nFinished loading Open AI response.");
+            Logger.LogInformation($"\n\nFinished loading Open AI response.");
 
             return result.Content[0].Text;
         }

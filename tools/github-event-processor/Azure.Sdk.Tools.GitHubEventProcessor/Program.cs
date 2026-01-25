@@ -1,46 +1,47 @@
 using System;
-using System.Collections.Concurrent;
 using System.IO;
-using Octokit;
-using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
-using Octokit.Internal;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
-using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
-using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Core;
+using Azure.Identity;
 using Azure.Sdk.Tools.GitHubEventProcessor.Configuration;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using Azure.Core;
-using Azure.Identity;
+using Octokit;
+using Octokit.Internal;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
     internal class Program
     {
-        private static readonly ConcurrentDictionary<string, IssueProcessing> IssueProcessors = new();
-
         static async Task Main(string[] args)
         {
             var host = Host.CreateDefaultBuilder(args)
-            .ConfigureLogging(logging =>
-            {
-                logging.ClearProviders();
-                logging.AddSimpleConsole(options =>
+                .ConfigureLogging(logging =>
                 {
-                    options.SingleLine = true;
-                    options.TimestampFormat = "[HH:mm:ss] ";
-                });
-                logging.SetMinimumLevel(LogLevel.Information);
-            })
-            .ConfigureServices((context, services) =>
-            {
-                services.AddSingleton<McpConfiguration>(sp => CreateMcpConfiguration());
-                services.AddSingleton<McpIssueProcessing>();
-            })
-            .Build();
+                    logging.ClearProviders();
+                    logging.AddSimpleConsole(options =>
+                    {
+                        options.SingleLine = true;
+                        options.TimestampFormat = "[HH:mm:ss] ";
+                    });
+                    logging.SetMinimumLevel(LogLevel.Information);
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddSingleton<McpConfiguration>(sp => CreateMcpConfiguration());
+                    services.AddSingleton<McpIssueProcessing>();
+                    services.AddSingleton<IssueProcessing>();
+                    services.AddSingleton<IssueCommentProcessing>();
+                    services.AddSingleton<PullRequestProcessing>();
+                    services.AddSingleton<PullRequestCommentProcessing>();
+                    services.AddSingleton<ScheduledEventProcessing>();
+                })
+                .Build();
 
             var serviceProvider = host.Services;
 
@@ -83,11 +84,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         // then Issue's PullRequest object in the payload will be non-null
                         if (issueCommentPayload.Issue.PullRequest != null)
                         {
-                            await PullRequestCommentProcessing.ProcessPullRequestCommentEvent(gitHubEventClient, issueCommentPayload);
+                            await serviceProvider.GetRequiredService<PullRequestCommentProcessing>().ProcessPullRequestCommentEvent(gitHubEventClient, issueCommentPayload);
                         }
                         else
                         {
-                            await IssueCommentProcessing.ProcessIssueCommentEvent(gitHubEventClient, issueCommentPayload);
+                            await serviceProvider.GetRequiredService<IssueCommentProcessing>().ProcessIssueCommentEvent(gitHubEventClient, issueCommentPayload);
                         }
 
                         break;
@@ -96,9 +97,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     {
                         // The pull_request, because of the auto_merge processing, requires more than just deserialization of the
                         // the rawJson.
-                        PullRequestEventGitHubPayload prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, serializer);
+                        PullRequestEventGitHubPayload prEventPayload = serviceProvider.GetRequiredService<PullRequestProcessing>().DeserializePullRequest(rawJson, serializer);
                         gitHubEventClient.SetConfigEntryOverrides(prEventPayload.Repository);
-                        await PullRequestProcessing.ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
+                        await serviceProvider.GetRequiredService<PullRequestProcessing>().ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
                         break;
                     }
                 case EventConstants.Schedule:
@@ -116,7 +117,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
                         gitHubEventClient.SetConfigEntryOverrides(scheduledEventPayload.Repository);
                         string cronTaskToRun = args[2];
-                        await ScheduledEventProcessing.ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun);
+                        await serviceProvider.GetRequiredService<ScheduledEventProcessing>().ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun);
                         break;
                     }
                 default:
@@ -140,8 +141,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 return new McpConfiguration(new ConfigurationBuilder().Build());
             }
 
-            bool isRunningInAzure = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
-            TokenCredential credential = isRunningInAzure
+            bool isRunningInGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
+            TokenCredential credential = isRunningInGitHubActions
                 ? new ManagedIdentityCredential()
                 : new ChainedTokenCredential(
                     new AzureCliCredential(),
@@ -180,15 +181,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// </summary>
         private static IssueProcessing GetIssueProcessor(Repository repository, IServiceProvider serviceProvider)
         {
-            string repoKey = $"{repository.Owner.Login}/{repository.Name}";
-
             if (repository.Owner.Login.Equals("Microsoft", StringComparison.OrdinalIgnoreCase) &&
                 repository.Name.Equals("mcp", StringComparison.OrdinalIgnoreCase))
             {
-                return IssueProcessors.GetOrAdd(repoKey, _ => serviceProvider.GetRequiredService<McpIssueProcessing>());
+                return serviceProvider.GetRequiredService<McpIssueProcessing>();
             }
 
-            return IssueProcessors.GetOrAdd(repoKey, _ => new IssueProcessing());
+            return serviceProvider.GetRequiredService<IssueProcessing>();
         }
     }
 }

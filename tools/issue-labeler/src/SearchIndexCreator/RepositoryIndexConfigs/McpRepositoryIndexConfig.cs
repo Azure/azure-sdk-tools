@@ -61,8 +61,8 @@ namespace SearchIndexCreator.RepositoryIndexConfigs
 
         public void PopulateCustomFields(IssueTriageContent content, string? primaryLabel, string? secondaryLabel)
         {
-            content.Server = primaryLabel;
-            content.Tool = secondaryLabel;
+            content.AdditionalProperties["Server"] = primaryLabel;
+            content.AdditionalProperties["Tool"] = secondaryLabel;
         }
 
         public IEnumerable<string> GetCodeowners(List<string> labels)

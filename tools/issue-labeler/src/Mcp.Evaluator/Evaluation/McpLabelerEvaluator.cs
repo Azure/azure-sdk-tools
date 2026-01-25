@@ -1,10 +1,10 @@
 using System.Net.Http;
+using Azure;
 using IssueLabeler.Shared;
 using IssueLabelerService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Azure;
 
 namespace Mcp.Evaluator.Evaluation
 {
@@ -133,7 +133,7 @@ namespace Mcp.Evaluator.Evaluation
                 .ToList();
 
             // Check if predicted matches any of the expected labels
-            return expectedLabels.Any(expected => 
+            return expectedLabels.Any(expected =>
                 string.Equals(predictedLabel, expected, StringComparison.OrdinalIgnoreCase));
         }
 

@@ -14,29 +14,29 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     public class McpIssueProcessing : IssueProcessing
     {
-        private readonly ILogger<McpIssueProcessing> _logger;
-        private readonly McpConfiguration _mcpConfiguration;
+        private readonly ILogger<McpIssueProcessing> Logger;
+        private readonly McpConfiguration McpConfiguration;
 
-        public McpIssueProcessing(ILogger<McpIssueProcessing> logger, McpConfiguration mcpConfiguration)
+        public McpIssueProcessing(ILogger<McpIssueProcessing> logger, McpConfiguration mcpConfiguration) : base(logger)
         {
-            _logger = logger;
-            _mcpConfiguration = mcpConfiguration;
+            Logger = logger;
+            McpConfiguration = mcpConfiguration;
         }
-        
+
         public override async Task InitialIssueTriage(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
 
-            _logger.LogInformation("Starting MCP issue triage for issue #{IssueNumber}", issueEventPayload.Issue.Number);
+            Logger.LogInformation("Starting MCP issue triage for issue #{IssueNumber}", issueEventPayload.Issue.Number);
 
             if (!gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.InitialIssueTriage))
             {
-                _logger.LogDebug("InitialIssueTriage rule disabled");
+                Logger.LogDebug("InitialIssueTriage rule disabled");
                 return;
             }
 
             if (issueEventPayload.Action != ActionConstants.Opened)
             {
-                _logger.LogDebug("Issue action {Action} is not 'opened'", issueEventPayload.Action);
+                Logger.LogDebug("Issue action {Action} is not 'opened'", issueEventPayload.Action);
                 return;
             }
 
@@ -47,11 +47,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 .ToList();
 
             IssueTriageResponse triageOutput = await gitHubEventClient.QueryAIIssueTriageService(
-                issueEventPayload, 
-                true, 
-                false); 
+                issueEventPayload,
+                true,
+                false);
 
-            var usePredictedLabels = EvaluatePredictedLabelsForMcp( userLabels, triageOutput.Labels);
+            var usePredictedLabels = EvaluatePredictedLabelsForMcp(userLabels, triageOutput.Labels);
             var finalLabels = new HashSet<string>();
 
             if (usePredictedLabels.UsePredictedServer && usePredictedLabels.PredictedServerLabel != null)
@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
             if (!usePredictedLabels.UsePredictedServer && !usePredictedLabels.UsePredictedTool && !userHasValidMcpLabel)
             {
-                gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTriage); 
+                gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTriage);
                 return;
             }
 
@@ -83,22 +83,22 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
             if (userLabels != null)
             {
-                foreach (var label in userLabels) 
+                foreach (var label in userLabels)
                 {
                     finalLabels.Add(label);
                 }
             }
 
             bool hasValidAssignee = await AssignCodeOwnerAsync(
-                gitHubEventClient, 
-                issueEventPayload, 
+                gitHubEventClient,
+                issueEventPayload,
                 finalLabels.ToList());
 
-            if (!hasValidAssignee) 
+            if (!hasValidAssignee)
             {
                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamTriage);
 
-                if (usePredictedLabels.UsePredictedServer && 
+                if (usePredictedLabels.UsePredictedServer &&
                     usePredictedLabels.PredictedServerLabel != null)
                 {
                     CreateServerTeamComment(gitHubEventClient, issueEventPayload, usePredictedLabels.PredictedServerLabel, triageOutput);
@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             else
             {
                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
-            }           
+            }
         }
 
         private async Task<bool> AssignCodeOwnerAsync(
@@ -124,40 +124,39 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 string assigneesMention = string.Join(", ", existingAssignees);
                 string issueComment = $"Thanks for your feedback! {assigneesMention} {(issueEventPayload.Issue.Assignees.Count == 1 ? "is" : "are")} looking into it.";
                 gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
-                _logger.LogInformation("Issue #{IssueNumber} already has assignee(s): {Assignees}", 
+                Logger.LogInformation("Issue #{IssueNumber} already has assignee(s): {Assignees}",
                     issueEventPayload.Issue.Number, string.Join(", ", issueEventPayload.Issue.Assignees.Select(a => a.Login)));
                 return hasValidAssignee;
             }
 
             CodeownersEntry codeOwnersEntry = CodeOwnerUtils.GetCodeownersEntryForLabelList(finalLabels);
-            
+
             if (codeOwnersEntry.ServiceOwners.Count > 0)
             {
                 if (codeOwnersEntry.ServiceOwners.Count == 1)
                 {
                     if (await gitHubEventClient.OwnerCanBeAssignedToIssuesInRepo(
-                        issueEventPayload.Repository.Owner.Login, 
+                        issueEventPayload.Repository.Owner.Login,
                         issueEventPayload.Repository.Name,
                         codeOwnersEntry.ServiceOwners[0]))
                     {
                         hasValidAssignee = true;
                         gitHubEventClient.AssignOwnerToIssue(
-                            issueEventPayload.Repository.Owner.Login, 
-                            issueEventPayload.Repository.Name, 
+                            issueEventPayload.Repository.Owner.Login,
+                            issueEventPayload.Repository.Name,
                             codeOwnersEntry.ServiceOwners[0]);
                         CreateComment(codeOwnersEntry, gitHubEventClient, issueEventPayload);
 
                     }
                     else
                     {
-                        _logger.LogWarning("{Owner} is the only owner in the ServiceOwners for service label(s) {Labels}, but cannot be assigned as an issue owner in this repository", codeOwnersEntry.ServiceOwners[0], string.Join(",", finalLabels));
-                    } 
+                        Logger.LogWarning("{Owner} is the only owner in the ServiceOwners for service label(s) {Labels}, but cannot be assigned as an issue owner in this repository", codeOwnersEntry.ServiceOwners[0], string.Join(",", finalLabels));
+                    }
                 }
 
                 else
                 {
-                    var rnd = new Random();
-                    var randomMcpOwners = codeOwnersEntry.ServiceOwners.OrderBy(item => rnd.Next(0, codeOwnersEntry.ServiceOwners.Count));
+                    var randomMcpOwners = codeOwnersEntry.ServiceOwners.OrderBy(item => Random.Shared.Next(0, codeOwnersEntry.ServiceOwners.Count));
                     foreach (string mcpOwner in randomMcpOwners)
                     {
                         if (await gitHubEventClient.OwnerCanBeAssignedToIssuesInRepo(
@@ -169,12 +168,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             gitHubEventClient.AssignOwnerToIssue(issueEventPayload.Repository.Owner.Login,
                             issueEventPayload.Repository.Name, mcpOwner);
                             CreateComment(codeOwnersEntry, gitHubEventClient, issueEventPayload);
-        
+
                             break;
                         }
                         else
                         {
-                            _logger.LogWarning("{Owner} is an MCP owner for service labels {Labels} but cannot be assigned as an issue owner in this repository", 
+                            Logger.LogWarning("{Owner} is an MCP owner for service labels {Labels} but cannot be assigned as an issue owner in this repository",
                                 mcpOwner, string.Join(",", finalLabels));
                         }
                     }
@@ -192,28 +191,28 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         private void CreateServerTeamComment(
-            GitHubEventClient gitHubEventClient, 
-            IssueEventGitHubPayload issueEventPayload, 
+            GitHubEventClient gitHubEventClient,
+            IssueEventGitHubPayload issueEventPayload,
             string serverLabel,
             IssueTriageResponse triageOutput)
         {
             string? teamMention = GetTeamMentionForServerLabel(serverLabel);
-            
-            string issueComment = teamMention != null 
-                ? $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {teamMention}." 
+
+            string issueComment = teamMention != null
+                ? $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {teamMention}."
                 : "Thanks for the feedback! We are routing this to the appropriate team for follow-up.";
-            
+
             gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
         }
 
         private string? GetTeamMentionForServerLabel(string serverLabel)
         {
-            return _mcpConfiguration.GetTeamMentionForServerLabel(serverLabel);
+            return McpConfiguration.GetTeamMentionForServerLabel(serverLabel);
         }
 
         private static McpPredictedLabelDecision EvaluatePredictedLabelsForMcp(IEnumerable<string> userLabels, IEnumerable<string> predictedLabels)
         {
-            if(predictedLabels == null || !predictedLabels.Any())
+            if (predictedLabels == null || !predictedLabels.Any())
             {
                 return new McpPredictedLabelDecision(false, false, null, null);
             }
@@ -224,14 +223,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             var userToolLabels = userLabels.Where(IsToolLabel).ToList();
 
             string? predictedServerLabel = predictedLabels.FirstOrDefault(IsServerLabel);
-            string? predictedToolLabel   = predictedLabels.FirstOrDefault(IsToolLabel);
+            string? predictedToolLabel = predictedLabels.FirstOrDefault(IsToolLabel);
 
-            bool isPredictedServerLabel = predictedServerLabel != null && 
-            (!userServerLabel.Any() || 
+            bool isPredictedServerLabel = predictedServerLabel != null &&
+            (!userServerLabel.Any() ||
             userServerLabel.Any(label => label.Equals(predictedServerLabel, StringComparison.OrdinalIgnoreCase)));
 
-            bool isPredictedToolLabel = predictedToolLabel != null && 
-            (!userToolLabels.Any() || 
+            bool isPredictedToolLabel = predictedToolLabel != null &&
+            (!userToolLabels.Any() ||
             userToolLabels.Any(label => label.Equals(predictedToolLabel, StringComparison.OrdinalIgnoreCase)));
 
             return new McpPredictedLabelDecision
@@ -241,22 +240,22 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
         private static bool IsServerLabel(string label)
         {
-            return label.StartsWith(ConfigConstants.McpServerLabelPrefix, StringComparison.OrdinalIgnoreCase);
+            return label.StartsWith(McpConstants.McpServerLabelPrefix, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsToolLabel(string label)
         {
-            return label.StartsWith(ConfigConstants.McpToolLabelPrefix, StringComparison.OrdinalIgnoreCase) ||
-            ConfigConstants.McpOtherLabels.Any(otherLabel => label.Equals(otherLabel, StringComparison.OrdinalIgnoreCase));
+            return label.StartsWith(McpConstants.McpToolLabelPrefix, StringComparison.OrdinalIgnoreCase) ||
+            McpConstants.McpOtherLabels.Any(otherLabel => label.Equals(otherLabel, StringComparison.OrdinalIgnoreCase));
         }
 
         private async Task<bool> GetCustomerReportedLabel(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             string login = issueEventPayload.Issue.User.Login;
             bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, login);
-            
+
             if (isMemberOfOrg) return false;
-        
+
             var hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(
                 issueEventPayload.Repository.Id, login);
 

@@ -29,8 +29,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hubbup.MikLabelModel.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.CodeownersUtils", "..\codeowners-utils\Azure.Sdk.Tools.CodeownersUtils\Azure.Sdk.Tools.CodeownersUtils.csproj", "{D27C2C44-3AC4-0732-FF87-DD1697A9DF37}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Evaluator", "src\Mcp.Evaluator\Mcp.Evaluator.csproj", "{2F1A6B5E-C446-4A09-BABC-5C076E9DD89E}"
 EndProject
 Global
@@ -166,9 +164,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{2F1A6B5E-C446-4A09-BABC-5C076E9DD89E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {60D53155-0C10-41E9-B797-FC68F4EDFF8A}

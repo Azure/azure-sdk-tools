@@ -1,13 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.ClientModel.Primitives;
+using System.Text.Json;
+using Azure.Identity;
+using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
 using Octokit;
-using Azure.Identity;
 using OpenAI;
-using Azure.Search.Documents.Indexes;
-using System.Text.Json;
-using System.ClientModel.Primitives;
 
 namespace SearchIndexCreator
 {
@@ -81,9 +81,8 @@ namespace SearchIndexCreator
             var index = new IssueTriageContentIndex(config);
             var credential = new AzureCliCredential();
             var openAIClient = new OpenAIClient(
-                new BearerTokenPolicy(credential, "https://ai.azure.com/.default"),
+                new BearerTokenPolicy(credential, "https://cognitiveservices.azure.com/.default"),
                 new OpenAIClientOptions {Endpoint = new Uri($"{config["OpenAIEndpoint"].TrimEnd('/')}/openai/v1/")});
-                
             var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), credential);
             var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), credential);
             await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);

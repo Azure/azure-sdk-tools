@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Storage.Blobs;
-using Azure.Identity;
-using Microsoft.Extensions.Configuration;
-using Octokit;
-using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using System.Net.Http.Headers;
-using Newtonsoft.Json;
+using Azure.Identity;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Azure.Storage.Blobs;
 using IssueLabeler.Shared;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Octokit;
 using SearchIndexCreator.RepositoryIndexConfigs;
 
 namespace SearchIndexCreator
@@ -70,7 +70,7 @@ namespace SearchIndexCreator
                 var blobClient = containerClient.GetBlobClient(content.Id);
                 try
                 {
-                    var jsonContent = JsonConvert.SerializeObject(content);
+                    var jsonContent = System.Text.Json.JsonSerializer.Serialize(content);
 
                     var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
                     {

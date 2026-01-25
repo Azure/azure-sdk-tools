@@ -5,19 +5,30 @@ using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using System.Text.Json;
 using Octokit.Internal;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     public class PullRequestProcessing
     {
+        private readonly ILogger<PullRequestProcessing> Logger;
+
+        public PullRequestProcessing(ILogger<PullRequestProcessing> logger)
+        {
+            Logger = logger;
+        }
+
         /// <summary>
         /// Every rule will have it's own function that will be called here, the rule configuration will determine
         /// which rules will execute.
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prEventPayload">PullRequestEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task ProcessPullRequestEvent(GitHubEventClient gitHubEventClient, PullRequestEventGitHubPayload prEventPayload)
+        public async Task ProcessPullRequestEvent(GitHubEventClient gitHubEventClient, PullRequestEventGitHubPayload prEventPayload)
         {
+            Logger.LogInformation("Processing pull request event. Action: {Action}, PR: {PullRequestNumber}, Repository: {Repository}",
+                prEventPayload.Action, prEventPayload.PullRequest.Number, prEventPayload.Repository.FullName);
+
             await PullRequestTriage(gitHubEventClient, prEventPayload);
             ResetPullRequestActivity(gitHubEventClient, prEventPayload);
             await ResetApprovalsForUntrustedChanges(gitHubEventClient, prEventPayload);
@@ -41,7 +52,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prEventPayload">PullRequestEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task PullRequestTriage(GitHubEventClient gitHubEventClient,
+        public async Task PullRequestTriage(GitHubEventClient gitHubEventClient,
                                                    PullRequestEventGitHubPayload prEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.PullRequestTriage))
@@ -54,6 +65,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         var prLabels = CodeOwnerUtils.GetPRAutoLabelsForFilePaths(prEventPayload.PullRequest.Labels, prFileList);
                         if (prLabels.Count > 0)
                         {
+                            Logger.LogInformation("PullRequestTriage: Adding auto-labels [{Labels}] to PR #{PullRequestNumber} based on file paths",
+                                string.Join(", ", prLabels), prEventPayload.PullRequest.Number);
                             foreach (var prLabel in prLabels)
                             {
                                 gitHubEventClient.AddLabel(prLabel);
@@ -71,6 +84,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                 bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
                                 if (!hasAdminOrWritePermission)
                                 {
+                                    Logger.LogInformation("PullRequestTriage: User {User} is not an org member and lacks write permissions on PR #{PullRequestNumber}. Adding '{CustomerReported}' and '{CommunityContribution}' labels.",
+                                        prEventPayload.PullRequest.User.Login, prEventPayload.PullRequest.Number, TriageLabelConstants.CustomerReported, TriageLabelConstants.CommunityContribution);
                                     gitHubEventClient.AddLabel(TriageLabelConstants.CustomerReported);
                                     gitHubEventClient.AddLabel(TriageLabelConstants.CommunityContribution);
                                     string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
@@ -105,7 +120,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prEventPayload">PullRequestEventGitHubPayload deserialized from the json event payload</param>
-        public static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
+        public void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
                                                     PullRequestEventGitHubPayload prEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetPullRequestActivity))
@@ -135,6 +150,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     }
                     if (removeLabel)
                     {
+                        Logger.LogInformation("ResetPullRequestActivity: Removing '{NoRecentActivity}' label from PR #{PullRequestNumber} due to action '{Action}'",
+                            TriageLabelConstants.NoRecentActivity, prEventPayload.PullRequest.Number, prEventPayload.Action);
                         gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
                     }
                 }
@@ -156,7 +173,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prEventPayload">PullRequestEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task ResetApprovalsForUntrustedChanges(GitHubEventClient gitHubEventClient,
+        public async Task ResetApprovalsForUntrustedChanges(GitHubEventClient gitHubEventClient,
                                                                    PullRequestEventGitHubPayload prEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetApprovalsForUntrustedChanges))
@@ -170,6 +187,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         // The sender will only have Write or Admin permssion if they are a collaborator
                         if (!hasAdminOrWritePermission)
                         {
+                            Logger.LogInformation("ResetApprovalsForUntrustedChanges: Untrusted user {User} pushed changes to auto-merge PR #{PullRequestNumber}. Resetting approvals.",
+                                prEventPayload.PullRequest.User.Login, prEventPayload.PullRequest.Number);
                             // In this case, get all of the reviews 
                             var reviews = await gitHubEventClient.GetReviewsForPullRequest(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
                             foreach (var review in reviews)
@@ -201,7 +220,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="rawJson">The rawJson to deserialize</param>
         /// <param name="serializer">Octokit.Internal.SimpleJsonSerializer which is serializer used to deserialize the payload into OctoKit classes.</param>
         /// <returns>PullRequestEventGitHubPayload deserialized from the event json</returns>
-        public static PullRequestEventGitHubPayload DeserializePullRequest(string rawJson, SimpleJsonSerializer serializer)
+        public PullRequestEventGitHubPayload DeserializePullRequest(string rawJson, SimpleJsonSerializer serializer)
         {
             PullRequestEventGitHubPayload prEventPayload = serializer.Deserialize<PullRequestEventGitHubPayload>(rawJson);
             using var doc = JsonDocument.Parse(rawJson);

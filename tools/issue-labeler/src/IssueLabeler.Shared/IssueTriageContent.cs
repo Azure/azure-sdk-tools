@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Text.Json.Serialization;
+
 namespace IssueLabeler.Shared
 {
     public class IssueTriageContent
@@ -10,9 +12,9 @@ namespace IssueLabeler.Shared
         public string? Body { get; set; }
         public string? Service { get; set; }
         public string? Category { get; set; }
-        public string? Server { get; set; }
-        public string? Tool { get; set; }
         public string? Author { get; set; }
+        [JsonExtensionData]
+        public Dictionary<string, object?> AdditionalProperties { get; set; } = new();
         public string? Repository { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
         public string? Url { get; set; }

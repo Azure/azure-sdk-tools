@@ -7,13 +7,12 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using IssueLabeler.Shared;
-using IssueLabelerService;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace IssueLabelerService
 {
@@ -251,7 +250,7 @@ namespace IssueLabelerService
 
             var rawQuery = $"Title: {issue.Title}\n\n{issue.Body ?? string.Empty}";
             var query = CleanToolMentions(rawQuery);
-            
+
             if (query != rawQuery)
             {
                 _logger.LogDebug("Query cleaned - Original: {Original}", rawQuery.Substring(0, Math.Min(100, rawQuery.Length)));
@@ -298,8 +297,8 @@ namespace IssueLabelerService
             return string.Join("\n\n", searchContentResults.Select(sc =>
                 $"Title: {sc.Title}\n" +
                 $"Description: {sc.Chunk}\n" +
-                $"Server: {sc.Server ?? "Unlabeled"}\n" +
-                $"Tool: {sc.Tool ?? "Unlabeled"}\n" +
+                $"Server: {sc.AdditionalProperties.GetValueOrDefault("Server")?.ToString() ?? "Unlabeled"}\n" +
+                $"Tool: {sc.AdditionalProperties.GetValueOrDefault("Tool")?.ToString() ?? "Unlabeled"}\n" +
                 $"Score: {sc.Score:F2}"));
         }
 
@@ -463,7 +462,7 @@ namespace IssueLabelerService
             try
             {
                 var cleaned = query;
-                
+
                 cleaned = SafeRegex(cleaned, @"\be\.g\.?,?\s+\w+", "");
                 cleaned = SafeRegex(cleaned, @"\b(like|such\s+as)\s+\w+", "");
                 cleaned = SafeRegex(cleaned, @"\s*\(e\.g\.?,?\s+[^)]+\)", "");
@@ -475,7 +474,7 @@ namespace IssueLabelerService
             {
                 _logger.LogWarning(ex, "Unexpected error in CleanToolMentions, returning original query");
                 return query;
-            }   
+            }
         }
 
         /// <summary>

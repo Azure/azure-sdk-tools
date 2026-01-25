@@ -17,13 +17,14 @@ using OpenAI;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
-    .ConfigureServices((context, services) => {
+    .ConfigureServices((context, services) =>
+    {
         var functionConfig = context.Configuration;
         var configEndpoint = new Uri(functionConfig["ConfigurationEndpoint"]);
         var isRunningInAzure = functionConfig["IsRunningInAzure"] == "true";
 
         // Use appropriate credential based on environment
-        TokenCredential credential = isRunningInAzure 
+        TokenCredential credential = isRunningInAzure
             ? new ManagedIdentityCredential()
             : new ChainedTokenCredential(
                 new AzureCliCredential(),
@@ -42,10 +43,10 @@ var host = new HostBuilder()
 
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-        
+
         var configService = new Configuration(configRoot);
         services.AddSingleton<Configuration>(configService);
-        
+
         var config = configService.GetDefault();
 
         // Need to combine the default config with the function app config
@@ -62,7 +63,7 @@ var host = new HostBuilder()
             return new OpenAIClient(
                 new BearerTokenPolicy(
                     credential,
-                    "https://ai.azure.com/.default"
+                    "https://cognitiveservices.azure.com/.default"
                 ),
                 new OpenAIClientOptions
                 {

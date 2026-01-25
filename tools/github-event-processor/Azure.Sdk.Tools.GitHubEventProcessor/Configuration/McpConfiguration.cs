@@ -2,20 +2,17 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.Configuration
 {
-    /// <summary>
-    /// Configuration service for MCP-specific settings loaded from Azure App Configuration.
-    /// </summary>
     public class McpConfiguration
     {
-        private readonly IConfiguration _configuration;
-        private const string McpConfigPrefix = "microsoft/mcp";
+        private readonly IConfiguration Configuration;
 
         public McpConfiguration(IConfiguration configuration)
         {
-            _configuration = configuration;
+            Configuration = configuration;
         }
 
         /// <summary>
@@ -25,7 +22,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Configuration
         {
             var mappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             
-            string? configValue = _configuration[$"{McpConfigPrefix}:ServerTeamMappings"];
+            string? configValue = Configuration[$"{McpConstants.McpConfigPrefix}:ServerTeamMappings"];
             
             if (string.IsNullOrEmpty(configValue))
             {

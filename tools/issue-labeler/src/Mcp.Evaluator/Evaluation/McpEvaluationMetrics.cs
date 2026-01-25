@@ -10,17 +10,17 @@ namespace Mcp.Evaluator.Evaluation
         public int TotalCases { get; set; }
         public int SuccessfulPredictions { get; set; }
         public int FailedPredictions { get; set; }
-        
+
         public int ServerCorrect { get; set; }
         public int ServerIncorrect { get; set; }
         public int ServerMissing { get; set; }
-        
+
         public int ToolCorrect { get; set; }
         public int ToolIncorrect { get; set; }
         public int ToolMissing { get; set; }
-        
+
         public int BothCorrect { get; set; }
-        
+
         public double ServerAccuracy => TotalCases > 0 ? (double)ServerCorrect / TotalCases : 0;
         public double ToolAccuracy => TotalCases > 0 ? (double)ToolCorrect / TotalCases : 0;
         public double CombinedAccuracy => TotalCases > 0 ? (double)BothCorrect / TotalCases : 0;

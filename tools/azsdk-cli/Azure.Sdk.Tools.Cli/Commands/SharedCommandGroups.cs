@@ -85,6 +85,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Feedback = new(
+            Verb: "feedback",
+            Description: "User feedback and session evaluation commands",
+            Options: []
+        );
+
 #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services.SetupRequirements;
@@ -39,10 +40,28 @@ public static class GoRequirements
     public class GoImportsRequirement : Requirement
     {
         public override string Name => "goimports";
-        public override string[] CheckCommand => ["pwsh", "-Command", "Get-Command", "goimports"];
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.Go);
+
+        public override async Task<RequirementCheckOutput> RunCheckAsync(
+            Func<string[], Task<ProcessResult>> runCommand,
+            RequirementContext ctx,
+            CancellationToken ct = default)
+        {
+            // Try running goimports with -h flag
+            var result = await runCommand(["goimports", "-h"]);
+            
+            // goimports -h returns exit code 2 but outputs help text, so check for output
+            bool found = result.Output?.Contains("usage:") == true || result.ExitCode == 0;
+            
+            return new RequirementCheckOutput
+            {
+                Success = found,
+                Output = found ? "goimports found" : null,
+                Error = found ? null : "goimports not found in PATH"
+            };
+        }
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {

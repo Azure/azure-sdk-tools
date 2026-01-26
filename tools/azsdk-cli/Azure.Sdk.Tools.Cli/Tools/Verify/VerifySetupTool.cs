@@ -150,49 +150,54 @@ public class VerifySetupTool : LanguageMcpTool
 
     private async Task<DefaultCommandResponse> RunCheck(Requirement req, RequirementContext ctx, CancellationToken ct)
     {
-        var command = req.CheckCommand;
-        var options = new ProcessOptions(
-            command[0],
-            args: command.Skip(1).ToArray(),
-            timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
-            logOutputStream: false,
-            workingDirectory: ctx.PackagePath
-        );
+        // Create a delegate that captures execution details
+        async Task<ProcessResult> runCommand(string[] command)
+        {
+            var options = new ProcessOptions(
+                command[0],
+                args: command.Skip(1).ToArray(),
+                timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
+                logOutputStream: false,
+                workingDirectory: ctx.PackagePath
+            );
+            return await processHelper.Run(options, ct);
+        }
 
-        var trimmed = string.Empty;
         try
         {
-            var result = await processHelper.Run(options, ct);
-            trimmed = (result.Output ?? string.Empty).Trim();
+            var checkResult = await req.RunCheckAsync(runCommand, ctx, ct);
 
-            if (result.ExitCode != 0)
+            if (!checkResult.Success)
             {
                 var instructions = req.GetInstructions(ctx);
-                logger.LogError("Command {Command} failed with exit code {ExitCode}.\n\nInstructions: {Instructions}", string.Join(' ', command), result.ExitCode, string.Join(", ", instructions));
+                logger.LogError("Requirement {Requirement} check failed.\n\nInstructions: {Instructions}", 
+                    req.Name, string.Join(", ", instructions));
                 return new DefaultCommandResponse
                 {
-                    Message = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}: {trimmed}."
+                    Message = $"Requirement {req.Name} check failed: {checkResult.Error ?? checkResult.Output}."
                 };
             }
 
-            var versionCheckResult = CheckVersion(trimmed, req);
+            var versionCheckResult = CheckVersion(checkResult.Output ?? string.Empty, req);
 
             if (!versionCheckResult.Equals(string.Empty))
             {
-                logger.LogError("Command {Command} failed, requires upgrade to version {Version}.", string.Join(' ', command), versionCheckResult);
+                logger.LogError("Requirement {Requirement} failed, requires upgrade to version {Version}.", 
+                    req.Name, versionCheckResult);
                 return new DefaultCommandResponse
                 {
-                    Message = $"Command {string.Join(' ', command)} failed, requires upgrade to version {versionCheckResult}"
+                    Message = $"Requirement {req.Name} failed, requires upgrade to version {versionCheckResult}"
                 };
             }
         }
         catch (Exception ex)
         {
             var instructions = req.GetInstructions(ctx);
-            logger.LogError(ex, "Command {Command} failed to execute.\n\nInstructions: {Instructions}", string.Join(' ', command), string.Join(", ", instructions));
+            logger.LogError(ex, "Requirement {Requirement} check failed to execute.\n\nInstructions: {Instructions}", 
+                req.Name, string.Join(", ", instructions));
             return new DefaultCommandResponse
             {
-                Message = $"Command {string.Join(' ', command)} failed to execute.\n\tException: {ex.Message}"
+                Message = $"Requirement {req.Name} check failed to execute.\n\tException: {ex.Message}"
             };
         }
 

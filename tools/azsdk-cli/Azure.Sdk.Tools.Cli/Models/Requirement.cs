@@ -1,7 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Helpers;
+
 namespace Azure.Sdk.Tools.Cli.Models;
+
+/// <summary>
+/// Result of running a requirement check.
+/// </summary>
+public class RequirementCheckOutput
+{
+    public bool Success { get; init; }
+    public string? Output { get; init; }
+    public string? Error { get; init; }
+}
 
 /// <summary>
 /// Base class for all environment requirements that can be verified by the setup tool.
@@ -27,8 +39,37 @@ public abstract class Requirement
 
     /// <summary>
     /// Command to run to verify the requirement is installed.
+    /// Override RunCheckAsync for custom validation logic.
     /// </summary>
-    public abstract string[] CheckCommand { get; }
+    public virtual string[]? CheckCommand => null;
+
+    /// <summary>
+    /// Runs the requirement check. Override for custom validation logic.
+    /// The runCommand delegate handles execution details (timeout, working directory, etc.)
+    /// </summary>
+    /// <param name="runCommand">Delegate to execute a command and return the result.</param>
+    /// <param name="ctx">The current environment context.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>The result of the requirement check.</returns>
+    public virtual async Task<RequirementCheckOutput> RunCheckAsync(
+        Func<string[], Task<ProcessResult>> runCommand,
+        RequirementContext ctx,
+        CancellationToken ct = default)
+    {
+        if (CheckCommand == null || CheckCommand.Length == 0)
+        {
+            throw new InvalidOperationException(
+                $"Requirement '{Name}' must define CheckCommand or override RunCheckAsync");
+        }
+
+        var result = await runCommand(CheckCommand);
+        return new RequirementCheckOutput
+        {
+            Success = result.ExitCode == 0,
+            Output = result.Output?.Trim(),
+            Error = result.ExitCode != 0 ? result.Output?.Trim() : null
+        };
+    }
 
     /// <summary>
     /// Returns context-aware installation instructions.

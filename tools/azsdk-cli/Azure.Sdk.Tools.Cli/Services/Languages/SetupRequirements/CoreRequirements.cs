@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services.SetupRequirements;
@@ -102,11 +103,29 @@ public static class CoreRequirements
     public class LongPathsRequirement : Requirement
     {
         public override string Name => "Git long paths";
-        public override string[] CheckCommand => ["pwsh", "-Command", "if ($IsWindows -and (git config --get core.longpaths) -ne 'true') { exit 1 }"];
 
         public override bool ShouldCheck(RequirementContext ctx)
         {
             return ctx.IsWindows;
+        }
+
+        public override async Task<RequirementCheckOutput> RunCheckAsync(
+            Func<string[], Task<ProcessResult>> runCommand,
+            RequirementContext ctx,
+            CancellationToken ct = default)
+        {
+            var result = await runCommand(["git", "config", "--get", "core.longpaths"]);
+            
+
+            bool isEnabled = result.ExitCode == 0 && 
+                             result.Output?.Trim().Equals("true", StringComparison.OrdinalIgnoreCase) == true;
+            
+            return new RequirementCheckOutput
+            {
+                Success = isEnabled,
+                Output = isEnabled ? "Git long paths enabled" : null,
+                Error = isEnabled ? null : "Git long paths not enabled, core.LongPaths is not set to true"
+            };
         }
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)

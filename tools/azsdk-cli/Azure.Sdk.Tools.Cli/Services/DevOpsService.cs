@@ -93,6 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan = false);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "");
         public Task<Build> GetPipelineRunAsync(int buildId);
@@ -217,6 +218,40 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false)
+        {
+            try
+            {
+                var languageId = MapLanguageToId(language);
+                var escapedPackageName = packageName?.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANER_APP_TEST}'";
+                query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] = 'In Progress'";
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No in-progress release plans found for package {packageName} in {language}", packageName, language);
+                    return [];
+                }
+
+                var releasePlans = new List<ReleasePlanWorkItem>();
+                foreach (var workItem in releasePlanWorkItems)
+                {
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+                    releasePlans.Add(releasePlan);
+                }
+
+                return releasePlans;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get release plans for package {packageName} in {language}", packageName, language);
+                throw new Exception($"Failed to get release plans for package {packageName} in {language}. Error: {ex.Message}", ex);
+            }
+        }
+
         private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
             var releasePlan = new ReleasePlanWorkItem()
@@ -254,22 +289,19 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var pullRequestStatus = workItem.Fields.TryGetValue($"Custom.SDKPullRequestStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var exclusionStatus = workItem.Fields.TryGetValue($"Custom.ReleaseExclusionStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
 
-                if (!string.IsNullOrEmpty(sdkGenPipelineUrl) || !string.IsNullOrEmpty(sdkPullRequestUrl) || !string.IsNullOrEmpty(packageName))
-                {
-                    releasePlan.SDKInfo.Add(
-                        new SDKInfo()
-                        {
-                            Language = MapLanguageIdToName(lang),
-                            GenerationPipelineUrl = sdkGenPipelineUrl,
-                            SdkPullRequestUrl = sdkPullRequestUrl,
-                            GenerationStatus = generationStatus,
-                            ReleaseStatus = releaseStatus,
-                            PullRequestStatus = pullRequestStatus,
-                            PackageName = packageName,
-                            ReleaseExclusionStatus = exclusionStatus
-                        }
-                    );
-                }
+                releasePlan.SDKInfo.Add(
+                    new SDKInfo()
+                    {
+                        Language = MapLanguageIdToName(lang),
+                        GenerationPipelineUrl = sdkGenPipelineUrl,
+                        SdkPullRequestUrl = sdkPullRequestUrl,
+                        GenerationStatus = generationStatus,
+                        ReleaseStatus = releaseStatus,
+                        PullRequestStatus = pullRequestStatus,
+                        PackageName = packageName,
+                        ReleaseExclusionStatus = exclusionStatus
+                    }
+                );
             }
 
             // Get details from API spec work item

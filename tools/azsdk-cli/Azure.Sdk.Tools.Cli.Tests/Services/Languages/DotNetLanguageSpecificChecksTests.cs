@@ -24,7 +24,7 @@ internal class DotNetLanguageSpecificChecksTests
     {
         _processHelperMock = new Mock<IProcessHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
-        _gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
+        _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _powerShellHelperMock = new Mock<IPowershellHelper>();
         _commonValidationHelperMock = new Mock<ICommonValidationHelpers>();
 
@@ -57,8 +57,8 @@ internal class DotNetLanguageSpecificChecksTests
     private void SetupGitRepoDiscovery()
     {
         _gitHelperMock
-            .Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
-            .Returns(_repoRoot);
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_repoRoot);
     }
 
     [Test]
@@ -517,6 +517,15 @@ internal class DotNetLanguageSpecificChecksTests
         (options.Command == "dotnet" && options.Args.Contains("--list-sdks")) ||
         (options.Command == "cmd.exe" && options.Args.Contains("dotnet") && options.Args.Contains("--list-sdks"));
 
+    /// <summary>
+    /// Checks if the ProcessOptions represents a dotnet test command with the specified working directory.
+    /// Handles both Unix (dotnet test) and Windows (cmd.exe /C dotnet test) patterns.
+    /// </summary>
+    private static bool IsDotNetTestCommand(ProcessOptions options, string expectedWorkingDirectory) =>
+        ((options.Command == "dotnet" && options.Args.Contains("test")) ||
+         (options.Command == "cmd.exe" && options.Args.Contains("dotnet") && options.Args.Contains("test"))) &&
+        options.WorkingDirectory == expectedWorkingDirectory;
+
     #endregion
 
     #region HasCustomizations Tests
@@ -579,6 +588,66 @@ public partial class TestClient
         var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
 
         Assert.That(result, Is.False);
+    }
+
+    #endregion
+
+    #region RunAllTests Tests
+
+    [Test]
+    public async Task RunAllTests_UsesTestsDirectory_WhenTestsDirectoryExists()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-test-directory-test");
+        var testsDir = Path.Combine(tempDir.DirectoryPath, "tests");
+        Directory.CreateDirectory(testsDir);
+        
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+        
+        _processHelperMock
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, testsDir)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.TestRunOutput, Does.Contain("Tests passed!"));
+        });
+        
+        _processHelperMock.Verify(x => x.Run(
+            It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, testsDir)),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task RunAllTests_UsesPackageDirectory_WhenTestsDirectoryDoesNotExist()
+    {
+        using var tempDir = TempDirectory.Create("dotnet-no-test-directory-test");
+        
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Tests passed!");
+        
+        _processHelperMock
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, tempDir.DirectoryPath)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.RunAllTests(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.TestRunOutput, Does.Contain("Tests passed!"));
+        });
+        
+        _processHelperMock.Verify(x => x.Run(
+            It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, tempDir.DirectoryPath)),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

@@ -15,6 +15,7 @@ from apistubgentest.models import (
     GenericStack,
     PetEnumPy3MetaclassAlt,
     PublicPrivateClass,
+    PropertyWithNoNameAttr,
     RequiredKwargObject,
     SomeAwesomelyNamedObject,
     SomeImplementationClass,
@@ -468,6 +469,28 @@ class TestClassParsing:
         assert metadata["RelatedToLine"] == 1
         # Body of class is not defined so there is no context end line
         assert metadata["IsContextEndLine"] == 0
+
+    def test_no_name_attr_typed_dict(self):
+        obj = PropertyWithNoNameAttr
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
+        expected = [
+            "class PropertyWithNoNameAttr:",
+            "ivar schema: TypedDict",
+        ]
+        _check_all(actuals, expected, obj)
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 2
+        assert metadata["IsContextEndLine"] == 1
 
     def test_properties(self):
         obj = SomethingWithProperties

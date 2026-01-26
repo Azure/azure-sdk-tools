@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             try
             {
                 logger.LogInformation("Starting tests for package at: {packagePath}", packagePath);
-                var languageService = GetLanguageService(packagePath);
+                var languageService = await GetLanguageServiceAsync(packagePath, ct);
                 if (languageService == null)
                 {
                     logger.LogError("No language service found for package at: {packagePath}", packagePath);
@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                var languageService = GetLanguageService(packagePath);
+                var languageService = await GetLanguageServiceAsync(packagePath, ct);
                 if (languageService != null)
                 {
                     var info = await languageService.GetPackageInfo(packagePath, ct);

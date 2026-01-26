@@ -33,6 +33,8 @@ public class AgentHelpers
             select new ApiViewAgentComment
             {
                 LineNumber = elementIdToLineNumber[comment.ElementId],
+                LineId = comment.ElementId,
+                LineText = GetCodeLineForElement(codeFile, comment.ElementId),
                 CreatedOn = comment.CreatedOn,
                 Upvotes = comment.Upvotes.Count,
                 Downvotes = comment.Downvotes.Count,
@@ -54,6 +56,8 @@ public class AgentHelpers
             select new ApiViewAgentComment
             {
                 LineNumber = elementIdToLineNumber[diagnostic.TargetId],
+                LineId = diagnostic.TargetId,
+                LineText = GetCodeLineForElement(codeFile, diagnostic.TargetId),
                 CommentText = diagnostic.Text,
             }).ToList();
     }

@@ -189,8 +189,14 @@ model ApiViewAgentComment {
     /** Comment ID */
     CommentId: string;
 
+    /** Line number where comment is attached */
+    LineNumber: int32;
+
     /** Element ID where comment is attached */
-    ElementId?: string;
+    LineId: string;
+
+    /** Text of the line where comment is attached */
+    LineText: string;
 
     /** Comment text */
     CommentText: string;

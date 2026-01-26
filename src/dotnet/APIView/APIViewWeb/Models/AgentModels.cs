@@ -8,6 +8,10 @@ public class ApiViewAgentComment
 {
     [JsonPropertyName("lineNo")]
     public int LineNumber { get; set; }
+    [JsonPropertyName("lineId")]
+    public string LineId { get; set; }
+    [JsonPropertyName("lineText")]
+    public string LineText { get; set; }
     [JsonPropertyName("createdOn")]
     public DateTimeOffset CreatedOn { get; set; }
     [JsonPropertyName("upvotes")]

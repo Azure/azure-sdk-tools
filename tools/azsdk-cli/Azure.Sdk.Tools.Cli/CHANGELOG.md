@@ -5,6 +5,8 @@
 ### Features Added
 
 - Added a new CLI command to update the package release status in release plan.
+- Added new MCP tools azsdk_package_generate_samples and azsdk_package_translate_samples for end-to-end sample workflows.
+
 
 ### Breaking Changes
 
@@ -23,7 +25,6 @@
 - MCP server now forwards log and subprocess output to MCP logging notifications instead of stdout
 - Added `APISpecProjectPath` property to Release Plan Work Item to track the TypeSpec project path in release plans
 - Added CLI mode telemetry, app insights endpoint determined by debug vs. release builds
-- Added new MCP tools azsdk_package_generate_samples and azsdk_package_translate_samples for end-to-end sample workflows.
 
 ### Breaking Changes
 

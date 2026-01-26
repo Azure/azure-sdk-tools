@@ -280,4 +280,52 @@ internal class VerifySetupToolTests
         Assert.That(nodeResult, Is.Not.Null);
         Assert.That(nodeResult!.Instructions, Is.Not.Empty);
     }
+
+    [Test]
+    public void LanguagesParam_RejectsUnknownLanguages()
+    {
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        var command = tool.GetCommandInstances().First();
+        var parseResult = command.Parse("--languages unknown --languages julia");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(parseResult.Errors.Any(e => e.Message.Contains("Invalid language 'unknown'")), Is.True);
+            Assert.That(parseResult.Errors.Any(e => e.Message.Contains("Invalid language 'julia'")), Is.True);
+        });
+    }
+
+    [Test]
+    public void LanguagesParam_AcceptsLanguages()
+    {
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        var command = tool.GetCommandInstances().First();
+
+        var parseResult = command.Parse("--languages all");
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        parseResult = command.Parse("--languages All");
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        foreach (var lang in Enum.GetNames<SdkLanguage>().Where(n => n != nameof(SdkLanguage.Unknown)))
+        {
+            parseResult = command.Parse($"--languages {lang}");
+            Assert.That(parseResult.Errors, Is.Empty);
+
+            parseResult = command.Parse($"--languages {lang.ToLower()}");
+            Assert.That(parseResult.Errors, Is.Empty);
+        }
+    }
 }

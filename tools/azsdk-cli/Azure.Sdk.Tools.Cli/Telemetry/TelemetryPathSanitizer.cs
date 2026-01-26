@@ -312,44 +312,30 @@ public static class TelemetryPathSanitizer
             return token;
         }
 
-        // First check if any segment is a known root
-        for (int i = 0; i < segments.Length; i++)
+        var preservedIndex = FindPreservedSegmentIndex(segments);
+        if (preservedIndex >= 0)
         {
-            var segment = segments[i];
-            if (KnownRoots.ContainsKey(segment))
+            var segment = segments[preservedIndex];
+            var remainder = string.Join(sepChar, segments.Skip(preservedIndex + 1));
+            if (IsAllowlistedSegment(segment))
             {
-                var remainder = string.Join(sepChar, segments.Skip(i + 1));
-                if (string.IsNullOrEmpty(remainder))
-                {
-                    return IsAllowlistedSegment(segment) ? $"{Redacted}{sepChar}{segment}" : Redacted;
-                }
-
-                if (IsAllowlistedSegment(segment))
-                {
-                    return $"{Redacted}{sepChar}{segment}{sepChar}{remainder}";
-                }
-
-                return string.IsNullOrEmpty(remainder) ? Redacted + sepChar : $"{Redacted}{sepChar}{remainder}";
+                return string.IsNullOrEmpty(remainder)
+                    ? $"{Redacted}{sepChar}{segment}"
+                    : $"{Redacted}{sepChar}{segment}{sepChar}{remainder}";
             }
-        }
 
-        // If no known roots found, check for allowlisted segments
-        var allowedIndex = FindAllowlistedSegmentIndex(segments);
-        if (allowedIndex >= 0)
-        {
-            var kept = string.Join(sepChar, segments.Skip(allowedIndex));
-            return string.IsNullOrEmpty(kept) ? Redacted : $"{Redacted}{sepChar}{kept}";
+            return string.IsNullOrEmpty(remainder) ? Redacted : $"{Redacted}{sepChar}{remainder}";
         }
 
         return Redacted;
     }
 
-    private static int FindAllowlistedSegmentIndex(string[] segments)
+    private static int FindPreservedSegmentIndex(string[] segments)
     {
         for (int i = 0; i < segments.Length; i++)
         {
             var segment = segments[i];
-            if (IsAllowlistedSegment(segment))
+            if (IsAllowlistedSegment(segment) || KnownRoots.ContainsKey(segment))
             {
                 return i;
             }

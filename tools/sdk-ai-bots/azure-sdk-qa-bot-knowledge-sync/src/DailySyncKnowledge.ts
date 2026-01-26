@@ -670,6 +670,27 @@ export function processMarkdownFile(
 }
 
 /**
+ * Preprocess content to fix Azure AI Search markdown parser issues
+ */
+export function preprocessContentForAzureAISearch(content: string): string {
+    let processed = content;
+    
+    // Fix 1: Replace all # at start of lines with // within code blocks
+    // This prevents Azure AI Search from treating comments as markdown headers
+    processed = processed.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, codeContent) => {
+        // Replace # at start of lines with //
+        const transformedContent = codeContent.replace(/^#\s*/gm, '// ');
+        return `\`\`\`${lang}\n${transformedContent}\`\`\``;
+    });
+    
+    // Fix 2: Replace code block delimiters ``` with ~~~ to avoid parser issues
+    // Match ``` with optional language identifier (e.g., ```python, ```typescript)
+    processed = processed.replace(/```(\w*)/g, '~~~$1');
+    
+    return processed;
+}
+
+/**
  * Convert markdown
  */
 export function convertMarkdown(content: string): { filename: string; content: string } {
@@ -679,6 +700,8 @@ export function convertMarkdown(content: string): { filename: string; content: s
     let inFrontmatter = false;
     let firstContentLine = true;
     
+    // Preprocess content to fix Azure AI Search parser issues
+    content = preprocessContentForAzureAISearch(content);
     const lines = content.split('\n');
     const contentLines: string[] = [];
     

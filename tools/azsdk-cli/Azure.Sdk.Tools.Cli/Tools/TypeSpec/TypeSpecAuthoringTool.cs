@@ -117,7 +117,7 @@ Returns an answer with supporting references and documentation links
                 // Build request
                 var completionRequest = new CompletionRequest
                 {
-                    TenantId = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
+                    AzureSdkKnowledgeServiceTenant = AzureSdkKnowledgeServiceTenant.AzureTypespecAuthoring,
                     Message = new Message
                     {
                         Role = Role.User,
@@ -153,12 +153,11 @@ Returns an answer with supporting references and documentation links
                     Solution = response.Answer,
                     References = MapReferences(response.References),
                     FullContext = response.FullContext,
-                    ReasoningProgress = response.ReasoningProgress,
+                    Reasoning = response.Reasoning,
                     QueryIntention = response.Intention != null ? new QueryIntention
                     {
                         Question = response.Intention.Question,
                         Category = response.Intention.Category,
-                        SpecType = response.Intention.SpecType,
                         Scope = response.Intention.Scope?.ToString()
                     } : null
                 };

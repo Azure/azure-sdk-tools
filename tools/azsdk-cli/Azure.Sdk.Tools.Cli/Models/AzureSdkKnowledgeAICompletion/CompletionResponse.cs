@@ -2,82 +2,123 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
 {
-  public class CompletionResponse
-  {
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
+    /// <summary>
+    /// Represents a response received from the Azure Knowledge Service AI completion API.
+    /// </summary>
+    public class CompletionResponse
+    {
+        /// <summary>
+        /// The unique ID of the completion API call.
+        /// </summary>
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
 
-    [JsonPropertyName("answer")]
-    public string Answer { get; set; } = string.Empty;
+        /// <summary>
+        /// The answer from the Azure Knowledge Service AI.
+        /// </summary>
+        [JsonPropertyName("answer")]
+        public string Answer { get; set; } = string.Empty;
 
-    [JsonPropertyName("has_result")]
-    public bool HasResult { get; set; }
+        /// <summary>
+        /// Indicates whether the Azure Knowledge Service AI was able to provide a result based on the provided context.
+        /// </summary>
+        [JsonPropertyName("has_result")]
+        public bool HasResult { get; set; }
 
-    [JsonPropertyName("references")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<Reference>? References { get; set; }
+        /// <summary>
+        /// The references to the documents used to generate the answer.
+        /// </summary>
+        [JsonPropertyName("references")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<Reference>? References { get; set; }
 
-    [JsonPropertyName("full_context")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? FullContext { get; set; }
+        /// <summary>
+        /// The full context used to generate the answer.
+        /// </summary>
+        [JsonPropertyName("full_context")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? FullContext { get; set; }
 
-    [JsonPropertyName("intention")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IntentionResult? Intention { get; set; }
+        /// <summary>
+        /// The intention of the question
+        /// </summary>
+        [JsonPropertyName("intention")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public IntentionResult? Intention { get; set; }
 
-    [JsonPropertyName("reasoning_progress")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? ReasoningProgress { get; set; }
-  }
+        /// <summary>
+        /// Describe how the LLM reasons through the question to arrive at the final answer
+        /// </summary>
+        [JsonPropertyName("reasoning")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Reasoning { get; set; }
+    }
 
-  public class Reference
-  {
-    [JsonPropertyName("title")]
-    public string Title { get; set; } = string.Empty;
+    public class Reference
+    {
+        /// <summary>
+        /// The title of the document
+        /// </summary>
+        [JsonPropertyName("title")]
+        public string Title { get; set; } = string.Empty;
 
-    [JsonPropertyName("source")]
-    public string Source { get; set; } = string.Empty;
+        /// <summary>
+        /// The source of the document
+        /// </summary>
+        [JsonPropertyName("source")]
+        public string Source { get; set; } = string.Empty;
 
-    [JsonPropertyName("link")]
-    public string Link { get; set; } = string.Empty;
+        /// <summary>
+        /// The link to the document
+        /// </summary>
+        [JsonPropertyName("link")]
+        public string Link { get; set; } = string.Empty;
 
-    [JsonPropertyName("content")]
-    public string Content { get; set; } = string.Empty;
-  }
+        /// <summary>
+        /// The content of the document
+        /// </summary>
+        [JsonPropertyName("content")]
+        public string Content { get; set; } = string.Empty;
+    }
 
-  public class IntentionResult
-  {
-    [JsonPropertyName("question")]
-    public string Question { get; set; } = string.Empty;
+    public class IntentionResult
+    {
+        /// <summary>
+        /// The question to ask the AI
+        /// </summary>
+        [JsonPropertyName("question")]
+        public string Question { get; set; } = string.Empty;
 
-    [JsonPropertyName("category")]
-    public string Category { get; set; } = string.Empty;
+        /// <summary>
+        /// The category of the question, e.g. versioning
+        /// </summary>
+        [JsonPropertyName("category")]
+        public string Category { get; set; } = string.Empty;
 
-    [JsonPropertyName("spec_type")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? SpecType { get; set; }
+        /// <summary>
+        /// The scope of the question, e.g. branded, unbranded
+        /// </summary>
+        [JsonPropertyName("scope")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public QuestionScope? Scope { get; set; }
+    }
 
-    [JsonPropertyName("scope")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public QuestionScope? Scope { get; set; }
-  }
+    /// <summary>
+    /// Represents an error response from the AI completion API.
+    /// </summary>
+    public class CompletionErrorResponse
+    {
+        [JsonPropertyName("error")]
+        public string Error { get; set; } = string.Empty;
 
-  /// <summary>
-  /// Represents an error response from the AI completion API.
-  /// </summary>
-  public class CompletionErrorResponse
-  {
-    [JsonPropertyName("error")]
-    public string Error { get; set; } = string.Empty;
+        [JsonPropertyName("message")]
+        public string Message { get; set; } = string.Empty;
 
-    [JsonPropertyName("message")]
-    public string Message { get; set; } = string.Empty;
+        [JsonPropertyName("code")]
+        public string? Code { get; set; }
 
-    [JsonPropertyName("code")]
-    public string? Code { get; set; }
-
-    [JsonPropertyName("details")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public Dictionary<string, object>? Details { get; set; }
-  }
+        [JsonPropertyName("details")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, object>? Details { get; set; }
+    }
 }

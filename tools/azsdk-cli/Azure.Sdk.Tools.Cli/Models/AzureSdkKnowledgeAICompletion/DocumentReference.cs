@@ -2,6 +2,9 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
 {
+    /// <summary>
+    /// Represents a document reference used in the AI chat completion.
+    /// </summary>
     public class DocumentReference
     {
         [JsonPropertyName("title")]

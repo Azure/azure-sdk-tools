@@ -17,9 +17,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? FullContext { get; set; }
 
-        [JsonPropertyName("reasoning_progress")]
+        [JsonPropertyName("reasoning")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? ReasoningProgress { get; set; }
+        public string? Reasoning { get; set; }
 
         [JsonPropertyName("query_intention")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -53,10 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
             {
                 result.AppendLine($"\n**Query Analysis:**");
                 result.AppendLine($"- Category: {QueryIntention.Category}");
-                if (!string.IsNullOrEmpty(QueryIntention.SpecType))
-                {
-                    result.AppendLine($"- Spec Type: {QueryIntention.SpecType}");
-                }
+
                 if (!string.IsNullOrEmpty(QueryIntention.Scope))
                 {
                     result.AppendLine($"- Scope: {QueryIntention.Scope}");

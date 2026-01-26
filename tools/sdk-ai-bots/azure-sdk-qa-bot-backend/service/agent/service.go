@@ -418,9 +418,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 
 func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntentionResult) {
 	query := req.Message.Content
-	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
-		query = *req.Message.RawContent
-	}
 	intentStart := time.Now()
 	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
 	intentResult, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, messages)

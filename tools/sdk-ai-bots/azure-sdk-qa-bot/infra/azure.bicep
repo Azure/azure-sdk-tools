@@ -7,10 +7,15 @@ param azureTableNameForConversation string
 // Azure Blob
 @secure()
 param azureBlobStorageUrl string
+param blobContainerName string
+param channelConfigBlobName string
+param tenantConfigBlobName string
 
 // RAG
 @secure()
 param ragScope string
+param fallbackRagEndpoint string
+param fallbackRagTenant string
 
 // Resources
 @maxLength(20)
@@ -141,6 +146,14 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'RAG_SERVICE_SCOPE'
           value: ragScope
         }
+        {
+          name: 'FALLBACK_RAG_ENDPOINT'
+          value: fallbackRagEndpoint
+        }
+        {
+          name: 'FALLBACK_RAG_TENANT'
+          value: fallbackRagTenant
+        }
         // Azure Table
         {
           name: 'AZURE_STORAGE_URL'
@@ -154,6 +167,18 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'AZURE_BLOB_STORAGE_URL'
           value: azureBlobStorageUrl
+        }
+        {
+          name: 'BLOB_CONTAINER_NAME'
+          value: blobContainerName
+        }
+        {
+          name: 'CHANNEL_CONFIG_BLOB_NAME'
+          value: channelConfigBlobName
+        }
+        {
+          name: 'TENANT_CONFIG_BLOB_NAME'
+          value: tenantConfigBlobName
         }
         {
           name: 'AZURE_CLIENT_ID'

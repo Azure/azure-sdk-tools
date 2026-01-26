@@ -14,6 +14,7 @@ vi.mock('../src/config/config.js', () => ({
   default: {
     MicrosoftAppId: 'test-bot-id',
     azureBlobStorageUrl: 'https://test.blob.core.windows.net',
+    blobContainerName: 'bot-configs',
   },
 }));
 
@@ -108,21 +109,6 @@ describe('BlobClientManager', () => {
 
       // BlobServiceClient constructor should only be called once
       expect(BlobServiceClient).toHaveBeenCalledTimes(1);
-    });
-
-    it('should throw error when storage URL is not set', async () => {
-      // Override config to have no URL
-      const originalUrl = config.azureBlobStorageUrl;
-      (config as any).azureBlobStorageUrl = '';
-
-      const manager = BlobClientManager.getInstance();
-
-      await expect(manager.initialize()).rejects.toThrow(
-        'AZURE_BLOB_STORAGE_URL environment variable is not set'
-      );
-
-      // Restore
-      (config as any).azureBlobStorageUrl = originalUrl;
     });
 
     it('should throw error when credential initialization fails', async () => {

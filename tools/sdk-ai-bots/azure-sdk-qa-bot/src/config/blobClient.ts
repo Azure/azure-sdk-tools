@@ -3,8 +3,6 @@ import { logger } from '../logging/logger.js';
 import config from './config.js';
 import { getAzureCredential } from '../common/shared.js';
 
-// Azure Blob Storage configuration
-const CONTAINER_NAME = 'bot-configs';
 const DEFAULT_MAX_RETRY = 6;
 
 /**
@@ -41,17 +39,11 @@ class BlobClientManager {
     }
 
     try {
-      const blobStorageUrl = config.azureBlobStorageUrl;
-      if (!blobStorageUrl) {
-        throw new Error('AZURE_BLOB_STORAGE_URL environment variable is not set');
-      }
-
       const credential = await getAzureCredential(this.botId);
+      this.blobServiceClient = new BlobServiceClient(config.azureBlobStorageUrl, credential);
+      this.containerClient = this.blobServiceClient.getContainerClient(config.blobContainerName);
 
-      this.blobServiceClient = new BlobServiceClient(blobStorageUrl, credential);
-      this.containerClient = this.blobServiceClient.getContainerClient(CONTAINER_NAME);
-
-      logger.info('Blob service client initialized', { storageUrl: blobStorageUrl, container: CONTAINER_NAME });
+      logger.info('Blob service client initialized', { storageUrl: config.azureBlobStorageUrl, container: config.blobContainerName });
     } catch (error) {
       logger.error('Failed to initialize blob service client', { error: error.message });
       throw error;

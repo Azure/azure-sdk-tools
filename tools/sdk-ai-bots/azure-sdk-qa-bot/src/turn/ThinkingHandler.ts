@@ -108,23 +108,23 @@ export class ThinkingHandler {
       return answer;
     }
 
-    const footerText = `💡 If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.`;
-    let footer: string;
+    let footer = `💡 If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.`;
 
     if (routeTenant) {
-      // Get channel info (name and url) from tenant ID
-      const tenant = await this.tenantConfigManager.getTenant(routeTenant);
-      if (!tenant) {
-        logger.warn(`Tenant not found for route_tenant: ${routeTenant}`, { meta: this.meta });
-        footer = footerText;
-      } else {
-        const displayName = tenant.channel_name || routeTenant;
-        const channelLink = tenant.channel_link ? `[${displayName}](${tenant.channel_link})` : `${displayName}`;
-        const redirectText = `💬 Not resolved? Try posting in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`;
-        footer = `${redirectText}\n\n${footerText}`;
+      try {
+        // Get channel info (name and url) from tenant ID
+        const tenant = await this.tenantConfigManager.getTenant(routeTenant);
+        if (!tenant) {
+          logger.warn(`Tenant not found for route_tenant: ${routeTenant}`, { meta: this.meta });
+        } else {
+          const displayName = tenant.channel_name || routeTenant;
+          const channelLink = tenant.channel_link ? `[${displayName}](${tenant.channel_link})` : `${displayName}`;
+          const redirectText = `💬 Not resolved? Try posting in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`;
+          footer = `${redirectText}\n\n${footer}`;
+        }
+      } catch (error) {
+        logger.error(`Failed to get tenant info for route_tenant: ${routeTenant}`, { error: error.message, meta: this.meta });
       }
-    } else {
-      footer = footerText;
     }
 
     return `${answer}\n\n---\n\n${footer}`;

@@ -7,6 +7,12 @@ vi.mock('../src/config/blobClient.js', () => ({
   },
 }));
 
+vi.mock('../src/config/config.js', () => ({
+  default: {
+    tenantConfigBlobName: 'tenant.yaml',
+  },
+}));
+
 vi.mock('../src/logging/logger.js', () => ({
   logger: {
     info: vi.fn(),

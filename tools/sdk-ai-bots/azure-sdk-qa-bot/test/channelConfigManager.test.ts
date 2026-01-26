@@ -7,6 +7,9 @@ vi.mock('../src/config/config.js', () => ({
     azureStorageUrl: 'https://teststorage.table.core.windows.net',
     azureBlobStorageUrl: 'https://teststorage.blob.core.windows.net',
     isLocal: false,
+    channelConfigBlobName: 'channel.yaml',
+    fallbackRagEndpoint: 'https://test.eastasia-01.azurewebsites.net',
+    fallbackRagTenant: 'azure_sdk_qa_bot',
   },
 }));
 
@@ -261,7 +264,7 @@ describe('ChannelConfigManager', () => {
       const result = await manager.getRagEndpoint('test-channel');
 
       // Should return fallback value when error occurs
-      expect(result).toBe('https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net');
+      expect(result).toBe('https://test.eastasia-01.azurewebsites.net');
     });
 
     it('should validate configuration structure', async () => {

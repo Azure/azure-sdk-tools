@@ -19,11 +19,6 @@ export interface ChannelConfig {
   channels: ChannelItem[];
 }
 
-// Azure Blob Storage configuration
-const BLOB_NAME = 'channel.yaml';
-const FALLBACK_RAG_ENDPOINT = 'https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net';
-const FALLBACK_RAG_TENANT = 'azure_sdk_qa_bot';
-
 class ChannelConfigManager {
   private config: ChannelConfig | null = null;
   private lastModified: Date | null = null;
@@ -60,8 +55,8 @@ class ChannelConfigManager {
       return {
         name: 'local',
         id: channelId,
-        tenant: config.localRagTenant ?? FALLBACK_RAG_TENANT,
-        endpoint: config.localBackendEndpoint ?? FALLBACK_RAG_ENDPOINT,
+        tenant: config.localRagTenant ?? config.fallbackRagTenant,
+        endpoint: config.localBackendEndpoint ?? config.fallbackRagEndpoint,
       };
     }
 
@@ -73,8 +68,8 @@ class ChannelConfigManager {
       return {
         name: channel.name,
         id: channel.id,
-        tenant: channel.tenant || channelConfig.default.tenant,
-        endpoint: channel.endpoint || channelConfig.default.endpoint,
+        tenant: channel.tenant,
+        endpoint: channel.endpoint,
       };
     }
 
@@ -95,11 +90,11 @@ class ChannelConfigManager {
       const channelConfig = await this.getChannelConfig(channelId);
       return channelConfig.tenant;
     } catch (error) {
-      logger.error(`Failed to get RAG tenant for channel, fallback to ${FALLBACK_RAG_TENANT}`, {
+      logger.error(`Failed to get RAG tenant for channel, fallback to ${config.fallbackRagTenant}`, {
         channelId,
         error: error.message,
       });
-      return FALLBACK_RAG_TENANT;
+      return config.fallbackRagTenant;
     }
   }
 
@@ -111,11 +106,11 @@ class ChannelConfigManager {
       const channelConfig = await this.getChannelConfig(channelId);
       return channelConfig.endpoint;
     } catch (error) {
-      logger.error(`Failed to get RAG endpoint for channel, fallback to ${FALLBACK_RAG_ENDPOINT}`, {
+      logger.error(`Failed to get RAG endpoint for channel, fallback to ${config.fallbackRagEndpoint}`, {
         channelId,
         error: error.message,
       });
-      return FALLBACK_RAG_ENDPOINT;
+      return config.fallbackRagEndpoint;
     }
   }
 
@@ -130,11 +125,11 @@ class ChannelConfigManager {
     }
 
     try {
-      const currentModified = await this.blobClientManager.getBlobLastModified(BLOB_NAME);
+      const currentModified = await this.blobClientManager.getBlobLastModified(config.channelConfigBlobName);
 
       if (!this.lastModified || (currentModified && currentModified > this.lastModified)) {
         logger.info('Channel config blob changed, reloading...', {
-          blob: BLOB_NAME,
+          blob: config.channelConfigBlobName,
           lastModified: this.lastModified?.toISOString(),
           currentModified: currentModified?.toISOString(),
         });
@@ -143,7 +138,7 @@ class ChannelConfigManager {
     } catch (error) {
       logger.error('Failed to check channel config blob modification time', {
         error: error.message,
-        blob: BLOB_NAME,
+        blob: config.channelConfigBlobName,
       });
     }
   }
@@ -170,7 +165,7 @@ class ChannelConfigManager {
   private async loadConfigCore(): Promise<void> {
     try {
       // Download blob content using shared blob client
-      const fileContent = await this.blobClientManager.downloadBlobContent(BLOB_NAME);
+      const fileContent = await this.blobClientManager.downloadBlobContent(config.channelConfigBlobName);
 
       if (!fileContent) {
         // If we already have a config, keep using it
@@ -182,8 +177,6 @@ class ChannelConfigManager {
         throw new Error('Failed to download channel config blob and no existing config available');
       }
 
-      logger.info('Channel configuration loaded successfully from blob storage', { fileContent });
-
       // Parse YAML content using yaml library with type assertion
       const parsedConfig = parse(fileContent, {
         schema: 'core',
@@ -194,11 +187,19 @@ class ChannelConfigManager {
       this.config = parsedConfig;
 
       // Get blob properties for last modified time
-      const lastModified = await this.blobClientManager.getBlobLastModified(BLOB_NAME);
-      this.lastModified = lastModified || new Date();
+      try {
+        const lastModified = await this.blobClientManager.getBlobLastModified(config.channelConfigBlobName);
+        this.lastModified = lastModified || new Date();
+      } catch (metadataError) {
+        logger.warn('Failed to get blob last modified time, using current time', {
+          blob: config.channelConfigBlobName,
+          error: metadataError.message,
+        });
+        this.lastModified = new Date();
+      }
 
       logger.info('Channel configuration loaded successfully from blob storage', {
-        blob: BLOB_NAME,
+        blob: config.channelConfigBlobName,
         channelCount: this.config.channels.length,
         defaultTenant: this.config.default.tenant,
       });
@@ -208,7 +209,7 @@ class ChannelConfigManager {
     } catch (error) {
       logger.error('Failed to load channel configuration from blob storage', {
         error: error.message,
-        blob: BLOB_NAME,
+        blob: config.channelConfigBlobName,
       });
       throw new Error(`Failed to load channel configuration: ${error.message}`);
     }
@@ -260,7 +261,7 @@ class ChannelConfigManager {
     this.startWatchLoop();
 
     logger.info('Started watching channel config blob', {
-      blob: BLOB_NAME,
+      blob: config.channelConfigBlobName,
       interval: this.watchInterval,
     });
   }

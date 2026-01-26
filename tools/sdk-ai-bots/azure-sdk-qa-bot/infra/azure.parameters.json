@@ -14,6 +14,21 @@
     "azureBlobStorageUrl": {
       "value": "${{AZURE_BLOB_STORAGE_URL}}"
     },
+    "blobContainerName": {
+      "value": "${{BLOB_CONTAINER_NAME}}"
+    },
+    "channelConfigBlobName": {
+      "value": "${{CHANNEL_CONFIG_BLOB_NAME}}"
+    },
+    "tenantConfigBlobName": {
+      "value": "${{TENANT_CONFIG_BLOB_NAME}}"
+    },
+    "fallbackRagEndpoint": {
+      "value": "${{FALLBACK_RAG_ENDPOINT}}"
+    },
+    "fallbackRagTenant": {
+      "value": "${{FALLBACK_RAG_TENANT}}"
+    },
     "ragScope": {
       "value": "${{RAG_SERVICE_SCOPE}}"
     },

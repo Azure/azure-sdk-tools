@@ -2,6 +2,7 @@ import { parse } from 'yaml';
 import { setTimeout } from 'timers/promises';
 import { logger } from '../logging/logger.js';
 import { BlobClientManager } from './blobClient.js';
+import config from './config.js';
 
 export interface TenantItem {
   tenant: string;
@@ -12,8 +13,6 @@ export interface TenantItem {
 export interface TenantConfig {
   tenants: TenantItem[];
 }
-
-const BLOB_NAME = 'tenant.yaml';
 
 class TenantConfigManager {
   private config: TenantConfig | null = null;
@@ -79,11 +78,11 @@ class TenantConfigManager {
     }
 
     try {
-      const currentModified = await this.blobClientManager.getBlobLastModified(BLOB_NAME);
+      const currentModified = await this.blobClientManager.getBlobLastModified(config.tenantConfigBlobName);
 
       if (!this.lastModified || (currentModified && currentModified > this.lastModified)) {
         logger.info('Tenant config blob changed, reloading...', {
-          blob: BLOB_NAME,
+          blob: config.tenantConfigBlobName,
           lastModified: this.lastModified?.toISOString(),
           currentModified: currentModified?.toISOString(),
         });
@@ -92,7 +91,7 @@ class TenantConfigManager {
     } catch (error) {
       logger.error('Failed to check tenant config blob modification time', {
         error: error.message,
-        blob: BLOB_NAME,
+        blob: config.tenantConfigBlobName,
       });
     }
   }
@@ -117,7 +116,7 @@ class TenantConfigManager {
 
   private async loadConfigCore(): Promise<void> {
     try {
-      const fileContent = await this.blobClientManager.downloadBlobContent(BLOB_NAME);
+      const fileContent = await this.blobClientManager.downloadBlobContent(config.tenantConfigBlobName);
 
       if (!fileContent) {
         // If we already have a config, keep using it
@@ -129,8 +128,6 @@ class TenantConfigManager {
         throw new Error('Failed to download tenant config blob and no existing config available');
       }
 
-      logger.info('Tenant configuration content loaded from blob storage', { fileContent });
-
       // Parse YAML content using yaml library with type assertion
       const parsedConfig = parse(fileContent, {
         schema: 'core',
@@ -139,10 +136,20 @@ class TenantConfigManager {
       }) as TenantConfig;
 
       this.config = parsedConfig;
-      this.lastModified = (await this.blobClientManager.getBlobLastModified(BLOB_NAME)) || new Date();
+
+      // Get blob properties for last modified time
+      try {
+        this.lastModified = (await this.blobClientManager.getBlobLastModified(config.tenantConfigBlobName)) || new Date();
+      } catch (metadataError) {
+        logger.warn('Failed to get blob last modified time, using current time', {
+          blob: config.tenantConfigBlobName,
+          error: metadataError.message,
+        });
+        this.lastModified = new Date();
+      }
 
       logger.info('Tenant configuration loaded successfully from blob storage', {
-        blob: BLOB_NAME,
+        blob: config.tenantConfigBlobName,
         tenantCount: this.config.tenants.length,
       });
 
@@ -150,7 +157,7 @@ class TenantConfigManager {
     } catch (error) {
       logger.error('Failed to load tenant configuration from blob storage', {
         error: error.message,
-        blob: BLOB_NAME,
+        blob: config.tenantConfigBlobName,
       });
       throw new Error(`Failed to load tenant configuration: ${error.message}`);
     }
@@ -198,7 +205,7 @@ class TenantConfigManager {
     this.startWatchLoop();
 
     logger.info('Started watching tenant config blob', {
-      blob: BLOB_NAME,
+      blob: config.tenantConfigBlobName,
       interval: this.watchInterval,
     });
   }

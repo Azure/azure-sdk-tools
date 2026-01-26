@@ -118,12 +118,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
         private async Task TranslateSamplesAsync(string fromPackagePath, string toPackagePath, bool overwrite, string? model, int batchSize, CancellationToken ct)
         {
             // Determine source language and get samples directory from source package path
-            var sourceLanguageService = GetLanguageService(fromPackagePath) ?? throw new ArgumentException("Unable to determine source language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            var sourceLanguageService = await GetLanguageServiceAsync(fromPackagePath, ct) ?? throw new ArgumentException("Unable to determine source language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
             var sourcePackageInfo = await sourceLanguageService.GetPackageInfo(fromPackagePath, ct);
             var samplesPath = sourcePackageInfo.SamplesDirectory;
 
             // Determine target language from target package path
-            var targetLanguageService = GetLanguageService(toPackagePath) ?? throw new ArgumentException("Unable to determine target language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            var targetLanguageService = await GetLanguageServiceAsync(toPackagePath, ct) ?? throw new ArgumentException("Unable to determine target language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
             var packageInfo = await targetLanguageService.GetPackageInfo(toPackagePath, ct);
             var outputDirectory = packageInfo.SamplesDirectory;
 

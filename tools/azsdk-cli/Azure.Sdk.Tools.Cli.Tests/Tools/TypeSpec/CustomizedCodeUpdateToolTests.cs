@@ -86,8 +86,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var svc = new MockNoChangeLanguageService();
         var tsp = new MockTspHelper();
         var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
-        gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
         var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
@@ -105,8 +105,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var svc = new MockChangeLanguageService();
         var tsp = new MockTspHelper();
         var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
-        gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-python");
-        gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-python");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
         var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
@@ -126,8 +126,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var gitHelper = new Mock<IGitHelper>();
         var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
-        gitHelper.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
-        gitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns("/mock/repo/root");
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
         var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);

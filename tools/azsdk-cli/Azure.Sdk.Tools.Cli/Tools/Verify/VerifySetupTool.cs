@@ -77,7 +77,7 @@ public class VerifySetupTool : LanguageMcpTool
     {
         try
         {
-            List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(langs, packagePath ?? Environment.CurrentDirectory, ct);
+            List<SetupRequirements.Requirement> reqsToCheck = await GetRequirementsAsync(langs, packagePath ?? Environment.CurrentDirectory, ct);
 
             VerifySetupResponse response = new VerifySetupResponse
             {
@@ -183,7 +183,7 @@ public class VerifySetupTool : LanguageMcpTool
         return new DefaultCommandResponse();
     }
 
-    private List<SetupRequirements.Requirement> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, CancellationToken ct)
+    private async Task<List<SetupRequirements.Requirement>> GetRequirementsAsync(HashSet<SdkLanguage> languages, string packagePath, CancellationToken ct)
     {
         // Check core requirements before language-specific requirements
         var parsedReqs = ParseRequirements(ct);
@@ -200,8 +200,8 @@ public class VerifySetupTool : LanguageMcpTool
                 return reqsToCheck;
             }
 
-            languageSvs.Add(GetLanguageService(packagePath));
-        }
+            languageSvs.Add(await GetLanguageServiceAsync(packagePath, ct));
+        } 
         else
         {
             foreach (var lang in languages)

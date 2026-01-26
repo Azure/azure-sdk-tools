@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     }
                     
                     var tspLocationDirectory = Path.GetDirectoryName(tspLocationPath);
-                    string sdkRepoName = gitHelper.GetRepoName(tspLocationPath);
+                    string sdkRepoName = await gitHelper.GetRepoNameAsync(tspLocationPath, ct);
                     logger.LogInformation("SDK Repository Name: {SdkRepoName}", sdkRepoName);
                     
                     string typeSpecProjectPath = GetTypeSpecProjectPathFromTspLocation(tspLocationPath);
@@ -146,13 +146,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Get the generate script path
-            string sdkRepoRoot = gitHelper.DiscoverRepoRoot(localSdkRepoPath);
+            string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(localSdkRepoPath, ct);
             if (string.IsNullOrEmpty(sdkRepoRoot))
             {
                 return PackageOperationResponse.CreateFailure($"Failed to discover local sdk repo with path: {localSdkRepoPath}.", typespecProjectPath: typespecProjectPath);
             }
 
-            string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
+            string sdkRepoName = await gitHelper.GetRepoNameAsync(sdkRepoRoot, ct);
             if (!tspConfigPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
                 // Validate arguments for local tspconfig.yaml case
@@ -160,7 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     return PackageOperationResponse.CreateFailure($"The 'tspconfig.yaml' file does not exist at the specified path: {tspConfigPath}. Prompt user to clone the azure-rest-api-specs repository locally if it does not have a local copy.", sdkRepoName: sdkRepoName, typespecProjectPath: typespecProjectPath);
                 }
-                specRepoFullName = await gitHelper.GetRepoFullNameAsync(tspConfigPath, findUpstreamParent: false);
+                specRepoFullName = await gitHelper.GetRepoFullNameAsync(tspConfigPath, findUpstreamParent: false, ct: ct);
             }
             else
             {

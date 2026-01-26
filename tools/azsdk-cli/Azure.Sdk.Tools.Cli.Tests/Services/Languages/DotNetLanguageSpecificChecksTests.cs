@@ -24,7 +24,7 @@ internal class DotNetLanguageSpecificChecksTests
     {
         _processHelperMock = new Mock<IProcessHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
-        _gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
+        _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _powerShellHelperMock = new Mock<IPowershellHelper>();
         _commonValidationHelperMock = new Mock<ICommonValidationHelpers>();
 
@@ -57,8 +57,8 @@ internal class DotNetLanguageSpecificChecksTests
     private void SetupGitRepoDiscovery()
     {
         _gitHelperMock
-            .Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
-            .Returns(_repoRoot);
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_repoRoot);
     }
 
     [Test]

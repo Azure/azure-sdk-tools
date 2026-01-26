@@ -209,38 +209,37 @@ func (s *SearchClient) GetCompleteContext(chunk model.Index) ([]model.Index, err
 	return resp.Value, nil
 }
 
-func (s *SearchClient) GetHeader1CompleteContext(chunk model.Index) ([]model.Index, error) {
-	// Escape single quotes by replacing them with double single quotes (OData filter syntax)
-	escapedHeader1 := strings.ReplaceAll(chunk.Header1, "'", "''")
-
-	req := &model.QueryIndexRequest{
-		Count:   false,
-		OrderBy: "ordinal_position",
-		Select:  "chunk_id, chunk, title, header_1, header_2, header_3, ordinal_position, context_id",
-		Filter:  fmt.Sprintf("title eq '%s' and context_id eq '%s' and header_1 eq '%s'", chunk.Title, chunk.ContextID, escapedHeader1),
-	}
-	resp, err := s.QueryIndex(context.Background(), req)
-	if err != nil {
-		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
-	}
-	return resp.Value, nil
-}
-
-func (s *SearchClient) GetHeader2CompleteContext(chunk model.Index) ([]model.Index, error) {
+func (s *SearchClient) CompleteChunkByHierarchy(chunk model.Index, hierarchy model.ChunkHierarchy) ([]model.Index, error) {
 	// Escape single quotes by replacing them with double single quotes (OData filter syntax)
 	escapedHeader1 := strings.ReplaceAll(chunk.Header1, "'", "''")
 	escapedHeader2 := strings.ReplaceAll(chunk.Header2, "'", "''")
-
+	escapedHeader3 := strings.ReplaceAll(chunk.Header3, "'", "''")
+	var filters []string
+	filters = append(filters, fmt.Sprintf("title eq '%s'", chunk.Title))
+	filters = append(filters, fmt.Sprintf("context_id eq '%s'", chunk.ContextID))
+	switch hierarchy {
+	case model.HierarchyHeader1:
+		filters = append(filters, fmt.Sprintf("header_1 eq '%s'", escapedHeader1))
+	case model.HierarchyHeader2:
+		filters = append(filters, fmt.Sprintf("header_1 eq '%s'", escapedHeader1))
+		filters = append(filters, fmt.Sprintf("header_2 eq '%s'", escapedHeader2))
+	case model.HierarchyHeader3:
+		filters = append(filters, fmt.Sprintf("header_1 eq '%s'", escapedHeader1))
+		filters = append(filters, fmt.Sprintf("header_2 eq '%s'", escapedHeader2))
+		filters = append(filters, fmt.Sprintf("header_3 eq '%s'", escapedHeader3))
+	}
+	filterStr := strings.Join(filters, " and ")
 	req := &model.QueryIndexRequest{
 		Count:   false,
 		OrderBy: "ordinal_position",
 		Select:  "chunk_id, chunk, title, header_1, header_2, header_3, ordinal_position, context_id",
-		Filter:  fmt.Sprintf("title eq '%s' and context_id eq '%s' and header_1 eq '%s' and header_2 eq '%s'", chunk.Title, chunk.ContextID, escapedHeader1, escapedHeader2),
+		Filter:  filterStr,
 	}
 	resp, err := s.QueryIndex(context.Background(), req)
 	if err != nil {
-		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
+		return []model.Index{chunk}, fmt.Errorf("QueryIndex() got an error: %v", err)
 	}
+	log.Printf("Expanded hierarchy %s '%s/%s/%s/%s/%s' → %d sub-chunks", hierarchy.String(), chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3, len(resp.Value))
 	return resp.Value, nil
 }
 
@@ -249,9 +248,9 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	var err error
 	switch chunk.ContextID {
 	case model.Source_TypeSpecQA, model.Source_TypeSpecMigration:
-		chunks, err = s.GetHeader1CompleteContext(chunk)
+		chunks, err = s.CompleteChunkByHierarchy(chunk, model.HierarchyHeader1)
 	case model.Source_StaticTypeSpecToSwaggerMapping:
-		chunks, err = s.GetHeader2CompleteContext(chunk)
+		chunks, err = s.CompleteChunkByHierarchy(chunk, model.HierarchyHeader2)
 	default:
 		chunks, err = s.GetCompleteContext(chunk)
 	}
@@ -327,42 +326,6 @@ func (s *SearchClient) MergeChunksWithHeaders(parentChunk model.Index, subChunks
 	}
 
 	return mergedChunk
-}
-
-// FetchHierarchicalSubChunks fetches all sub-chunks under a given header hierarchy
-func (s *SearchClient) FetchHierarchicalSubChunks(chunk model.Index, hierarchy model.ChunkHierarchy) []model.Index {
-	var subChunks []model.Index
-	var err error
-
-	switch hierarchy {
-	case model.HierarchyHeader1:
-		// Fetch all chunks under this header1
-		subChunks, err = s.GetHeader1CompleteContext(chunk)
-		if err != nil {
-			log.Printf("Failed to fetch header1 sub-chunks for %s/%s#%s: %v", chunk.ContextID, chunk.Title, chunk.Header1, err)
-			return []model.Index{chunk} // Fall back to original chunk
-		}
-		log.Printf("Expanded header1 '%s/%s/%s' → %d sub-chunks", chunk.ContextID, chunk.Title, chunk.Header1, len(subChunks))
-
-	case model.HierarchyHeader2:
-		// Fetch all chunks under this header1+header2
-		subChunks, err = s.GetHeader2CompleteContext(chunk)
-		if err != nil {
-			log.Printf("Failed to fetch header2 sub-chunks for %s/%s#%s#%s: %v", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, err)
-			return []model.Index{chunk} // Fall back to original chunk
-		}
-		log.Printf("Expanded header2 '%s/%s/%s/%s' → %d sub-chunks", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, len(subChunks))
-
-	default:
-		// No expansion needed for header3 or unknown Hierarchy
-		return []model.Index{chunk}
-	}
-
-	if len(subChunks) == 0 {
-		return []model.Index{chunk}
-	}
-
-	return subChunks
 }
 
 // AgenticSearchOptions contains parameters specific to agentic search

@@ -691,7 +691,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 
 		// Other chunks: check if needs hierarchical expansion
 		hierarchy := s.searchClient.DetectChunkHierarchy(result)
-		if hierarchy == model.HierarchyHeader1 || hierarchy == model.HierarchyHeader2 {
+		if hierarchy != model.HierarchyUnknown {
 			allChunks = append(allChunks, model.ChunkWithExpansion{
 				Chunk:     result,
 				Expansion: model.ExpansionHierarchical,
@@ -731,7 +731,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 
 		// Check if needs hierarchical expansion
 		hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
-		if hierarchy == model.HierarchyHeader1 || hierarchy == model.HierarchyHeader2 {
+		if hierarchy != model.HierarchyUnknown {
 			allChunks = append(allChunks, model.ChunkWithExpansion{
 				Chunk:     chunk,
 				Expansion: model.ExpansionHierarchical,
@@ -762,21 +762,20 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			switch cwe.Expansion {
 			case model.ExpansionQA:
 				// Expand complete QA chunk
-				subChunks, _ := s.searchClient.GetHeader1CompleteContext(chunk)
+				subChunks, _ := s.searchClient.CompleteChunkByHierarchy(chunk, model.HierarchyHeader1)
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 				log.Printf("✓ Expanded complete QA chunk: %s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1)
 			case model.ExpansionMapping:
 				// Expand complete Mapping chunk
-				subChunks, _ := s.searchClient.GetHeader2CompleteContext(chunk)
+				subChunks, _ := s.searchClient.CompleteChunkByHierarchy(chunk, model.HierarchyHeader2)
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 				log.Printf("✓ Expanded complete code mapping chunk: %s/%s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
 			case model.ExpansionHierarchical:
 				// Process by hierarchy level
 				Hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
 				// Expand all chunks under header1
-				subChunks := s.searchClient.FetchHierarchicalSubChunks(chunk, Hierarchy)
+				subChunks, _ := s.searchClient.CompleteChunkByHierarchy(chunk, Hierarchy)
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
-
 			default:
 				// Unknown expansion type - keep original
 				finalChunks[i] = chunk

@@ -2,6 +2,7 @@
 
 ## 0.5.8 (Unreleased)
 - Add `do-not-store-secrets-in-test-variables` check
+- Add `remove-deprecated-iscoroutinefunction` check
 
 ## 0.5.7 (2025-07-15)
 - Bug fix for `do-not-use-logging-exception` checker

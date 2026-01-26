@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -44,6 +45,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         };
 
         public List<string> SanitizedHeaders { get; } = new List<string> { "Authorization" };
+
+        /// <summary>
+        /// Abstraction for getting a compiled Regex from a string. Used by derived classes to cache their compiled regexes.
+        /// </summary>
+        /// <param name="regex">The regular expression pattern to compile.</param>
+        public static Regex GetRegex(string regex)
+        {
+            try
+            {
+                return new Regex(regex, RegexOptions.Compiled);
+            }
+            catch (Exception e)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, $"Expression of value {regex} does not successfully compile. Failure Details: {e.Message}");
+            }
+        }
 
         public virtual string SanitizeUri(string uri)
         {
@@ -100,16 +117,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         }
 
         public virtual string SanitizeVariable(string variableName, string environmentVariableValue) => environmentVariableValue;
-
-        //protected internal static void UpdateSanitizedContentLength(RequestOrResponse requestOrResponse)
-        //{
-        //    var headers = requestOrResponse.Headers;
-        //    int sanitizedLength = requestOrResponse.Body?.Length ?? 0;
-        //    // Only update Content-Length if already present.
-        //    if (headers.ContainsKey("Content-Length"))
-        //    {
-        //        headers["Content-Length"] = new string[] { sanitizedLength.ToString(CultureInfo.InvariantCulture) };
-        //    }
 
         public byte[] SanitizeMultipartBody(string boundary, byte[] raw)
         {

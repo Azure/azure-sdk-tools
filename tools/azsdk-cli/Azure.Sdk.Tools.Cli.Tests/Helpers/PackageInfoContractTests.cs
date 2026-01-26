@@ -58,9 +58,28 @@ public class PackageInfoContractTests
         File.WriteAllText(fullPath, content);
     }
 
-    private void SetupDotNetPackage(string packagePath, string version)
+    private void SetupDotNetPackage(string packagePath, string packageName, string version, SdkType sdkType)
     {
-        CreateTestFile(packagePath, "src/test.csproj", $"<Project><PropertyGroup><Version>{version}</Version></PropertyGroup></Project>");
+        var sdkTypeValue = sdkType switch
+        {
+            SdkType.Dataplane => "client",
+            SdkType.Management => "mgmt",
+            SdkType.Functions => "functions",
+            _ => "client"
+        };
+
+        var csprojContent = $@"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  
+  <Target Name=""GetPackageInfo"" Returns=""@(PackageInfoItem)"">
+    <ItemGroup>
+      <PackageInfoItem Include=""'$(MSBuildProjectDirectory)' 'testservice' '{packageName}' '{version}' '{sdkTypeValue}' 'true' 'bin/Release/net8.0' 'false'"" />
+    </ItemGroup>
+  </Target>
+</Project>";
+        CreateTestFile(packagePath, $"src/{packageName}.csproj", csprojContent);
     }
 
     private void SetupJavaPackage(string packagePath, string artifactId, string version)
@@ -124,7 +143,7 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
         switch (language)
         {
             case SdkLanguage.DotNet:
-                SetupDotNetPackage(packagePath, version);
+                SetupDotNetPackage(packagePath, packageName, version, sdkType);
                 break;
             case SdkLanguage.Java:
                 SetupJavaPackage(packagePath, packageName, version);
@@ -183,6 +202,11 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
 
         SetupPackageForLanguage(language, pkgPath, package, expectedVersion, SdkType.Unknown);
 
+        if (language == SdkLanguage.DotNet)
+        {
+            processHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
+        }
+
         if (language == SdkLanguage.Go)
         {
             processHelper = new ProcessHelper(Mock.Of<ILogger<ProcessHelper>>(), Mock.Of<IRawOutputHelper>());
@@ -233,11 +257,11 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
     {
         ///var powershellHelper = new Mock<IPowershellHelper>();
 
-        SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
-        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
-        SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
-        SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
-        SdkLanguage.Go => new GoLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>()),
+        SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+        SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+        SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+        SdkLanguage.Go => new GoLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
         _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
     };
 }

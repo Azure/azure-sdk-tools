@@ -11,10 +11,10 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -55,7 +55,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
-            services.AddSingleton<IRawOutputHelper>(_ => new OutputHelper(outputMode));
+            services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
+            if (outputMode == OutputHelper.OutputModes.Mcp)
+            {
+                services.AddSingleton<IRawOutputHelper, McpRawOutputHelper>();
+            }
+            else
+            {
+                services.AddSingleton<IRawOutputHelper>(_ => new OutputHelper(outputMode));
+            }
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
@@ -76,10 +84,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
-
-            // Telemetry
-            services.AddSingleton<ITelemetryService, TelemetryService>();
-            services.ConfigureOpenTelemetry();
 
             services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>
@@ -168,7 +172,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                         var loggerFactory = services.GetRequiredService<ILoggerFactory>();
                         var logger = loggerFactory.CreateLogger(toolType);
                         var telemetryService = services.GetRequiredService<ITelemetryService>();
-                        return new InstrumentedTool(telemetryService, logger, innerTool);
+                        var mcpServerContextAccessor = services.GetRequiredService<IMcpServerContextAccessor>();
+                        return new InstrumentedTool(telemetryService, logger, mcpServerContextAccessor, innerTool);
                     }));
                 }
             }

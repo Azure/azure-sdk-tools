@@ -242,14 +242,14 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
         public virtual void Sanitize(RecordEntry entry, bool matchingBodies = true)
         {
-            // PHASE 0: Build multipart tree for any multipart bodies
-            // This happens ONCE per entry, then all sanitizers use the cached tree
+            // PHASE 0: Build precache metadata for any multipart bodies
+            // This happens ONCE per entry, then all sanitizers use the cached metadata
             if (matchingBodies)
             {
-                BuildMultipartTree(entry.Request);
+                PreCacheBodyMetadata(entry.Request);
                 if (entry.RequestMethod != RequestMethod.Head)
                 {
-                    BuildMultipartTree(entry.Response);
+                    PreCacheBodyMetadata(entry.Response);
                 }
             }
 
@@ -283,59 +283,60 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
         }
 
         /// <summary>
-        /// Build a multipart tree from a request or response body.
-        /// This is called once per body during precache phase, then the tree is reused.
-        /// If the message is not multipart or already has a tree, this is a no-op.
+        /// Build cached body metadata from a request or response body.
+        /// Currently optimized for multipart bodies. Future extensibility: other body types.
+        /// This is called once per body during precache phase, then the metadata is reused.
+        /// If the message is not multipart or already has metadata, this is a no-op.
         /// </summary>
-        public virtual void BuildMultipartTree(RequestOrResponse message)
+        public virtual void PreCacheBodyMetadata(RequestOrResponse message)
         {
-            if (message?.Body == null || message.CachedTree != null)
-                return;  // Already has tree, or no body
+            if (message?.Body == null || message.CachedBodyMetadata != null)
+                return;  // Already has metadata, or no body
 
             if (!ContentTypeUtilities.IsMultipart(message.Headers, out var boundary))
-                return;  // Not multipart, don't build tree
+                return;  // Not multipart, don't build metadata (yet)
 
-            // Build tree structure from multipart body
+            // Build metadata structure from multipart body
             boundary = MultipartUtilities.ResolveFirstBoundary(boundary, message.Body);
             byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(message.Body);
             var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
 
-            var tree = new MultipartTree { Boundary = boundary };
+            var metadata = new PreCachedBodyMetadata { Boundary = boundary };
 
             try
             {
                 MultipartSection section;
                 while ((section = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
                 {
-                    var treeSection = new MultipartTreeSection();
+                    var bodySection = new PreCachedBodySection();
 
                     // Copy headers - convert StringValues to string
                     foreach (var header in section.Headers)
                     {
-                        treeSection.Headers[header.Key] = header.Value.ToString();
+                        bodySection.Headers[header.Key] = header.Value.ToString();
                     }
 
                     // Read body
                     byte[] sectionBody = MultipartUtilities.ReadAllBytes(section.Body);
-                    treeSection.Body = sectionBody;
+                    bodySection.Body = sectionBody;
 
                     // Check if section itself is multipart (nested)
-                    if (treeSection.Headers.TryGetValue("Content-Type", out var contentType) &&
+                    if (bodySection.Headers.TryGetValue("Content-Type", out var contentType) &&
                         ContentTypeUtilities.IsMultiPart(contentType, out var nestedBoundary))
                     {
-                        treeSection.NestedTree = BuildNestedMultipartTree(sectionBody, nestedBoundary);
+                        bodySection.NestedMetadata = BuildNestedMultipartMetadata(sectionBody, nestedBoundary);
                     }
 
-                    tree.Sections.Add(treeSection);
+                    metadata.Sections.Add(bodySection);
                 }
 
-                message.CachedTree = tree;
+                message.CachedBodyMetadata = metadata;
             }
             catch (IOException ex)
             {
                 var byteContent = Convert.ToBase64String(fixedRaw);
                 string message_text = $$"""
-The test-proxy is unexpectedly unable to build the multipart tree during precache: \"{{ex.Message}}\"
+The test-proxy is unexpectedly unable to build precached body metadata during precache: \"{{ex.Message}}\"
 File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
 {{byteContent}}
 """;
@@ -344,52 +345,52 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
         }
 
         /// <summary>
-        /// Helper for recursive nested multipart trees
+        /// Helper for recursive nested multipart metadata
         /// </summary>
-        private MultipartTree BuildNestedMultipartTree(byte[] body, string boundary)
+        private PreCachedBodyMetadata BuildNestedMultipartMetadata(byte[] body, string boundary)
         {
             boundary = MultipartUtilities.ResolveFirstBoundary(boundary, body);
             byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(body);
             var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
 
-            var tree = new MultipartTree { Boundary = boundary };
+            var metadata = new PreCachedBodyMetadata { Boundary = boundary };
 
             try
             {
                 MultipartSection section;
                 while ((section = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
                 {
-                    var treeSection = new MultipartTreeSection();
+                    var bodySection = new PreCachedBodySection();
 
                     foreach (var header in section.Headers)
                     {
-                        treeSection.Headers[header.Key] = header.Value.ToString();
+                        bodySection.Headers[header.Key] = header.Value.ToString();
                     }
 
                     byte[] sectionBody = MultipartUtilities.ReadAllBytes(section.Body);
-                    treeSection.Body = sectionBody;
+                    bodySection.Body = sectionBody;
 
-                    if (treeSection.Headers.TryGetValue("Content-Type", out var nested) &&
+                    if (bodySection.Headers.TryGetValue("Content-Type", out var nested) &&
                         ContentTypeUtilities.IsMultiPart(nested, out var nestedBoundary))
                     {
-                        treeSection.NestedTree = BuildNestedMultipartTree(sectionBody, nestedBoundary);
+                        bodySection.NestedMetadata = BuildNestedMultipartMetadata(sectionBody, nestedBoundary);
                     }
 
-                    tree.Sections.Add(treeSection);
+                    metadata.Sections.Add(bodySection);
                 }
             }
             catch (IOException ex)
             {
                 var byteContent = Convert.ToBase64String(fixedRaw);
                 string message_text = $$"""
-The test-proxy is unexpectedly unable to build nested multipart tree during precache: \"{{ex.Message}}\"
+The test-proxy is unexpectedly unable to build nested multipart metadata during precache: \"{{ex.Message}}\"
 File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
 {{byteContent}}
 """;
                 throw new HttpException(HttpStatusCode.InternalServerError, message_text);
             }
 
-            return tree;
+            return metadata;
         }
 
         public virtual void Sanitize(RecordSession session)

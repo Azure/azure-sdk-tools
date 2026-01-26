@@ -14,10 +14,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public byte[] Body { get; set; }
 
         /// <summary>
-        /// Cached multipart tree structure. Built once during precache phase,
-        /// then reused by sanitizers to avoid reparsing multipart bodies.
+        /// Cached metadata about this body. Built once during precache phase,
+        /// then reused by sanitizers to avoid reparsing multipart or other complex bodies.
         /// </summary>
-        public MultipartTree CachedTree { get; set; }
+        public PreCachedBodyMetadata CachedBodyMetadata { get; set; }
 
         public bool TryGetContentType(out string contentType)
         {

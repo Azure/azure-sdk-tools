@@ -267,12 +267,12 @@ describe('ReviewPageOptionsComponent', () => {
         expect(result).toBe(true);
       });
 
-      it('should handle empty package version - should still disable when copilot required', () => {
+      it('should return false when package version is missing (empty string)', () => {
         component.activeAPIRevision!.packageVersion = '';
         const isReviewByCopilotRequired = true;
         const isVersionReviewedByCopilot = false;
         const result = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
-        expect(result).toBe(true);
+        expect(result).toBe(false); // Can't require Copilot review without version to track
       });
     });
 

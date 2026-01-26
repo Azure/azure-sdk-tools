@@ -212,13 +212,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public async Task GetMergeBaseCommitShaAsync_WithInvalidBranch_ReturnsEmptyString()
+        public async Task GetMergeBaseCommitShaAsync_WithInvalidBranch_ThrowsInvalidOperationException()
         {
             using var repo = await CreateTestRepoWithoutRemoteAsync();
             await GitTestHelper.GitCommitAsync(repo.DirectoryPath, "Initial commit");
 
-            var result = await gitHelper.GetMergeBaseCommitShaAsync(repo.DirectoryPath, "nonexistent-branch");
-            Assert.That(result, Is.Empty);
+            Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await gitHelper.GetMergeBaseCommitShaAsync(repo.DirectoryPath, "nonexistent-branch"));
         }
 
         #endregion

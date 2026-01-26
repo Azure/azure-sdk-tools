@@ -33,32 +33,21 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public async Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranchName, CancellationToken ct = default)
         {
             var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
-            try
+            var options = new GitOptions($"merge-base HEAD {targetBranchName}", repoRoot);
+            var result = await gitCommandHelper.Run(options, ct);
+            
+            if (result.ExitCode != 0)
             {
-                var options = new GitOptions($"merge-base HEAD {targetBranchName}", repoRoot);
-                var result = await gitCommandHelper.Run(options, ct);
-                
-                if (result.ExitCode != 0)
-                {
-                    throw new InvalidOperationException($"Git command failed: {result.Output.Trim()}");
-                }
-                
-                var mergeBaseSha = result.Stdout.Trim();
-                var currentBranch = await GetBranchNameAsync(pathInRepo, ct);
-                logger.LogDebug(
-                    "Git merge base - Current branch: {currentBranch}, Merge base SHA: {mergeBaseCommitSha}",
-                    currentBranch,
-                    mergeBaseSha);
-                return mergeBaseSha;
+                throw new InvalidOperationException($"Command '{options.ShortName}' failed: {result.Output.Trim()}");
             }
-            catch (Exception ex)
-            {
-                logger.LogWarning(
-                    "Failed to find merge base with branch '{targetBranch}': {error}",
-                    targetBranchName,
-                    ex.Message);
-                return "";
-            }
+            
+            var mergeBaseSha = result.Stdout.Trim();
+            var currentBranch = await GetBranchNameAsync(pathInRepo, ct);
+            logger.LogDebug(
+                "Git merge base - Current branch: {currentBranch}, Merge base SHA: {mergeBaseCommitSha}",
+                currentBranch,
+                mergeBaseSha);
+            return mergeBaseSha;
         }
 
         /// <summary>

@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         HttpClient httpClient
     ) : MCPMultiCommandTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("release-plan", "Manage release plans in AzureDevops")];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.ReleasePlan];
 
         // Commands
         private const string getReleasePlanDetailsCommandName = "get";

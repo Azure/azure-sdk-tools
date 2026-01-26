@@ -209,7 +209,7 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 		}
 		return result, nil
 	}
-	log.Printf("RecognizaIntention took %f s", time.Since(start).Seconds())
+	log.Printf("RecognizeIntention took %f s", time.Since(start).Seconds())
 	return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 )
 
 type SearchClient struct {
@@ -157,7 +158,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, opts Sear
 
 		resp, err := s.QueryIndex(context.Background(), &req)
 		if err != nil {
-			log.Printf("Warning: search error for source %s: %v", source, err)
+			log.Printf("Warning: search error for source %s: %v", utils.SanitizeForLog(string(source)), err)
 			continue
 		}
 

@@ -25,9 +25,9 @@ class Program
 
         var testErrors = new[]
         {
-            new RuleError("AZC0012", "Type name 'Client' is too generic. Consider using a more descriptive multi-word name, such as 'ServiceClient'."),
+            new RuleError("AZC0030", "Model name 'RequestData' ends with 'Data'. Consider using a more specific suffix like 'Info' or 'Details'."),
             new RuleError("UNKNOWN_ERROR", "This is an unknown error type"),
-            new RuleError("AZC0012", "Type name 'Manager' is too generic. Consider using a more descriptive multi-word name, such as 'ResourceManager'.")
+            new RuleError("AZC0034", "Type name 'Response' conflicts with System.Net.Response. Consider renaming to 'CreateBlobResponse' to avoid confusion.")
         };
 
         foreach (var error in testErrors)

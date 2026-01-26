@@ -13,12 +13,6 @@ namespace Azure.Tools.ErrorAnalyzers
         /// </summary>
         static void AddClientPrompts(Dictionary<string, AgentPromptFix> builder)
         {
-            // AZC0012 - Generic Type Name Violation
-            builder["AZC0012"] = new AgentPromptFix(
-                prompt: "AZC0012 TASK: Rename generic type name\nACTION: Add @@clientName decorator to specify C# name\nSYNTAX: @@clientName(GenericType, \"SpecificName\", \"csharp\")\nEXAMPLE: @@clientName(Client, \"BlobServiceClient\", \"csharp\")\nSOURCE: Extract exact type name from error message",
-                context: "AZC0012 - Generic type name violation\nERROR: {0}"
-            );
-            
             // AZC0030 - Model Naming Suffix Violation
             builder["AZC0030"] = new AgentPromptFix(
                 prompt: "AZC0030 TASK: Fix model naming suffix\nACTION: Add @@clientName decorator with proper suffix\nSYNTAX: @@clientName(ModelName, \"NewNameWithSuffix\", \"csharp\")\nSUFFIX PATTERNS: Input→'Options', Response→'Result', Data→'Info'\nEXAMPLE: @@clientName(UserModel, \"UserData\", \"csharp\")",

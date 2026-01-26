@@ -69,7 +69,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
         public void GetPromptFix_WithValidRuleId_ReturnsSpecificFix()
         {
             // Arrange
-            string ruleId = "AZC0012"; // This should exist in the prompts
+            string ruleId = "AZC0030"; // This should exist in the prompts
 
             // Act
             var fix = AnalyzerPrompts.GetPromptFix(ruleId);
@@ -84,14 +84,14 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
         public void GetPromptFix_WithValidRuleId_ReturnsCorrectData()
         {
             // Arrange
-            string ruleId = "AZC0012";
+            string ruleId = "AZC0030";
 
             // Act
             var fix = AnalyzerPrompts.GetPromptFix(ruleId);
 
             // Assert
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix.Prompt, Does.Contain("Fix AZC0012"));
+            Assert.That(fix.Prompt, Does.Contain("AZC0030"));
             Assert.That(fix.Context, Is.Not.Empty);
         }
 
@@ -103,7 +103,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
 
             // Assert
             Assert.That(ruleIds, Is.Not.Empty);
-            Assert.That(ruleIds, Does.Contain("AZC0012"));
+            Assert.That(ruleIds, Does.Contain("AZC0030"));
         }
     }
 }

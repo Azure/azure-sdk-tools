@@ -226,5 +226,51 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
             }
         }
+
+        /// <summary>
+        /// Tests ResetApprovalsForUntrustedChanges when the PR author is a trusted bot user (e.g., copilot[bot]).
+        /// Verifies that approvals are NOT reset for trusted bot users even when they don't have write permissions.
+        /// </summary>
+        /// <param name="rule">Rule being tested</param>
+        /// <param name="payloadFile">JSon payload file for the event being tested</param>
+        /// <param name="trustedBotUser">The trusted bot username to test</param>
+        /// <param name="approvedReviews">Number of approved reviews the PR has</param>
+        [Category("static")]
+        [TestCase(RulesConstants.ResetApprovalsForUntrustedChanges, "Tests.JsonEventPayloads/ResetApprovalsForUntrustedChanges_pr_synchronize.json", "copilot[bot]", 2)]
+        [TestCase(RulesConstants.ResetApprovalsForUntrustedChanges, "Tests.JsonEventPayloads/ResetApprovalsForUntrustedChanges_pr_synchronize.json", "github-actions[bot]", 3)]
+        public async Task TestResetApprovalsForUntrustedChanges_TrustedBotUser(string rule, string payloadFile, string trustedBotUser, int approvedReviews)
+        {
+            var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
+            mockGitHubEventClient.RulesConfiguration.Rules[rule] = RuleState.On;
+            mockGitHubEventClient.RulesConfiguration.TrustedBotUsers.Add(trustedBotUser);
+            
+            var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
+            var prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, SimpleJsonSerializer);
+            
+            // Override the PR author to be the trusted bot user
+            prEventPayload.PullRequest.User.Login = trustedBotUser;
+            
+            // Set the return value for the permission check - bot doesn't have permissions
+            mockGitHubEventClient.UserHasPermissionsReturn = false;
+            // Create the fake reviews that would normally be dismissed
+            mockGitHubEventClient.CreateFakeReviewsForPullRequest(approvedReviews, 0);
+            
+            await PullRequestProcessing.ResetApprovalsForUntrustedChanges(mockGitHubEventClient, prEventPayload);
+            
+            // Verify the rule is enabled
+            Assert.True(mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' should be enabled.");
+            
+            // Verify that no updates were made because the user is a trusted bot
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
+            Assert.AreEqual(0, totalUpdates, $"No updates should have been made for trusted bot user {trustedBotUser}, but {totalUpdates} updates were made.");
+            
+            // Verify no comments were created
+            int numComments = mockGitHubEventClient.GetComments().Count;
+            Assert.AreEqual(0, numComments, $"No comments should have been created for trusted bot user {trustedBotUser}, but {numComments} were created.");
+            
+            // Verify no reviews were dismissed
+            int numDismissedReviews = mockGitHubEventClient.GetReviewDismissals().Count;
+            Assert.AreEqual(0, numDismissedReviews, $"No reviews should have been dismissed for trusted bot user {trustedBotUser}, but {numDismissedReviews} were dismissed.");
+        }
     }
 }

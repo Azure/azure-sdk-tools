@@ -32,10 +32,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         public static readonly string RulesConfigSubDirectory = ".github";
         public static string rulesConfigFilePathOverride = null;
         public Dictionary<string, RuleState> Rules { get; set; }
+        public List<string> TrustedBotUsers { get; set; }
         public string RulesConfigFile { get; set; } = null;
         public RulesConfiguration() 
         {
             Rules = new Dictionary<string, RuleState>();
+            TrustedBotUsers = new List<string>();
         }
 
         /// <summary>
@@ -46,6 +48,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         public RulesConfiguration(string configurationFile = null)
         {
             Rules = new Dictionary<string, RuleState>();
+            TrustedBotUsers = new List<string>();
             string configLoc = configurationFile;
             if (configLoc == null)
             {
@@ -75,7 +78,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             {
                 string rawJson = FileHelpers.GetFileOrUrlContents(RulesConfigFile);
                 Console.WriteLine($"Loading repository rules from {RulesConfigFile}");
-                Rules = JsonSerializer.Deserialize<Dictionary<string, RuleState>>(rawJson);
+                
+                // Try to deserialize as RulesConfiguration first to get all properties
+                try
+                {
+                    var config = JsonSerializer.Deserialize<RulesConfiguration>(rawJson);
+                    if (config != null)
+                    {
+                        Rules = config.Rules ?? new Dictionary<string, RuleState>();
+                        TrustedBotUsers = config.TrustedBotUsers ?? new List<string>();
+                    }
+                }
+                catch
+                {
+                    // Fallback to just deserializing Rules for backward compatibility
+                    Rules = JsonSerializer.Deserialize<Dictionary<string, RuleState>>(rawJson);
+                    TrustedBotUsers = new List<string>();
+                }
+                
                 // Report any rules that might be missing from the config file.
                 ReportMissingRulesFromConfig();
             }
@@ -141,6 +161,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
                     Console.WriteLine($"{rule} was not in the rules config file. Missing rules default to Off.");
                 }
             }
+        }
+
+        /// <summary>
+        /// Check if a given username is in the list of trusted bot users.
+        /// </summary>
+        /// <param name="username">The GitHub username to check</param>
+        /// <returns>True if the user is in the trusted bot users list, False otherwise</returns>
+        public bool IsTrustedBotUser(string username)
+        {
+            if (string.IsNullOrEmpty(username) || TrustedBotUsers == null)
+            {
+                return false;
+            }
+            return TrustedBotUsers.Contains(username, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>

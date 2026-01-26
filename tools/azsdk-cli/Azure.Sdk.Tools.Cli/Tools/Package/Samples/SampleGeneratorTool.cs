@@ -308,9 +308,7 @@ Scenarios description:
         private async Task<string> ResolvePromptAsync(string rawPrompt, CancellationToken ct)
         {
             // If the raw prompt looks like a path to a markdown file, load its content
-            if (!string.IsNullOrWhiteSpace(rawPrompt)
-                && rawPrompt.IndexOf('\n') == -1
-                && rawPrompt.IndexOf('\r') == -1)
+            if (!string.IsNullOrWhiteSpace(rawPrompt))
             {
                 var trimmed = rawPrompt.Trim();
                 if (trimmed.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||

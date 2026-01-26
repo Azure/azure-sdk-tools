@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     /// Tool for translating sample code between Azure SDK packages in different languages.
     /// Provides both CLI command (azsdk pkg samples translate) and MCP tool method.
     /// </summary>
-    [McpServerToolType, Description("Translates sample files from one language to another for Azure SDK packages.")]
+    [McpServerToolType, Description("Translates sample code files from a source Azure SDK package to a target package in a different programming language. Takes samples from the source package's samples directory, understands the functionality being demonstrated, and generates equivalent idiomatic code for the target language.")]
     public class SampleTranslatorTool : LanguageMcpTool
     {
         private readonly IMicroagentHostService _microagentHostService;
@@ -125,7 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
         /// <summary>
         /// Translates sample code from one package language to another.
         /// </summary>
-        [McpServerTool(Name = "azsdk_package_translate_samples"), Description("Translates sample code from one package language to another, adapting to target language idioms.")]
+        [McpServerTool(Name = "azsdk_package_translate_samples"), Description("Translates sample code files from a source package to a target package in a different programming language. Takes samples from the source package's samples directory, understands the functionality being demonstrated, and generates equivalent idiomatic code for the target language using the target package's APIs. Preserves the sample's intent and structure while adapting authentication patterns, error handling, and async conventions to match the target language's best practices.")]
         public async Task<PackageOperationResponse> TranslateSamplesAsync(
             [Description("Path to the source package directory containing samples to translate.")] string fromPackagePath,
             [Description("Path to the target package directory where translated samples will be written.")] string toPackagePath,

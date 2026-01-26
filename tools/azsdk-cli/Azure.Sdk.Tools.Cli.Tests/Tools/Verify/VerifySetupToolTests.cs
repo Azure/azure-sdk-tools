@@ -59,9 +59,9 @@ internal class VerifySetupToolTests
             return "unknown-repo"; // default fallback
         });
 
-        // Mock DiscoverRepoRoot for PackagePathParser.Parse
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
-        .Returns((string path) => path ?? "/test/repo");
+        // Mock DiscoverRepoRootAsync for PackagePathParser.ParseAsync
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync((string path, CancellationToken _) => path ?? "/test/repo");
 
         languageServices = [
             new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),

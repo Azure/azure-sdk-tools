@@ -77,7 +77,7 @@ public class VerifySetupTool : LanguageMcpTool
         try
         {
             // Create context for filtering requirements
-            var ctx = CreateRequirementContext(packagePath ?? Environment.CurrentDirectory, langs);
+            var ctx = await CreateRequirementContext(packagePath ?? Environment.CurrentDirectory, langs);
             
             // Get all requirements that should be checked in this context
             var reqsToCheck = AllRequirements.All
@@ -204,14 +204,14 @@ public class VerifySetupTool : LanguageMcpTool
         return new DefaultCommandResponse();
     }
 
-    private RequirementContext CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null)
+    private async Task<RequirementContext> CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null)
     {
-        var (repoRoot, _, _) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, _, _) = await PackagePathParser.ParseAsync(gitHelper, packagePath);
         
         // If no languages specified, try to detect from the repo
         if (languages == null || languages.Count == 0)
         {
-            var languageService = GetLanguageService(packagePath);
+            var languageService = await GetLanguageServiceAsync(packagePath);
             if (languageService != null)
             {
                 languages = [languageService.Language];

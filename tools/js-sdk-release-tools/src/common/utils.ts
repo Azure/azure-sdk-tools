@@ -468,7 +468,7 @@ export async function cleanUpPackageDirectory(
         const managementSDKType = getSDKType(packageDirectory);
         if (managementSDKType === SDKType.HighLevelClient) {
             if (pipelineRunMode) {
-                // In Release/Local modes, preserve test and assets.json, clean up everything else (src folder handled by emitter)
+                // In Release/Local modes, preserve test and assets.json, clean up everything else including src
                 logger.info(`[HighLevelClient] Cleaning up in ${runMode} mode, preserving test and assets.json for: ${packageDirectory}`);
                 await cleanUpDirectory(packageDirectory, ["test","assets.json"]);
                 return;

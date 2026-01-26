@@ -227,7 +227,7 @@ describe("cleanUpPackageDirectory", () => {
     //   * Release/Local mode: Cleanup is skipped (handled by emitter)
     //   * SpecPullRequest/Batch modes: All files are cleaned up
     // - Management Plane (arm-*) HighLevelClient: 
-    //   * Release/Local mode: Preserves test and assets.json, cleans up everything else
+    //   * Release/Local mode: Preserves test and assets.json, cleans up everything else including src
     //   * SpecPullRequest/Batch modes: All files are cleaned up
     // - Management Plane (arm-*) Non-HighLevelClient: 
     //   * All modes: Cleanup is skipped (handled by emitter)

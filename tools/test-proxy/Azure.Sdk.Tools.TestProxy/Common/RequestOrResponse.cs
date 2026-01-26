@@ -13,6 +13,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public byte[] Body { get; set; }
 
+        /// <summary>
+        /// Cached multipart tree structure. Built once during precache phase,
+        /// then reused by sanitizers to avoid reparsing multipart bodies.
+        /// </summary>
+        public MultipartTree CachedTree { get; set; }
+
         public bool TryGetContentType(out string contentType)
         {
             contentType = null;

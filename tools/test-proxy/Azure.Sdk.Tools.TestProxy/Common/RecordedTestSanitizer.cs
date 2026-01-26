@@ -242,6 +242,17 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
         public virtual void Sanitize(RecordEntry entry, bool matchingBodies = true)
         {
+            // PHASE 0: Build multipart tree for any multipart bodies
+            // This happens ONCE per entry, then all sanitizers use the cached tree
+            if (matchingBodies)
+            {
+                BuildMultipartTree(entry.Request);
+                if (entry.RequestMethod != RequestMethod.Head)
+                {
+                    BuildMultipartTree(entry.Response);
+                }
+            }
+
             if (Condition == null || Condition.IsApplicable(entry))
             {
                 if (AppliesTo(SanitizerScope.Uri))
@@ -269,6 +280,116 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                     SanitizeBody(entry.Response);
                 }
             }
+        }
+
+        /// <summary>
+        /// Build a multipart tree from a request or response body.
+        /// This is called once per body during precache phase, then the tree is reused.
+        /// If the message is not multipart or already has a tree, this is a no-op.
+        /// </summary>
+        public virtual void BuildMultipartTree(RequestOrResponse message)
+        {
+            if (message?.Body == null || message.CachedTree != null)
+                return;  // Already has tree, or no body
+
+            if (!ContentTypeUtilities.IsMultipart(message.Headers, out var boundary))
+                return;  // Not multipart, don't build tree
+
+            // Build tree structure from multipart body
+            boundary = MultipartUtilities.ResolveFirstBoundary(boundary, message.Body);
+            byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(message.Body);
+            var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
+
+            var tree = new MultipartTree { Boundary = boundary };
+
+            try
+            {
+                MultipartSection section;
+                while ((section = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
+                {
+                    var treeSection = new MultipartTreeSection();
+
+                    // Copy headers - convert StringValues to string
+                    foreach (var header in section.Headers)
+                    {
+                        treeSection.Headers[header.Key] = header.Value.ToString();
+                    }
+
+                    // Read body
+                    byte[] sectionBody = MultipartUtilities.ReadAllBytes(section.Body);
+                    treeSection.Body = sectionBody;
+
+                    // Check if section itself is multipart (nested)
+                    if (treeSection.Headers.TryGetValue("Content-Type", out var contentType) &&
+                        ContentTypeUtilities.IsMultiPart(contentType, out var nestedBoundary))
+                    {
+                        treeSection.NestedTree = BuildNestedMultipartTree(sectionBody, nestedBoundary);
+                    }
+
+                    tree.Sections.Add(treeSection);
+                }
+
+                message.CachedTree = tree;
+            }
+            catch (IOException ex)
+            {
+                var byteContent = Convert.ToBase64String(fixedRaw);
+                string message_text = $$"""
+The test-proxy is unexpectedly unable to build the multipart tree during precache: \"{{ex.Message}}\"
+File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
+{{byteContent}}
+""";
+                throw new HttpException(HttpStatusCode.InternalServerError, message_text);
+            }
+        }
+
+        /// <summary>
+        /// Helper for recursive nested multipart trees
+        /// </summary>
+        private MultipartTree BuildNestedMultipartTree(byte[] body, string boundary)
+        {
+            boundary = MultipartUtilities.ResolveFirstBoundary(boundary, body);
+            byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(body);
+            var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
+
+            var tree = new MultipartTree { Boundary = boundary };
+
+            try
+            {
+                MultipartSection section;
+                while ((section = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
+                {
+                    var treeSection = new MultipartTreeSection();
+
+                    foreach (var header in section.Headers)
+                    {
+                        treeSection.Headers[header.Key] = header.Value.ToString();
+                    }
+
+                    byte[] sectionBody = MultipartUtilities.ReadAllBytes(section.Body);
+                    treeSection.Body = sectionBody;
+
+                    if (treeSection.Headers.TryGetValue("Content-Type", out var nested) &&
+                        ContentTypeUtilities.IsMultiPart(nested, out var nestedBoundary))
+                    {
+                        treeSection.NestedTree = BuildNestedMultipartTree(sectionBody, nestedBoundary);
+                    }
+
+                    tree.Sections.Add(treeSection);
+                }
+            }
+            catch (IOException ex)
+            {
+                var byteContent = Convert.ToBase64String(fixedRaw);
+                string message_text = $$"""
+The test-proxy is unexpectedly unable to build nested multipart tree during precache: \"{{ex.Message}}\"
+File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
+{{byteContent}}
+""";
+                throw new HttpException(HttpStatusCode.InternalServerError, message_text);
+            }
+
+            return tree;
         }
 
         public virtual void Sanitize(RecordSession session)

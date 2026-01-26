@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
@@ -107,7 +108,7 @@ public class ReviewsTokenAuthController : ControllerBase
     /// <param name="revisionId">The API revision ID (from /resolve endpoint).</param>
     /// <returns>Full review and revision metadata.</returns>
     [HttpGet("metadata", Name = "GetReviewMetadata")]
-    public async Task<ActionResult<ReviewMetadata>> GetMetadata([FromQuery] string revisionId)
+    public async Task<ActionResult<ReviewMetadata>> GetMetadata([FromQuery, Required] string revisionId)
     {
         if (string.IsNullOrEmpty(revisionId))
         {

@@ -186,16 +186,21 @@ model APICodeFileModel {
  * Comment for API view agents
  */
 model ApiViewAgentComment {
-    /** Comment ID */
-    CommentId: string;
-
     /** Line number where comment is attached */
-    LineNumber: int32;
+    LineNo: int32;
 
-    /** Element ID where comment is attached */
+    /** 
+     * (Preview) Element ID where comment is attached.
+     * This field is experimental and may change or be removed in future versions.
+     */
+    @encodedName("application/json", "_lineId")
     LineId: string;
 
-    /** Text of the line where comment is attached */
+    /** 
+     * (Preview) Text of the line where comment is attached.
+     * This field is experimental and may change or be removed in future versions.
+     */
+    @encodedName("application/json", "_lineText")
     LineText: string;
 
     /** Comment text */

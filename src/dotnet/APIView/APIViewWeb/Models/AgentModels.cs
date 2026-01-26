@@ -8,9 +8,15 @@ public class ApiViewAgentComment
 {
     [JsonPropertyName("lineNo")]
     public int LineNumber { get; set; }
-    [JsonPropertyName("lineId")]
+    /// <summary>
+    /// Preview feature: Line identifier. May change or be removed in future versions.
+    /// </summary>
+    [JsonPropertyName("_lineId")]
     public string LineId { get; set; }
-    [JsonPropertyName("lineText")]
+    /// <summary>
+    /// Preview feature: Line text content. May change or be removed in future versions.
+    /// </summary>
+    [JsonPropertyName("_lineText")]
     public string LineText { get; set; }
     [JsonPropertyName("createdOn")]
     public DateTimeOffset CreatedOn { get; set; }

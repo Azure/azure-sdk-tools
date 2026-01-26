@@ -31,7 +31,7 @@ public sealed partial class PythonLanguageService : LanguageService
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Python package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
         
         if (packageName == null)
@@ -78,7 +78,7 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     try
     {
         logger.LogTrace("Calling get_package_properties.py for {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "get_package_properties.py");
         
         var result = await pythonHelper.Run(new PythonOptions(

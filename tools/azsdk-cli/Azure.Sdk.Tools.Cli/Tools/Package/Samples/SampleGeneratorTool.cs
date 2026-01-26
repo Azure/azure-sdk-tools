@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 
         private async Task GenerateSampleAsync(string prompt, string packagePath, bool overwrite, string model, string[]? extraContextPaths, CancellationToken ct)
         {
-            var languageService = GetLanguageService(packagePath) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            var languageService = await GetLanguageServiceAsync(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
             var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
             var resolvedOutputDirectory = packageInfo.SamplesDirectory;
 

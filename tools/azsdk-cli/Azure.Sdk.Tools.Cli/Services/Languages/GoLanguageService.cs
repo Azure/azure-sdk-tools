@@ -43,7 +43,7 @@ public partial class GoLanguageService : LanguageService
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         var fullPath = RealPath.GetRealPath(packagePath);
-        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
 
         try

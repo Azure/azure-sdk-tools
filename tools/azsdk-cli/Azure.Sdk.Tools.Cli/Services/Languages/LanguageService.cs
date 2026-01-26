@@ -365,7 +365,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
                 // Get repository root path from project path
-                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+                string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
                     return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.", null);

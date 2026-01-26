@@ -23,7 +23,7 @@ internal class JavaScriptLanguageSpecificChecksTests
         _processHelperMock = new Mock<IProcessHelper>();
         _npxHelperMock = new Mock<INpxHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
-        _gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-js");
+        _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js");
         _commonValidationHelpersMock = new Mock<ICommonValidationHelpers>();
 
         _languageChecks = new JavaScriptLanguageService(

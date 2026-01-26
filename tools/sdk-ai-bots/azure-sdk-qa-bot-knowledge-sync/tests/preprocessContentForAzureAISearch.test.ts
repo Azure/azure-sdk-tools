@@ -3,7 +3,7 @@ import { preprocessContentForAzureAISearch } from '../src/DailySyncKnowledge';
 
 describe('preprocessContentForAzureAISearch', () => {
     describe('Code block conversion', () => {
-        it('should replace ``` with ~~~', () => {
+        it('should escape ``` to prevent parser issues', () => {
             const input = `Some text
 \`\`\`
 code line 1
@@ -11,11 +11,11 @@ code line 2
 \`\`\`
 More text`;
 
-            const expected = `Some text
-~~~
+            const expected = String.raw`Some text
+\`\`\`
 code line 1
 code line 2
-~~~
+\`\`\`
 More text`;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
@@ -27,10 +27,10 @@ def hello():
     print("world")
 \`\`\``;
 
-            const expected = `~~~python
+            const expected = String.raw`\`\`\`python
 def hello():
     print("world")
-~~~`;
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });
@@ -43,18 +43,112 @@ const x = 1;
 
 Second block:
 \`\`\`python
-y = 2
+# generated _client.py
+class PetStoreClient(_PetStoreClientOperationsMixin):
+    def __init__(self, endpoint: str, **kwargs: Any) -> None: ...
+
+// generated operations/_operations.py
+class _PetStoreClientOperationsMixin:
+
+    @distributed_trace
+    def info(self, **kwargs: Any) -> None:
+
+class BillingsOperations:
+
+    @distributed_trace
+    def history(self, **kwargs: Any) -> None:
+
+class ActionsOperations:
+
+    @distributed_trace
+    def open(self, **kwargs: Any) -> None:
+
+    @distributed_trace
+    def close(self, **kwargs: Any) -> None:
+
+# generated pets/operations/_operations.py
+class PetsOperations:
+
+    @distributed_trace
+    def info(self, **kwargs: Any) -> None:
+
+class PetsActionsOperations:
+
+    @distributed_trace
+    def open(self, **kwargs: Any) -> None:
+
+    @distributed_trace
+    def close(self, **kwargs: Any) -> None:
+
+#usage sample
+from pet_store import PetStoreClient
+
+client = PetStoreClient()
+client.info()
+client.billings.history()
+client.pets.info()
+client.pets.actions.feed()
+client.pets.actions.pet()
+client.actions.open()
+client.actions.close()
 \`\`\``;
 
-            const expected = `First block:
-~~~javascript
+            const expected = String.raw`First block:
+\`\`\`javascript
 const x = 1;
-~~~
+\`\`\`
 
 Second block:
-~~~python
-y = 2
-~~~`;
+\`\`\`python
+// generated _client.py
+class PetStoreClient(_PetStoreClientOperationsMixin):
+    def __init__(self, endpoint: str, **kwargs: Any) -> None: ...
+
+// generated operations/_operations.py
+class _PetStoreClientOperationsMixin:
+
+    @distributed_trace
+    def info(self, **kwargs: Any) -> None:
+
+class BillingsOperations:
+
+    @distributed_trace
+    def history(self, **kwargs: Any) -> None:
+
+class ActionsOperations:
+
+    @distributed_trace
+    def open(self, **kwargs: Any) -> None:
+
+    @distributed_trace
+    def close(self, **kwargs: Any) -> None:
+
+// generated pets/operations/_operations.py
+class PetsOperations:
+
+    @distributed_trace
+    def info(self, **kwargs: Any) -> None:
+
+class PetsActionsOperations:
+
+    @distributed_trace
+    def open(self, **kwargs: Any) -> None:
+
+    @distributed_trace
+    def close(self, **kwargs: Any) -> None:
+
+// usage sample
+from pet_store import PetStoreClient
+
+client = PetStoreClient()
+client.info()
+client.billings.history()
+client.pets.info()
+client.pets.actions.feed()
+client.pets.actions.pet()
+client.actions.open()
+client.actions.close()
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });
@@ -68,13 +162,13 @@ function test() {
 }
 \`\`\``;
 
-            const expected = `~~~typescript
+            const expected = String.raw`\`\`\`typescript
 function test() {
     if (true) {
         console.log("nested");
     }
 }
-~~~`;
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });
@@ -84,9 +178,9 @@ function test() {
 plain code
 \`\`\``;
 
-            const expected = `~~~
+            const expected = String.raw`\`\`\`
 plain code
-~~~`;
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });
@@ -100,11 +194,11 @@ def hello():
     pass
 \`\`\``;
 
-            const expected = `~~~python
+            const expected = String.raw`\`\`\`python
 // This is a comment
 def hello():
     pass
-~~~`;
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });
@@ -116,11 +210,11 @@ def hello():
 code here
 \`\`\``;
 
-            const expected = `~~~python
+            const expected = String.raw`\`\`\`python
 // Comment 1
 // Comment 2
 code here
-~~~`;
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });
@@ -131,10 +225,10 @@ code here
 text = "value" # inline comment
 \`\`\``;
 
-            const expected = `~~~python
+            const expected = String.raw`\`\`\`python
 // Start comment
 text = "value" # inline comment
-~~~`;
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });
@@ -144,7 +238,7 @@ text = "value" # inline comment
 # Header 1
 ## Header 2`;
 
-            const expected = `# generated by dataclasses
+            const expected = String.raw`# generated by dataclasses
 # Header 1
 ## Header 2`;
 
@@ -163,12 +257,12 @@ def example():
 
 # Another Section`;
 
-            const expected = `# TypeSpec Documentation
+            const expected = String.raw`# TypeSpec Documentation
 
-~~~python
+\`\`\`python
 def example():
     pass
-~~~
+\`\`\`
 
 # Another Section`;
 
@@ -182,11 +276,11 @@ class MyClass:
     pass
 \`\`\``;
 
-            const expected = `~~~
+            const expected = String.raw`\`\`\`
 // generated by dataclasses
 class MyClass:
     pass
-~~~`;
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });
@@ -215,28 +309,28 @@ class User:
         pass
 \`\`\``;
 
-            const expected = `# TypeSpec Documentation
+            const expected = String.raw`# TypeSpec Documentation
 
 # generated from source
 
 Here's an example:
 
-~~~typescript
+\`\`\`typescript
 interface User {
     name: string;
     age: number;
 }
-~~~
+\`\`\`
 
 And another:
 
-~~~python
+\`\`\`python
 // generated by tool
 // Another comment
 class User:
     def __init__(self):
         pass
-~~~`;
+\`\`\``;
 
             expect(preprocessContentForAzureAISearch(input)).toBe(expected);
         });

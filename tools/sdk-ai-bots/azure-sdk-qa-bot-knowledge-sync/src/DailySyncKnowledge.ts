@@ -677,15 +677,15 @@ export function preprocessContentForAzureAISearch(content: string): string {
     
     // Fix 1: Replace all # at start of lines with // within code blocks
     // This prevents Azure AI Search from treating comments as markdown headers
-    processed = processed.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, codeContent) => {
+    processed = processed.replace(/\`\`\`(\w*)\n([\s\S]*?)\`\`\`/g, (match, lang, codeContent) => {
         // Replace # at start of lines with //
         const transformedContent = codeContent.replace(/^#\s*/gm, '// ');
         return `\`\`\`${lang}\n${transformedContent}\`\`\``;
     });
     
-    // Fix 2: Replace code block delimiters ``` with ~~~ to avoid parser issues
-    // Match ``` with optional language identifier (e.g., ```python, ```typescript)
-    processed = processed.replace(/```(\w*)/g, '~~~$1');
+    // Fix 2: Escape code block delimiters ``` to prevent Azure AI Search parser issues
+    // Replace ``` with \`\`\` to display code blocks as literal text
+    processed = processed.replace(/\`\`\`(\w*)/g, '\\`\\`\\`$1');
     
     return processed;
 }

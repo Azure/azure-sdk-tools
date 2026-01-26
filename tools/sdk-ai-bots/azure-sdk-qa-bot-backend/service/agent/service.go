@@ -103,24 +103,25 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	intention, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, llmMessages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
-	} else if intention != nil {
-		// Apply default scope from tenant config
-		if tenantConfig.DefaultScope != nil {
-			intention.Scope = tenantConfig.DefaultScope
-		}
-
-		// Apply intention override if provided
-		if req.Intention != nil {
-			if req.Intention.Scope != nil {
-				intention.Scope = req.Intention.Scope
-			}
-			if req.Intention.Plane != nil {
-				intention.Plane = req.Intention.Plane
-			}
-		}
-		jsonReq, _ := json.Marshal(intention)
-		log.Printf("Intent Result: %s", utils.SanitizeForLog(string(jsonReq)))
+		return nil, err
 	}
+
+	// Apply default scope from tenant config
+	if tenantConfig.DefaultScope != nil {
+		intention.Scope = tenantConfig.DefaultScope
+	}
+
+	// Apply intention override if provided
+	if req.Intention != nil {
+		if req.Intention.Scope != nil {
+			intention.Scope = req.Intention.Scope
+		}
+		if req.Intention.Plane != nil {
+			intention.Plane = req.Intention.Plane
+		}
+	}
+	jsonReq, _ = json.Marshal(intention)
+	log.Printf("Intent Result: %s", utils.SanitizeForLog(string(jsonReq)))
 	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 
 	var knowledges []model.Knowledge

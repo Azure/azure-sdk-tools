@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             
             if (result.ExitCode != 0)
             {
-                throw new InvalidOperationException($"Git command failed: {result.Output.Trim()}");
+                throw new InvalidOperationException($"Command '{options.ShortName}' failed: {result.Output.Trim()}");
             }
             
             var remoteUrl = result.Stdout.Trim();

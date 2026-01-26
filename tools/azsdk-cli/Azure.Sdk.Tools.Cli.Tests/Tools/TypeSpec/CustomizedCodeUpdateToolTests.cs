@@ -31,6 +31,8 @@ public class CustomizedCodeUpdateToolAutoTests
         public override bool HasCustomizations(string packagePath, CancellationToken ct) => false; // No customizations found
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(false);
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+            => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null)); // Mock successful build
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
         {
             PackagePath = packagePath,
@@ -95,7 +97,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
         Assert.That(run.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide next steps guidance");
-        Assert.That(string.Join(" ", run.NextSteps), Does.Contain("No customizations found"), "Should indicate no customizations found");
+        Assert.That(run.Message, Does.Contain("No customization"), "Should indicate no customizations found");
     }
 
     [Test]
@@ -116,7 +118,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(first.ErrorCode, Is.Null, "Should complete successfully without errors");
         Assert.That(first.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for applied patches");
-        Assert.That(string.Join(" ", first.NextSteps), Does.Contain("Patches applied automatically"), "Should indicate patches were applied successfully");
+        Assert.That(first.Message, Does.Contain("Patches applied"), "Should indicate patches were applied successfully");
     }
 
     [Test]
@@ -135,9 +137,10 @@ public class CustomizedCodeUpdateToolAutoTests
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
         var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, ct: CancellationToken.None);
-        Assert.That(resp.ErrorCode, Is.Null, "Should complete without throwing errors");
+        // Build failure now returns an error code (structured for classifier)
+        Assert.That(resp.ErrorCode, Is.Not.Null, "Should have error code for build failure");
         Assert.That(resp.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for validation failure");
-        Assert.That(string.Join(" ", resp.NextSteps), Does.Contain("Build failed").Or.Contain("validation failed"), "Should indicate validation/build failure");
+        Assert.That(resp.Message, Does.Contain("Build failed"), "Should indicate build failure in message");
     }
 
     private class TestLanguageServiceFailThenFix: LanguageService

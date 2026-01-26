@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { preprocessContentForAzureAISearch } from '../src/DailySyncKnowledge';
+import { preprocessContent } from '../src/DailySyncKnowledge';
 
-describe('preprocessContentForAzureAISearch', () => {
+describe('preprocessContent', () => {
     describe('Code block conversion', () => {
         it('should escape ``` to prevent parser issues', () => {
             const input = `Some text
@@ -18,7 +18,7 @@ code line 2
 \`\`\`
 More text`;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should replace ``` with language identifier', () => {
@@ -32,7 +32,7 @@ def hello():
     print("world")
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should handle multiple code blocks', () => {
@@ -150,7 +150,7 @@ client.actions.open()
 client.actions.close()
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should preserve code content exactly', () => {
@@ -170,7 +170,7 @@ function test() {
 }
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should handle backticks without language identifier', () => {
@@ -182,7 +182,7 @@ plain code
 plain code
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
     });
 
@@ -200,7 +200,7 @@ def hello():
     pass
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should convert multiple # comments inside code blocks', () => {
@@ -216,7 +216,7 @@ code here
 code here
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should preserve # in middle of lines inside code blocks', () => {
@@ -230,7 +230,7 @@ text = "value" # inline comment
 text = "value" # inline comment
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should not convert # outside code blocks', () => {
@@ -242,7 +242,7 @@ text = "value" # inline comment
 # Header 1
 ## Header 2`;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
     });
 
@@ -266,7 +266,7 @@ def example():
 
 # Another Section`;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should handle # comments inside code block', () => {
@@ -282,7 +282,7 @@ class MyClass:
     pass
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
 
         it('should handle complex real-world example', () => {
@@ -332,13 +332,13 @@ class User:
         pass
 \`\`\``;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(expected);
+            expect(preprocessContent(input)).toBe(expected);
         });
     });
 
     describe('Edge cases', () => {
         it('should handle empty string', () => {
-            expect(preprocessContentForAzureAISearch('')).toBe('');
+            expect(preprocessContent('')).toBe('');
         });
 
         it('should handle content with no transformations needed', () => {
@@ -346,13 +346,13 @@ class User:
 With multiple lines
 And **bold** text`;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(input);
+            expect(preprocessContent(input)).toBe(input);
         });
 
         it('should handle inline backticks (not code blocks)', () => {
             const input = `Use \`inline code\` like this`;
 
-            expect(preprocessContentForAzureAISearch(input)).toBe(input);
+            expect(preprocessContent(input)).toBe(input);
         });
     });
 });

@@ -14,8 +14,6 @@ param tenantConfigBlobName string
 // RAG
 @secure()
 param ragScope string
-param fallbackRagEndpoint string
-param fallbackRagTenant string
 
 // Resources
 @maxLength(20)
@@ -145,14 +143,6 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'RAG_SERVICE_SCOPE'
           value: ragScope
-        }
-        {
-          name: 'FALLBACK_RAG_ENDPOINT'
-          value: fallbackRagEndpoint
-        }
-        {
-          name: 'FALLBACK_RAG_TENANT'
-          value: fallbackRagTenant
         }
         // Azure Table
         {

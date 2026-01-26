@@ -9,8 +9,6 @@ vi.mock('../../src/config/config.js', () => ({
     blobContainerName: 'bot-configs',
     channelConfigBlobName: 'channel.yaml',
     tenantConfigBlobName: 'tenant.yaml',
-    fallbackRagEndpoint: 'https://test.azurewebsites.net',
-    fallbackRagTenant: 'test_tenant',
   },
 }));
 

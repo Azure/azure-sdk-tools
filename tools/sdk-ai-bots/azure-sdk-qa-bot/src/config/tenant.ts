@@ -31,6 +31,9 @@ class TenantConfigManager {
    */
   public async initialize(): Promise<void> {
     await this.loadConfig();
+    if (!this.config) {
+      throw new Error('Failed to initialize tenant configuration: config could not be loaded from blob storage');
+    }
     this.startWatching();
   }
 
@@ -78,7 +81,7 @@ class TenantConfigManager {
     }
 
     try {
-      const currentModified = await this.blobClientManager.getBlobLastModified(config.tenantConfigBlobName);
+      const currentModified = await this.blobClientManager.getBlobLastModifiedTime(config.tenantConfigBlobName);
 
       if (!this.lastModified || (currentModified && currentModified > this.lastModified)) {
         logger.info('Tenant config blob changed, reloading...', {
@@ -122,10 +125,10 @@ class TenantConfigManager {
         // If we already have a config, keep using it
         if (this.config) {
           logger.warn(`Failed to download tenant config blob, still use old config.`);
-          return;
+        } else {
+          logger.error('Failed to download tenant config blob and no existing config available.');
         }
-        // First initialization - no config to fall back to
-        throw new Error('Failed to download tenant config blob and no existing config available');
+        return;
       }
 
       // Parse YAML content using yaml library with type assertion
@@ -139,7 +142,7 @@ class TenantConfigManager {
 
       // Get blob properties for last modified time
       try {
-        this.lastModified = (await this.blobClientManager.getBlobLastModified(config.tenantConfigBlobName)) || new Date();
+        this.lastModified = (await this.blobClientManager.getBlobLastModifiedTime(config.tenantConfigBlobName)) ?? new Date();
       } catch (metadataError) {
         logger.warn('Failed to get blob last modified time, using current time', {
           blob: config.tenantConfigBlobName,
@@ -153,7 +156,6 @@ class TenantConfigManager {
         tenantCount: this.config.tenants.length,
       });
 
-      this.ensureConfig();
     } catch (error) {
       logger.error('Failed to load tenant configuration from blob storage', {
         error: error.message,
@@ -161,27 +163,6 @@ class TenantConfigManager {
       });
       throw new Error(`Failed to load tenant configuration: ${error.message}`);
     }
-  }
-
-  /**
-   * Ensure the loaded configuration is valid
-   */
-  private ensureConfig(): void {
-    if (!this.config) {
-      throw new Error('Tenant configuration is null');
-    }
-
-    if (!Array.isArray(this.config.tenants)) {
-      throw new Error('Tenants configuration must be an array');
-    }
-
-    for (const tenant of this.config.tenants) {
-      if (!tenant.tenant || !tenant.channel_name || !tenant.channel_link) {
-        throw new Error(`Tenant configuration is incomplete: ${JSON.stringify(tenant)}`);
-      }
-    }
-
-    logger.debug('Tenant configuration validation passed');
   }
 
   /**

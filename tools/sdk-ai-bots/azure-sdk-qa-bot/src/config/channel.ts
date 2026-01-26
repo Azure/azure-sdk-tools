@@ -7,8 +7,8 @@ import config from './config.js';
 export interface ChannelItem {
   name: string;
   id: string;
-  tenant: string;
-  endpoint: string;
+  tenant?: string;
+  endpoint?: string;
 }
 
 export interface ChannelConfig {
@@ -33,6 +33,9 @@ class ChannelConfigManager {
 
   public async initialize(): Promise<void> {
     await this.loadConfig();
+    if (!this.config) {
+      throw new Error('Failed to initialize channel configuration: config could not be loaded from blob storage.');
+    }
     this.startWatching();
   }
 
@@ -40,9 +43,6 @@ class ChannelConfigManager {
    * Get the current channel configuration
    */
   public async getConfig(): Promise<ChannelConfig> {
-    if (!this.config) {
-      throw new Error('Channel configuration is not loaded');
-    }
     return this.config;
   }
 
@@ -50,13 +50,13 @@ class ChannelConfigManager {
    * Get channel configuration by channel ID
    */
   public async getChannelConfig(channelId: string): Promise<ChannelItem> {
-    // In local environment, return local settings directly
-    if (config.isLocal) {
+    // In local environment, return local settings directly if configured
+    if (config.isLocal && config.localRagTenant && config.localBackendEndpoint) {
       return {
         name: 'local',
         id: channelId,
-        tenant: config.localRagTenant ?? config.fallbackRagTenant,
-        endpoint: config.localBackendEndpoint ?? config.fallbackRagEndpoint,
+        tenant: config.localRagTenant,
+        endpoint: config.localBackendEndpoint,
       };
     }
 
@@ -68,8 +68,8 @@ class ChannelConfigManager {
       return {
         name: channel.name,
         id: channel.id,
-        tenant: channel.tenant,
-        endpoint: channel.endpoint,
+        tenant: channel.tenant ?? channelConfig.default.tenant,
+        endpoint: channel.endpoint ?? channelConfig.default.endpoint,
       };
     }
 
@@ -86,32 +86,16 @@ class ChannelConfigManager {
    * Get RAG tenant for a specific channel ID
    */
   public async getRagTenant(channelId: string): Promise<string> {
-    try {
-      const channelConfig = await this.getChannelConfig(channelId);
-      return channelConfig.tenant;
-    } catch (error) {
-      logger.error(`Failed to get RAG tenant for channel, fallback to ${config.fallbackRagTenant}`, {
-        channelId,
-        error: error.message,
-      });
-      return config.fallbackRagTenant;
-    }
+    const channelConfig = await this.getChannelConfig(channelId);
+    return channelConfig.tenant;
   }
 
   /**
    * Get RAG endpoint for a specific channel ID
    */
   public async getRagEndpoint(channelId: string): Promise<string> {
-    try {
-      const channelConfig = await this.getChannelConfig(channelId);
-      return channelConfig.endpoint;
-    } catch (error) {
-      logger.error(`Failed to get RAG endpoint for channel, fallback to ${config.fallbackRagEndpoint}`, {
-        channelId,
-        error: error.message,
-      });
-      return config.fallbackRagEndpoint;
-    }
+    const channelConfig = await this.getChannelConfig(channelId);
+    return channelConfig.endpoint;
   }
 
   /**
@@ -125,7 +109,7 @@ class ChannelConfigManager {
     }
 
     try {
-      const currentModified = await this.blobClientManager.getBlobLastModified(config.channelConfigBlobName);
+      const currentModified = await this.blobClientManager.getBlobLastModifiedTime(config.channelConfigBlobName);
 
       if (!this.lastModified || (currentModified && currentModified > this.lastModified)) {
         logger.info('Channel config blob changed, reloading...', {
@@ -171,10 +155,10 @@ class ChannelConfigManager {
         // If we already have a config, keep using it
         if (this.config) {
           logger.warn('Failed to download channel config blob, still use old config.');
-          return;
+        } else {
+          logger.error('Failed to download channel config blob and no existing config available.');
         }
-        // First initialization - no config to fall back to
-        throw new Error('Failed to download channel config blob and no existing config available');
+        return;
       }
 
       // Parse YAML content using yaml library with type assertion
@@ -188,8 +172,8 @@ class ChannelConfigManager {
 
       // Get blob properties for last modified time
       try {
-        const lastModified = await this.blobClientManager.getBlobLastModified(config.channelConfigBlobName);
-        this.lastModified = lastModified || new Date();
+        const lastModified = await this.blobClientManager.getBlobLastModifiedTime(config.channelConfigBlobName);
+        this.lastModified = lastModified ?? new Date();
       } catch (metadataError) {
         logger.warn('Failed to get blob last modified time, using current time', {
           blob: config.channelConfigBlobName,
@@ -203,9 +187,6 @@ class ChannelConfigManager {
         channelCount: this.config.channels.length,
         defaultTenant: this.config.default.tenant,
       });
-
-      // Validate configuration
-      this.ensureConfig();
     } catch (error) {
       logger.error('Failed to load channel configuration from blob storage', {
         error: error.message,
@@ -213,31 +194,6 @@ class ChannelConfigManager {
       });
       throw new Error(`Failed to load channel configuration: ${error.message}`);
     }
-  }
-
-  /**
-   * Ensure the loaded configuration is valid
-   */
-  private ensureConfig(): void {
-    if (!this.config) {
-      throw new Error('Configuration is null');
-    }
-
-    if (!this.config.default || !this.config.default.tenant || !this.config.default.endpoint) {
-      throw new Error('Default configuration is missing or incomplete');
-    }
-
-    if (!Array.isArray(this.config.channels)) {
-      throw new Error('Channels configuration must be an array');
-    }
-
-    for (const channel of this.config.channels) {
-      if (!channel.id || !channel.name || !channel.tenant || !channel.endpoint) {
-        throw new Error(`Channel configuration is incomplete: ${JSON.stringify(channel)}`);
-      }
-    }
-
-    logger.debug('Channel configuration validation passed');
   }
 
   /**

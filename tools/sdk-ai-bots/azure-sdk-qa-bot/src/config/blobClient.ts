@@ -83,7 +83,7 @@ class BlobClientManager {
   /**
    * Get blob last modified time
    */
-  public async getBlobLastModified(blobName: string): Promise<Date | undefined> {
+  public async getBlobLastModifiedTime(blobName: string): Promise<Date | undefined> {
     const containerClient = this.getContainerClient();
     const blobClient = containerClient.getBlobClient(blobName);
     const properties = await blobClient.getProperties();

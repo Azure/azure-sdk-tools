@@ -29,7 +29,7 @@ describe('TenantConfigManager', () => {
   let manager: TenantConfigManager;
   let mockBlobClientManager: {
     downloadBlobContent: Mock;
-    getBlobLastModified: Mock;
+    getBlobLastModifiedTime: Mock;
   };
 
   const validTenantYaml = `
@@ -48,7 +48,7 @@ tenants:
 
     mockBlobClientManager = {
       downloadBlobContent: vi.fn(),
-      getBlobLastModified: vi.fn(),
+      getBlobLastModifiedTime: vi.fn(),
     };
 
     (BlobClientManager.getInstance as Mock).mockReturnValue(mockBlobClientManager);
@@ -65,7 +65,7 @@ tenants:
   describe('Initialization', () => {
     it('should initialize and load configuration successfully', async () => {
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(validTenantYaml);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 
@@ -75,7 +75,7 @@ tenants:
     it('should throw error when download fails on first initialization', async () => {
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(undefined);
 
-      await expect(manager.initialize()).rejects.toThrow('Failed to load tenant configuration');
+      await expect(manager.initialize()).rejects.toThrow('Failed to initialize tenant configuration');
     });
 
     it('should throw error when download throws', async () => {
@@ -88,7 +88,7 @@ tenants:
   describe('Configuration Access', () => {
     beforeEach(async () => {
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(validTenantYaml);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
       await manager.initialize();
     });
 
@@ -152,7 +152,7 @@ tenants:
         .mockResolvedValueOnce(oldConfig)
         .mockResolvedValueOnce(newConfig);
 
-      mockBlobClientManager.getBlobLastModified
+      mockBlobClientManager.getBlobLastModifiedTime
         .mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'))
         .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'))
         .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'));
@@ -171,7 +171,7 @@ tenants:
 
     it('should keep old config when reload fails', async () => {
       mockBlobClientManager.downloadBlobContent.mockResolvedValueOnce(validTenantYaml);
-      mockBlobClientManager.getBlobLastModified
+      mockBlobClientManager.getBlobLastModifiedTime
         .mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'))
         .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'));
 
@@ -189,41 +189,15 @@ tenants:
     });
   });
 
-  describe('Configuration Validation', () => {
-    it('should throw error for invalid tenant config (missing fields)', async () => {
-      const invalidYaml = `
-tenants:
-  - tenant: incomplete-tenant
-`;
-
-      mockBlobClientManager.downloadBlobContent.mockResolvedValue(invalidYaml);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date());
-
-      await expect(manager.initialize()).rejects.toThrow('Failed to load tenant configuration');
-    });
-
-    it('should throw error when tenants is not an array', async () => {
-      const invalidYaml = `
-tenants:
-  tenant: not-an-array
-`;
-
-      mockBlobClientManager.downloadBlobContent.mockResolvedValue(invalidYaml);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date());
-
-      await expect(manager.initialize()).rejects.toThrow('Failed to load tenant configuration');
-    });
-  });
-
   describe('Watch Loop', () => {
     it('should stop watching when stopWatching is called', async () => {
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(validTenantYaml);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 
       // Initial load calls
-      const initialCalls = mockBlobClientManager.getBlobLastModified.mock.calls.length;
+      const initialCalls = mockBlobClientManager.getBlobLastModifiedTime.mock.calls.length;
 
       manager.stopWatching();
 
@@ -231,17 +205,7 @@ tenants:
       await vi.advanceTimersByTimeAsync(10000);
 
       // Should not have made more calls after stopping
-      expect(mockBlobClientManager.getBlobLastModified.mock.calls.length).toBe(initialCalls);
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should throw error when getConfig called before initialization', async () => {
-      await expect(manager.getConfig()).rejects.toThrow('Tenant configuration is not loaded');
-    });
-
-    it('should throw error when getTenant called before initialization', async () => {
-      await expect(manager.getTenant('any')).rejects.toThrow('Tenant configuration is not loaded');
+      expect(mockBlobClientManager.getBlobLastModifiedTime.mock.calls.length).toBe(initialCalls);
     });
   });
 });

@@ -217,7 +217,7 @@ describe('BlobClientManager', () => {
       const manager = BlobClientManager.getInstance();
       await manager.initialize();
 
-      const result = await manager.getBlobLastModified('test.yaml');
+      const result = await manager.getBlobLastModifiedTime('test.yaml');
 
       expect(result).toEqual(lastModified);
       expect(mockContainerClient.getBlobClient).toHaveBeenCalledWith('test.yaml');
@@ -229,7 +229,7 @@ describe('BlobClientManager', () => {
       const manager = BlobClientManager.getInstance();
       await manager.initialize();
 
-      const result = await manager.getBlobLastModified('test.yaml');
+      const result = await manager.getBlobLastModifiedTime('test.yaml');
 
       expect(result).toBeUndefined();
     });
@@ -240,7 +240,7 @@ describe('BlobClientManager', () => {
       const manager = BlobClientManager.getInstance();
       await manager.initialize();
 
-      await expect(manager.getBlobLastModified('nonexistent.yaml')).rejects.toThrow('Blob not found');
+      await expect(manager.getBlobLastModifiedTime('nonexistent.yaml')).rejects.toThrow('Blob not found');
     });
   });
 });

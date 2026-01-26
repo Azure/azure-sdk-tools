@@ -20,9 +20,6 @@ const config = {
   blobContainerName: process.env.BLOB_CONTAINER_NAME,
   channelConfigBlobName: process.env.CHANNEL_CONFIG_BLOB_NAME,
   tenantConfigBlobName: process.env.TENANT_CONFIG_BLOB_NAME,
-  // Fallback RAG config
-  fallbackRagEndpoint: process.env.FALLBACK_RAG_ENDPOINT,
-  fallbackRagTenant: process.env.FALLBACK_RAG_TENANT,
   // Local config
   isLocal: process.env.IS_LOCAL === 'true',
   // Local RAG config
@@ -36,8 +33,6 @@ const requiredEnvVars = [
   { name: 'BLOB_CONTAINER_NAME', value: config.blobContainerName },
   { name: 'CHANNEL_CONFIG_BLOB_NAME', value: config.channelConfigBlobName },
   { name: 'TENANT_CONFIG_BLOB_NAME', value: config.tenantConfigBlobName },
-  { name: 'FALLBACK_RAG_ENDPOINT', value: config.fallbackRagEndpoint },
-  { name: 'FALLBACK_RAG_TENANT', value: config.fallbackRagTenant },
 ];
 
 const missingVars = requiredEnvVars.filter((v) => !v.value).map((v) => v.name);

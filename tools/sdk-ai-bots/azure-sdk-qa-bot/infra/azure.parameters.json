@@ -23,12 +23,6 @@
     "tenantConfigBlobName": {
       "value": "${{TENANT_CONFIG_BLOB_NAME}}"
     },
-    "fallbackRagEndpoint": {
-      "value": "${{FALLBACK_RAG_ENDPOINT}}"
-    },
-    "fallbackRagTenant": {
-      "value": "${{FALLBACK_RAG_TENANT}}"
-    },
     "ragScope": {
       "value": "${{RAG_SERVICE_SCOPE}}"
     },

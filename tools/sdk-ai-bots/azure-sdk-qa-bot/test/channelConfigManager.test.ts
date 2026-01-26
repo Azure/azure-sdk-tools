@@ -8,15 +8,13 @@ vi.mock('../src/config/config.js', () => ({
     azureBlobStorageUrl: 'https://teststorage.blob.core.windows.net',
     isLocal: false,
     channelConfigBlobName: 'channel.yaml',
-    fallbackRagEndpoint: 'https://test.eastasia-01.azurewebsites.net',
-    fallbackRagTenant: 'azure_sdk_qa_bot',
   },
 }));
 
 // Mock BlobClientManager
 const mockBlobClientManager = {
   downloadBlobContent: vi.fn(),
-  getBlobLastModified: vi.fn(),
+  getBlobLastModifiedTime: vi.fn(),
 };
 
 vi.mock('../src/config/blobClient.js', () => ({
@@ -33,11 +31,6 @@ vi.mock('../src/logging/logger.js', () => ({
     debug: vi.fn(),
     warn: vi.fn(),
   },
-}));
-
-// Mock timers/promises
-vi.mock('timers/promises', () => ({
-  setTimeout: vi.fn(() => Promise.resolve()),
 }));
 
 // Mock configuration data as YAML string
@@ -59,21 +52,28 @@ describe('ChannelConfigManager', () => {
   let manager: ChannelConfigManager;
 
   beforeEach(() => {
-    manager = new ChannelConfigManager();
-
-    // Reset all mocks
     vi.clearAllMocks();
+    // Use fake timers to control the watch loop that periodically checks for config changes.
+    // Without fake timers, the watch loop's setTimeout would run continuously during tests,
+    // causing tests to hang or behave unpredictably. With fake timers, we can use
+    // vi.advanceTimersByTimeAsync() to manually trigger reload checks.
+    vi.useFakeTimers();
+    manager = new ChannelConfigManager();
   });
 
   afterEach(() => {
+    // Stop the watch loop to prevent it from running after the test completes
     manager.stopWatching();
+    // Restore real timers for subsequent tests
+    vi.useRealTimers();
+    vi.resetAllMocks();
   });
 
   describe('Blob Storage Loading and Watching', () => {
     it('should initialize blob client and load configuration', async () => {
       // Mock BlobClientManager methods
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(mockConfigYaml);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 
@@ -85,7 +85,7 @@ describe('ChannelConfigManager', () => {
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(undefined);
 
       // Initialize should throw since no config to fall back to
-      await expect(manager.initialize()).rejects.toThrow('Failed to load channel configuration');
+      await expect(manager.initialize()).rejects.toThrow('Failed to initialize channel configuration');
     });
 
     it('should handle blob download errors gracefully when download throws', async () => {
@@ -101,7 +101,7 @@ describe('ChannelConfigManager', () => {
 
       // First load succeeds
       mockBlobClientManager.downloadBlobContent.mockResolvedValueOnce(testConfig);
-      mockBlobClientManager.getBlobLastModified
+      mockBlobClientManager.getBlobLastModifiedTime
         .mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'))
         // Second call indicates blob changed
         .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'));
@@ -130,7 +130,7 @@ describe('ChannelConfigManager', () => {
         .mockResolvedValueOnce(oldConfig)
         .mockResolvedValueOnce(newConfig);
 
-      mockBlobClientManager.getBlobLastModified
+      mockBlobClientManager.getBlobLastModifiedTime
         .mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'))
         .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'))
         .mockResolvedValueOnce(new Date('2023-01-01T11:00:00Z'));
@@ -140,7 +140,9 @@ describe('ChannelConfigManager', () => {
       let config = await manager.getConfig();
       expect(config.default.tenant).toBe('old');
 
-      // Simulate time passing and blob change
+      // Advance timer to trigger reload check
+      await vi.advanceTimersByTimeAsync(5000);
+
       config = await manager.getConfig();
       expect(config.default.tenant).toBe('new');
     });
@@ -148,7 +150,7 @@ describe('ChannelConfigManager', () => {
     it('should not reload if blob has not changed', async () => {
       const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 
@@ -165,7 +167,7 @@ describe('ChannelConfigManager', () => {
     it('should handle blob properties check errors gracefully', async () => {
       const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
-      mockBlobClientManager.getBlobLastModified
+      mockBlobClientManager.getBlobLastModifiedTime
         .mockResolvedValueOnce(new Date('2023-01-01T10:00:00Z'))
         .mockRejectedValueOnce(new Error('Network error'));
 
@@ -179,7 +181,7 @@ describe('ChannelConfigManager', () => {
   describe('Configuration Access', () => {
     beforeEach(async () => {
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(mockConfigYaml);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
     });
@@ -222,7 +224,7 @@ describe('ChannelConfigManager', () => {
       const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
 
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 
@@ -238,52 +240,11 @@ describe('ChannelConfigManager', () => {
     });
   });
 
-  describe('Error Handling', () => {
-    beforeEach(async () => {
-      const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
-      mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
-
-      await manager.initialize();
-    });
-
-    it('should handle getRagTenant errors gracefully', async () => {
-      // Mock getChannelConfig to throw an error
-      vi.spyOn(manager, 'getChannelConfig').mockRejectedValue(new Error('Config error'));
-
-      const result = await manager.getRagTenant('test-channel');
-
-      // Should return fallback value when error occurs
-      expect(result).toBe('azure_sdk_qa_bot');
-    });
-
-    it('should handle getRagEndpoint errors gracefully', async () => {
-      // Mock getChannelConfig to throw an error
-      vi.spyOn(manager, 'getChannelConfig').mockRejectedValue(new Error('Config error'));
-
-      const result = await manager.getRagEndpoint('test-channel');
-
-      // Should return fallback value when error occurs
-      expect(result).toBe('https://test.eastasia-01.azurewebsites.net');
-    });
-
-    it('should validate configuration structure', async () => {
-      // Create a new manager that hasn't been initialized yet
-      const newManager = new ChannelConfigManager();
-
-      // Mock invalid config - missing default section
-      mockBlobClientManager.downloadBlobContent.mockResolvedValue('channels: []');
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
-
-      await expect(newManager.initialize()).rejects.toThrow('Failed to load channel configuration');
-    });
-  });
-
   describe('Watch Loop', () => {
     it('should stop watching when stopWatching is called', async () => {
       const testConfig = 'default:\n  tenant: test\n  endpoint: test\nchannels: []';
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(testConfig);
-      mockBlobClientManager.getBlobLastModified.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
+      mockBlobClientManager.getBlobLastModifiedTime.mockResolvedValue(new Date('2023-01-01T10:00:00Z'));
 
       await manager.initialize();
 

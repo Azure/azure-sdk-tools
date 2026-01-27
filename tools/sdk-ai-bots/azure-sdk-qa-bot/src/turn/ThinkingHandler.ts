@@ -113,13 +113,13 @@ export class ThinkingHandler {
     if (routeTenant) {
       try {
         // Get channel info (name and url) from tenant ID
-        const tenant = await this.tenantConfigManager.getTenant(routeTenant);
+        const tenant = this.tenantConfigManager.getTenant(routeTenant);
         if (!tenant) {
           logger.warn(`Tenant not found for route_tenant: ${routeTenant}`, { meta: this.meta });
         } else {
           const displayName = tenant.channel_name || routeTenant;
           const channelLink = tenant.channel_link ? `[${displayName}](${tenant.channel_link})` : `${displayName}`;
-          const redirectText = `💬 Not resolved? Try posting in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`;
+          const redirectText = `💬 Not resolved? Please re-post in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`;
           footer = `${redirectText}\n\n${footer}`;
         }
       } catch (error) {

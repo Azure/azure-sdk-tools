@@ -40,16 +40,16 @@ class ChannelConfigManager {
   }
 
   /**
-   * Get the current channel configuration
+   * Get the current channel configuration.
    */
-  public async getConfig(): Promise<ChannelConfig> {
+  public getConfig(): ChannelConfig {
     return this.config;
   }
 
   /**
-   * Get channel configuration by channel ID
+   * Get channel configuration by channel ID.
    */
-  public async getChannelConfig(channelId: string): Promise<ChannelItem> {
+  public getChannelConfig(channelId: string): ChannelItem {
     // In local environment, return local settings directly if configured
     if (config.isLocal && config.localRagTenant && config.localBackendEndpoint) {
       return {
@@ -60,7 +60,7 @@ class ChannelConfigManager {
       };
     }
 
-    const channelConfig = await this.getConfig();
+    const channelConfig = this.getConfig();
 
     // Find matching channel
     const channel = channelConfig.channels.find((ch) => ch.id === channelId);
@@ -85,16 +85,16 @@ class ChannelConfigManager {
   /**
    * Get RAG tenant for a specific channel ID
    */
-  public async getRagTenant(channelId: string): Promise<string> {
-    const channelConfig = await this.getChannelConfig(channelId);
+  public getRagTenant(channelId: string): string {
+    const channelConfig = this.getChannelConfig(channelId);
     return channelConfig.tenant;
   }
 
   /**
    * Get RAG endpoint for a specific channel ID
    */
-  public async getRagEndpoint(channelId: string): Promise<string> {
-    const channelConfig = await this.getChannelConfig(channelId);
+  public getRagEndpoint(channelId: string): string {
+    const channelConfig = this.getChannelConfig(channelId);
     return channelConfig.endpoint;
   }
 
@@ -173,13 +173,14 @@ class ChannelConfigManager {
       // Get blob properties for last modified time
       try {
         const lastModified = await this.blobClientManager.getBlobLastModifiedTime(config.channelConfigBlobName);
-        this.lastModified = lastModified ?? new Date();
+        if (lastModified) {
+          this.lastModified = lastModified;
+        }
       } catch (metadataError) {
-        logger.warn('Failed to get blob last modified time, using current time', {
+        logger.warn('Failed to get blob last modified time, will reload on next check', {
           blob: config.channelConfigBlobName,
           error: metadataError.message,
         });
-        this.lastModified = new Date();
       }
 
       logger.info('Channel configuration loaded successfully from blob storage', {
@@ -194,13 +195,6 @@ class ChannelConfigManager {
       });
       throw new Error(`Failed to load channel configuration: ${error.message}`);
     }
-  }
-
-  /**
-   * Promise-based delay function using async/await
-   */
-  private async delay(ms: number): Promise<void> {
-    await setTimeout(ms);
   }
 
   /**
@@ -240,12 +234,10 @@ class ChannelConfigManager {
     while (this.isWatching) {
       try {
         await this.checkAndReload();
-        await this.delay(this.watchInterval);
       } catch (error) {
         logger.error('Failed to check for config changes', { error: error.message });
-        // Continue watching even if there's an error
-        await this.delay(this.watchInterval);
       }
+      await setTimeout(this.watchInterval);
     }
   }
 

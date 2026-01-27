@@ -109,14 +109,14 @@ describe('ChannelConfigManager', () => {
       await manager.initialize();
 
       // Verify initial config loaded
-      let config = await manager.getConfig();
+      let config = manager.getConfig();
       expect(config.default.tenant).toBe('test');
 
       // Now simulate download failure during reload
       mockBlobClientManager.downloadBlobContent.mockResolvedValue(undefined);
 
       // Trigger reload by accessing config (blob has changed)
-      config = await manager.getConfig();
+      config = manager.getConfig();
 
       // Should still have the old config
       expect(config.default.tenant).toBe('test');
@@ -137,13 +137,13 @@ describe('ChannelConfigManager', () => {
       await manager.initialize();
 
       // Verify initial config
-      let config = await manager.getConfig();
+      let config = manager.getConfig();
       expect(config.default.tenant).toBe('old');
 
       // Advance timer to trigger reload check
       await vi.advanceTimersByTimeAsync(5000);
 
-      config = await manager.getConfig();
+      config = manager.getConfig();
       expect(config.default.tenant).toBe('new');
     });
 
@@ -158,7 +158,7 @@ describe('ChannelConfigManager', () => {
       mockBlobClientManager.downloadBlobContent.mockClear();
 
       // Call getConfig again - should not trigger reload since blob hasn't changed
-      await manager.getConfig();
+      manager.getConfig();
 
       // download should not be called again
       expect(mockBlobClientManager.downloadBlobContent).not.toHaveBeenCalled();
@@ -174,7 +174,7 @@ describe('ChannelConfigManager', () => {
       await manager.initialize();
 
       // Should not throw error when checking for updates fails
-      await expect(manager.getConfig()).resolves.toBeDefined();
+      expect(manager.getConfig()).toBeDefined();
     });
   });
 
@@ -186,8 +186,8 @@ describe('ChannelConfigManager', () => {
       await manager.initialize();
     });
 
-    it('should return channel config for existing channel', async () => {
-      const channelConfig = await manager.getChannelConfig('channel1');
+    it('should return channel config for existing channel', () => {
+      const channelConfig = manager.getChannelConfig('channel1');
 
       expect(channelConfig).toEqual({
         id: 'channel1',
@@ -197,8 +197,8 @@ describe('ChannelConfigManager', () => {
       });
     });
 
-    it('should return default config for non-existing channel', async () => {
-      const channelConfig = await manager.getChannelConfig('non-existing');
+    it('should return default config for non-existing channel', () => {
+      const channelConfig = manager.getChannelConfig('non-existing');
 
       expect(channelConfig).toEqual({
         id: 'non-existing',
@@ -208,13 +208,13 @@ describe('ChannelConfigManager', () => {
       });
     });
 
-    it('should return RAG tenant for channel', async () => {
-      const tenant = await manager.getRagTenant('channel1');
+    it('should return RAG tenant for channel', () => {
+      const tenant = manager.getRagTenant('channel1');
       expect(tenant).toBe('tenant1');
     });
 
-    it('should return RAG endpoint for channel', async () => {
-      const endpoint = await manager.getRagEndpoint('channel1');
+    it('should return RAG endpoint for channel', () => {
+      const endpoint = manager.getRagEndpoint('channel1');
       expect(endpoint).toBe('https://channel1.endpoint.com');
     });
   });
@@ -228,10 +228,8 @@ describe('ChannelConfigManager', () => {
 
       await manager.initialize();
 
-      // Make multiple concurrent calls - they should all return the same config
-      const promises = [manager.getConfig(), manager.getConfig(), manager.getConfig()];
-
-      const results = await Promise.all(promises);
+      // Make multiple calls - they should all return the same config
+      const results = [manager.getConfig(), manager.getConfig(), manager.getConfig()];
 
       // All calls should get the same result
       results.forEach((config) => {

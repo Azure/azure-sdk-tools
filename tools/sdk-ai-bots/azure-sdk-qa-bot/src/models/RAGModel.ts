@@ -45,10 +45,8 @@ export class RAGModel implements PromptCompletionModel {
     const token = await getAccessTokenByManagedIdentity(this.credential, config.ragScope);
     const meta = getTurnContextLogMeta(context);
     const { channelId } = parseConversationId(context.activity.conversation.id);
-    const [ ragTenantId, ragEndpoint ] = await Promise.all([
-      this.channelConfigManager.getRagTenant(channelId),
-      this.channelConfigManager.getRagEndpoint(channelId),
-    ]);
+    const ragTenantId = this.channelConfigManager.getRagTenant(channelId);
+    const ragEndpoint = this.channelConfigManager.getRagEndpoint(channelId);
     logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,

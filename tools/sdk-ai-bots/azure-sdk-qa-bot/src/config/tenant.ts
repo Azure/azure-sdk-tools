@@ -38,36 +38,33 @@ class TenantConfigManager {
   }
 
   /**
-   * Get the current tenant configuration
+   * Get the current tenant configuration.
    */
-  public async getConfig(): Promise<TenantConfig> {
-    if (!this.config) {
-      throw new Error('Tenant configuration is not loaded');
-    }
-    return this.config;
+  public getConfig(): TenantConfig {
+    return this.config!;
   }
 
   /**
-   * Get tenant item by tenant ID
+   * Get tenant item by tenant ID.
    */
-  public async getTenant(tenantId: string): Promise<TenantItem | undefined> {
-    const config = await this.getConfig();
+  public getTenant(tenantId: string): TenantItem | undefined {
+    const config = this.getConfig();
     return config.tenants.find((t) => t.tenant === tenantId);
   }
 
   /**
    * Get channel name by tenant ID
    */
-  public async getChannelName(tenantId: string): Promise<string | undefined> {
-    const tenant = await this.getTenant(tenantId);
+  public getChannelName(tenantId: string): string | undefined {
+    const tenant = this.getTenant(tenantId);
     return tenant?.channel_name;
   }
 
   /**
    * Get channel link by tenant ID
    */
-  public async getChannelLink(tenantId: string): Promise<string | undefined> {
-    const tenant = await this.getTenant(tenantId);
+  public getChannelLink(tenantId: string): string | undefined {
+    const tenant = this.getTenant(tenantId);
     return tenant?.channel_link;
   }
 
@@ -142,13 +139,15 @@ class TenantConfigManager {
 
       // Get blob properties for last modified time
       try {
-        this.lastModified = (await this.blobClientManager.getBlobLastModifiedTime(config.tenantConfigBlobName)) ?? new Date();
+        const lastModified = await this.blobClientManager.getBlobLastModifiedTime(config.tenantConfigBlobName);
+        if (lastModified) {
+          this.lastModified = lastModified;
+        }
       } catch (metadataError) {
-        logger.warn('Failed to get blob last modified time, using current time', {
+        logger.warn('Failed to get blob last modified time, will reload on next check', {
           blob: config.tenantConfigBlobName,
           error: metadataError.message,
         });
-        this.lastModified = new Date();
       }
 
       logger.info('Tenant configuration loaded successfully from blob storage', {
@@ -163,13 +162,6 @@ class TenantConfigManager {
       });
       throw new Error(`Failed to load tenant configuration: ${error.message}`);
     }
-  }
-
-  /**
-   * Promise-based delay function using async/await
-   */
-  private async delay(ms: number): Promise<void> {
-    await setTimeout(ms);
   }
 
   /**
@@ -209,12 +201,10 @@ class TenantConfigManager {
     while (this.isWatching) {
       try {
         await this.checkAndReload();
-        await this.delay(this.watchInterval);
       } catch (error) {
         logger.error('Failed to check for tenant config changes', { error: error.message });
-        // Continue watching even if there's an error
-        await this.delay(this.watchInterval);
       }
+      await setTimeout(this.watchInterval);
     }
   }
 

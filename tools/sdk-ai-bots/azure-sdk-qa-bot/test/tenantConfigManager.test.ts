@@ -92,42 +92,42 @@ tenants:
       await manager.initialize();
     });
 
-    it('should return full config', async () => {
-      const config = await manager.getConfig();
+    it('should return full config', () => {
+      const config = manager.getConfig();
 
       expect(config.tenants).toHaveLength(2);
       expect(config.tenants[0].tenant).toBe('tenant-1');
       expect(config.tenants[1].tenant).toBe('tenant-2');
     });
 
-    it('should return tenant by ID', async () => {
-      const tenant = await manager.getTenant('tenant-1');
+    it('should return tenant by ID', () => {
+      const tenant = manager.getTenant('tenant-1');
 
       expect(tenant).toBeDefined();
       expect(tenant?.tenant).toBe('tenant-1');
       expect(tenant?.channel_name).toBe('Test Channel 1');
     });
 
-    it('should return undefined for non-existing tenant', async () => {
-      const tenant = await manager.getTenant('non-existing');
+    it('should return undefined for non-existing tenant', () => {
+      const tenant = manager.getTenant('non-existing');
 
       expect(tenant).toBeUndefined();
     });
 
-    it('should return channel name by tenant ID', async () => {
-      const channelName = await manager.getChannelName('tenant-2');
+    it('should return channel name by tenant ID', () => {
+      const channelName = manager.getChannelName('tenant-2');
 
       expect(channelName).toBe('Test Channel 2');
     });
 
-    it('should return channel link by tenant ID', async () => {
-      const channelLink = await manager.getChannelLink('tenant-1');
+    it('should return channel link by tenant ID', () => {
+      const channelLink = manager.getChannelLink('tenant-1');
 
       expect(channelLink).toBe('https://teams.microsoft.com/channel1');
     });
 
-    it('should return undefined channel name for non-existing tenant', async () => {
-      const channelName = await manager.getChannelName('non-existing');
+    it('should return undefined channel name for non-existing tenant', () => {
+      const channelName = manager.getChannelName('non-existing');
 
       expect(channelName).toBeUndefined();
     });
@@ -159,13 +159,13 @@ tenants:
 
       await manager.initialize();
 
-      let config = await manager.getConfig();
+      let config = manager.getConfig();
       expect(config.tenants[0].tenant).toBe('old-tenant');
 
       // Advance timer to trigger reload check
       await vi.advanceTimersByTimeAsync(5000);
 
-      config = await manager.getConfig();
+      config = manager.getConfig();
       expect(config.tenants[0].tenant).toBe('new-tenant');
     });
 
@@ -183,7 +183,7 @@ tenants:
       // Advance timer to trigger reload check
       await vi.advanceTimersByTimeAsync(5000);
 
-      const config = await manager.getConfig();
+      const config = manager.getConfig();
       expect(config.tenants).toHaveLength(2);
       expect(config.tenants[0].tenant).toBe('tenant-1');
     });

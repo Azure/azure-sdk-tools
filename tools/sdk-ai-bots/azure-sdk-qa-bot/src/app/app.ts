@@ -60,8 +60,8 @@ const isSubmitMessage = async (ctx: TurnContext) =>
 
 app.activity(isSubmitMessage, async (context: TurnContext) => {
   const { channelId } = parseConversationId(context.activity.conversation.id);
-  const ragTenantId = await channelConfigManager.getRagTenant(channelId);
-  const ragEndpoint = await channelConfigManager.getRagEndpoint(channelId);
+  const ragTenantId = channelConfigManager.getRagTenant(channelId);
+  const ragEndpoint = channelConfigManager.getRagEndpoint(channelId);
   const token = await getAccessTokenByManagedIdentity(credential, config.ragScope);
   const ragOptions: RAGOptions = {
     endpoint: ragEndpoint,

@@ -29,7 +29,7 @@ public static class TelemetryPathSanitizer
         "@azure-rest",
     ];
 
-    private const string AzureSdkPrefix = "azure-sdk-";
+    private const string AzurePrefix = "azure";
 
     private static readonly ConcurrentDictionary<string, byte> KnownRoots =
         new(StringComparer.OrdinalIgnoreCase);
@@ -63,7 +63,7 @@ public static class TelemetryPathSanitizer
         }
 
         AllowlistedSegmentSet.TryAdd(segment, 0);
-        if (segment.StartsWith(AzureSdkPrefix, StringComparison.OrdinalIgnoreCase))
+        if (segment.StartsWith(AzurePrefix, StringComparison.OrdinalIgnoreCase))
         {
             KnownRoots.TryAdd(segment, 0);
         }
@@ -346,7 +346,7 @@ public static class TelemetryPathSanitizer
 
     private static bool IsAllowlistedSegment(string segment)
     {
-        if (segment.StartsWith(AzureSdkPrefix, StringComparison.OrdinalIgnoreCase))
+        if (segment.StartsWith(AzurePrefix, StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

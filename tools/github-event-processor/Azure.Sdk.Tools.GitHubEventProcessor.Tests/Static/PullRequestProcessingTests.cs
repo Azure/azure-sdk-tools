@@ -323,7 +323,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     writer.WriteStringValue(element.GetString());
                     break;
                 case JsonValueKind.Number:
-                    writer.WriteNumberValue(element.GetDouble());
+                    if (element.TryGetInt32(out int intValue))
+                    {
+                        writer.WriteNumberValue(intValue);
+                    }
+                    else if (element.TryGetInt64(out long longValue))
+                    {
+                        writer.WriteNumberValue(longValue);
+                    }
+                    else
+                    {
+                        writer.WriteNumberValue(element.GetDouble());
+                    }
                     break;
                 case JsonValueKind.True:
                     writer.WriteBooleanValue(true);

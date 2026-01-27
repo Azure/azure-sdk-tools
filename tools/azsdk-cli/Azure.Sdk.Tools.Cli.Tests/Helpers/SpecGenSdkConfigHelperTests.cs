@@ -356,8 +356,42 @@ public class SpecGenSdkConfigHelperTests
         var result = _helper.SubstituteCommandVariables(command, variables);
 
         // Assert  
-        // Already quoted values are not re-quoted, so /src is appended outside quotes
-        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Path With Spaces\\Project\"/src"));
+        // Already quoted values should have quotes removed, combined with continuation, then re-quoted
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Path With Spaces\\Project/src\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithSpacesNoContinuation_QuotesCorrectly()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "c:\\Program Files\\My Project" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_MultipleOccurrencesWithSpaces_QuotesAll()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}/src && copy {PackagePath}/output /dest";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "c:\\Program Files\\My Project" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project/src\" && copy \"c:\\Program Files\\My Project/output\" /dest"));
     }
 
     [Test]

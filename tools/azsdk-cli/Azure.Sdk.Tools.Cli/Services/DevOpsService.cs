@@ -225,7 +225,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var languageId = MapLanguageToId(language);
                 var escapedPackageName = packageName?.Replace("'", "''");
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANER_APP_TEST}'";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] = 'In Progress'";

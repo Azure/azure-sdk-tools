@@ -178,7 +178,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             foreach (var variable in variables)
             {
                 var placeholder = $"{{{variable.Key}}}";
-                result = result.Replace(placeholder, variable.Value, StringComparison.OrdinalIgnoreCase);
+                // Quote the value if it contains spaces and is not already quoted
+                var value = variable.Value;
+                if (value.Contains(' ') && !value.StartsWith('"'))
+                {
+                    value = $"\"{value}\"";
+                }
+                result = result.Replace(placeholder, value, StringComparison.OrdinalIgnoreCase);
             }
 
             _logger.LogDebug("Command after variable substitution: {result}", result);

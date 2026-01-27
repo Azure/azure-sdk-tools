@@ -1,16 +1,10 @@
 # Release History
 
-## 0.5.14 (Unreleased)
+## 0.5.14 (2026-01-27)
 
 ### Features Added
 
 - Added a new CLI command to update the package release status in release plan.
-
-### Breaking Changes
-
-### Bugs Fixed
-
-### Other Changes
 
 ## 0.5.13 (2026-01-23)
 

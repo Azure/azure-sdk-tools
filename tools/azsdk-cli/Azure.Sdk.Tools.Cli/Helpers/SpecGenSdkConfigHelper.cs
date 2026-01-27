@@ -178,13 +178,46 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             foreach (var variable in variables)
             {
                 var placeholder = $"{{{variable.Key}}}";
-                // Quote the value if it contains spaces and is not already quoted
                 var value = variable.Value;
+                
+                // Only quote if value contains spaces and isn't already quoted
                 if (value.Contains(' ') && !value.StartsWith('"'))
                 {
-                    value = $"\"{value}\"";
+                    // Find all occurrences of the placeholder to handle path continuations
+                    int placeholderIndex;
+                    while ((placeholderIndex = result.IndexOf(placeholder, StringComparison.OrdinalIgnoreCase)) >= 0)
+                    {
+                        // Look ahead after the placeholder to find path continuations
+                        int endIndex = placeholderIndex + placeholder.Length;
+                        int pathEndIndex = endIndex;
+                        
+                        // Continue while we see path separators or valid path characters
+                        while (pathEndIndex < result.Length)
+                        {
+                            char c = result[pathEndIndex];
+                            // Stop at whitespace or characters that would end a path argument
+                            if (char.IsWhiteSpace(c) || c == '"')
+                            {
+                                break;
+                            }
+                            pathEndIndex++;
+                        }
+                        
+                        // Extract the path continuation (e.g., "/src")
+                        string pathContinuation = result.Substring(endIndex, pathEndIndex - endIndex);
+                        
+                        // Build the quoted replacement
+                        string quotedReplacement = $"\"{value}{pathContinuation}\"";
+                        
+                        // Replace the placeholder and continuation with quoted version
+                        result = result.Substring(0, placeholderIndex) + quotedReplacement + result.Substring(pathEndIndex);
+                    }
                 }
-                result = result.Replace(placeholder, value, StringComparison.OrdinalIgnoreCase);
+                else
+                {
+                    // No quoting needed, simple replacement
+                    result = result.Replace(placeholder, value, StringComparison.OrdinalIgnoreCase);
+                }
             }
 
             _logger.LogDebug("Command after variable substitution: {result}", result);

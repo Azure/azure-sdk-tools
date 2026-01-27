@@ -322,7 +322,7 @@ public class SpecGenSdkConfigHelperTests
         var result = _helper.SubstituteCommandVariables(command, variables);
 
         // Assert
-        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Users\\user\\Code\\AzSDK Tools Agent Demo\\azure-sdk-for-net\\sdk\\healthdataaiservices\\Azure.ResourceManager.HealthDataAIServices\"/src"));
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Users\\user\\Code\\AzSDK Tools Agent Demo\\azure-sdk-for-net\\sdk\\healthdataaiservices\\Azure.ResourceManager.HealthDataAIServices/src\""));
     }
 
     [Test]
@@ -355,7 +355,8 @@ public class SpecGenSdkConfigHelperTests
         // Act
         var result = _helper.SubstituteCommandVariables(command, variables);
 
-        // Assert
+        // Assert  
+        // Already quoted values are not re-quoted, so /src is appended outside quotes
         Assert.That(result, Is.EqualTo("dotnet build \"c:\\Path With Spaces\\Project\"/src"));
     }
 

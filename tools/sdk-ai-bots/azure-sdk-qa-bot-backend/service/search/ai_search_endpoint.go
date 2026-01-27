@@ -240,7 +240,6 @@ func (s *SearchClient) CompleteChunkByHierarchy(chunk model.Index, hierarchy mod
 	if err != nil {
 		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
 	}
-	log.Printf("Expanded hierarchy %s '%s/%s/%s/%s/%s' → %d sub-chunks", hierarchy.String(), chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3, len(resp.Value))
 	return resp.Value, nil
 }
 

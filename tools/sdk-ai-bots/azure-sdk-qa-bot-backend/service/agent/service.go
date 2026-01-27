@@ -783,14 +783,15 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 				log.Printf("✓ Expanded complete code mapping chunk: %s/%s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
 			case model.ExpansionHierarchical:
 				// Process by hierarchy level
-				Hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
+				hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
 				// Expand all chunks under header1
-				subChunks, err := s.searchClient.CompleteChunkByHierarchy(chunk, Hierarchy)
+				subChunks, err := s.searchClient.CompleteChunkByHierarchy(chunk, hierarchy)
 				if err != nil {
 					log.Printf("Failed to expand hierarchical chunk: %s/%s/%s/%s/%s, error: %v", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3, err)
 					finalChunks[i] = chunk // Fallback to original chunk
 					return
 				}
+				log.Printf("Expanded hierarchy %s '%s/%s/%s/%s/%s' → %d sub-chunks", hierarchy.String(), chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3, len(subChunks))
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 			default:
 				// Unknown expansion type - keep original

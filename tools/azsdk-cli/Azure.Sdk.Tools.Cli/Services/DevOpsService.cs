@@ -93,6 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan = false);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "");
         public Task<Build> GetPipelineRunAsync(int buildId);
@@ -153,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception("Failed to list overdue release plans. Error: {ex}", ex);
             }
         }
-        
+
         public async Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId)
         {
             logger.LogInformation("Fetching release plan work with id {workItemId}", workItemId);
@@ -217,6 +218,40 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false)
+        {
+            try
+            {
+                var languageId = MapLanguageToId(language);
+                var escapedPackageName = packageName?.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANER_APP_TEST}'";
+                query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] = 'In Progress'";
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No in-progress release plans found for package {packageName} in {language}", packageName, language);
+                    return [];
+                }
+
+                var releasePlans = new List<ReleasePlanWorkItem>();
+                foreach (var workItem in releasePlanWorkItems)
+                {
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+                    releasePlans.Add(releasePlan);
+                }
+
+                return releasePlans;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get release plans for package {packageName} in {language}", packageName, language);
+                throw new Exception($"Failed to get release plans for package {packageName} in {language}. Error: {ex.Message}", ex);
+            }
+        }
+
         private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
             var releasePlan = new ReleasePlanWorkItem()
@@ -240,6 +275,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 IsSpecApproved = workItem.Fields.TryGetValue("Custom.APISpecApprovalStatus", out value) && "Approved".Equals(value?.ToString()),
                 LanguageExclusionRequesterNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionRequestNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 LanguageExclusionApproverNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionApprovalNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                APISpecProjectPath = workItem.Fields.TryGetValue("Custom.ApiSpecProjectPath", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Owner = workItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty,
             };
 
@@ -253,22 +289,19 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var pullRequestStatus = workItem.Fields.TryGetValue($"Custom.SDKPullRequestStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var exclusionStatus = workItem.Fields.TryGetValue($"Custom.ReleaseExclusionStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
 
-                if (!string.IsNullOrEmpty(sdkGenPipelineUrl) || !string.IsNullOrEmpty(sdkPullRequestUrl) || !string.IsNullOrEmpty(packageName))
-                {
-                    releasePlan.SDKInfo.Add(
-                        new SDKInfo()
-                        {
-                            Language = MapLanguageIdToName(lang),
-                            GenerationPipelineUrl = sdkGenPipelineUrl,
-                            SdkPullRequestUrl = sdkPullRequestUrl,
-                            GenerationStatus = generationStatus,
-                            ReleaseStatus = releaseStatus,
-                            PullRequestStatus = pullRequestStatus,
-                            PackageName = packageName,
-                            ReleaseExclusionStatus = exclusionStatus
-                        }
-                    );
-                }
+                releasePlan.SDKInfo.Add(
+                    new SDKInfo()
+                    {
+                        Language = MapLanguageIdToName(lang),
+                        GenerationPipelineUrl = sdkGenPipelineUrl,
+                        SdkPullRequestUrl = sdkPullRequestUrl,
+                        GenerationStatus = generationStatus,
+                        ReleaseStatus = releaseStatus,
+                        PullRequestStatus = pullRequestStatus,
+                        PackageName = packageName,
+                        ReleaseExclusionStatus = exclusionStatus
+                    }
+                );
             }
 
             // Get details from API spec work item
@@ -448,16 +481,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Handle target ID
             if (targetId != null)
             {
-                var wiql = new Wiql { Query = $"SELECT [System.Id] FROM WorkItems WHERE ([System.Id] = {targetId})" };
-                var queryResult = await workItemClient.QueryByWiqlAsync(wiql);
-                var targetWorkItems = queryResult.WorkItems ?? [];
-                
-                // Query should only come up with one work item
-                if (!targetWorkItems.Any())
+                var targetWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(targetId.Value);
+
+                // Ensure the target work item exists before creating the relation
+                if (targetWorkItem == null)
                 {
                     throw new Exception($"Work item with ID {targetId} does not exist.");
                 }
-                var targetWorkItem = targetWorkItems.First();
 
                 // targetWorkItem contains only Id + Url; URL is enough to create relation
                 patchDocument.Add(new JsonPatchOperation
@@ -470,7 +500,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                         Url = targetWorkItem.Url
                     }
                 });
-                
             }
             // Handle target URLs (comma-separated)
             else if (!string.IsNullOrWhiteSpace(targetUrl))
@@ -490,17 +519,59 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await workItemClient.UpdateWorkItemAsync(patchDocument, id);
         }
 
+        private async Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId)
+        {
+            var workItemClient = connection.GetWorkItemClient();
+
+            var relationTypeSystemName = await ResolveRelationTypeSystemName(relationType);
+
+            var workItem = await workItemClient.GetWorkItemAsync(id, expand: WorkItemExpand.Relations);
+            var targetWorkItem = await workItemClient.GetWorkItemAsync(targetId);
+
+            if (workItem == null)
+            {
+                throw new Exception($"Work item {id} not found.");
+            }
+            if (targetWorkItem == null)
+            {
+                throw new Exception($"Target work item {targetId} not found.");
+            }
+            if (workItem.Relations == null || !workItem.Relations.Any())
+            {
+                throw new Exception($"Work item {id} has no relations.");
+            }
+
+            var targetRelation = workItem.Relations.FirstOrDefault(r =>
+                r.Rel.Equals(relationTypeSystemName, StringComparison.OrdinalIgnoreCase) &&
+                r.Url.Equals(targetWorkItem.Url, StringComparison.OrdinalIgnoreCase)
+            );
+
+            if (targetRelation == null)
+            {
+                throw new Exception($"Relation of type '{relationType}' to target work item ID {targetId} not found in work item {id}.");
+            }
+
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+            var relationIndex = workItem.Relations.IndexOf(targetRelation);
+            patchDocument.Add(new JsonPatchOperation
+            {
+                Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Remove,
+                Path = $"/relations/{relationIndex}"
+            });
+            await workItemClient.UpdateWorkItemAsync(patchDocument, id);
+        }
+
         private async Task<string> ResolveRelationTypeSystemName(string relationType)
         {
             var relationTypes = await GetCachedRelationTypes();
 
             // Match service-provided relation type by display name (case-insensitive)
             var match = relationTypes.FirstOrDefault(rt => string.Equals(rt.Name, relationType, StringComparison.OrdinalIgnoreCase));
-            if(match != null && match.ReferenceName != null)
+            if (match != null && match.ReferenceName != null)
             {
                 return match.ReferenceName;
             }
-            
+
             throw new Exception($"Relation Type '{relationType}' is not valid.");
         }
 
@@ -1446,6 +1517,23 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             logger.LogInformation("[{workItemId}] - Created service work item for {serviceName}", workItem.Id, serviceName);
             return workItem;
+        }
+        
+        private async Task UpdateWorkItemParentAsync(WorkItemBase child, WorkItemBase parent)
+        {
+            if (child.ParentId == parent.WorkItemId)
+            {
+                return; // already the parent
+            }
+
+            // Remove existing parent link
+            // Child must have existing parent link
+            if (child.ParentId != 0)
+            {
+                await RemoveWorkItemRelationAsync(child.WorkItemId, "Parent", child.ParentId);
+            }
+            
+            await CreateWorkItemRelationAsync(child.WorkItemId, "Parent", parent.WorkItemId);
         }
     }
 }

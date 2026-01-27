@@ -95,7 +95,7 @@ export class SpectorCaseProcessor {
                 const fileName = path.basename(specPath).toLowerCase();
                 // Only process main.tsp files (skip client.tsp as it will be processed in processSpecFile)
                 if (fileName !== 'main.tsp') {
-                    return;
+                    continue;
                 }
                 results.push(this.processSpecFile(spec, specPath, root, targetRoot));
                 

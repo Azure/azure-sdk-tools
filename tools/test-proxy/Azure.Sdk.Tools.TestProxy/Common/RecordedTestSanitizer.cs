@@ -215,7 +215,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual void Sanitize(RecordEntry entry, bool matchingBodies = true)
         {
-            // PHASE 0: Build precache metadata for any multipart bodies
+            // Build precache metadata for any multipart bodies
             // This happens ONCE per entry, then all sanitizers use the cached metadata
             if (matchingBodies)
             {
@@ -225,7 +225,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     PreCacheBodyMetadata(entry.Response);
                 }
 
-                // Verify: if body is multipart, it MUST have been cached
+                // add a couple assertions
                 if (entry.Request.Body != null && ContentTypeUtilities.IsMultipart(entry.Request.Headers, out _) && entry.Request.CachedBodyMetadata == null)
                 {
                     throw new HttpException(HttpStatusCode.InternalServerError, "TestProxy sanitizer: Multipart request body exists but precaching failed - CachedBodyMetadata is null");
@@ -274,10 +274,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public virtual void PreCacheBodyMetadata(RequestOrResponse message)
         {
             if (message?.Body == null || message.CachedBodyMetadata != null)
-                return;  // Already has metadata, or no body
+            {
+                return;  // already has metadata, or no body
+            }
 
             if (!ContentTypeUtilities.IsMultipart(message.Headers, out var boundary))
-                return;  // Not multipart, don't build metadata (yet)
+            {
+                return;  // Not multipart, don't need to precache
+            }
 
             // Build metadata structure from multipart body
             boundary = MultipartUtilities.ResolveFirstBoundary(boundary, message.Body);
@@ -365,12 +369,12 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             catch (IOException ex)
             {
                 var byteContent = Convert.ToBase64String(fixedRaw);
-                string message_text = $$"""
+                string message = $$"""
 The test-proxy is unexpectedly unable to build nested multipart metadata during precache: \"{{ex.Message}}\"
 File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
 {{byteContent}}
 """;
-                throw new HttpException(HttpStatusCode.InternalServerError, message_text);
+                throw new HttpException(HttpStatusCode.InternalServerError, message);
             }
 
             return metadata;

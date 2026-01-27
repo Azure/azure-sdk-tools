@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
@@ -246,8 +247,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             
             var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
             
-            // Modify the JSON to replace the user login with the bot user
-            rawJson = rawJson.Replace("\"login\": \"FakeUser1\"", $"\"login\": \"{trustedBotUser}\"");
+            // Modify the JSON to replace the user login with the bot user using JsonDocument
+            using (JsonDocument doc = JsonDocument.Parse(rawJson))
+            {
+                // Create a writable copy of the JSON
+                using (var stream = new System.IO.MemoryStream())
+                {
+                    using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = false }))
+                    {
+                        WriteJsonWithModifiedUserLogin(doc.RootElement, writer, trustedBotUser);
+                    }
+                    rawJson = Encoding.UTF8.GetString(stream.ToArray());
+                }
+            }
             
             var prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, SimpleJsonSerializer);
             
@@ -272,6 +284,57 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             // Verify no reviews were dismissed
             int numDismissedReviews = mockGitHubEventClient.GetReviewDismissals().Count;
             Assert.AreEqual(0, numDismissedReviews, $"No reviews should have been dismissed for trusted bot user {trustedBotUser}, but {numDismissedReviews} were dismissed.");
+        }
+
+        /// <summary>
+        /// Helper method to write JSON while modifying the user login property.
+        /// This recursively traverses the JSON tree and replaces all "login" properties with the new value.
+        /// </summary>
+        private static void WriteJsonWithModifiedUserLogin(JsonElement element, Utf8JsonWriter writer, string newLogin)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    writer.WriteStartObject();
+                    foreach (JsonProperty property in element.EnumerateObject())
+                    {
+                        writer.WritePropertyName(property.Name);
+                        // Replace login property value with the new login
+                        if (property.Name == "login" && property.Value.ValueKind == JsonValueKind.String)
+                        {
+                            writer.WriteStringValue(newLogin);
+                        }
+                        else
+                        {
+                            WriteJsonWithModifiedUserLogin(property.Value, writer, newLogin);
+                        }
+                    }
+                    writer.WriteEndObject();
+                    break;
+                case JsonValueKind.Array:
+                    writer.WriteStartArray();
+                    foreach (JsonElement item in element.EnumerateArray())
+                    {
+                        WriteJsonWithModifiedUserLogin(item, writer, newLogin);
+                    }
+                    writer.WriteEndArray();
+                    break;
+                case JsonValueKind.String:
+                    writer.WriteStringValue(element.GetString());
+                    break;
+                case JsonValueKind.Number:
+                    writer.WriteNumberValue(element.GetDouble());
+                    break;
+                case JsonValueKind.True:
+                    writer.WriteBooleanValue(true);
+                    break;
+                case JsonValueKind.False:
+                    writer.WriteBooleanValue(false);
+                    break;
+                case JsonValueKind.Null:
+                    writer.WriteNullValue();
+                    break;
+            }
         }
     }
 }

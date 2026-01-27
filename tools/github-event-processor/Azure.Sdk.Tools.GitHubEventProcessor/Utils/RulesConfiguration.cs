@@ -89,9 +89,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
                         TrustedBotUsers = config.TrustedBotUsers ?? new List<string>();
                     }
                 }
-                catch
+                catch (JsonException ex)
                 {
                     // Fallback to just deserializing Rules for backward compatibility
+                    System.Console.WriteLine($"Warning: Could not deserialize as RulesConfiguration: {ex.Message}. Falling back to rules-only deserialization.");
                     Rules = JsonSerializer.Deserialize<Dictionary<string, RuleState>>(rawJson);
                     TrustedBotUsers = new List<string>();
                 }

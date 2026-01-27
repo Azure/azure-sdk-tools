@@ -18,8 +18,6 @@ import { ThemeHelper } from './_helpers/theme.helper';
 })
 export class AppComponent  implements OnInit{
   title : string = 'APIView';
-  scrollBarHeight: string = '10px';
-  scrollBarWidth: string = '10px';
   userProfile: UserProfile | undefined = undefined;
 
   private destroy$ = new Subject<void>();

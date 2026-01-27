@@ -105,7 +105,7 @@ Follow conventions in `.editorconfig`:
 ### PowerShell Projects
 
 - Use `Invoke-Pester` for unit tests
-- Common templates available in `eng/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml`
+- Common templates available in `eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml`
 
 ## Code Owners
 
@@ -123,7 +123,7 @@ Follow conventions in `.editorconfig`:
 - Use pipeline templates from `eng/pipelines/templates`
 - Create `ci.yml` in tool directory for build/test/release
 - Use internal builds for release steps with appropriate conditions
-- See example: `tools/CreateRuleFabricBot/ci.yml`
+- See examples: `tools/pipeline-witness/ci.yml`, `tools/http-fault-injector/ci.yml`
 
 ## Contributing
 

@@ -6,10 +6,21 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 /// <summary>
+/// Represents a single patch that was applied to a customization file.
+/// </summary>
+public record AppliedPatch(
+    string FilePath,
+    string Description,
+    int ReplacementCount);
+
+/// <summary>
 /// Response payload for CustomizedCodeUpdateTool MCP / CLI operations.
 /// </summary>
 public class CustomizedCodeUpdateResponse : PackageResponseBase
 {
+    [JsonPropertyName("appliedPatches")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<AppliedPatch>? AppliedPatches { get; set; }
     /// <summary>
     /// Error codes for classifier to parse programmatically.
     /// These define the contract between the tool and downstream processors.
@@ -40,6 +51,15 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         if (!string.IsNullOrEmpty(Message))
         {
             sb.AppendLine(Message);
+        }
+        if (AppliedPatches?.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("## Applied Patches");
+            foreach (var patch in AppliedPatches)
+            {
+                sb.AppendLine($"- {patch.FilePath}: {patch.Description}");
+            }
         }
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {

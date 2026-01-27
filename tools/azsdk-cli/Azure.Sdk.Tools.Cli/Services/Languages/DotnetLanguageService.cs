@@ -230,7 +230,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         return new TestRunResponse(result);
     }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override string? HasCustomizations(string packagePath, CancellationToken ct)
     {
         // In azure-sdk-for-net, generated code lives in the Generated folder.
         // Customizations are partial types defined outside the Generated folder.
@@ -240,8 +240,14 @@ public sealed partial class DotnetLanguageService: LanguageService
 
         try
         {
+            var srcDir = Path.Combine(packagePath, "src");
+            if (!Directory.Exists(srcDir))
+            {
+                return null;
+            }
+
             var generatedDirMarker = Path.DirectorySeparatorChar + GeneratedFolderName + Path.DirectorySeparatorChar;
-            var csFiles = Directory.GetFiles(packagePath, "*.cs", SearchOption.AllDirectories)
+            var csFiles = Directory.GetFiles(srcDir, "*.cs", SearchOption.AllDirectories)
                 .Where(file => !file.Contains(generatedDirMarker, StringComparison.OrdinalIgnoreCase));
             
             foreach (var file in csFiles)
@@ -253,7 +259,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                         if (line.Contains("partial class"))
                         {
                             logger.LogDebug("Found .NET partial class in {FilePath}", file);
-                            return true;
+                            return srcDir;
                         }
                     }
                 }
@@ -264,12 +270,12 @@ public sealed partial class DotnetLanguageService: LanguageService
             }
 
             logger.LogDebug("No .NET partial classes found in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Error searching for .NET customization files in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
     }
 }

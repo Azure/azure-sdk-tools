@@ -88,18 +88,38 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             buildError);
 
     private static string[] GetMaxIterationsReachedNextSteps(string buildError) =>
-        BuildFailureNextSteps(
-            "Maximum repair iterations reached",
-            "Automatic repair exhausted after multiple attempts. Review errors and fix manually.",
-            buildError);
+    [
+        "## Status: Partial Success",
+        "",
+        "Customization patches were applied, but build errors remain.",
+        "",
+        "## Remaining Error",
+        buildError,
+        "",
+        "## Analysis",
+        "The remaining errors are in **generated code** (not customization files).",
+        "This tool can only patch customization files - it cannot modify generated code.",
+        "",
+        "## Common Causes",
+        "- TypeSpec renamed a property, and the emitter's partial-update kept handwritten",
+        "  constructors/methods that reference the old name",
+        "- Generated code has internal inconsistencies the emitter should have resolved",
+        "",
+        "## Recommended Actions",
+        "- If error is in generated code: File an issue with the language emitter",
+        "- If error is in customization: Review the patch that was applied and adjust manually",
+        "",
+        "## Documentation",
+        "https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md"
+    ];
 
     private static string GetCodeCustomizationDocUrl(string language) => language.ToLowerInvariant() switch
     {
         "python" => "https://github.com/Azure/autorest.python/blob/main/docs/customizations.md",
         "java" => "https://github.com/Azure/autorest.java/blob/main/customization-base/README.md",
-        "csharp" or "dotnet" => "https://github.com/microsoft/typespec/blob/main/packages/http-client-csharp/.tspd/docs/customization.md",
+        "dotnet" => "https://github.com/microsoft/typespec/blob/main/packages/http-client-csharp/.tspd/docs/customization.md",
         "go" => "https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/development/generate.md",
-        "javascript" or "typescript" => "https://github.com/Azure/azure-sdk-for-js/wiki/Modular-(DPG)-Customization-Guide",
+        "javascript" => "https://github.com/Azure/azure-sdk-for-js/wiki/Modular-(DPG)-Customization-Guide",
         _ => "https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md"
     };
     protected override Command GetCommand() =>
@@ -192,10 +212,10 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             }
 
             // Build failed - check if we have customizations to repair
-            var hasCustomizations = languageService.HasCustomizations(packagePath, ct);
-            logger.LogDebug("Has customizations: {HasCustomizations}", hasCustomizations);
+            var customizationRoot = languageService.HasCustomizations(packagePath, ct);
+            logger.LogDebug("Customization root: {CustomizationRoot}", customizationRoot ?? "(none)");
 
-            if (!hasCustomizations)
+            if (customizationRoot == null)
             {
                 // Build failed but no customization files to repair
                 logger.LogWarning("Build failed with no customizations: {Error}", initialBuildError);
@@ -211,29 +231,33 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             // Error-driven repair loop: attempt to fix build errors automatically
             logger.LogInformation("Build failed with customizations present - activating error-driven repair");
             var currentBuildError = initialBuildError;
+            var allAppliedPatches = new List<AppliedPatch>();
             
             for (int iteration = 1; iteration <= MaxPhaseBIterations; iteration++)
             {
                 logger.LogInformation("Error-driven repair iteration {Iteration}/{Max}", iteration, MaxPhaseBIterations);
                 
                 // Pass build error with context to microagent for repair
-                var patchesApplied = await ApplyPatchesAsync(
+                var patches = await ApplyPatchesAsync(
                     commitSha, 
-                    packagePath, 
+                    customizationRoot, 
                     packagePath, 
                     languageService, 
                     currentBuildError ?? "Build failed",
                     iteration,
                     ct);
+                
+                allAppliedPatches.AddRange(patches);
 
-                if (!patchesApplied)
+                if (patches.Count == 0)
                 {
-                    logger.LogInformation("Patches were not applied on iteration {Iteration}", iteration);
+                    logger.LogInformation("No patches applied on iteration {Iteration}", iteration);
                     return new CustomizedCodeUpdateResponse
                     {
-                        Message = "Patches not applied - automatic patching unsuccessful or not applicable.",
+                        Message = "No patches applied - automatic patching found nothing to fix.",
                         ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
                         ResponseError = currentBuildError,
+                        AppliedPatches = allAppliedPatches.Count > 0 ? allAppliedPatches : null,
                         NextSteps = GetPatchesFailedNextSteps().ToList()
                     };
                 }
@@ -263,6 +287,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                     return new CustomizedCodeUpdateResponse
                     {
                         Message = $"Build passed after {iteration} repair iteration(s). Patches applied successfully.",
+                        AppliedPatches = allAppliedPatches.Count > 0 ? allAppliedPatches : null,
                         NextSteps = SuccessPatchesAppliedNextSteps.ToList()
                     };
                 }
@@ -279,6 +304,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 Message = $"Max repair iterations reached. Build still failing: {currentBuildError}",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
                 ResponseError = currentBuildError,
+                AppliedPatches = allAppliedPatches.Count > 0 ? allAppliedPatches : null,
                 NextSteps = GetMaxIterationsReachedNextSteps(currentBuildError ?? "Unknown error").ToList()
             };
         }
@@ -316,7 +342,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     }
 
 
-    private async Task<bool> ApplyPatchesAsync(
+    private async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string commitSha,
         string? customizationRoot,
         string packagePath,
@@ -328,17 +354,17 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         if (string.IsNullOrEmpty(customizationRoot) || !Directory.Exists(customizationRoot))
         {
             logger.LogInformation("No customizations found to patch");
-            return false;
+            return [];
         }
 
         // Enrich build error with context for LLM understanding
         var enrichedContext = BuildEnrichedErrorContext(commitSha, buildError, iteration);
         
         logger.LogInformation("Applying error-driven patches for build error (iteration {Iteration})", iteration);
-        var patchesApplied = await languageService.ApplyPatchesAsync(commitSha, customizationRoot, packagePath, enrichedContext, ct);
-        logger.LogDebug("Patch application result: {Success}", patchesApplied);
+        var patches = await languageService.ApplyPatchesAsync(commitSha, customizationRoot, packagePath, enrichedContext, ct);
+        logger.LogDebug("Patches applied: {PatchCount}", patches.Count);
 
-        return patchesApplied;
+        return patches;
     }
 
     /// <summary>

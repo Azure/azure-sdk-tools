@@ -531,7 +531,7 @@ internal class DotNetLanguageSpecificChecksTests
     #region HasCustomizations Tests
 
     [Test]
-    public void HasCustomizations_ReturnsTrue_WhenPartialClassExistsOutsideGeneratedFolder()
+    public void HasCustomizations_ReturnsPath_WhenPartialClassExistsOutsideGeneratedFolder()
     {
         using var tempDir = TempDirectory.Create("dotnet-customization-test");
         var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
@@ -545,13 +545,14 @@ public partial class TestClient
     public void CustomMethod() { }
 }");
 
-        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath);
 
-        Assert.That(result, Is.True);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.EqualTo(srcDir));
     }
 
     [Test]
-    public void HasCustomizations_ReturnsFalse_WhenNoPartialClassesExist()
+    public void HasCustomizations_ReturnsNull_WhenNoPartialClassesExist()
     {
         using var tempDir = TempDirectory.Create("dotnet-no-customization-test");
         var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
@@ -565,16 +566,17 @@ public class RegularClass
     public void Method() { }
 }");
 
-        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath);
 
-        Assert.That(result, Is.False);
+        Assert.That(result, Is.Null);
     }
 
     [Test]
-    public void HasCustomizations_ReturnsFalse_WhenPartialClassOnlyInGeneratedFolder()
+    public void HasCustomizations_ReturnsNull_WhenPartialClassOnlyInGeneratedFolder()
     {
         using var tempDir = TempDirectory.Create("dotnet-generated-only-test");
-        var generatedDir = Path.Combine(tempDir.DirectoryPath, "src", "Generated");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
+        var generatedDir = Path.Combine(srcDir, "Generated");
         Directory.CreateDirectory(generatedDir);
         
         // Create a partial class inside Generated folder
@@ -585,9 +587,9 @@ public partial class TestClient
     public void GeneratedMethod() { }
 }");
 
-        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath);
 
-        Assert.That(result, Is.False);
+        Assert.That(result, Is.Null);
     }
 
     #endregion

@@ -49,7 +49,7 @@ The question must be classified into one of these categories:
   - How to fix typespec validation check failures?
   **You need to rewrite TypeSpec CI failures to TypeSpec Validation failures**
 
-## Intent Planes
+## Intent Service Planes
 {{include "../templates/intention/intent_service_plane.md"}}
 
 ## Need RAG Processing
@@ -59,7 +59,7 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,    // The rewritten standalone question
-  "plane": string,       // Must be one of the intent planes or unknown
+  "service_plane": string,       // Must be one of the intent service planes or unknown
   "category": string,    // Must be one of the intent categories or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
@@ -71,7 +71,7 @@ Response:
 {
   "question": "How do I migrate Azure Resource Manager (ARM) swagger specifications to TypeSpec?",
   "category": "TypeSpec Migration",
-  "plane": "management-plane",
+  "service_plane": "management-plane",
   "needs_rag_processing": true
 }
 
@@ -80,6 +80,6 @@ Response:
 {
   "question": "Good Job",
   "category": "unknown",
-  "plane": "unknown",
+  "service_plane": "unknown",
   "needs_rag_processing": false
 }

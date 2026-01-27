@@ -1,9 +1,9 @@
 using System;
-using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using System.Threading.Tasks;
-using Octokit;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Microsoft.Extensions.Logging;
+using Octokit;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {

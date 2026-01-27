@@ -1,11 +1,11 @@
-using Octokit;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
-using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
-using System.Text.Json;
-using Octokit.Internal;
 using Microsoft.Extensions.Logging;
+using Octokit;
+using Octokit.Internal;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {

@@ -54,15 +54,15 @@ export class SpectorCaseProcessor {
             this.convertSpectorCasesToMarkdown(
                 path.join(docsDir, 'typespec/packages/http-specs/specs'),
                 path.join(docsDir, 'typespec/packages/http-specs/specs/generated')
-            ),
+            ).catch(error => ({ error: error as Error })),
             this.convertSpectorCasesToMarkdown(
                 path.join(docsDir, 'typespec-azure/packages/azure-http-specs/specs'),
                 path.join(docsDir, 'typespec-azure/packages/azure-http-specs/specs/generated')
-            )
+            ).catch(error => ({ error: error as Error }))
         ]);
         
         for (const result of results) {
-            if (result.error) {
+            if (result?.error) {
                 console.error(`Error processing specs: ${result.error.message}`);
             }
         }
@@ -198,7 +198,7 @@ export class SpectorCaseProcessor {
     ): Promise<string> {
         try {
             // Combine spec and client.tsp for analysis context
-            const combinedSpec = clientTsp ? `${mainSpec}\n\n// === CLIENT CUSTOMIZATION (client.tsp) ===\n${clientTsp}` : mainSpec;
+            const combinedSpec = clientTsp ? `// === MAIN SPEC (main.tsp) ===\n${mainSpec}\n\n// === CLIENT CUSTOMIZATION (client.tsp) ===\n${clientTsp}` : mainSpec;
             
             // Single comprehensive call to process all scenarios at once
             const analysisResult = await this.analyzeScenariosAndSpec(scenarios, combinedSpec);
@@ -260,7 +260,7 @@ export class SpectorCaseProcessor {
 
         const prompt = `Analyze the following TypeSpec content and scenarios to extract structured information.
 
-            MAIN SPEC CONTENT:
+            FULL SPEC CONTENT:
             ${spec}
 
             SCENARIOS:

@@ -731,7 +731,6 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
 def db_ingest_guidelines(
     dry_run: bool = False,
     force: bool = False,
-    language_filter: Optional[str] = None,
     base_sha: Optional[str] = None,
     target_sha: Optional[str] = None,
 ):
@@ -747,7 +746,6 @@ def db_ingest_guidelines(
     result = ingestor.sync_guidelines(
         dry_run=dry_run,
         force=force,
-        language_filter=language_filter,
         base_sha=base_sha,
         target_sha=target_sha,
     )
@@ -756,23 +754,12 @@ def db_ingest_guidelines(
     if dry_run:
         print(f"{BOLD}[DRY RUN] No changes were made to the database.{RESET}\n")
 
-    if result.created:
-        print(f"{GREEN}Guidelines to create ({len(result.created)}):{RESET}")
-        for gid in result.created:
-            print(f"  + {gid}")
-        print()
-
-    if result.updated:
-        print(f"{BLUE}Guidelines to update ({len(result.updated)}):{RESET}")
-        for gid in result.updated:
-            print(f"  ~ {gid}")
-        print()
-
-    if result.deleted:
-        print(f"{Fore.RED}Guidelines to delete ({len(result.deleted)}):{RESET}")
-        for gid in result.deleted:
-            print(f"  - {gid}")
-        print()
+    print(
+        f"Guidelines: {GREEN}{len(result.guidelines_created)} to create{RESET}, "
+        f"{BLUE}{len(result.guidelines_updated)} to update{RESET}, "
+        f"{Fore.RED}{len(result.guidelines_deleted)} to delete{RESET}, "
+        f"{len(result.guidelines_unchanged)} unchanged"
+    )
 
     if result.errors:
         print(f"{Fore.RED}Errors ({len(result.errors)}):{RESET}")
@@ -780,8 +767,14 @@ def db_ingest_guidelines(
             print(f"  ! {err}")
         print()
 
-    print(result.summary())
-    return result
+    # Return counts only (not full lists) for CLI output
+    return {
+        "guidelines_created": len(result.guidelines_created),
+        "guidelines_updated": len(result.guidelines_updated),
+        "guidelines_deleted": len(result.guidelines_deleted),
+        "guidelines_unchanged": len(result.guidelines_unchanged),
+        "errors": len(result.errors),
+    }
 
 
 def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
@@ -1529,13 +1522,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Ignore the last synced commit SHA and process all guideline files (full resync).",
                 options_list=["--force", "-f"],
-            )
-            ac.argument(
-                "language_filter",
-                type=str,
-                help="Only process guidelines for this language (e.g., 'python', 'java').",
-                options_list=["--language", "-l"],
-                choices=list(SUPPORTED_LANGUAGES) + ["general"],
             )
             ac.argument(
                 "base_sha",

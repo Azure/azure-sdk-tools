@@ -10,7 +10,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
         [Test]
         public void GetFix_WithValidError_ReturnsFix()
         {
-            var error = new RuleError("AZC0030", "Test error message");
+            var error = new RuleError("AZC0012", "Test error message");
 
             var fix = ErrorAnalyzerService.GetFix(error);
 
@@ -43,9 +43,9 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
         {
             var errors = new[]
             {
-                new RuleError("AZC0030", "Test error 1"),
+                new RuleError("AZC0012", "Test error 1"),
                 new RuleError("UNSUPPORTED", "Unsupported error"),
-                new RuleError("AZC0030", "Test error 2")
+                new RuleError("AZC0012", "Test error 2")
             };
 
             var fixes = ErrorAnalyzerService.GetFixes(errors).ToList();

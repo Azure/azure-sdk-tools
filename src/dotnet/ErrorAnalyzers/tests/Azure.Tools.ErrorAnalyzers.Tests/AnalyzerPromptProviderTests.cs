@@ -20,7 +20,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
 
             // Assert
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix.Prompt, Does.Contain("Analyze and fix unknown error"));
+            Assert.That(fix.Prompt, Does.Contain("Analyze and Fix Unknown Error"));
         }
 
         [Test]
@@ -34,7 +34,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
 
             // Assert
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix.Prompt, Does.Contain("Analyze and fix unknown error"));
+            Assert.That(fix.Prompt, Does.Contain("Analyze and Fix Unknown Error"));
         }
 
         [Test]
@@ -48,7 +48,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
 
             // Assert
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix.Prompt, Does.Contain("Analyze and fix unknown error"));
+            Assert.That(fix.Prompt, Does.Contain("Analyze and Fix Unknown Error"));
         }
 
         [Test]
@@ -62,7 +62,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
 
             // Assert
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix.Prompt, Does.Contain("Analyze and fix unknown error"));
+            Assert.That(fix.Prompt, Does.Contain("Analyze and Fix Unknown Error"));
         }
 
         [Test]
@@ -77,7 +77,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
             // Assert
             Assert.That(fix, Is.Not.Null);
             Assert.That(fix.Prompt, Is.Not.Empty);
-            Assert.That(fix.Prompt, Does.Not.Contain("Analyze and fix unknown error")); // Should not be fallback
+            Assert.That(fix.Prompt, Does.Not.Contain("Analyze and Fix Unknown Error")); // Should not be fallback
         }
 
         [Test]
@@ -91,7 +91,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
 
             // Assert
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix.Prompt, Does.Contain("AZC0012"));
+            Assert.That(fix.Prompt, Does.Contain("Fix AZC0012"));
             Assert.That(fix.Context, Is.Not.Empty);
         }
 

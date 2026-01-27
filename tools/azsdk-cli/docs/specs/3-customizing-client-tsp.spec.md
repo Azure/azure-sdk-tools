@@ -475,14 +475,14 @@ Note: Field 'displayName' no longer exists in generated model
 
 ### Scenario 5: .NET Build Errors from Analyzer
 
-**Description:** .NET analyzer errors (AZC0030, AZC0034) for naming violations: model ends with "Parameters", type name conflicts with existing types.
+**Description:** .NET analyzer errors (AZC0030, AZC0012) for naming violations: model ends with "Parameters", type name "Tasks" too generic.
 
 **Entry Point:** Build failure (.NET analyzer)
 
 **Errors:**
 
 - `AZC0030`: Model name ends with 'Parameters'
-- `AZC0034`: Type name conflicts with existing type
+- `AZC0012`: Type name 'Tasks' too generic
 
 **Workflow Execution:**
 
@@ -491,7 +491,7 @@ Note: Field 'displayName' no longer exists in generated model
 | **Phase A: TypeSpec** | Parse analyzer error messages<br/>Apply `@clientName` decorators for .NET<br/>Rename problematic types<br/>Regenerate .NET SDK<br/>Validate build | SDK regenerates with new names<br/>Analyzer errors resolved<br/>Build passes<br/>No Phase B needed |
 
 **Acceptance Criteria:**
-- `@@clientName` decorators applied for all analyzer violations (AZC0030, AZC0034, etc.)
+- `@@clientName` decorators applied for all analyzer violations (AZC0030, AZC0012, etc.)
 - All .NET analyzer errors resolved
 - Build completes with no errors
 - Renamed types follow .NET naming conventions

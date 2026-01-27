@@ -35,7 +35,7 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
             Assert.That(fix!.Action, Is.EqualTo(FixAction.AgentPrompt));
             var promptFix = fix as AgentPromptFix;
             Assert.That(promptFix, Is.Not.Null);
-            Assert.That(promptFix!.Prompt, Does.Contain("Analyze and fix unknown error")); // Fallback prompt
+            Assert.That(promptFix!.Prompt, Does.Contain("Analyze and Fix Unknown Error")); // Fallback prompt
         }
 
         [Test]

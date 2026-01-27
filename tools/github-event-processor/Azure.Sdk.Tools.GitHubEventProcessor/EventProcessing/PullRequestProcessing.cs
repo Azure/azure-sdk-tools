@@ -172,7 +172,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         // If the user is a trusted bot, skip the approval reset
                         if (isTrustedBot)
                         {
-                            Console.WriteLine($"User {prEventPayload.PullRequest.User.Login} is a trusted bot user. Skipping approval reset.");
                             return;
                         }
                         

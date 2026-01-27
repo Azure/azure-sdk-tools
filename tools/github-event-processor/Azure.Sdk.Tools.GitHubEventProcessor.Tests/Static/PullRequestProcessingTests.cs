@@ -245,10 +245,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             mockGitHubEventClient.RulesConfiguration.TrustedBotUsers.Add(trustedBotUser);
             
             var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
-            var prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, SimpleJsonSerializer);
             
-            // Override the PR author to be the trusted bot user
-            prEventPayload.PullRequest.User.Login = trustedBotUser;
+            // Modify the JSON to replace the user login with the bot user
+            rawJson = rawJson.Replace("\"login\": \"FakeUser1\"", $"\"login\": \"{trustedBotUser}\"");
+            
+            var prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, SimpleJsonSerializer);
             
             // Set the return value for the permission check - bot doesn't have permissions
             mockGitHubEventClient.UserHasPermissionsReturn = false;

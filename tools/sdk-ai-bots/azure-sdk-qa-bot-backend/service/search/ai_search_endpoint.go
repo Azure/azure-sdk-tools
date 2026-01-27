@@ -238,7 +238,7 @@ func (s *SearchClient) CompleteChunkByHierarchy(chunk model.Index, hierarchy mod
 	}
 	resp, err := s.QueryIndex(context.Background(), req)
 	if err != nil {
-		return []model.Index{chunk}, fmt.Errorf("QueryIndex() got an error: %v", err)
+		return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
 	}
 	log.Printf("Expanded hierarchy %s '%s/%s/%s/%s/%s' → %d sub-chunks", hierarchy.String(), chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3, len(resp.Value))
 	return resp.Value, nil
@@ -385,8 +385,6 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, opts Age
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-	log.Printf("Agentic Search Req: %s", string(body))
-
 	knowledgeBaseAPI := config.AppConfig.AI_SEARCH_KNOWLEDGE_BASE_API
 	knowledgeBaseAPI = strings.ReplaceAll(knowledgeBaseAPI, "{AI_SEARCH_BASE_URL}", s.BaseUrl)
 	knowledgeBaseAPI = strings.ReplaceAll(knowledgeBaseAPI, "{AI_SEARCH_AGENT}", s.Agent)
@@ -423,7 +421,7 @@ func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[mode
 		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", *scope))
 	}
 	if plane != nil && *plane != model.Plane_Unknown {
-		// For a specific plane, include documents with that plane, 'both', or no plane specified.
+		// For a specific plane, include documents with that plane or no plane specified.
 		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or plane eq null)", *plane))
 	}
 	metadataFilter := strings.Join(metadataFilters, " and ")

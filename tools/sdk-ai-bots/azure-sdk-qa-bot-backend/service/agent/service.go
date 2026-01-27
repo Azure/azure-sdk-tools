@@ -763,19 +763,34 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			switch cwe.Expansion {
 			case model.ExpansionQA:
 				// Expand complete QA chunk
-				subChunks, _ := s.searchClient.CompleteChunkByHierarchy(chunk, model.HierarchyHeader1)
+				subChunks, err := s.searchClient.CompleteChunkByHierarchy(chunk, model.HierarchyHeader1)
+				if err != nil {
+					log.Printf("Failed to expand QA chunk: %s/%s/%s, error: %v", chunk.ContextID, chunk.Title, chunk.Header1, err)
+					finalChunks[i] = chunk // Fallback to original chunk
+					return
+				}
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 				log.Printf("✓ Expanded complete QA chunk: %s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1)
 			case model.ExpansionMapping:
 				// Expand complete Mapping chunk
-				subChunks, _ := s.searchClient.CompleteChunkByHierarchy(chunk, model.HierarchyHeader2)
+				subChunks, err := s.searchClient.CompleteChunkByHierarchy(chunk, model.HierarchyHeader2)
+				if err != nil {
+					log.Printf("Failed to expand Mapping chunk: %s/%s/%s/%s, error: %v", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, err)
+					finalChunks[i] = chunk // Fallback to original chunk
+					return
+				}
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 				log.Printf("✓ Expanded complete code mapping chunk: %s/%s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
 			case model.ExpansionHierarchical:
 				// Process by hierarchy level
 				Hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
 				// Expand all chunks under header1
-				subChunks, _ := s.searchClient.CompleteChunkByHierarchy(chunk, Hierarchy)
+				subChunks, err := s.searchClient.CompleteChunkByHierarchy(chunk, Hierarchy)
+				if err != nil {
+					log.Printf("Failed to expand hierarchical chunk: %s/%s/%s/%s/%s, error: %v", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3, err)
+					finalChunks[i] = chunk // Fallback to original chunk
+					return
+				}
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 			default:
 				// Unknown expansion type - keep original

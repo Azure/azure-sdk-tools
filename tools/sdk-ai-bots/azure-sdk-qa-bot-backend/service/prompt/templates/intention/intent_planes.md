@@ -1,4 +1,3 @@
-The question must be classified into one of these planes if it is a `branded` question,
 Use the following methods to classify the plane (check in order):
 
 1. **PR Label Analysis**: If the question includes an azure-rest-api-specs PR link:

@@ -59,7 +59,7 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,    // The rewritten standalone question
-  "plane": string,       // Must be one of the intent planes or unknown, required if scope is branded
+  "plane": string,       // Must be one of the intent planes or unknown
   "category": string,    // Must be one of the intent categories or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }

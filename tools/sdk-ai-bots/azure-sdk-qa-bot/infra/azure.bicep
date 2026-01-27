@@ -1,12 +1,8 @@
 // Azure Table
 @secure()
-param azureStorageUrl string
-@secure()
 param azureTableNameForConversation string
 
 // Azure Blob
-@secure()
-param azureBlobStorageUrl string
 param blobContainerName string
 param channelConfigBlobName string
 param tenantConfigBlobName string
@@ -144,20 +140,17 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'RAG_SERVICE_SCOPE'
           value: ragScope
         }
-        // Azure Table
+        // Azure Storage Account
         {
-          name: 'AZURE_STORAGE_URL'
-          value: azureStorageUrl
+          name: 'STORAGE_ACCOUNT_NAME'
+          value: storageAccountName
         }
+        // Azure Table
         {
           name: 'AZURE_TABLE_NAME_FOR_CONVERSATION'
           value: azureTableNameForConversation
         }
         // Azure Blob
-        {
-          name: 'AZURE_BLOB_STORAGE_URL'
-          value: azureBlobStorageUrl
-        }
         {
           name: 'BLOB_CONTAINER_NAME'
           value: blobContainerName

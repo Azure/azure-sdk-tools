@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Union
 from .constants import EVALUATION_PASS_FAIL_MAPPING
 
 class AzureBotReferenceEvaluator:
@@ -75,7 +75,7 @@ class AzureBotReferenceEvaluator:
 
         return exact_matches, unexpected_refs, missing_refs, match_percentage
     
-    def __call__(self, references: list[str], expected_references: list[str] | None = None):
+    def __call__(self, references: list[Dict[str, Any]], expected_references: list[Dict[str, Any]] | None = None)-> Dict[str, Union[Any, float]]:
         # Calculate reference matching if expected references are provided
 
         result: dict[str, Any] = {}

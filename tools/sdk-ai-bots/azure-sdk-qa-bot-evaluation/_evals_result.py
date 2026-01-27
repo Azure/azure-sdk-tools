@@ -1,3 +1,4 @@
+from enum import IntFlag
 import json
 import logging
 import math
@@ -7,8 +8,13 @@ from typing import Any, Optional
 from tabulate import tabulate
 
 
+class EvalReturnCode(IntFlag):
+    SUCCESS = 0
+    FAIL = 1
+    WARNING = 2 << 1
+
 class EvalsResult:
-    def __init__(self, weights: dict[str, float] | None, metrics: dict[str, list[str] | None], suppressions: dict[str, list[str] | None]):
+    def __init__(self, weights: dict[str, float] | None, metrics: dict[str, list[str] | None], suppressions: dict[str, list[str]] | None):
         """
         Initialize an EvalsResult instance for managing evaluation results.
 
@@ -27,7 +33,15 @@ class EvalsResult:
         """
         self._weights = weights or {}
         self._metrics = metrics
-        self._suppressions = suppressions or {"evaluators":[], "testcases":[]}
+        # Ensure suppressions dict always has lists, never None
+        self._suppressions: dict[str, list[str]]
+        if suppressions is None:
+            self._suppressions = {"evaluators": [], "testcases": []}
+        else:
+            self._suppressions = {
+                "evaluators": suppressions.get("evaluators") or [],
+                "testcases": suppressions.get("testcases") or []
+            }
 
     def calculate_overall_score(self, row: dict[str, Any]) -> float:
         """Calculate weighted score based on various metrics."""
@@ -115,7 +129,7 @@ class EvalsResult:
         return run_result
 
     @classmethod
-    def format_terminal_diff(cls, new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
+    def format_terminal_diff(cls, new: float, old: float, format_str: str = ".2f", reverse: bool = False) -> str:
         """Format difference with ANSI colors for terminal output."""
 
         diff = new - old
@@ -164,10 +178,10 @@ class EvalsResult:
                     base_score = base[f"{metric}"] if f"{metric}" in base else None
                     if base_score is not None:
                         values.append(
-                            f"{metric_score:.1f}{EvalsResult.format_terminal_diff(metric_score, float(base_score))}"
+                            f"{metric_score:.2f}{EvalsResult.format_terminal_diff(metric_score, float(base_score))}"
                         )
                     else:
-                        values.append(f"{metric_score:.1f}")
+                        values.append(f"{metric_score:.2f}")
                     fields = self._metrics[metric]
                     if fields:
                         for field in fields:
@@ -177,11 +191,11 @@ class EvalsResult:
                     else:
                         metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
                         values.append(f"{metric_result}")
-                values.append(f"{score:.1f}{EvalsResult.format_terminal_diff(score, float(base['overall_score']))}")
+                values.append(f"{score:.2f}{EvalsResult.format_terminal_diff(score, float(base['overall_score']))}")
             else:
                 for metric in metrics:
                     metric_score = result[f"{metric}"] if f"{metric}" in result else -1
-                    values.append(f"{metric_score:.1f}")
+                    values.append(f"{metric_score:.2f}")
                     fields = self._metrics[metric]
                     if fields:
                         for field in fields:
@@ -191,7 +205,7 @@ class EvalsResult:
                     else:
                         metric_result = result[f"{metric}_result"] if f"{metric}_result" in result else "N/A"
                         values.append(f"{metric_result}")
-                values.append(f"{score:.1f}")
+                values.append(f"{score:.2f}")
 
             terminal_row.extend(values)
             terminal_rows.append(terminal_row)
@@ -238,12 +252,23 @@ class EvalsResult:
 
             self.output_table(test_results, name, baseline_results)
 
-    def verify_results(self, all_results: dict[str, Any], with_baseline: bool = True) -> bool:
-        ret = True
+    def verify_results(self, all_results: dict[str, Any], with_baseline: bool = True) -> int:
+        """
+        Verify evaluation results against baseline and suppression rules.
+
+        Args:
+            all_results: A dictionary mapping scenario names to their evaluation results (list of dicts).
+            with_baseline: Whether to compare results with baseline data (default: True).
+
+        Returns:
+            int: 0 if all scenarios pass, 1 if any scenario fails, 2 if all pass but some have warnings (suppressed failures).
+        """
+        ret = 0
         failed_scenarios = []
+        warning_scenarios = []
         metrics = self._metrics.keys()
         for name, test_results in all_results.items():
-            scenario_ret = True
+            scenario_ret = EvalReturnCode.SUCCESS
 
             if with_baseline:
                 baseline_results = {}
@@ -257,30 +282,38 @@ class EvalsResult:
                             baseline_results[result["testcase"]] = result
                         baseline_results["average_score"] = baseline_data[-1]["average_score"]
                         if test_results[-1]["average_score"] < baseline_data[-1]["average_score"]:
-                            # scenario_ret = False //ignore decrease in average score
                             logging.warning(f"scenario {name} avarage score decrease!")
+                            warning = True
 
             for metric in metrics:
-                if metric in self._suppressions["evaluators"]:
-                    continue
                 pass_rate = test_results[-1][f"{metric}_pass_rate"] if f"{metric}_pass_rate" in test_results[-1] else 0
                 fail_rate = test_results[-1][f"{metric}_fail_rate"] if f"{metric}_fail_rate" in test_results[-1] else 0
                 # workaround: for groundedness, only caculate the `fail`
+                metric_ret = EvalReturnCode.SUCCESS
                 if metric == "groundedness":
                     if fail_rate > 0:
-                        scenario_ret = False
+                        metric_ret = EvalReturnCode.FAIL
                 else:
                     if pass_rate < test_results[-1]["total_evals"]:
-                        scenario_ret = False
+                        metric_ret = EvalReturnCode.FAIL
+                if metric in self._suppressions["evaluators"] and metric_ret == EvalReturnCode.FAIL:
+                    metric_ret = EvalReturnCode.WARNING #fallback to warning if evaluator is suppressed
+                scenario_ret = scenario_ret | metric_ret
 
-            if not scenario_ret:
+            if scenario_ret & EvalReturnCode.FAIL:
                 failed_scenarios.append(name)
-                ret = False
+                ret = 1 # failed
+            elif scenario_ret & EvalReturnCode.WARNING:
+                warning_scenarios.append(name)
+                ret = 2 # succeed with warning
+
         if failed_scenarios:
             logging.info(f"Failed Scenarios: {' '.join(failed_scenarios)}")
+        elif warning_scenarios:
+            logging.info(f"Scenarios with warnings: {' '.join(warning_scenarios)}")
         else:
             logging.info(f"All scenarios passed without issues.")
-        
+
         return ret
 
     def establish_baseline(self, all_results: dict[str, Any], is_ci: bool) -> None:

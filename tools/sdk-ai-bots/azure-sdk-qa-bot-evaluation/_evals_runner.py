@@ -159,7 +159,7 @@ class EvalsRunner:
         num_to_run: int = 1,
     ):
         self._evaluators = evaluators or {}
-        self._evals_result: EvalsResult = evals_result or EvalsResult(None, {})
+        self._evals_result: EvalsResult = evals_result or EvalsResult(None, {}, None)
         self._num_to_run = num_to_run
         # Initialize the shared cache lazily once
         if EvalsRunner.channel_to_tenant_id_dict is None:

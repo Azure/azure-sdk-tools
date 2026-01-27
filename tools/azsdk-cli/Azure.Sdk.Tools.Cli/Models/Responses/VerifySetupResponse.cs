@@ -23,12 +23,12 @@ public class VerifySetupResponse : CommandResponse
             foreach (var result in Results)
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
-                sb.AppendLine($"        Instructions: {string.Join(", ", result.Instructions)}");
+                sb.AppendLine($"        - Instructions: {string.Join(", ", result.Instructions)}");
                 if (!string.IsNullOrEmpty(result.Reason))
                 {
-                    sb.AppendLine($"        Reason: {result.Reason}\n");
+                    sb.AppendLine($"        - Reason: {result.Reason}");
                 }
-                sb.AppendLine($"        Requirement Status Details: {result.RequirementStatusDetails}\n");
+                sb.AppendLine($"        - Requirement Status Details: {result.RequirementStatusDetails}\n");
             }
         }
         else

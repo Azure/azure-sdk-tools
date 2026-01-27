@@ -34,7 +34,7 @@ public static class CoreRequirements
             {
                 return ["sudo apt install nodejs"];
             }
-            return ["Download Node.js from https://nodejs.org", "Or run: winget install OpenJS.NodeJS"];            
+            return ["Download Node.js from https://nodejs.org"];            
         }
     }
 
@@ -124,7 +124,7 @@ public static class CoreRequirements
             {
                 Success = isEnabled,
                 Output = isEnabled ? "Git long paths enabled" : null,
-                Error = isEnabled ? null : "Git long paths not enabled, core.LongPaths is not set to true"
+                Error = isEnabled ? null : "Git long paths not enabled, core.longpaths is not set to true"
             };
         }
 

@@ -77,7 +77,7 @@ public class VerifySetupTool : LanguageMcpTool
         try
         {
             // Create context for filtering requirements
-            var ctx = await CreateRequirementContext(packagePath ?? Environment.CurrentDirectory, langs);
+            var ctx = await CreateRequirementContext(packagePath ?? Environment.CurrentDirectory, langs, ct);
             
             // Get all requirements that should be checked in this context
             var reqsToCheck = AllRequirements.All
@@ -114,18 +114,7 @@ public class VerifySetupTool : LanguageMcpTool
                     displayName = $"{req.Name} (>= {req.MinVersion})";
                 }
 
-                if (result.ExitCode != 0)
-                {
-                    response.ResponseErrors ??= new List<string>();
-                    response.ResponseErrors.Add($"Requirement failed: {req.Name}. Error: {result.ResponseError}");
-
-                    response.Results.Add(new RequirementCheckResult
-                    {
-                        Requirement = displayName,
-                        Instructions = instructions,
-                    });
-                } 
-                else if (result.Message != null)
+                if (result.Message != null)
                 {
                     response.Results.Add(new RequirementCheckResult
                     {
@@ -204,14 +193,14 @@ public class VerifySetupTool : LanguageMcpTool
         return new DefaultCommandResponse();
     }
 
-    private async Task<RequirementContext> CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null)
+    private async Task<RequirementContext> CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null, CancellationToken ct = default)
     {
-        var (repoRoot, _, _) = await PackagePathParser.ParseAsync(gitHelper, packagePath);
+        var (repoRoot, _, _) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         
         // If no languages specified, try to detect from the repo
         if (languages == null || languages.Count == 0)
         {
-            var languageService = await GetLanguageServiceAsync(packagePath);
+            var languageService = await GetLanguageServiceAsync(packagePath, ct);
             if (languageService != null)
             {
                 languages = [languageService.Language];

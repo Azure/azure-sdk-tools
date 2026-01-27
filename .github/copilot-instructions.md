@@ -7,6 +7,7 @@ This repository contains tools and libraries used by the Azure SDK team's engine
 ## General Guidelines
 
 - @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_best_practices` tool if available.
+- Base all assumptions and conclusions on data from authoritative sources. Do research as needed to gather data. If you lack sufficient data for validation, stop and tell me what you don't know.
 - Make minimal, surgical changes focused on the specific task at hand
 - Follow existing patterns and conventions found in the codebase
 - Each tool should be self-contained with its own README, tests, and CI configuration

@@ -67,10 +67,10 @@ func (s *SearchClient) QueryIndex(ctx context.Context, req *model.QueryIndexRequ
 
 // SearchOptions contains common parameters for search operations
 type SearchOptions struct {
-	Sources      []model.Source
-	SourceFilter map[model.Source]string
-	Scope        *model.Scope
-	Plane        *model.ServicePlane
+	Sources       []model.Source
+	SourceFilter  map[model.Source]string
+	QuestionScope *model.QuestionScope
+	ServicePlane  *model.ServicePlane
 }
 
 func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([]model.Index, error) {
@@ -133,7 +133,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, opts Sear
 	// If no sources specified, search all at once
 	if len(opts.Sources) == 0 {
 		baseReq.Top = k
-		baseReq.Filter = s.buildFilter(nil, opts.SourceFilter, opts.Scope, opts.Plane)
+		baseReq.Filter = s.buildFilter(nil, opts.SourceFilter, opts.QuestionScope, opts.ServicePlane)
 		resp, err := s.QueryIndex(context.Background(), &baseReq)
 		if err != nil {
 			return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
@@ -154,7 +154,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, opts Sear
 		if val, ok := config.SourceTopK[source]; ok {
 			req.Top = val
 		}
-		req.Filter = s.buildFilter([]model.Source{source}, opts.SourceFilter, opts.Scope, opts.Plane)
+		req.Filter = s.buildFilter([]model.Source{source}, opts.SourceFilter, opts.QuestionScope, opts.ServicePlane)
 
 		resp, err := s.QueryIndex(context.Background(), &req)
 		if err != nil {
@@ -367,7 +367,7 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, opts Age
 		{
 			KnowledgeSourceName: config.AppConfig.AI_SEARCH_KNOWLEDGE_SOURCE,
 			Kind:                model.KnowledgeSourceKindSearchIndex,
-			FilterAddOn:         s.buildFilter(opts.Sources, opts.SourceFilter, opts.Scope, opts.Plane),
+			FilterAddOn:         s.buildFilter(opts.Sources, opts.SourceFilter, opts.QuestionScope, opts.ServicePlane),
 			RerankerThreshold:   to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
 			IncludeReferences:   to.Ptr(true),
 		},
@@ -414,10 +414,10 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, opts Age
 }
 
 // buildFilter creates a combined OData filter string from sources, source-specific filters, and metadata filters.
-func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope *model.Scope, plane *model.ServicePlane) string {
+func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope *model.QuestionScope, plane *model.ServicePlane) string {
 	// Build metadata filter from scope and plane
 	var metadataFilters []string
-	if scope != nil && *scope == model.Scope_Unbranded {
+	if scope != nil && *scope == model.QuestionScope_Unbranded {
 		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", *scope))
 	}
 	if plane != nil && *plane != model.ServicePlane_Unknown {

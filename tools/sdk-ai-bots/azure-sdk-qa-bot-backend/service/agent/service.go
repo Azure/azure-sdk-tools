@@ -108,16 +108,16 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// Apply default scope from tenant config
 	if tenantConfig.DefaultScope != nil {
-		intention.Scope = tenantConfig.DefaultScope
+		intention.QuestionScope = tenantConfig.DefaultScope
 	}
 
 	// Apply intention override if provided
 	if req.Intention != nil {
-		if req.Intention.Scope != nil {
-			intention.Scope = req.Intention.Scope
+		if req.Intention.QuestionScope != nil {
+			intention.QuestionScope = req.Intention.QuestionScope
 		}
-		if req.Intention.Plane != nil {
-			intention.Plane = req.Intention.Plane
+		if req.Intention.ServicePlane != nil {
+			intention.ServicePlane = req.Intention.ServicePlane
 		}
 	}
 	jsonReq, _ = json.Marshal(intention)
@@ -517,10 +517,10 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 	resp, err := s.searchClient.AgenticSearch(ctx, query, search.AgenticSearchOptions{
 		SearchOptions: search.SearchOptions{
-			Sources:      req.Sources,
-			SourceFilter: sourceFilter,
-			Scope:        intention.Scope,
-			Plane:        intention.Plane,
+			Sources:       req.Sources,
+			SourceFilter:  sourceFilter,
+			QuestionScope: intention.QuestionScope,
+			ServicePlane:  intention.ServicePlane,
 		},
 		Prompt: agenticSearchPrompt,
 	})
@@ -618,10 +618,10 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 	}
 
 	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, search.SearchOptions{
-		Sources:      req.Sources,
-		SourceFilter: sourceFilter,
-		Scope:        intention.Scope,
-		Plane:        intention.Plane,
+		Sources:       req.Sources,
+		SourceFilter:  sourceFilter,
+		QuestionScope: intention.QuestionScope,
+		ServicePlane:  intention.ServicePlane,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)

@@ -55,10 +55,10 @@ func TestAgenticSearch(t *testing.T) {
 	sourceFilter := map[model.Source]string{}
 	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", search.AgenticSearchOptions{
 		SearchOptions: search.SearchOptions{
-			Sources:      nil,
-			SourceFilter: sourceFilter,
-			Scope:        to.Ptr(model.Scope_Unbranded),
-			Plane:        to.Ptr(model.ServicePlane_Unknown),
+			Sources:       nil,
+			SourceFilter:  sourceFilter,
+			QuestionScope: to.Ptr(model.QuestionScope_Unbranded),
+			ServicePlane:  to.Ptr(model.ServicePlane_Unknown),
 		},
 		Prompt: "",
 	})

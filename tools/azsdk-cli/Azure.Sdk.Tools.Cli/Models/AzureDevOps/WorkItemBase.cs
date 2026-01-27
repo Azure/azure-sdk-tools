@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
 using Azure.Sdk.Tools.Cli.Attributes;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 

@@ -124,23 +124,39 @@ func TestIntentionRecognition_AnnouncementMessage(t *testing.T) {
 	messages := []model.Message{
 		{
 			Role: model.Role_User,
-			Content: `October SDK Release Kickoff
-Hi All,
-Welcome to the October Release Kickoff!
+			Content: `Hi everyone,
+ 
+We released Core and Identity out-of-band this month with some important updates:
+Core release
+Identity release
+We are clear to proceed with the January 2026 SDK releases.
+There will be automatic patch releases this month.
 
-Release TO DOs:
-- Run the Prepare-Release script by EOB Wednesday October 1st
-- Review release notes PR by ship date (Tuesday October 7th)
-
-Important Dates:
-- Monthly Release Check-In: Thursday October 2nd @11:00AM PST
-- October core code complete: 9/30
-- October all package ship: 10/07
-
-Important Links:
-- Upcoming release dates
-- Releasing Libraries
-- Release Checklist`,
+If you have updates and plan to release manually, please release before January 26th.
+If you plan an out-of-band release, please inform @Jair Myree of your intention.
+Note: Updates to documentation require a manual release.
+ 
+Important Dates
+Patch Release: January 27th
+BOM Release: January 28th
+ 
+Release Guidance
+For packages doing both stable & beta releases, use separate branches for each.
+For packages releasing stable from main, ensure API reviews are approved by the Azure SDK for Java API review board. Missing approvals will cause pipeline failures.
+For packages releasing stable from a release branch, API reviews will auto‑generate and the initial pipeline run will fail. Get those auto‑generated reviews approved, then re-run the pipeline.
+For more documentation on how to perform an SDK release, see our wiki.
+ 
+Packages to be Released Next
+Releases can now proceed in this order:
+ 
+Group 2:
+App Configuration, Attestation, Communication (Common & Identity), Confidential Ledger, Container Registry, Cosmos, Device Update, Digital Twins, Farmbeats, Form Recognizer, Key Vault, Load Testing, Maps, Metrics Advisor, Mixed Reality Authentication, Monitor, Personalizer, Purview, Quantum Jobs, Schema Registry, Search, Service Bus, Storage, Tables, Text Analytics, Web Pub Sub, etc.
+ 
+Group 3 (after Communication Common, Communication Identity, Mixed Reality Authentication, and Storage):
+Communication (Chat, Email, Network Traversal, Phone Numbers, Rooms, SMS, etc), Event Grid, Event Hubs, Mixed Reality Remote Rendering.
+ 
+Group 4 (after Group 3):
+BOM, Spring Releases.`,
 		},
 	}
 

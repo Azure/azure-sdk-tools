@@ -49,15 +49,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         {
             try
             {
-                var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
+                var repoRootPath = await gitHelper.DiscoverRepoRootAsync(repoPath);
                 logger.LogInformation("GitHub repo root path: {RepoRootPath}", repoRootPath);
                 if (string.IsNullOrEmpty(repoRootPath))
                 {
                     return new DefaultCommandResponse { ResponseError = "Failed to get repo root path. Please make sure to provide a valid repository path." };
                 }
                 var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
-                var repoName = gitHelper.GetRepoName(repoRootPath);
-                var headBranchName = gitHelper.GetBranchName(repoRootPath);
+                var repoName = await gitHelper.GetRepoNameAsync(repoRootPath);
+                var headBranchName = await gitHelper.GetBranchNameAsync(repoRootPath);
                 var forkOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
                 var headBranchRef = $"{forkOwner}:{headBranchName}";
                 logger.LogInformation(
@@ -98,8 +98,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 try
                 {
                     // Discover the repository root from the provided path
-                    var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
-                    var headBranchName = gitHelper.GetBranchName(repoRootPath);
+                    var repoRootPath = await gitHelper.DiscoverRepoRootAsync(repoPath);
+                    var headBranchName = await gitHelper.GetBranchNameAsync(repoRootPath);
                     if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
                     {
                         results.Add("Failed to create pull request. Pull request can not be created for changes in main branch. Select the GitHub branch for your spec changes using `git checkout <branch name>'");
@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                     // Get repo details like target owner, head owner, repo name
                     var headRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
                     var targetRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, true);
-                    var repoName = gitHelper.GetRepoName(repoRootPath);
+                    var repoName = await gitHelper.GetRepoNameAsync(repoRootPath);
 
                     var headBranch = $"{headRepoOwner}:{headBranchName}";
                     logger.LogInformation("Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}",
@@ -138,9 +138,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 
         private async Task<List<string>> GetPullRequestCommentsAsync(int pullRequestNumber, string repoPath)
         {
-            var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
+            var repoRootPath = await gitHelper.DiscoverRepoRootAsync(repoPath);
             var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
-            var repoName = gitHelper.GetRepoName(repoRootPath);
+            var repoName = await gitHelper.GetRepoNameAsync(repoRootPath);
 
             var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
             if (comments == null || comments.Count == 0)
@@ -156,9 +156,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         {
             try
             {
-                var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
+                var repoRootPath = await gitHelper.DiscoverRepoRootAsync(repoPath);
                 var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
-                var repoName = gitHelper.GetRepoName(repoRootPath);
+                var repoName = await gitHelper.GetRepoNameAsync(repoRootPath);
 
                 logger.LogInformation("Getting pull request details for {pullRequestNumber} in repo {repoOwner}/{repoName}",
                                         pullRequestNumber, repoOwner, repoName);

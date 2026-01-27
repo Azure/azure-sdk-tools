@@ -43,11 +43,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             environmentHelper = environmentHelperMock.Object;
 
             var gitHelperMock = new Mock<IGitHelper>();
-            gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
-            gitHelperMock.Setup(x => x.GetRepoRemoteUri(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute))))
-                .Returns(new Uri("https://github.com/Azure/azure-rest-api-specs.git"));
-            gitHelperMock.Setup(x => x.DiscoverRepoRoot(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute))))
-                .Returns((string path) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
+            gitHelperMock.Setup(x => x.GetBranchNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("testBranch");
+            gitHelperMock.Setup(x => x.GetRepoRemoteUriAsync(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute)), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Uri("https://github.com/Azure/azure-rest-api-specs.git"));
+            gitHelperMock.Setup(x => x.DiscoverRepoRootAsync(It.Is<string>(p => !string.IsNullOrEmpty(p) && !Uri.IsWellFormedUriString(p, UriKind.Absolute)), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string path, CancellationToken _) => path.Contains("specification") ? path.Substring(0, path.IndexOf("specification")) : path);
             gitHelper = gitHelperMock.Object;
 
             typeSpecHelper = new TypeSpecHelper(gitHelper);

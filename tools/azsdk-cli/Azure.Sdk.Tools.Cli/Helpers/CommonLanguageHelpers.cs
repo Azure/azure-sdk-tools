@@ -58,8 +58,9 @@ public interface ICommonValidationHelpers
     /// Validates package path and discovers repository root.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>Repository root path if successful, or PackageCheckResponse with error if validation fails</returns>
-    (string? repoRoot, PackageCheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath);
+    Task<(string? repoRoot, PackageCheckResponse? errorResponse)> ValidatePackageAndDiscoverRepoAsync(string packagePath, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -95,7 +96,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            var (packageRepoRoot, errorResponse) = await ValidatePackageAndDiscoverRepoAsync(packagePath, ct);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -137,7 +138,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            var (packageRepoRoot, errorResponse) = await ValidatePackageAndDiscoverRepoAsync(packagePath, ct);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -199,7 +200,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            var (packageRepoRoot, errorResponse) = await ValidatePackageAndDiscoverRepoAsync(packagePath, ct);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -256,14 +257,14 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         }
     }
 
-    public (string? repoRoot, PackageCheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath)
+    public async Task<(string? repoRoot, PackageCheckResponse? errorResponse)> ValidatePackageAndDiscoverRepoAsync(string packagePath, CancellationToken ct = default)
     {
         if (!Directory.Exists(packagePath))
         {
             return (null, new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}"));
         }
 
-        var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var packageRepoRoot = await _gitHelper.DiscoverRepoRootAsync(packagePath, ct);
         if (string.IsNullOrEmpty(packageRepoRoot))
         {
             return (null, new PackageCheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));

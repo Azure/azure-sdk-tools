@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Microsoft.Extensions.Primitives;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -81,8 +82,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// Headers for this section (Content-Type, Content-Disposition, etc.)
         /// </summary>
-        public Dictionary<string, string> Headers { get; set; } =
-            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, StringValues> Headers { get; set; } =
+            new Dictionary<string, StringValues>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Raw body content of this section (may contain text, binary, or multipart data)

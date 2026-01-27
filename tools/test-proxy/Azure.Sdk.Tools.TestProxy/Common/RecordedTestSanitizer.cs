@@ -130,91 +130,64 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual string SanitizeVariable(string variableName, string environmentVariableValue) => environmentVariableValue;
 
-        public byte[] SanitizeMultipartBody(string boundary, byte[] raw)
+        /// <summary>
+        /// Sanitize a multipart body using the precached tree structure.
+        /// Walks the already-parsed tree, sanitizes content in each section recursively,
+        /// materializes the result, and assigns it back to the message body.
+        /// </summary>
+        public byte[] SanitizeMultipartBody(RequestOrResponse message)
         {
-            // Boundary might have been sanitised to "REDACTED", handle that.
-            boundary = MultipartUtilities.ResolveFirstBoundary(boundary, raw);
-
-            // Only run the LF→CRLF fixer once at the outermost level
-            // the reason we still do this instead of just using the body as-is, is that we may be loading up
-            // a recording from before we started storing the corrected multipart/mixed body.
-            byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(raw);
-
-            var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
-            using var outStream = new MemoryStream();
-
-            byte[] boundaryStart = Encoding.ASCII.GetBytes($"--{boundary}\r\n");
-            byte[] boundaryClose = Encoding.ASCII.GetBytes($"--{boundary}--\r\n");
-
-            try
+            if (message?.CachedBodyMetadata == null)
             {
-                MultipartSection section;
-                while ((section = reader.ReadNextSectionAsync()
-                                         .GetAwaiter()
-                                         .GetResult()) != null)
+                throw new HttpException(HttpStatusCode.InternalServerError,
+                    "SanitizeMultipartBody called but no CachedBodyMetadata found. Ensure PreCacheBodyMetadata() was called during Sanitize().");
+            }
+
+            // Walk the tree and sanitize each section
+            SanitizeMultipartSections(message.CachedBodyMetadata.Sections);
+
+            // Materialize the sanitized tree back to bytes and return
+            return message.CachedBodyMetadata.Materialize();
+        }
+
+        /// <summary>
+        /// Recursively sanitize all sections in a multipart body's cached metadata.
+        /// For text sections: applies text sanitizers.
+        /// For nested multipart sections: recurses through nested metadata.
+        /// For binary/other: leaves as-is (CR/LF normalization already done during precaching).
+        /// </summary>
+        private void SanitizeMultipartSections(List<PreCachedBodySection> sections)
+        {
+            foreach (var section in sections)
+            {
+                if (section.NestedMetadata != null)
                 {
-                    // we actually need to figure out the sanitization length _before_ we look at the headers
-                    // as if there is a Content-Length header we need to update it to reflect the new reality
-                    byte[] original = MultipartUtilities.ReadAllBytes(section.Body);
-                    byte[] fixedBody = MultipartUtilities.NormalizeBareLf(original);
-                    byte[] newBody;
+                    // This section contains nested multipart: recurse through its sections
+                    SanitizeMultipartSections(section.NestedMetadata.Sections);
+                }
+                else if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
+                {
+                    // Text content: sanitize it
+                    string text = enc.GetString(section.Body);
 
-                    if (MultipartUtilities.IsNestedMultipart(section.Headers, out var childBoundary))
-                    {
-                        newBody = SanitizeMultipartBody(childBoundary, fixedBody);
-                    }
-                    else if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
-                    {
-                        var sanitised = SanitizeTextBody(section.ContentType, enc.GetString(fixedBody));
-                        newBody = enc.GetBytes(sanitised);
-                    }
-                    else
-                    {
-                        // binary or application/http part – no extra sanitising,
-                        // but keep CR/LF corrections we just applied
-                        newBody = fixedBody;
-                    }
+                    // Extract content type from headers for sanitization context
+                    section.Headers.TryGetValue("Content-Type", out var contentType);
 
-                    // 1) opening boundary
-                    outStream.Write(boundaryStart);
-                    // 2) headers (by spec must be ASCII encoded)
-                    foreach (var h in section.Headers)
+                    var sanitised = SanitizeTextBody(contentType.ToString(), text);
+                    section.Body = enc.GetBytes(sanitised);
+
+                    // Update Content-Length header if present
+                    if (section.Headers.ContainsKey("Content-Length"))
                     {
-                        var newValue = h.Value;
-                        if (h.Key == "Content-Length")
-                        {
-                            var parsed = int.TryParse(h.Value[0], out var contentLength);
-                            if (parsed && contentLength != newBody.Length)
-                            {
-                                newValue = new StringValues(newBody.Length.ToString());
-                            }
-                        }
-                        var headerLine = $"{h.Key}: {newValue}\r\n";
-                        outStream.Write(Encoding.ASCII.GetBytes(headerLine));
+                        section.Headers["Content-Length"] = section.Body.Length.ToString();
                     }
-                    // 3) blank line between headers and body
-                    outStream.Write(MultipartUtilities.CrLf);
-                    // 4) output the revised body (or nothing if there is nothing in the body)
-                    outStream.Write(newBody);
-                    outStream.Write(MultipartUtilities.CrLf);
+                }
+                else
+                {
+                    // Binary or application/http: no sanitization needed
+                    // (CR/LF normalization already applied during precaching)
                 }
             }
-            catch (IOException ex)
-            {
-                var byteContent = Convert.ToBase64String(fixedRaw);
-                string message = $$"""
-The test-proxy is unexpectedly unable to read this section of the config during sanitization: \"{{ex.Message}}\"
-File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
-{{byteContent}}
-""";
-
-                throw new HttpException(HttpStatusCode.InternalServerError, message);
-            }
-
-            // 5) finally write closing boundary
-            outStream.Write(boundaryClose);
-
-            return outStream.ToArray();
         }
 
         public virtual void SanitizeBody(RequestOrResponse message)
@@ -225,7 +198,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
                 if (ContentTypeUtilities.IsMultipart(message.Headers, out var boundary))
                 {
-                    message.Body = SanitizeMultipartBody(boundary, message.Body);
+                    message.Body = SanitizeMultipartBody(message);
                 }
                 else if (message.TryGetBodyAsText(out string text))
                 {
@@ -320,10 +293,10 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                 {
                     var bodySection = new PreCachedBodySection();
 
-                    // Copy headers - convert StringValues to string
+                    // Copy headers - keep as StringValues
                     foreach (var header in section.Headers)
                     {
-                        bodySection.Headers[header.Key] = header.Value.ToString();
+                        bodySection.Headers[header.Key] = header.Value;
                     }
 
                     // Read body
@@ -332,7 +305,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
                     // Check if section itself is multipart (nested)
                     if (bodySection.Headers.TryGetValue("Content-Type", out var contentType) &&
-                        ContentTypeUtilities.IsMultiPart(contentType, out var nestedBoundary))
+                        ContentTypeUtilities.IsMultiPart(contentType.ToString(), out var nestedBoundary))
                     {
                         bodySection.NestedMetadata = BuildNestedMultipartMetadata(sectionBody, nestedBoundary);
                     }

@@ -1186,27 +1186,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         #region HasCustomizations Tests
 
         [Test]
-        public void HasCustomizations_ReturnsTrue_WhenCustomizationDirectoryExists()
+        public void HasCustomizations_ReturnsPath_WhenCustomizationDirectoryExists()
         {
             using var tempDir = TempDirectory.Create("java-customization-test");
             var customizationDir = Path.Combine(tempDir.DirectoryPath, "customization", "src", "main", "java");
             Directory.CreateDirectory(customizationDir);
 
-            var result = LangService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+            var result = LangService.HasCustomizations(tempDir.DirectoryPath);
 
-            Assert.That(result, Is.True);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.EqualTo(customizationDir));
         }
 
         [Test]
-        public void HasCustomizations_ReturnsFalse_WhenNoCustomizationDirectoryExists()
+        public void HasCustomizations_ReturnsNull_WhenNoCustomizationDirectoryExists()
         {
             using var tempDir = TempDirectory.Create("java-no-customization-test");
             var srcDir = Path.Combine(tempDir.DirectoryPath, "src", "main", "java");
             Directory.CreateDirectory(srcDir);
 
-            var result = LangService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+            var result = LangService.HasCustomizations(tempDir.DirectoryPath);
 
-            Assert.That(result, Is.False);
+            Assert.That(result, Is.Null);
         }
 
         #endregion

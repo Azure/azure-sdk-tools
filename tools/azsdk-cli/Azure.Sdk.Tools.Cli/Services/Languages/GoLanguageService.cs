@@ -136,7 +136,7 @@ public partial class GoLanguageService : LanguageService
         return categories.TryGetValue("go", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override string? HasCustomizations(string packagePath, CancellationToken ct)
     {
         // Go customization files can live in different locations depending on the package.
         // Known locations include:
@@ -154,17 +154,17 @@ public partial class GoLanguageService : LanguageService
                 if (Directory.Exists(customizationPath))
                 {
                     logger.LogDebug("Found Go customization directory at {CustomizationPath}", customizationPath);
-                    return true;
+                    return customizationPath;
                 }
             }
 
             logger.LogDebug("No Go customization directory found in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Error searching for Go customization files in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
     }
 

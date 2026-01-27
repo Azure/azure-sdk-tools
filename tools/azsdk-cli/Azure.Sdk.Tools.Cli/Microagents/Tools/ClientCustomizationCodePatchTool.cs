@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.ComponentModel;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Microagents.Tools;
 
@@ -17,6 +18,11 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
 {
     public override string Name { get; init; } = "ClientCustomizationCodePatch";
     public override string Description { get; init; } = "Apply a code patch to a customization file by replacing old content with new content";
+
+    /// <summary>
+    /// Tracks all patches successfully applied by this tool instance.
+    /// </summary>
+    public List<AppliedPatch> AppliedPatches { get; } = [];
 
     public override async Task<ClientCustomizationCodePatchOutput> Invoke(ClientCustomizationCodePatchInput input, CancellationToken ct)
     {
@@ -62,6 +68,12 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
             var updatedContent = fileContent.Replace(input.OldContent, input.NewContent);
             await File.WriteAllTextAsync(safeFilePath, updatedContent, ct);
 
+            // Generate a brief description of what changed
+            var description = GeneratePatchDescription(input.OldContent, input.NewContent);
+            
+            // Track this patch for reporting
+            AppliedPatches.Add(new AppliedPatch(input.FilePath, description, occurrences));
+
             var message = occurrences == 1 
                 ? $"Successfully applied patch to {input.FilePath}"
                 : $"Successfully applied patch to {input.FilePath} ({occurrences} replacements made)";
@@ -89,5 +101,40 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
             index += pattern.Length;
         }
         return count;
+    }
+
+    /// <summary>
+    /// Generates a brief human-readable description of the patch.
+    /// </summary>
+    private static string GeneratePatchDescription(string oldContent, string newContent)
+    {
+        // Extract first meaningful line from each for comparison
+        var oldLine = GetFirstMeaningfulLine(oldContent);
+        var newLine = GetFirstMeaningfulLine(newContent);
+
+        if (oldLine.Length > 50)
+        {
+            oldLine = oldLine[..47] + "...";
+        }
+        if (newLine.Length > 50)
+        {
+            newLine = newLine[..47] + "...";
+        }
+
+        return $"Changed '{oldLine}' to '{newLine}'";
+    }
+
+    private static string GetFirstMeaningfulLine(string content)
+    {
+        var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (!string.IsNullOrWhiteSpace(trimmed) && !trimmed.StartsWith("//") && !trimmed.StartsWith("/*"))
+            {
+                return trimmed;
+            }
+        }
+        return content.Trim().Split('\n')[0].Trim();
     }
 }

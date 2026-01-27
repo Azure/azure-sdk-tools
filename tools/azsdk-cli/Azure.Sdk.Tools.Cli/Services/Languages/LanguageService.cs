@@ -194,19 +194,14 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
-        /// Determines whether the package has any hand-authored customizations.
+        /// Determines whether the package has customizations and returns their root directory.
         /// </summary>
         /// <param name="packagePath">Root folder of the package (e.g. SDK package directory).</param>
         /// <param name="ct">Cancellation token.</param>
-        /// <returns>True if customizations exist; false otherwise.</returns>
-        public virtual bool HasCustomizations(string packagePath, CancellationToken ct)
+        /// <returns>Path to customization root directory if customizations exist, null otherwise.</returns>
+        public virtual string? HasCustomizations(string packagePath, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(packagePath) || !Directory.Exists(packagePath))
-            {
-                logger?.LogDebug("Cannot check for customizations - package path does not exist: {PackagePath}", packagePath);
-                return false;
-            }
-            return false;
+            return null;
         }
 
         /// <summary>
@@ -217,10 +212,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="packagePath">Path to the package directory containing generated code</param>
         /// <param name="buildError">The build error and context that triggered automatic repair</param>
         /// <param name="ct">Cancellation token</param>
-        /// <returns>True if patches were successfully applied; false otherwise</returns>
-        public virtual Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct)
+        /// <returns>List of applied patches (empty if none were applied)</returns>
+        public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct)
         {
-            return Task.FromResult(false);
+            return Task.FromResult(new List<AppliedPatch>());
         }
 
         /// <summary>

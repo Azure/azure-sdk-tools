@@ -251,6 +251,16 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
                 {
                     PreCacheBodyMetadata(entry.Response);
                 }
+
+                // Verify: if body is multipart, it MUST have been cached
+                if (entry.Request.Body != null && ContentTypeUtilities.IsMultipart(entry.Request.Headers, out _) && entry.Request.CachedBodyMetadata == null)
+                {
+                    throw new HttpException(HttpStatusCode.InternalServerError, "TestProxy sanitizer: Multipart request body exists but precaching failed - CachedBodyMetadata is null");
+                }
+                if (entry.Response.Body != null && ContentTypeUtilities.IsMultipart(entry.Response.Headers, out _) && entry.Response.CachedBodyMetadata == null)
+                {
+                    throw new HttpException(HttpStatusCode.InternalServerError, "TestProxy sanitizer: Multipart response body exists but precaching failed - CachedBodyMetadata is null");
+                }
             }
 
             if (Condition == null || Condition.IsApplicable(entry))

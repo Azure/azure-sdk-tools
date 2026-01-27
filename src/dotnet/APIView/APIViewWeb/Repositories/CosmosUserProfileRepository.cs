@@ -24,7 +24,13 @@ namespace APIViewWeb
         {
             try
             {
-                return await _userProfileContainer.ReadItemAsync<UserProfileModel>(UserName, new PartitionKey(UserName));
+                var profile = await _userProfileContainer.ReadItemAsync<UserProfileModel>(UserName, new PartitionKey(UserName));
+                
+                // Auto-save the profile to remove any deprecated properties (like ScrollBarSize) from the database
+                // This is a fire-and-forget operation to clean up the database
+                _ = _userProfileContainer.UpsertItemAsync(profile.Resource, new PartitionKey(UserName));
+                
+                return profile;
             }
             catch
             {

@@ -6,10 +6,10 @@ import { Metadata, Override } from './ConfigurationLoader';
  */
 export class MetadataResolver {
     /**
-     * Resolve metadata for a file using path defaults and override patterns
+     * Resolve metadata for a file using path defaults and overrides
      * @param relativePath Relative path from repository root
      * @param pathMetadata Default metadata from DocumentationPath
-     * @param overrides Override patterns from DocumentationPath
+     * @param overrides Override metadata for specific files
      * @returns Resolved metadata with scope and plane, or null if no metadata
      */
     static resolveMetadata(

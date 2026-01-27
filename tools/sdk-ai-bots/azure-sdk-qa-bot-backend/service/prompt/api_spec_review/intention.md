@@ -36,7 +36,7 @@ The question must be classified into one of these categories:
     - Don't relate directly to API specification review
 
 ## Intent Planes
-{{include "../templates/intention/intent_planes.md"}}
+{{include "../templates/intention/intent_service_plane.md"}}
 
 ## Need RAG Processing
 {{include "../templates/intention/need_rag_processing.md"}}

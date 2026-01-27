@@ -50,7 +50,7 @@ The question must be classified into one of these categories:
   **You need to rewrite TypeSpec CI failures to TypeSpec Validation failures**
 
 ## Intent Planes
-{{include "../templates/intention/intent_planes.md"}}
+{{include "../templates/intention/intent_service_plane.md"}}
 
 ## Need RAG Processing
 {{include "../templates/intention/need_rag_processing.md"}}

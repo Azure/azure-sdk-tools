@@ -1340,27 +1340,20 @@ namespace Azure.Sdk.Tools.Cli.Services
             return workItem;
         }
 
-        private async Task<WorkItem?> FindParentWorkItem(string serviceName, string packageDisplayName, bool ignoreReleasePlannerTests = true, string? tag = null)
+        private async Task<WorkItem?> FindProductWorkItem(string serviceName, string packageDisplayName, bool ignoreReleasePlannerTests = true, string? tag = null)
         {
+            if (string.IsNullOrEmpty(serviceName))
+            {
+                throw new Exception($"Service name is required {nameof(serviceName)}");
+            }
+
+            if (string.IsNullOrEmpty(packageDisplayName))
+            {
+                throw new Exception($"Package display name is required {nameof(packageDisplayName)}");
+            }
+
             var serviceCondition = new StringBuilder();
-
-            if (!string.IsNullOrEmpty(serviceName))
-            {
-                serviceCondition.Append($"[Custom.ServiceName] = '{serviceName}'");
-
-                if (!string.IsNullOrEmpty(packageDisplayName))
-                {
-                    serviceCondition.Append($" AND [Custom.PackageDisplayName] = '{packageDisplayName}'");
-                }
-                else
-                {
-                    serviceCondition.Append(" AND [Custom.PackageDisplayName] = ''");
-                }
-            }
-            else
-            {
-                serviceCondition.Append("[Custom.ServiceName] <> ''");
-            }
+            serviceCondition.Append($"[Custom.ServiceName] = '{serviceName}' AND [Custom.PackageDisplayName] = '{packageDisplayName}'");
 
             if (!string.IsNullOrEmpty(tag))
             {
@@ -1374,7 +1367,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             var query = $"SELECT [System.Id], [Custom.ServiceName], [Custom.PackageDisplayName], [System.Parent], [System.Tags] FROM WorkItems WHERE [System.WorkItemType] = 'Epic' AND {serviceCondition}";
 
-            logger.LogDebug("Finding parent work item with query: {query}", query);
+            logger.LogDebug("Finding product work item with query: {query}", query);
 
             var workItems = await FetchWorkItemsAsync(query);
 
@@ -1382,7 +1375,45 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 if (workItems.Count > 1)
                 {
-                    logger.LogWarning("Found multiple parent work items matching criteria. Using first match with ID: {workItemId}", workItems[0].Id);
+                    logger.LogWarning("Found multiple product work items for service '{serviceName}' and package '{packageDisplayName}'. Using first match with ID: {workItemId}", serviceName, packageDisplayName, workItems[0].Id);
+                }
+                return workItems[0];
+            }
+
+            return null;
+        }
+
+        private async Task<WorkItem?> FindServiceWorkItem(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null)
+        {
+            if (string.IsNullOrEmpty(serviceName))
+            {
+                throw new Exception($"Service name is required {nameof(serviceName)}");
+            }
+
+            var serviceCondition = new StringBuilder();
+            serviceCondition.Append($"[Custom.ServiceName] = '{serviceName}' AND [Custom.PackageDisplayName] = ''");
+
+            if (!string.IsNullOrEmpty(tag))
+            {
+                serviceCondition.Append($" AND [System.Tags] CONTAINS '{tag}'");
+            }
+
+            if (ignoreReleasePlannerTests)
+            {
+                serviceCondition.Append($" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'");
+            }
+
+            var query = $"SELECT [System.Id], [Custom.ServiceName], [Custom.PackageDisplayName], [System.Parent], [System.Tags] FROM WorkItems WHERE [System.WorkItemType] = 'Epic' AND {serviceCondition}";
+
+            logger.LogDebug("Finding service work item with query: {query}", query);
+
+            var workItems = await FetchWorkItemsAsync(query);
+
+            if (workItems.Count > 0)
+            {
+                if (workItems.Count > 1)
+                {
+                    logger.LogWarning("Found multiple service work items for {serviceName}. Using first match with ID: {workItemId}", serviceName, workItems[0].Id);
                 }
                 return workItems[0];
             }
@@ -1392,7 +1423,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<WorkItem> FindOrCreateServiceParent(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null)
         {
-            var serviceParent = await FindParentWorkItem(serviceName, packageDisplayName: null, ignoreReleasePlannerTests, tag);
+            var serviceParent = await FindServiceWorkItem(serviceName, ignoreReleasePlannerTests, tag);
             if (serviceParent != null)
             {
                 logger.LogDebug("Found existing service work item [{workItemId}]", serviceParent.Id);

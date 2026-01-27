@@ -193,7 +193,6 @@ class ChannelConfigManager {
         error: error.message,
         blob: config.channelConfigBlobName,
       });
-      throw new Error(`Failed to load channel configuration: ${error.message}`);
     }
   }
 

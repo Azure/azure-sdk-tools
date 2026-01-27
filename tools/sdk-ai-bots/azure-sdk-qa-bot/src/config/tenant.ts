@@ -160,7 +160,6 @@ class TenantConfigManager {
         error: error.message,
         blob: config.tenantConfigBlobName,
       });
-      throw new Error(`Failed to load tenant configuration: ${error.message}`);
     }
   }
 

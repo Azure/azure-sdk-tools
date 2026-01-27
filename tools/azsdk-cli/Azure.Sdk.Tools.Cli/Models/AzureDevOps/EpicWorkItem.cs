@@ -4,7 +4,7 @@ using Azure.Sdk.Tools.Cli.Attributes;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
-    public class ServiceWorkItem : WorkItemBase
+    public class EpicWorkItem : WorkItemBase
     {
         [FieldName("Custom.PackageDisplayName")]
         public string PackageDisplayName { get; set; } = string.Empty;

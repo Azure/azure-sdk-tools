@@ -8,6 +8,16 @@
 Initialize the agent module for APIView Copilot.
 """
 
-from ._agent import get_readwrite_agent
+from ._agent import (
+    delete_cached_agents,
+    get_cached_agent_ids,
+    get_readonly_agent,
+    get_readwrite_agent,
+)
 
-__all__ = ["get_readwrite_agent"]
+__all__ = [
+    "get_readwrite_agent",
+    "get_readonly_agent",
+    "delete_cached_agents",
+    "get_cached_agent_ids",
+]

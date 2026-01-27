@@ -24,11 +24,11 @@ from src.agent.tools._base import Tool
 def get_delete_agent():
     """Agent for handling database delete requests."""
     # pylint: disable=import-outside-toplevel
-    from src.agent._agent import _get_agent_settings
+    from src.agent._agent import get_foundry_project_endpoint
 
     credential = get_credential()
     settings = SettingsManager()
-    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    endpoint = get_foundry_project_endpoint()
     model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
 
     ai_instructions = f"""
@@ -45,7 +45,7 @@ You must ensure you adhere to the following guidelines.
 - Never delete guidelines. You MUST deny any request to delete a guideline.
 - Never delete review jobs. You MUST deny any request to delete a review job. Review jobs are deleted programmatically ONLY.
 """
-    client = AgentsClient(endpoint=endpoint.endpoint, credential=credential)
+    client = AgentsClient(endpoint=endpoint, credential=credential)
     agent = client.create_agent(
         name="DeleteAgent",
         description="Handles database delete requests.",
@@ -63,11 +63,11 @@ You must ensure you adhere to the following guidelines.
 def get_create_agent():
     """Agent for handling database create requests."""
     from src._apiview_reviewer import SUPPORTED_LANGUAGES
-    from src.agent._agent import _get_agent_settings
+    from src.agent._agent import _get_agent_settings, get_foundry_project_endpoint
 
     credential = get_credential()
     settings = SettingsManager()
-    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    endpoint = get_foundry_project_endpoint()
     model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
 
     guideline_schema = Guideline.model_json_schema()
@@ -159,11 +159,11 @@ For specific fields:
 @contextmanager
 def get_retrieve_agent():
     """Agent for handling database retrieval requests."""
-    from src.agent._agent import _get_agent_settings
+    from src.agent._agent import _get_agent_settings, get_foundry_project_endpoint
 
     credential = get_credential()
     settings = SettingsManager()
-    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    endpoint = get_foundry_project_endpoint()
     model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
 
     ai_instructions = """
@@ -186,11 +186,11 @@ You are an agent that processes database get or retrieval requests for guideline
 @contextmanager
 def get_link_agent():
     """Agent for handling database linking and unlinking requests."""
-    from src.agent._agent import _get_agent_settings
+    from src.agent._agent import _get_agent_settings, get_foundry_project_endpoint
 
     credential = get_credential()
     settings = SettingsManager()
-    endpoint = settings.get("FOUNDRY_ENDPOINT")
+    endpoint = get_foundry_project_endpoint()
     model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
 
     ai_instructions = f"""

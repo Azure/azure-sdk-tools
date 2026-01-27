@@ -1,5 +1,6 @@
 # regular requirements
 aiohttp==3.13.3
+azure-ai-inference==1.0.0b9
 azure-appconfiguration==1.7.1
 azure-cosmos==4.9.0
 azure-identity==1.21.0

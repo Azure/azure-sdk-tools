@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
@@ -224,6 +225,126 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             else
             {
                 Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
+            }
+        }
+
+        /// <summary>
+        /// Tests ResetApprovalsForUntrustedChanges when the PR author is a trusted bot user (e.g., copilot[bot]).
+        /// Verifies that approvals are NOT reset for trusted bot users even when they don't have write permissions.
+        /// </summary>
+        /// <param name="rule">Rule being tested</param>
+        /// <param name="payloadFile">JSon payload file for the event being tested</param>
+        /// <param name="trustedBotUser">The trusted bot username to test</param>
+        /// <param name="approvedReviews">Number of approved reviews the PR has</param>
+        [Category("static")]
+        [TestCase(RulesConstants.ResetApprovalsForUntrustedChanges, "Tests.JsonEventPayloads/ResetApprovalsForUntrustedChanges_pr_synchronize.json", "copilot[bot]", 2)]
+        [TestCase(RulesConstants.ResetApprovalsForUntrustedChanges, "Tests.JsonEventPayloads/ResetApprovalsForUntrustedChanges_pr_synchronize.json", "github-actions[bot]", 3)]
+        public async Task TestResetApprovalsForUntrustedChanges_TrustedBotUser(string rule, string payloadFile, string trustedBotUser, int approvedReviews)
+        {
+            var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
+            mockGitHubEventClient.RulesConfiguration.Rules[rule] = RuleState.On;
+            mockGitHubEventClient.RulesConfiguration.TrustedBotUsers.Add(trustedBotUser);
+            
+            var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
+            
+            // Modify the JSON to replace the user login with the bot user using JsonDocument
+            using (JsonDocument doc = JsonDocument.Parse(rawJson))
+            {
+                // Create a writable copy of the JSON
+                using (var stream = new System.IO.MemoryStream())
+                {
+                    using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = false }))
+                    {
+                        WriteJsonWithModifiedUserLogin(doc.RootElement, writer, trustedBotUser);
+                    }
+                    rawJson = Encoding.UTF8.GetString(stream.ToArray());
+                }
+            }
+            
+            var prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, SimpleJsonSerializer);
+            
+            // Set the return value for the permission check - bot doesn't have permissions
+            mockGitHubEventClient.UserHasPermissionsReturn = false;
+            // Create the fake reviews that would normally be dismissed
+            mockGitHubEventClient.CreateFakeReviewsForPullRequest(approvedReviews, 0);
+            
+            await PullRequestProcessing.ResetApprovalsForUntrustedChanges(mockGitHubEventClient, prEventPayload);
+            
+            // Verify the rule is enabled
+            Assert.True(mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' should be enabled.");
+            
+            // Verify that no updates were made because the user is a trusted bot
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
+            Assert.AreEqual(0, totalUpdates, $"No updates should have been made for trusted bot user {trustedBotUser}, but {totalUpdates} updates were made.");
+            
+            // Verify no comments were created
+            int numComments = mockGitHubEventClient.GetComments().Count;
+            Assert.AreEqual(0, numComments, $"No comments should have been created for trusted bot user {trustedBotUser}, but {numComments} were created.");
+            
+            // Verify no reviews were dismissed
+            int numDismissedReviews = mockGitHubEventClient.GetReviewDismissals().Count;
+            Assert.AreEqual(0, numDismissedReviews, $"No reviews should have been dismissed for trusted bot user {trustedBotUser}, but {numDismissedReviews} were dismissed.");
+        }
+
+        /// <summary>
+        /// Helper method to write JSON while modifying the user login property.
+        /// This recursively traverses the JSON tree and replaces all "login" properties with the new value.
+        /// </summary>
+        private static void WriteJsonWithModifiedUserLogin(JsonElement element, Utf8JsonWriter writer, string newLogin)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    writer.WriteStartObject();
+                    foreach (JsonProperty property in element.EnumerateObject())
+                    {
+                        writer.WritePropertyName(property.Name);
+                        // Replace login property value with the new login
+                        if (property.Name == "login" && property.Value.ValueKind == JsonValueKind.String)
+                        {
+                            writer.WriteStringValue(newLogin);
+                        }
+                        else
+                        {
+                            WriteJsonWithModifiedUserLogin(property.Value, writer, newLogin);
+                        }
+                    }
+                    writer.WriteEndObject();
+                    break;
+                case JsonValueKind.Array:
+                    writer.WriteStartArray();
+                    foreach (JsonElement item in element.EnumerateArray())
+                    {
+                        WriteJsonWithModifiedUserLogin(item, writer, newLogin);
+                    }
+                    writer.WriteEndArray();
+                    break;
+                case JsonValueKind.String:
+                    writer.WriteStringValue(element.GetString());
+                    break;
+                case JsonValueKind.Number:
+                    if (element.TryGetInt32(out int intValue))
+                    {
+                        writer.WriteNumberValue(intValue);
+                    }
+                    else if (element.TryGetInt64(out long longValue))
+                    {
+                        writer.WriteNumberValue(longValue);
+                    }
+                    else
+                    {
+                        writer.WriteNumberValue(element.GetDouble());
+                    }
+                    break;
+                case JsonValueKind.True:
+                    writer.WriteBooleanValue(true);
+                    break;
+                case JsonValueKind.False:
+                    writer.WriteBooleanValue(false);
+                    break;
+                case JsonValueKind.Null:
+                    writer.WriteNullValue();
+                    break;
             }
         }
     }

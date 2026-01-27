@@ -59,6 +59,26 @@ The [rules configuration file](./YmlAndConfigFiles/event-processor.config) is si
 
 All three of the above rules are *Issues* event rules. InitialIssueTriage and ManualIssueTriage would both run because they're **On** but ServiceAttention would not because it's **Off**. Also, just because a rule is **On** doesn't mean it'll always make updates to an Issue.
 
+#### Trusted Bot Users Configuration
+
+In addition to rules, the configuration file can specify a list of trusted bot users (like `copilot[bot]` or `github-actions[bot]`) that should be treated differently from untrusted external contributors. When a PR is authored by a trusted bot user, the `ResetApprovalsForUntrustedChanges` rule will skip resetting approvals, allowing for a streamlined approval process.
+
+Example configuration:
+
+```json
+{
+  "PullRequestTriage": "On",
+  "ResetApprovalsForUntrustedChanges": "On",
+  ...
+  "TrustedBotUsers": [
+    "copilot[bot]",
+    "github-actions[bot]"
+  ]
+}
+```
+
+This configuration allows organizations to treat automated PRs from trusted bots (like GitHub Copilot) the same as PRs from team members with write access, reducing the approval burden and streamlining the review process.
+
 Every rule has a the following definition:
 
 - **Trigger** - The event and action that will cause a given rule to process.

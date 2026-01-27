@@ -166,6 +166,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     if (prEventPayload.PullRequest.State == ItemState.Open &&
                         prEventPayload.AutoMergeEnabled)
                     {
+                        // Check if the user is a trusted bot user (e.g., copilot[bot], github-actions[bot])
+                        bool isTrustedBot = gitHubEventClient.RulesConfiguration.IsTrustedBotUser(prEventPayload.PullRequest.User.Login);
+                        
+                        // If the user is a trusted bot, skip the approval reset
+                        if (isTrustedBot)
+                        {
+                            return;
+                        }
+                        
                         bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
                         // The sender will only have Write or Admin permssion if they are a collaborator
                         if (!hasAdminOrWritePermission)

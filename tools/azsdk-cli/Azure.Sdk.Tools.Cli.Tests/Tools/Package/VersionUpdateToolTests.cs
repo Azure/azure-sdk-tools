@@ -170,7 +170,7 @@ public class VersionUpdateToolTests
     {
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns((string?)null!);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync((string?)null!);
 
         // Act
         var result = await _tool.UpdateVersionAsync(testPath, null, null, null, CancellationToken.None);
@@ -187,8 +187,8 @@ public class VersionUpdateToolTests
     {
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
@@ -239,8 +239,8 @@ public class VersionUpdateToolTests
     {
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, TestConfigValue));
 
@@ -269,8 +269,8 @@ public class VersionUpdateToolTests
     {
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
@@ -293,7 +293,7 @@ public class VersionUpdateToolTests
         var expectedException = new InvalidOperationException("Test exception");
         var expectedErrorMessage = $"An error occurred: {expectedException.Message}";
 
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Throws(expectedException);
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ThrowsAsync(expectedException);
 
         // Act
         var result = await _tool.UpdateVersionAsync(testPath, null, null, null, CancellationToken.None);
@@ -316,8 +316,8 @@ public class VersionUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         var cancellationToken = new CancellationToken();
         
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
@@ -343,8 +343,8 @@ public class VersionUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         var scriptContent = "echo 'Updating version'";
         
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, scriptContent));
 
@@ -400,8 +400,8 @@ public class VersionUpdateToolTests
         var version = "3.0.0-beta.1";
         var releaseDate = "2025-11-15";
         
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
 
@@ -449,8 +449,8 @@ public class VersionUpdateToolTests
         // Arrange
         var testPath = _tempDirectory.DirectoryPath;
         
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
 
@@ -494,8 +494,8 @@ public class VersionUpdateToolTests
         var version = "4.0.0";
         var releaseDate = "2025-12-01";
         
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
 
@@ -537,8 +537,8 @@ public class VersionUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         var validReleaseDate = "2025-12-25"; // Correct format (YYYY-MM-DD)
         
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
 
@@ -574,8 +574,8 @@ public class VersionUpdateToolTests
         var testPath = _tempDirectory.DirectoryPath;
         var expectedDatePattern = DateTime.Now.ToString("yyyy-MM-dd");
         
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(testPath)).Returns(TestRepoRoot);
-        _mockGitHelper.Setup(x => x.GetRepoName(testPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync(TestRepoRoot);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(testPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockSpecGenSdkConfigHelper.Setup(x => x.GetConfigurationAsync(TestRepoRoot, SpecGenSdkConfigType.UpdateVersion))
             .ReturnsAsync((SpecGenSdkConfigContentType.Command, "test-command"));
 

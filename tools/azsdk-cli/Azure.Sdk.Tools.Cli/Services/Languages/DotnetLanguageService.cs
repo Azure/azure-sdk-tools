@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Xml.Linq;
+using System.Diagnostics;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -14,6 +15,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 {
     private const string DotNetCommand = "dotnet";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
+    private const string GeneratedFolderName = "Generated";
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
 
@@ -33,6 +35,10 @@ public sealed partial class DotnetLanguageService: LanguageService
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
+    public override bool IsCustomizedCodeUpdateSupported => true;
+
+    private static readonly string[] separator = new[] { "' '" };
+
     /// <summary>
     /// Gets the default samples directory path relative to the package path.
     /// </summary>
@@ -43,8 +49,8 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving .NET package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
-        var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var (packageName, packageVersion, sdkType) = await TryGetPackageInfoAsync(fullPath, ct);
         
         if (packageName == null)
         {
@@ -54,8 +60,20 @@ public sealed partial class DotnetLanguageService: LanguageService
         {
             logger.LogWarning("Could not determine package version for .NET package at {fullPath}", fullPath);
         }
+        if (sdkType == null)
+        {
+            logger.LogWarning("Could not determine SDK type for .NET package at {fullPath}", fullPath);
+        }
         
         var samplesDirectory = FindSamplesDirectory(fullPath);
+
+        var parsedSdkType = sdkType switch
+        {
+            "client" => SdkType.Dataplane,
+            "mgmt" => SdkType.Management,
+            "functions" => SdkType.Functions,
+            _ => SdkType.Unknown
+        };
         
         var model = new PackageInfo
         {
@@ -66,17 +84,17 @@ public sealed partial class DotnetLanguageService: LanguageService
             PackageVersion = packageVersion,
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = Models.SdkLanguage.DotNet,
-            SamplesDirectory = samplesDirectory
+            SamplesDirectory = samplesDirectory,
+            SdkType = parsedSdkType
         };
         
-        logger.LogDebug("Resolved .NET package: {packageName} v{packageVersion} at {relativePath}", 
-            packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
+        logger.LogDebug("Resolved .NET package: {packageName} v{packageVersion} at {relativePath} (as {parsedSdkType})", 
+            packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath, parsedSdkType.ToString() ?? "(unknown)");
         
         return model;
     }
 
-
-    private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
+    private async Task<(string? Name, string? Version, string? SdkType)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
     {
         try
         {
@@ -85,69 +103,59 @@ public sealed partial class DotnetLanguageService: LanguageService
             if (csproj == null) 
             {
                 logger.LogWarning("No .csproj file found in {packagePath}", packagePath);
-                return (null, null); 
+                return (null, null, null); 
             }
             
-            logger.LogTrace("Reading .csproj file: {csproj}", csproj);
-            var content = await File.ReadAllTextAsync(csproj, ct);
+            logger.LogTrace("Getting package info via MSBuild for: {csproj}", csproj);
 
-            // Parse XML
-            var doc = XDocument.Parse(content);
-            
-            // Extract name from PackageId, AssemblyName, or file name
-            string? name = null;
-            var packageId = doc.Descendants("PackageId").FirstOrDefault()?.Value;
-            if (!string.IsNullOrWhiteSpace(packageId))
+            var result = await processHelper.Run(new ProcessOptions(
+                command: "dotnet",
+                args: ["msbuild", csproj, "-getTargetResult:GetPackageInfo", "-nologo"]
+            ), ct);
+
+            if (result == null || result.ExitCode != 0)
             {
-                name = packageId;
-                logger.LogTrace("Found package name from PackageId: {name}", name);
-            }
-            else
-            {
-                var assemblyName = doc.Descendants("AssemblyName").FirstOrDefault()?.Value;
-                if (!string.IsNullOrWhiteSpace(assemblyName))
-                {
-                    name = assemblyName;
-                    logger.LogTrace("Found package name from AssemblyName: {name}", name);
-                }
-                else
-                {
-                    name = Path.GetFileNameWithoutExtension(csproj);
-                    logger.LogTrace("Using file name as package name: {name}", name);
-                }
+                logger.LogTrace("MSBuild GetPackageInfo failed, returning null values");
+                return (null, null, null);
             }
 
-            // Extract version from Version, or VersionPrefix + VersionSuffix
-            string? version = null;
-            var versionElement = doc.Descendants("Version").FirstOrDefault()?.Value;
-            if (!string.IsNullOrWhiteSpace(versionElement))
+            // Parse JSON output
+            using var jsonDoc = JsonDocument.Parse(result.Stdout);
+            var targetResults = jsonDoc.RootElement.GetProperty("TargetResults");
+            var getPackageInfo = targetResults.GetProperty("GetPackageInfo");
+            var items = getPackageInfo.GetProperty("Items");
+
+            // Identity field which contains the package info
+            var identity = items[0].GetProperty("Identity").GetString();
+
+            // Parse the identity string:  'pkgPath' 'serviceDir' 'pkgName' 'pkgVersion' 'sdkType' 'isNewSdk' 'dllFolder' 'AotCompatOptOut'
+            var parts = identity?.Split(separator, StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Trim('\'', ' '))
+                .ToArray();
+
+            if (parts?.Length >= 5) // for now we only need items in the first 5 positions
             {
-                version = versionElement;
-                logger.LogTrace("Found version from Version tag: {version}", version);
-            }
-            else
-            {
-                var versionPrefix = doc.Descendants("VersionPrefix").FirstOrDefault()?.Value;
-                if (!string.IsNullOrWhiteSpace(versionPrefix))
+                var name = parts[2]; // pkgName
+                var version = parts[3]; // pkgVersion
+                var sdkType = parts[4]; // sdkType
+
+                // Validate we got actual values before returning
+                if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(version))
                 {
-                    var versionSuffix = doc.Descendants("VersionSuffix").FirstOrDefault()?.Value;
-                    version = !string.IsNullOrWhiteSpace(versionSuffix) 
-                        ? $"{versionPrefix}-{versionSuffix}" 
-                        : versionPrefix;
-                    logger.LogTrace("Found version from VersionPrefix/Suffix: {version}", version);
-                }
-                else
-                {
-                    logger.LogTrace("No version information found in .csproj");
+                    logger.LogTrace("Found package info via MSBuild: {name} v{version} ({sdkType})", 
+                        name, version, sdkType);
+
+                    return (name, version, sdkType);
                 }
             }
 
-            return (name, version);
+            logger.LogTrace("Unable to parse identity string, returning null values");
+            return (null, null, null);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error reading .NET package info from {packagePath}", packagePath);
-            return (null, null);
+            logger.LogError(ex, "Error getting .NET package info from {packagePath} using MSBuild GetPackageInfo target", packagePath);
+            return (null, null, null);
         }
     }
 
@@ -208,10 +216,13 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
+        var testsPath = Path.Combine(packagePath, "tests");
+        var workingDirectory = Directory.Exists(testsPath) ? testsPath : packagePath;
+        
         var result = await processHelper.Run(new ProcessOptions(
                 command: "dotnet",
                 args: ["test"],
-                workingDirectory: packagePath
+                workingDirectory: workingDirectory
             ),
             ct
         );
@@ -222,5 +233,48 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
         return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+    }
+
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    {
+        // In azure-sdk-for-net, generated code lives in the Generated folder.
+        // Customizations are partial types defined outside the Generated folder.
+        // Example: sdk/ai/Azure.AI.DocumentIntelligence/src/
+        //   - Generated/ (generated code)
+        //   - Customized/ or other folders (customization code with partial classes)
+
+        try
+        {
+            var generatedDirMarker = Path.DirectorySeparatorChar + GeneratedFolderName + Path.DirectorySeparatorChar;
+            var csFiles = Directory.GetFiles(packagePath, "*.cs", SearchOption.AllDirectories)
+                .Where(file => !file.Contains(generatedDirMarker, StringComparison.OrdinalIgnoreCase));
+            
+            foreach (var file in csFiles)
+            {
+                try
+                {
+                    foreach (var line in File.ReadLines(file))
+                    {
+                        if (line.Contains("partial class"))
+                        {
+                            logger.LogDebug("Found .NET partial class in {FilePath}", file);
+                            return true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to read file {FilePath} for partial class detection", file);
+                }
+            }
+
+            logger.LogDebug("No .NET partial classes found in {PackagePath}", packagePath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for .NET customization files in {PackagePath}", packagePath);
+            return false;
+        }
     }
 }

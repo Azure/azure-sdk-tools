@@ -37,7 +37,7 @@ public sealed partial class JavaLanguageService : LanguageService
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Java package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
         
         if (packageName == null)
@@ -244,34 +244,32 @@ public sealed partial class JavaLanguageService : LanguageService
         return Task.FromResult(new List<ApiChange>());
     }
 
-    public override string GetCustomizationRoot(string generationRoot, CancellationToken ct)
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
+        // In azure-sdk-for-java layout, customizations live under:
+        //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
+        // Example (document intelligence):
+        //   package path: .../azure-ai-documentintelligence
+        //   customization: .../azure-ai-documentintelligence/customization/src/main/java
+        // TODO: In the future, check tspconfig.yaml for "customization-class" directive for definitive detection.
+
         try
         {
-            // In azure-sdk-for-java layout, generated code lives under:
-            //   <pkgRoot>/azure-<package>-<service>/src
-            // Customizations live under parallel directory:
-            //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
-            // Example (document intelligence):
-            //   generated root: .../azure-ai-documentintelligence/src
-            //   customization root: .../azure-ai-documentintelligence/customization/src/main/java
-            logger.LogInformation("Trying to resolve Java customization root from generationRoot '{GenerationRoot}'", generationRoot);
-
-            var customizationSourceRoot = Path.Combine(generationRoot, CustomizationDirName, "src", "main", "java");
-            var exists = Directory.Exists(customizationSourceRoot);
-            logger.LogInformation("Checking customization path: {CustomizationPath}, exists: {Exists}", customizationSourceRoot, exists);
-
-            if (exists)
+            var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
+            if (Directory.Exists(customizationSourceRoot))
             {
-                return customizationSourceRoot;
+                logger.LogDebug("Found Java customization directory at {CustomizationPath}", customizationSourceRoot);
+                return true;
             }
-            logger.LogInformation("No customization directory found, returning null");
+
+            logger.LogDebug("No Java customization directory found in {PackagePath}", packagePath);
+            return false;
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Failed to resolve Java customization root from generationRoot '{GenerationRoot}'", generationRoot);
+            logger.LogWarning(ex, "Error searching for Java customization files in {PackagePath}", packagePath);
+            return false;
         }
-        return null;
     }
 
     public override async Task<bool> ApplyPatchesAsync(

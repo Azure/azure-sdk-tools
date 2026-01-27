@@ -1,113 +1,96 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Services;
-using LibGit2Sharp;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface IGitHelper
     {
-        // Get the owner 
-        public Task<string> GetRepoOwnerNameAsync(string pathInRepo, bool findUpstreamParent = true);
-        public Task<string> GetRepoFullNameAsync(string pathInRepo, bool findUpstreamParent = true);
-        public Uri GetRepoRemoteUri(string pathInRepo);
-        public string GetBranchName(string pathInRepo);
-        public string GetMergeBaseCommitSha(string pathInRepo, string targetBranch);
-        public string DiscoverRepoRoot(string pathInRepo);
-        public string GetRepoName(string pathInRepo);
+        // Get the owner
+        public Task<string> GetRepoOwnerNameAsync(string pathInRepo, bool findUpstreamParent = true, CancellationToken ct = default);
+        public Task<string> GetRepoFullNameAsync(string pathInRepo, bool findUpstreamParent = true, CancellationToken ct = default);
+        public Task<Uri> GetRepoRemoteUriAsync(string pathInRepo, CancellationToken ct = default);
+        public Task<string> GetBranchNameAsync(string pathInRepo, CancellationToken ct = default);
+        public Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranch, CancellationToken ct = default);
+        public Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct = default);
+        public Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct = default);
     }
 
-    public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
+    public class GitHelper(IGitHubService gitHubService, IGitCommandHelper gitCommandHelper, ILogger<GitHelper> logger) : IGitHelper
     {
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
+        private readonly IGitCommandHelper gitCommandHelper = gitCommandHelper;
 
         /// <summary>
         /// Gets the SHA of the merge base (common ancestor) between the current branch and the target branch.
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
         /// <param name="targetBranchName">The name of the target branch to find the merge base with</param>
-        /// <returns>The SHA of the merge base commit, or empty string if not found</returns>
-        public string GetMergeBaseCommitSha(string pathInRepo, string targetBranchName)
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>The SHA of the merge base commit, or empty string if not found or on error</returns>
+        public async Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranchName, CancellationToken ct = default)
         {
-            var repoRoot = DiscoverRepoRoot(pathInRepo);
-            using (var repo = new Repository(repoRoot))
-            {
-                // Get the current branch
-                Branch currentBranch = repo.Head;
-                var targetBranch = repo.Branches[targetBranchName];
+            var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
+            var options = new GitOptions($"merge-base HEAD {targetBranchName}", repoRoot);
+            var result = await gitCommandHelper.Run(options, ct);
 
-                // Find the merge base (common ancestor) (git merge-base main HEAD)
-                var mergeBaseCommit = repo.ObjectDatabase.FindMergeBase(currentBranch.Tip, targetBranch.Tip);
-                logger.LogDebug(
-                    "Git merge base analysis - Current branch: {currentBranch}, Target branch SHA: {mergeBaseCommitSha}",
-                    currentBranch.FriendlyName,
-                    mergeBaseCommit?.Sha);
-                return mergeBaseCommit?.Sha ?? "";
+            if (result.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"Command '{options.ShortName}' failed: {result.Output.Trim()}");
             }
+
+            var mergeBaseSha = result.Stdout.Trim();
+            var currentBranch = await GetBranchNameAsync(pathInRepo, ct);
+            logger.LogDebug(
+                "Git merge base - Current branch: {currentBranch}, Merge base SHA: {mergeBaseCommitSha}",
+                currentBranch,
+                mergeBaseSha);
+            return mergeBaseSha;
         }
 
         /// <summary>
         /// Gets the friendly name of the current branch in the repository.
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns>The friendly name of the current branch</returns>
-        public string GetBranchName(string pathInRepo)
+        public async Task<string> GetBranchNameAsync(string pathInRepo, CancellationToken ct = default)
         {
-            var repoRoot = DiscoverRepoRoot(pathInRepo);
-            using var repo = new Repository(repoRoot);
-            var branchName = repo.Head.FriendlyName;
-            return branchName;
+            var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
+            var options = new GitOptions("rev-parse --abbrev-ref HEAD", repoRoot);
+            var result = await gitCommandHelper.Run(options, ct);
+
+            if (result.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"Command '{options.ShortName}' failed: {result.Output.Trim()}");
+            }
+
+            return result.Stdout.Trim();
         }
 
         /// <summary>
         /// Gets the remote origin URI of the repository in HTTPS format.
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns>The HTTPS URI of the remote origin</returns>
-        /// <exception cref="InvalidOperationException">Thrown when unable to determine remote URL</exception>
-        public Uri GetRepoRemoteUri(string pathInRepo)
+        public async Task<Uri> GetRepoRemoteUriAsync(string pathInRepo, CancellationToken ct = default)
         {
-            var repoRoot = DiscoverRepoRoot(pathInRepo);
-            using var repo = new Repository(repoRoot);
-            var remote = repo.Network?.Remotes["origin"];
-            if (remote != null)
-            {
-                var url = ConvertSshToHttpsUrl(remote.Url);
-                return new Uri(url);
-            }
-            throw new InvalidOperationException("Unable to determine remote URL.");
-        }
+            var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
+            var options = new GitOptions("remote get-url origin", repoRoot);
+            var result = await gitCommandHelper.Run(options, ct);
 
-        /// <summary>
-        /// Converts SSH GitHub URLs to HTTPS format
-        /// </summary>
-        /// <param name="gitUrl">The Git URL (SSH or HTTPS)</param>
-        /// <returns>HTTPS formatted Git URL</returns>
-        private static string ConvertSshToHttpsUrl(string gitUrl)
-        {
-            if (string.IsNullOrEmpty(gitUrl))
+            if (result.ExitCode != 0)
             {
-                return gitUrl;
+                throw new InvalidOperationException($"Command '{options.ShortName}' failed: {result.Output.Trim()}");
             }
 
-            // If it's already HTTPS, return as-is
-            if (gitUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-            {
-                return gitUrl;
-            }
-
-            // Handle GitHub SSH URLs (e.g., git@github.com:Azure/azure-rest-api-specs.git)
-            if (gitUrl.StartsWith("git@github.com:", StringComparison.OrdinalIgnoreCase))
-            {
-                // Convert SSH URL to HTTPS URL
-                // git@github.com:Azure/azure-rest-api-specs.git -> https://github.com/Azure/azure-rest-api-specs.git
-                return gitUrl.Replace("git@github.com:", "https://github.com/");
-            }
-
-            // Return as-is if it's not a recognized format
-            return gitUrl;
+            var remoteUrl = result.Stdout.Trim();
+            var url = ConvertSshToHttpsUrl(remoteUrl);
+            return new Uri(url);
         }
 
         /// <summary>
@@ -115,11 +98,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
         /// <param name="findUpstreamParent">Whether to find the upstream parent repo if this is a fork (default: true)</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns>The owner name of the repository or its upstream parent</returns>
         /// <exception cref="InvalidOperationException">Thrown when unable to determine repository owner</exception>
-        public async Task<string> GetRepoOwnerNameAsync(string pathInRepo, bool findUpstreamParent = true)
+        public async Task<string> GetRepoOwnerNameAsync(string pathInRepo, bool findUpstreamParent = true, CancellationToken ct = default)
         {
-            var uri = GetRepoRemoteUri(pathInRepo);
+            var uri = await GetRepoRemoteUriAsync(pathInRepo, ct);
             var segments = uri.Segments;
             string repoOwner = string.Empty;
             string repoName = string.Empty;
@@ -157,14 +141,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
         /// <param name="findUpstreamParent">Whether to find the upstream parent repo if this is a fork (default: true)</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns>The full name of the repository in "owner/name" format</returns>
         /// <exception cref="ArgumentException">Thrown when pathInRepo is null or empty</exception>
-        public async Task<string> GetRepoFullNameAsync(string pathInRepo, bool findUpstreamParent = true)
+        public async Task<string> GetRepoFullNameAsync(string pathInRepo, bool findUpstreamParent = true, CancellationToken ct = default)
         {
             if (!string.IsNullOrEmpty(pathInRepo))
             {
-                var repoOwner = await GetRepoOwnerNameAsync(pathInRepo, findUpstreamParent);
-                var repoName = GetRepoName(pathInRepo);
+                var repoOwner = await GetRepoOwnerNameAsync(pathInRepo, findUpstreamParent, ct);
+                var repoName = await GetRepoNameAsync(pathInRepo, ct);
                 return $"{repoOwner}/{repoName}";
             }
 
@@ -175,43 +160,81 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// Discovers and returns the root directory path of the git repository containing the specified path.
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns>The absolute path to the repository root directory</returns>
         /// <exception cref="InvalidOperationException">Thrown when no git repository is found at or above the specified path</exception>
-        public string DiscoverRepoRoot(string pathInRepo)
+        public async Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct = default)
         {
-            // Discover the repo root for this path
-            var repoPath = Repository.Discover(pathInRepo);
-            if (string.IsNullOrEmpty(repoPath))
+            if (string.IsNullOrWhiteSpace(pathInRepo))
             {
-                throw new InvalidOperationException($"No git repository found at or above the path: {pathInRepo}");
+                throw new InvalidOperationException("Path cannot be null or empty");
             }
 
-            // Repository.Discover returns the path to .git directory
-            // The repository root is the parent directory of .git
-            var gitDir = new DirectoryInfo(repoPath);
-            if (gitDir.Parent == null || string.IsNullOrEmpty(gitDir.Parent.FullName))
+            // Determine the working directory for git command
+            // If path is a file, use its directory; if directory, use it directly
+            string? workingDir;
+            if (Directory.Exists(pathInRepo))
             {
-                throw new InvalidOperationException("Unable to determine repository root");
+                workingDir = pathInRepo;
             }
-            
-            return gitDir.Parent.FullName;
+            else
+            {
+                // Path might be a file or non-existent path - get its directory
+                workingDir = Path.GetDirectoryName(pathInRepo);
+
+                // Handle edge cases like "C:" which returns null
+                if (string.IsNullOrEmpty(workingDir))
+                {
+                    workingDir = Directory.GetCurrentDirectory();
+                }
+            }
+
+            if (!Directory.Exists(workingDir))
+            {
+                throw new InvalidOperationException($"Directory does not exist: {workingDir} (from path: {pathInRepo})");
+            }
+
+            try
+            {
+                // git rev-parse --show-toplevel returns the root of the working tree
+                // This correctly handles both normal repos and worktrees
+                var options = new GitOptions("rev-parse --show-toplevel", workingDir);
+                var result = await gitCommandHelper.Run(options, ct);
+
+                if (result.ExitCode != 0)
+                {
+                    throw new InvalidOperationException($"Git command failed: {result.Output.Trim()}");
+                }
+
+                var repoRoot = result.Stdout.Trim();
+                var repoDirectoryName = Path.GetFileName(repoRoot);
+                TelemetryPathSanitizer.AddAllowlistedSegment(repoDirectoryName);
+
+                // Normalize path separators: git returns forward slashes on Windows
+                return repoRoot.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new InvalidOperationException($"No git repository found at or above the path: {pathInRepo}. Details: {ex.Message}", ex);
+            }
         }
 
         /// <summary>
         /// Gets the repository name from the remote origin URL.
         /// </summary>
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <param name="ct">Cancellation token</param>
         /// <returns>The name of the repository (without the owner)</returns>
         /// <exception cref="ArgumentException">Thrown when pathInRepo is null or empty</exception>
         /// <exception cref="InvalidOperationException">Thrown when unable to determine repository name from remote URL</exception>
-        public string GetRepoName(string pathInRepo)
+        public async Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(pathInRepo))
             {
                 throw new ArgumentException("Invalid repository path.", nameof(pathInRepo));
             }
-            
-            var uri = GetRepoRemoteUri(pathInRepo);
+
+            var uri = await GetRepoRemoteUriAsync(pathInRepo, ct);
             var segments = uri.Segments;
 
             if (segments.Length < 2)
@@ -221,6 +244,36 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             string repoName = segments[^1].Replace(".git", "");
             return repoName;
+        }
+
+        /// <summary>
+        /// Converts SSH GitHub URLs to HTTPS format
+        /// </summary>
+        /// <param name="gitUrl">The Git URL (SSH or HTTPS)</param>
+        /// <returns>HTTPS formatted Git URL</returns>
+        private static string ConvertSshToHttpsUrl(string gitUrl)
+        {
+            if (string.IsNullOrEmpty(gitUrl))
+            {
+                return gitUrl;
+            }
+
+            // If it's already HTTPS, return as-is
+            if (gitUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return gitUrl;
+            }
+
+            // Handle GitHub SSH URLs (e.g., git@github.com:Azure/azure-rest-api-specs.git)
+            if (gitUrl.StartsWith("git@github.com:", StringComparison.OrdinalIgnoreCase))
+            {
+                // Convert SSH URL to HTTPS URL
+                // git@github.com:Azure/azure-rest-api-specs.git -> https://github.com/Azure/azure-rest-api-specs.git
+                return gitUrl.Replace("git@github.com:", "https://github.com/");
+            }
+
+            // Return as-is if it's not a recognized format
+            return gitUrl;
         }
     }
 }

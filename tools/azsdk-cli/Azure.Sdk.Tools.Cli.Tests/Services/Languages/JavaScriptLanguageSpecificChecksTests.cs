@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -22,7 +23,7 @@ internal class JavaScriptLanguageSpecificChecksTests
         _processHelperMock = new Mock<IProcessHelper>();
         _npxHelperMock = new Mock<INpxHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
-        _gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-js");
+        _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js");
         _commonValidationHelpersMock = new Mock<ICommonValidationHelpers>();
 
         _languageChecks = new JavaScriptLanguageService(
@@ -103,4 +104,32 @@ internal class JavaScriptLanguageSpecificChecksTests
         Assert.That(response.ResponseError, Does.Contain("Error updating snippets: process failed"));
         Assert.That(response.NextSteps, Is.Null);
     }
+
+    #region HasCustomizations Tests
+
+    [Test]
+    public void HasCustomizations_ReturnsTrue_WhenGeneratedFolderExists()
+    {
+        using var tempDir = TempDirectory.Create("js-customization-test");
+        var generatedDir = Path.Combine(tempDir.DirectoryPath, "generated");
+        Directory.CreateDirectory(generatedDir);
+
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void HasCustomizations_ReturnsFalse_WhenNoGeneratedFolderExists()
+    {
+        using var tempDir = TempDirectory.Create("js-no-customization-test");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
+        Directory.CreateDirectory(srcDir);
+
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.That(result, Is.False);
+    }
+
+    #endregion
 }

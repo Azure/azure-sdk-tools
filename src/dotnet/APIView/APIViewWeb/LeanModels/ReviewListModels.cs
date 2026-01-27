@@ -166,9 +166,9 @@ namespace APIViewWeb.LeanModels
                     const string prefix = "Source Branch:";
                     if (Label.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                     {
-                        return Label.Substring(prefix.Length).Trim();
+                        string extracted = Label.Substring(prefix.Length).Trim();
+                        return string.IsNullOrWhiteSpace(extracted) ? null : extracted;
                     }
-                    return null;
                 }
                 return _sourceBranch;
             }

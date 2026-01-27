@@ -116,7 +116,7 @@ public class AutoReviewController : ControllerBase
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
 
-            (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions, sourceBranch:sourceBranch);
+            (ReviewListItemModel review, APIRevisionListItemModel apiRevision) = await _autoReviewService.CreateAutomaticRevisionAsync(user: User, codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions, sourceBranch: sourceBranch);
             if (apiRevision == null)
             {
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError, "API revision creation returned null. This may indicate an issue with the code file parsing or revision creation process.");

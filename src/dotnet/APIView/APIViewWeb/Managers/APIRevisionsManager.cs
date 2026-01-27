@@ -216,19 +216,24 @@ namespace APIViewWeb.Managers
             };
 
             if (!string.IsNullOrEmpty(reviewId))
+            {
                 apiRevision.ReviewId = reviewId;
+            }
 
             if (!string.IsNullOrEmpty(packageName))
+            {
                 apiRevision.PackageName = packageName;
+            }
 
             if (!string.IsNullOrEmpty(language))
+            {
                 apiRevision.Language = language;
-
-            if (!string.IsNullOrEmpty(language))
-                apiRevision.Language = language;
+            }
 
             if (!string.IsNullOrEmpty(label))
+            {
                 apiRevision.Label = label;
+            }
 
             if (!string.IsNullOrEmpty(sourceBranch))
             {
@@ -236,7 +241,9 @@ namespace APIViewWeb.Managers
             }
 
             if (prNumber != null)
+            {
                 apiRevision.PullRequestNo = prNumber;
+            }
 
             return apiRevision;
         }
@@ -909,6 +916,7 @@ namespace APIViewWeb.Managers
         /// <param name="codeFile"></param>
         /// <param name="originalName"></param>
         /// <param name="prNumber"></param>
+        /// <param name="sourceBranch"></param>
         /// <returns></returns>
         public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
             MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null, string sourceBranch = null)

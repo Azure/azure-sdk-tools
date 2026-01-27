@@ -193,41 +193,47 @@ namespace APIViewWeb.Managers
         /// <param name="prNumber"></param>
         /// <param name="createdBy"></param>
         /// <param name="apiRevisionType"></param>
+        /// <param name="sourceBranch"></param>
         /// <returns></returns>
         public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType,
             string reviewId = null, string packageName = null, string language = null,
-            string label = null, int? prNumber = null, string createdBy= ApiViewConstants.AzureSdkBotName)
+            string label = null, int? prNumber = null, string createdBy= ApiViewConstants.AzureSdkBotName, string sourceBranch = null)
         {
             var apiRevision = new APIRevisionListItemModel()
             {
                 CreatedBy = createdBy,
                 CreatedOn = DateTime.UtcNow,
                 APIRevisionType = apiRevisionType,
-                ChangeHistory = new List<APIRevisionChangeHistoryModel>()
-                {
-                    new APIRevisionChangeHistoryModel()
+                ChangeHistory =
+                [
+                    new APIRevisionChangeHistoryModel
                     {
                         ChangeAction = APIRevisionChangeAction.Created,
                         ChangedBy = createdBy,
                         ChangedOn = DateTime.UtcNow
                     }
-                },
+                ],
             };
 
-            if (!String.IsNullOrEmpty(reviewId))
+            if (!string.IsNullOrEmpty(reviewId))
                 apiRevision.ReviewId = reviewId;
 
-            if (!String.IsNullOrEmpty(packageName))
+            if (!string.IsNullOrEmpty(packageName))
                 apiRevision.PackageName = packageName;
 
-            if (!String.IsNullOrEmpty(language))
+            if (!string.IsNullOrEmpty(language))
                 apiRevision.Language = language;
 
-            if (!String.IsNullOrEmpty(language))
+            if (!string.IsNullOrEmpty(language))
                 apiRevision.Language = language;
 
-            if (!String.IsNullOrEmpty(label))
+            if (!string.IsNullOrEmpty(label))
                 apiRevision.Label = label;
+
+            if (!string.IsNullOrEmpty(sourceBranch))
+            {
+                apiRevision.SourceBranch = sourceBranch;
+            }
 
             if (prNumber != null)
                 apiRevision.PullRequestNo = prNumber;
@@ -905,7 +911,7 @@ namespace APIViewWeb.Managers
         /// <param name="prNumber"></param>
         /// <returns></returns>
         public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
-            MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null)
+            MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null, string sourceBranch = null)
         {
 
             var apiRevision = GetNewAPIRevisionAsync(

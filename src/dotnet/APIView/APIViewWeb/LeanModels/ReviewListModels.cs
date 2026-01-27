@@ -156,6 +156,24 @@ namespace APIViewWeb.LeanModels
         public bool IsDeleted { get; set; }
         public bool IsReleased { get; set; }
         public DateTime ReleasedOn { get; set; }
+        private string _sourceBranch;
+        public string SourceBranch 
+        { 
+            get 
+            {
+                if (string.IsNullOrEmpty(_sourceBranch) && !string.IsNullOrEmpty(Label))
+                {
+                    const string prefix = "Source Branch:";
+                    if (Label.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return Label.Substring(prefix.Length).Trim();
+                    }
+                    return null;
+                }
+                return _sourceBranch;
+            }
+            set => _sourceBranch = value;
+        }
     }
 
 

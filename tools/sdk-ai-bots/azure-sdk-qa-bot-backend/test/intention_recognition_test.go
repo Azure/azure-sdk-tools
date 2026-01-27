@@ -237,8 +237,8 @@ func TestIntentionRecognition_PlaneDetection_FilePathResourceManager(t *testing.
 	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
-	require.NotNil(t, intentionResult.Plane)
-	require.Equal(t, model.Plane_ManagementPlane, *intentionResult.Plane, "File path with resource-manager should be detected as management-plane")
+	require.NotNil(t, intentionResult.ServicePlane)
+	require.Equal(t, model.ServicePlane_ManagementPlane, *intentionResult.ServicePlane, "File path with resource-manager should be detected as management-plane")
 }
 
 func TestIntentionRecognition_PlaneDetection_FilePathDataPlane(t *testing.T) {
@@ -262,7 +262,7 @@ func TestIntentionRecognition_PlaneDetection_FilePathDataPlane(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.Plane)
-	require.Equal(t, model.Plane_DataPlane, *intentionResult.Plane, "File path with data-plane should be detected as data-plane")
+	require.Equal(t, model.PlaneType_DataPlane, *intentionResult.Plane, "File path with data-plane should be detected as data-plane")
 }
 
 func TestIntentionRecognition_PlaneDetection_ARMKeyword(t *testing.T) {
@@ -286,7 +286,7 @@ func TestIntentionRecognition_PlaneDetection_ARMKeyword(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.Plane)
-	require.Equal(t, model.Plane_ManagementPlane, *intentionResult.Plane, "Question with ARM keyword should be detected as management-plane")
+	require.Equal(t, model.PlaneType_ManagementPlane, *intentionResult.Plane, "Question with ARM keyword should be detected as management-plane")
 }
 
 func TestIntentionRecognition_PlaneDetection_MPGKeyword(t *testing.T) {
@@ -310,7 +310,7 @@ func TestIntentionRecognition_PlaneDetection_MPGKeyword(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.Plane)
-	require.Equal(t, model.Plane_ManagementPlane, *intentionResult.Plane, "Question with MPG keyword should be detected as management-plane")
+	require.Equal(t, model.PlaneType_ManagementPlane, *intentionResult.Plane, "Question with MPG keyword should be detected as management-plane")
 }
 
 func TestIntentionRecognition_PlaneDetection_DPGKeyword(t *testing.T) {
@@ -334,7 +334,7 @@ func TestIntentionRecognition_PlaneDetection_DPGKeyword(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.Plane)
-	require.Equal(t, model.Plane_DataPlane, *intentionResult.Plane, "Question with DPG keyword should be detected as data-plane")
+	require.Equal(t, model.PlaneType_DataPlane, *intentionResult.Plane, "Question with DPG keyword should be detected as data-plane")
 }
 
 func TestIntentionRecognition_PlaneDetection_PRLabelManagementPlane(t *testing.T) {
@@ -359,7 +359,7 @@ func TestIntentionRecognition_PlaneDetection_PRLabelManagementPlane(t *testing.T
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.NotNil(t, intentionResult.Plane)
-	require.Equal(t, model.Plane_ManagementPlane, *intentionResult.Plane, "PR with management-plane label should be detected as management-plane")
+	require.Equal(t, model.PlaneType_ManagementPlane, *intentionResult.Plane, "PR with management-plane label should be detected as management-plane")
 }
 
 func TestIntentionRecognition_PlaneDetection_PRLabelDataPlane(t *testing.T) {
@@ -384,7 +384,7 @@ func TestIntentionRecognition_PlaneDetection_PRLabelDataPlane(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.NotNil(t, intentionResult.Plane)
-	require.Equal(t, model.Plane_DataPlane, *intentionResult.Plane, "PR with data-plane label should be detected as data-plane")
+	require.Equal(t, model.PlaneType_DataPlane, *intentionResult.Plane, "PR with data-plane label should be detected as data-plane")
 }
 
 func TestIntentionRecognition_PlaneDetection_UnknownNoSignal(t *testing.T) {
@@ -411,7 +411,7 @@ func TestIntentionRecognition_PlaneDetection_UnknownNoSignal(t *testing.T) {
 	require.NotNil(t, intentionResult.Plane)
 	// Plane might be unknown if no clear signal is present
 	// This depends on LLM interpretation, but we test it doesn't crash
-	require.Equal(t, model.Plane_Unknown, *intentionResult.Plane)
+	require.Equal(t, model.ServicePlane_Unknown, *intentionResult.Plane)
 }
 
 // Helper function to convert model.Message to LLM message format

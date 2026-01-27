@@ -58,7 +58,7 @@ func TestAgenticSearch(t *testing.T) {
 			Sources:      nil,
 			SourceFilter: sourceFilter,
 			Scope:        to.Ptr(model.Scope_Unbranded),
-			Plane:        to.Ptr(model.Plane_Unknown),
+			Plane:        to.Ptr(model.ServicePlane_Unknown),
 		},
 		Prompt: "",
 	})

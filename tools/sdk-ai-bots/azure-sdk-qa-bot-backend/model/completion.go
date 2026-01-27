@@ -109,21 +109,21 @@ const (
 	Scope_Unbranded Scope = "unbranded"
 )
 
-type Plane string
+type ServicePlane string
 
 const (
-	Plane_Unknown         Plane = "unknown"
-	Plane_DataPlane       Plane = "data-plane"
-	Plane_ManagementPlane Plane = "management-plane"
+	ServicePlane_Unknown         ServicePlane = "unknown"
+	ServicePlane_DataPlane       ServicePlane = "data-plane"
+	ServicePlane_ManagementPlane ServicePlane = "management-plane"
 )
 
 type IntentionResult struct {
-	Question           string  `json:"question" jsonschema:"required,description=The question to ask the agent"`
-	Category           string  `json:"category" jsonschema:"required,description=The category of the question"`
-	SpecType           *string `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
-	NeedsRagProcessing bool    `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
-	Scope              *Scope  `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
-	Plane              *Plane  `json:"plane,omitempty" jsonschema:"omitempty,description=The plane for filtering"`
+	Question           string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
+	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType           *string       `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
+	Scope              *Scope        `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+	ServicePlane       *ServicePlane `json:"service_plane,omitempty" jsonschema:"omitempty,description=The service plane for filtering"`
 }
 
 type TenantRoutingResult struct {

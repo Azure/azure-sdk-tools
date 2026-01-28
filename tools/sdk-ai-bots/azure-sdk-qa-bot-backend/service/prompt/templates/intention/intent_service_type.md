@@ -1,4 +1,4 @@
-Use the following methods to classify the service plane (check in order):
+Use the following methods to classify the service type (check in order):
 
 1. **PR Label Analysis**: If the question includes an azure-rest-api-specs PR link:
    - Check if the PR has a `data-plane` label → classify as **data-plane**
@@ -12,4 +12,4 @@ Use the following methods to classify the service plane (check in order):
    - Question contains management-plane, ARM, RPaaS, RPSaaS → classify as **management-plane**
    - Question contains data-plane → classify as **data-plane**
 
-4. **No Clear Signal**: If none of the above methods provide a clear signal, set service plane to **unknown**
+4. **No Clear Signal**: If none of the above methods provide a clear signal, set service type to **unknown**

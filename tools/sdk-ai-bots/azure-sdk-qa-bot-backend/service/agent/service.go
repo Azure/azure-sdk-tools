@@ -116,8 +116,8 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		if req.Intention.QuestionScope != nil {
 			intention.QuestionScope = req.Intention.QuestionScope
 		}
-		if req.Intention.ServicePlane != nil {
-			intention.ServicePlane = req.Intention.ServicePlane
+		if req.Intention.ServiceType != nil {
+			intention.ServiceType = req.Intention.ServiceType
 		}
 	}
 	jsonReq, _ = json.Marshal(intention)
@@ -520,7 +520,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 			Sources:       req.Sources,
 			SourceFilter:  sourceFilter,
 			QuestionScope: intention.QuestionScope,
-			ServicePlane:  intention.ServicePlane,
+			ServicePlane:  intention.ServiceType,
 		},
 		Prompt: agenticSearchPrompt,
 	})
@@ -621,7 +621,7 @@ func (s *CompletionService) vectorSearch(req *model.CompletionReq, query string,
 		Sources:       req.Sources,
 		SourceFilter:  sourceFilter,
 		QuestionScope: intention.QuestionScope,
-		ServicePlane:  intention.ServicePlane,
+		ServicePlane:  intention.ServiceType,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)

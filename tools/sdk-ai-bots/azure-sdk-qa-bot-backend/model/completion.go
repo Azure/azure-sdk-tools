@@ -109,12 +109,12 @@ const (
 	QuestionScope_Unbranded QuestionScope = "unbranded"
 )
 
-type ServicePlane string
+type ServiceType string
 
 const (
-	ServicePlane_Unknown         ServicePlane = "unknown"
-	ServicePlane_DataPlane       ServicePlane = "data-plane"
-	ServicePlane_ManagementPlane ServicePlane = "management-plane"
+	ServiceType_Unknown         ServiceType = "unknown"
+	ServiceType_DataPlane       ServiceType = "data-plane"
+	ServiceType_ManagementPlane ServiceType = "management-plane"
 )
 
 type IntentionResult struct {
@@ -123,7 +123,7 @@ type IntentionResult struct {
 	SpecType           *string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
 	NeedsRagProcessing bool           `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
 	QuestionScope      *QuestionScope `json:"question_scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
-	ServicePlane       *ServicePlane  `json:"service_plane,omitempty" jsonschema:"omitempty,description=The service plane for filtering"`
+	ServiceType        *ServiceType   `json:"service_type,omitempty" jsonschema:"omitempty,description=The service type for filtering"`
 }
 
 type TenantRoutingResult struct {

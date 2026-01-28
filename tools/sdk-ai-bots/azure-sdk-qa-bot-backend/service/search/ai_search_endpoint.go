@@ -70,7 +70,7 @@ type SearchOptions struct {
 	Sources       []model.Source
 	SourceFilter  map[model.Source]string
 	QuestionScope *model.QuestionScope
-	ServicePlane  *model.ServicePlane
+	ServicePlane  *model.ServiceType
 }
 
 func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([]model.Index, error) {
@@ -413,13 +413,13 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, opts Age
 }
 
 // buildFilter creates a combined OData filter string from sources, source-specific filters, and metadata filters.
-func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope *model.QuestionScope, plane *model.ServicePlane) string {
+func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope *model.QuestionScope, plane *model.ServiceType) string {
 	// Build metadata filter from scope and plane
 	var metadataFilters []string
 	if scope != nil && *scope == model.QuestionScope_Unbranded {
 		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", *scope))
 	}
-	if plane != nil && *plane != model.ServicePlane_Unknown {
+	if plane != nil && *plane != model.ServiceType_Unknown {
 		// For a specific plane, include documents with that plane or no plane specified.
 		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or plane eq null)", *plane))
 	}

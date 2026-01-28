@@ -566,7 +566,7 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	}
 
 	agenticCh := make(chan agenticResult, 1)
-	knowledgeCh := make(chan knowledgeResult, 1)
+	vectorCh := make(chan knowledgeResult, 1)
 
 	// Start agentic search in a goroutine
 	go func() {
@@ -575,19 +575,19 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 		agenticCh <- agenticResult{chunks: chunks, err: err}
 	}()
 
-	// Start knowledge search in parallel (without agentic chunks for now)
+	// Start vector search in a goroutine
 	go func() {
-		defer close(knowledgeCh)
-		rawResults, err := s.searchKnowledgeBase(req, query, intention)
-		knowledgeCh <- knowledgeResult{rawResults: rawResults, err: err}
+		defer close(vectorCh)
+		rawResults, err := s.vectorSearch(req, query, intention)
+		vectorCh <- knowledgeResult{rawResults: rawResults, err: err}
 	}()
 
 	// Wait for both searches to complete
 	agenticRes := <-agenticCh
-	knowledgeRes := <-knowledgeCh
+	vectorRes := <-vectorCh
 
-	if agenticRes.err != nil && knowledgeRes.err != nil {
-		return nil, fmt.Errorf("both agentic and knowledge searches failed: agentic error: %v, knowledge error: %v", agenticRes.err, knowledgeRes.err)
+	if agenticRes.err != nil && vectorRes.err != nil {
+		return nil, fmt.Errorf("both agentic and knowledge searches failed: agentic error: %v, knowledge error: %v", agenticRes.err, vectorRes.err)
 	}
 
 	var agenticChunks []model.Index
@@ -598,19 +598,19 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 		agenticChunks = agenticRes.chunks
 	}
 
-	if knowledgeRes.err != nil {
-		return nil, knowledgeRes.err
+	if vectorRes.err != nil {
+		return nil, vectorRes.err
 	}
 
 	// Merge and process the results
-	knowledges := s.mergeAndProcessSearchResults(agenticChunks, knowledgeRes.rawResults)
+	knowledges := s.mergeAndProcessSearchResults(agenticChunks, vectorRes.rawResults)
 
 	log.Printf("Parallel search and merge took: %v", time.Since(parallelSearchStart))
 	return knowledges, nil
 }
 
-// searchKnowledgeBase performs the core knowledge search without dependency on agentic results
-func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query string, intention *model.IntentionResult) ([]model.Index, error) {
+// vectorSearch performs the core knowledge search without dependency on agentic results
+func (s *CompletionService) vectorSearch(req *model.CompletionReq, query string, intention *model.IntentionResult) ([]model.Index, error) {
 	searchStart := time.Now()
 	sourceFilter := map[model.Source]string{}
 	if tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID); hasConfig && tenantConfig.SourceFilter != nil {
@@ -659,92 +659,30 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 //   - Converts all expanded chunks into Knowledge objects
 //
 // Returns: slice of Knowledge objects with merged and expanded search results
-func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.Index, knowledgeResults []model.Index) []model.Knowledge {
+func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults []model.Index, vectorSearchedResults []model.Index) []model.Knowledge {
 	mergeStart := time.Now()
 
 	allChunks := make([]model.ChunkWithExpansion, 0)
 
-	//  Add knowledge search results with scoring based on relevance
-	for _, result := range knowledgeResults {
+	// Add knowledge search results with scoring based on relevance
+	for _, result := range vectorSearchedResults {
 		// Skip low relevance results
 		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
 			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
 			continue
 		}
-
 		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
-
-		// Static chunks specific expansion rules
-		if result.ContextID == model.Source_TypeSpecQA || result.ContextID == model.Source_TypeSpecMigration {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     result,
-				Expansion: model.ExpansionQA,
-			})
-			continue
-		}
-		if result.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     result,
-				Expansion: model.ExpansionMapping,
-			})
-			continue
-		}
-
-		// Other chunks: check if needs hierarchical expansion
-		hierarchy := s.searchClient.DetectChunkHierarchy(result)
-		if hierarchy != model.HierarchyUnknown {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     result,
-				Expansion: model.ExpansionHierarchical,
-			})
-			log.Printf("Vector chunk needs hierarchical expansion: %s/%s#%s#%s", result.ContextID, result.Title, result.Header1, result.Header2)
-			continue
-		}
-
-		// No expansion needed
-		allChunks = append(allChunks, model.ChunkWithExpansion{
-			Chunk:     result,
-			Expansion: model.ExpansionNone,
-		})
+		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(result))
 	}
 
 	// Then, add agentic search results after vector search results
 	topK := config.AppConfig.AI_SEARCH_TOPK / 2
-	if len(agenticChunks) > topK {
-		agenticChunks = agenticChunks[:topK] // Limit to TopK results
+	if len(agenticSearchedResults) > topK {
+		agenticSearchedResults = agenticSearchedResults[:topK] // Limit to TopK results
 	}
-	for _, chunk := range agenticChunks {
-		// Static chunks specific expansion rules
-		if chunk.ContextID == model.Source_TypeSpecQA || chunk.ContextID == model.Source_TypeSpecMigration {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionQA,
-			})
-			continue
-		}
-		if chunk.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionMapping,
-			})
-			continue
-		}
-
-		// Check if needs hierarchical expansion
-		hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
-		if hierarchy != model.HierarchyUnknown {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionHierarchical,
-			})
-			log.Printf("Agentic chunk needs hierarchical expansion: %s/%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
-			continue
-		}
+	for _, chunk := range agenticSearchedResults {
 		log.Printf("Agentic searched chunk: %+v", chunk)
-		allChunks = append(allChunks, model.ChunkWithExpansion{
-			Chunk:     chunk,
-			Expansion: model.ExpansionNone,
-		})
+		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
 	allChunks = s.searchClient.DeduplicateExpansions(allChunks)
@@ -809,7 +747,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 	}
 
 	log.Printf("Search merge summary: %d agentic + %d knowledge → %d total chunks",
-		len(agenticChunks), len(knowledgeResults), len(finalChunks))
+		len(agenticSearchedResults), len(vectorSearchedResults), len(finalChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
 	return results
 }

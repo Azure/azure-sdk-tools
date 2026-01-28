@@ -449,24 +449,19 @@ func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[mode
 // deduplicateExpansions removes duplicate chunk expansions considering hierarchy:
 // - If a header1 is being expanded, remove any subsequent header2/header3 under it
 // - If a header2 is being expanded, remove any subsequent header3 under it
+// - If a header3 is being expanded, keep it
 // This respects the order/priority of expansions in the array
 func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansion) []model.ChunkWithExpansion {
 	result := make([]model.ChunkWithExpansion, 0)
-	processedChunks := make(map[string]bool)
 
 	// Track what hierarchies have been expanded (built incrementally during iteration)
 	expandedHeader1 := make(map[string]bool) // contextID|title|header1
 	expandedHeader2 := make(map[string]bool) // contextID|title|header1|header2
+	expandedHeader3 := make(map[string]bool) // contextID|title|header1|header2|header3
 
 	// Process expansions in order, tracking what's been expanded
 	for _, cwe := range expansions {
 		c := cwe.Chunk
-
-		// Check if already processed (exact duplicate)
-		chunkKey := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Chunk)
-		if processedChunks[chunkKey] {
-			continue
-		}
 
 		// Detect hierarchy once for efficiency
 		hierarchy := s.DetectChunkHierarchy(c)
@@ -495,22 +490,59 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 			}
 		}
 
-		// Not redundant, keep it
-		processedChunks[chunkKey] = true
+		h3Key := fmt.Sprintf("%s|%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2, c.Header3)
+		// If this exact chunk has already been processed, skip it
+		if expandedHeader3[h3Key] {
+			log.Printf("Skipping chunk (already processed): %s/%s#%s#%s#%s", c.ContextID, c.Title, c.Header1, c.Header2, c.Header3)
+			continue
+		}
+
 		result = append(result, cwe)
 
 		// Track this expansion for future iterations
-		if cwe.Expansion == model.ExpansionHierarchical {
-			switch hierarchy {
-			case model.HierarchyHeader1:
-				h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
-				expandedHeader1[h1Key] = true
-			case model.HierarchyHeader2:
-				h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
-				expandedHeader2[h2Key] = true
-			}
+		switch hierarchy {
+		case model.HierarchyHeader1:
+			h1Key := fmt.Sprintf("%s|%s|%s", c.ContextID, c.Title, c.Header1)
+			expandedHeader1[h1Key] = true
+		case model.HierarchyHeader2:
+			h2Key := fmt.Sprintf("%s|%s|%s|%s", c.ContextID, c.Title, c.Header1, c.Header2)
+			expandedHeader2[h2Key] = true
+		case model.HierarchyHeader3:
+			expandedHeader3[h3Key] = true
 		}
 	}
 
 	return result
+}
+
+// DetermineChunkExpansion determines the expansion type for a given chunk based on its source and hierarchy
+func (s *SearchClient) DetermineChunkExpansion(chunk model.Index) model.ChunkWithExpansion {
+	// Static chunks specific expansion rules
+	if chunk.ContextID == model.Source_TypeSpecQA || chunk.ContextID == model.Source_TypeSpecMigration {
+		return model.ChunkWithExpansion{
+			Chunk:     chunk,
+			Expansion: model.ExpansionQA,
+		}
+	}
+	if chunk.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
+		return model.ChunkWithExpansion{
+			Chunk:     chunk,
+			Expansion: model.ExpansionMapping,
+		}
+	}
+
+	// Check if needs hierarchical expansion
+	hierarchy := s.DetectChunkHierarchy(chunk)
+	if hierarchy != model.HierarchyUnknown {
+		return model.ChunkWithExpansion{
+			Chunk:     chunk,
+			Expansion: model.ExpansionHierarchical,
+		}
+	}
+
+	// No expansion needed
+	return model.ChunkWithExpansion{
+		Chunk:     chunk,
+		Expansion: model.ExpansionNone,
+	}
 }

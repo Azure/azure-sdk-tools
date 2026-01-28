@@ -1333,6 +1333,25 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
+        public static Uri GetWebSocketRequestUri(HttpRequest request)
+        {
+            var requestUri = GetRequestUri(request);
+            if (requestUri.Scheme.Equals("ws", StringComparison.OrdinalIgnoreCase) ||
+                requestUri.Scheme.Equals("wss", StringComparison.OrdinalIgnoreCase))
+            {
+                return requestUri;
+            }
+
+            var targetScheme = requestUri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase) ? "wss" : "ws";
+            var builder = new UriBuilder(requestUri)
+            {
+                Scheme = targetScheme,
+                Port = requestUri.Port
+            };
+
+            return builder.Uri;
+        }
+
         private static bool IncludeHeader(string header)
         {
             return !header.Equals("Host", StringComparison.OrdinalIgnoreCase)

@@ -4,7 +4,6 @@
 using GraphQL;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
-using Octokit;
 using System.Collections.Concurrent;
 using System.Net.Http.Json;
 

@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await GenerateSdkAsync(localSdkRepoPath, tspConfigPath, tspLocationPath, emitterOptions, ct);
         }
 
-        [McpServerTool(Name = GenerateSdkToolName), Description("Generate SDK code or run code generation for a package from TypeSpec. Creates client library code for Azure services.")]
+        [McpServerTool(Name = GenerateSdkToolName), Description("Generate SDK code locally or run code generation for a package from TypeSpec. Creates client library code for Azure services. Runs locally, not via pipeline.")]
         public async Task<PackageOperationResponse> GenerateSdkAsync(
             [Description("Absolute path to the local Azure SDK repository. REQUIRED. Example: 'path/to/azure-sdk-for-net'. If not provided, the tool attempts to discover the repo from the current working directory.")]
             string localSdkRepoPath,

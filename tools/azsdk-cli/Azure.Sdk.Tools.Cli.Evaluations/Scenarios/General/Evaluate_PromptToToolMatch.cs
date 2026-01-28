@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 {
     /// <summary>
     /// Data-driven tests that evaluate tool discoverability using embedding similarity.
-    /// Loads test prompts from TestPrompts.md and validates that each prompt matches
+    /// Loads test prompts from TestPrompts.json and validates that each prompt matches
     /// its expected tool with sufficient confidence.
     /// </summary>
     public partial class Scenario
@@ -100,23 +100,29 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             var totalTools = allToolNames.Count - exemptTools.Count(t => allToolNames.Contains(t));
 
             TestContext.WriteLine($"\n=== Test Prompt Coverage ===");
+            if (totalTools == 0)
+            {
+                TestContext.WriteLine("No non-exempt tools found; skipping coverage statistics.");
+                return;
+            }
+
             TestContext.WriteLine($"Total prompts: {totalPrompts}");
             TestContext.WriteLine($"Tools with prompts: {toolsWithPrompts}/{totalTools} ({(double)toolsWithPrompts / totalTools:P0})");
             TestContext.WriteLine($"Tools without prompts: {missingTools.Count}");
-            TestContext.WriteLine($"Average prompts per tool: {(double)totalPrompts / toolsWithPrompts:F1}");
+            TestContext.WriteLine($"Average prompts per tool: {(toolsWithPrompts == 0 ? "N/A" : $"{(double)totalPrompts / toolsWithPrompts:F1}")}");
 
             // FAIL if any tools are missing prompts - enforces tool owners to add prompts
             if (missingTools.Any())
             {
-                Assert.Fail($"Coverage gap: {missingTools.Count} tool(s) have no test prompts in TestPrompts.md. " +
+                Assert.Fail($"Coverage gap: {missingTools.Count} tool(s) have no test prompts in TestPrompts.json. " +
                     $"Tool owners must add 2-3 prompt variations for each:\n" +
                     $"  - {string.Join("\n  - ", missingTools)}\n\n" +
-                    $"To add prompts, edit: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.md");
+                    $"To add prompts, edit: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json");
             }
         }
 
         /// <summary>
-        /// Provides test cases from TestPrompts.md for the data-driven test.
+        /// Provides test cases from TestPrompts.json for the data-driven test.
         /// Each test case is a (toolName, prompt) pair.
         /// </summary>
         public static IEnumerable<TestCaseData> GetPromptTestCases()

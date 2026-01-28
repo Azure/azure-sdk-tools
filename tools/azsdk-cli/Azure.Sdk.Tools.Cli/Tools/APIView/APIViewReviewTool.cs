@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.ComponentModel;
-using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
@@ -77,9 +76,11 @@ public class APIViewReviewTool : MCPMultiCommandTool
     {
         try
         {
-            (string revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
+            (string revisionId, _) = ApiViewUrlParser.ExtractIds(apiViewUrl);
+            string environment = IAPIViewHttpService.DetectEnvironmentFromUrl(apiViewUrl);
+            _logger.LogInformation("Detected APIView environment: {Environment} from URL: {Url}", environment, apiViewUrl);
 
-            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
+            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, environment);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Failed to retrieve comments for API View: {apiViewUrl}" };
@@ -114,10 +115,11 @@ public class APIViewReviewTool : MCPMultiCommandTool
             return new APIViewResponse { ResponseError = $"Invalid content type '{contentType}'. Must be one of: {validValues}." };
         }
 
-        (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl!);
+        (string revisionId, string reviewId) = ApiViewUrlParser.ExtractIds(apiViewUrl!);
+        string environment = IAPIViewHttpService.DetectEnvironmentFromUrl(apiViewUrl!);
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType, environment);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Content not found" };
@@ -146,40 +148,6 @@ public class APIViewReviewTool : MCPMultiCommandTool
         catch (Exception ex)
         {
             return new APIViewResponse { ResponseError = $"Failed to get content: {ex.Message}" };
-        }
-    }
-
-    private (string revisionId, string reviewId) ExtractIdsFromUrl(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            throw new ArgumentException("Input cannot be null or empty", nameof(url));
-        }
-
-        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
-        {
-            throw new ArgumentException("Input needs to be a valid APIView URL (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})", nameof(url));
-        }
-
-        try
-        {
-            // Pattern: /review/{reviewId} in path and activeApiRevisionId={revisionId} in query string
-            var match = Regex.Match(url, @"/review/([^/?]+).*[?&]activeApiRevisionId=([^&#]+)", RegexOptions.IgnoreCase);
-            
-            if (!match.Success)
-            {
-                throw new ArgumentException("APIView URL must contain both 'activeApiRevisionId' query parameter AND '/review/{reviewId}' path segment");
-            }
-
-            string reviewId = match.Groups[1].Value;
-            string revisionId = match.Groups[2].Value;
-
-            return (revisionId, reviewId);
-        }
-        catch (Exception ex) when (ex is not ArgumentException)
-        {
-            _logger.LogError(ex, "Failed to parse APIView URL {Url}", url);
-            throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url));
         }
     }
 }

@@ -2,8 +2,8 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewService
 {
-    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType);
-    Task<string?> GetCommentsByRevisionAsync(string revisionId);
+    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, string? environment = null);
+    Task<string?> GetCommentsByRevisionAsync(string revisionId, string? environment = null);
 }
 
 public class APIViewService : IAPIViewService
@@ -19,10 +19,10 @@ public class APIViewService : IAPIViewService
         _logger = logger;
     }
 
-    public async Task<string?> GetCommentsByRevisionAsync(string revisionId)
+    public async Task<string?> GetCommentsByRevisionAsync(string revisionId, string? environment = null)
     {
         string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint);
+        string? result = await _httpService.GetAsync(endpoint, environment);
 
         if (result == null)
         {
@@ -32,10 +32,10 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType)
+    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, string? environment = null)
     {
         string revisionContentEndpoint = $"/api/apirevisions/getRevisionContent?apiRevisionId={apiRevisionId}&reviewId={reviewId}&contentReturnType={contentReturnType}";
-        string? result = await _httpService.GetAsync(revisionContentEndpoint);
+        string? result = await _httpService.GetAsync(revisionContentEndpoint, environment);
         if (string.IsNullOrWhiteSpace(result))
         {
             _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", apiRevisionId);

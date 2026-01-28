@@ -37,40 +37,58 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             if (Sections.Count == 0 || string.IsNullOrEmpty(Boundary))
                 return null;
 
+            using var outStream = new MemoryStream();
+            Materialize(outStream);
+            return outStream.ToArray();
+        }
+
+        /// <summary>
+        /// Stream-based materialization to avoid intermediate byte[] allocations for nested multiparts.
+        /// The caller owns <paramref name="destination"/> and is responsible for flushing/disposing it.
+        /// </summary>
+        /// <param name="destination">Stream that receives the serialized body.</param>
+        internal void Materialize(Stream destination)
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            if (Sections.Count == 0 || string.IsNullOrEmpty(Boundary))
+            {
+                return;
+            }
+
             byte[] boundaryStart = Encoding.ASCII.GetBytes($"--{Boundary}\r\n");
             byte[] boundaryClose = Encoding.ASCII.GetBytes($"--{Boundary}--\r\n");
 
-            using var outStream = new MemoryStream();
-
             foreach (var section in Sections)
             {
-                outStream.Write(boundaryStart);
+                destination.Write(boundaryStart);
 
                 // Write headers
                 foreach (var header in section.Headers)
                 {
                     var headerLine = $"{header.Key}: {header.Value}\r\n";
-                    outStream.Write(Encoding.ASCII.GetBytes(headerLine));
+                    destination.Write(Encoding.ASCII.GetBytes(headerLine));
                 }
 
-                outStream.Write(MultipartUtilities.CrLf);
+                destination.Write(MultipartUtilities.CrLf);
 
                 // Write body (handles nested multipart recursively)
-                byte[] sectionBody = section.NestedMetadata != null
-                    ? section.NestedMetadata.Materialize()
-                    : section.Body;
-
-                if (sectionBody != null && sectionBody.Length > 0)
+                if (section.NestedMetadata != null)
                 {
-                    outStream.Write(sectionBody);
+                    section.NestedMetadata.Materialize(destination);
+                }
+                else if (section.Body != null && section.Body.Length > 0)
+                {
+                    destination.Write(section.Body);
                 }
 
-                outStream.Write(MultipartUtilities.CrLf);
+                destination.Write(MultipartUtilities.CrLf);
             }
 
-            outStream.Write(boundaryClose);
-
-            return outStream.ToArray();
+            destination.Write(boundaryClose);
         }
     }
 

@@ -31,40 +31,52 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         public byte[] Materialize()
         {
+            using var outStream = new MemoryStream();
+            Materialize(outStream);
+            return outStream.ToArray();
+        }
+
+        /// <summary>
+        /// Stream-based materialization to avoid allocating intermediate buffers when nesting.
+        /// </summary>
+        /// <param name="destination">Stream that receives the serialized multipart payload.</param>
+        internal void Materialize(Stream destination)
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
             byte[] boundaryStart = Encoding.ASCII.GetBytes($"--{Boundary}\r\n");
             byte[] boundaryClose = Encoding.ASCII.GetBytes($"--{Boundary}--\r\n");
 
-            using var outStream = new MemoryStream();
-
             foreach (var section in Sections)
             {
-                outStream.Write(boundaryStart);
+                destination.Write(boundaryStart);
 
                 // Write headers
                 foreach (var header in section.Headers)
                 {
                     var headerLine = $"{header.Key}: {header.Value}\r\n";
-                    outStream.Write(Encoding.ASCII.GetBytes(headerLine));
+                    destination.Write(Encoding.ASCII.GetBytes(headerLine));
                 }
 
-                outStream.Write(MultipartUtilities.CrLf);
+                destination.Write(MultipartUtilities.CrLf);
 
                 // Write body (handles nested multipart recursively)
-                byte[] sectionBody = section.NestedTree != null
-                    ? section.NestedTree.Materialize()
-                    : section.Body;
-
-                if (sectionBody != null && sectionBody.Length > 0)
+                if (section.NestedTree != null)
                 {
-                    outStream.Write(sectionBody);
+                    section.NestedTree.Materialize(destination);
+                }
+                else if (section.Body != null && section.Body.Length > 0)
+                {
+                    destination.Write(section.Body);
                 }
 
-                outStream.Write(MultipartUtilities.CrLf);
+                destination.Write(MultipartUtilities.CrLf);
             }
 
-            outStream.Write(boundaryClose);
-
-            return outStream.ToArray();
+            destination.Write(boundaryClose);
         }
     }
 

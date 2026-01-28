@@ -244,10 +244,10 @@
   --p-togglebutton-hover-background: var(--border-color);
   --p-togglebutton-hover-color: var(--text-color-secondary);
   --p-togglebutton-hover-border-color: var(--text-color-secondary);
-  --p-togglebutton-padding: 0.20rem 0.5rem;
+  --p-togglebutton-padding: 0.2rem 0.5rem;
   --p-selectbutton-border-radius: 6px;
 
-  border: 1px solid var(--border-color) !important;
+  border: 2px solid var(--border-color) !important;
   overflow: hidden !important;
 }
 

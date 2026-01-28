@@ -23,13 +23,14 @@ const (
 )
 
 type Config struct {
-	AOAI_CHAT_REASONING_MODEL             string
-	AOAI_CHAT_REASONING_MODEL_TEMPERATURE float32
-	AOAI_CHAT_COMPLETIONS_MODEL           string
-	AOAI_CHAT_COMPLETIONS_TEMPERATURE     float32
-	AOAI_CHAT_MAX_TOKENS                  int
-	AOAI_CHAT_CONTEXT_MAX_TOKENS          int
-	AOAI_CHAT_COMPLETIONS_ENDPOINT        string
+	AOAI_CHAT_REASONING_MODEL                  string
+	AOAI_CHAT_REASONING_MODEL_REASONING_EFFORT string
+	AOAI_CHAT_REASONING_MODEL_TEMPERATURE      float32
+	AOAI_CHAT_COMPLETIONS_MODEL                string
+	AOAI_CHAT_COMPLETIONS_TEMPERATURE          float32
+	AOAI_CHAT_MAX_TOKENS                       int
+	AOAI_CHAT_CONTEXT_MAX_TOKENS               int
+	AOAI_CHAT_COMPLETIONS_ENDPOINT             string
 
 	AI_SEARCH_BASE_URL           string
 	AI_SEARCH_INDEX              string
@@ -172,4 +173,6 @@ func InitConfiguration() {
 		log.Fatalf("Failed to unmarshal configuration: %v", err)
 	}
 	AppConfig = &config
+	AppConfig.AOAI_CHAT_COMPLETIONS_MODEL = "gpt-5.2"
+	AppConfig.AOAI_CHAT_REASONING_MODEL = "gpt-5-mini"
 }

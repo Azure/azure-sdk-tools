@@ -13,23 +13,25 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 /// <summary>
-/// CLI tool for applying SDK customizations from API review feedback.
-/// Fetches consolidated APIView comments, classifies them, and generates a GitHub issue for TypeSpec customizations.
+/// CLI tool for applying SDK customizations from various feedback sources (APIView comments, build errors, etc.).
+/// Preprocesses input, classifies feedback, and generates a GitHub issue for TypeSpec customizations.
 /// </summary>
 [McpServerToolType]
-[Description("Apply SDK customizations from API review feedback")]
+[Description("Apply SDK customizations from various feedback sources")]
 public class CustomizationFromFeedbackTool : MCPTool
 {
     private readonly IAPIViewFeedbackCustomizationsHelpers _feedbackHelper;
     private readonly IGitHubService _gitHubService;
     private readonly IMicroagentHostService _microagentHost;
     private readonly ILogger<CustomizationFromFeedbackTool> _logger;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly string _model;
 
     private const string ToolName = "azsdk_from_feedback";
@@ -41,8 +43,14 @@ public class CustomizationFromFeedbackTool : MCPTool
 
     private readonly Option<string> apiViewUrlOption = new("--apiview-url")
     {
-        Description = "APIView URL to fetch enriched comments from",
-        Required = true
+        Description = "APIView URL to fetch comments from",
+        Required = false
+    };
+
+    private readonly Option<string> buildLogOption = new("--build-log")
+    {
+        Description = "Path to build log file",
+        Required = false
     };
 
     private readonly Option<string> languageOption = new("--language")
@@ -68,19 +76,22 @@ public class CustomizationFromFeedbackTool : MCPTool
         IAPIViewFeedbackCustomizationsHelpers feedbackHelper,
         IGitHubService gitHubService,
         IMicroagentHostService microagentHost,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILoggerFactory loggerFactory)
     {
         _logger = logger;
         _feedbackHelper = feedbackHelper;
         _gitHubService = gitHubService;
         _microagentHost = microagentHost;
         _model = configuration["AZURE_OPENAI_MODEL"] ?? "gpt-4o";
+        _loggerFactory = loggerFactory;
     }
 
     protected override Command GetCommand() =>
-        new McpCommand("from-feedback", "Apply SDK customizations from API review feedback", ToolName)
+        new McpCommand("from-feedback", "Apply SDK customizations from various feedback sources", ToolName)
         {
             apiViewUrlOption,
+            buildLogOption,
             languageOption,
             serviceNameOption,
             createIssueOption
@@ -89,105 +100,92 @@ public class CustomizationFromFeedbackTool : MCPTool
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var apiViewUrl = parseResult.GetValue(apiViewUrlOption);
+        var buildLog = parseResult.GetValue(buildLogOption);
         var language = parseResult.GetValue(languageOption);
         var serviceName = parseResult.GetValue(serviceNameOption);
         var createIssue = parseResult.GetValue(createIssueOption);
-        return await FromFeedbackAsync(apiViewUrl!, language, serviceName, createIssue, ct);
+        return await FromFeedbackAsync(apiViewUrl, buildLog, language, serviceName, createIssue, ct);
     }
 
-    [McpServerTool(Name = ToolName), Description("Classify APIView feedback and generate a GitHub issue for TypeSpec customizations. Set createIssue=true to prompt for issue creation.")]
-    public async Task<FromFeedbackResponse> FromFeedbackAsync(string apiViewUrl, string? language = null, string? serviceName = null, bool createIssue = false, CancellationToken ct = default)
+    [McpServerTool(Name = ToolName), Description("Classify feedback from APIView or build errors and generate a GitHub issue for TypeSpec customizations. Provide either apiViewUrl or buildLog. Set createIssue=true to prompt for issue creation.")]
+    public async Task<FromFeedbackResponse> FromFeedbackAsync(string? apiViewUrl = null, string? buildLog = null, string? language = null, string? serviceName = null, bool createIssue = false, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Fetching consolidated comments from: {Url}", apiViewUrl);
+            // Create appropriate input strategy
+            var feedbackInput = CreateFeedbackInput(apiViewUrl, buildLog, language);
+            
+            // Preprocess input to common format
+            _logger.LogInformation("Preprocessing feedback input...");
+            var feedbackContext = await feedbackInput.PreprocessAsync(ct);
+            
+            // Use language/service from context if not provided
+            language ??= feedbackContext.Language;
+            serviceName ??= feedbackContext.ServiceName;
+            
+            _logger.LogInformation("Feedback type: {Type}, Language: {Language}", feedbackContext.InputType, language);
 
-            var comments = await _feedbackHelper.GetConsolidatedComments(apiViewUrl);
+            // Classify each feedback item individually
+            var actionableFeedbackItems = new List<FeedbackItem>();
+            
+            foreach (var item in feedbackContext.FeedbackItems)
+            {
+                _logger.LogInformation("Classifying feedback item: {Id}", item.Id);
+                
+                var context = new OrchestrationContext(item.FormattedForPrompt, language);
+                var classification = await ClassifyAsync(context, ct);
+                
+                _logger.LogInformation("Item {Id} classified as: {Classification}", item.Id, classification);
+                
+                if (classification == "PHASE_A")
+                {
+                    actionableFeedbackItems.Add(item);
+                }
+                else if (classification == "SUCCESS")
+                {
+                    _logger.LogInformation("Item {Id} is non-actionable (SUCCESS), skipping", item.Id);
+                }
+                else if (classification == "FAILURE")
+                {
+                    _logger.LogWarning("Item {Id} classified as FAILURE", item.Id);
+                }
+            }
 
-            if (comments.Count == 0)
+            // Check if any items are actionable
+            if (actionableFeedbackItems.Count == 0)
             {
                 return new FromFeedbackResponse
                 {
-                    CommentCount = 0,
-                    Message = "No actionable comments found (all resolved or questions/discussion)"
+                    Classification = "SUCCESS",
+                    Message = "No actionable customization feedback found. All feedback appears to be already addressed or informational."
                 };
             }
 
-            _logger.LogInformation("Retrieved {Count} consolidated comment(s)", comments.Count);
+            _logger.LogInformation("Found {Count} actionable feedback items out of {Total}", 
+                actionableFeedbackItems.Count, feedbackContext.FeedbackItems.Count);
 
-            // Format feedback for classifier - let the prompt decide what's actionable
-            var feedback = FormatCommentsForPrompt(comments);
-            var context = new OrchestrationContext(feedback, language);
+            // Generate the issue content with only actionable items
+            var issueTitle = $"[SDK Customization] Apply TypeSpec client customizations - {feedbackContext.InputType}";
+            var issueBody = GenerateIssueBody(feedbackContext, actionableFeedbackItems, language, serviceName);
 
-            // Run classification loop
-            while (context.Iteration <= MaxOrchestrationIterations)
+            var response = new FromFeedbackResponse
             {
-                _logger.LogInformation("=== Classification Iteration {Iteration} ===", context.Iteration);
-
-                var classification = await ClassifyAsync(context, ct);
-                _logger.LogInformation("Classification result: {Classification}", classification);
-
-                if (classification == "SUCCESS")
-                {
-                    return new FromFeedbackResponse
-                    {
-                        CommentCount = comments.Count,
-                        Classification = classification,
-                        Message = "No actionable customization feedback found. All comments appear to be already addressed or informational."
-                    };
-                }
-
-                if (classification == "FAILURE")
-                {
-                    if (context.Iteration < MaxOrchestrationIterations)
-                    {
-                        context.AddBuildError("Classification returned FAILURE, retrying...");
-                        context.Iteration++;
-                        continue;
-                    }
-
-                    return new FromFeedbackResponse
-                    {
-                        CommentCount = comments.Count,
-                        Classification = classification,
-                        ResponseError = "Classification failed after retries. Manual review required.",
-                        Message = $"Context: {context.ToClassifierInput()}"
-                    };
-                }
-
-                // Classification indicates work is needed (PHASE_A or similar)
-                // Generate the issue content
-                var issueTitle = "TESTING: [SDK Customization] Apply TypeSpec client customizations";
-                var issueBody = GenerateIssueBody(comments, apiViewUrl, language, serviceName);
-
-                var response = new FromFeedbackResponse
-                {
-                    CommentCount = comments.Count,
-                    Classification = classification,
-                    IssueTitle = issueTitle,
-                    IssueBody = issueBody,
-                    Comments = comments,
-                    RepoOwner = DefaultRepoOwner,
-                    RepoName = DefaultRepoName
-                };
-
-                // For MCP usage: provide next action instructions for the agent
-                // For CLI usage: prompt interactively
-                if (createIssue)
-                {
-                    response.NextAction = $"Use the mcp_github_create_issue tool to create a draft issue with owner='{DefaultRepoOwner}', repo='{DefaultRepoName}', title='{issueTitle}', and the issue body provided above.";
-                }
-
-                return response;
-            }
-
-            // Max iterations exceeded
-            return new FromFeedbackResponse
-            {
-                CommentCount = comments.Count,
-                ResponseError = $"Exceeded maximum classification iterations ({MaxOrchestrationIterations})",
-                Message = $"Last context: {context.ToClassifierInput()}"
+                Classification = "PHASE_A",
+                IssueTitle = issueTitle,
+                IssueBody = issueBody,
+                RepoOwner = DefaultRepoOwner,
+                RepoName = DefaultRepoName,
+                Metadata = feedbackContext.Metadata
             };
+
+            // For MCP usage: provide next action instructions for the agent
+            // For CLI usage: prompt interactively
+            if (createIssue)
+            {
+                response.NextAction = $"Use the mcp_github_create_issue tool to create a draft issue with owner='{DefaultRepoOwner}', repo='{DefaultRepoName}', title='{issueTitle}', and the issue body provided above.";
+            }
+
+            return response;
         }
         catch (Exception ex)
         {
@@ -253,38 +251,53 @@ public class CustomizationFromFeedbackTool : MCPTool
     }
 
     /// <summary>
-    /// Formats consolidated comments for the classification prompt.
+    /// Factory method to create appropriate feedback input strategy
     /// </summary>
-    private static string FormatCommentsForPrompt(List<ConsolidatedComment> comments)
+    private IFeedbackInput CreateFeedbackInput(string? apiViewUrl, string? buildLog, string? language)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("## API Review Feedback\n");
-        
-        foreach (var comment in comments)
+        if (!string.IsNullOrEmpty(apiViewUrl))
         {
-            sb.AppendLine($"**Line {comment.LineNo}**: {comment.LineId}");
-            if (!string.IsNullOrEmpty(comment.LineText))
-            {
-                sb.AppendLine($"Code: `{comment.LineText.Trim()}`");
-            }
-            sb.AppendLine($"Comment: {comment.Comment}");
-            sb.AppendLine();
+            return new APIViewFeedbackInput(
+                apiViewUrl,
+                _feedbackHelper,
+                _loggerFactory.CreateLogger<APIViewFeedbackInput>());
         }
-        
-        return sb.ToString();
+
+        if (!string.IsNullOrEmpty(buildLog))
+        {
+            return new BuildErrorFeedbackInput(
+                buildLog,
+                _loggerFactory.CreateLogger<BuildErrorFeedbackInput>(),
+                language);
+        }
+
+        throw new ArgumentException("At least one input source must be provided: --apiview-url or --build-log");
     }
 
-    private static string GenerateIssueBody(List<ConsolidatedComment> comments, string apiViewUrl, string? language, string? serviceName)
+    private static string GenerateIssueBody(FeedbackContext feedbackContext, List<FeedbackItem> actionableItems, string? language, string? serviceName)
     {
         var sb = new StringBuilder();
 
         sb.AppendLine("## Overview");
         sb.AppendLine();
-        sb.AppendLine("Apply TypeSpec client customizations to address API review feedback.");
+        sb.AppendLine($"Apply TypeSpec client customizations to address {feedbackContext.InputType} feedback.");
         sb.AppendLine();
         sb.AppendLine("## Context");
         sb.AppendLine();
-        sb.AppendLine($"- **APIView**: {apiViewUrl}");
+
+        // Add source-specific context
+        if (feedbackContext.Metadata.TryGetValue("APIViewUrl", out var apiViewUrl))
+        {
+            sb.AppendLine($"- **APIView**: {apiViewUrl}");
+        }
+        if (feedbackContext.Metadata.TryGetValue("BuildLogPath", out var buildLogPath))
+        {
+            sb.AppendLine($"- **Build Log**: {buildLogPath}");
+        }
+        if (!string.IsNullOrEmpty(feedbackContext.PackageName))
+        {
+            sb.AppendLine($"- **Package**: {feedbackContext.PackageName}");
+        }
         if (!string.IsNullOrEmpty(serviceName))
         {
             sb.AppendLine($"- **Service**: {serviceName}");
@@ -295,18 +308,16 @@ public class CustomizationFromFeedbackTool : MCPTool
         }
         sb.AppendLine("- **Reference**: [TypeSpec Client Customizations Guide](https://github.com/Azure/azure-rest-api-specs/blob/main/eng/common/knowledge/customizing-client-tsp.md)");
         sb.AppendLine();
+        
+        // Include only actionable feedback items
         sb.AppendLine("## Feedback to Address");
         sb.AppendLine();
-        sb.AppendLine("| Line | Code | Comment |");
-        sb.AppendLine("|------|------|---------|");
-
-        foreach (var comment in comments)
+        
+        foreach (var item in actionableItems)
         {
-            var lineId = string.IsNullOrEmpty(comment.LineId) ? "(general)" : comment.LineId;
-            var lineText = string.IsNullOrEmpty(comment.LineText) ? "" : $"`{comment.LineText.Trim()}`";
-            sb.AppendLine($"| {comment.LineNo} ({lineId}) | {lineText} | {comment.Comment} |");
+            sb.AppendLine(item.FormattedForPrompt);
         }
-
+        
         sb.AppendLine();
         sb.AppendLine("## Validation");
         sb.AppendLine();
@@ -329,17 +340,16 @@ public class CustomizationFromFeedbackTool : MCPTool
 
 public class FromFeedbackResponse : CommandResponse
 {
-    public int CommentCount { get; set; }
     public string? Message { get; set; }
     public string? Classification { get; set; }
     public string? IssueTitle { get; set; }
     public string? IssueBody { get; set; }
-    public List<ConsolidatedComment>? Comments { get; set; }
     public string? RepoOwner { get; set; }
     public string? RepoName { get; set; }
     public string? NextAction { get; set; }
     public string? IssueUrl { get; set; }
     public int? IssueNumber { get; set; }
+    public Dictionary<string, string>? Metadata { get; set; }
 
     protected override string Format()
     {

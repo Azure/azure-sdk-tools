@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Text;
-using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 

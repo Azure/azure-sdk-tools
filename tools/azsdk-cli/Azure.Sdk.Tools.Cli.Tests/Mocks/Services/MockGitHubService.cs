@@ -82,6 +82,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(issue);
         }
 
+        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body)
+        {
+            var issue = CreateMockIssue(repoOwner, repoName, 1);
+            return Task.FromResult(issue);
+        }
+
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state)
         {
             return Task.CompletedTask;

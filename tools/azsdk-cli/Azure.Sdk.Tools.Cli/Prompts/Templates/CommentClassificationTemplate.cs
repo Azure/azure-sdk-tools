@@ -103,6 +103,8 @@ public class CommentClassificationTemplate : BasePromptTemplate
             - Build completed successfully with no errors remaining
             - Input is informational, not a directive (e.g., explanations, questions, acknowledgments)
             - Input uses past tense indicating completed action (e.g., "Method was made private") rather than directive tense requesting action (e.g., "Make method private")
+            - Comment explicitly states to keep current behavior (e.g., "Keep this as is", "No changes needed", "Leave unchanged")
+            - Comment is non-actionable or indicates acceptance of current state (e.g., "This is fine", "Acceptable as is")
 
             ## Failure Conditions
 
@@ -315,5 +317,28 @@ public class CommentClassificationTemplate : BasePromptTemplate
             4. Review the TypeSpec client customizations guide for proper model referencing patterns
             5. If the model was removed entirely, consider using @alternateType in client.tsp to maintain backwards compatibility
             ```
+
+            **Example 7: Non-actionable "keep as is" comment**
+            ```
+            Input: "Keep this as is since cancelled/canceled are both used in Contoso.WidgetManager TypeSpec."
+
+            Classification: SUCCESS
+            Reason: Comment explicitly states to keep current behavior - no action required
+            Iteration: 1
+            Next Action: Mark as resolved, no changes needed
+            ```
+
+            **Example 8: Multiple comments, mix of actionable and non-actionable**
+            ```
+            Input: "1. Remove 'widget_' prefix since it's redundant.
+            2. Keep method name as is - consistent with REST API.
+            3. Add required 'hat' parameter."
+
+            Classification: PHASE_A
+            Reason: Contains actionable items (remove prefix, add parameter) that require TypeSpec changes
+            Iteration: 1
+            Next Action: Apply TypeSpec decorators for the actionable items. Note: Item #2 requires no action.
+            ```
             """;    }
+
 }

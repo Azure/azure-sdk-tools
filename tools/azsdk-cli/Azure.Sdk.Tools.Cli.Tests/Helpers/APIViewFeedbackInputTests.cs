@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
@@ -11,17 +12,18 @@ using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 {
-    public class APIViewFeedbackCustomizationsHelpersTests
+    public class APIViewFeedbackInputTests
     {
         [Test]
-        public async Task GetConsolidatedComments_WithRealAPIViewData()
+        public async Task PreprocessAsync_WithRealAPIViewData()
         {
             // Arrange - Setup DI with real OpenAI but mocked APIView
             var services = new ServiceCollection();
             ServiceRegistrations.RegisterCommonServices(services, OutputHelper.OutputModes.Plain);
             
-            // Mock only the APIView service with real APIView comments
+            // Mock the APIView services with sample data
             var mockApiViewService = new Mock<IAPIViewService>();
+            var mockApiViewHttpService = new Mock<IAPIViewHttpService>();
             
             // Create sample comments as JSON string (matching APIView API format)
             var sampleCommentsJson = "[" +
@@ -43,31 +45,47 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 "{\"lineNo\":101,\"createdOn\":\"2026-01-23T21:29:51.2421148+00:00\",\"upvotes\":0,\"downvotes\":0,\"createdBy\":\"swathipil\",\"commentText\":\"TODO: return None instead. Try doing it via TypeSpec. (decorator alttype, revtype?)\",\"isResolved\":false,\"severity\":\"\",\"threadId\":\"nId-81016050799401034-1120274748-784388137-0-1769203767351\"}" +
                 "]";
             
+            var sampleMetadataJson = "{\"packageName\":\"azure-contoso-widgetmanager\",\"language\":\"Python\",\"revisionLabel\":\"Test Revision\"}";
+            
             mockApiViewService
                 .Setup(s => s.GetCommentsByRevisionAsync(It.IsAny<string>(), It.IsAny<string?>()))
                 .ReturnsAsync(sampleCommentsJson);
             
-            // Replace the real APIView service with mock
+            mockApiViewHttpService
+                .Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<string?>()))
+                .ReturnsAsync(sampleMetadataJson);
+            
+            // Replace the services with mocks
             services.AddSingleton(mockApiViewService.Object);
+            services.AddSingleton(mockApiViewHttpService.Object);
             
             var provider = services.BuildServiceProvider();
             var helper = provider.GetRequiredService<IAPIViewFeedbackCustomizationsHelpers>();
-            var logger = provider.GetRequiredService<ILogger<APIViewFeedbackCustomizationsHelpersTests>>();
+            var logger = provider.GetRequiredService<ILogger<APIViewFeedbackInput>>();
 
-            // Act - Call real helper which will use REAL OpenAI
-            var result = await helper.GetConsolidatedComments("https://apiview.dev/review/test-review-id?activeApiRevisionId=test-revision-id");
+            // Create the input processor
+            var feedbackInput = new APIViewFeedbackInput(
+                "https://apiview.dev/review/test-review-id?activeApiRevisionId=test-revision-id",
+                helper,
+                logger);
+
+            // Act - Process the feedback which uses REAL OpenAI for consolidation
+            var result = await feedbackInput.PreprocessAsync();
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(6), "Should have consolidated comments");
+            Assert.That(result.FeedbackItems, Is.Not.Null);
+            Assert.That(result.FeedbackItems.Count, Is.EqualTo(6), "Should have 6 consolidated comment threads");
+            Assert.That(result.Language, Is.EqualTo("Python"));
+            Assert.That(result.PackageName, Is.EqualTo("azure-contoso-widgetmanager"));
+            Assert.That(result.InputType, Is.EqualTo("apiview"));
             
             // Output all results from OpenAI to console
-            Console.WriteLine($"\n=== Found {result.Count} consolidated comment threads ===\n");
-            foreach (var comment in result)
+            Console.WriteLine($"\n=== Found {result.FeedbackItems.Count} consolidated feedback items ===\n");
+            foreach (var item in result.FeedbackItems)
             {
-                Console.WriteLine($"Thread: {comment.ThreadId}");
-                Console.WriteLine($"Line: {comment.LineNo}");
-                Console.WriteLine($"OpenAI Conclusion: {comment.Conclusion}\n");
+                Console.WriteLine($"ID: {item.Id}");
+                Console.WriteLine($"Comment: {item.Comment}\n");
             }
         }
     }

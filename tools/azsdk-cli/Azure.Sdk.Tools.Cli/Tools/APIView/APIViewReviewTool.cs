@@ -72,7 +72,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         return result;
     }
 
-    [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get all the comments of an APIView API using the APIView URL")]
+    [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review.")]
     public async Task<APIViewResponse> GetComments(string apiViewUrl)
     {
         try

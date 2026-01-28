@@ -1,20 +1,32 @@
-using System.Text.RegularExpressions;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     /// <summary>
-    /// Represents a single test prompt entry from TestPrompts.md
+    /// Represents a single test prompt entry
     /// </summary>
-    public record TestPromptEntry(string ToolName, string Prompt, string Category);
+    public record TestPromptEntry(
+        [property: JsonPropertyName("toolName")] string ToolName,
+        [property: JsonPropertyName("prompt")] string Prompt,
+        [property: JsonPropertyName("category")] string Category);
 
     /// <summary>
-    /// Loads and parses test prompts from TestPrompts.md markdown file.
+    /// JSON structure for TestPrompts.json
+    /// </summary>
+    internal class TestPromptsFile
+    {
+        [JsonPropertyName("prompts")]
+        public List<TestPromptEntry> Prompts { get; set; } = [];
+    }
+
+    /// <summary>
+    /// Loads and parses test prompts from TestPrompts.json.
     /// Provides methods to retrieve prompts for evaluation testing.
     /// </summary>
     public class TestPromptRegistry
     {
         private readonly List<TestPromptEntry> _prompts = [];
-        private static readonly Regex TableRowRegex = new(@"^\|\s*(\S+)\s*\|\s*(.+?)\s*\|\s*(\S+)\s*\|$", RegexOptions.Compiled);
 
         /// <summary>
         /// All loaded test prompts
@@ -22,44 +34,28 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         public IReadOnlyList<TestPromptEntry> Prompts => _prompts.AsReadOnly();
 
         /// <summary>
-        /// Load test prompts from the default TestPrompts.md file location
+        /// Load test prompts from the default TestPrompts.json file location
         /// </summary>
         public static async Task<TestPromptRegistry> LoadFromDefaultPathAsync()
         {
-            // Find the TestPrompts.md file relative to the test assembly
+            // TestData folder is copied to output directory via csproj
             var assemblyLocation = typeof(TestPromptRegistry).Assembly.Location;
             var assemblyDir = Path.GetDirectoryName(assemblyLocation)!;
-            
-            // Navigate up to find the TestData folder
-            // In build output: artifacts/bin/Azure.Sdk.Tools.Cli.Evaluations/Debug/net8.0/
-            // TestData is at: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations/TestData/
-            
-            // Try multiple possible locations
-            string[] possiblePaths =
-            [
-                Path.Combine(assemblyDir, "TestData", "TestPrompts.md"),
-                Path.Combine(assemblyDir, "..", "..", "..", "..", "..", "tools", "azsdk-cli", "Azure.Sdk.Tools.Cli.Evaluations", "TestData", "TestPrompts.md"),
-                Path.Combine(Directory.GetCurrentDirectory(), "TestData", "TestPrompts.md"),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "TestData", "TestPrompts.md"),
-            ];
+            var testPromptsPath = Path.Combine(assemblyDir, "TestData", "TestPrompts.json");
 
-            foreach (var path in possiblePaths)
+            if (File.Exists(testPromptsPath))
             {
-                var normalizedPath = Path.GetFullPath(path);
-                if (File.Exists(normalizedPath))
-                {
-                    return await LoadFromMarkdownAsync(normalizedPath);
-                }
+                return await LoadFromJsonAsync(testPromptsPath);
             }
 
             throw new FileNotFoundException(
-                $"TestPrompts.md not found. Searched in: {string.Join(", ", possiblePaths.Select(Path.GetFullPath))}");
+                $"TestPrompts.json not found at: {testPromptsPath}. Ensure TestData is copied to output directory.");
         }
 
         /// <summary>
-        /// Load test prompts from a markdown file
+        /// Load test prompts from a JSON file
         /// </summary>
-        public static async Task<TestPromptRegistry> LoadFromMarkdownAsync(string filePath)
+        public static async Task<TestPromptRegistry> LoadFromJsonAsync(string filePath)
         {
             if (!File.Exists(filePath))
             {
@@ -67,61 +63,18 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             }
 
             var registry = new TestPromptRegistry();
-            var lines = await File.ReadAllLinesAsync(filePath);
+            await using var stream = File.OpenRead(filePath);
 
-            bool inTable = false;
-            bool headerSkipped = false;
-
-            foreach (var line in lines)
+            var options = new JsonSerializerOptions
             {
-                var trimmedLine = line.Trim();
+                PropertyNameCaseInsensitive = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
+            };
 
-                // Detect table start (header row)
-                if (trimmedLine.StartsWith("| Tool Name"))
-                {
-                    inTable = true;
-                    headerSkipped = false;
-                    continue;
-                }
+            var file = await JsonSerializer.DeserializeAsync<TestPromptsFile>(stream, options)
+                ?? throw new InvalidOperationException($"Failed to deserialize {filePath}");
 
-                // Skip separator row (|:---|:---|:---|)
-                if (inTable && !headerSkipped && 
-                    (trimmedLine.StartsWith("|:") || trimmedLine.StartsWith("| :") || trimmedLine.StartsWith("|-")))
-                {
-                    headerSkipped = true;
-                    continue;
-                }
-
-                // Detect table end (empty line or non-table content)
-                if (inTable && (string.IsNullOrWhiteSpace(trimmedLine) || !trimmedLine.StartsWith("|")))
-                {
-                    inTable = false;
-                    headerSkipped = false;
-                    continue;
-                }
-
-                // Parse table row
-                if (inTable && headerSkipped)
-                {
-                    var match = TableRowRegex.Match(trimmedLine);
-                    if (match.Success)
-                    {
-                        var toolName = match.Groups[1].Value.Trim();
-                        var prompt = match.Groups[2].Value.Trim();
-                        var category = match.Groups[3].Value.Trim();
-
-                        // Skip if this looks like a header or separator
-                        if (toolName.Equals("Tool Name", StringComparison.OrdinalIgnoreCase) ||
-                            toolName.StartsWith("-") || toolName.StartsWith(":"))
-                        {
-                            continue;
-                        }
-
-                        registry._prompts.Add(new TestPromptEntry(toolName, prompt, category));
-                    }
-                }
-            }
-
+            registry._prompts.AddRange(file.Prompts);
             return registry;
         }
 

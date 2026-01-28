@@ -33,7 +33,10 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Models
 
         /// <summary>
         /// Minimum confidence score (cosine similarity) required for a match.
-        /// Default is 0.4 (40%).
+        /// Default is 0.4 (40%), chosen empirically:
+        /// - Below 40%: Prompts are too vague to reliably identify the correct tool
+        /// - Above 40%: Strong semantic match between prompt and tool description
+        /// Combined with TopK ranking to catch both ambiguous prompts and similar tool descriptions.
         /// </summary>
         public double MinConfidence { get; init; } = 0.4;
 

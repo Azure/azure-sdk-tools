@@ -75,7 +75,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                 var textsToEmbed = new List<string> { prompt };
                 textsToEmbed.AddRange(tools.Select(t => t.Description ?? t.Name));
 
-                var embeddings = await GenerateEmbeddingsAsync(textsToEmbed, cancellationToken);
+                var embeddings = await EvaluationHelper.GenerateEmbeddingsAsync(
+                    _openAIClient, _embeddingModelDeployment, textsToEmbed, cancellationToken);
                 var promptEmbedding = embeddings[0];
 
                 // Calculate similarity scores for all tools
@@ -84,7 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                 {
                     var tool = tools[i];
                     var toolEmbedding = embeddings[i + 1]; // +1 because prompt is at index 0
-                    var similarity = CalculateCosineSimilarity(promptEmbedding, toolEmbedding);
+                    var similarity = EvaluationHelper.CalculateCosineSimilarity(promptEmbedding, toolEmbedding);
                     toolScores.Add((tool.Name, similarity, tool.Description ?? ""));
                 }
 
@@ -95,6 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                 int bestExpectedRank = int.MaxValue;
                 double bestExpectedScore = 0;
                 string? bestExpectedTool = null;
+                string? bestExpectedToolDescription = null;
 
                 for (int rank = 0; rank < rankedTools.Count; rank++)
                 {
@@ -106,6 +108,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                             bestExpectedRank = rank;
                             bestExpectedScore = tool.Score;
                             bestExpectedTool = tool.Name;
+                            bestExpectedToolDescription = tool.Description;
                         }
                     }
                 }
@@ -146,10 +149,18 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                         $"Expected tool '{bestExpectedTool}' has {bestExpectedScore:P0} confidence, but needs ≥{minConfidence:P0}"));
                 }
 
+                // On failure, show the tool's description to help identify improvement areas
+                if (!passesRankCheck || !passesConfidenceCheck)
+                {
+                    metric.AddDiagnostics(EvaluationDiagnostic.Informational(
+                        $"Tool description: {TruncateString(bestExpectedToolDescription ?? "(no description)", 200)}"));
+                }
+
                 metric.Value = passesRankCheck && passesConfidenceCheck;
+                var truncatedDescription = TruncateString(bestExpectedToolDescription ?? "(no description)", 150);
                 metric.Reason = metric.Value == true
                     ? $"Tool '{bestExpectedTool}' ranked #{displayRank} with {bestExpectedScore:P0} confidence"
-                    : $"Tool '{bestExpectedTool}' ranked #{displayRank} with {bestExpectedScore:P0} confidence (required: top {topK}, ≥{minConfidence:P0})";
+                    : $"Tool '{bestExpectedTool}' ranked #{displayRank} with {bestExpectedScore:P0} confidence (required: top {topK}, ≥{minConfidence:P0}). Description: \"{truncatedDescription}\"";
 
                 Interpret(metric);
                 return new EvaluationResult(metric);
@@ -159,67 +170,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                 MetricError($"Error during prompt-to-tool match evaluation: {ex.Message}", metric);
                 return new EvaluationResult(metric);
             }
-        }
-
-        /// <summary>
-        /// Generate embeddings for a list of texts using Azure OpenAI
-        /// </summary>
-        private async Task<List<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(
-            List<string> texts,
-            CancellationToken cancellationToken)
-        {
-            var embeddingClient = _openAIClient.GetEmbeddingClient(_embeddingModelDeployment);
-            var embeddings = new List<ReadOnlyMemory<float>>();
-
-            // Azure OpenAI has a limit on batch size, so process in chunks if needed
-            const int batchSize = 100;
-            for (int i = 0; i < texts.Count; i += batchSize)
-            {
-                var batch = texts.Skip(i).Take(batchSize).ToList();
-                var response = await embeddingClient.GenerateEmbeddingsAsync(batch, cancellationToken: cancellationToken);
-
-                foreach (var embedding in response.Value)
-                {
-                    embeddings.Add(embedding.ToFloats());
-                }
-            }
-
-            return embeddings;
-        }
-
-        /// <summary>
-        /// Calculate cosine similarity between two embedding vectors
-        /// </summary>
-        private static double CalculateCosineSimilarity(ReadOnlyMemory<float> vector1, ReadOnlyMemory<float> vector2)
-        {
-            var v1 = vector1.Span;
-            var v2 = vector2.Span;
-
-            if (v1.Length != v2.Length)
-            {
-                throw new ArgumentException("Vectors must have the same length");
-            }
-
-            double dotProduct = 0.0;
-            double magnitude1 = 0.0;
-            double magnitude2 = 0.0;
-
-            for (int i = 0; i < v1.Length; i++)
-            {
-                dotProduct += v1[i] * v2[i];
-                magnitude1 += v1[i] * v1[i];
-                magnitude2 += v2[i] * v2[i];
-            }
-
-            magnitude1 = Math.Sqrt(magnitude1);
-            magnitude2 = Math.Sqrt(magnitude2);
-
-            if (magnitude1 == 0.0 || magnitude2 == 0.0)
-            {
-                return 0.0;
-            }
-
-            return dotProduct / (magnitude1 * magnitude2);
         }
 
         private static string TruncateString(string s, int maxLength)

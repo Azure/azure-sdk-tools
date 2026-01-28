@@ -57,10 +57,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                         prompt: prompt,
                         expectedToolNames: [toolName],
                         availableTools: s_tools!)
-                    {
-                        MinConfidence = 0.4,
-                        TopK = 3
-                    }
                 ]);
 
             EvaluationHelper.ValidatePromptToToolMatchEvaluator(result);

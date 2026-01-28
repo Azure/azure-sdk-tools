@@ -1,4 +1,5 @@
 using AwesomeAssertions;
+using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Evaluations.Evaluators;
 using Azure.Sdk.Tools.Cli.Evaluations.Models;
 using Microsoft.Extensions.AI.Evaluation;
@@ -126,6 +127,71 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             // also make sure to always include verify setup
             var combinedOptional = optionalToolNames.Append(verifySetupToolName);
             return combinedOptional.Except(expectedToolNames);
+        }
+
+        /// <summary>
+        /// Generate embeddings for a list of texts using Azure OpenAI.
+        /// Shared helper for embedding-based evaluators.
+        /// </summary>
+        public static async Task<List<ReadOnlyMemory<float>>> GenerateEmbeddingsAsync(
+            AzureOpenAIClient openAIClient,
+            string embeddingModelDeployment,
+            List<string> texts,
+            CancellationToken cancellationToken)
+        {
+            var embeddingClient = openAIClient.GetEmbeddingClient(embeddingModelDeployment);
+            var embeddings = new List<ReadOnlyMemory<float>>();
+
+            // Azure OpenAI has a limit on batch size, so process in chunks if needed
+            const int batchSize = 100;
+            for (int i = 0; i < texts.Count; i += batchSize)
+            {
+                var batch = texts.Skip(i).Take(batchSize).ToList();
+                var response = await embeddingClient.GenerateEmbeddingsAsync(batch, cancellationToken: cancellationToken);
+
+                foreach (var embedding in response.Value)
+                {
+                    embeddings.Add(embedding.ToFloats());
+                }
+            }
+
+            return embeddings;
+        }
+
+        /// <summary>
+        /// Calculate cosine similarity between two embedding vectors.
+        /// Shared helper for embedding-based evaluators.
+        /// </summary>
+        public static double CalculateCosineSimilarity(ReadOnlyMemory<float> vector1, ReadOnlyMemory<float> vector2)
+        {
+            var v1 = vector1.Span;
+            var v2 = vector2.Span;
+
+            if (v1.Length != v2.Length)
+            {
+                throw new ArgumentException("Vectors must have the same length");
+            }
+
+            double dotProduct = 0.0;
+            double magnitude1 = 0.0;
+            double magnitude2 = 0.0;
+
+            for (int i = 0; i < v1.Length; i++)
+            {
+                dotProduct += v1[i] * v2[i];
+                magnitude1 += v1[i] * v1[i];
+                magnitude2 += v2[i] * v2[i];
+            }
+
+            magnitude1 = Math.Sqrt(magnitude1);
+            magnitude2 = Math.Sqrt(magnitude2);
+
+            if (magnitude1 == 0.0 || magnitude2 == 0.0)
+            {
+                return 0.0;
+            }
+
+            return dotProduct / (magnitude1 * magnitude2);
         }
     }
 }

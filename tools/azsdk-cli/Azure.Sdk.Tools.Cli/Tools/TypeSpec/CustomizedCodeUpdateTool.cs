@@ -5,10 +5,12 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
@@ -20,6 +22,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     private readonly FeedbackClassifier feedbackClassifier;
     private readonly IAPIViewFeedbackCustomizationsHelpers feedbackHelper;
     private readonly ILoggerFactory loggerFactory;
+    private readonly IMicroagentHostService _microagentHost;
+    private readonly string _model;
     
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
@@ -31,6 +35,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <param name="feedbackClassifier">The feedback classifier for analyzing build errors and APIView feedback.</param>
     /// <param name="feedbackHelper">The feedback helper for extracting feedback from various sources.</param>
     /// <param name="loggerFactory">The logger factory for creating loggers.</param>
+    /// <param name="microagentHost">The microagent host service for enhanced guidance generation.</param>
+    /// <param name="configuration">The configuration for model settings.</param>
     public CustomizedCodeUpdateTool(
         ILogger<CustomizedCodeUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
@@ -38,13 +44,17 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         ITspClientHelper tspClientHelper,
         FeedbackClassifier feedbackClassifier,
         IAPIViewFeedbackCustomizationsHelpers feedbackHelper,
-        ILoggerFactory loggerFactory
+        ILoggerFactory loggerFactory,
+        IMicroagentHostService microagentHost,
+        IConfiguration configuration
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper;
         this.feedbackClassifier = feedbackClassifier;
         this.feedbackHelper = feedbackHelper;
         this.loggerFactory = loggerFactory;
+        _microagentHost = microagentHost;
+        _model = configuration["AZURE_OPENAI_MODEL"] ?? "gpt-4o";
     }
 
     // MCP Tool Names
@@ -416,162 +426,94 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             logger.LogInformation("--------------------------------");
         }
 
-        // Step 3: Aggregate classifications to determine overall action
-        var overallClassification = AggregateClassifications(itemClassifications);
-        
-        logger.LogInformation("=== Overall Classification Result ===");
-        logger.LogInformation("Classification: {Classification}", overallClassification.Classification);
-        logger.LogInformation("Reason: {Reason}", overallClassification.Reason);
-        if (!string.IsNullOrEmpty(overallClassification.NextAction))
+        // Step 3: Return classifications for all items
+        logger.LogInformation("=== Classification Summary ===");
+        logger.LogInformation("Classified {Count} feedback items", itemClassifications.Count);
+        foreach (var (item, result) in itemClassifications)
         {
-            logger.LogInformation("Combined Next Actions:\n{NextAction}", overallClassification.NextAction);
+            logger.LogInformation("- {ItemId}: {Classification}", item.Id, result.Classification);
         }
-        logger.LogInformation("====================================");
+        logger.LogInformation("============================");
 
-        // Step 4: Handle based on overall classification
-        if (overallClassification.Classification == "SUCCESS")
+        // Step 4: For FAILURE items with NextAction, enhance guidance with detailed agent response
+        var enhancedClassifications = new List<CustomizedCodeUpdateResponse.ItemClassificationDetails>();
+        foreach (var (item, result) in itemClassifications)
         {
-            return new CustomizedCodeUpdateResponse
+            if (result.Classification == "FAILURE" && !string.IsNullOrEmpty(result.NextAction))
             {
-                Message = $"All feedback items resolved. {overallClassification.Reason}",
-                NextSteps = SuccessPatchesAppliedNextSteps.ToList(),
-                Classifications = itemClassifications.Select(ic => new CustomizedCodeUpdateResponse.ItemClassificationDetails
+                logger.LogInformation("Enhancing guidance for failed item: {ItemId}", item.Id);
+                var enhancedGuidance = await EnhanceFailureGuidanceAsync(item, result, language, ct);
+                enhancedClassifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
                 {
-                    ItemId = ic.Item.Id,
-                    Classification = ic.Result.Classification,
-                    Reason = ic.Result.Reason,
-                    NextAction = ic.Result.NextAction
-                }).ToList()
-            };
-        }
-
-        if (overallClassification.Classification == "FAILURE")
-        {
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = $"Customization requires manual intervention. {overallClassification.Reason}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
-                ResponseError = overallClassification.Reason,
-                NextSteps = new List<string> { overallClassification.NextAction ?? "No guidance available" },
-                Classifications = itemClassifications.Select(ic => new CustomizedCodeUpdateResponse.ItemClassificationDetails
-                {
-                    ItemId = ic.Item.Id,
-                    Classification = ic.Result.Classification,
-                    Reason = ic.Result.Reason,
-                    NextAction = ic.Result.NextAction
-                }).ToList()
-            };
-        }
-
-        // Step 5: For PHASE_A items, check if we can proceed with updates
-        if (languageService == null || string.IsNullOrEmpty(packagePath))
-        {
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = $"Cannot proceed with TypeSpec updates - no valid package path or language service. {itemClassifications.Count} items classified.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                ResponseError = "Missing package path or language service",
-                NextSteps = new List<string> { overallClassification.NextAction ?? "Please provide --package-path explicitly" },
-                Classifications = itemClassifications.Select(ic => new CustomizedCodeUpdateResponse.ItemClassificationDetails
-                {
-                    ItemId = ic.Item.Id,
-                    Classification = ic.Result.Classification,
-                    Reason = ic.Result.Reason,
-                    NextAction = ic.Result.NextAction
-                }).ToList()
-            };
-        }
-
-        // Step 6: Retry loop for PHASE_A items (TypeSpec changes needed)
-        for (int iteration = 1; iteration <= FeedbackClassifier.MaxIterations; iteration++)
-        {
-            context.Iteration = iteration;
-            logger.LogInformation("Starting iteration {Iteration}/{Max}", iteration, FeedbackClassifier.MaxIterations);
-
-            // Classify feedback
-            var classification = await feedbackClassifier.ClassifyAsync(context, ct);
-            
-            // Output classification results to console
-            logger.LogInformation("=== Classification Result ===");
-            logger.LogInformation("Classification: {Classification}", classification.Classification);
-            logger.LogInformation("Reason: {Reason}", classification.Reason);
-            if (!string.IsNullOrEmpty(classification.NextAction))
-            {
-                logger.LogInformation("Next Action:\n{NextAction}", classification.NextAction);
-            }
-            logger.LogInformation("============================");
-
-            logger.LogInformation("============================");
-
-            // Handle SUCCESS or explicit FAILURE
-            if (classification.Classification == "SUCCESS")
-            {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = $"Customization succeeded. {classification.Reason}",
-                    NextSteps = SuccessPatchesAppliedNextSteps.ToList()
-                };
-            }
-
-            if (classification.Classification == "FAILURE")
-            {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = $"Customization exhausted. {classification.Reason}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
-                    ResponseError = classification.Reason,
-                    NextSteps = new List<string> { classification.NextAction ?? "No guidance available" }
-                };
-            }
-
-            // Step 3: Attempt regeneration and patching (only if we have language service and package path)
-            if (languageService == null || string.IsNullOrEmpty(packagePath))
-            {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = $"Cannot proceed with update - no valid package path or language service. Classification: {classification.Classification}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                    ResponseError = "Missing package path or language service",
-                    NextSteps = new List<string> { classification.NextAction ?? "Please provide --package-path explicitly" }
-                };
-            }
-            
-            var updateResult = await RunStandardUpdateAsync(commitSha, packagePath, languageService, ct);
-            
-            // Track results for next iteration
-            if (updateResult.ErrorCode == null)
-            {
-                context.AddBuildSuccess();
-                // Success on this iteration
-                return updateResult;
+                    ItemId = item.Id,
+                    Classification = result.Classification,
+                    Reason = result.Reason,
+                    NextAction = enhancedGuidance
+                });
             }
             else
             {
-                context.AddBuildError(updateResult.ResponseError ?? "Unknown error");
-                
-                // If max iterations reached, return FAILURE with guidance
-                if (iteration >= FeedbackClassifier.MaxIterations)
+                enhancedClassifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
                 {
-                    // Final classification to get NextAction guidance
-                    var finalClassification = await feedbackClassifier.ClassifyAsync(context, ct);
-                    return new CustomizedCodeUpdateResponse
-                    {
-                        Message = $"Max iterations ({FeedbackClassifier.MaxIterations}) reached. {finalClassification.Reason}",
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
-                        ResponseError = updateResult.ResponseError,
-                        NextSteps = new List<string> { finalClassification.NextAction ?? "Manual intervention required" }
-                    };
-                }
+                    ItemId = item.Id,
+                    Classification = result.Classification,
+                    Reason = result.Reason,
+                    NextAction = result.NextAction
+                });
             }
         }
 
-        // Should not reach here, but handle as safety
+        // Return response with all individual classifications
         return new CustomizedCodeUpdateResponse
         {
-            Message = "Update process completed without resolution",
-            ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError,
-            ResponseError = "Retry loop exhausted"
+            Message = $"Classified {itemClassifications.Count} feedback item(s)",
+            Classifications = enhancedClassifications
         };
+    }
+
+    /// <summary>
+    /// Enhances failure guidance by calling the agent with error context and next action.
+    /// </summary>
+    private async Task<string> EnhanceFailureGuidanceAsync(
+        FeedbackItem item,
+        FeedbackClassifier.ClassificationResult result,
+        string language,
+        CancellationToken ct)
+    {
+        try
+        {
+            var prompt = $@"You are helping a developer fix an issue that cannot be resolved with TypeSpec changes alone.
+
+**Error Context:**
+{item.FormattedForPrompt}
+
+**Initial Classification:**
+- Reason: {result.Reason}
+- Suggested Action: {result.NextAction}
+
+**Your Task:**
+Provide detailed, actionable guidance for the {language} SDK to resolve this issue. Include:
+1. Specific files or locations to modify
+2. Code examples or patterns to follow
+3. Step-by-step instructions
+4. Any language-specific considerations for {language}
+
+Be concrete and specific. Avoid generic advice.";
+
+            var enhancedGuidance = await _microagentHost.RunAgentToCompletion(new Microagent<string>
+            {
+                Instructions = prompt,
+                Model = _model,
+                MaxToolCalls = 0 // No tools needed for this enhancement
+            }, ct);
+
+            return enhancedGuidance ?? result.NextAction;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to enhance guidance for item {ItemId}, using original NextAction", item.Id);
+            return result.NextAction ?? "Manual intervention required";
+        }
     }
 
     /// <summary>
@@ -724,62 +666,5 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         logger.LogDebug("Patch application result: {Success}", patchesApplied);
 
         return patchesApplied;
-    }
-
-    /// <summary>
-    /// Aggregates individual item classifications into an overall classification decision.
-    /// Priority: FAILURE > PHASE_A > SUCCESS
-    /// </summary>
-    private FeedbackClassifier.ClassificationResult AggregateClassifications(
-        List<(FeedbackItem Item, FeedbackClassifier.ClassificationResult Result)> itemClassifications)
-    {
-        var failureItems = itemClassifications.Where(ic => ic.Result.Classification == "FAILURE").ToList();
-        var phaseAItems = itemClassifications.Where(ic => ic.Result.Classification == "PHASE_A").ToList();
-        var successItems = itemClassifications.Where(ic => 
-            ic.Result.Classification == "SUCCESS" || ic.Result.Classification == "KEEP_AS_IS").ToList();
-
-        // If any item is FAILURE, overall is FAILURE
-        if (failureItems.Any())
-        {
-            var failureReasons = string.Join("\n- ", failureItems.Select(f => $"Item {f.Item.Id}: {f.Result.Reason}"));
-            var combinedActions = string.Join("\n\n", failureItems
-                .Where(f => !string.IsNullOrEmpty(f.Result.NextAction))
-                .Select(f => $"Item {f.Item.Id}:\n{f.Result.NextAction}"));
-
-            return new FeedbackClassifier.ClassificationResult
-            {
-                Classification = "FAILURE",
-                Reason = $"{failureItems.Count} item(s) require manual intervention:\n- {failureReasons}",
-                Iteration = 1,
-                NextAction = string.IsNullOrEmpty(combinedActions) ? null : combinedActions
-            };
-        }
-
-        // If any item is PHASE_A, overall is PHASE_A
-        if (phaseAItems.Any())
-        {
-            var phaseAReasons = string.Join("\n- ", phaseAItems.Select(p => $"Item {p.Item.Id}: {p.Result.Reason}"));
-            var combinedActions = string.Join("\n\n", phaseAItems
-                .Where(p => !string.IsNullOrEmpty(p.Result.NextAction))
-                .Select(p => $"Item {p.Item.Id}:\n{p.Result.NextAction}"));
-
-            return new FeedbackClassifier.ClassificationResult
-            {
-                Classification = "PHASE_A",
-                Reason = $"{phaseAItems.Count} item(s) require TypeSpec changes:\n- {phaseAReasons}",
-                Iteration = 1,
-                NextAction = string.IsNullOrEmpty(combinedActions) ? null : combinedActions
-            };
-        }
-
-        // All items are SUCCESS or KEEP_AS_IS
-        var successReasons = string.Join("\n- ", successItems.Select(s => $"Item {s.Item.Id}: {s.Result.Reason}"));
-        return new FeedbackClassifier.ClassificationResult
-        {
-            Classification = "SUCCESS",
-            Reason = $"All {successItems.Count} item(s) resolved:\n- {successReasons}",
-            Iteration = 1,
-            NextAction = null
-        };
     }
 }

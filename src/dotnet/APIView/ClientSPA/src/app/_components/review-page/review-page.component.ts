@@ -19,7 +19,7 @@ import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, D
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
-import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentType, CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { SamplesRevisionService } from 'src/app/_services/samples/samples.service';
 import { SamplesRevision } from 'src/app/_models/samples';
@@ -459,10 +459,9 @@ export class ReviewPageComponent implements OnInit {
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         if (userPreferenceModel!.showSystemComments) {
-          this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
-        }
-        else {
-          this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Diagnostics);
+          this.codePanelComponent?.insertDiagnosticCommentThreads();
+        } else {
+          this.codePanelComponent?.removeDiagnosticCommentThreads();
         }
       }
     });
@@ -750,9 +749,19 @@ export class ReviewPageComponent implements OnInit {
 
   checkForFatalDiagnostics() {
     for (const rowData of this.codePanelRowData) {
+      // Check legacy diagnostic rows
       if (rowData.diagnostics && rowData.diagnostics.level === 'fatal') {
         this.hasFatalDiagnostics = true;
         break;
+      }
+      if (rowData.comments) {
+        for (const comment of rowData.comments) {
+          if (comment.commentSource === CommentSource.Diagnostic && comment.severity === CommentSeverity.MustFix) {
+            this.hasFatalDiagnostics = true;
+            break;
+          }
+        }
+        if (this.hasFatalDiagnostics) break;
       }
     }
   }

@@ -291,9 +291,6 @@ namespace APIViewWeb.Helpers
             var commentsForRow = CollectUserCommentsForRow(codePanelRawData, reviewLine.LineId, nodeIdHashed, codePanelRow);
             //Add code line and comment to code panel data
             InsertCodePanelRowData(codePanelData: codePanelData, rowData: codePanelRow, nodeIdHashed: nodeIdHashed, codePanelRawData: codePanelRawData, commentsForRow: commentsForRow);
-
-            // Add diagnostic row
-            AddDiagnosticRow(codePanelData: codePanelData, codeFile: codePanelRawData.activeRevisionCodeFile, nodeId: reviewLine.LineId, nodeIdHashed: nodeIdHashed);
         }
 
         private static CodePanelRowData GetCodePanelRowData(CodePanelData codePanelData, ReviewLine reviewLine, string nodeIdHashed, int indent)
@@ -453,27 +450,6 @@ namespace APIViewWeb.Helpers
                 }
                 
                 codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.TryAdd(lineIndex, threadRows);
-            }
-        }
-
-        private static void AddDiagnosticRow(CodePanelData codePanelData, CodeFile codeFile, string nodeId, string nodeIdHashed)
-        {
-            if (codeFile.Diagnostics == null || codeFile.Diagnostics.Length == 0)
-                return;
-
-            var diagnostics = codeFile.Diagnostics.Where(d => d.TargetId == nodeId);
-            foreach (var diagnostic in diagnostics)
-            {
-                var rowData = new CodePanelRowData()
-                {
-                    Type = CodePanelRowDatatype.Diagnostics,
-                    NodeIdHashed = nodeIdHashed,
-                    NodeId = nodeId,
-                    Diagnostics = diagnostic,
-                    RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() },
-                    RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Count()
-                };
-                codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Add(rowData);
             }
         }
 

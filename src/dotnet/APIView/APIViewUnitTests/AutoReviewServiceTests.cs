@@ -246,7 +246,7 @@ namespace APIViewUnitTests
                     It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(true); // Same content
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
@@ -303,7 +303,7 @@ namespace APIViewUnitTests
                     It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(false); // Different content
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
@@ -380,7 +380,7 @@ namespace APIViewUnitTests
                     It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(false);
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
@@ -452,7 +452,7 @@ namespace APIViewUnitTests
                     It.IsAny<RenderedCodeFile>(), false))
                 .ReturnsAsync(true);
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
@@ -517,7 +517,7 @@ namespace APIViewUnitTests
                     It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(false);
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(

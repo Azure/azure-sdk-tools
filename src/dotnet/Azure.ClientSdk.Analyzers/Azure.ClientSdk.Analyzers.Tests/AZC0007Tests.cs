@@ -105,14 +105,14 @@ namespace RandomNamespace.Foo
         public async Task AZC0007NotProducedForClientWithClientSettings()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
 
 namespace RandomNamespace
 {
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class SomeClient
     {
@@ -127,14 +127,14 @@ namespace RandomNamespace
         public async Task AZC0005ProducedForClientWithOnlyClientSettingsAndNoParameterlessCtor()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
 
 namespace RandomNamespace
 {
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class {|AZC0005:SomeClient|}
     {
@@ -148,7 +148,7 @@ namespace RandomNamespace
         public async Task AZC0007NotProducedForClientWithClientSettingsAndOtherOverloads()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
@@ -158,7 +158,7 @@ namespace RandomNamespace
     using Azure.Core;
 
     public class SomeClientOptions : ClientOptions {}
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class SomeClient
     {
@@ -175,14 +175,14 @@ namespace RandomNamespace
         public async Task AZC0007ProducedForClientWithClientSettingsButMissingOptionsOverload()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
 
 namespace RandomNamespace
 {
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class SomeClient
     {
@@ -198,7 +198,7 @@ namespace RandomNamespace
         public async Task AZC0007NotProducedForClientWithMultipleClientSettingsOverloads()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
@@ -208,8 +208,8 @@ namespace RandomNamespace
     using System;
     using Azure;
 
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
-    public class AnotherClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
+    public class AnotherClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class SomeClient
     {

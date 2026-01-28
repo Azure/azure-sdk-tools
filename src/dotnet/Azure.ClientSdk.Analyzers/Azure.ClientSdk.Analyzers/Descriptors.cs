@@ -72,15 +72,6 @@ namespace Azure.ClientSdk.Analyzers
             nameof(AZC0011), "Avoid InternalsVisibleTo to non-test assemblies",
             "Internal visible to product libraries effectively become public API and have to be versioned appropriately", DiagnosticCategory.Usage, DiagnosticSeverity.Warning, true);
 
-        public static DiagnosticDescriptor AZC0012 = new DiagnosticDescriptor(
-            nameof(AZC0012),
-            "Avoid single word type names",
-            "Type name '{0}' is too generic and has high chance of collision with BCL types or types from other libraries. {1}",
-            DiagnosticCategory.Usage,
-            DiagnosticSeverity.Warning,
-            true,
-            "Single word type names are too generic and have high chance of collision with BCL types or types from other libraries.");
-
         public static DiagnosticDescriptor AZC0013 = new DiagnosticDescriptor(
             nameof(AZC0013),
             "Use TaskCreationOptions.RunContinuationsAsynchronously when instantiating TaskCompletionSource",

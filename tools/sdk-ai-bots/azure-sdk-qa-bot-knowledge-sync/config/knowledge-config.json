@@ -50,31 +50,31 @@
             {
               "pattern": "**/getstarted/azure-resource-manager/**",
               "metadata": {
-                "plane": "management-plane"
+                "service_type": "management-plane"
               }
             },
             {
               "pattern": "**/getstarted/azure-core/**",
               "metadata": {
-                "plane": "data-plane"
+                "service_type": "data-plane"
               }
             },
             {
               "pattern": "**/howtos/arm/**",
               "metadata": {
-                "plane": "management-plane"
+                "service_type": "management-plane"
               }
             },
             {
               "pattern": "**/migrate-swagger/checklists/migrate-arm-tips/**",
               "metadata": {
-                "plane": "management-plane"
+                "service_type": "management-plane"
               }
             },
             {
               "pattern": "**/migrate-swagger/checklists/migrate-dp-tips/**",
               "metadata": {
-                "plane": "data-plane"
+                "service_type": "data-plane"
               }
             }
           ]
@@ -156,7 +156,7 @@
           "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded",
-            "plane": "data-plane"
+            "service_type": "data-plane"
           }
         }
       ]
@@ -177,7 +177,7 @@
           "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded",
-            "plane": "management-plane"
+            "service_type": "management-plane"
           }
         }
       ]
@@ -308,7 +308,7 @@
           "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded",
-            "plane": "management-plane"
+            "service_type": "management-plane"
           }
         },
         {

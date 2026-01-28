@@ -222,7 +222,7 @@ export class BlobService {
     /**
      * Check if blob metadata has changed
      * @param blobPath The blob path to check
-     * @param currentMetadata The current metadata (scope and plane)
+     * @param currentMetadata The current metadata (scope and service_type)
      * @param existingBlobs Map of existing blob items with their properties
      * @returns True if metadata has changed or is new, false if unchanged
      */
@@ -242,7 +242,7 @@ export class BlobService {
 
         // If current metadata is undefined but existing has metadata, it changed
         if (!currentMetadata) {
-            return existingMetadata && (existingMetadata.scope !== undefined || existingMetadata.plane !== undefined);
+            return existingMetadata && (existingMetadata.scope !== undefined || existingMetadata.service_type !== undefined);
         }
 
         // If existing blob has no metadata, but current has metadata, it changed
@@ -255,8 +255,8 @@ export class BlobService {
             return true;
         }
 
-        // Compare plane (both can be undefined)
-        if (currentMetadata.plane !== existingMetadata.plane) {
+        // Compare service_type (both can be undefined)
+        if (currentMetadata.service_type !== existingMetadata.service_type) {
             return true;
         }
 

@@ -231,7 +231,7 @@ type Index struct {
 	OrdinalPosition int     `json:"ordinal_position"`
 	ContextID       Source  `json:"context_id"`
 	Scope           string  `json:"scope,omitempty"`
-	Plane           string  `json:"plane,omitempty"`
+	ServiceType     string  `json:"service_type,omitempty"`
 }
 
 type Knowledge struct {

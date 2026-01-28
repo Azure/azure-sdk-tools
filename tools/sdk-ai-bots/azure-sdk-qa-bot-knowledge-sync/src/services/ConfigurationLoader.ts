@@ -7,7 +7,7 @@ import { InvocationContext } from '@azure/functions';
  */
 export interface Metadata {
     scope: 'branded' | 'unbranded';
-    plane?: 'data-plane' | 'management-plane';
+    service_type?: 'data-plane' | 'management-plane';
 }
 
 /**

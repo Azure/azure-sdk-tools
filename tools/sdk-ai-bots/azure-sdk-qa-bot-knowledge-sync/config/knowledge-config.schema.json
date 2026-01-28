@@ -160,7 +160,7 @@
           "enum": ["branded", "unbranded"],
           "description": "Target audience: branded (Azure-specific) or unbranded (general TypeSpec)"
         },
-        "plane": {
+        "service_type": {
           "type": "string",
           "enum": ["data-plane", "management-plane"],
           "description": "Service plane: data-plane (DPG), management-plane (MPG/ARM)"

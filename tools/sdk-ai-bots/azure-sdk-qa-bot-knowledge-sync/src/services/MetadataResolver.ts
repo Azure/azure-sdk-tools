@@ -38,7 +38,7 @@ export class MetadataResolver {
             }
         }
 
-        // Return resolved metadata (scope and plane only)
+        // Return resolved metadata (scope and service_type only)
         return metadata;
     }
 
@@ -71,14 +71,14 @@ export class MetadataResolver {
             return false;
         }
 
-        // Plane is optional but must be valid if present
-        if (metadata.plane && !['data-plane', 'management-plane'].includes(metadata.plane)) {
+        // ServiceType is optional but must be valid if present
+        if (metadata.service_type && !['data-plane', 'management-plane'].includes(metadata.service_type)) {
             return false;
         }
 
-        // Plane only makes sense for branded content
-        if (metadata.scope === 'unbranded' && metadata.plane) {
-            console.warn('Warning: plane is set for unbranded content and will be ignored');
+        // ServiceType only makes sense for branded content
+        if (metadata.scope === 'unbranded' && metadata.service_type) {
+            console.warn('Warning: service_type is set for unbranded content and will be ignored');
         }
 
         return true;

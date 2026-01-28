@@ -382,8 +382,8 @@ async function processSourceDirectory(
                 blobMetadata = {
                     scope: processed.metadata.scope
                 };
-                if (processed.metadata.plane) {
-                    blobMetadata.plane = processed.metadata.plane;
+                if (processed.metadata.service_type) {
+                    blobMetadata.service_type = processed.metadata.service_type;
                 }
             }
 
@@ -783,14 +783,14 @@ async function uploadFilesToBlobStorage(
                 
                 if (file.metadata) {
                     // Convert metadata to string key-value pairs for blob metadata
-                    // Only store scope and plane as blob metadata
+                    // Only store scope and service_type as blob metadata
                     blobMetadata = {
                         scope: file.metadata.scope
                     };
                     
-                    // Only add plane if it exists
-                    if (file.metadata.plane) {
-                        blobMetadata.plane = file.metadata.plane;
+                    // Only add service_type if it exists
+                    if (file.metadata.service_type) {
+                        blobMetadata.service_type = file.metadata.service_type;
                     }
                 }
                 

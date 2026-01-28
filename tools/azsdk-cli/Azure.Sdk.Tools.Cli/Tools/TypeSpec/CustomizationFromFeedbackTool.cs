@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Server;
 
@@ -19,13 +20,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 /// <summary>
 /// CLI tool for applying SDK customizations from API review feedback.
-/// Fetches enriched APIView comments, classifies them, and generates a GitHub issue for TypeSpec customizations.
+/// Fetches consolidated APIView comments, classifies them, and generates a GitHub issue for TypeSpec customizations.
 /// </summary>
 [McpServerToolType]
 [Description("Apply SDK customizations from API review feedback")]
 public class CustomizationFromFeedbackTool : MCPTool
 {
-    private readonly IApiViewCommentEnrichmentService _enrichmentService;
+    private readonly IAPIViewFeedbackCustomizationsHelpers _feedbackHelper;
     private readonly IGitHubService _gitHubService;
     private readonly IMicroagentHostService _microagentHost;
     private readonly ILogger<CustomizationFromFeedbackTool> _logger;
@@ -56,21 +57,21 @@ public class CustomizationFromFeedbackTool : MCPTool
         Required = false
     };
 
-    private readonly Option<bool> skipIssueOption = new("--skip-issue")
+    private readonly Option<bool> createIssueOption = new("--create-issue")
     {
-        Description = "Skip prompting to create a GitHub issue (by default, prompts for issue creation)",
+        Description = "Prompt to create a GitHub issue (by default, skips prompt for issue creation)",
         Required = false
     };
 
     public CustomizationFromFeedbackTool(
         ILogger<CustomizationFromFeedbackTool> logger,
-        IApiViewCommentEnrichmentService enrichmentService,
+        IAPIViewFeedbackCustomizationsHelpers feedbackHelper,
         IGitHubService gitHubService,
         IMicroagentHostService microagentHost,
         IConfiguration configuration)
     {
         _logger = logger;
-        _enrichmentService = enrichmentService;
+        _feedbackHelper = feedbackHelper;
         _gitHubService = gitHubService;
         _microagentHost = microagentHost;
         _model = configuration["AZURE_OPENAI_MODEL"] ?? "gpt-4o";
@@ -82,7 +83,7 @@ public class CustomizationFromFeedbackTool : MCPTool
             apiViewUrlOption,
             languageOption,
             serviceNameOption,
-            skipIssueOption
+            createIssueOption
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -90,53 +91,32 @@ public class CustomizationFromFeedbackTool : MCPTool
         var apiViewUrl = parseResult.GetValue(apiViewUrlOption);
         var language = parseResult.GetValue(languageOption);
         var serviceName = parseResult.GetValue(serviceNameOption);
-        var skipIssue = parseResult.GetValue(skipIssueOption);
-        return await FromFeedbackAsync(apiViewUrl!, language, serviceName, skipIssue, ct);
+        var createIssue = parseResult.GetValue(createIssueOption);
+        return await FromFeedbackAsync(apiViewUrl!, language, serviceName, createIssue, ct);
     }
 
-    [McpServerTool(Name = ToolName), Description("Classify APIView feedback and generate a GitHub issue for TypeSpec customizations. Set skipIssue=true to skip the issue creation prompt.")]
-    public async Task<FromFeedbackResponse> FromFeedbackAsync(string apiViewUrl, string? language = null, string? serviceName = null, bool skipIssue = false, CancellationToken ct = default)
+    [McpServerTool(Name = ToolName), Description("Classify APIView feedback and generate a GitHub issue for TypeSpec customizations. Set createIssue=true to prompt for issue creation.")]
+    public async Task<FromFeedbackResponse> FromFeedbackAsync(string apiViewUrl, string? language = null, string? serviceName = null, bool createIssue = false, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Fetching enriched comments from: {Url}", apiViewUrl);
+            _logger.LogInformation("Fetching consolidated comments from: {Url}", apiViewUrl);
 
-            var comments = await _enrichmentService.GetEnrichedCommentsAsync(apiViewUrl);
-
-            if (comments == null)
-            {
-                return new FromFeedbackResponse
-                {
-                    ResponseError = "Failed to retrieve comments from APIView"
-                };
-            }
+            var comments = await _feedbackHelper.GetConsolidatedComments(apiViewUrl);
 
             if (comments.Count == 0)
             {
                 return new FromFeedbackResponse
                 {
                     CommentCount = 0,
-                    Message = "No actionable comments found (all resolved or questions)"
+                    Message = "No actionable comments found (all resolved or questions/discussion)"
                 };
             }
 
-            // Filter to only actionable comments (exclude pure questions/informational)
-            var actionableComments = comments.Where(IsActionableComment).ToList();
-            _logger.LogInformation("Filtered {Total} comments to {Actionable} actionable (excluding informational questions)", 
-                comments.Count, actionableComments.Count);
+            _logger.LogInformation("Retrieved {Count} consolidated comment(s)", comments.Count);
 
-            if (actionableComments.Count == 0)
-            {
-                return new FromFeedbackResponse
-                {
-                    CommentCount = comments.Count,
-                    Classification = "SUCCESS",
-                    Message = $"No actionable comments found. All {comments.Count} comment(s) are informational questions without directives."
-                };
-            }
-
-            // Format feedback and create orchestration context using only actionable comments
-            var feedback = _enrichmentService.FormatForPrompt(actionableComments);
+            // Format feedback for classifier - let the prompt decide what's actionable
+            var feedback = FormatCommentsForPrompt(comments);
             var context = new OrchestrationContext(feedback, language);
 
             // Run classification loop
@@ -193,7 +173,7 @@ public class CustomizationFromFeedbackTool : MCPTool
 
                 // For MCP usage: provide next action instructions for the agent
                 // For CLI usage: prompt interactively
-                if (!skipIssue)
+                if (createIssue)
                 {
                     response.NextAction = $"Use the mcp_github_create_issue tool to create a draft issue with owner='{DefaultRepoOwner}', repo='{DefaultRepoName}', title='{issueTitle}', and the issue body provided above.";
                 }
@@ -273,34 +253,29 @@ public class CustomizationFromFeedbackTool : MCPTool
     }
 
     /// <summary>
-    /// Determines if a comment is actionable (not just a question or informational).
+    /// Formats consolidated comments for the classification prompt.
     /// </summary>
-    private static bool IsActionableComment(EnrichedApiViewComment comment)
+    private static string FormatCommentsForPrompt(List<ConsolidatedComment> comments)
     {
-        var text = comment.CommentText?.Trim() ?? "";
+        var sb = new StringBuilder();
+        sb.AppendLine("## API Review Feedback\n");
         
-        // Comments that are purely questions (end with ? and don't contain directive words) are not actionable
-        if (text.EndsWith("?"))
+        foreach (var comment in comments)
         {
-            // Check if it contains directive language that makes it actionable despite being a question
-            var directivePatterns = new[] { "should", "must", "need to", "has to", "remove", "add", "change", "make", "rename", "hide" };
-            var lowerText = text.ToLowerInvariant();
-            
-            // If it's just asking for info without a directive, it's not actionable
-            if (!directivePatterns.Any(p => lowerText.Contains(p)))
+            sb.AppendLine($"**Line {comment.LineNo}**: {comment.LineId}");
+            if (!string.IsNullOrEmpty(comment.LineText))
             {
-                return false;
+                sb.AppendLine($"Code: `{comment.LineText.Trim()}`");
             }
+            sb.AppendLine($"Comment: {comment.Comment}");
+            sb.AppendLine();
         }
         
-        return true;
+        return sb.ToString();
     }
 
-    private static string GenerateIssueBody(List<EnrichedApiViewComment> comments, string apiViewUrl, string? language, string? serviceName)
+    private static string GenerateIssueBody(List<ConsolidatedComment> comments, string apiViewUrl, string? language, string? serviceName)
     {
-        // Filter to only actionable comments (exclude pure questions/informational)
-        var actionableComments = comments.Where(IsActionableComment).ToList();
-        
         var sb = new StringBuilder();
 
         sb.AppendLine("## Overview");
@@ -322,13 +297,14 @@ public class CustomizationFromFeedbackTool : MCPTool
         sb.AppendLine();
         sb.AppendLine("## Feedback to Address");
         sb.AppendLine();
-        sb.AppendLine("| Line | Comment |");
-        sb.AppendLine("|------|---------|");
+        sb.AppendLine("| Line | Code | Comment |");
+        sb.AppendLine("|------|------|---------|");
 
-        foreach (var comment in actionableComments)
+        foreach (var comment in comments)
         {
-            var lineText = string.IsNullOrEmpty(comment.LineText) ? "(general)" : $"`{comment.LineText.Trim()}`";
-            sb.AppendLine($"| {lineText} | {comment.CommentText} |");
+            var lineId = string.IsNullOrEmpty(comment.LineId) ? "(general)" : comment.LineId;
+            var lineText = string.IsNullOrEmpty(comment.LineText) ? "" : $"`{comment.LineText.Trim()}`";
+            sb.AppendLine($"| {comment.LineNo} ({lineId}) | {lineText} | {comment.Comment} |");
         }
 
         sb.AppendLine();
@@ -358,7 +334,7 @@ public class FromFeedbackResponse : CommandResponse
     public string? Classification { get; set; }
     public string? IssueTitle { get; set; }
     public string? IssueBody { get; set; }
-    public List<EnrichedApiViewComment>? Comments { get; set; }
+    public List<ConsolidatedComment>? Comments { get; set; }
     public string? RepoOwner { get; set; }
     public string? RepoName { get; set; }
     public string? NextAction { get; set; }

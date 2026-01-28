@@ -68,7 +68,7 @@ public class CommentClassificationTemplate : BasePromptTemplate
             ### TypeSpec Changes (Phase A)
             - **Repository**: `azure-rest-api-specs` (or `Azure/azure-rest-api-specs` on GitHub)
             - **File to modify**: `client.tsp` in the service's TypeSpec project folder
-            - **Typical path**: `specification/<org>/<resource-manager|data-plane>/<ServiceName>/client.tsp`
+            - **Typical path**: `specification/<service>/<resource-manager|data-plane>/<ServiceName>/client.tsp`
 
             ### SDK Code Changes (Phase B)
             | Language | Repository | Customization Files |
@@ -92,7 +92,7 @@ public class CommentClassificationTemplate : BasePromptTemplate
 
             | Classification | When to Use |
             |----------------|-------------|
-            | **PHASE_A** | TypeSpec decorators can address the issue (renaming, hiding operations, client restructuring, visibility changes) |
+            | **PHASE_A** | Actionable: TypeSpec decorators can address the issue (renaming, hiding operations, client restructuring, visibility changes) or manual guidance can be given to address the issue. |
             | **SUCCESS** | No further action needed |
             | **FAILURE** | Manual guidance needed |
 
@@ -120,6 +120,16 @@ public class CommentClassificationTemplate : BasePromptTemplate
                - Python: No `*_patch.py` files
                - .NET: No partial classes
                - In this case, suggest creating appropriate customization infrastructure
+            5. **Phase B Exhausted**: Previous iteration returned structured NextSteps indicating automated patching failed:
+               - NextSteps contains "Issue: Automatic patching was unsuccessful or not applicable"
+               - NextSteps contains "Issue: Build still failing after patches applied"
+               - NextSteps contains "Issue: Build failed after regeneration but no customization files exist"
+               - **CRITICAL**: When SuggestedApproach is present, you MUST follow that approach and, if possible, provide more detailed guidance:
+                 * Fetch and consult any Documentation links provided using available tools
+                 * Expand on the suggested approach with specific, actionable steps
+                 * Include relevant code examples from the documentation
+                 * Provide context about why this approach is recommended for the specific error
+                 * Reference the BuildError field if present to tailor guidance to the actual failure
 
             ## Context Parsing
 
@@ -137,6 +147,12 @@ public class CommentClassificationTemplate : BasePromptTemplate
 
             --- Code Changes Applied ---
             <patches applied to customization files>
+
+            --- NextSteps ---
+            Issue: <what went wrong>
+            SuggestedApproach: <how to fix>
+            BuildError: <actual error> (optional)
+            Documentation: <reference link>
             ```
 
             ### How to Use Context History
@@ -147,6 +163,7 @@ public class CommentClassificationTemplate : BasePromptTemplate
                - If no `--- Code Changes Applied ---` sections exist, we're in Phase A
                - If Phase A build failed AND customization files exist, Phase B activates automatically
             4. **Assess progress**: Use history to determine if TypeSpec changes resolved the issue or if new errors appeared
+            5. **Parse structured NextSteps**: If present, extract Issue, SuggestedApproach, BuildError, and Documentation fields to understand Phase B outcomes
 
             ## Classification Logic
 
@@ -181,6 +198,17 @@ public class CommentClassificationTemplate : BasePromptTemplate
                → Check if customization files exist for the language
                → If no files: return FAILURE with guidance to create them
                → If files exist: Phase B activates automatically (not a classifier decision)
+
+            6. If structured NextSteps from Phase B are present:
+               → Parse "Issue:" to identify the Phase B failure scenario
+               → If Issue indicates Phase B exhausted (patches failed, build failed after patches):
+                  → return FAILURE
+                  → Fetch Documentation link if provided (use tools to retrieve content)
+                  → Expand SuggestedApproach with detailed steps from documentation
+                  → Include specific examples and context from fetched docs
+                  → Tailor guidance to BuildError if present
+               → If BuildError suggests a TypeSpec approach might work:
+                  → Consider PHASE_A to attempt different TypeSpec decorator approach
             ```
 
             ## Output Format
@@ -256,6 +284,36 @@ public class CommentClassificationTemplate : BasePromptTemplate
             Reason: TypeSpec has no decorators for customizing polling behavior or header extraction
             Iteration: 1
             Next Action: Provide manual guidance to create language-specific customization files with polling examples
+            ```
+
+            **Example 6: Phase B failed with structured NextSteps**
+            ```
+            Input: "Update SDK after spec changes
+            --- Iteration 2 ---
+            --- Code Changes Applied ---
+            Applied patches to customization files
+            --- Build Result ---
+            Build failed: error CS0246: FooModel not found
+            --- NextSteps ---
+            Issue: Build still failing after patches applied
+            BuildError: error CS0246: The type 'FooModel' could not be found
+            SuggestedApproach: Review build errors and fix customization files manually
+            Documentation: https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md"
+
+            Classification: FAILURE
+            Reason: Phase B exhausted - patches applied but build still failing with CS0246 error
+            Iteration: 2
+            Next Action: Fetch documentation from the provided link and provide detailed manual guidance. The CS0246 error indicates 'FooModel' is not found - this commonly occurs when:
+            1. A model was renamed in the generated code after TypeSpec changes
+            2. The customization file references the old model name
+            3. A using/import statement is missing or incorrect
+            
+            Steps to fix:
+            1. Check the generated code for the new name of FooModel (search for similar model names)
+            2. Update all references in customization files to use the new name
+            3. Verify import statements include the correct namespace
+            4. Review the TypeSpec client customizations guide for proper model referencing patterns
+            5. If the model was removed entirely, consider using @alternateType in client.tsp to maintain backwards compatibility
             ```
             """;    }
 }

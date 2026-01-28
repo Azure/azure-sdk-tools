@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
             services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
             services.AddSingleton<IAPIViewService, APIViewService>();
-            services.AddSingleton<IApiViewCommentEnrichmentService, ApiViewCommentEnrichmentService>();
+            services.AddSingleton<IAPIViewFeedbackCustomizationsHelpers, APIViewFeedbackCustomizationsHelpers>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();

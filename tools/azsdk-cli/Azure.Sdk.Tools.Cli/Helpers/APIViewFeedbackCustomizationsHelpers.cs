@@ -12,14 +12,39 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     /// <summary>
+    /// Represents metadata from APIView resolve endpoint
+    /// </summary>
+    public class ApiViewMetadata
+    {
+        [JsonPropertyName("packageName")]
+        public string PackageName { get; set; } = string.Empty;
+        
+        [JsonPropertyName("language")]
+        public string Language { get; set; } = string.Empty;
+        
+        [JsonPropertyName("reviewId")]
+        public string ReviewId { get; set; } = string.Empty;
+        
+        [JsonPropertyName("version")]
+        public string Version { get; set; } = string.Empty;
+        
+        [JsonPropertyName("revisionId")]
+        public string RevisionId { get; set; } = string.Empty;
+        
+        [JsonPropertyName("revisionLabel")]
+        public string? RevisionLabel { get; set; }
+    }
+
+    /// <summary>
     /// Represents a consolidated comment from a discussion thread
     /// </summary>
     public class ConsolidatedComment
     {
         public string ThreadId { get; set; } = string.Empty;
         public int LineNo { get; set; }
+        public string? LineId { get; set; } = string.Empty;
         public string LineText { get; set; } = string.Empty;
-        public string Conclusion { get; set; } = string.Empty;
+        public string Comment { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -28,6 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public interface IAPIViewFeedbackCustomizationsHelpers
     {
         Task<List<ConsolidatedComment>> GetConsolidatedComments(string apiViewUrl);
+        Task<ApiViewMetadata> GetMetadata(string apiViewUrl);
     }
 
     /// <summary>
@@ -37,6 +63,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         [JsonPropertyName("lineNo")]
         public int LineNo { get; set; }
+        
+        [JsonPropertyName("_lineId")]
+        public string? LineId { get; set; }
+        
+        [JsonPropertyName("_lineText")]
+        public string? LineText { get; set; }
         
         [JsonPropertyName("createdOn")]
         public string? CreatedOn { get; set; }
@@ -98,23 +130,46 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             
             if (string.IsNullOrWhiteSpace(commentsJson))
             {
+                _logger.LogError("Failed to retrieve comments from APIView for revision {RevisionId}", revisionId);
+                throw new InvalidOperationException($"APIView returned empty response for revision {revisionId}");
+            }
+
+            // Deserialize comments
+            List<ApiViewComment>? comments;
+            try
+            {
+                comments = JsonSerializer.Deserialize<List<ApiViewComment>>(commentsJson);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize comments JSON for revision {RevisionId}", revisionId);
+                throw new InvalidOperationException($"Failed to parse APIView response for revision {revisionId}", ex);
+            }
+            
+            if (comments == null)
+            {
+                _logger.LogError("Deserialized comments are null for revision {RevisionId}", revisionId);
+                throw new InvalidOperationException($"APIView response deserialized to null for revision {revisionId}");
+            }
+            
+            if (!comments.Any())
+            {
                 _logger.LogInformation("No comments found for revision {RevisionId}", revisionId);
                 return new List<ConsolidatedComment>();
             }
 
-            // Deserialize comments
-            var comments = JsonSerializer.Deserialize<List<ApiViewComment>>(commentsJson);
+            // 1. Filter out resolved, Question severity comments, and comments with no text
+            var filteredComments = comments
+                .Where(c => !c.IsResolved && c.Severity != "Question" && !string.IsNullOrWhiteSpace(c.CommentText))
+                .ToList();
             
-            if (comments == null || !comments.Any())
+            if (!filteredComments.Any())
             {
-                _logger.LogInformation("No comments to process for revision {RevisionId}", revisionId);
+                _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering (all resolved or questions)", revisionId);
                 return new List<ConsolidatedComment>();
             }
-
-            // 1. Filter out resolved and Question severity comments
-            var filteredComments = comments
-                .Where(c => !c.IsResolved && c.Severity != "Question")
-                .ToList();
+            
+            _logger.LogInformation("Found {Count} actionable comment(s) after filtering", filteredComments.Count);
 
             // 2. Group comments by threadId and order by createdOn
             var groupedComments = filteredComments
@@ -133,10 +188,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 consolidatedComments.Add(consolidated);
                 
                 _logger.LogInformation(
-                    "Consolidated discussion - ThreadId: {ThreadId}, LineNo: {LineNo}, Conclusion: {Conclusion}",
+                    "Consolidated discussion - ThreadId: {ThreadId}, LineNo: {LineNo}, Comment: {Comment}",
                     consolidated.ThreadId,
                     consolidated.LineNo,
-                    consolidated.Conclusion);
+                    consolidated.Comment);
             }
 
             return consolidatedComments;
@@ -152,19 +207,34 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var firstComment = groupedComments.First();
             var threadId = firstComment.ThreadId ?? string.Empty;
             var lineNo = firstComment.LineNo;
+            var lineText = firstComment.LineText ?? string.Empty;
+            var lineId = firstComment.LineId ?? string.Empty;
+
+            // If only one comment, use it directly as the comment
+            if (groupedComments.Count == 1)
+            {
+                return new ConsolidatedComment
+                {
+                    ThreadId = threadId,
+                    LineNo = lineNo,
+                    LineId = lineId,
+                    LineText = lineText,
+                    Comment = firstComment.CommentText!,
+                };
+            }
 
             // Build discussion text from grouped comments
             var discussion = string.Join("\n\n", groupedComments.Select((c, idx) => 
                 $"Comment {idx + 1} (by {c.CreatedBy} at {c.CreatedOn}):\n{c.CommentText}"));
 
-            var prompt = $@"Read the following discussion thread from an API review and provide a summarized comment of the discussion with the conclusion.
+            var prompt = $@"Read the following discussion thread from an API review and provide a summarized comment of the discussion.
 
 Discussion:
 {discussion}
 
 Respond in JSON format:
 {{
-  ""conclusion"": ""a description of the final decision or action""
+  ""comment"": ""a description of the final decision or action""
 }}";
 
             var modelName = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT") 
@@ -192,8 +262,46 @@ Respond in JSON format:
             {
                 ThreadId = threadId,
                 LineNo = lineNo,
-                Conclusion = jsonResponse?["conclusion"]?.ToString() ?? string.Empty
+                LineId = lineId,
+                LineText = lineText,
+                Comment = jsonResponse?["comment"]?.ToString() ?? string.Empty
             };
+        }
+        
+
+
+        /// <summary>
+        /// Gets metadata (language, packageName, etc.) for an APIView URL
+        /// </summary>
+        public async Task<ApiViewMetadata> GetMetadata(string apiViewUrl)
+        {
+            var environment = IAPIViewHttpService.DetectEnvironmentFromUrl(apiViewUrl);
+            
+            _logger.LogInformation("Getting metadata for APIView URL: {ApiViewUrl}", apiViewUrl);
+            
+            // Call the resolve endpoint to get metadata
+            var metadataJson = await _apiViewService.ResolveApiViewUrlAsync(apiViewUrl, environment);
+            
+            if (string.IsNullOrWhiteSpace(metadataJson))
+            {
+                throw new InvalidOperationException($"Failed to resolve APIView URL: {apiViewUrl}");
+            }
+
+            // Deserialize metadata
+            var metadata = JsonSerializer.Deserialize<ApiViewMetadata>(metadataJson);
+            
+            if (metadata == null)
+            {
+                throw new InvalidOperationException($"Failed to deserialize metadata for APIView URL: {apiViewUrl}");
+            }
+
+            _logger.LogInformation(
+                "Retrieved metadata - Package: {PackageName}, Language: {Language}, RevisionLabel: {RevisionLabel}",
+                metadata.PackageName,
+                metadata.Language,
+                metadata.RevisionLabel);
+
+            return metadata;
         }
     }
 }

@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Text;
-using Azure.Sdk.Tools.Cli.Services.APIView;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 
@@ -20,7 +20,7 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
     private readonly string _language;
     private readonly string? _apiViewUrl;
     private readonly string _rawFeedback;
-    private readonly IReadOnlyList<EnrichedApiViewComment>? _enrichedComments;
+    private readonly IReadOnlyList<ConsolidatedComment>? _consolidatedComments;
 
     /// <summary>
     /// Initializes a new TypeSpec customization template with the specified parameters.
@@ -29,19 +29,19 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
     /// <param name="language">Target SDK language (e.g., python, csharp, java)</param>
     /// <param name="apiViewUrl">Optional APIView URL for reference</param>
     /// <param name="rawFeedback">The raw feedback text</param>
-    /// <param name="enrichedComments">Pre-enriched APIView comments, if available</param>
+    /// <param name="consolidatedComments">Pre-consolidated APIView comments, if available</param>
     public TypeSpecCustomizationTemplate(
         string serviceName,
         string language,
         string? apiViewUrl,
         string rawFeedback,
-        IReadOnlyList<EnrichedApiViewComment>? enrichedComments = null)
+        IReadOnlyList<ConsolidatedComment>? consolidatedComments = null)
     {
         _serviceName = serviceName;
         _language = language;
         _apiViewUrl = apiViewUrl;
         _rawFeedback = rawFeedback;
-        _enrichedComments = enrichedComments;
+        _consolidatedComments = consolidatedComments;
     }
 
     /// <summary>
@@ -79,21 +79,22 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
 
     private string FormatFeedback()
     {
-        if (_enrichedComments == null || _enrichedComments.Count == 0)
+        if (_consolidatedComments == null || _consolidatedComments.Count == 0)
         {
             return _rawFeedback;
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine($"### APIView Comments ({_enrichedComments.Count} unresolved)");
+        sb.AppendLine($"### APIView Comments ({_consolidatedComments.Count} consolidated)");
         sb.AppendLine();
-        sb.AppendLine("| line_text | comment_text |");
-        sb.AppendLine("|-----------|--------------|");
+        sb.AppendLine("| lineId | lineText | commentText |");
+        sb.AppendLine("|--------|----------|-------------|");
 
-        foreach (var comment in _enrichedComments)
+        foreach (var comment in _consolidatedComments)
         {
-            var lineText = string.IsNullOrEmpty(comment.LineText) ? "(general)" : $"`{comment.LineText}`";
-            sb.AppendLine($"| {lineText} | {comment.CommentText} |");
+            var lineId = string.IsNullOrEmpty(comment.LineId) ? "(general)" : comment.LineId;
+            var lineText = string.IsNullOrEmpty(comment.LineText) ? "" : $"`{comment.LineText.Trim()}`";
+            sb.AppendLine($"| {comment.LineNo} | {lineId} | {lineText} | {comment.Comment} |");
         }
 
         return sb.ToString();
@@ -157,9 +158,9 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
 
             {For each comment, format as a table row:}
 
-            | line_text | comment_text |
-            |-----------|--------------|
-            | `{line_text}` | {comment_text} |
+            | lineNo | lineId | lineText | commentText |
+            |--------|--------|----------|-------------|
+            | {lineNo} | {lineId} | `{lineText}` | {commentText} |
 
             ## Validation
 

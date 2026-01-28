@@ -10,15 +10,23 @@ This script requires the user has elevated access to the Azure SDK Engineering S
 subscription. It will assign the "DocumentDB Account Contributor" ARM role and the
 "Built-in Data Reader" SQL role to the current user for the production and staging
 APIView Cosmos DB accounts.
+
+Note: Uses AZURE_APP_CONFIG_ENDPOINT and ENVIRONMENT_NAME from .env file.
 """
 
 import argparse
+import sys
+from pathlib import Path
 from uuid import uuid4
 
 import requests
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from src._settings import SettingsManager
 
 
 def get_principal_type(credential, principal_id: str) -> str:
@@ -51,17 +59,20 @@ def modify_permissions():
     """Grant or revoke APIView Cosmos DB permissions for a specified principal."""
     parser = argparse.ArgumentParser(description="Grant or revoke Cosmos DB permissions for a principal.")
     parser.add_argument(
-        "principal_id", type=str, help="The principal ID (user or service principal) to grant/revoke permissions for."
-    )
-    parser.add_argument(
-        "environment", type=str, choices=["staging", "prod"], help="The environment to modify permissions for."
+        "--principal-id",
+        type=str,
+        required=True,
+        help="The principal ID (user or service principal) to grant/revoke permissions for.",
     )
     parser.add_argument("--revoke", action="store_true", help="Revoke permissions instead of granting them.")
     args = parser.parse_args()
 
+    settings = SettingsManager()
+    environment = settings.label
+
     user_principal_id = args.principal_id
     print(f"Principal ID: {user_principal_id}")
-    print(f"Environment: {args.environment}")
+    print(f"Environment: {environment}")
 
     subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
 
@@ -175,14 +186,13 @@ def modify_permissions():
             assign_arm_role()
             assign_sql_role()
 
-    settings = {
+    settings_map = {
         "staging": {"resource_group": "apiviewstagingrg", "cosmos_account": "apiviewstaging"},
         "prod": {"resource_group": "apiview", "cosmos_account": "apiview-cosmos"},
     }
 
-    env = args.environment
-    data = settings[env]
-    print(f"\n=== Processing {env} ===")
+    data = settings_map[environment]
+    print(f"\n=== Processing {environment} ===")
     resource_group = data["resource_group"]
     cosmos_account = data["cosmos_account"]
     process_permissions(resource_group, cosmos_account)

@@ -1,0 +1,102 @@
+// Admin Permissions Page
+
+.admin-permissions-container { padding: 2rem; min-height: 100vh; background: var(--surface-ground); }
+
+// Header
+.page-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;
+  padding: 1.25rem; background: var(--surface-card); border-radius: 8px; border: 1px solid var(--surface-border);
+  .header-content { display: flex; align-items: center; gap: 1rem; }
+  .header-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #10b981; border-radius: 10px; i { font-size: 1.5rem; color: white; } }
+  .header-text { h1 { margin: 0; font-size: 1.5rem; } .subtitle { margin: 0.25rem 0 0; color: var(--text-color-secondary); } }
+  .header-stats { display: flex; gap: 1rem; }
+  .stat-card { text-align: center; padding: 0.5rem 1rem; background: var(--surface-ground); border-radius: 8px; .stat-value { font-size: 1.25rem; font-weight: 600; color: var(--primary-color); } .stat-label { font-size: 0.75rem; color: var(--text-color-secondary); } }
+}
+
+// Loading & Access Denied
+.loading-container, .access-denied { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 2rem; text-align: center; background: var(--surface-card); border-radius: 8px; i { font-size: 2rem; margin-bottom: 1rem; } h2 { margin: 0 0 0.5rem; } p { color: var(--text-color-secondary); margin: 0; } }
+.loading-spinner, .denied-icon { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 1rem; }
+.loading-spinner { background: var(--surface-ground); }
+.denied-icon { background: var(--red-100); i { color: var(--red-500); } }
+
+// Main Layout
+.main-content { display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem; }
+
+// Groups Panel
+.groups-panel { background: var(--surface-card); border-radius: 8px; border: 1px solid var(--surface-border); padding: 1rem; height: fit-content; max-height: calc(100vh - 200px); overflow-y: auto; }
+.groups-panel .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--surface-border); }
+.groups-panel .panel-title { display: flex; align-items: center; gap: 0.5rem; i { color: var(--primary-color); } h2 { margin: 0; font-size: 1rem; } }
+.groups-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.group-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: var(--surface-ground); border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.group-card:hover { background: var(--surface-hover); }
+.group-card:hover .group-actions { opacity: 1; }
+.group-card.selected { border-color: var(--primary-color); background: rgba(var(--primary-color-rgb), 0.08); }
+.group-avatar { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: white; font-weight: 600; flex-shrink: 0; }
+.group-info { flex: 1; min-width: 0; h3 { margin: 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .group-id { font-size: 0.75rem; color: var(--text-color-secondary); font-family: monospace; } }
+.group-badges { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+.badge { padding: 0.15rem 0.4rem; font-size: 0.7rem; border-radius: 4px; }
+.members-badge { background: var(--blue-100); color: var(--blue-700); }
+.roles-badge { background: var(--purple-100); color: var(--purple-700); }
+.group-actions { display: flex; gap: 0.25rem; opacity: 0; transition: opacity 0.2s; .action-btn { width: 28px; height: 28px; } }
+
+// Empty States
+.empty-state, .empty-details { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; h3 { margin: 0 0 0.5rem; } p { margin: 0 0 1rem; color: var(--text-color-secondary); } }
+.empty-illustration { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; background: var(--surface-200); border-radius: 50%; margin-bottom: 1rem; i { font-size: 1.5rem; color: var(--text-color-secondary); } }
+.empty-details { min-height: 300px; }
+.empty-details-content { display: flex; flex-direction: column; align-items: center; }
+
+// Details Panel
+.details-panel { background: var(--surface-card); border-radius: 8px; border: 1px solid var(--surface-border); padding: 1.25rem; height: fit-content; }
+.detail-header { margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--surface-border); }
+.detail-title-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+.detail-avatar { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: white; font-weight: 600; font-size: 1.25rem; }
+.detail-title { h2 { margin: 0; font-size: 1.25rem; } .group-id-code { font-size: 0.8rem; color: var(--text-color-secondary); background: var(--surface-ground); padding: 0.15rem 0.4rem; border-radius: 4px; } }
+.detail-meta { display: flex; gap: 1rem; margin-top: 0.5rem; .meta-item { display: flex; align-items: center; gap: 0.25rem; font-size: 0.85rem; color: var(--text-color-secondary); } }
+.detail-section { margin-bottom: 1.5rem; }
+.section-header { margin-bottom: 0.75rem; }
+.section-title { display: flex; align-items: center; gap: 0.5rem; h3 { margin: 0; font-size: 0.95rem; } i { color: var(--primary-color); } }
+.section-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; background: var(--primary-color); color: white; font-size: 0.7rem; font-weight: 600; border-radius: 10px; }
+
+// Roles & Members
+.roles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.5rem; }
+.members-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.role-card { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 0.75rem; background: var(--surface-ground); border-radius: 6px; border: 1px solid transparent; }
+.role-card.global-role { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.2); }
+.role-card.scoped-role { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2); }
+.role-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; i { font-size: 0.85rem; color: white; } }
+.role-card.global-role .role-icon { background: #6366f1; }
+.role-card.scoped-role .role-icon { background: #22c55e; }
+.role-info { display: flex; flex-direction: column; .role-name { font-weight: 500; font-size: 0.85rem; } .role-scope { font-size: 0.7rem; color: var(--text-color-secondary); } }
+.member-card { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: var(--surface-ground); border-radius: 6px; }
+.member-card:hover .remove-btn { opacity: 1; }
+.member-avatar { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--primary-color); color: white; font-size: 0.75rem; }
+.member-name { font-size: 0.85rem; }
+.remove-btn { opacity: 0; transition: opacity 0.2s; }
+.empty-roles, .empty-members { padding: 1.5rem; text-align: center; background: var(--surface-ground); border-radius: 6px; color: var(--text-color-secondary); grid-column: 1 / -1; }
+.services-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.service-tag { padding: 0.3rem 0.6rem; background: var(--surface-ground); border-radius: 12px; font-size: 0.8rem; }
+
+// Dialogs
+.dialog-content { display: flex; flex-direction: column; gap: 1rem; }
+.form-field { display: flex; flex-direction: column; gap: 0.4rem; label { font-weight: 500; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; i { color: var(--primary-color); } } .input-enhanced { border-radius: 6px; } .field-hint { font-size: 0.75rem; color: var(--text-color-secondary); } }
+.add-role-form { padding: 0.75rem; background: var(--surface-ground); border-radius: 6px; .role-selectors { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; } }
+.current-roles { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+.role-chip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.3rem 0.4rem 0.3rem 0.6rem; border-radius: 6px; font-size: 0.8rem; &.global { background: rgba(99, 102, 241, 0.15); color: #4338ca; } &.scoped { background: rgba(34, 197, 94, 0.15); color: #166534; } .chip-remove { width: 20px; height: 20px; } }
+.no-roles-hint { padding: 0.75rem; background: var(--surface-ground); border-radius: 6px; color: var(--text-color-secondary); font-size: 0.85rem; margin-top: 0.5rem; }
+.member-dialog-header { margin-bottom: 0.5rem; padding: 0.5rem 0.75rem; background: var(--surface-ground); border-radius: 6px; p { margin: 0; font-size: 0.85rem; } }
+.dialog-footer { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+// PrimeNG Dialog Footer Override
+::ng-deep .p-dialog {
+  .p-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--surface-border);
+  }
+}
+
+// Responsive
+@media (max-width: 992px) { .admin-permissions-container { padding: 1rem; } .page-header { flex-direction: column; gap: 1rem; .header-content { flex-direction: column; text-align: center; } } .main-content { grid-template-columns: 1fr; } .groups-panel { max-height: none; } }

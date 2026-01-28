@@ -44,20 +44,6 @@
                             <div id="reviewLanguagesHelp" class="form-text">You can approve reviews! Pick the languages you'd like to approve below.</div>
                         </div>
                     </li>
-                    <li class="list-group-item">
-                        <div class="mb-1">
-                            <label for="scrollBarDropdown" class="form-label fw-semibold">Scrollbar size</label>
-                            <div class="card flex justify-content-center">
-                                <p-select
-                                    (onChange)="onProfileChange($event)"
-                                    id="scrollBarDropdown"
-                                    [options]="scrollBarSizes"
-                                    [(ngModel)]="selectedScrollBarSize"
-                                    [style]="{'width':'100%'}">
-                                </p-select>
-                            </div>
-                        </div>
-                    </li>
                 </ul>
                 <div class="mt-4 d-grid gap-2">
                     <button type="button" class="btn btn-primary btn-lg" (click)="saveProfileChanges()" [disabled]="disableSaveButton">Save changes</button>

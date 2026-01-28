@@ -24,6 +24,9 @@ namespace APIViewWeb
         {
             try
             {
+                // When a profile is read from the database, any deprecated properties (like ScrollBarSize) 
+                // will be automatically ignored during deserialization since they no longer exist in the model.
+                // The property will be removed from the database the next time the profile is updated.
                 return await _userProfileContainer.ReadItemAsync<UserProfileModel>(UserName, new PartitionKey(UserName));
             }
             catch

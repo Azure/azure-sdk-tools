@@ -44,9 +44,9 @@ The question must be classified into one of these categories:
 # Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
-  "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the intent categories or unknown
-  "service_type": string,       // Must be one of the intent service types or unknown
+  "question": string,     // The rewritten standalone question
+  "category": string,     // Must be one of the intent categories or unknown
+  "service_type": string, // Must be one of the intent service types or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
 

@@ -451,9 +451,16 @@ def review_summarize(language: str, target: str, base: str = None):
     """
     Summarize an API or a diff of two APIs using the deployed API review service.
     """
-    payload = {"language": language, "target": target}
+    # Read file contents - server can't access local filesystem
+    with open(target, "r", encoding="utf-8") as f:
+        target_content = f.read()
+
+    payload = {"language": language, "target": target_content}
     if base:
-        payload["base"] = base
+        with open(base, "r", encoding="utf-8") as f:
+            base_content = f.read()
+        payload["base"] = base_content
+
     settings = SettingsManager()
     base_url = settings.get("WEBAPP_ENDPOINT")
     api_endpoint = f"{base_url}/api-review/summarize"

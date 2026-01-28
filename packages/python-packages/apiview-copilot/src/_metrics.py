@@ -8,8 +8,9 @@ from src._apiview import (
     get_comments_in_date_range,
 )
 from src._database_manager import get_database_manager
+from src._foundry_runner import call_foundry_model
 from src._models import APIViewComment
-from src._utils import run_prompty
+from src._utils import get_prompt_path
 
 
 @dataclass
@@ -106,7 +107,10 @@ def get_metrics_report(
     report = _build_metrics_report(data)
     if markdown:
         inputs = {"data": report}
-        summary = run_prompty(folder="other", filename="summarize_metrics", inputs=inputs)
+        summary = call_foundry_model(
+            prompt_file=get_prompt_path(folder="other", filename="summarize_metrics"),
+            inputs=inputs,
+        )
         print(summary)
     else:
         return report

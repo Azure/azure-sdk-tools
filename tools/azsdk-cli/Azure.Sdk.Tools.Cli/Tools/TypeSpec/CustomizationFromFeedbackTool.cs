@@ -5,6 +5,7 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text;
+using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
@@ -100,10 +101,18 @@ public class CustomizationFromFeedbackTool : MCPTool
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        var buildLog = parseResult.GetValue(buildLogOption);
+        var buildLogPath = parseResult.GetValue(buildLogOption);
         var language = parseResult.GetValue(languageOption);
         var serviceName = parseResult.GetValue(serviceNameOption);
         var createIssue = parseResult.GetValue(createIssueOption);
+        
+        // Read build log file if provided
+        string? buildLog = null;
+        if (!string.IsNullOrEmpty(buildLogPath))
+        {
+            buildLog = await File.ReadAllTextAsync(buildLogPath, ct);
+        }
+        
         return await FromFeedbackAsync(apiViewUrl, buildLog, language, serviceName, createIssue, ct);
     }
 
@@ -128,27 +137,41 @@ public class CustomizationFromFeedbackTool : MCPTool
             // Classify each feedback item individually
             var actionableFeedbackItems = new List<FeedbackItem>();
             
+            ClassificationResult? failureResult = null;
+            
             foreach (var item in feedbackContext.FeedbackItems)
             {
                 _logger.LogInformation("Classifying feedback item: {Id}", item.Id);
                 
                 var context = new OrchestrationContext(item.FormattedForPrompt, language);
-                var classification = await ClassifyAsync(context, ct);
+                var result = await ClassifyAsync(context, ct);
                 
-                _logger.LogInformation("Item {Id} classified as: {Classification}", item.Id, classification);
+                _logger.LogInformation("Item {Id} classified as: {Classification}", item.Id, result.Classification);
                 
-                if (classification == "PHASE_A")
+                if (result.Classification == "PHASE_A")
                 {
                     actionableFeedbackItems.Add(item);
                 }
-                else if (classification == "SUCCESS")
+                else if (result.Classification == "SUCCESS")
                 {
                     _logger.LogInformation("Item {Id} is non-actionable (SUCCESS), skipping", item.Id);
                 }
-                else if (classification == "FAILURE")
+                else if (result.Classification == "FAILURE")
                 {
                     _logger.LogWarning("Item {Id} classified as FAILURE", item.Id);
+                    failureResult = result; // Keep the failure result with guidance
                 }
+            }
+
+            // If we have FAILURE classification, return that with guidance
+            if (failureResult != null)
+            {
+                return new FromFeedbackResponse
+                {
+                    Classification = "FAILURE",
+                    Message = failureResult.Reason,
+                    NextAction = failureResult.NextAction
+                };
             }
 
             // Check if any items are actionable
@@ -200,7 +223,7 @@ public class CustomizationFromFeedbackTool : MCPTool
     /// <summary>
     /// Classifies the feedback using the classification template.
     /// </summary>
-    private async Task<string> ClassifyAsync(OrchestrationContext context, CancellationToken ct)
+    private async Task<ClassificationResult> ClassifyAsync(OrchestrationContext context, CancellationToken ct)
     {
         var prompt = new CommentClassificationTemplate(
             null, // serviceName - not available from APIView
@@ -214,12 +237,56 @@ public class CustomizationFromFeedbackTool : MCPTool
         {
             Instructions = prompt,
             Model = _model,
-            MaxToolCalls = 1,
-            Tools = []
+            MaxToolCalls = 5, // Allow multiple tool calls to fetch documentation
+            Tools = [
+                AgentTool<FetchDocumentationInput, FetchDocumentationOutput>.FromFunc(
+                    name: "fetch_documentation",
+                    description: "Fetch documentation from a URL to provide detailed guidance. Use this when a Documentation link is provided in the NextSteps section.",
+                    invokeHandler: async (input, cancellationToken) =>
+                    {
+                        try
+                        {
+                            // Transform GitHub web URLs to raw content URLs
+                            var url = input.Url;
+                            if (url.Contains("github.com") && url.Contains("/blob/"))
+                            {
+                                url = url.Replace("github.com", "raw.githubusercontent.com")
+                                         .Replace("/blob/", "/refs/heads/");
+                            }
+                            
+                            _logger.LogInformation("Fetching documentation from: {Url}", url);
+                            
+                            // Use HttpClient to fetch the page
+                            using var httpClient = new HttpClient();
+                            httpClient.DefaultRequestHeaders.Add("User-Agent", "Azure-SDK-Tools");
+                            
+                            var response = await httpClient.GetAsync(url, cancellationToken);
+                            response.EnsureSuccessStatusCode();
+                            
+                            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                            
+                            // Return first 10000 characters to avoid token limits
+                            var truncatedContent = content.Length > 10000 
+                                ? content.Substring(0, 10000) + "\n\n[Content truncated...]" 
+                                : content;
+                            
+                            return new FetchDocumentationOutput(truncatedContent);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to fetch documentation from {Url}", input.Url);
+                            return new FetchDocumentationOutput($"Failed to fetch documentation: {ex.Message}");
+                        }
+                    }
+                )
+]
         }, ct);
 
-        return result.Classification;
+        return result;
     }
+
+    private record FetchDocumentationInput(string Url);
+    private record FetchDocumentationOutput(string Content);
 
     /// <summary>
     /// Creates the GitHub issue after user confirmation.
@@ -335,6 +402,9 @@ public class CustomizationFromFeedbackTool : MCPTool
     {
         public string Classification { get; set; } = "FAILURE";
         public string Reason { get; set; } = "";
+        public int Iteration { get; set; } = 1;
+        [JsonPropertyName("Next Action")]
+        public string? NextAction { get; set; }
     }
 }
 

@@ -126,12 +126,17 @@ public class CommentClassificationTemplate : BasePromptTemplate
                - NextSteps contains "Issue: Automatic patching was unsuccessful or not applicable"
                - NextSteps contains "Issue: Build still failing after patches applied"
                - NextSteps contains "Issue: Build failed after regeneration but no customization files exist"
-               - **CRITICAL**: When SuggestedApproach is present, you MUST follow that approach and, if possible, provide more detailed guidance:
-                 * Fetch and consult any Documentation links provided using available tools
-                 * Expand on the suggested approach with specific, actionable steps
-                 * Include relevant code examples from the documentation
+               - **CRITICAL**: When SuggestedApproach is present, you MUST follow that approach and provide detailed guidance:
+                 * **REQUIRED**: If a Documentation link is present, you MUST call the fetch_documentation tool BEFORE providing guidance
+                 * **CRITICAL**: The Next Action field MUST incorporate specific content from the fetched documentation:
+                   - Extract and include relevant code examples from the documentation
+                   - Reference specific sections, patterns, or APIs mentioned in the docs
+                   - Adapt the documentation examples to address the specific BuildError
+                   - Provide step-by-step instructions based on the documented approaches
+                 * Expand on the suggested approach with concrete, actionable steps based on the documentation
                  * Provide context about why this approach is recommended for the specific error
-                 * Reference the BuildError field if present to tailor guidance to the actual failure
+                 * Reference the BuildError field to tailor guidance to the actual failure scenario
+                 * **FORBIDDEN**: Do NOT provide generic advice when documentation is available - the Next Action MUST demonstrate that you read and used the fetched documentation by including specific details, code patterns, or examples from it
 
             ## Context Parsing
 

@@ -57,8 +57,6 @@ public static class CoreRequirements
             }
             else
             {
-                var tspClientPath = Path.Combine("eng", "common", "tsp-client");
-
                 // Use absolute path to eng/common/tsp-client if RepoRoot is available
                 var tspClientPath = !string.IsNullOrEmpty(ctx.RepoRoot) 
                 ? Path.Combine(ctx.RepoRoot, "eng", "common", "tsp-client")

@@ -413,15 +413,15 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, opts Age
 }
 
 // buildFilter creates a combined OData filter string from sources, source-specific filters, and metadata filters.
-func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope *model.QuestionScope, plane *model.ServiceType) string {
+func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[model.Source]string, scope *model.QuestionScope, service_type *model.ServiceType) string {
 	// Build metadata filter from scope and plane
 	var metadataFilters []string
 	if scope != nil && *scope == model.QuestionScope_Unbranded {
 		metadataFilters = append(metadataFilters, fmt.Sprintf("scope eq '%s'", *scope))
 	}
-	if plane != nil && *plane != model.ServiceType_Unknown {
-		// For a specific plane, include documents with that plane or no plane specified.
-		metadataFilters = append(metadataFilters, fmt.Sprintf("(plane eq '%s' or plane eq null)", *plane))
+	if service_type != nil && *service_type != model.ServiceType_Unknown {
+		// For a specific service_type, include documents with that service_type or no service_type specified.
+		metadataFilters = append(metadataFilters, fmt.Sprintf("(service_type eq '%s' or service_type eq null)", *service_type))
 	}
 	metadataFilter := strings.Join(metadataFilters, " and ")
 

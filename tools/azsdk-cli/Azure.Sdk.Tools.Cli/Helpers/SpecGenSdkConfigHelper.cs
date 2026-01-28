@@ -3,6 +3,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.CommandLine.Parsing;
 using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Models;
@@ -189,65 +190,33 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 
                 if (needsQuoting)
                 {
-                    // Find all occurrences of the placeholder to handle path continuations
-                    int placeholderIndex;
-                    while ((placeholderIndex = result.IndexOf(placeholder, StringComparison.OrdinalIgnoreCase)) >= 0)
+                    // Use regex to find placeholder and capture path continuation
+                    // Path continuation stops at common delimiters: whitespace, quotes, =, ;, ,
+                    var pattern = Regex.Escape(placeholder) + @"([^\s""=;,]*)";
+                    var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                    
+                    result = regex.Replace(result, match =>
                     {
-                        // Look ahead after the placeholder to find path continuations
-                        int endIndex = placeholderIndex + placeholder.Length;
-                        int pathEndIndex = endIndex;
-                        
-                        // Continue while we see path separators or valid path characters
-                        // Stop at whitespace, quotes, or common argument delimiters
-                        while (pathEndIndex < result.Length)
-                        {
-                            char c = result[pathEndIndex];
-                            // Stop at whitespace or characters that would end a path argument
-                            if (char.IsWhiteSpace(c) || c == '"' || c == '=' || c == ',' || c == '&' || c == '|' || c == ';')
-                            {
-                                break;
-                            }
-                            pathEndIndex++;
-                        }
-                        
-                        // Extract the path continuation (e.g., "/src")
-                        string pathContinuation = result.Substring(endIndex, pathEndIndex - endIndex);
-                        
+                        // Extract the path continuation from the match
+                        string pathContinuation = match.Groups[1].Value;
                         // Build the quoted replacement including the continuation
-                        string quotedReplacement = $"\"{value}{pathContinuation}\"";
-                        
-                        // Replace the placeholder and continuation with quoted version
-                        result = result.Substring(0, placeholderIndex) + quotedReplacement + result.Substring(pathEndIndex);
-                    }
+                        return $"\"{value}{pathContinuation}\"";
+                    });
                 }
                 else if (isAlreadyQuoted)
                 {
                     // Handle already-quoted values with continuations
-                    int placeholderIndex;
-                    while ((placeholderIndex = result.IndexOf(placeholder, StringComparison.OrdinalIgnoreCase)) >= 0)
+                    var pattern = Regex.Escape(placeholder) + @"([^\s""=;,]*)";
+                    var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                    
+                    result = regex.Replace(result, match =>
                     {
-                        int endIndex = placeholderIndex + placeholder.Length;
-                        int pathEndIndex = endIndex;
-                        
-                        // Look for path continuations
-                        while (pathEndIndex < result.Length)
-                        {
-                            char c = result[pathEndIndex];
-                            if (char.IsWhiteSpace(c) || c == '"' || c == '=' || c == ',' || c == '&' || c == '|' || c == ';')
-                            {
-                                break;
-                            }
-                            pathEndIndex++;
-                        }
-                        
-                        string pathContinuation = result.Substring(endIndex, pathEndIndex - endIndex);
-                        
+                        // Extract the path continuation from the match
+                        string pathContinuation = match.Groups[1].Value;
                         // For already-quoted values, remove the quotes and re-quote with continuation
                         string unquotedValue = value.Substring(1, value.Length - 2);
-                        string quotedReplacement = $"\"{unquotedValue}{pathContinuation}\"";
-                        
-                        result = result.Substring(0, placeholderIndex) + quotedReplacement + result.Substring(pathEndIndex);
-                    }
+                        return $"\"{unquotedValue}{pathContinuation}\"";
+                    });
                 }
                 else
                 {

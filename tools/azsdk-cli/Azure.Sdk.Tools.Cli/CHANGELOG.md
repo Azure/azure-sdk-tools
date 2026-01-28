@@ -4,6 +4,9 @@
 
 ### Features Added
 
+- Added a new CLI command to update the package release status in release plan.
+- Added new MCP tools azsdk_package_generate_samples and azsdk_package_translate_samples for end-to-end sample workflows.
+
 ### Breaking Changes
 
 ### Bugs Fixed

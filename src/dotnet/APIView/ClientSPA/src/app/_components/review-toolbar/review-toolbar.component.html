@@ -77,7 +77,7 @@
     </span>
 
     <!-- Diff Style Toggle -->
-    <span *ngIf="isDiffView && contentHasDiff" class="d-flex align-items-center diff-style-toggle-wrapper me-3">
+    <span *ngIf="isDiffView && contentHasDiff !== false" class="d-flex align-items-center diff-style-toggle-wrapper me-3">
         <p-selectButton (onChange)="onDiffStyleChange($event)" [options]="diffStyleOptions" [(ngModel)]="selectedDiffStyle" [unselectable]="true" optionLabel="label" optionValue="value" styleClass="neutral-toggle-group"></p-selectButton>
     </span>
 

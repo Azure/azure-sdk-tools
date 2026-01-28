@@ -51,6 +51,14 @@ public class RequirementContext
     public string? RepoName => RepoRoot != null ? Path.GetFileName(RepoRoot) : null;
 
     /// <summary>
+    /// Determines if the current repository is the azure-rest-api-specs repository.
+    /// </summary>
+    public bool IsSpecsRepo()
+    {
+        return RepoName != null && RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Creates a RequirementContext for the current environment.
     /// </summary>
     public static RequirementContext Create(string? repoRoot, string? packagePath, HashSet<SdkLanguage>? languages = null)

@@ -42,11 +42,44 @@ public static class CoreRequirements
     {
         public override string Name => "tsp-client";
         public override string? MinVersion => "0.24.0";
-        public override string[] CheckCommand => ["tsp-client", "--version"];
+
+        public override async Task<RequirementCheckOutput> RunCheckAsync(
+            Func<string[], Task<ProcessResult>> runCommand,
+            RequirementContext ctx,
+            CancellationToken ct = default)
+        {
+            string[] command;
+
+            // specs repo uses a different check
+            if (ctx.IsSpecsRepo())
+            {
+                command = ["tsp-client", "--version"];
+            }
+            else
+            {
+                var tspClientPath = Path.Combine("eng", "common", "tsp-client");
+
+                // Use absolute path to eng/common/tsp-client if RepoRoot is available
+                var tspClientPath = !string.IsNullOrEmpty(ctx.RepoRoot) 
+                ? Path.Combine(ctx.RepoRoot, "eng", "common", "tsp-client")
+                : Path.Combine("eng", "common", "tsp-client");
+
+                command = ["npm", "exec", "--prefix", tspClientPath, "--no", "--", "tsp-client", "--version"];
+            }
+
+            var result = await runCommand(command);
+            return new RequirementCheckOutput
+            {
+                Success = result.ExitCode == 0,
+                Output = result.Output?.Trim(),
+                Error = result.ExitCode != 0 ? result.Output?.Trim() : null
+            };
+        }
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            if (ctx.RepoName != null && ctx.RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase))
+            // special case for specs repo
+            if (ctx.IsSpecsRepo())
             {
                 return [
                     $"cd {ctx.RepoRoot}",
@@ -65,7 +98,7 @@ public static class CoreRequirements
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
-            if (ctx.RepoName != null && ctx.RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase))
+            if (ctx.IsSpecsRepo())
             {
                 return [
                     $"cd {ctx.RepoRoot}",

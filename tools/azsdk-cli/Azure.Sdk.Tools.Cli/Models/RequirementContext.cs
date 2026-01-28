@@ -11,9 +11,9 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public class RequirementContext
 {
     /// <summary>
-    /// The root directory of the repository, or null if not in a repo.
+    /// The root directory of the repository.
     /// </summary>
-    public string? RepoRoot { get; init; }
+    public required string RepoRoot { get; init; }
 
     /// <summary>
     /// The package path provided by the user, or null if not specified.
@@ -46,22 +46,22 @@ public class RequirementContext
     public bool IsLinux => Platform == OSPlatform.Linux;
 
     /// <summary>
-    /// The name of the repository (folder name), or null if not in a repo.
+    /// The name of the repository (folder name).
     /// </summary>
-    public string? RepoName => RepoRoot != null ? Path.GetFileName(RepoRoot) : null;
+    public string RepoName => Path.GetFileName(RepoRoot);
 
     /// <summary>
     /// Determines if the current repository is the azure-rest-api-specs repository.
     /// </summary>
     public bool IsSpecsRepo()
     {
-        return RepoName != null && RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase);
+        return RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
     /// Creates a RequirementContext for the current environment.
     /// </summary>
-    public static RequirementContext Create(string? repoRoot, string? packagePath, HashSet<SdkLanguage>? languages = null)
+    public static RequirementContext Create(string repoRoot, string? packagePath, HashSet<SdkLanguage>? languages = null)
     {
         return new RequirementContext
         {

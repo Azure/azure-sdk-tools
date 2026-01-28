@@ -181,12 +181,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var placeholder = $"{{{variable.Key}}}";
                 var value = variable.Value;
                 
-                // Check if value is already properly quoted
-                bool isAlreadyQuoted = value.StartsWith('"') && value.EndsWith('"');
-                
                 // Check if value needs quoting - contains special characters that require quoting in shell commands
                 // Including: spaces, ampersand, pipe, semicolon, less than, greater than, parentheses, backtick, dollar sign, single quote
-                bool needsQuoting = !isAlreadyQuoted && value.IndexOfAny(new[] { ' ', '&', '|', ';', '<', '>', '(', ')', '`', '$', '\'' }) >= 0;
+                bool needsQuoting = value.IndexOfAny(new[] { ' ', '&', '|', ';', '<', '>', '(', ')', '`', '$', '\'' }) >= 0;
                 
                 if (needsQuoting)
                 {
@@ -201,21 +198,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         string pathContinuation = match.Groups[1].Value;
                         // Build the quoted replacement including the continuation
                         return $"\"{value}{pathContinuation}\"";
-                    });
-                }
-                else if (isAlreadyQuoted)
-                {
-                    // Handle already-quoted values with continuations
-                    var pattern = Regex.Escape(placeholder) + @"([^\s""=;,]*)";
-                    var regex = new Regex(pattern, RegexOptions.IgnoreCase);
-                    
-                    result = regex.Replace(result, match =>
-                    {
-                        // Extract the path continuation from the match
-                        string pathContinuation = match.Groups[1].Value;
-                        // For already-quoted values, remove the quotes and re-quote with continuation
-                        string unquotedValue = value.Substring(1, value.Length - 2);
-                        return $"\"{unquotedValue}{pathContinuation}\"";
                     });
                 }
                 else

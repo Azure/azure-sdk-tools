@@ -343,24 +343,6 @@ public class SpecGenSdkConfigHelperTests
     }
 
     [Test]
-    public void SubstituteCommandVariables_AlreadyQuotedPath_DoesNotDoubleQuote()
-    {
-        // Arrange
-        var command = "dotnet build {PackagePath}/src";
-        var variables = new Dictionary<string, string>
-        {
-            { "PackagePath", "\"c:\\Path With Spaces\\Project\"" }
-        };
-
-        // Act
-        var result = _helper.SubstituteCommandVariables(command, variables);
-
-        // Assert  
-        // Already quoted values should have continuation included in quotes
-        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Path With Spaces\\Project/src\""));
-    }
-
-    [Test]
     public void SubstituteCommandVariables_PathWithSpacesNoContinuation_QuotesCorrectly()
     {
         // Arrange

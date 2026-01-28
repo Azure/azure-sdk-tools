@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         private const string CreatePullRequestToolName = "azsdk_create_pull_request";
         private const string GetPullRequestToolName = "azsdk_get_pull_request";
 
-        [McpServerTool(Name = GetGitHubUserDetailsToolName), Description("Connect to GitHub using personal access token.")]
+        [McpServerTool(Name = GetGitHubUserDetailsToolName), Description("Get GitHub user details and profile information. Find out who a GitHub user is by their username.")]
         public async Task<DefaultCommandResponse> GetGitHubUserDetails()
         {
             try

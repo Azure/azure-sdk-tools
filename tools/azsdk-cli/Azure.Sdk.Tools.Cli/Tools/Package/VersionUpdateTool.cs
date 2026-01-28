@@ -82,7 +82,7 @@ public class VersionUpdateTool : LanguageMcpTool
     /// <param name="releaseDate">The date (YYYY-MM-DD) to write into the changelog.</param>
     /// <param name="ct">Cancellation token for the operation.</param>
     /// <returns>A response indicating the result of the version update operation.</returns>
-    [McpServerTool(Name = UpdateVersionToolName), Description("Updates the version and release date for a specified package.")]
+    [McpServerTool(Name = UpdateVersionToolName), Description("Update or bump the version number for an SDK package. Sets the package version and release date in project files.")]
     public async Task<PackageOperationResponse> UpdateVersionAsync(
         [Description("The absolute path to the package directory.")] string packagePath,
         [Description("Specifies whether the next version is 'beta' or 'stable'.")] string? releaseType,

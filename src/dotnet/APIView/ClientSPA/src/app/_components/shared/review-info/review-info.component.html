@@ -13,7 +13,10 @@
         </ng-template>
         <ng-template *ngIf="showPageoptionsButton" pTemplate="end">
             <input type="checkbox" (change)="onRightPanelCheckChange($event)" [ngModel]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off" data-clarity-region="toggle-page-options"/>
-            <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="page-right-panel"><i class="fa fa-bars"></i></label>
+            <label class="btn btn-sm sidebar-toggle-btn float-end" accesskey="m" for="page-right-panel"><i class="bi bi-layout-sidebar-reverse"></i></label>
+
+            <input type="checkbox" (change)="onLeftPanelCheckChange($event)" [ngModel]="showLeftNavigation" class="btn-check" id="page-left-panel" autocomplete="off" data-clarity-region="toggle-left-navigation"/>
+            <label class="btn btn-sm sidebar-toggle-btn float-end me-1" accesskey="l" for="page-left-panel"><i class="bi bi-layout-sidebar"></i></label>
         </ng-template>
     </p-menubar>
 </div>

@@ -191,6 +191,11 @@ def modify_permissions():
         "prod": {"resource_group": "apiview", "cosmos_account": "apiview-cosmos"},
     }
 
+    if environment not in settings_map:
+        valid_environments = ", ".join(sorted(settings_map.keys()))
+        print(f"Error: Unsupported environment '{environment}'. Expected one of: {valid_environments}.")
+        sys.exit(1)
+
     data = settings_map[environment]
     print(f"\n=== Processing {environment} ===")
     resource_group = data["resource_group"]

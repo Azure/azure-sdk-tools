@@ -57,6 +57,8 @@ def get_principal_info(credential, principal_id: str) -> tuple[Literal["User", "
     )
     if resp.status_code == 200:
         return "User", resp.json()
+    if resp.status_code != 404:
+        resp.raise_for_status()
 
     # Try as a service principal
     resp = requests.get(
@@ -66,6 +68,8 @@ def get_principal_info(credential, principal_id: str) -> tuple[Literal["User", "
     )
     if resp.status_code == 200:
         return "ServicePrincipal", resp.json()
+    if resp.status_code != 404:
+        resp.raise_for_status()
 
     raise ValueError(f"Could not find principal with ID '{principal_id}' as User or ServicePrincipal.")
 
@@ -262,9 +266,6 @@ def main():
     if args.revoke:
         # Get existing assignments to find the ones to revoke
         existing = get_existing_role_assignments(credential, avc_sp_id, args.principal_id)
-        role_to_assignment = {app_roles.get(a.get("appRoleId")): a for a in existing}
-        # Build reverse lookup: role_id -> role_name
-        role_id_to_name = {v: k for k, v in app_roles.items()}
 
         for role_name in roles_to_process:
             role_id = app_roles[role_name]

@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum LabelSyncErrorType
+public enum GitHubLabelSyncErrorType
 {
     DuplicateCsvLabel,
     DuplicateAdoWorkItem,
@@ -13,10 +13,10 @@ public enum LabelSyncErrorType
     AdoApiError
 }
 
-public class LabelSyncError
+public class GitHubLabelSyncError
 {
     [JsonPropertyName("error_type")]
-    public LabelSyncErrorType ErrorType { get; set; }
+    public GitHubLabelSyncErrorType ErrorType { get; set; }
 
     [JsonPropertyName("label")]
     public string Label { get; set; } = string.Empty;

@@ -108,8 +108,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
-        public Task<List<LabelWorkItem>> GetLabelWorkItemsAsync();
-        public Task<LabelWorkItem> CreateLabelWorkItemAsync(string label);
+        public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync();
+        public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -1517,13 +1517,13 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <summary>
         /// Gets all Label work items from the Release project.
         /// </summary>
-        /// <returns>List of LabelWorkItem objects</returns>
-        public async Task<List<LabelWorkItem>> GetLabelWorkItemsAsync()
+        /// <returns>List of GitHubLableWorkItem objects</returns>
+        public async Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync()
         {
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
             var workItems = await FetchWorkItemsPagedAsync(query);
 
-            return workItems.Select(wi => new LabelWorkItem
+            return workItems.Select(wi => new GitHubLableWorkItem
             {
                 Label = wi.Fields.TryGetValue("Custom.Label", out object? labelValue) ? labelValue?.ToString() ?? string.Empty : string.Empty,
                 WorkItemId = wi.Id ?? 0,
@@ -1535,8 +1535,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// Creates a new Label work item in the Release project.
         /// </summary>
         /// <param name="label">The label name to create</param>
-        /// <returns>The created LabelWorkItem</returns>
-        public async Task<LabelWorkItem> CreateLabelWorkItemAsync(string label)
+        /// <returns>The created GitHubLableWorkItem</returns>
+        public async Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label)
         {
             var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
             {
@@ -1570,7 +1570,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             logger.LogInformation("Created Label work item {workItemId} for '{label}'", workItem.Id, label);
 
-            return new LabelWorkItem
+            return new GitHubLableWorkItem
             {
                 Label = label,
                 WorkItemId = workItem.Id ?? 0,

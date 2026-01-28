@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class LabelWorkItem
+public class GitHubLableWorkItem
 {
     [JsonPropertyName("label")]
     public string Label { get; set; } = string.Empty;

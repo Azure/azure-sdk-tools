@@ -5,16 +5,16 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
-public class LabelSyncResponse : CommandResponse
+public class GitHubLabelSyncResponse : CommandResponse
 {
     [JsonPropertyName("existing_work_items")]
-    public List<LabelWorkItem> ExistingWorkItems { get; set; } = [];
+    public List<GitHubLableWorkItem> ExistingWorkItems { get; set; } = [];
 
     [JsonPropertyName("created_work_items")]
-    public List<LabelWorkItem> CreatedWorkItems { get; set; } = [];
+    public List<GitHubLableWorkItem> CreatedWorkItems { get; set; } = [];
 
     [JsonPropertyName("sync_errors")]
-    public List<LabelSyncError> SyncErrors { get; set; } = [];
+    public List<GitHubLabelSyncError> SyncErrors { get; set; } = [];
 
     [JsonPropertyName("dry_run")]
     public bool DryRun { get; set; }

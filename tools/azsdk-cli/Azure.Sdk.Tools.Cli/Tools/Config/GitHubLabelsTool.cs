@@ -207,10 +207,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// This is a CLI-only command (no MCP exposure).
         /// </summary>
         /// <param name="dryRun">If true, preview changes without creating Work Items</param>
-        /// <returns>LabelSyncResponse with details of the sync operation</returns>
-        public async Task<LabelSyncResponse> SyncLabelsToAdo(bool dryRun)
+        /// <returns>GitHubLabelSyncResponse with details of the sync operation</returns>
+        public async Task<GitHubLabelSyncResponse> SyncLabelsToAdo(bool dryRun)
         {
-            var response = new LabelSyncResponse { DryRun = dryRun };
+            var response = new GitHubLabelSyncResponse { DryRun = dryRun };
 
             try
             {
@@ -230,9 +230,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 {
                     foreach (var duplicateLabel in duplicateCsvLabels)
                     {
-                        response.SyncErrors.Add(new LabelSyncError
+                        response.SyncErrors.Add(new GitHubLabelSyncError
                         {
-                            ErrorType = LabelSyncErrorType.DuplicateCsvLabel,
+                            ErrorType = GitHubLabelSyncErrorType.DuplicateCsvLabel,
                             Label = duplicateLabel,
                             Details = "Label appears multiple times in the CSV file"
                         });
@@ -241,15 +241,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                 // 2. Fetch existing ADO Work Items
                 logger.LogInformation("Fetching existing Label work items from Azure DevOps...");
-                List<LabelWorkItem> existingWorkItems;
+                List<GitHubLableWorkItem> existingWorkItems;
                 try
                 {
-                    existingWorkItems = await devOpsService.GetLabelWorkItemsAsync();
+                    existingWorkItems = await devOpsService.GetGitHubLableWorkItemsAsync();
                 }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Failed to fetch Label Work Items from Azure DevOps");
-                    response.ResponseError = $"GetLabelWorkItemsAsync failed: {ex.Message}.";
+                    response.ResponseError = $"GetGitHubLableWorkItemsAsync failed: {ex.Message}.";
                     return response;
                 }
 
@@ -262,9 +262,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                 foreach (var kvp in labelToWorkItems.Where(kvp => kvp.Value.Count > 1))
                 {
-                    response.SyncErrors.Add(new LabelSyncError
+                    response.SyncErrors.Add(new GitHubLabelSyncError
                     {
-                        ErrorType = LabelSyncErrorType.DuplicateAdoWorkItem,
+                        ErrorType = GitHubLabelSyncErrorType.DuplicateAdoWorkItem,
                         Label = kvp.Key,
                         Details = $"Multiple work items exist with the same label: {string.Join(", ", kvp.Value.Select(wi => wi.WorkItemId))}"
                     });
@@ -276,9 +276,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 {
                     if (!serviceLabelSet.Contains(workItem.Label))
                     {
-                        response.SyncErrors.Add(new LabelSyncError
+                        response.SyncErrors.Add(new GitHubLabelSyncError
                         {
-                            ErrorType = LabelSyncErrorType.OrphanedWorkItem,
+                            ErrorType = GitHubLabelSyncErrorType.OrphanedWorkItem,
                             Label = workItem.Label,
                             Details = $"Work item {workItem.WorkItemId} references a label not found in the CSV"
                         });
@@ -299,7 +299,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     if (dryRun)
                     {
                         // In dry-run mode, just report what would be created
-                        response.CreatedWorkItems.Add(new LabelWorkItem
+                        response.CreatedWorkItems.Add(new GitHubLableWorkItem
                         {
                             Label = label,
                             WorkItemId = 0,
@@ -310,16 +310,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                     try
                     {
-                        var createdWorkItem = await devOpsService.CreateLabelWorkItemAsync(label);
+                        var createdWorkItem = await devOpsService.CreateGitHubLableWorkItemAsync(label);
                         response.CreatedWorkItems.Add(createdWorkItem);
                         logger.LogInformation("Created work item {id} for label '{label}'", createdWorkItem.WorkItemId, label);
                     }
                     catch (Exception ex)
                     {
                         logger.LogError(ex, "Failed to create work item for label '{label}'", label);
-                        response.SyncErrors.Add(new LabelSyncError
+                        response.SyncErrors.Add(new GitHubLabelSyncError
                         {
-                            ErrorType = LabelSyncErrorType.AdoApiError,
+                            ErrorType = GitHubLabelSyncErrorType.AdoApiError,
                             Label = label,
                             Details = $"Failed to create work item: {ex.Message}"
                         });

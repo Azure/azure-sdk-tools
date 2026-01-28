@@ -212,14 +212,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(workItem);
         }
 
-        Task<List<LabelWorkItem>> IDevOpsService.GetLabelWorkItemsAsync()
+        Task<List<GitHubLableWorkItem>> IDevOpsService.GetGitHubLableWorkItemsAsync()
         {
-            return Task.FromResult(new List<LabelWorkItem>());
+            return Task.FromResult(new List<GitHubLableWorkItem>());
         }
 
-        Task<LabelWorkItem> IDevOpsService.CreateLabelWorkItemAsync(string label)
+        Task<GitHubLableWorkItem> IDevOpsService.CreateGitHubLableWorkItemAsync(string label)
         {
-            return Task.FromResult(new LabelWorkItem
+            return Task.FromResult(new GitHubLableWorkItem
             {
                 Label = label,
                 WorkItemId = 1,

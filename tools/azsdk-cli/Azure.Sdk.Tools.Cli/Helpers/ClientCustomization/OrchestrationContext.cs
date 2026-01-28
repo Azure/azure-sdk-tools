@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
+namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 
 /// <summary>
 /// Tracks iteration state for the customization orchestration loop.

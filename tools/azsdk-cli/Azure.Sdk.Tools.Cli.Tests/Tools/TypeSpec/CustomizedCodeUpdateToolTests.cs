@@ -1,11 +1,14 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 
@@ -92,7 +95,10 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var feedbackClassifier = new Mock<FeedbackClassifier>(null!, null!, null!);
+        var feedbackHelper = new Mock<IAPIViewFeedbackCustomizationsHelpers>();
+        var loggerFactory = new Mock<ILoggerFactory>();
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, feedbackClassifier.Object, feedbackHelper.Object, loggerFactory.Object);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
@@ -111,7 +117,10 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var feedbackClassifier = new Mock<FeedbackClassifier>(null!, null!, null!);
+        var feedbackHelper = new Mock<IAPIViewFeedbackCustomizationsHelpers>();
+        var loggerFactory = new Mock<ILoggerFactory>();
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, feedbackClassifier.Object, feedbackHelper.Object, loggerFactory.Object);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
@@ -132,7 +141,10 @@ public class CustomizedCodeUpdateToolAutoTests
         gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
         specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
             .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var feedbackClassifier = new Mock<FeedbackClassifier>(null!, null!, null!);
+        var feedbackHelper = new Mock<IAPIViewFeedbackCustomizationsHelpers>();
+        var loggerFactory = new Mock<ILoggerFactory>();
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, feedbackClassifier.Object, feedbackHelper.Object, loggerFactory.Object);
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));

@@ -34,9 +34,37 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ErrorCode { get; set; }
 
+    [JsonPropertyName("classifications")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<ItemClassificationDetails>? Classifications { get; set; }
+
     protected override string Format()
     {
         var sb = new StringBuilder();
+        
+        // Show detailed per-item classifications FIRST if available
+        if (Classifications != null && Classifications.Any())
+        {
+            sb.AppendLine("=== Detailed Feedback Analysis ===");
+            foreach (var item in Classifications)
+            {
+                sb.AppendLine();
+                sb.AppendLine($"## {item.ItemId}");
+                sb.AppendLine($"**Classification:** {item.Classification}");
+                sb.AppendLine($"**Reason:** {item.Reason}");
+                
+                if (!string.IsNullOrEmpty(item.NextAction))
+                {
+                    sb.AppendLine();
+                    sb.AppendLine("**Next Action:**");
+                    sb.AppendLine(item.NextAction);
+                }
+                
+                sb.AppendLine("---");
+            }
+            sb.AppendLine();
+        }
+
         if (!string.IsNullOrEmpty(Message))
         {
             sb.AppendLine(Message);
@@ -45,6 +73,52 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
         }
+
         return sb.ToString();
+    }
+
+    public override string ToString()
+    {
+        var value = Format();
+
+        List<string> messages = [];
+        if (!string.IsNullOrEmpty(ResponseError))
+        {
+            messages.Add("[ERROR] " + ResponseError);
+        }
+        foreach (var error in ResponseErrors ?? [])
+        {
+            messages.Add("[ERROR] " + error);
+        }
+
+        if (NextSteps?.Count > 0)
+        {
+            messages.Add("[NEXT STEPS]");
+            foreach (var step in NextSteps)
+            {
+                messages.Add(step);
+            }
+        }
+
+        // IMPORTANT: Prepend the Format() output (which includes detailed feedback)
+        // instead of replacing it like the base class does
+        if (messages.Count > 0)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                return value + Environment.NewLine + string.Join(Environment.NewLine, messages);
+            }
+            return string.Join(Environment.NewLine, messages);
+        }
+
+        return value;
+    }
+
+    public class ItemClassificationDetails
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public string Classification { get; set; } = string.Empty;
+        public string Reason { get; set; } = string.Empty;
+        public string? NextAction { get; set; }
     }
 }

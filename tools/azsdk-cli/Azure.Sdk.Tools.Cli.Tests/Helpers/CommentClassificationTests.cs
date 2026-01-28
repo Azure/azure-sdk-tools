@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
     /// TODO: These tests validate classification logic (PHASE_A/SUCCESS/FAILURE decisions and output format)
     /// but do NOT validate that the fetch_documentation tool is actually being called. Tests bypass the
     /// microagent orchestration by calling ChatClient directly, so the LLM has no access to tools.
-    /// Consider implementing integration tests that invoke through CustomizationFromFeedbackTool.ClassifyAsync
+    /// Consider implementing integration tests that invoke through FeedbackClassifier.ClassifyAsync
     /// with full DI and tools to validate end-to-end behavior including documentation fetching.
     /// </remarks>
     public class CommentClassificationTests

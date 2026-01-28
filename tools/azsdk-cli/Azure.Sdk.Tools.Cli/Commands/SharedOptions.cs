@@ -45,7 +45,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TypeSpecConvertTool),
             typeof(TypeSpecInitTool),
             typeof(CustomizedCodeUpdateTool),
-            typeof(CustomizationFromFeedbackTool),
             typeof(TypeSpecPublicRepoValidationTool),
             typeof(APIViewReviewTool),
             typeof(VerifySetupTool),
@@ -75,11 +74,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
             DefaultValueFactory = _ => false,
         };
 
-        public static Option<string> PackagePath = new("--package-path", "-p")
+        public static Option<string?> PackagePath = new("--package-path", "-p")
         {
-            Description = "Path to the package directory to check. Defaults to the current working directory",
+            Description = "Path to the package directory. If not provided with --apiview-url or --build-log, will auto-discover from feedback metadata",
             Required = false,
-            DefaultValueFactory = _ => Environment.CurrentDirectory,
         };
 
         public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)

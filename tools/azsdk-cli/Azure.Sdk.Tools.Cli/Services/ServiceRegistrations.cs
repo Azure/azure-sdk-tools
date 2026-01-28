@@ -86,6 +86,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
+            services.AddScoped<FeedbackClassifier>();
 
 
             services.AddHttpClient();

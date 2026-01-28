@@ -169,6 +169,7 @@ public class ReviewsTokenAuthController : ControllerBase
                 RevisionId = revision.Id,
                 PackageVersion = revision.PackageVersion,
                 IsApproved = revision.IsApproved,
+                SourceBranch = revision.SourceBranch,
                 PullRequestNo = revision.PullRequestNo,
                 PullRequestRepository = pullRequestRepo,
                 CreatedBy = revision.CreatedBy,

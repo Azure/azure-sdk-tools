@@ -95,7 +95,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
@@ -119,7 +120,8 @@ namespace APIViewUnitTests
                 "test.json",
                 It.IsAny<MemoryStream>(),
                 packageTypeValue,
-                false),
+                false,
+                null),
                 Times.Once);
         }
 
@@ -166,7 +168,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
@@ -190,7 +193,8 @@ namespace APIViewUnitTests
                 "test.json",
                 It.IsAny<MemoryStream>(),
                 packageTypeValue,
-                false),
+                false,
+                null),
                 Times.Once);
         }
 
@@ -232,7 +236,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
@@ -286,7 +291,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
@@ -342,7 +348,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
             ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
@@ -378,7 +385,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((new ReviewListItemModel(), (APIRevisionListItemModel)null));
 
             var result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
@@ -426,7 +434,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
@@ -443,7 +452,8 @@ namespace APIViewUnitTests
                 It.IsAny<string>(),
                 It.IsAny<MemoryStream>(),
                 It.IsAny<string>(),
-                true), // compareAllRevisions = true
+                true, // compareAllRevisions = true
+                null),
                 Times.Once);
         }
 
@@ -486,7 +496,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
@@ -542,7 +553,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((mockReview, mockApiRevision));
 
             _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
@@ -586,7 +598,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     It.IsAny<string>(),
-                    It.IsAny<bool>()))
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
                 .ReturnsAsync((new ReviewListItemModel
                 {
                     Id = "review-id",
@@ -637,7 +650,8 @@ namespace APIViewUnitTests
                     It.IsAny<string>(),
                     It.IsAny<MemoryStream>(),
                     "client",
-                    false),
+                    false,
+                    It.IsAny<string>()),
                 Times.Once);
 
             if (shouldCreateNewRevision)

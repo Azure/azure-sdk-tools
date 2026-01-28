@@ -15,5 +15,6 @@ public interface IAutoReviewService
         string originalName,
         MemoryStream memoryStream,
         string packageType,
-        bool compareAllRevisions = false);
+        bool compareAllRevisions = false,
+        string sourceBranch = null);
 }

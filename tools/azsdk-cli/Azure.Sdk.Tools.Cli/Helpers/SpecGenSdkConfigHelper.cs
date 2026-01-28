@@ -180,75 +180,21 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var placeholder = $"{{{variable.Key}}}";
                 var value = variable.Value;
                 
-                // Check if value needs quoting (contains spaces and isn't already properly quoted)
+                // Check if value is already properly quoted
                 bool isAlreadyQuoted = value.StartsWith('"') && value.EndsWith('"');
-                bool needsQuoting = value.Contains(' ') && !isAlreadyQuoted;
+                
+                // Check if value needs quoting - contains special characters that require quoting in shell commands
+                // Including: spaces, ampersand, pipe, semicolon, less than, greater than, parentheses, backtick, dollar sign, backslash with space
+                bool needsQuoting = !isAlreadyQuoted && value.IndexOfAny(new[] { ' ', '&', '|', ';', '<', '>', '(', ')', '`', '$', '\'' }) >= 0;
                 
                 if (needsQuoting)
                 {
-                    // Find all occurrences of the placeholder to handle path continuations
-                    int placeholderIndex;
-                    while ((placeholderIndex = result.IndexOf(placeholder, StringComparison.OrdinalIgnoreCase)) >= 0)
-                    {
-                        // Look ahead after the placeholder to find path continuations
-                        int endIndex = placeholderIndex + placeholder.Length;
-                        int pathEndIndex = endIndex;
-                        
-                        // Continue while we see path separators or valid path characters
-                        // Stop at whitespace, quotes, or common argument delimiters
-                        while (pathEndIndex < result.Length)
-                        {
-                            char c = result[pathEndIndex];
-                            // Stop at whitespace or characters that would end a path argument
-                            if (char.IsWhiteSpace(c) || c == '"' || c == '=' || c == ';' || c == ',')
-                            {
-                                break;
-                            }
-                            pathEndIndex++;
-                        }
-                        
-                        // Extract the path continuation (e.g., "/src")
-                        string pathContinuation = result.Substring(endIndex, pathEndIndex - endIndex);
-                        
-                        // Build the quoted replacement including the continuation
-                        string quotedReplacement = $"\"{value}{pathContinuation}\"";
-                        
-                        // Replace the placeholder and continuation with quoted version
-                        result = result.Substring(0, placeholderIndex) + quotedReplacement + result.Substring(pathEndIndex);
-                    }
-                }
-                else if (isAlreadyQuoted)
-                {
-                    // Handle already-quoted values with continuations
-                    int placeholderIndex;
-                    while ((placeholderIndex = result.IndexOf(placeholder, StringComparison.OrdinalIgnoreCase)) >= 0)
-                    {
-                        int endIndex = placeholderIndex + placeholder.Length;
-                        int pathEndIndex = endIndex;
-                        
-                        // Look for path continuations
-                        while (pathEndIndex < result.Length)
-                        {
-                            char c = result[pathEndIndex];
-                            if (char.IsWhiteSpace(c) || c == '"' || c == '=' || c == ';' || c == ',')
-                            {
-                                break;
-                            }
-                            pathEndIndex++;
-                        }
-                        
-                        string pathContinuation = result.Substring(endIndex, pathEndIndex - endIndex);
-                        
-                        // For already-quoted values, remove the quotes and re-quote with continuation
-                        string unquotedValue = value.Substring(1, value.Length - 2);
-                        string quotedReplacement = $"\"{unquotedValue}{pathContinuation}\"";
-                        
-                        result = result.Substring(0, placeholderIndex) + quotedReplacement + result.Substring(pathEndIndex);
-                    }
+                    // Quote the entire value
+                    result = result.Replace(placeholder, $"\"{value}\"", StringComparison.OrdinalIgnoreCase);
                 }
                 else
                 {
-                    // No quoting needed, simple replacement
+                    // Simple replacement - no quoting needed
                     result = result.Replace(placeholder, value, StringComparison.OrdinalIgnoreCase);
                 }
             }

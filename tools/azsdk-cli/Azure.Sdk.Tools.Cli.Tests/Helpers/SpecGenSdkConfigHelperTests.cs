@@ -322,7 +322,7 @@ public class SpecGenSdkConfigHelperTests
         var result = _helper.SubstituteCommandVariables(command, variables);
 
         // Assert
-        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Users\\user\\Code\\AzSDK Tools Agent Demo\\azure-sdk-for-net\\sdk\\healthdataaiservices\\Azure.ResourceManager.HealthDataAIServices/src\""));
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Users\\user\\Code\\AzSDK Tools Agent Demo\\azure-sdk-for-net\\sdk\\healthdataaiservices\\Azure.ResourceManager.HealthDataAIServices\"/src"));
     }
 
     [Test]
@@ -356,8 +356,8 @@ public class SpecGenSdkConfigHelperTests
         var result = _helper.SubstituteCommandVariables(command, variables);
 
         // Assert  
-        // Already quoted values should have quotes removed, combined with continuation, then re-quoted
-        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Path With Spaces\\Project/src\""));
+        // Already quoted values are not re-quoted
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Path With Spaces\\Project\"/src"));
     }
 
     [Test]
@@ -391,7 +391,7 @@ public class SpecGenSdkConfigHelperTests
         var result = _helper.SubstituteCommandVariables(command, variables);
 
         // Assert
-        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project/src\" && copy \"c:\\Program Files\\My Project/output\" /dest"));
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project\"/src && copy \"c:\\Program Files\\My Project\"/output /dest"));
     }
 
     [Test]
@@ -410,6 +410,23 @@ public class SpecGenSdkConfigHelperTests
 
         // Assert
         Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project\" --output \"c:\\Build Output\\bin\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithSpecialCharacters_QuotesValue()
+    {
+        // Arrange
+        var command = "echo {Message}";
+        var variables = new Dictionary<string, string>
+        {
+            { "Message", "Hello & goodbye | test" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("echo \"Hello & goodbye | test\""));
     }
 
     #endregion

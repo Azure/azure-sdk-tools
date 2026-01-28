@@ -57,6 +57,12 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
+	if req.Intention == nil {
+		req.Intention = &model.Intention{}
+	}
+	if req.Intention.QuestionScope == nil {
+		req.Intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
+	}
 	return nil
 }
 
@@ -104,11 +110,6 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
-	}
-
-	// Apply default scope from tenant config
-	if tenantConfig.DefaultScope != nil {
-		intention.QuestionScope = tenantConfig.DefaultScope
 	}
 
 	// Apply intention override if provided
@@ -174,7 +175,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
+func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
 	start := time.Now()
 	promptParser := prompt.IntentionPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
@@ -427,7 +428,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.C
 	return llmMessages
 }
 
-func (s *CompletionService) buildPrompt(intention *model.IntentionResult, knowledges []model.Knowledge, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(intention *model.Intention, knowledges []model.Knowledge, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, knowledge := range knowledges {
@@ -493,7 +494,7 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 
 }
 
-func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq, intention *model.IntentionResult) ([]model.Index, error) {
+func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq, intention *model.Intention) ([]model.Index, error) {
 	agenticSearchStart := time.Now()
 
 	// Get the tenant-specific agentic search prompt
@@ -551,7 +552,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 // runParallelSearchAndMergeResults runs agentic search and knowledge search in parallel where possible,
 // then merges and processes their results
-func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string, intention *model.IntentionResult) ([]model.Knowledge, error) {
+func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string, intention *model.Intention) ([]model.Knowledge, error) {
 	parallelSearchStart := time.Now()
 
 	// Use channels to collect results from parallel operations
@@ -610,7 +611,7 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 }
 
 // vectorSearch performs the core knowledge search without dependency on agentic results
-func (s *CompletionService) vectorSearch(req *model.CompletionReq, query string, intention *model.IntentionResult) ([]model.Index, error) {
+func (s *CompletionService) vectorSearch(req *model.CompletionReq, query string, intention *model.Intention) ([]model.Index, error) {
 	searchStart := time.Now()
 	sourceFilter := map[model.Source]string{}
 	if tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID); hasConfig && tenantConfig.SourceFilter != nil {

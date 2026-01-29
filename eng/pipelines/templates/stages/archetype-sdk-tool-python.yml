@@ -125,9 +125,6 @@ extends:
             displayName: "Release to PyPI"
             dependsOn: Build
             condition: Succeeded()
-            variables:
-              - template: /eng/pipelines/templates/variables/globals.yml
-              - template: /eng/pipelines/templates/variables/image.yml
             jobs:
             - deployment: PublishPackage
               displayName: "Publish to PyPI via ESRP"
@@ -143,8 +140,8 @@ extends:
                   targetPath: $(Pipeline.Workspace)/${{ parameters.ArtifactName }}
 
               pool:
-                image: $(LINUXVMIMAGE)
-                name: $(LINUXPOOL)
+                image: ubuntu-24.04
+                name: azsdk-pool
                 os: linux
 
               strategy:

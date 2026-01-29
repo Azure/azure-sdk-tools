@@ -14,6 +14,10 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         public string WorkItemHtmlUrl { get; set; } = string.Empty;
 
+        public DateTime CreatedDate { get; set; }
+
+        public DateTime ChangedDate { get; set; }
+
         public bool IsCreatedByAgent { get; set; } = false;
 
         [FieldName("System.AssignedTo")]
@@ -24,6 +28,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         [FieldName("System.Title")]
         public string Title { get; set; } = string.Empty;
+
+        [FieldName("System.Parent")]
+        public int ParentId { get; set; } = 0;
 
         public string Description { get; set; } = string.Empty;
 

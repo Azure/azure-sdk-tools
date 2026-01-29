@@ -17,6 +17,9 @@ FROM mcr.microsoft.com/devcontainers/go:1.24 as go-builder
 
 WORKDIR /app
 
+# Set Go proxy to use public proxy
+ENV GOPROXY=https://proxy.golang.org,direct
+
 # Copy Go application files
 COPY tools/sdk-ai-bots/azure-sdk-qa-bot-backend .
 

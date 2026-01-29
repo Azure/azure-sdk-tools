@@ -142,7 +142,7 @@ public partial class GoLanguageService : LanguageService
             var processResults = new List<ProcessResult>();
 
             // run the standard golangci-lint
-            var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             var packageName = await GetSubPath(packagePath, ct);
             var result = await processHelper.Run(new ProcessOptions(golangciLintUnix, golangciLintWin, ["run", "--config", Path.Join(repoRoot, "eng", ".golangci.yml")], workingDirectory: packagePath), ct);
             processResults.Add(result);
@@ -193,9 +193,9 @@ public partial class GoLanguageService : LanguageService
     /// </summary>
     /// <param name="packagePath">The full path to the package</param>
     /// <returns>The sub-path (ex: sdk/messaging/azservicebus)</returns>
-    public Task<string> GetSubPath(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<string> GetSubPath(string packagePath, CancellationToken cancellationToken = default)
     {
-        var gitRepoPath = gitHelper.DiscoverRepoRoot(packagePath);
+        var gitRepoPath = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
 
         // ex: sdk/messaging/azservicebus/
         var relativePath = Path.GetRelativePath(gitRepoPath, packagePath);
@@ -203,7 +203,7 @@ public partial class GoLanguageService : LanguageService
         // Ensure forward slashes for Go package names and remove trailing slash
         var subPathNormalized = relativePath.Replace(Path.DirectorySeparatorChar, '/');
 
-        return Task.FromResult(subPathNormalized.TrimEnd('/'));
+        return subPathNormalized.TrimEnd('/');
     }
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)

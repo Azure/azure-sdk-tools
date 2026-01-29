@@ -27,6 +27,12 @@
     <MicrosoftNETTestSdkVersion>16.11.0</MicrosoftNETTestSdkVersion>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- Override output paths to use the default behavior -->
+    <BaseOutputPath Condition="'$(BaseOutputPath)' == ''">$(MSBuildProjectDirectory)\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)' == ''">$(MSBuildProjectDirectory)\obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
     <!-- Apply the local props after, which allows them to override.-->
     <Import Project="Directory.Build.local.props" Condition="Exists('Directory.Build.local.props')" />
 

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using IssueLabeler.Shared;
+using IssueLabeler.Shared.Models;
 using System;
 using System.Linq;
 using System.Collections.Generic;

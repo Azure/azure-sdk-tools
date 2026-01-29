@@ -1,0 +1,16 @@
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using IssueLabeler.Shared.Models;
+
+namespace IssueLabeler.Shared
+{
+    public static class AzureSdkLabel
+    {
+        public static bool IsServiceLabel(Label label) =>
+            string.Equals(label.Color, "e99695", StringComparison.InvariantCultureIgnoreCase);
+
+        public static bool IsCategoryLabel(Label label) =>
+            string.Equals(label.Color, "ffeb77", StringComparison.InvariantCultureIgnoreCase);
+    }
+}

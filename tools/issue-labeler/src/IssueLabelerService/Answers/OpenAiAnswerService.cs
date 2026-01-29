@@ -14,7 +14,7 @@ namespace IssueLabelerService
     public class OpenAiAnswerService : IAnswerService
     {
         private const string SolutionAnswerType = "solution";
-        private const string SuggestionsAnswerType = "suggestions";
+        private const string SuggestionsAnswerType = "suggestion";
         private RepositoryConfiguration _config;
         private TriageRag _ragService;
         private ILogger<AnswerFactory> _logger;

@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Azure.Core;
 using Microsoft.Extensions.Logging;
+using IssueLabeler.Shared;
 
 namespace IssueLabelerService
 {
@@ -35,3 +36,4 @@ namespace IssueLabelerService
             );
     }
 }
+

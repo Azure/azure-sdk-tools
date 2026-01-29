@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Azure.Storage.Blobs;
 using System.Text.Json;
 using Azure.Identity;
+using IssueLabeler.Shared;
 
 namespace SearchIndexCreator
 {

@@ -10,7 +10,7 @@ export class MetadataResolver {
      * @param relativePath Relative path from repository root
      * @param pathMetadata Default metadata from DocumentationPath
      * @param overrides Override metadata for specific files
-     * @returns Resolved metadata with scope and plane, or null if no metadata
+     * @returns Resolved metadata with scope and service_type, or null if no metadata
      */
     static resolveMetadata(
         relativePath: string,

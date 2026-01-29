@@ -313,12 +313,7 @@ function mayHaveChildren(item: ApiItem): boolean {
 function buildMemberLineTokens(line: ReviewLine, item: ApiItem, deprecated: boolean) {
    for (const generator of generators) {
     if (generator.isValid(item)) {
-      const result = generator.generate(item, deprecated);
-      line.Tokens.push(...result.Tokens);
-      if (result.Children) {
-        line.Children = line.Children ?? [];
-        line.Children.push(...result.Children);
-      }
+      line.Tokens.push(...generator.generate(item, deprecated));
       return;
     }
   }

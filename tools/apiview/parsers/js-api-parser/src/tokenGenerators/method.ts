@@ -4,7 +4,7 @@ import {
   ApiMethod,
   ApiMethodSignature,
 } from "@microsoft/api-extractor-model";
-import { ReviewLine, ReviewToken, TokenKind } from "../models";
+import { ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
 
@@ -14,7 +14,7 @@ function isValid(item: ApiItem): item is MethodLike {
   return item.kind === ApiItemKind.Method || item.kind === ApiItemKind.MethodSignature;
 }
 
-function generate(item: MethodLike, deprecated?: boolean): ReviewLine {
+function generate(item: MethodLike, deprecated?: boolean): ReviewToken[] {
   const tokens: ReviewToken[] = [];
 
   if (item.kind !== ApiItemKind.Method && item.kind !== ApiItemKind.MethodSignature) {
@@ -118,7 +118,7 @@ function generate(item: MethodLike, deprecated?: boolean): ReviewLine {
   tokens.push(createToken(TokenKind.Text, "):", { hasSuffixSpace: true, deprecated }));
   processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
 
-  return { Tokens: tokens };
+  return tokens;
 }
 
 export const methodTokenGenerator: TokenGenerator<MethodLike> = {

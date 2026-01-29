@@ -91,8 +91,7 @@ describe("classTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "TestClass" } as ExcerptToken,
       ]);
 
-      const result = classTokenGenerator.generate(mockClass);
-      const tokens = result.Tokens;
+      const tokens = classTokenGenerator.generate(mockClass);
 
       expect(tokens.length).toBeGreaterThan(0);
       expect(tokens.some((t) => t.Value === "export")).toBe(true);
@@ -107,8 +106,7 @@ describe("classTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "DeprecatedClass" } as ExcerptToken,
       ]);
 
-      const result = classTokenGenerator.generate(mockClass, true);
-      const tokens = result.Tokens;
+      const tokens = classTokenGenerator.generate(mockClass, true);
 
       expect(tokens.every((t) => t.IsDeprecated === true)).toBe(true);
     });
@@ -143,8 +141,7 @@ describe("classTokenGenerator", () => {
         },
       };
 
-      const result = classTokenGenerator.generate(mockClass);
-      const tokens = result.Tokens;
+      const tokens = classTokenGenerator.generate(mockClass);
 
       const referenceToken = tokens.find(
         (t) => t.Kind === TokenKind.TypeName && t.NavigateToId === "@test!BaseClass:class",
@@ -185,8 +182,7 @@ describe("classTokenGenerator", () => {
         },
       ];
 
-      const result = classTokenGenerator.generate(mockClass);
-      const tokens = result.Tokens;
+      const tokens = classTokenGenerator.generate(mockClass);
 
       expect(tokens.length).toBeGreaterThan(0);
       const referenceToken = tokens.find((t) => t.NavigateToId === "@test!IInterface:interface");
@@ -212,8 +208,7 @@ describe("classTokenGenerator", () => {
         },
       ];
 
-      const result = classTokenGenerator.generate(mockClass);
-      const tokens = result.Tokens;
+      const tokens = classTokenGenerator.generate(mockClass);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("GenericClass");
@@ -275,8 +270,7 @@ describe("classTokenGenerator", () => {
         },
       ];
 
-      const result = classTokenGenerator.generate(mockClass);
-      const tokens = result.Tokens;
+      const tokens = classTokenGenerator.generate(mockClass);
 
       const firstRef = tokens.find((t) => t.NavigateToId === "@test!IFirst:interface");
       const secondRef = tokens.find((t) => t.NavigateToId === "@test!ISecond:interface");
@@ -295,8 +289,7 @@ describe("classTokenGenerator", () => {
       // Add isAbstract property
       (mockClass as any).isAbstract = true;
 
-      const result = classTokenGenerator.generate(mockClass);
-      const tokens = result.Tokens;
+      const tokens = classTokenGenerator.generate(mockClass);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("abstract");
@@ -314,8 +307,7 @@ describe("classTokenGenerator", () => {
           { kind: ExcerptTokenKind.Content, text: displayName } as ExcerptToken,
         ]);
 
-        const result = classTokenGenerator.generate(mockClass);
-        const tokens = result.Tokens;
+        const tokens = classTokenGenerator.generate(mockClass);
         expect(tokens.some((t) => t.Value === displayName)).toBe(true);
       });
     });
@@ -328,8 +320,7 @@ describe("classTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "CryptographyClient" } as ExcerptToken,
       ]);
 
-      const result = classTokenGenerator.generate(mockClass);
-      const tokens = result.Tokens;
+      const tokens = classTokenGenerator.generate(mockClass);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("export");

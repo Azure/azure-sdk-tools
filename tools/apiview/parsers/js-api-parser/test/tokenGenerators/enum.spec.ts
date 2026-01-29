@@ -40,8 +40,7 @@ describe("enumTokenGenerator", () => {
         displayName: "KnownFoo",
       } as ApiEnum;
 
-      const result = enumTokenGenerator.generate(mockEnum, false);
-      const tokens = result.Tokens;
+      const tokens = enumTokenGenerator.generate(mockEnum, false);
 
       expect(tokens).toHaveLength(3);
       expect(tokens[0]).toEqual({
@@ -69,8 +68,7 @@ describe("enumTokenGenerator", () => {
         displayName: "OldEnum",
       } as ApiEnum;
 
-      const result = enumTokenGenerator.generate(mockEnum, true);
-      const tokens = result.Tokens;
+      const tokens = enumTokenGenerator.generate(mockEnum, true);
 
       expect(tokens).toHaveLength(3);
       expect(tokens[0]).toEqual({
@@ -98,8 +96,7 @@ describe("enumTokenGenerator", () => {
         displayName: "TestEnum",
       } as ApiEnum;
 
-      const result = enumTokenGenerator.generate(mockEnum, false);
-      const tokens = result.Tokens;
+      const tokens = enumTokenGenerator.generate(mockEnum, false);
 
       // Should only have export, enum, and name - no braces or member tokens
       expect(tokens).toHaveLength(3);
@@ -123,8 +120,7 @@ describe("enumTokenGenerator", () => {
         displayName: "MyEnum",
       } as ApiEnum;
 
-      const result = enumTokenGenerator.generate(mockEnum, false);
-      const tokens = result.Tokens;
+      const tokens = enumTokenGenerator.generate(mockEnum, false);
 
       // First two tokens should have suffix space, last one should not
       expect(tokens[0].HasSuffixSpace).toBe(true);
@@ -147,8 +143,7 @@ describe("enumTokenGenerator", () => {
           displayName,
         } as ApiEnum;
 
-        const result = enumTokenGenerator.generate(mockEnum, false);
-        const tokens = result.Tokens;
+        const tokens = enumTokenGenerator.generate(mockEnum, false);
         expect(tokens[2].Value).toBe(displayName);
       });
     });

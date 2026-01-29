@@ -32,8 +32,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiProperty;
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens).to.have.lengthOf(3);
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "myProperty" });
@@ -50,8 +49,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "number" },
             } as unknown as ApiProperty;
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "readonly" });
             expect(tokens[1]).to.deep.include({ Kind: TokenKind.MemberName, Value: "readonlyProp" });
@@ -66,8 +64,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "boolean" },
             } as unknown as ApiPropertySignature;
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "optionalProp" });
             expect(tokens[1]).to.deep.include({ Kind: TokenKind.Punctuation, Value: "?" });
@@ -85,8 +82,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { value: { text: "string" }, writable: false },
             });
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "static" });
             expect(tokens[1]).to.deep.include({ Kind: TokenKind.MemberName, Value: "staticProp" });
@@ -103,8 +99,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { value: { text: "string" }, writable: false },
             });
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "static" });
             expect(tokens[1]).to.deep.include({ Kind: TokenKind.Keyword, Value: "readonly" });
@@ -120,8 +115,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiProperty;
 
-            const result = propertyTokenGenerator.generate(mockItem, true);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem, true);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "deprecatedProp", IsDeprecated: true });
         });
@@ -146,8 +140,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiPropertySignature;
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens).to.have.lengthOf(3);
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "signatureProp" });
@@ -164,8 +157,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "number" },
             } as unknown as ApiPropertySignature;
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "readonly" });
             expect(tokens[1]).to.deep.include({ Kind: TokenKind.MemberName, Value: "readonlySignature" });
@@ -180,8 +172,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "boolean" },
             } as unknown as ApiPropertySignature;
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "optionalSignature" });
             expect(tokens[1]).to.deep.include({ Kind: TokenKind.Punctuation, Value: "?" });
@@ -198,8 +189,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "string[]" },
             } as unknown as ApiPropertySignature;
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "readonly" });
             expect(tokens[1]).to.deep.include({ Kind: TokenKind.MemberName, Value: "readonlyOptional" });
@@ -217,8 +207,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiPropertySignature;
 
-            const result = propertyTokenGenerator.generate(mockItem);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem);
 
             const hasStatic = tokens.some(t => t.Value === "static");
             expect(hasStatic).to.be.false;
@@ -233,8 +222,7 @@ describe("Property Token Generator", () => {
                 propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiPropertySignature;
 
-            const result = propertyTokenGenerator.generate(mockItem, true);
-            const tokens = result.Tokens;
+            const tokens = propertyTokenGenerator.generate(mockItem, true);
 
             expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "deprecatedSignature", IsDeprecated: true });
             expect(tokens[2]).to.deep.include({ Kind: TokenKind.TypeName, Value: "string", IsDeprecated: true });

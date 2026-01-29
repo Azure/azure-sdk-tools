@@ -1,15 +1,14 @@
 import { ApiItem, ApiItemKind, ApiProperty, ApiPropertyItem } from "@microsoft/api-extractor-model";
-import { ReviewLine, ReviewToken, TokenKind } from "../models";
+import { ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
-import { createToken, processExcerptTokens, isComplexType, generateComplexTypeLines } from "./helpers";
+import { createToken, processExcerptTokens } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiPropertyItem {
   return item.kind === ApiItemKind.Property || item.kind === ApiItemKind.PropertySignature;
 }
 
-function generate(item: ApiPropertyItem, deprecated?: boolean): ReviewLine {
+function generate(item: ApiPropertyItem, deprecated?: boolean): ReviewToken[] {
   const tokens: ReviewToken[] = [];
-  
   if (item.kind !== ApiItemKind.Property && item.kind !== ApiItemKind.PropertySignature) {
     throw new Error(
       `Invalid item ${item.displayName} of kind ${item.kind} for Property token generator.`,
@@ -32,34 +31,14 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): ReviewLine {
 
   tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
 
-  // Check if this is a complex type that needs multi-line formatting
-  const typeText = item.propertyTypeExcerpt.spannedTokens?.length
-    ? item.propertyTypeExcerpt.spannedTokens.map(t => t.text).join("")
-    : item.propertyTypeExcerpt.text || "";
-
-  if (isComplexType(typeText)) {
-    // Add opening brace on same line
-    tokens.push(createToken(TokenKind.Punctuation, "{", { deprecated }));
-    
-    // Generate child lines for the complex type content
-    const childLines = generateComplexTypeLines(typeText, deprecated);
-    
-    return {
-      Tokens: tokens,
-      Children: childLines,
-    };
-  } else {
-    // Simple type - add tokens inline
-    if (item.propertyTypeExcerpt.spannedTokens?.length) {
-      processExcerptTokens(item.propertyTypeExcerpt.spannedTokens, tokens, deprecated);
-    } else if (item.propertyTypeExcerpt.text) {
-      tokens.push(createToken(TokenKind.TypeName, item.propertyTypeExcerpt.text.trim(), { deprecated }));
-    }
-    
-    return {
-      Tokens: tokens,
-    };
+  // Use spannedTokens if available, otherwise fall back to text
+  if (item.propertyTypeExcerpt.spannedTokens?.length) {
+    processExcerptTokens(item.propertyTypeExcerpt.spannedTokens, tokens, deprecated);
+  } else if (item.propertyTypeExcerpt.text) {
+    tokens.push(createToken(TokenKind.TypeName, item.propertyTypeExcerpt.text.trim(), { deprecated }));
   }
+
+  return tokens;
 }
 
 export const propertyTokenGenerator: TokenGenerator<ApiPropertyItem> = {

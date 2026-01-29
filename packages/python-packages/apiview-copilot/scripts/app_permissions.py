@@ -263,6 +263,9 @@ def main():
             print(f"❌ Role '{role}' not found in app registration")
             sys.exit(1)
 
+    # Track failures
+    has_failures = False
+
     if args.revoke:
         # Get existing assignments to find the ones to revoke
         existing = get_existing_role_assignments(credential, avc_sp_id, args.principal_id)
@@ -277,20 +280,22 @@ def main():
                     break
 
             if assignment:
-                revoke_app_role(
+                success = revoke_app_role(
                     credential,
                     args.principal_id,
                     principal_type,
                     assignment["id"],
                     role_name,
                 )
+                if not success:
+                    has_failures = True
             else:
                 print(f"ℹ️ Role '{role_name}' not currently assigned to {args.principal_id}")
     else:
         # Grant roles
         for role_name in roles_to_process:
             role_id = app_roles[role_name]
-            assign_app_role(
+            success = assign_app_role(
                 credential,
                 avc_sp_id,
                 args.principal_id,
@@ -298,9 +303,15 @@ def main():
                 role_id,
                 role_name,
             )
+            if not success:
+                has_failures = True
 
     print()
-    print("Done!")
+    if has_failures:
+        print("Completed with errors.")
+        sys.exit(1)
+    else:
+        print("Done!")
 
 
 if __name__ == "__main__":

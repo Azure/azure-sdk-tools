@@ -296,14 +296,14 @@
     {
       "repository": {
         "url": "https://github.com/Azure/azure-rest-api-specs.git",
-        "branch": "master",
+        "branch": "main",
         "authType": "public"
       },
       "paths": [
         {
-          "description": "Azure REST API Breaking Change And Oad Rules Mapping",
+          "description": "Azure REST API Breaking Change and Oad Rules Mapping",
           "path": "/documentation/BreakingChange-Oad-Rules-Mapping.md",
-          "folder": "static_azure_docs",
+          "folder": "azure_rest_api_specs_docs",
           "relativeByRepoPath": true
         }
       ]
@@ -318,7 +318,7 @@
         {
           "description": "OpenAPI Diff (OAD) rules documentation",
           "path": "/docs",
-          "folder": "static_azure_docs",
+          "folder": "azure_rest_api_specs_docs",
           "relativeByRepoPath": true
         }
       ]

@@ -57,12 +57,6 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
-	if req.Intention == nil {
-		req.Intention = &model.Intention{}
-	}
-	if req.Intention.QuestionScope == nil {
-		req.Intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
-	}
 	return nil
 }
 
@@ -109,7 +103,9 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		log.Printf("Intention recognize failed with error: %s", err)
 		return nil, err
 	}
-
+	if intention.QuestionScope == nil {
+		intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
+	}
 	// Apply intention override if provided
 	if req.Intention != nil {
 		if req.Intention.QuestionScope != nil {

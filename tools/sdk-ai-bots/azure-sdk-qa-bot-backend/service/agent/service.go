@@ -117,7 +117,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 4. Build prompt
-	prompt, err = s.buildPrompt(intention, knowledges, promptTemplate)
+	prompt, err = s.buildPrompt(req.TenantID, intention, knowledges, promptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -148,11 +148,13 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
+func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
 	promptParser := prompt.IntentionPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
+	promptStr, err := promptParser.ParsePrompt(map[string]string{
+		"tenant_id": string(tenantID),
+	}, promptTemplate)
 	if err != nil {
 		log.Printf("Failed to parse intention prompt: %v", err)
 		return nil, err
@@ -412,7 +414,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	}
 	intentStart := time.Now()
 	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
-	intentResult, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, messages)
+	intentResult, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
@@ -427,7 +429,7 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	return query, intentResult
 }
 
-func (s *CompletionService) buildPrompt(intention *model.IntentionResult, knowledges []model.Knowledge, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(tenantID model.TenantID, intention *model.IntentionResult, knowledges []model.Knowledge, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, knowledge := range knowledges {
@@ -450,6 +452,7 @@ func (s *CompletionService) buildPrompt(intention *model.IntentionResult, knowle
 	promptStr, err := promptParser.ParsePrompt(map[string]string{
 		"context":   string(knowledgeStr),
 		"intention": string(intentionStr),
+		"tenant_id": string(tenantID),
 	}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -505,7 +508,9 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	promptParser := prompt.AgenticSearchPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	agenticSearchPrompt, err := promptParser.ParsePrompt(nil, agenticSearchPromptTemplate)
+	agenticSearchPrompt, err := promptParser.ParsePrompt(map[string]string{
+		"tenant_id": string(req.TenantID),
+	}, agenticSearchPromptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err

@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
@@ -21,6 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         private readonly IAzureSdkKnowledgeBaseService _azureSdkKnowledgeBaseService;
         private readonly ILogger<TypeSpecAuthoringTool> _logger;
+        private readonly ITypeSpecHelper _typeSpecHelper;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
         private const string TypeSpecAuthoringToolCommandName = "consult";
@@ -35,12 +37,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             Description = "The additional information to consider for the TypeSpec project.",
             Required = false,
         };
+
+        private readonly Option<string> _typeSpecProjectPathOption = new("--typespec-project")
+        {
+            Description = "The root path of the TypeSpec project",
+            Required = false,
+        };
+
         public TypeSpecAuthoringTool(
             IAzureSdkKnowledgeBaseService azureSdkKnowledgeBaseService,
-            ILogger<TypeSpecAuthoringTool> logger)
+            ILogger<TypeSpecAuthoringTool> logger,
+            ITypeSpecHelper typeSpecHelper)
         {
             _azureSdkKnowledgeBaseService = azureSdkKnowledgeBaseService ?? throw new ArgumentNullException(nameof(azureSdkKnowledgeBaseService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _typeSpecHelper = typeSpecHelper ?? throw new ArgumentNullException(nameof(typeSpecHelper));
         }
 
         protected override Command GetCommand()
@@ -48,7 +59,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             var command = new Command(TypeSpecAuthoringToolCommandName, "Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service.")
             {
                 _requestArgument,
-                _additionalInformationOption
+                _additionalInformationOption,
+                _typeSpecProjectPathOption,
             };
 
             return command;
@@ -57,6 +69,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             var request = parseResult.GetValue(_requestArgument);
+            var additionalInformation = parseResult.GetValue(_additionalInformationOption);
+            var typespecProjectRootPath = parseResult.GetValue(_typeSpecProjectPathOption);
 
             if (string.IsNullOrWhiteSpace(request))
             {
@@ -70,6 +84,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
                 var response = await AuthoringWithAzureSDKDocumentation(
                   request,
+                  additionalInformation,
+                  typespecProjectRootPath,
                   ct: ct
                 );
 
@@ -99,8 +115,11 @@ Returns an answer with supporting references and documentation links
             string request,
             [Description("Additional information to consider for the TypeSpec project")]
             string additionalInformation = null,
+            [Description("The root path of the TypeSpec project")]
+            string typeSpecProjectRootPath = null,
             CancellationToken ct = default)
         {
+            var typespecProject = _typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectRootPath);
             try
             {
                 // Validate inputs
@@ -108,6 +127,7 @@ Returns an answer with supporting references and documentation links
                 {
                     return new TypeSpecAuthoringResponse
                     {
+                        TypeSpecProject = typespecProject,
                         ResponseError = "Request cannot be empty"
                     };
                 }
@@ -145,11 +165,13 @@ Returns an answer with supporting references and documentation links
                 {
                     return new TypeSpecAuthoringResponse
                     {
+                        TypeSpecProject = typespecProject,
                         ResponseError = "Did not receive a result from knowledge base service."
                     };
                 }
                 return new TypeSpecAuthoringResponse
                 {
+                    TypeSpecProject = typespecProject,
                     Solution = response.Answer,
                     References = MapReferences(response.References),
                     FullContext = response.FullContext,
@@ -167,6 +189,7 @@ Returns an answer with supporting references and documentation links
                 _logger.LogWarning("AI query was cancelled");
                 return new TypeSpecAuthoringResponse
                 {
+                    TypeSpecProject = typespecProject,
                     ResponseError = "Query was cancelled"
                 };
             }
@@ -175,6 +198,7 @@ Returns an answer with supporting references and documentation links
                 _logger.LogError(ex, "Error querying AI agent");
                 return new TypeSpecAuthoringResponse
                 {
+                    TypeSpecProject = typespecProject,
                     ResponseError = $"Failed to query AI agent: {ex.Message}"
                 };
             }

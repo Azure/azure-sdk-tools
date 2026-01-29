@@ -5,7 +5,7 @@ using Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
 {
-    public class TypeSpecAuthoringResponse : CommandResponse
+    public class TypeSpecAuthoringResponse : TypeSpecBaseResponse
     {
         [JsonPropertyName("solution")]
         public string Solution { get; set; } = string.Empty;
@@ -32,6 +32,12 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
                 return string.Empty;
             }
             var result = new StringBuilder();
+
+            if (!string.IsNullOrEmpty(TypeSpecProject))
+            {
+                result.AppendLine($"TypeSpec project: {TypeSpecProject}");
+            }
+
             result.AppendLine($"**Solution:** {Solution}");
 
             if (References.Any())

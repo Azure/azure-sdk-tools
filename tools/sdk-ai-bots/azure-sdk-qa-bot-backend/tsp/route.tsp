@@ -5,7 +5,7 @@ import "./model.tsp";
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-namespace AzureSDKQABot;
+namespace AzureSDK.QAAssistant;
 
 @route("/ping")
 interface HealthCheck {
@@ -22,9 +22,9 @@ interface Completion {
   @doc("The core Q&A API. Generate a completion response for the given message and context")
   @post
   completion(
-    @header("X-API-Key") apiKey: string,
+    @header("Authorization") authorization?: string,
     @body request: CompletionRequest
-  ): CompletionResponse | ErrorResponse | UnauthorizedError;
+  ): CompletionResponse | ErrorResponse;
 }
 
 @route("/feedback")
@@ -32,7 +32,7 @@ interface Feedback {
   @doc("Submit feedback for a conversation")
   @post
   feedback(
-    @header("X-API-Key") apiKey: string,
+    @header("Authorization") authorization?: string,
     @body request: FeedbackRequest
-  ): FeedbackResponse | ErrorResponse | UnauthorizedError;
+  ): FeedbackResponse | ErrorResponse;
 }

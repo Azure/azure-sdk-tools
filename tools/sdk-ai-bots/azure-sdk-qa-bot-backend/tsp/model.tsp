@@ -8,14 +8,35 @@ namespace AzureSDK.QAAssistant;
 
 @doc("Available tenant IDs for the QA bot service")
 union TenantID {
-  @doc("Default TypeSpec QA bot")
-  TypespecQABot: "typespec_qa_bot",
+  @doc("Default Azure SDK QA bot")
+  AzureSDKQaBot: "azure_sdk_qa_bot",
   
   @doc("TypeSpec extension bot")
   TypeSpecExtension: "typespec_extension",
   
   @doc("Python channel QA bot")
   PythonChannelQaBot: "python_channel_qa_bot",
+  
+  @doc(".NET channel QA bot")
+  DotnetChannelQaBot: "dotnet_channel_qa_bot",
+  
+  @doc("Azure SDK onboarding bot")
+  AzureSDKOnboarding: "azure_sdk_onboarding",
+  
+  @doc("Golang channel QA bot")
+  GolangChannelQaBot: "golang_channel_qa_bot",
+  
+  @doc("Java channel QA bot")
+  JavaChannelQaBot: "java_channel_qa_bot",
+  
+  @doc("JavaScript channel QA bot")
+  JavaScriptChannelQaBot: "javascript_channel_qa_bot",
+  
+  @doc("General QA bot")
+  GeneralQaBot: "general_qa_bot",
+  
+  @doc("API spec review bot")
+  APISpecReviewBot: "api_spec_review_bot",
 }
 
 @doc("Available data sources for knowledge retrieval")
@@ -43,6 +64,51 @@ union Source {
   
   @doc("Azure Resource Manager RPC")
   AzureResourceManagerRPC: "azure_resource_manager_rpc",
+  
+  @doc("TypeSpec migration documentation")
+  TypeSpecMigration: "static_typespec_migration_docs",
+  
+  @doc("Azure SDK documentation engineering")
+  AzureSDKDocsEng: "azure-sdk-docs-eng",
+  
+  @doc("Azure SDK internal wiki")
+  AzureSDKInternalWiki: "azure-sdk-internal-wiki",
+  
+  @doc("Azure SDK guidelines")
+  AzureSDKGuidelines: "azure-sdk-guidelines",
+  
+  @doc("TypeSpec Azure HTTP specs")
+  TypeSpecAzureHttpSpecs: "typespec_azure_http_specs",
+  
+  @doc("TypeSpec HTTP specs")
+  TypeSpecHttpSpecs: "typespec_http_specs",
+  
+  @doc("Azure SDK for Go documentation")
+  AzureSDKForGoDocs: "azure_sdk_for_go_docs",
+  
+  @doc("Static Azure documentation")
+  StaticAzureDocs: "static_azure_docs",
+  
+  @doc("TypeSpec to Swagger mapping")
+  StaticTypeSpecToSwaggerMapping: "static_typespec_to_swagger_mapping",
+  
+  @doc("Azure SDK for Java documentation")
+  AzureSDKForJavaDocs: "azure_sdk_for_java_docs",
+  
+  @doc("Azure SDK for Java wiki")
+  AzureSDKForJavaWiki: "azure_sdk_for_java_wiki",
+  
+  @doc("Autorest Java documentation")
+  AutorestJavaDocs: "autorest_java_docs",
+  
+  @doc("Azure SDK for JavaScript documentation")
+  AzureSDKForJavaScriptDocs: "azure_sdk_for_js_docs",
+  
+  @doc("Azure SDK for JavaScript wiki")
+  AzureSDKForJavaScriptWiki: "azure_sdk_for_js_wiki",
+  
+  @doc("Azure SDK for .NET documentation")
+  AzureSDKForNetDocs: "azure_sdk_for_net_docs",
 }
 
 @doc("Message roles in the conversation")
@@ -75,9 +141,9 @@ union Reaction {
   Bad: "bad",
 }
 
-@doc("Question categorization for intent analysis")
-union QuestionCategory {
-  @doc("Unknown category")
+@doc("Question scope for intent analysis")
+union QuestionScope {
+  @doc("Unknown scope")
   Unknown: "unknown",
   
   @doc("Branded question (specific to Azure/Microsoft products)")
@@ -85,6 +151,18 @@ union QuestionCategory {
   
   @doc("Unbranded question (general programming/technical)")
   Unbranded: "unbranded",
+}
+
+@doc("Service type for filtering")
+union ServiceType {
+  @doc("Unknown service type")
+  Unknown: "unknown",
+  
+  @doc("Data plane service")
+  DataPlane: "data-plane",
+  
+  @doc("Management plane service")
+  ManagementPlane: "management-plane",
 }
 
 @doc("A message in the conversation")
@@ -130,24 +208,30 @@ model AdditionalInfo {
 }
 
 @doc("Intent analysis result for the question")
-model IntensionResult {
+model Intention {
   @doc("The question to ask the agent")
   question: string;
   
   @doc("The category of the question")
-  category: QuestionCategory;
+  category: string;
+  
+  @doc("The type of the spec, such as typespec, azure rest api, etc.")
+  spec_type?: string;
+  
+  @doc("Whether to invoke RAG workflow")
+  needs_rag_processing: boolean;
+  
+  @doc("The scope of the question")
+  question_scope?: QuestionScope;
+  
+  @doc("The service type for filtering")
+  service_type?: ServiceType;
 }
 
 @doc("Request for chat completion")
 model CompletionRequest {
   @doc("The tenant ID of the agent")
   tenant_id: TenantID;
-  
-  @doc("The prompt template to use for the agent")
-  prompt_template?: string;
-  
-  @doc("The arguments to use for the prompt template")
-  prompt_template_arguments?: string;
   
   @doc("The number of top K documents to search for the answer. Default is 10")
   top_k?: int32;
@@ -169,6 +253,9 @@ model CompletionRequest {
   
   @doc("Additional information to provide to the agent, such as links or images")
   additional_infos?: AdditionalInfo[];
+  
+  @doc("Optional intention fields that override LLM intention recognition results")
+  intention?: Intention;
 }
 
 @doc("Response from chat completion")
@@ -189,7 +276,13 @@ model CompletionResponse {
   full_context?: string;
   
   @doc("The intention analysis of the question")
-  intension?: IntensionResult;
+  intention?: Intention;
+  
+  @doc("The reasoning progress of generating the answer")
+  reasoning_progress?: string;
+  
+  @doc("The tenant ID the question is routed to")
+  route_tenant?: TenantID;
 }
 
 @doc("Request for submitting feedback")
@@ -229,18 +322,4 @@ model FeedbackResponse {
 model ErrorResponse {
   @doc("Error message")
   error: string;
-}
-
-@doc("Unauthorized error response")
-@error
-model UnauthorizedError {
-  @doc("Error message indicating authentication failure")
-  error: "Unauthorized - API key is missing or invalid";
-}
-
-@doc("API Key authentication scheme")
-model ApiKeyAuth {
-  @doc("API key for authentication")
-  @header("X-API-Key")
-  apiKey: string;
 }

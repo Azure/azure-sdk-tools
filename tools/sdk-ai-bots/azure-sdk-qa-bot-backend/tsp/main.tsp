@@ -11,7 +11,6 @@ using TypeSpec.Versioning;
 
 @service({
   title: "Azure SDK QA Assistant Service",
-  version: "0.0.1"
 })
 @server("https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net", "Development server")
 @server("https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net", "Production server")

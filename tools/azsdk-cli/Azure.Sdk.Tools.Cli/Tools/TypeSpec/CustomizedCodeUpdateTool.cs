@@ -157,8 +157,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 };
             }
 
-            var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha, isCli: false, ct);
             if (!regenResult.IsSuccessful)
             {
                 return new CustomizedCodeUpdateResponse
@@ -219,7 +218,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
             // Patches were applied, regenerate and build to validate
             logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
-            var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
+            var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(packagePath, commitSha, ct);
             if (!regenSuccess)
             {
                 logger.LogWarning("Code regeneration failed: {Error}", regenError);
@@ -269,11 +268,11 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
-    private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string tspLocationPath, string packagePath, string commitSha, CancellationToken ct)
+    private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string packagePath, string commitSha, CancellationToken ct)
     {
         try
         {
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha, isCli: false, ct);
 
             if (!regenResult.IsSuccessful)
             {

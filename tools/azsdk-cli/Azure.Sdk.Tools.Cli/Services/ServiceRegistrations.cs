@@ -70,6 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
+            services.AddSingleton<INpmHelper, NpmHelper>();
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
             services.AddSingleton<IMavenHelper, MavenHelper>();

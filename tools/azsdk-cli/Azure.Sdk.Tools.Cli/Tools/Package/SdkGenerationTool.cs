@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     logger.LogInformation("TypeSpec Project Path from tsp-location.yaml: {TypeSpecProjectPath}", typeSpecProjectPath);
 
                     // Run tsp-client update using the existing tsp-location.yaml
-                    var tspResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, tspLocationDirectory, ct: ct);
+                    var tspResult = await tspClientHelper.UpdateGenerationAsync(tspLocationDirectory, ct: ct);
                     
                     if (!tspResult.IsSuccessful)
                     {

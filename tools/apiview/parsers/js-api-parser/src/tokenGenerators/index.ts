@@ -1,5 +1,5 @@
 import { enumTokenGenerator } from "./enum";
-import { ReviewToken } from "../models";
+import { ReviewLine, ReviewToken } from "../models";
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { functionTokenGenerator } from "./function";
 import { interfaceTokenGenerator } from "./interfaces";
@@ -8,7 +8,7 @@ import { methodTokenGenerator } from "./method";
 import { propertyTokenGenerator } from "./property";
 
 /**
- * Interface for token generators that create ReviewTokens from ApiItems.
+ * Interface for token generators that create ReviewLines from ApiItems.
  */
 export interface TokenGenerator<T extends ApiItem = ApiItem> {
   /**
@@ -19,12 +19,12 @@ export interface TokenGenerator<T extends ApiItem = ApiItem> {
   isValid(item: ApiItem): item is T;
 
   /**
-   * Generates ReviewTokens from the given ApiItem.
+   * Generates a ReviewLine from the given ApiItem, with optional child lines for complex types.
    * @param item - The ApiItem to process.
    * @param deprecated - Indicates if the Api is deprecated.
-   * @returns An array of ReviewTokens generated from the ApiItem.
+   * @returns A ReviewLine generated from the ApiItem.
    */
-  generate(item: T, deprecated?: boolean): ReviewToken[];
+  generate(item: T, deprecated?: boolean): ReviewLine;
 }
 
 export const generators: TokenGenerator[] = [

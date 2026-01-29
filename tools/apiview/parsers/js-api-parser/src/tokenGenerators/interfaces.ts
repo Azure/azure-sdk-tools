@@ -1,5 +1,5 @@
 import { ApiInterface, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import { ReviewLine, ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
 
@@ -7,7 +7,7 @@ function isValid(item: ApiItem): item is ApiInterface {
   return item.kind === ApiItemKind.Interface;
 }
 
-function generate(item: ApiInterface, deprecated?: boolean): ReviewToken[] {
+function generate(item: ApiInterface, deprecated?: boolean): ReviewLine {
   const tokens: ReviewToken[] = [];
   if (item.kind !== ApiItemKind.Interface) {
     throw new Error(
@@ -90,7 +90,7 @@ function generate(item: ApiInterface, deprecated?: boolean): ReviewToken[] {
     });
   }
 
-  return tokens;
+  return { Tokens: tokens };
 }
 
 export const interfaceTokenGenerator: TokenGenerator<ApiInterface> = {

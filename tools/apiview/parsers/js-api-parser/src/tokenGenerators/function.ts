@@ -5,7 +5,7 @@ import {
   Parameter,
   TypeParameter,
 } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import { ReviewLine, ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
 
@@ -13,7 +13,7 @@ function isValid(item: ApiItem): item is ApiFunction {
   return item.kind === ApiItemKind.Function;
 }
 
-function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
+function generate(item: ApiFunction, deprecated?: boolean): ReviewLine {
   const tokens: ReviewToken[] = [];
   if (item.kind !== ApiItemKind.Function) {
     throw new Error(
@@ -100,7 +100,7 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
   tokens.push(createToken(TokenKind.Text, "):", { hasSuffixSpace: true, deprecated }));
   processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
 
-  return tokens;
+  return { Tokens: tokens };
 }
 
 export const functionTokenGenerator: TokenGenerator<ApiFunction> = {

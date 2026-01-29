@@ -1,5 +1,5 @@
 import { ApiClass, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import { ReviewLine, ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
 
@@ -7,7 +7,7 @@ function isValid(item: ApiItem): item is ApiClass {
   return item.kind === ApiItemKind.Class;
 }
 
-function generate(item: ApiClass, deprecated?: boolean): ReviewToken[] {
+function generate(item: ApiClass, deprecated?: boolean): ReviewLine {
   const tokens: ReviewToken[] = [];
   if (item.kind !== ApiItemKind.Class) {
     throw new Error(
@@ -107,7 +107,7 @@ function generate(item: ApiClass, deprecated?: boolean): ReviewToken[] {
     });
   }
 
-  return tokens;
+  return { Tokens: tokens };
 }
 
 export const classTokenGenerator: TokenGenerator<ApiClass> = {

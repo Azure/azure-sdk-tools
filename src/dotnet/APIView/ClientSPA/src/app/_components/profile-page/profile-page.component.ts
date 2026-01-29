@@ -4,7 +4,6 @@ import { take } from 'rxjs';
 import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
 import { USER_NAME_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { SelectItemModel } from 'src/app/_models/review';
-import { ScrollBarSize } from 'src/app/_models/userPreferenceModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
@@ -32,8 +31,6 @@ export class ProfilePageComponent {
     { label: "dark-solarized", data: "dark-solarized-theme" }
   ];
   selectedTheme : SelectItemModel = { label: "light", data: "light-theme" };
-  scrollBarSizes : string[] = ["small", "medium", "large"];
-  selectedScrollBarSize : ScrollBarSize = ScrollBarSize.Small;
   disableSaveButton : boolean = true;
   isLoaded: boolean | undefined = undefined;
 
@@ -52,7 +49,6 @@ export class ProfilePageComponent {
           console.log(userProfile);
           console.log(this.selectedLanguages);
           this.selectedTheme = this.themes.filter(t => t.data === userProfile.preferences.theme)[0];
-          this.selectedScrollBarSize = userProfile.preferences.scrollBarSize;
 
           if (this.userName !== userProfile.userName) {
             this.userProfileService.getUserProfile(this.userName!).subscribe({
@@ -85,7 +81,6 @@ export class ProfilePageComponent {
     this.userProfile!.email = this.notificationEmail!;
     this.userProfile!.preferences.approvedLanguages = this.selectedLanguages.map((lang: SelectItemModel) => lang.data);
     this.userProfile!.preferences.theme = this.selectedTheme.data;
-    this.userProfile!.preferences.scrollBarSize = this.selectedScrollBarSize;
     this.userProfileService.updateUserProfile(this.userProfile!).pipe(take(1)).subscribe({
       next: (response: any) => {
         window.location.reload();

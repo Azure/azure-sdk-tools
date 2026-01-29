@@ -13,14 +13,14 @@ namespace Azure.ClientSdk.Analyzers.Tests
         public async Task AZC0021ProducedForClientSettingsWithOtherParameters()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
 
 namespace RandomNamespace
 {
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class SomeClient
     {
@@ -35,7 +35,7 @@ namespace RandomNamespace
         public async Task AZC0021ProducedForClientSettingsWithMultipleOtherParameters()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
@@ -45,7 +45,7 @@ namespace RandomNamespace
     using System;
     using Azure;
 
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class SomeClient
     {
@@ -60,14 +60,14 @@ namespace RandomNamespace
         public async Task AZC0021NotProducedForClientSettingsAsOnlyParameter()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
 
 namespace RandomNamespace
 {
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class SomeClient
     {
@@ -102,14 +102,14 @@ namespace RandomNamespace
         public async Task AZC0021ProducedForClientSettingsInMiddlePosition()
         {
             const string code = @"
-namespace System.ClientModel
+namespace System.ClientModel.Primitives
 {
     public class ClientSettings {}
 }
 
 namespace RandomNamespace
 {
-    public class SomeClientSettings : System.ClientModel.ClientSettings {}
+    public class SomeClientSettings : System.ClientModel.Primitives.ClientSettings {}
 
     public class SomeClient
     {

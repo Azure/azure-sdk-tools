@@ -1,7 +1,7 @@
 using System.Diagnostics;
+using System.Linq;
 using OpenTelemetry;
 using Azure.Sdk.Tools.Cli.Models;
-
 namespace Azure.Sdk.Tools.Cli.Telemetry;
 
 public sealed class TelemetryProcessor : BaseProcessor<Activity>
@@ -50,6 +50,23 @@ public sealed class TelemetryProcessor : BaseProcessor<Activity>
         if (activity.GetCustomProperty(TelemetryConstants.TagName.ModelsUsed) is string modelsUsed)
         {
             activity.SetTag(TelemetryConstants.TagName.ModelsUsed, modelsUsed);
+        }
+
+        SanitizeTags(activity);
+    }
+
+    private static void SanitizeTags(Activity activity)
+    {
+        foreach (var tag in activity.TagObjects.ToList())
+        {
+            if (tag.Value is string value)
+            {
+                var sanitized = TelemetryPathSanitizer.Sanitize(value);
+                if (!string.Equals(sanitized, value, StringComparison.Ordinal))
+                {
+                    activity.SetTag(tag.Key, sanitized);
+                }
+            }
         }
     }
 }

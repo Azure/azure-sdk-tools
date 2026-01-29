@@ -1,17 +1,24 @@
 
 @use "../../../../../APIViewWeb/Client/css/shared/mixins.scss" as *;
 
+:host {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
 :host ::ng-deep {
     font-family: Consolas, monospace;
     font-size: 14px;
     line-height: 1.5;
     display: block;
+    height: 100%;
 
     @include glow;
 
     #viewport {
         overflow: auto;
-        height: calc(100vh - 102px);
+        height: 100%;
         will-change: scroll-position, contents;
         container-type: inline-size;
         background-color: var(--base-fg-color);

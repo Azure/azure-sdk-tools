@@ -30,6 +30,19 @@ const (
 	HierarchyUnknown                       // Unknown or no headers
 )
 
+func (s ChunkHierarchy) String() string {
+	switch s {
+	case HierarchyHeader3:
+		return "HierarchyHeader3"
+	case HierarchyHeader2:
+		return "HierarchyHeader2"
+	case HierarchyHeader1:
+		return "HierarchyHeader1"
+	default:
+		return "HierarchyUnknown"
+	}
+}
+
 type AgenticSearchRequest struct {
 	Messages                 []KnowledgeAgentMessage   `json:"messages"`
 	KnowledgeSourceParams    []KnowledgeSourceParams   `json:"knowledgeSourceParams,omitempty"`
@@ -217,6 +230,8 @@ type Index struct {
 	Header3         string  `json:"header_3"`
 	OrdinalPosition int     `json:"ordinal_position"`
 	ContextID       Source  `json:"context_id"`
+	Scope           string  `json:"scope,omitempty"`
+	ServiceType     string  `json:"service_type,omitempty"`
 }
 
 type Knowledge struct {

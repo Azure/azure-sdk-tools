@@ -50,4 +50,65 @@ internal class LabelHelperTests
         var actual = LabelHelper.NormalizeLabel(input);
         Assert.That(actual, Is.EqualTo(expected));
     }
+
+    [Test]
+    // Basic cases - returns only service labels (color e99695)
+    [TestCase("ServiceA,,e99695", "ServiceA")]
+    [TestCase("ServiceA,,e99695\nServiceB,,e99695", "ServiceA,ServiceB")]
+    [TestCase("ServiceA,,e99695\nServiceB,,e99695\nServiceC,,e99695", "ServiceA,ServiceB,ServiceC")]
+    // Filters out non-service labels (different color codes)
+    [TestCase("ServiceA,,e99695\nNonService,,123456\nServiceB,,e99695", "ServiceA,ServiceB")]
+    [TestCase("NonService,,123456", "")]
+    // Case-insensitive color code matching
+    [TestCase("ServiceA,,E99695\nServiceB,,e99695", "ServiceA,ServiceB")]
+    // Handles empty/whitespace lines
+    [TestCase("ServiceA,,e99695\n\nServiceB,,e99695", "ServiceA,ServiceB")]
+    [TestCase("ServiceA,,e99695\n   \nServiceB,,e99695", "ServiceA,ServiceB")]
+    // Skips incomplete lines (less than 3 columns)
+    [TestCase("ServiceA,,e99695\nIncomplete\nServiceB,,e99695", "ServiceA,ServiceB")]
+    [TestCase("ServiceA,,e99695\nTwo,Columns\nServiceB,,e99695", "ServiceA,ServiceB")]
+    // Handles Windows line endings
+    [TestCase("ServiceA,,e99695\r\nServiceB,,e99695", "ServiceA,ServiceB")]
+    // Empty CSV
+    [TestCase("", "")]
+    public void TestGetAllServiceLabels(string csvContent, string expectedLabelsCsv)
+    {
+        var result = LabelHelper.GetAllServiceLabels(csvContent);
+        var expected = string.IsNullOrEmpty(expectedLabelsCsv) 
+            ? new List<string>() 
+            : expectedLabelsCsv.Split(',').ToList();
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    // No duplicates - returns false with empty list
+    [TestCase("ServiceA,ServiceB,ServiceC", false, "")]
+    [TestCase("ServiceA", false, "")]
+    [TestCase("", false, "")]
+    // With duplicates - returns true with duplicate labels
+    [TestCase("ServiceA,ServiceB,ServiceA", true, "ServiceA")]
+    [TestCase("ServiceA,ServiceA", true, "ServiceA")]
+    // Case-insensitive duplicate detection
+    [TestCase("ServiceA,SERVICEA", true, "ServiceA")]
+    [TestCase("ServiceA,servicea,SERVICEA", true, "ServiceA")]
+    [TestCase("Service-A,SERVICE-A,service-a", true, "Service-A")]
+    // Multiple different duplicates
+    [TestCase("ServiceA,ServiceB,ServiceA,ServiceB", true, "ServiceA,ServiceB")]
+    [TestCase("A,B,C,A,B,C", true, "A,B,C")]
+    public void TestTryFindDuplicateLabels(string inputLabelsCsv, bool expectedResult, string expectedDuplicatesCsv)
+    {
+        var labels = string.IsNullOrEmpty(inputLabelsCsv) 
+            ? new List<string>() 
+            : inputLabelsCsv.Split(',').ToList();
+        var expectedDuplicates = string.IsNullOrEmpty(expectedDuplicatesCsv) 
+            ? new List<string>() 
+            : expectedDuplicatesCsv.Split(',').ToList();
+
+        var result = LabelHelper.TryFindDuplicateLabels(labels, out var duplicates);
+
+        Assert.That(result, Is.EqualTo(expectedResult));
+        Assert.That(duplicates.Count, Is.EqualTo(expectedDuplicates.Count));
+        CollectionAssert.AreEqual(expectedDuplicates, duplicates, "Duplicate lists do not match");
+    }
 }

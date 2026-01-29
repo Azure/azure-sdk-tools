@@ -317,9 +317,83 @@ model FeedbackResponse {
   // Empty response model
 }
 
-@doc("Error response")
+@doc("Error codes for the service")
+union ErrorCode {
+  // Client Error Codes (4xx)
+  @doc("Invalid request format or parameters")
+  InvalidRequest: "INVALID_REQUEST",
+  
+  @doc("Message field is missing")
+  MissingMessage: "MISSING_MESSAGE",
+  
+  @doc("Message content is empty")
+  EmptyContent: "EMPTY_CONTENT",
+  
+  @doc("Invalid tenant ID provided")
+  InvalidTenantID: "INVALID_TENANT_ID",
+  
+  @doc("Authentication failed")
+  Unauthorized: "UNAUTHORIZED",
+  
+  // Server Error Codes (5xx)
+  @doc("Service initialization failed")
+  ServiceInitFailure: "SERVICE_INIT_FAILURE",
+  
+  @doc("LLM service call failed")
+  LLMServiceFailure: "LLM_SERVICE_FAILURE",
+  
+  @doc("LLM rate limit exceeded")
+  LLMRateLimitFailure: "LLM_RATE_LIMIT_FAILURE",
+  
+  @doc("Search service call failed")
+  SearchFailure: "SEARCH_FAILURE",
+  
+  @doc("Internal server error")
+  InternalError: "INTERNAL_ERROR",
+}
+
+@doc("Error category for monitoring and alerting")
+union ErrorCategory {
+  @doc("Validation error")
+  Validation: "validation",
+  
+  @doc("Authentication error")
+  Authentication: "authentication",
+  
+  @doc("Authorization error")
+  Authorization: "authorization",
+  
+  @doc("Rate limit error")
+  RateLimit: "rate limit",
+  
+  @doc("Service error")
+  Service: "service",
+  
+  @doc("Dependency error")
+  Dependency: "dependency",
+  
+  @doc("Internal error")
+  Internal: "internal",
+}
+
+@doc("Structured API error response")
 @error
 model ErrorResponse {
-  @doc("Error message")
-  error: string;
+  @doc("Error code identifying the type of error")
+  code: ErrorCode;
+  
+  @doc("Human-readable error message")
+  message: string;
+  
+  @doc("Error category for monitoring and alerting")
+  category: ErrorCategory;
+  
+  @doc("Additional error details")
+  details?: unknown;
+  
+  @doc("Request ID for tracing")
+  request_id?: string;
+  
+  @doc("Timestamp when the error occurred")
+  timestamp?: string;
 }

@@ -191,10 +191,11 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 	}, messages...)
 
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		Messages:       messages,
-		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
-		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE)),
-		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
+		Messages:        messages,
+		DeploymentName:  to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
+		ResponseFormat:  &azopenai.ChatCompletionsJSONResponseFormat{},
+		Seed:            to.Ptr(int64(1)), // Fixed seed for deterministic output
+		ReasoningEffort: to.Ptr(azopenai.ReasoningEffortValueMedium),
 	}, nil)
 
 	if err != nil {
@@ -468,6 +469,7 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 		DeploymentName: &s.model,
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
 		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TEMPERATURE)),
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
 	}, nil)
 	if err != nil {
 		// Check if this is a rate limit error (429)
@@ -776,9 +778,11 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, message
 
 	// Call LLM for tenant routing
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		Messages:       routingMessages,
-		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
-		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
+		Messages:        routingMessages,
+		DeploymentName:  to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
+		ResponseFormat:  &azopenai.ChatCompletionsJSONResponseFormat{},
+		Seed:            to.Ptr(int64(1)), // Fixed seed for deterministic output
+		ReasoningEffort: to.Ptr(azopenai.ReasoningEffortValueMedium),
 	}, nil)
 
 	if err != nil {

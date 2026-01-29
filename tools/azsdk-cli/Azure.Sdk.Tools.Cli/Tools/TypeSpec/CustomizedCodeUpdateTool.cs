@@ -12,7 +12,7 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
-[McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, provides intelligent analysis and recommendations for updating customization code.")]
+[McpServerToolType, Description("Updates SDK code from TypeSpec and automatically repairs customization files when build fails.")]
 public class CustomizedCodeUpdateTool: LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
@@ -49,43 +49,24 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
     private const string DefaultCustomizationDocUrl = "https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md";
 
-    // NextSteps for success scenarios
-    private static readonly string[] SuccessNoCustomizationsNextSteps =
+    private static readonly string[] SuccessNextSteps =
     [
-        "Review generated code changes",
-        $"Create customizations if needed for your SDK requirements (see: {DefaultCustomizationDocUrl})",
-        "Open a pull request with your changes"
+        "Review changes and open a pull request"
     ];
-
-    private static readonly string[] SuccessPatchesAppliedNextSteps =
-    [
-        "Review applied changes in customization files",
-        "Review generated code to ensure it meets your requirements",
-        "Open a pull request with your changes"
-    ];
-
-    // Consolidated failure NextSteps builder - reduces duplication
-    private static string[] BuildFailureNextSteps(string issue, string suggestedApproach, string? buildError = null, string? docUrl = null) =>
-        buildError is null
-            ? [$"Issue: {issue}", $"SuggestedApproach: {suggestedApproach}", $"Documentation: {docUrl ?? DefaultCustomizationDocUrl}"]
-            : [$"Issue: {issue}", $"BuildError: {buildError}", $"SuggestedApproach: {suggestedApproach}", $"Documentation: {docUrl ?? DefaultCustomizationDocUrl}"];
 
     private static string[] GetBuildNoCustomizationsFailedNextSteps(string language) =>
-        BuildFailureNextSteps(
-            "Build failed after regeneration but no customization files exist",
-            $"Create customization files for {language} to fix build errors",
-            docUrl: GetCodeCustomizationDocUrl(language));
+    [
+        "Issue: Build failed after regeneration but no customization files exist",
+        $"SuggestedApproach: Create customization files for {language} to fix build errors",
+        $"Documentation: {GetCodeCustomizationDocUrl(language)}"
+    ];
 
     private static string[] GetPatchesFailedNextSteps() =>
-        BuildFailureNextSteps(
-            "Automatic patching was unsuccessful or not applicable",
-            "Compare generated code with customizations and update manually");
-
-    private static string[] GetBuildAfterPatchesFailedNextSteps(string buildError) =>
-        BuildFailureNextSteps(
-            "Build still failing after patches applied",
-            "Review build errors and fix customization files manually",
-            buildError);
+    [
+        "Issue: Automatic patching was unsuccessful or not applicable",
+        "SuggestedApproach: Compare generated code with customizations and update manually",
+        $"Documentation: {DefaultCustomizationDocUrl}"
+    ];
 
     private static string[] GetMaxIterationsReachedNextSteps(string buildError) =>
     [
@@ -149,7 +130,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
-    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
+    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Updates SDK code from a TypeSpec commit and automatically repairs customization files (e.g., *Customization.java, _patch.py, partial classes) when the build fails. Returns success if build passes, or detailed error analysis with applied patches if issues remain.")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
         => RunUpdateAsync(commitSha, packagePath, ct);
 
@@ -198,27 +179,25 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             }
 
             // Step 1: Build to check if customizations are already compatible
-            logger.LogInformation("Building SDK to check current state...");
             var (initialBuildSuccess, initialBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
 
             if (initialBuildSuccess)
             {
-                logger.LogInformation("Build passed after regeneration - no repairs needed");
+                logger.LogDebug("Build passed - no repairs needed");
                 return new CustomizedCodeUpdateResponse
                 {
-                    Message = "Regeneration succeeded. Build passed without modifications.",
-                    NextSteps = SuccessNoCustomizationsNextSteps.ToList()
+                    Message = "Build passed.",
+                    NextSteps = SuccessNextSteps.ToList()
                 };
             }
 
             // Build failed - check if we have customizations to repair
             var customizationRoot = languageService.HasCustomizations(packagePath, ct);
-            logger.LogDebug("Customization root: {CustomizationRoot}", customizationRoot ?? "(none)");
 
             if (customizationRoot == null)
             {
                 // Build failed but no customization files to repair
-                logger.LogWarning("Build failed with no customizations: {Error}", initialBuildError);
+                logger.LogDebug("Build failed, no customizations to repair");
                 return new CustomizedCodeUpdateResponse
                 {
                     Message = $"Build failed after regeneration: {initialBuildError}",
@@ -229,7 +208,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             }
 
             // Error-driven repair loop: attempt to fix build errors automatically
-            logger.LogInformation("Build failed with customizations present - activating error-driven repair");
+            logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
             var currentBuildError = initialBuildError;
             var allAppliedPatches = new List<AppliedPatch>();
             
@@ -243,7 +222,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                     customizationRoot, 
                     packagePath, 
                     languageService, 
-                    currentBuildError ?? "Build failed",
+                    currentBuildError!,
                     iteration,
                     ct);
                 
@@ -251,7 +230,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
                 if (patches.Count == 0)
                 {
-                    logger.LogInformation("No patches applied on iteration {Iteration}", iteration);
+                    logger.LogDebug("No patches applied on iteration {Iteration}", iteration);
                     return new CustomizedCodeUpdateResponse
                     {
                         Message = "No patches applied - automatic patching found nothing to fix.",
@@ -263,11 +242,10 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 }
 
                 // Regenerate after patches
-                logger.LogInformation("Patches applied, regenerating code...");
-                var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
+                var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(packagePath, commitSha, ct);
                 if (!regenSuccess)
                 {
-                    logger.LogWarning("Code regeneration failed: {Error}", regenError);
+                    logger.LogDebug("Code regeneration failed: {Error}", regenError);
                     return new CustomizedCodeUpdateResponse
                     {
                         Message = $"Code regeneration failed after applying patches: {regenError}",
@@ -278,23 +256,21 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 }
 
                 // Build to validate
-                logger.LogInformation("Building SDK to validate repairs...");
                 var (buildSuccess, buildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
 
                 if (buildSuccess)
                 {
-                    logger.LogInformation("Build passed after {Iteration} repair iteration(s)", iteration);
+                    logger.LogDebug("Build passed after {Iteration} iteration(s)", iteration);
                     return new CustomizedCodeUpdateResponse
                     {
-                        Message = $"Build passed after {iteration} repair iteration(s). Patches applied successfully.",
-                        AppliedPatches = allAppliedPatches.Count > 0 ? allAppliedPatches : null,
-                        NextSteps = SuccessPatchesAppliedNextSteps.ToList()
+                        Message = "Build passed after repairs.",
+                        AppliedPatches = allAppliedPatches,
+                        NextSteps = SuccessNextSteps.ToList()
                     };
                 }
 
                 // Build still failing - continue to next iteration
                 currentBuildError = buildError;
-                logger.LogWarning("Build still failing after iteration {Iteration}: {Error}", iteration, currentBuildError);
             }
 
             // Max iterations reached

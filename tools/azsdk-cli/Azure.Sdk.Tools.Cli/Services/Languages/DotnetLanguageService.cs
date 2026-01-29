@@ -230,7 +230,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         return new TestRunResponse(result);
     }
 
-    public override string? HasCustomizations(string packagePath, CancellationToken ct)
+    public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {
         // In azure-sdk-for-net, generated code lives in the Generated folder.
         // Customizations are partial types defined outside the Generated folder.

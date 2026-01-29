@@ -261,49 +261,24 @@ public sealed partial class JavaLanguageService : LanguageService
     {
         try
         {
-            logger.LogInformation("Applying error-driven patches for Java customization files");
-            logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
-            logger.LogInformation("Package path: {PackagePath}", packagePath);
-            logger.LogInformation("Build error to fix: {BuildError}", buildError.Length > 500 ? buildError.Substring(0, 500) + "..." : buildError);
-
-            // Read all .java files under customizationRoot and concatenate their contents into customizationContent
-            var customizationContentBuilder = new System.Text.StringBuilder();
-            var customizationFiles = new List<string>();
-
-            if (Directory.Exists(customizationRoot))
+            if (!Directory.Exists(customizationRoot))
             {
-                var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
-                logger.LogInformation("Found {FileCount} Java customization files in {Root}", javaFiles.Length, customizationRoot);
-
-                foreach (var file in javaFiles)
-                {
-                    logger.LogDebug("Reading customization file: {File}", file);
-                    var fileContent = await File.ReadAllTextAsync(file, ct);
-
-                    // Use relative path from customizationRoot for the LLM to reference
-                    var relativePath = Path.GetRelativePath(customizationRoot, file);
-                    customizationFiles.Add(relativePath);
-                    customizationContentBuilder.AppendLine($"// File: {relativePath}");
-                    customizationContentBuilder.AppendLine(fileContent);
-                    customizationContentBuilder.AppendLine();
-                }
-            }
-            else
-            {
-                logger.LogWarning("Customization root directory does not exist: {Root}", customizationRoot);
+                logger.LogDebug("Customization root does not exist: {Root}", customizationRoot);
                 return [];
             }
 
-            var customizationContent = customizationContentBuilder.ToString();
+            // Just get the list of files - microagent will read content as needed
+            var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
+            var customizationFiles = javaFiles
+                .Select(f => Path.GetRelativePath(customizationRoot, f))
+                .ToList();
 
             // Build error-driven prompt
             var prompt = new JavaErrorDrivenPatchTemplate(
                 buildError,
                 packagePath,
-                customizationContent,
                 customizationRoot,
                 customizationFiles).BuildPrompt();
-            logger.LogInformation("Generated error-driven prompt with {ContentLength} characters", prompt.Length);
 
             // Create patch tool so we can retrieve applied patches after microagent completes
             var patchTool = new ClientCustomizationCodePatchTool(customizationRoot)
@@ -312,9 +287,13 @@ public sealed partial class JavaLanguageService : LanguageService
                 Description = "Apply code patches to customization files only (never generated code)"
             };
 
+            // Safety limit on tool calls per patching session. This is a heuristic -
+            // if real-world usage shows the model needs more calls to complete valid fixes,
+            // this should be tuned based on observed behavior. Typical fix needs 2-5 calls.
             var agentDefinition = new Microagent<bool>
             {
                 Instructions = prompt,
+                MaxToolCalls = 15,
                 Tools =
                 [
                     new ReadFileTool(packagePath)
@@ -326,9 +305,16 @@ public sealed partial class JavaLanguageService : LanguageService
                 ]
             };
 
-            // Use microagent system to apply patches directly
-            logger.LogInformation("Sending error-driven prompt to microagent for patch application");
-            await microagentHost.RunAgentToCompletion(agentDefinition, ct);
+            // Use microagent system to apply patches
+            try
+            {
+                await microagentHost.RunAgentToCompletion(agentDefinition, ct);
+            }
+            catch (Exception agentEx)
+            {
+                // Microagent may have hit MaxToolCalls limit but still applied patches
+                logger.LogDebug(agentEx, "Microagent terminated early");
+            }
             logger.LogInformation("Patch application completed, patches applied: {PatchCount}", patchTool.AppliedPatches.Count);
 
             return patchTool.AppliedPatches;

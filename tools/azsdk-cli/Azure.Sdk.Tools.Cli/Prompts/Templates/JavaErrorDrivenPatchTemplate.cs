@@ -10,9 +10,10 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 public class JavaErrorDrivenPatchTemplate(
     string buildError,
     string packagePath,
-    string customizationContent,
     string customizationRoot,
-    List<string> customizationFiles) : BasePromptTemplate
+    List<string> customizationFiles,
+    string? documentationContent = null,
+    string? documentationFallback = null) : BasePromptTemplate
 {
     public override string TemplateId => "java-error-driven-patch";
     public override string Version => "1.0.0";
@@ -34,36 +35,33 @@ public class JavaErrorDrivenPatchTemplate(
         ## YOUR TASK
         Analyze the build error above and apply a targeted fix to the customization code.
         
+        ## JAVA CUSTOMIZATION CONTEXT
+        Java SDK customizations use the autorest customization framework.
+        {BuildDocumentationSection()}
+        
         ## SCOPE LIMITATIONS
         You may ONLY perform these types of fixes:
-        - Remove duplicate field/method definitions
-        - Update references after TypeSpec renames (e.g., method name changes)
+        - Remove duplicate field/method definitions (customization adds something TypeSpec now generates)
+        - Update method/class name references after TypeSpec renames
+        - Fix references to methods that no longer exist or were renamed
         - Add missing import statements
-        - Fix reserved keyword conflicts
         
         You may NOT:
-        - Add new methods or functionality
-        - Restructure code architecture
-        - Change method visibility (use TypeSpec @access instead)
-        - Add error handling or new logic
+        - Add new customization logic
+        - Restructure the customization architecture
+        - Add error handling or new features
         
         ## FILE STRUCTURE
         - Package Path (ReadFile base): {packagePath}
         - Customization Root: {customizationRoot}
-        - Customization Files:
+        - Customization Files (use ReadFile to examine):
         {fileList}
         
-        ## CUSTOMIZATION CODE (to fix):
-        ```java
-        {customizationContent}
-        ```
-        
         ## WORKFLOW
-        1. **Parse the error**: Identify the exact issue (duplicate field, undefined reference, etc.)
-        2. **Investigate the cause**: 
-           - Use ReadFile to examine the generated code referenced in the error
-           - Look for what the NEW name/field/method is (TypeSpec may have renamed it)
-           - Compare with what the customization is looking for
+        1. **Parse the error**: Identify the exact issue from the build error
+        2. **Read relevant files**: Use ReadFile to examine:
+           - The customization file(s) that might need fixing
+           - The generated code referenced in the error (to find new names after renames)
         3. **Locate the fix**: Find the exact string in customization that needs updating
         4. **Apply fix**: Use ClientCustomizationCodePatch tool with exact replacement
         5. **Return result**: true if fix applied, false if unable to fix
@@ -71,10 +69,9 @@ public class JavaErrorDrivenPatchTemplate(
         ## KEY INSIGHT: TypeSpec Renames
         When you see "cannot find symbol" or "method not found" errors:
         - The TypeSpec may have renamed the property/method
+        - The customization references old names like `getMethodsByName("setUrlSource")`
         - Use ReadFile to look at the GENERATED code to discover the NEW name
-        - Example: If customization looks for `setUrlSource` but error says not found,
-          read the generated file to see if there's a `setSourceUrl` method instead
-        - Then update the customization to use the new name
+        - Then update the customization to use the new method name
         """;
     }
 
@@ -105,7 +102,11 @@ public class JavaErrorDrivenPatchTemplate(
         - Include enough context to uniquely identify the location
         - Preserve code formatting and indentation
         - If uncertain about the fix → Return false (let human review)
-        - After applying a successful patch, EXIT - do not try more patches
+        
+        **CRITICAL: STOP AFTER SUCCESS**
+        - After a ClientCustomizationCodePatch returns Success=true, IMMEDIATELY return true
+        - DO NOT try additional patches - you will corrupt the file
+        - If a patch fails with "Old content not found", the file may have changed - read it again or stop
         
         **Discovery Process for Renames:**
         When error says "cannot find symbol" or "method not found":
@@ -135,57 +136,71 @@ public class JavaErrorDrivenPatchTemplate(
         return """
         ## EXAMPLE SCENARIOS
         
-        **Example 1: Duplicate Field**
-        Build error: `[ERROR] DocumentIntelligenceCustomizations.java:[178,20] variable operationId is already defined`
+        **Example 1: Customization References Renamed Method**
+        Build error: `[ERROR] ... cannot find symbol ... method getMethodsByName("setUrlSource")`
         
-        Analysis: TypeSpec now generates `operationId`, but customization also adds it.
-        Fix: Remove the duplicate field injection from customization.
+        Step 1 - Read customization: ReadFile("customization/src/main/java/.../MyCustomizations.java")
+        Discovery: Customization has `clazz.getMethodsByName("setUrlSource")` 
         
+        Step 2 - Read generated code: ReadFile("src/main/java/com/azure/.../AnalyzeDocumentOptions.java")
+        Discovery: File shows `setSourceUrl` method exists (TypeSpec renamed urlSource → sourceUrl)
+        
+        Step 3 - Fix customization to use new method name:
         ```
         ClientCustomizationCodePatch(
-            FilePath: 'DocumentIntelligenceCustomizations.java',
-            OldContent: 'clazz.addField("String", "operationId", Modifier.Keyword.PRIVATE);',
-            NewContent: '// Removed: operationId now generated by TypeSpec'
-        )
-        ```
-        
-        **Example 2: TypeSpec Rename - Method Name Changed**
-        Build error: `[ERROR] ... Expected method setUrlSource not found`
-        
-        Step 1 - Investigate: ReadFile("src/main/java/com/azure/ai/.../AnalyzeDocumentOptions.java")
-        Discovery: File shows `setSourceUrl` method exists (not `setUrlSource`)
-        
-        Step 2 - Understand: TypeSpec renamed `urlSource` → `sourceUrl`, so method is now `setSourceUrl`
-        
-        Step 3 - Fix: Update customization to use new method name
-        
-        ```
-        ClientCustomizationCodePatch(
-            FilePath: 'DocumentIntelligenceCustomizations.java',
+            FilePath: 'MyCustomizations.java',
             OldContent: 'clazz.getMethodsByName("setUrlSource")',
             NewContent: 'clazz.getMethodsByName("setSourceUrl")'
         )
         ```
         
-        **Example 3: Out of Scope - Error in Generated Code, No Customization Cause**
-        Build error: `[ERROR] SomeGeneratedFile.java:[100,5] incompatible types`
+        **Example 2: Customization Adds Field That's Now Generated**
+        Build error: `[ERROR] ... variable operationId is already defined`
         
-        Analysis: Error is in generated code (src/main/java/...) and examining the customization
-        shows no code that could cause this error.
+        Analysis: TypeSpec now generates `operationId`, but customization also adds it via
+        `clazz.addField(...)` or similar. Remove the duplicate from customization.
         
-        Action: Return false IMMEDIATELY - do not try to patch the generated file!
-        The ClientCustomizationCodePatch tool CANNOT modify generated files.
-        This is a regeneration/emitter issue.
+        ```
+        ClientCustomizationCodePatch(
+            FilePath: 'MyCustomizations.java',
+            OldContent: '.addField("operationId"...',
+            NewContent: '// Removed: operationId now generated by TypeSpec'
+        )
+        ```
         
-        **Example 4: Multiple Errors - Fix What You Can, Then Exit**
-        Build errors show:
-        1. Customization error: method name reference wrong
-        2. Generated code error: internal inconsistency in generated file
+        **Example 3: Error in Generated Code - NOT Fixable**
+        Build error: `[ERROR] src/main/java/.../SomeGeneratedFile.java:[100,5] incompatible types`
         
-        Action: 
-        1. Fix the customization error with ClientCustomizationCodePatch
-        2. After successful patch, EXIT with true
-        3. DO NOT try to fix the generated code error - let regeneration handle it
+        Analysis: Error is in GENERATED code (src/main/java/...), not customization.
+        This tool CANNOT patch generated files - only customization files.
+        
+        Action: Return false immediately. This is an emitter/regeneration issue.
+        
+        **Example 4: Customization References Non-Existent Class**
+        Build error: `[ERROR] ... cannot find symbol ... class OldClassName`
+        
+        Step 1 - Read customization to find the reference
+        Step 2 - Search generated code to find what the class was renamed to
+        Step 3 - Update the class name reference in customization
+        """;
+    }
+
+    private string BuildDocumentationSection()
+    {
+        if (string.IsNullOrEmpty(documentationContent))
+        {
+            // Use provided fallback from language service
+            return documentationFallback ?? "";
+        }
+        
+        return $"""
+        
+        ### AUTOREST JAVA CUSTOMIZATION DOCUMENTATION
+        The following is the official documentation for the Java customization framework:
+        
+        {documentationContent}
+        
+        ### END OF DOCUMENTATION
         """;
     }
 

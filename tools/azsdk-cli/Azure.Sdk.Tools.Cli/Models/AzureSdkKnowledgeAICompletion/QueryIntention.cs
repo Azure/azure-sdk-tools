@@ -22,8 +22,15 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
         /// <summary>
         /// The scope of the question, e.g. branded, unbranded
         /// </summary>
-        [JsonPropertyName("scope")]
+        [JsonPropertyName("question_scope")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? Scope { get; set; }
+        public QuestionScope? QuestionScope { get; set; }
+
+        /// <summary>
+        /// The service type the question pertains to, e.g. management-plane, data-plane
+        /// </summary>
+        [JsonPropertyName("service_type")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ServiceType? ServiceType { get; set; }
     }
 }

@@ -50,4 +50,17 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
         [EnumMember(Value = "unbranded")]
         Unbranded,
     }
+
+    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<ServiceType>))]
+    public enum ServiceType
+    {
+        [EnumMember(Value = "unknown")]
+        Unknown,
+
+        [EnumMember(Value = "management-plane")]
+        ManagementPlane,
+
+        [EnumMember(Value = "data-plane")]
+        DataPlane,
+    }
 }

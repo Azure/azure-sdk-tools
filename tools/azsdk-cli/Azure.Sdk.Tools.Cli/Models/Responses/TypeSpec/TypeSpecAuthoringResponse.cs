@@ -60,9 +60,13 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec
                 result.AppendLine($"\n**Query Analysis:**");
                 result.AppendLine($"- Category: {QueryIntention.Category}");
 
-                if (!string.IsNullOrEmpty(QueryIntention.Scope))
+                if (QueryIntention.QuestionScope != null)
                 {
-                    result.AppendLine($"- Scope: {QueryIntention.Scope}");
+                    result.AppendLine($"- Scope: {QueryIntention.QuestionScope}");
+                }
+                if (QueryIntention.ServiceType != null)
+                {
+                    result.AppendLine($"- Service Type: {QueryIntention.ServiceType}");
                 }
             }
 

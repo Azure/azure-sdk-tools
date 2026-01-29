@@ -176,12 +176,7 @@ Returns an answer with supporting references and documentation links
                     References = MapReferences(response.References),
                     FullContext = response.FullContext,
                     Reasoning = response.Reasoning,
-                    QueryIntention = response.Intention != null ? new QueryIntention
-                    {
-                        Question = response.Intention.Question,
-                        Category = response.Intention.Category,
-                        Scope = response.Intention.Scope?.ToString()
-                    } : null
+                    QueryIntention = response.Intention,
                 };
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)

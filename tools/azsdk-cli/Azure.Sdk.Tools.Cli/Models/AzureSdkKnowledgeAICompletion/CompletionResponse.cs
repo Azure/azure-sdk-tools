@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
         /// </summary>
         [JsonPropertyName("intention")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public IntentionResult? Intention { get; set; }
+        public QueryIntention? Intention { get; set; }
 
         /// <summary>
         /// Describe how the LLM reasons through the question to arrive at the final answer
@@ -79,28 +79,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
         /// </summary>
         [JsonPropertyName("content")]
         public string Content { get; set; } = string.Empty;
-    }
-
-    public class IntentionResult
-    {
-        /// <summary>
-        /// The question to ask the AI
-        /// </summary>
-        [JsonPropertyName("question")]
-        public string Question { get; set; } = string.Empty;
-
-        /// <summary>
-        /// The category of the question, e.g. versioning
-        /// </summary>
-        [JsonPropertyName("category")]
-        public string Category { get; set; } = string.Empty;
-
-        /// <summary>
-        /// The scope of the question, e.g. branded, unbranded
-        /// </summary>
-        [JsonPropertyName("scope")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public QuestionScope? Scope { get; set; }
     }
 
     /// <summary>

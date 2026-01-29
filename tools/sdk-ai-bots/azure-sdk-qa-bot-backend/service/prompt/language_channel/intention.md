@@ -40,14 +40,18 @@ The question must be classified into one of these categories:
     - Are unclear or ambiguous about the SDK context
     - Don't relate directly to Azure SDK development or usage processes
 
+## Intent Service Type
+{{include "../templates/intention/intent_service_type.md"}}
+
 ## Need RAG Processing
 {{include "../templates/intention/need_rag_processing.md"}}
 
 # Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
-  "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the categories: sdk-generation, sdk-development, sdk-release, sdk-usage or unknown,
+  "question": string,     // The rewritten standalone question
+  "category": string,     // Must be one of the categories: sdk-generation, sdk-development, sdk-release, sdk-usage or unknown,
+  "service_type": string, // Must be one of the intent service types or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
 

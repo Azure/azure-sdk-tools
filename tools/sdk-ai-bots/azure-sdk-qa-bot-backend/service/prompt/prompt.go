@@ -89,10 +89,10 @@ type IntentionPromptParser struct {
 	*DefaultPromptParser
 }
 
-func (p *IntentionPromptParser) ParseResponse(response, template string) (*model.IntentionResult, error) {
+func (p *IntentionPromptParser) ParseResponse(response, template string) (*model.Intention, error) {
 	// Implement your response parsing logic here
 	// For example, you can unmarshal the response into a struct
-	var resp model.IntentionResult
+	var resp model.Intention
 	err := json.Unmarshal([]byte(response), &resp)
 	if err != nil {
 		return nil, err

@@ -54,15 +54,15 @@ export class SpectorCaseProcessor {
             this.convertSpectorCasesToMarkdown(
                 path.join(docsDir, 'typespec/packages/http-specs/specs'),
                 path.join(docsDir, 'typespec/packages/http-specs/specs/generated')
-            ),
+            ).catch(error => ({ error: error as Error })),
             this.convertSpectorCasesToMarkdown(
                 path.join(docsDir, 'typespec-azure/packages/azure-http-specs/specs'),
                 path.join(docsDir, 'typespec-azure/packages/azure-http-specs/specs/generated')
-            )
+            ).catch(error => ({ error: error as Error }))
         ]);
         
         for (const result of results) {
-            if (result.error) {
+            if (result?.error) {
                 console.error(`Error processing specs: ${result.error.message}`);
             }
         }
@@ -92,7 +92,11 @@ export class SpectorCaseProcessor {
             for (let i = 0; i < specs.length; i++) {
                 const spec = specs[i];
                 const specPath = paths[i];
-                
+                const fileName = path.basename(specPath).toLowerCase();
+                // Only process main.tsp files (skip client.tsp as it will be processed in processSpecFile)
+                if (fileName !== 'main.tsp') {
+                    continue;
+                }
                 results.push(this.processSpecFile(spec, specPath, root, targetRoot));
                 
                 // Limit concurrency
@@ -118,7 +122,7 @@ export class SpectorCaseProcessor {
      * Process a single spec file
      */
     private static async processSpecFile(
-        spec: string,
+        mainSpec: string,
         specPath: string,
         root: string,
         targetRoot: string
@@ -128,12 +132,21 @@ export class SpectorCaseProcessor {
             const relativeDir = path.relative(root, dir);
             console.log(`Processing spec path: ${relativeDir}`);
 
-            const scenarios = this.getScenarios('@scenario\n', spec);
+            // Check for client.tsp in the same directory
+            const clientTspPath = path.join(dir, 'client.tsp');
+            let clientTsp: string | undefined;
+            if (fs.existsSync(clientTspPath)) {
+                clientTsp = fs.readFileSync(clientTspPath, 'utf-8');
+                console.log(`Found client.tsp in: ${relativeDir}`);
+            }
+
+            const scenarios = this.getScenarios('@scenario\n', mainSpec);
             if (scenarios.length === 0) {
                 console.log(`No scenarios found in spec path: ${relativeDir}, skipping.`);
                 return;
             }
-            const doc = await this.createMarkdownDoc(scenarios, spec);
+            
+            const doc = await this.createMarkdownDoc(scenarios, mainSpec, clientTsp);
             
             // Create target directory if it doesn't exist
             const targetDir = path.join(targetRoot, relativeDir);
@@ -180,11 +193,15 @@ export class SpectorCaseProcessor {
      */
     private static async createMarkdownDoc(
         scenarios: string[],
-        spec: string
+        mainSpec: string,
+        clientTsp?: string
     ): Promise<string> {
         try {
+            // Combine spec and client.tsp for analysis context
+            const combinedSpec = clientTsp ? `// === MAIN SPEC (main.tsp) ===\n${mainSpec}\n\n// === CLIENT CUSTOMIZATION (client.tsp) ===\n${clientTsp}` : mainSpec;
+            
             // Single comprehensive call to process all scenarios at once
-            const analysisResult = await this.analyzeScenariosAndSpec(scenarios, spec);
+            const analysisResult = await this.analyzeScenariosAndSpec(scenarios, combinedSpec);
             
             let doc = `# Usages for ${analysisResult.title}\n\n`;
             
@@ -206,11 +223,21 @@ export class SpectorCaseProcessor {
                 doc += section + '\n';
             }
             
-            const removed = this.removeSpectorContent(spec);
+            const removedMain = this.removeSpectorContent(mainSpec);
             doc += "## Full Sample: \n" +
+            "// main.tsp\n" +
                 "``` typespec\n" +
-                removed + "\n" +
+                removedMain + "\n" +
                 "```\n";
+            
+            // Add client.tsp content if exists
+            if (clientTsp) {
+                const removedClient = this.removeSpectorContent(clientTsp);
+                doc +=  "// client.tsp\n" +
+                    "``` typespec\n" +
+                    removedClient + "\n" +
+                    "```\n";
+            }
                 
             return doc;
         } catch (error) {
@@ -233,7 +260,7 @@ export class SpectorCaseProcessor {
 
         const prompt = `Analyze the following TypeSpec content and scenarios to extract structured information.
 
-            MAIN SPEC CONTENT:
+            FULL SPEC CONTENT:
             ${spec}
 
             SCENARIOS:

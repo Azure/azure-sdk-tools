@@ -106,7 +106,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
 		query = *req.Message.RawContent
 	}
-	intention, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, llmMessages)
+	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, llmMessages)
 	if err != nil {
 		log.Printf("Intention recognize failed with error: %s", err)
 		return nil, err

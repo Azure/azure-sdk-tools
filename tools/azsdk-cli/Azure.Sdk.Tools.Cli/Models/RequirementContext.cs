@@ -55,7 +55,8 @@ public class RequirementContext
     /// </summary>
     public bool IsSpecsRepo()
     {
-        return RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase);
+        return RepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase) || 
+               RepoName.Equals("azure-rest-api-specs-pr", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

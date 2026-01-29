@@ -25,11 +25,11 @@ public interface ITspClientHelper
     /// <summary>
     /// Runs `tsp-client update` to regenerate a TypeSpec client using the tsp-location.yaml in the package directory.
     /// </summary>
-    /// <param name="packagePath">Path to the SDK package directory containing tsp-location.yaml.</param>
+    /// <param name="tspLocationDirectory">Path to the directory containing tsp-location.yaml.</param>
     /// <param name="commitSha">Optional commit SHA to update the tsp-location.yaml with before regeneration. If null, uses the commit SHA from the existing tsp-location.yaml.</param>
     /// <param name="isCli">True when invoked from CLI flow (suppresses duplicate streamed output in error text).</param>
     /// <param name="ct">Cancellation token.</param>
-    Task<TspToolResponse> UpdateGenerationAsync(string packagePath, string? commitSha = null, bool isCli = false, CancellationToken ct = default);
+    Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, CancellationToken ct = default);
 
     /// <summary>
     /// Runs `tsp-client init` to initialize SDK generation from a tspconfig.yaml file.

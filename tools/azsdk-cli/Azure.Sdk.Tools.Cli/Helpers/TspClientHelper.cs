@@ -79,20 +79,20 @@ public class TspClientHelper : ITspClientHelper
     }
 
     /// <inheritdoc />
-    public async Task<TspToolResponse> UpdateGenerationAsync(string packagePath, string? commitSha = null, bool isCli = false, CancellationToken ct = default)
+    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, CancellationToken ct = default)
     {
-        var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
-        logger.LogInformation("tsp-client update: {packagePath}, commit: {commit}", packagePath, commitSha ?? "(latest)");
+        var tspLocationPath = Path.Combine(tspLocationDirectory, "tsp-location.yaml");
+        logger.LogInformation("tsp-client update: {tspLocationDirectory}, commit: {commit}", tspLocationDirectory, commitSha ?? "(latest)");
         
         if (!File.Exists(tspLocationPath))
         {
             return new TspToolResponse {
                 ResponseError = $"tsp-location.yaml not found at path: {tspLocationPath}",
-                TypeSpecProject = packagePath
+                TypeSpecProject = tspLocationDirectory
             };
         }
         
-        var repoRootFolder = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+        var repoRootFolder = await gitHelper.DiscoverRepoRootAsync(tspLocationDirectory, ct);
         
         var args = new List<string> { "tsp-client", "update" };
         if (!string.IsNullOrEmpty(commitSha))
@@ -106,7 +106,7 @@ public class TspClientHelper : ITspClientHelper
             npmPrefix,
             args.ToArray(),
             logOutputStream: true,
-            workingDirectory: packagePath,
+            workingDirectory: tspLocationDirectory,
             timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
         );
 
@@ -118,14 +118,14 @@ public class TspClientHelper : ITspClientHelper
                 ResponseError = isCli
                     ? "Failed to regenerate TypeSpec client, see details in the above logs."
                     : "Failed to regenerate TypeSpec client, see generator output below" + Environment.NewLine + result.Output,
-                TypeSpecProject = packagePath
+                TypeSpecProject = tspLocationDirectory
             };
         }
 
         return new TspToolResponse
         {
             IsSuccessful = true,
-            TypeSpecProject = packagePath
+            TypeSpecProject = tspLocationDirectory
         };
     }
 

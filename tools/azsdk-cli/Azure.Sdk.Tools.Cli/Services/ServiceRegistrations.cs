@@ -16,6 +16,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Telemetry;
 
 
@@ -101,6 +102,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             });
             services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
             services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();
+
+            // TypeSpec Customization Service (uses Copilot SDK)
+            services.AddScoped<ITypeSpecCustomizationService, TypeSpecCustomizationService>();
+
 
             services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>

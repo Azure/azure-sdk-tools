@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.ClientModel.Primitives;
+using System.Text.Json;
+using Azure.Identity;
+using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
 using Octokit;
-using Azure.Identity;
-using Azure.AI.OpenAI;
-using Azure.Search.Documents.Indexes;
-using System.Text.Json;
+using OpenAI;
 
 namespace SearchIndexCreator
 {
@@ -26,6 +27,7 @@ namespace SearchIndexCreator
             Console.WriteLine("3. Process Demo");
             Console.WriteLine("4. Create or Refresh Labels");
             Console.WriteLine("5. Create or Update Knowledge Agent");
+            Console.WriteLine("6. Delete Knowledge Agent");
 
             var input = Console.ReadLine();
 
@@ -48,6 +50,9 @@ namespace SearchIndexCreator
                     case "5":
                         await ProcessKnowledgeAgent(config);
                         break;
+                    case "6":
+                        await DeleteKnowledgeAgent(config);
+                        break;
                     default:
                         Console.WriteLine("Invalid option selected.");
                         break;
@@ -63,7 +68,9 @@ namespace SearchIndexCreator
         {
             // 1. Retrieve all issues from a repository
             var issueTriageContentRetrieval = new IssueTriageContentRetrieval(config);
-            var issueTriageContent = await issueTriageContentRetrieval.RetrieveContent("Azure");
+            var repository = config["repo"];
+            var repoOwner = GetRepositoryOwner(repository);
+            var issueTriageContent = await issueTriageContentRetrieval.RetrieveContent(repoOwner);
             Console.WriteLine($"Retrieved {issueTriageContent.Count} search contents from the repository.");
 
             // 2. Upload the search contents to Azure Blob Storage
@@ -73,11 +80,21 @@ namespace SearchIndexCreator
             //  3. Create an Azure Search Index
             var index = new IssueTriageContentIndex(config);
             var credential = new AzureCliCredential();
-            var openAIClient = new AzureOpenAIClient(new Uri(config["OpenAIEndpoint"]), credential);
+            var openAIClient = new OpenAIClient(
+                new BearerTokenPolicy(credential, "https://cognitiveservices.azure.com/.default"),
+                new OpenAIClientOptions {Endpoint = new Uri($"{config["OpenAIEndpoint"].TrimEnd('/')}/openai/v1/")});
             var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), credential);
             var indexerClient = new SearchIndexerClient(new Uri(config["SearchEndpoint"]), credential);
             await index.SetupAndRunIndexer(indexClient, indexerClient, openAIClient);
         }
+
+        private static string GetRepositoryOwner(string repository)
+        {
+            return repository?.Equals("mcp", StringComparison.OrdinalIgnoreCase) == true
+                ? "microsoft"
+                : "Azure";
+        }
+
         private static async Task ProcessIssueExamples(IConfigurationSection config)
         {
             // Retrieve examples of issues for testing from a repository
@@ -113,7 +130,9 @@ namespace SearchIndexCreator
         {
             var tokenAuth = new Credentials(config["GithubKey"]);
             var labelRetrieval = new LabelRetrieval(tokenAuth, config);
-            await labelRetrieval.CreateOrRefreshLabels("Azure");
+            var repo = config["repo"];
+            var repoOwner = GetRepositoryOwner(repo);
+            await labelRetrieval.CreateOrRefreshLabels(repoOwner);
         }
 
         private static async Task ProcessKnowledgeAgent(IConfigurationSection config)
@@ -122,6 +141,14 @@ namespace SearchIndexCreator
             var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), credential);
             var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
             await issueKnowledgeAgent.CreateOrUpdateAsync();
+        }
+
+        private static async Task DeleteKnowledgeAgent(IConfigurationSection config)
+        {
+            var defaultCredential = new AzureCliCredential();
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
+            await issueKnowledgeAgent.DeleteAsync();
         }
     }
 }

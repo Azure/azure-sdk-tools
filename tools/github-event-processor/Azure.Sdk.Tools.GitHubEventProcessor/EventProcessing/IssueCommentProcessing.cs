@@ -1,22 +1,34 @@
 using System;
-using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using System.Threading.Tasks;
-using Octokit;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Microsoft.Extensions.Logging;
+using Octokit;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     public class IssueCommentProcessing
     {
 
+        private readonly ILogger<IssueCommentProcessing> Logger;
+        private readonly IssueProcessing IssueProcssing;
+
+        public IssueCommentProcessing(ILogger<IssueCommentProcessing> logger, IssueProcessing issueProcessing)
+        {
+            Logger = logger;
+            IssueProcssing = issueProcessing;
+        }
         /// <summary>
         /// Every rule will have it's own function that will be called here, the rule configuration will determine
         /// which rules will execute.
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueCommentPayload">IssueCommentPayload deserialized from the json event payload</param>
-        public static async Task ProcessIssueCommentEvent(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public async Task ProcessIssueCommentEvent(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
+            Logger.LogInformation("Processing issue comment event. Action: {Action}, Issue: {IssueNumber}, Repository: {Repository}",
+                issueCommentPayload.Action, issueCommentPayload.Issue.Number, issueCommentPayload.Repository.FullName);
+
             AuthorFeedback(gitHubEventClient, issueCommentPayload);
             ResetIssueActivity(gitHubEventClient, issueCommentPayload);
             ReopenIssue(gitHubEventClient, issueCommentPayload);
@@ -39,7 +51,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        public static void AuthorFeedback(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public void AuthorFeedback(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.AuthorFeedback))
             {
@@ -49,6 +61,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, TriageLabelConstants.NeedsAuthorFeedback) &&
                         issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login)
                     {
+                        Logger.LogInformation("AuthorFeedback: Author {Author} commented on issue #{IssueNumber}. Removing '{NeedsAuthorFeedback}' and adding '{NeedsTeamAttention}'",
+                            issueCommentPayload.Sender.Login, issueCommentPayload.Issue.Number, TriageLabelConstants.NeedsAuthorFeedback, TriageLabelConstants.NeedsTeamAttention);
                         gitHubEventClient.RemoveLabel(TriageLabelConstants.NeedsAuthorFeedback);
                         gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                     }
@@ -62,11 +76,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        public static void ResetIssueActivity(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public void ResetIssueActivity(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (issueCommentPayload.Action == ActionConstants.Created)
             {
-                IssueProcessing.Common_ResetIssueActivity(gitHubEventClient, issueCommentPayload.Action, issueCommentPayload.Issue, issueCommentPayload.Sender);
+                IssueProcssing.Common_ResetIssueActivity(gitHubEventClient, issueCommentPayload.Action, issueCommentPayload.Issue, issueCommentPayload.Sender);
             }
         }
 
@@ -88,7 +102,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        public static void ReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public void ReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ReopenIssue))
             {
@@ -103,6 +117,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         // but being that the issue is closed is part of the criteria, this will be set
                         DateTime.UtcNow <= issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7))
                     {
+                        Logger.LogInformation("ReopenIssue: Reopening issue #{IssueNumber} due to author {Author} comment within 7 days of closing",
+                            issueCommentPayload.Issue.Number, issueCommentPayload.Sender.Login);
                         gitHubEventClient.RemoveLabel(TriageLabelConstants.NeedsAuthorFeedback);
                         gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
                         gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
@@ -125,7 +141,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        public static async Task DeclineToReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public async Task DeclineToReopenIssue(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.DeclineToReopenIssue))
             {
@@ -140,6 +156,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         bool hasPermissionOfNone = await gitHubEventClient.DoesUserHavePermission(issueCommentPayload.Repository.Id, issueCommentPayload.Sender.Login, PermissionLevel.None);
                         if (hasPermissionOfNone)
                         {
+                            Logger.LogInformation("DeclineToReopenIssue: Issue #{IssueNumber} has been closed for more than 7 days. Adding comment to suggest opening new issue.",
+                                issueCommentPayload.Issue.Number);
                             string issueComment = "Thank you for your interest in this issue! Because it has been closed for a period of time, we strongly advise that you open a new issue linking to this to ensure better visibility of your comment.";
                             gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
                         }
@@ -166,7 +184,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
-        public static async Task IssueAddressedCommands(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
+        public async Task IssueAddressedCommands(GitHubEventClient gitHubEventClient, IssueCommentPayload issueCommentPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IssueAddressedCommands))
             {
@@ -181,6 +199,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         if (issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login ||
                             hasAdminOrWritePermission)
                         {
+                            Logger.LogInformation("IssueAddressedCommands: User {User} requested /unresolve on issue #{IssueNumber}. Reopening and removing '{IssueAddressed}' label.",
+                                issueCommentPayload.Sender.Login, issueCommentPayload.Issue.Number, TriageLabelConstants.IssueAddressed);
                             gitHubEventClient.SetIssueState(issueCommentPayload.Issue, ItemState.Open);
                             gitHubEventClient.RemoveLabel(TriageLabelConstants.IssueAddressed);
                             gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
@@ -190,6 +210,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         {
                             if (!hasAdminOrWritePermission)
                             {
+                                Logger.LogInformation("IssueAddressedCommands: User {User} attempted /unresolve on issue #{IssueNumber} but is not the author and lacks permissions.",
+                                    issueCommentPayload.Sender.Login, issueCommentPayload.Issue.Number);
                                 string issueComment = $"Hi ${issueCommentPayload.Sender.Login}, only the original author of the issue can ask that it be unresolved.  Please open a new issue with your scenario and details if you would like to discuss this topic with the team.";
                                 gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
                             }

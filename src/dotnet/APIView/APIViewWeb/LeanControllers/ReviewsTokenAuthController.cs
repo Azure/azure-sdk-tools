@@ -104,21 +104,23 @@ public class ReviewsTokenAuthController : ControllerBase
 
     /// <summary>
     ///     Returns the canonical APIView review URL for a given package and language.
-    ///     This provides a static, user-friendly endpoint for locating reviews.
+    ///     By default redirects to the review page. Use redirect=false to get JSON response instead.
     /// </summary>
     /// <param name="package">Package query (e.g., "Azure.Storage.Blobs", "azure-storage-blob")</param>
-    /// <param name="language">language (e.g., "C#", "Python", "Java", "JavaScript")</param>
-    /// <param name="version">Optional package version. If not specified, returns URL to latest revision.</param>
-    /// <returns>JSON response with the canonical review URL</returns>
+    /// <param name="language">Language (e.g., "C#", "Python", "Java", "JavaScript")</param>
+    /// <param name="version">Optional package version. If not specified, uses latest revision.</param>
+    /// <param name="redirect">If true (default), redirects to review page. If false, returns JSON with URL.</param>
+    /// <returns>Redirect to review page (default) or JSON response with URL</returns>
     /// <example>
-    ///     GET /review?package=Azure.Storage.Blobs&amp;language=C#
-    ///     Returns: { "url": "https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}" }
+    ///     GET /review?package=Azure.Storage.Blobs&amp;language=C# - Redirects to review
+    ///     GET /review?package=Azure.Storage.Blobs&amp;language=C#&amp;redirect=false - Returns { "url": "..." }
     /// </example>
     [HttpGet("/review", Name = "GetReviewUrl")]
     public async Task<IActionResult> GetReviewUrl(
         [FromQuery] string package,
         [FromQuery] string language,
-        [FromQuery] string version = null)
+        [FromQuery] string version = null,
+        [FromQuery] bool redirect = true)
     {
         if (string.IsNullOrEmpty(package) || string.IsNullOrEmpty(language))
         {
@@ -143,6 +145,11 @@ public class ReviewsTokenAuthController : ControllerBase
                 result.Language,
                 _configuration,
                 _languageServices);
+
+            if (redirect)
+            {
+                return Redirect(reviewUrl);
+            }
 
             return new LeanJsonResult(new { url = reviewUrl }, StatusCodes.Status200OK);
         }

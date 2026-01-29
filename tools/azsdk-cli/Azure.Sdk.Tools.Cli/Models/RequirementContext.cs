@@ -16,6 +16,11 @@ public class RequirementContext
     public required string RepoRoot { get; init; }
 
     /// <summary>
+    /// The name of the repository.
+    /// </summary>
+    public required string RepoName { get; init; }
+
+    /// <summary>
     /// The package path provided by the user, or null if not specified.
     /// </summary>
     public string? PackagePath { get; init; }
@@ -46,11 +51,6 @@ public class RequirementContext
     public bool IsLinux => Platform == OSPlatform.Linux;
 
     /// <summary>
-    /// The name of the repository (folder name).
-    /// </summary>
-    public string RepoName => Path.GetFileName(RepoRoot);
-
-    /// <summary>
     /// Determines if the current repository is the azure-rest-api-specs repository.
     /// </summary>
     public bool IsSpecsRepo()
@@ -61,11 +61,12 @@ public class RequirementContext
     /// <summary>
     /// Creates a RequirementContext for the current environment.
     /// </summary>
-    public static RequirementContext Create(string repoRoot, string? packagePath, HashSet<SdkLanguage>? languages = null)
+    public static RequirementContext Create(string repoRoot, string repoName, string? packagePath, HashSet<SdkLanguage>? languages = null)
     {
         return new RequirementContext
         {
             RepoRoot = repoRoot,
+            RepoName = repoName,
             PackagePath = packagePath,
             Platform = GetCurrentPlatform(),
             Languages = languages ?? new HashSet<SdkLanguage>()

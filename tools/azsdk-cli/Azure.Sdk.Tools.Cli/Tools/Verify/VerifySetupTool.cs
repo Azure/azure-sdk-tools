@@ -196,7 +196,8 @@ public class VerifySetupTool : LanguageMcpTool
     private async Task<RequirementContext> CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null, CancellationToken ct = default)
     {
         var (repoRoot, _, _) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
-        
+        var repoName = await gitHelper.GetRepoNameAsync(repoRoot, ct);
+
         // If no languages specified, try to detect from the repo
         if (languages == null || languages.Count == 0)
         {
@@ -213,6 +214,7 @@ public class VerifySetupTool : LanguageMcpTool
 
         return RequirementContext.Create(
             repoRoot: repoRoot,
+            repoName: repoName,
             packagePath: packagePath,
             languages: languages
         );

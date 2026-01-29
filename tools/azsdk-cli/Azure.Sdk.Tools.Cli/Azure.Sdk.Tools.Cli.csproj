@@ -8,7 +8,8 @@
     <IsPackable>true</IsPackable>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <ToolCommandName>azsdk</ToolCommandName>
-    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604</NoWarn>
+    <!-- CS8002: GitHub.Copilot.SDK is not strong-named (preview package) -->
+    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604;CS8002</NoWarn>
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>

@@ -37,10 +37,16 @@ export class ReviewPageLayoutComponent {
   @Input() activeSamplesRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
   @Input() showPageoptionsButton: boolean = false;
+  @Input() showLeftNavigation: boolean = true;
 
   @Output() pageOptionsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 
   handlePageOptionsEmitter(showPageOptions: boolean) {
     this.pageOptionsEmitter.emit(showPageOptions);
+  }
+
+  handleLeftNavigationEmitter(showLeftNavigation: boolean) {
+    this.showLeftNavigationEmitter.emit(showLeftNavigation);
   }
 }

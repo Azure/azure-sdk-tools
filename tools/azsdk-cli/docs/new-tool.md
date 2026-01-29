@@ -18,6 +18,7 @@ Help me create a new tool using #new-tool.md as a reference
    * [Response Handling](#response-handling)
    * [Prompt Template System](#prompt-template-system)
    * [Registration and Testing](#registration-and-testing)
+   * [Tool Discoverability Testing](#add-test-prompts-for-tool-discoverability)
    * [Required Tool Conventions](#required-tool-conventions)
    * [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
 
@@ -606,6 +607,43 @@ internal class YourToolTests
     }
 }
 ```
+
+### Add Test Prompts for Tool Discoverability
+
+When creating a new tool, you **must** add test prompts to validate that LLM agents can discover your tool from natural language queries. This ensures your tool's description is effective for embedding-based tool matching.
+
+**Add 2-3 prompt variations** to [`Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json`](../Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json):
+
+```json
+{ "toolName": "azsdk_your_tool_method", "prompt": "Natural language query that should match your tool", "category": "all" },
+{ "toolName": "azsdk_your_tool_method", "prompt": "Alternative phrasing users might use", "category": "all" },
+{ "toolName": "azsdk_your_tool_method", "prompt": "Another variation of the request", "category": "all" }
+```
+
+**Guidelines for test prompts:**
+- Write prompts as users would naturally phrase them (not technical descriptions)
+- Include variations: questions, commands, different terminology
+- Use `"category": "all"` for tools that work in any repository
+- Use `"category": "azure-rest-api-specs"` for tools specific to the specs repository
+
+**Run the discoverability tests:**
+```bash
+# Test all prompts match their expected tools
+dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~Evaluate_PromptToToolMatch"
+
+# Verify your tool has test prompts (will fail if missing)
+dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~AllToolsHaveTestPrompts"
+```
+
+**If tests fail**, your tool description may need improvement. The test output shows:
+- Current ranking of your tool for the prompt
+- Confidence score (must be ≥40%)
+- Your tool's description (to help identify what needs improvement)
+
+**Tips for good tool descriptions:**
+- Include action verbs users would say: "analyze", "check", "create", "update"
+- Mention the domain/context: "pipeline", "SDK", "TypeSpec", "release plan"
+- Be specific about what the tool does, not just technical implementation details
 
 ## Required Tool Conventions
 

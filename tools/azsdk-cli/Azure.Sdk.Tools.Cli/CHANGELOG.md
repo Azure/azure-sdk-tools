@@ -1,6 +1,25 @@
 # Release History
 
-## 0.5.12 (2026-01-21)
+## 0.5.15 (Unreleased)
+
+### Features Added
+
+- Added a new CLI command to update the package release status in release plan.
+- Added new MCP tools azsdk_package_generate_samples and azsdk_package_translate_samples for end-to-end sample workflows.
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.5.14 (2026-01-27)
+
+### Features Added
+
+- Added a new CLI command to update the package release status in release plan.
+
+## 0.5.13 (2026-01-23)
 
 ### Features Added
 

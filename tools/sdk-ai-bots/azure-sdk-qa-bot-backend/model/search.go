@@ -311,6 +311,12 @@ func GetIndexLink(chunk Index) string {
 		path = TrimFileFormat(path)
 		wikiPath := strings.ReplaceAll(path, "#", "/")
 		return "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki?wikiVersion=GBwikiMaster&pagePath=/" + wikiPath
+	case Source_AzureRestAPISpecDocs:
+		// Handle documents from azure-rest-api-specs documentation
+		return "https://github.com/Azure/azure-rest-api-specs/blob/main/" + path
+	case Source_AzureOpenapiDiffDocs:
+		// Handle documents from openapi-diff/docs
+		return "https://github.com/Azure/openapi-diff/blob/main/" + path
 	default:
 		return ""
 	}

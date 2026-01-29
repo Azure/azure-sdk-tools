@@ -156,11 +156,6 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         return new TestRunResponse(result);
     }
 
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-    {
-        return categories.TryGetValue("javascript", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
-    }
-
     public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
         // In azure-sdk-for-js, the presence of a "generated" folder at the same level

@@ -255,11 +255,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             }
         }               
 
-        public virtual List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-        {
-            throw new NotImplementedException("Environment requirements are not implemented for this language.");
-        }
-
         /// <summary>
         /// Updates the package metadata content for a specified package.
         /// </summary>

@@ -362,9 +362,4 @@ public sealed partial class JavaLanguageService : LanguageService
             return false;
         }
     }
-
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-    {
-        return categories.TryGetValue("java", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
-    }
 }

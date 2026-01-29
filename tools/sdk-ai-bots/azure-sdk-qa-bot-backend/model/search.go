@@ -312,11 +312,10 @@ func GetIndexLink(chunk Index) string {
 		wikiPath := strings.ReplaceAll(path, "#", "/")
 		return "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki?wikiVersion=GBwikiMaster&pagePath=/" + wikiPath
 	case Source_AzureRestAPISpecDocs:
-		// Handle documents from both azure-rest-api-specs and openapi-diff repos
-		if strings.Contains(path, "BreakingChange-Oad-Rules-Mapping") {
-			return "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/" + path
-		}
-		// Documents from openapi-diff/docs
+		// Handle documents from azure-rest-api-specs documentation
+		return "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/" + path
+	case Source_AzureOpenapiDiffDocs:
+		// Handle documents from openapi-diff/docs
 		return "https://github.com/Azure/openapi-diff/blob/main/docs/" + path
 	default:
 		return ""

@@ -47,11 +47,18 @@ export function processExcerptTokens(
   deprecated?: boolean,
 ): void {
   for (const excerpt of excerptTokens) {
-    const trimmedText = excerpt.text.trim();
-    if (!trimmedText) continue;
+    const text = excerpt.text;
+    if (!text || !text.trim()) continue;
 
-    const hasPrefixSpace = needsLeadingSpace(trimmedText);
-    const hasSuffixSpace = needsTrailingSpace(trimmedText);
+    // Check if original text had leading/trailing whitespace
+    const hasLeadingWhitespace = text.startsWith(" ") || text.startsWith("\t");
+    const hasTrailingWhitespace = text.endsWith(" ") || text.endsWith("\t");
+
+    const trimmedText = text.trim();
+
+    // Determine spacing based on both original whitespace and token type
+    const hasPrefixSpace = hasLeadingWhitespace || needsLeadingSpace(trimmedText);
+    const hasSuffixSpace = hasTrailingWhitespace || needsTrailingSpace(trimmedText);
 
     if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
       tokens.push(

@@ -1,5 +1,15 @@
 # Release History
 
+## 0.8.0 (2026-01-29)
+
+### Features Added
+
+* Add metadata for knowledge and clarify management-plane and data-plane
+
+### Other Changes
+
+* Enhance common prompt for language channel
+
 ## 0.7.1 (2026-01-20)
 
 ### Bugs Fixed

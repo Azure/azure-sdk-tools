@@ -28,7 +28,7 @@ Sub-queries:
 - "Python SDK paginated list operations example"
 - "Azure SDK Python async pagination"
 
-Question: "How do solve Go SDK generation errors"
+Question: "How do I solve Go SDK generation errors"
 Sub-queries:
 - "Azure SDK Go code generation process"
 - "Common Azure SDK Go generation errors"

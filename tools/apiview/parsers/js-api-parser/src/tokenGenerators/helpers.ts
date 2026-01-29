@@ -42,10 +42,12 @@ export function needsTrailingSpace(value: string): boolean {
 
 /** Process excerpt tokens and add them to the tokens array */
 export function processExcerptTokens(
-  excerptTokens: readonly ExcerptToken[],
+  excerptTokens: readonly ExcerptToken[] | undefined,
   tokens: ReviewToken[],
   deprecated?: boolean,
 ): void {
+  if (!excerptTokens) return;
+
   for (const excerpt of excerptTokens) {
     const text = excerpt.text;
     if (!text || !text.trim()) continue;

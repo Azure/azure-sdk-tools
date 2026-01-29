@@ -6,9 +6,9 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 namespace Azure.Sdk.Tools.Cli.Microagents.Tools;
 
 public record ClientCustomizationCodePatchInput(
-    [property: Description("The absolute path to the file to patch")] string FilePath,
-    [property: Description("The exact content to be replaced in the file")] string OldContent,
-    [property: Description("The new content to replace the old content with")] string NewContent);
+    [property: Description("Path to the customization file (relative to customization root)")] string FilePath,
+    [property: Description("Exact text to replace")] string OldContent,
+    [property: Description("Replacement text")] string NewContent);
 
 public record ClientCustomizationCodePatchOutput(
     [property: Description("Whether the patch was successfully applied")] bool Success,
@@ -41,48 +41,37 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
             return new ClientCustomizationCodePatchOutput(false, "New content cannot be empty");
         }
 
-        // Validate and get safe file path
         if (!ToolHelpers.TryGetSafeFullPath(baseDir, input.FilePath, out var safeFilePath))
         {
-            return new ClientCustomizationCodePatchOutput(false, "The file path is invalid or outside the allowed base directory");
+            return new ClientCustomizationCodePatchOutput(false, "File path is outside the customization directory");
         }
 
         try
         {
             if (!File.Exists(safeFilePath))
             {
-                return new ClientCustomizationCodePatchOutput(false, $"File does not exist: {input.FilePath}");
+                return new ClientCustomizationCodePatchOutput(false, $"File not found: {input.FilePath}");
             }
 
             var fileContent = await File.ReadAllTextAsync(safeFilePath, ct);
 
             if (!fileContent.Contains(input.OldContent))
             {
-                return new ClientCustomizationCodePatchOutput(false, $"Old content not found in file: {input.FilePath}");
+                return new ClientCustomizationCodePatchOutput(false, "Old content not found in file");
             }
 
-            // Count occurrences for informative feedback
             var occurrences = CountOccurrences(fileContent, input.OldContent);
-
-            // Apply the patch (replace all occurrences)
             var updatedContent = fileContent.Replace(input.OldContent, input.NewContent);
             await File.WriteAllTextAsync(safeFilePath, updatedContent, ct);
 
-            // Generate a brief description of what changed
             var description = GeneratePatchDescription(input.OldContent, input.NewContent);
-            
-            // Track this patch for reporting
             AppliedPatches.Add(new AppliedPatch(input.FilePath, description, occurrences));
 
-            var message = occurrences == 1 
-                ? $"Successfully applied patch to {input.FilePath}"
-                : $"Successfully applied patch to {input.FilePath} ({occurrences} replacements made)";
-
-            return new ClientCustomizationCodePatchOutput(true, message);
+            return new ClientCustomizationCodePatchOutput(true, $"Patch applied to {input.FilePath}");
         }
         catch (Exception ex)
         {
-            return new ClientCustomizationCodePatchOutput(false, $"Failed to apply patch to {input.FilePath}: {ex.Message}");
+            return new ClientCustomizationCodePatchOutput(false, $"Failed: {ex.Message}");
         }
     }
 

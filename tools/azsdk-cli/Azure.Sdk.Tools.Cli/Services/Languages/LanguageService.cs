@@ -51,6 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;
+
 #pragma warning disable CS1998
         public async virtual Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken cancellationToken = default)
         {
@@ -430,7 +431,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 // Skip build for Python projects early (Python SDKs don't require compilation)
                 if (Language == SdkLanguage.Python)
                 {
-                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    logger.LogDebug("Python SDK - skipping build");
                     return (true, null, null);
                 }
 
@@ -451,7 +452,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 }
 
                 packagePath = fullPath;
-                logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
                 // Get repository root path from project path
                 string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
@@ -459,8 +459,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 {
                     return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.", null);
                 }
-
-                logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
 
                 PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
 
@@ -470,7 +468,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     return (false, "No build configuration found or failed to prepare the build command.", packageInfo);
                 }
 
-                logger.LogInformation("Found valid configuration for build process. Executing configured script...");
+                logger.LogDebug("Found valid configuration for build process. Executing configured script...");
 
                 // Prepare script parameters
                 var scriptParameters = new Dictionary<string, string>
@@ -496,7 +494,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     return (false, errorMessage, packageInfo);
                 }
 
-                logger.LogInformation("Build completed successfully.");
+                logger.LogDebug("Build completed successfully.");
                 return (true, null, packageInfo);
             }
             catch (Exception ex)

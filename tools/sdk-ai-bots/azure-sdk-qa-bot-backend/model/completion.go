@@ -41,6 +41,7 @@ const (
 	Source_AzureSDKForJavaScript          Source = "azure_sdk_for_js_docs"
 	Source_AzureSDKForJavaScriptWiki      Source = "azure_sdk_for_js_wiki"
 	Source_AzureSDKForNetDocs             Source = "azure_sdk_for_net_docs"
+	Source_AzureRestAPISpecDocs           Source = "azure_rest_api_specs_docs"
 )
 
 type Role string

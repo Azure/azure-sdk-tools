@@ -31,7 +31,12 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): ReviewToken[] {
 
   tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
 
-  processExcerptTokens(item.propertyTypeExcerpt.spannedTokens, tokens, deprecated);
+  // Use spannedTokens if available, otherwise fall back to text
+  if (item.propertyTypeExcerpt.spannedTokens?.length) {
+    processExcerptTokens(item.propertyTypeExcerpt.spannedTokens, tokens, deprecated);
+  } else if (item.propertyTypeExcerpt.text) {
+    tokens.push(createToken(TokenKind.TypeName, item.propertyTypeExcerpt.text.trim(), { deprecated }));
+  }
 
   return tokens;
 }

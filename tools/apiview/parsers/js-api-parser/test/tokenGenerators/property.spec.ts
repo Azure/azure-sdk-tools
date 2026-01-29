@@ -1,4 +1,4 @@
-import { ApiItemKind, ApiProperty, ApiPropertySignature, ExcerptTokenKind } from "@microsoft/api-extractor-model";
+import { ApiItemKind, ApiProperty, ApiPropertySignature } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 import { propertyTokenGenerator } from "../../src/tokenGenerators/property";
 import { TokenKind } from "../../src/models";
@@ -29,9 +29,7 @@ describe("Property Token Generator", () => {
                 displayName: "myProperty",
                 isReadonly: false,
                 isOptional: false,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "string", canonicalReference: { toString: () => "string" } }]
-                },
+                propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiProperty;
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -48,9 +46,7 @@ describe("Property Token Generator", () => {
                 displayName: "readonlyProp",
                 isReadonly: true,
                 isOptional: false,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "number", canonicalReference: { toString: () => "number" } }]
-                },
+                propertyTypeExcerpt: { text: "number" },
             } as unknown as ApiProperty;
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -65,9 +61,7 @@ describe("Property Token Generator", () => {
                 displayName: "optionalProp",
                 isReadonly: false,
                 isOptional: true,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "boolean", canonicalReference: { toString: () => "boolean" } }]
-                },
+                propertyTypeExcerpt: { text: "boolean" },
             } as unknown as ApiPropertySignature;
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -85,10 +79,7 @@ describe("Property Token Generator", () => {
                 isStatic: { value: true, writable: false },
                 isReadonly: { value: false, writable: false },
                 isOptional: { value: false, writable: false },
-                propertyTypeExcerpt: { 
-                    value: { spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "string", canonicalReference: { toString: () => "string" } }] }, 
-                    writable: false 
-                },
+                propertyTypeExcerpt: { value: { text: "string" }, writable: false },
             });
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -105,10 +96,7 @@ describe("Property Token Generator", () => {
                 isStatic: { value: true, writable: false },
                 isReadonly: { value: true, writable: false },
                 isOptional: { value: false, writable: false },
-                propertyTypeExcerpt: { 
-                    value: { spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "string", canonicalReference: { toString: () => "string" } }] }, 
-                    writable: false 
-                },
+                propertyTypeExcerpt: { value: { text: "string" }, writable: false },
             });
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -124,9 +112,7 @@ describe("Property Token Generator", () => {
                 displayName: "deprecatedProp",
                 isReadonly: false,
                 isOptional: false,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "string", canonicalReference: { toString: () => "string" } }]
-                },
+                propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiProperty;
 
             const tokens = propertyTokenGenerator.generate(mockItem, true);
@@ -151,9 +137,7 @@ describe("Property Token Generator", () => {
                 displayName: "signatureProp",
                 isReadonly: false,
                 isOptional: false,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "string", canonicalReference: { toString: () => "string" } }]
-                },
+                propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiPropertySignature;
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -170,9 +154,7 @@ describe("Property Token Generator", () => {
                 displayName: "readonlySignature",
                 isReadonly: true,
                 isOptional: false,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "number", canonicalReference: { toString: () => "number" } }]
-                },
+                propertyTypeExcerpt: { text: "number" },
             } as unknown as ApiPropertySignature;
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -187,9 +169,7 @@ describe("Property Token Generator", () => {
                 displayName: "optionalSignature",
                 isReadonly: false,
                 isOptional: true,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "boolean", canonicalReference: { toString: () => "boolean" } }]
-                },
+                propertyTypeExcerpt: { text: "boolean" },
             } as unknown as ApiPropertySignature;
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -206,9 +186,7 @@ describe("Property Token Generator", () => {
                 displayName: "readonlyOptional",
                 isReadonly: true,
                 isOptional: true,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "string[]", canonicalReference: { toString: () => "string[]" } }]
-                },
+                propertyTypeExcerpt: { text: "string[]" },
             } as unknown as ApiPropertySignature;
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -226,9 +204,7 @@ describe("Property Token Generator", () => {
                 displayName: "interfaceProp",
                 isReadonly: false,
                 isOptional: false,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "string", canonicalReference: { toString: () => "string" } }]
-                },
+                propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiPropertySignature;
 
             const tokens = propertyTokenGenerator.generate(mockItem);
@@ -243,9 +219,7 @@ describe("Property Token Generator", () => {
                 displayName: "deprecatedSignature",
                 isReadonly: false,
                 isOptional: false,
-                propertyTypeExcerpt: { 
-                    spannedTokens: [{ kind: ExcerptTokenKind.Reference, text: "string", canonicalReference: { toString: () => "string" } }]
-                },
+                propertyTypeExcerpt: { text: "string" },
             } as unknown as ApiPropertySignature;
 
             const tokens = propertyTokenGenerator.generate(mockItem, true);

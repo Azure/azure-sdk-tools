@@ -42,43 +42,47 @@ export function needsTrailingSpace(value: string): boolean {
 
 /** Process excerpt tokens and add them to the tokens array */
 export function processExcerptTokens(
-  excerptTokens: readonly ExcerptToken[] | undefined,
+  excerptTokens: readonly ExcerptToken[],
   tokens: ReviewToken[],
   deprecated?: boolean,
 ): void {
-  if (!excerptTokens) return;
-
   for (const excerpt of excerptTokens) {
     const text = excerpt.text;
     if (!text || !text.trim()) continue;
 
-    // Check if original text had leading/trailing whitespace
-    const hasLeadingWhitespace = text.startsWith(" ") || text.startsWith("\t");
-    const hasTrailingWhitespace = text.endsWith(" ") || text.endsWith("\t");
+    // Split by newlines to preserve line structure
+    const lines = text.split(/(\r?\n)/);
 
-    const trimmedText = text.trim();
+    for (const segment of lines) {
+      // Handle newline - add as separate token or skip if empty
+      if (segment === '\n' || segment === '\r\n') {
+        continue; // Newlines are handled by the rendering layer
+      }
 
-    // Determine spacing based on both original whitespace and token type
-    const hasPrefixSpace = hasLeadingWhitespace || needsLeadingSpace(trimmedText);
-    const hasSuffixSpace = hasTrailingWhitespace || needsTrailingSpace(trimmedText);
+      const trimmedText = segment.trim();
+      if (!trimmedText) continue;
 
-    if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-      tokens.push(
-        createToken(TokenKind.TypeName, trimmedText, {
-          navigateToId: excerpt.canonicalReference.toString(),
-          hasPrefixSpace,
-          hasSuffixSpace,
-          deprecated,
-        }),
-      );
-    } else {
-      tokens.push(
-        createToken(TokenKind.Text, trimmedText, {
-          hasPrefixSpace,
-          hasSuffixSpace,
-          deprecated,
-        }),
-      );
+      const hasPrefixSpace = segment.startsWith(" ") || segment.startsWith("\t") || needsLeadingSpace(trimmedText);
+      const hasSuffixSpace = segment.endsWith(" ") || segment.endsWith("\t") || needsTrailingSpace(trimmedText);
+
+      if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
+        tokens.push(
+          createToken(TokenKind.TypeName, trimmedText, {
+            navigateToId: excerpt.canonicalReference.toString(),
+            hasPrefixSpace,
+            hasSuffixSpace,
+            deprecated,
+          }),
+        );
+      } else {
+        tokens.push(
+          createToken(TokenKind.Text, trimmedText, {
+            hasPrefixSpace,
+            hasSuffixSpace,
+            deprecated,
+          }),
+        );
+      }
     }
   }
 }

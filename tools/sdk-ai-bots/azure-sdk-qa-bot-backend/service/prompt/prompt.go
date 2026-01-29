@@ -78,10 +78,10 @@ func (p *CompletionPromptParser) ParseResponse(response, template string) (*mode
 		return nil, err
 	}
 	return &model.CompletionResp{
-		Answer:            resp.Answer,
-		HasResult:         resp.HasResult,
-		References:        append([]model.Reference{}, resp.References...),
-		ReasoningProgress: &resp.ReasoningProgress,
+		Answer:     resp.Answer,
+		HasResult:  resp.HasResult,
+		References: append([]model.Reference{}, resp.References...),
+		Reasoning:  &resp.Reasoning,
 	}, nil
 }
 

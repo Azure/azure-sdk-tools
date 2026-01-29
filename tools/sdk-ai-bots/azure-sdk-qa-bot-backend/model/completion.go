@@ -13,6 +13,7 @@ const (
 	TenantID_JavaScriptChannelQaBot TenantID = "javascript_channel_qa_bot"
 	TenantID_GeneralQaBot           TenantID = "general_qa_bot"
 	TenantID_APISpecReviewBot       TenantID = "api_spec_review_bot"
+	TenantID_AzureTypespecAuthoring TenantID = "azure_typespec_authoring"
 )
 
 type Source string
@@ -52,10 +53,9 @@ const (
 )
 
 type Message struct {
-	Role       Role    `json:"role" jsonschema:"required,description=The role of the message sender"`
-	Content    string  `json:"content" jsonschema:"required,description=The content of the message"`
-	RawContent *string `json:"raw_content,omitempty" jsonschema:"omitempty,description=The raw content of the message, used for searching"`
-	Name       *string `json:"name,omitempty" jsonschema:"omitempty,description=The name of the message sender, used for system messages"`
+	Role    Role    `json:"role" jsonschema:"required,description=The role of the message sender"`
+	Content string  `json:"content" jsonschema:"required,description=The content of the message"`
+	Name    *string `json:"name,omitempty" jsonschema:"omitempty,description=The name of the message sender, used for system messages"`
 }
 
 type Reference struct {
@@ -70,6 +70,7 @@ type AdditionalInfoType string
 const (
 	AdditionalInfoType_Link  AdditionalInfoType = "link"
 	AdditionalInfoType_Image AdditionalInfoType = "image"
+	AdditionalInfoType_Text  AdditionalInfoType = "text"
 )
 
 type AdditionalInfo struct {
@@ -91,14 +92,14 @@ type CompletionReq struct {
 }
 
 type CompletionResp struct {
-	ID                string      `json:"id" jsonschema:"required,description=The unique ID of the completion"`
-	Answer            string      `json:"answer" jsonschema:"required,description=The answer from the agent"`
-	HasResult         bool        `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
-	References        []Reference `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
-	FullContext       *string     `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
-	Intention         *Intention  `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
-	ReasoningProgress *string     `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
-	RouteTenant       *TenantID   `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID the question is routed to"`
+	ID          string      `json:"id" jsonschema:"required,description=The unique ID of the completion"`
+	Answer      string      `json:"answer" jsonschema:"required,description=The answer from the agent"`
+	HasResult   bool        `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
+	References  []Reference `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
+	FullContext *string     `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
+	Intention   *Intention  `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
+	Reasoning   *string     `json:"reasoning,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
+	RouteTenant *TenantID   `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID the question is routed to"`
 }
 
 type QuestionScope string

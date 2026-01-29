@@ -28,6 +28,19 @@ var typespecSources = []model.Source{
 	model.Source_StaticTypeSpecToSwaggerMapping,
 }
 
+var azureTypespecAuthoringSources = []model.Source{
+	model.Source_AzureAPIGuidelines,
+	model.Source_AzureResourceManagerRPC,
+	model.Source_TypeSpecAzure,
+	model.Source_TypeSpecQA,
+	model.Source_TypeSpecAzureHttpSpecs,
+	model.Source_TypeSpec,
+	model.Source_AzureRestAPISpec,
+	model.Source_TypeSpecMigration,
+	model.Source_TypeSpecHttpSpecs,
+	model.Source_StaticAzureDocs,
+}
+
 var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
 	model.Source_TypeSpecQA:                     3,
@@ -94,6 +107,12 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		Sources:                 []model.Source{model.Source_AzureSDKDocsEng},
 		AgenticSearchPrompt:     "azure_sdk_onboarding/agentic_search.md",
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
+	},
+	model.TenantID_AzureTypespecAuthoring: {
+		PromptTemplate:          "azure_typespec_authoring/qa.md",
+		Sources:                 azureTypespecAuthoringSources,
+		IntentionPromptTemplate: "azure_typespec_authoring/intention.md",
+		AgenticSearchPrompt:     "azure_typespec_authoring/agentic_search.md",
 	},
 	model.TenantID_GeneralQaBot: {
 		PromptTemplate:          "general/qa.md",

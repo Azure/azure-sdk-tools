@@ -316,7 +316,7 @@
       },
       "paths": [
         {
-          "description": "oad rules",
+          "description": "OpenAPI Diff (OAD) rules documentation",
           "path": "/docs",
           "folder": "static_azure_docs",
           "relativeByRepoPath": true

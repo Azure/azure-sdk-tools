@@ -47,29 +47,42 @@ export function processExcerptTokens(
   deprecated?: boolean,
 ): void {
   for (const excerpt of excerptTokens) {
-    const trimmedText = excerpt.text.trim();
-    if (!trimmedText) continue;
+    const text = excerpt.text;
+    if (!text || !text.trim()) continue;
 
-    const hasPrefixSpace = needsLeadingSpace(trimmedText);
-    const hasSuffixSpace = needsTrailingSpace(trimmedText);
+    // Split by newlines to preserve line structure
+    const lines = text.split(/(\r?\n)/);
 
-    if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-      tokens.push(
-        createToken(TokenKind.TypeName, trimmedText, {
-          navigateToId: excerpt.canonicalReference.toString(),
-          hasPrefixSpace,
-          hasSuffixSpace,
-          deprecated,
-        }),
-      );
-    } else {
-      tokens.push(
-        createToken(TokenKind.Text, trimmedText, {
-          hasPrefixSpace,
-          hasSuffixSpace,
-          deprecated,
-        }),
-      );
+    for (const segment of lines) {
+      // Handle newline - add as separate token or skip if empty
+      if (segment === '\n' || segment === '\r\n') {
+        continue; // Newlines are handled by the rendering layer
+      }
+
+      const trimmedText = segment.trim();
+      if (!trimmedText) continue;
+
+      const hasPrefixSpace = segment.startsWith(" ") || segment.startsWith("\t") || needsLeadingSpace(trimmedText);
+      const hasSuffixSpace = segment.endsWith(" ") || segment.endsWith("\t") || needsTrailingSpace(trimmedText);
+
+      if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
+        tokens.push(
+          createToken(TokenKind.TypeName, trimmedText, {
+            navigateToId: excerpt.canonicalReference.toString(),
+            hasPrefixSpace,
+            hasSuffixSpace,
+            deprecated,
+          }),
+        );
+      } else {
+        tokens.push(
+          createToken(TokenKind.Text, trimmedText, {
+            hasPrefixSpace,
+            hasSuffixSpace,
+            deprecated,
+          }),
+        );
+      }
     }
   }
 }

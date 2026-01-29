@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from azure.identity import DefaultAzureCredential, AzureCliCredential
 from _evals_result import EvalsResult
-from eval import AzureBotEvaluator
+from eval import AzureBotEvaluator, AzureBotReferenceEvaluator
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -115,12 +115,35 @@ if __name__ == "__main__":
                 "column_mapping": {
                     "response": "${data.response}",
                     "ground_truth": "${data.ground_truth}",
-                    "expected_reference_urls": "${data.expected_reference_urls}",
-                    "reference_urls": "${data.reference_urls}",
                     "testcase": "${data.testcase}",
                 }
             },
             ["bot_evals", "bot_evals_similarity", "bot_evals_response_completeness", "bot_evals_result"],
+        )
+
+        reference_evaluator = AzureBotReferenceEvaluator()
+        reference_evaluator_class = EvaluatorClass(
+            "reference_match",
+            reference_evaluator,
+            {
+                "column_mapping": {
+                    "expected_references": "${data.expected_references}",
+                    "references": "${data.references}"
+                }
+            }
+        )
+
+        knowledge_evaluator_threshold = float(evaluate_threshold)/5.0
+        knowledge_evaluator = AzureBotReferenceEvaluator(result_key="knowledge_match", threshold=knowledge_evaluator_threshold)
+        knowledge_evaluator_class = EvaluatorClass(
+            "knowledge_match",
+            knowledge_evaluator,
+            {
+                "column_mapping": {
+                    "expected_references": "${data.expected_knowledges}",
+                    "references": "${data.knowledges}"
+                }
+            }
         )
 
         evaluators = {
@@ -128,6 +151,8 @@ if __name__ == "__main__":
             "groundedness": groundedness_class,
             "response_completeness": response_completion_class,
             "bot_evals": qa_evaluator_class,
+            "reference_match": reference_evaluator_class,
+            "knowledge_match": knowledge_evaluator_class,
         }
 
         metrics = {}
@@ -144,7 +169,29 @@ if __name__ == "__main__":
             "groundedness_weight": 0.4,  # Staying grounded in guidelines
             "response_completeness_weight": 0.4,
         }
-        eval_result = EvalsResult(weights=weights, metrics=metrics)
+
+
+        suppression_file = os.path.join(script_directory, "suppression.json")
+        suppression: dict[str, list[str]] = {"evaluators": [], "testcases": []}
+        if os.path.exists(suppression_file):
+            with open(suppression_file, "r", encoding="utf-8") as f:
+                try:
+                    loaded = json.load(f)
+                    # Ensure both keys exist and are lists of str
+                    for key in ["evaluators", "testcases"]:
+                        val = loaded.get(key, [])
+                        if not isinstance(val, list):
+                            val = []
+                        # Convert all elements to str, ignore non-str
+                        val = [str(x) for x in val if isinstance(x, str) or isinstance(x, int) or isinstance(x, float)]
+                        suppression[key] = val
+                except (json.JSONDecodeError, TypeError) as exc:
+                    logging.warning(
+                        "Failed to parse context JSON in extract_title_and_link_from_context: %s",
+                        exc,
+                    )
+
+        eval_result = EvalsResult(weights=weights, metrics=metrics, suppressions=suppression)
 
         evals_runner = EvalsRunner(evaluators=evals, evals_result=eval_result)
 
@@ -194,7 +241,9 @@ if __name__ == "__main__":
         if args.baseline_check:
             evals_runner.evals_result.establish_baseline(all_results, args.is_ci)
         isPass = evals_runner.evals_result.verify_results(all_results, args.baseline_check)
-        if not isPass:
+        if isPass == 2:
+            print("##vso[task.logissue type=warning]Evaluation succeeded with warning. Some tests failed but suppressed.")
+        elif isPass == 1:
             sys.exit(1)
     except Exception as e:
         logging.info(f"❌ Error occurred: {str(e)}")

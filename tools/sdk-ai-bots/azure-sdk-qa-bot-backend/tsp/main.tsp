@@ -12,8 +12,9 @@ using TypeSpec.Versioning;
 @service({
   title: "Azure SDK QA Assistant Service",
 })
-@server("https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net", "Development server")
-@server("https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net", "Production server")
+@server("https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net", "Development server")
+@server("https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net", "Testing server")
+@server("https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net", "Production server")
 @versioned(Versions)
 namespace AzureSDK.QAAssistant;
 

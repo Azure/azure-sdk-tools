@@ -317,6 +317,13 @@ model FeedbackResponse {
   // Empty response model
 }
 
+@doc("Simple error response used by feedback API")
+@error
+model SimpleErrorResponse {
+  @doc("Error message")
+  error: string;
+}
+
 @doc("Error codes for the service")
 union ErrorCode {
   // Client Error Codes (4xx)

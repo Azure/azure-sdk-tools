@@ -34,5 +34,5 @@ interface Feedback {
   feedback(
     @header("Authorization") authorization?: string,
     @body request: FeedbackRequest
-  ): FeedbackResponse | ErrorResponse;
+  ): FeedbackResponse | SimpleErrorResponse;
 }

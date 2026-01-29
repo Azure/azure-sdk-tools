@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ApiExtractor.DotNet</RootNamespace>
+    
+    <PackageId>ApiExtractor.DotNet</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Microsoft</Authors>
+    <Description>Static analyzer that extracts public API surface from .NET assemblies for AI context</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
+  </ItemGroup>
+
+</Project>

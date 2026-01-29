@@ -78,8 +78,9 @@ public class APIViewReviewTool : MCPMultiCommandTool
         try
         {
             (string revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
+            string environment = GetEnvironmentFromUrl(apiViewUrl);
 
-            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
+            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, environment);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Failed to retrieve comments for API View: {apiViewUrl}" };
@@ -115,9 +116,10 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
 
         (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl!);
+        string environment = GetEnvironmentFromUrl(apiViewUrl!);
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType, environment);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Content not found" };
@@ -181,5 +183,27 @@ public class APIViewReviewTool : MCPMultiCommandTool
             _logger.LogError(ex, "Failed to parse APIView URL {Url}", url);
             throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url));
         }
+    }
+
+    private string GetEnvironmentFromUrl(string url)
+    {
+        // First check if APIVIEW_ENVIRONMENT is set. If set, use it as an override
+        // that takes precedence over URL auto-detection.
+        string? envOverride = Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT");
+        if (!string.IsNullOrEmpty(envOverride))
+        {
+            return envOverride;
+        }
+
+        // Auto-detect from URL when no override is present
+        if (url.Contains("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return "staging";
+        }
+        if (url.Contains("localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return "local";
+        }
+        return "production"; // Default for apiview.dev
     }
 }

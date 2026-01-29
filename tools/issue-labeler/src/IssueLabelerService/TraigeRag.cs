@@ -1,29 +1,29 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Search.Documents;
-using Microsoft.Extensions.Logging;
-using Azure.Search.Documents.Models;
-using OpenAI.Chat;
-using Azure.Search.Documents.Indexes;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using System;
-using Azure.AI.OpenAI;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Azure.Search.Documents;
+using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Models;
+using Microsoft.Extensions.Logging;
+using OpenAI;
+using OpenAI.Chat;
 
 namespace IssueLabelerService
 {
     public class TriageRag
     {
-        private static AzureOpenAIClient s_openAiClient;
-        private static SearchIndexClient s_searchIndexClient;
-        private ILogger<TriageRag> _logger;
-
-        public TriageRag(ILogger<TriageRag> logger, AzureOpenAIClient openAiClient, SearchIndexClient searchIndexClient)
+        private readonly OpenAIClient OpenAiClient;
+        private readonly SearchIndexClient SearchIndexClient;
+        private readonly ILogger<TriageRag> Logger;
+        
+        public TriageRag(ILogger<TriageRag> logger, OpenAIClient openAiClient, SearchIndexClient searchIndexClient)
         {
-            s_openAiClient = openAiClient;
-            _logger = logger;
-            s_searchIndexClient = searchIndexClient;
+            OpenAiClient = openAiClient;
+            Logger = logger;
+            SearchIndexClient = searchIndexClient;
         }
 
         public async Task<List<IndexContent>> IssueTriageContentIndexAsync(
@@ -33,7 +33,7 @@ namespace IssueLabelerService
             string query,
             int count,
             double scoreThreshold,
-            Dictionary<string, string> labels = null)
+            string filter = null)
         {
 
             var searchResults = await AzureSearchQueryAsync<IndexContent>(
@@ -41,7 +41,8 @@ namespace IssueLabelerService
                 semanticConfigName,
                 field,
                 query,
-                count
+                count,
+                filter
             );
 
             var filteredIssues = new List<IndexContent>();
@@ -54,7 +55,7 @@ namespace IssueLabelerService
                     filteredIssues.Add(issue);
                 }
             }
-            
+
             return filteredIssues;
         }
 
@@ -66,9 +67,9 @@ namespace IssueLabelerService
             int count,
             string filter = null)
         {
-            SearchClient searchClient = s_searchIndexClient.GetSearchClient(indexName);
+            SearchClient searchClient = SearchIndexClient.GetSearchClient(indexName);
 
-            _logger.LogInformation($"Searching for related {typeof(T).Name.ToLower()}s...");
+            Logger.LogInformation($"Searching for related {typeof(T).Name.ToLower()}s...");
             SearchOptions options = new SearchOptions
             {
                 Size = count,
@@ -98,7 +99,7 @@ namespace IssueLabelerService
                 query,
                 options);
 
-            _logger.LogInformation($"{typeof(T).Name}s found.");
+            Logger.LogInformation($"{typeof(T).Name}s found.");
 
             List<(T, double)> results = new List<(T, double)>();
             foreach (SearchResult<T> result in response.GetResults())
@@ -111,9 +112,9 @@ namespace IssueLabelerService
 
         public async Task<string> SendMessageQnaAsync(string instructions, string message, string modelName, string contextBlock = null, BinaryData structure = null)
         {
-            _logger.LogInformation($"\n\nWaiting for an Open AI response...");
-            ChatClient chatClient = s_openAiClient.GetChatClient(modelName);
-            
+            Logger.LogInformation($"\n\nWaiting for an Open AI response...");
+            ChatClient chatClient = OpenAiClient.GetChatClient(modelName);
+
             ChatCompletionOptions options = new ChatCompletionOptions();
 
             if (modelName.Contains("gpt"))
@@ -147,7 +148,7 @@ namespace IssueLabelerService
 
             ChatCompletion result = await chatClient.CompleteChatAsync(chatMessages, options);
 
-            _logger.LogInformation($"\n\nFinished loading Open AI response.");
+            Logger.LogInformation($"\n\nFinished loading Open AI response.");
 
             return result.Content[0].Text;
         }

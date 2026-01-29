@@ -35,24 +35,29 @@ The question must be classified into one of these categories:
     - Are unclear or ambiguous about the spec review context
     - Don't relate directly to API specification review
 
+## Intent Service Type
+{{include "../templates/intention/intent_service_type.md"}}
+
 ## Need RAG Processing
 {{include "../templates/intention/need_rag_processing.md"}}
 
 # Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
-  "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the categories: spec-validation, spec-guidelines, spec-structure, spec-migration, pr-process, breaking-changes, spec-examples, sdk-generation, unknown
+  "question": string,     // The rewritten standalone question
+  "category": string,     // Must be one of the intent categories or unknown
+  "service_type": string, // Must be one of the intent service types or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
 
 # Examples
 
-Original: "My PR validation is failing with LintDiff errors"
+Original: "My PR validation is failing with LintDiff errors for a data-plane spec"
 Response:
 {
-  "question": "Why is my spec PR validation failing with LintDiff errors and how do I fix them?",
+  "question": "Why is my spec PR validation failing with LintDiff errors for a data-plane spec and how do I fix them?",
   "category": "spec-validation",
+  "service_type": "data-plane",
   "needs_rag_processing": true
 }
 
@@ -61,5 +66,6 @@ Response:
 {
   "question": "What is the correct folder and file structure for organizing Azure REST API specification files?",
   "category": "spec-guidelines",
+  "service_type": "unknown",
   "needs_rag_processing": true
 }

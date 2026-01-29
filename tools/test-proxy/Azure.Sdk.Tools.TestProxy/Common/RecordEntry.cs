@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public int StatusCode { get; set; }
 
         public static RecordEntry Deserialize(JsonElement element)
-            {
+        {
             var record = new RecordEntry();
 
             if (element.TryGetProperty(nameof(RequestMethod), out JsonElement property))

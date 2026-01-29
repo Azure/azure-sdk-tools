@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Reflection;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Telemetry;
+using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli;
 
@@ -85,11 +87,38 @@ public class Program
                 options.Listen(System.Net.IPAddress.Loopback, 0); // 0 = dynamic port
             });
             builder.Services.ConfigureMcpLogging();
+            builder.Services.Configure<McpServerOptions>(options =>
+            {
+                // BASELINE TEST: Temporarily disabled to measure LLM tool selection without instructions
+                options.ServerInstructions = LoadServerInstructions();
+            });
             builder.Services
                 .AddMcpServer()
                 .WithStdioServerTransport();
         }
 
         return builder;
+    }
+
+    private static string LoadServerInstructions()
+    {
+        const string resourceName = "Azure.Sdk.Tools.Cli.Resources.azsdk-rules.txt";
+        try
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                Console.Error.WriteLine($"Warning: Server instructions resource '{resourceName}' not found. MCP server will run without instructions.");
+                return string.Empty;
+            }
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Warning: Failed to load server instructions from '{resourceName}': {ex.Message}");
+            return string.Empty;
+        }
     }
 }

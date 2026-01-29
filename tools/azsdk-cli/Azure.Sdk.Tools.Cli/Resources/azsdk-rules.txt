@@ -1,0 +1,8 @@
+Azure SDK Tools MCP server usage rules:
+- When working with Azure SDK repositories, TypeSpec API specifications, SDK code generation, SDK releases, or SDK workflows, use azsdk tools.
+- When generating SDKs from TypeSpec, ask user preference for local vs pipeline-based generation before proceeding.
+- When analyzing Azure Pipeline failures or CI/CD issues, use azsdk pipeline analysis tools.
+- When working with TypeSpec projects, use azsdk TypeSpec tools.
+- When managing pull requests in Azure SDK repositories, use azsdk GitHub tools.
+- When working with SDK release workflows or release plans, use azsdk release tools.
+- When checking package release readiness, use azsdk validation tools.

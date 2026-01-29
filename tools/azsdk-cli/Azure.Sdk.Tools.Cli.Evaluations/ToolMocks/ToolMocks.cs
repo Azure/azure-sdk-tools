@@ -28,6 +28,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                 new CreateReleasePlan(),
                 new VerifySetup(),
                 new LinkNamespaceApprovalIssue(),
+                // Server instructions eval mocks
+                new GetPipelineStatus(),
+                new GetPipelineLlmArtifacts(),
+                new GetFailedTestCases(),
+                new GetGithubUserDetails(),
+                new PackageRunCheck(),
+                new PackageGenerateCode(),
+                new RunGenerateSdk(),
             };
 
             foreach (var mock in mockInstances)

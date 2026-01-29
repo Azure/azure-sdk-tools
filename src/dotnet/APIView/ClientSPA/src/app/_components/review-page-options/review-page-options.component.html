@@ -119,56 +119,6 @@
     </ul>
     </app-page-options-section>
 
-    <app-page-options-section sectionName="Page Settings">
-    <ul class="list-group">
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showCommentsSwitch"
-            (onChange)="onCommentsSwitchChange($event)" data-clarity-region="toggle-comments" />
-            <label class="ms-2">Comments</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showSystemCommentsSwitch"
-            (onChange)="onShowSystemCommentsSwitchChange($event)" data-clarity-region="toggle-diagnostic-comments" />
-            <label class="ms-2">Diagnostic comments</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showDocumentationSwitch"
-            (onChange)="onShowDocumentationSwitchChange($event)" data-clarity-region="toggle-documentation" />
-            <label class="ms-2">Documentation</label>
-        </li>
-        <li *ngIf="hasHiddenAPIs" class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showHiddenAPISwitch"
-            (onChange)="onShowHiddenAPISwitchChange($event)" data-clarity-region="toggle-hidden-apis" />
-            <label class="ms-2">Hidden APIs</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showLineNumbersSwitch"
-            (onChange)="onShowLineNumbersSwitchChange($event)" data-clarity-region="toggle-line-numbers"/>
-            <label class="ms-2">Line numbers</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="showLeftNavigationSwitch"
-            (onChange)="onShowLeftNavigationSwitchChange($event)" data-clarity-region="toggle-left-navigation" />
-            <label class="ms-2">Left navigation</label>
-        </li>
-        <li class="list-group-item d-flex align-items-center">
-            <p-toggleswitch [(ngModel)]="disableCodeLinesLazyLoading"
-            (onChange)="onDisableLazyLoadingSwitchChange($event)" data-clarity-region="toggle-disable-lazy-loading" />
-            <label class="ms-2">Disable lazy loading</label>
-        </li>
-        <li *ngIf="isDiffView" class="list-group-item">
-            <label class="small mx-1" for="diff-style-select">Diff style :</label>
-            <p-selectButton
-                (onChange)="onDiffStyleChange($event)"
-                [options]="diffStyleOptions"
-                [(ngModel)]="selectedDiffStyle"
-                [disabled]="!contentHasDiff"
-                optionLabel="label"
-                styleClass="w-100 apiview-toggle-button-group"
-                data-clarity-region="diff-view-style-selectbutton" />
-        </li>
-    </ul>
-    </app-page-options-section>
 
     <app-page-options-section sectionName="API Revision Options">
     <ul class="list-group">

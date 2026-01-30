@@ -55,7 +55,8 @@ export class BlobService {
      */
     async putBlob(
         blobPath: string,
-        content: Buffer | string
+        content: Buffer | string,
+        metadata?: Record<string, string>
     ): Promise<void> {
         try {
             const blockBlobClient =
@@ -65,6 +66,7 @@ export class BlobService {
                 blobHTTPHeaders: {
                     blobContentType: this.getContentType(blobPath),
                 },
+                metadata: metadata
             };
 
             await blockBlobClient.upload(
@@ -202,6 +204,12 @@ export class BlobService {
             return true;
         }
 
+        // Check if the blob has a deletion flag in metadata
+        if (existing.metadata && existing.metadata.IsDeleted === "true") {
+            console.log(`Blob ${blobPath} has deletion flag, needs re-upload to override`);
+            return true;
+        }
+
         // Convert Uint8Array to base64 string for comparison
         const existingMD5 = Buffer.from(
             existing.properties.contentMD5
@@ -209,6 +217,50 @@ export class BlobService {
 
         // Check if content MD5 has changed
         return existingMD5 !== currentMD5;
+    }
+
+    /**
+     * Check if blob metadata has changed
+     * @param blobPath The blob path to check
+     * @param currentMetadata The current metadata (scope and service_type)
+     * @param existingBlobs Map of existing blob items with their properties
+     * @returns True if metadata has changed or is new, false if unchanged
+     */
+    hasMetadataChanged(
+        blobPath: string,
+        currentMetadata: Record<string, string> | undefined,
+        existingBlobs: Map<string, BlobItem>
+    ): boolean {
+        const existing = existingBlobs.get(blobPath);
+
+        // If blob doesn't exist, consider metadata as changed
+        if (!existing) {
+            return currentMetadata !== undefined;
+        }
+
+        const existingMetadata = existing.metadata;
+
+        // If current metadata is undefined but existing has metadata, it changed
+        if (!currentMetadata) {
+            return existingMetadata && (existingMetadata.scope !== undefined || existingMetadata.service_type !== undefined);
+        }
+
+        // If existing blob has no metadata, but current has metadata, it changed
+        if (!existingMetadata) {
+            return true;
+        }
+
+        // Compare scope
+        if (currentMetadata.scope !== existingMetadata.scope) {
+            return true;
+        }
+
+        // Compare service_type (both can be undefined)
+        if (currentMetadata.service_type !== existingMetadata.service_type) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

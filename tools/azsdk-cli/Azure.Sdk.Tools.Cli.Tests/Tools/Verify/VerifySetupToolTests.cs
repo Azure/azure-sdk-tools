@@ -41,8 +41,8 @@ internal class VerifySetupToolTests
         _mockGitHelper = new Mock<IGitHelper>();
         _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
-        _mockGitHelper.Setup(x => x.GetRepoName(It.IsAny<string>()))
-        .Returns((string path) =>
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync((string path, CancellationToken _) =>
         {
             if (path.Contains("python", StringComparison.OrdinalIgnoreCase))
             { return "azure-sdk-for-python"; }
@@ -61,11 +61,11 @@ internal class VerifySetupToolTests
         // Create temp directory for tests
 
         languageServices = [
-            new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new GoLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>()),
-            new DotnetLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>())
+            new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+            new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+            new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+            new GoLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+            new DotnetLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>())
         ];
 
         SetupSuccessfulProcessMocks();
@@ -293,5 +293,53 @@ internal class VerifySetupToolTests
         // Assert - Should succeed with just core requirements
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Results, Is.Empty);
+    }
+
+    [Test]
+    public void LanguagesParam_RejectsUnknownLanguages()
+    {
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        var command = tool.GetCommandInstances().First();
+        var parseResult = command.Parse("--languages unknown --languages julia");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(parseResult.Errors.Any(e => e.Message.Contains("Invalid language 'unknown'")), Is.True);
+            Assert.That(parseResult.Errors.Any(e => e.Message.Contains("Invalid language 'julia'")), Is.True);
+        });
+    }
+
+    [Test]
+    public void LanguagesParam_AcceptsLanguages()
+    {
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        var command = tool.GetCommandInstances().First();
+
+        var parseResult = command.Parse("--languages all");
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        parseResult = command.Parse("--languages All");
+        Assert.That(parseResult.Errors, Is.Empty);
+
+        foreach (var lang in Enum.GetNames<SdkLanguage>().Where(n => n != nameof(SdkLanguage.Unknown)))
+        {
+            parseResult = command.Parse($"--languages {lang}");
+            Assert.That(parseResult.Errors, Is.Empty);
+
+            parseResult = command.Parse($"--languages {lang.ToLower()}");
+            Assert.That(parseResult.Errors, Is.Empty);
+        }
     }
 }

@@ -15,9 +15,10 @@ parameters:
   - name: slot
     displayName: 'Target Slot'
     type: string
-    default: codereview
+    default: default
     values:
-      - codereview
+      - default
+      - authoring
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -124,7 +125,7 @@ extends:
                   inlineScript: |
                     set -euo pipefail
                     SLOT="${{ parameters.slot }}"
-                    if [ -n "$SLOT" ]; then
+                    if [ -n "$SLOT" ] && [ "$SLOT" != "default" ]; then
                       TARGET="$(APP_NAME)/$SLOT"
                       SLOT_ARG="--slot $SLOT"
                     else
@@ -166,7 +167,7 @@ extends:
                   inlineScript: |
                     set -euo pipefail
                     SLOT="${{ parameters.slot }}"
-                    if [ -n "$SLOT" ]; then
+                    if [ -n "$SLOT" ] && [ "$SLOT" != "default" ]; then
                       TARGET="$(APP_NAME)/$SLOT"
                       SLOT_ARG="--slot $SLOT"
                     else

@@ -11,7 +11,7 @@ import { ReviewInfoComponent } from '../shared/review-info/review-info.component
 import { MenubarModule } from 'primeng/menubar';
 import { MenuModule } from 'primeng/menu';
 import { ContextMenuModule } from 'primeng/contextmenu';
-import { SidebarModule } from 'primeng/sidebar';
+import { DrawerModule } from 'primeng/drawer';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { RippleModule } from 'primeng/ripple';
@@ -25,22 +25,20 @@ describe('RevisionPageComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
+      imports: [
         RevisionPageComponent,
         NavBarComponent,
         ReviewInfoComponent,
         RevisionsListComponent,
         ReviewPageLayoutComponent,
-        LanguageNamesPipe
-      ],
-      imports: [
+        LanguageNamesPipe,
         BrowserAnimationsModule,
         HttpClientTestingModule,
         MenubarModule,
         MenuModule,
         ContextMenuModule,
         SelectModule,
-        SidebarModule,
+        DrawerModule,
         TooltipModule,
         RippleModule,
         ReactiveFormsModule,

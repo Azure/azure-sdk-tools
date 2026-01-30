@@ -1,4 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { TimeagoModule } from 'ngx-timeago';
+import { TimelineModule } from 'primeng/timeline';
+import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
+import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';
@@ -11,9 +16,17 @@ import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/comm
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 
 @Component({
-  selector: 'app-conversations',
-  templateUrl: './conversations.component.html',
-  styleUrls: ['./conversations.component.scss']
+    selector: 'app-conversations',
+    templateUrl: './conversations.component.html',
+    styleUrls: ['./conversations.component.scss'],
+    standalone: true,
+    imports: [
+        CommonModule,
+        TimeagoModule,
+        TimelineModule,
+        CommentThreadComponent,
+        LastUpdatedOnPipe
+    ]
 })
 export class ConversationsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];
@@ -89,7 +102,7 @@ export class ConversationsComponent implements OnChanges {
             const codePanelRowData = new CodePanelRowData();
             codePanelRowData.type = CodePanelRowDatatype.CommentThread;
             codePanelRowData.comments = comments;
-            codePanelRowData.threadId = threadId; 
+            codePanelRowData.threadId = threadId;
             codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
 
             if (!codePanelRowData.isResolvedCommentThread) {
@@ -170,7 +183,7 @@ export class ConversationsComponent implements OnChanges {
       }
     });
   }
-  
+
   handleSaveCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
     commentUpdates.reviewId = this.review?.id!;
     if (commentUpdates.commentId) {
@@ -242,7 +255,7 @@ export class ConversationsComponent implements OnChanges {
 
   handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
     commentUpdates.reviewId = this.review?.id!;
-    
+
     switch (commentUpdates.commentThreadUpdateAction) {
       case CommentThreadUpdateAction.CommentCreated:
         if (commentUpdates.comment) {

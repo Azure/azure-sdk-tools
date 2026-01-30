@@ -27,12 +27,12 @@ export function getLanguageCssSafeName(language: string): string {
       return "cplusplus";
     default:
       return language.toLowerCase();
-  }   
+  }
 }
 
 export function mapLanguageAliases(languages: Iterable<string>): string[] {
   const result: Set<string> = new Set<string>();
-  
+
   for (const language of languages) {
     if (language === "TypeSpec" || language === "Cadl") {
       result.add("Cadl");
@@ -86,12 +86,14 @@ export function getSupportedLanguages(): any {
   ];
 }
 
-export function getAIReviewNotifiationInfo(jobInfo : AIReviewJobCompletedDto, origin: string): [SiteNotification, any] | undefined {
+export function getAIReviewNotificationInfo(jobInfo : AIReviewJobCompletedDto, origin: string): [SiteNotification, any] | undefined {
   if (jobInfo.status == 'Success' && jobInfo.noOfGeneratedComments > 0) {
     const messageData : ToastMessageData = {
       action: 'RefreshPage',
     };
-    const pageUrl = `${origin}/review/${jobInfo.reviewId}?activeApiRevisionId=${jobInfo.apirevisionId}`;
+    // Determine base path - use /spa/browser/ if we're on spa.* hostname, otherwise use /
+    const basePath = window.location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
+    const pageUrl = `${window.location.protocol}//${window.location.host}${basePath}review/${jobInfo.reviewId}?activeApiRevisionId=${jobInfo.apirevisionId}`;
     const messagePart = (jobInfo.noOfGeneratedComments === 1) ? "comment" : "comments";
     const messageDetail = `Copilot generated ${jobInfo.noOfGeneratedComments} ${messagePart}.`;
     const summary = 'Copilot Comments';

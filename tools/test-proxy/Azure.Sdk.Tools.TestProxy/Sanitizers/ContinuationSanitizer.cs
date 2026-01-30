@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// Used to sanitize "session" variables. A "session" variable is one that is returned as a result of Response A, then used as INPUT of Response B. 
-    /// 
+    /// Used to sanitize "session" variables. A "session" variable is one that is returned as a result of Response A, then used as INPUT of Response B.
+    ///
     /// The value inserted defaults to a new guid if one is not provided. This sanitizer applies at the session level, and looks at the HEADERS of the request/response pairs.
     /// </summary>
     public class ContinuationSanitizer : RecordedTestSanitizer
@@ -32,12 +32,12 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 
         /// <summary>
         /// This sanitizer is applied at the session level, and is used to anonymize private keys in response/request pairs.
-        /// 
+        ///
         /// For instance, request/response pair A has a RESPONSE that contains a "sessionId" header whos value must be present in the REQUEST of the next request/response pair B.
-        /// 
-        /// This sanitizer supports "all further requests get this the value of this first key" as well as as the more standard "response value gets used in next request" that is described 
-        /// in the scenario before. 
-        /// 
+        ///
+        /// This sanitizer supports "all further requests get this the value of this first key" as well as as the more standard "response value gets used in next request" that is described
+        /// in the scenario before.
+        ///
         /// Defaults to maintaining same key for rest of recording.
         /// </summary>
         /// <param name="key">The name of the header whos value will be replaced from response -> next request.</param>
@@ -45,6 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="resetAfterFirst">Do we need multiple pairs replaced? Or do we want to stop after the first set.</param>
         public ContinuationSanitizer(string key, string method, string resetAfterFirst = "true")
         {
+            _scope = SanitizerScope.Header;
             _targetKey = key;
             _method = method;
             _resetAfterFirst = bool.Parse(resetAfterFirst);
@@ -57,13 +58,13 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             string newValue = "";
 
-            // iterate across the entries. looking at responses first for a member that may need to be anonymized, 
+            // iterate across the entries. looking at responses first for a member that may need to be anonymized,
             // when one is found, the next REQUEST should have this same key modified.
             // currently will invoke the creation function once per encounter of response -> request.
             for (int i = 0; i < session.Entries.Count; i++)
             {
                 var currentEntry = session.Entries[i];
-                
+
                 if (currentEntry.Response.Headers.ContainsKey(_targetKey) && String.IsNullOrWhiteSpace(newValue))
                 {
                     newValue = (string)_updateMethod[_method].DynamicInvoke();

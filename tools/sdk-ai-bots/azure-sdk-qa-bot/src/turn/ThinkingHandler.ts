@@ -3,9 +3,11 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ConversationHandler, ConversationMessage, Prompt, RAGReply } from '../input/ConversationHandler.js';
 import { createContactCard } from '../cards/components/contact.js';
 import { contactCardVersion } from '../config/config.js';
+import { TenantConfigManager } from '../config/tenant.js';
 import { CompletionResponsePayload, isCompletionResponsePayload, RagApiError } from '../backend/rag.js';
 import { logger } from '../logging/logger.js';
 import { setTimeout } from 'node:timers/promises';
+import { sendActivityWithRetry, updateActivityWithRetry } from '../activityUtils.js';
 
 export class ThinkingHandler {
   private readonly thinkEmojis = ['⏳', '🤔', '💭', '🧠', '🤩', '🧐', '🚨', '🤭'];
@@ -16,24 +18,30 @@ export class ThinkingHandler {
   private readonly defaultThinkingInterval = 5000; // unit in milliseconds
   private readonly context: TurnContext;
   private readonly conversationHandler: ConversationHandler;
+  private readonly tenantConfigManager: TenantConfigManager;
   private thinkingMessage = this.defaultThinkingMessage;
   private shouldStop = false;
   private isRunning = false;
   private resourceId: string | undefined = undefined;
   private meta: object;
 
-  constructor(context: TurnContext, conversationHandler: ConversationHandler) {
+  constructor(
+    context: TurnContext,
+    conversationHandler: ConversationHandler,
+    tenantConfigManager: TenantConfigManager
+  ) {
     this.context = context;
     this.meta = getTurnContextLogMeta(context);
     this.conversationHandler = conversationHandler;
+    this.tenantConfigManager = tenantConfigManager;
   }
 
-  public async start(context: TurnContext, conversationMessages: ConversationMessage[]): Promise<Date> {
-    await this.trySendContactCard(context, conversationMessages);
-    const resource = await context.sendActivity(this.thinkingMessage);
+  public async start(conversationMessages: ConversationMessage[]): Promise<Date> {
+    await this.trySendContactCard(conversationMessages);
+    const resource = await sendActivityWithRetry(this.context, this.thinkingMessage);
     const timestamp = new Date();
     this.resourceId = resource.id;
-    this.startCore(context, resource.id);
+    this.startCore(resource.id);
     return timestamp;
   }
 
@@ -53,14 +61,17 @@ export class ThinkingHandler {
 
   // separate this method from cancelTimer to make sure complete message is always shown
   public async stop(replyStartTime: Date, reply: CompletionResponsePayload | RagApiError, currentPrompt: Prompt) {
-    const answer = this.generateAnswer(reply);
+    const { answer, isError } = this.generateAnswer(reply);
+    const routeTenant = isCompletionResponsePayload(reply) ? reply.route_tenant : undefined;
+    const formattedAnswer = await this.formatAnswer(answer, isError, routeTenant);
     const updated: Partial<TurnContext> = {
       type: 'message',
       id: this.resourceId,
-      text: answer,
+      text: formattedAnswer,
       conversation: this.context.activity.conversation,
     } as any;
-    const response = await this.context.updateActivity(updated);
+
+    const response = await updateActivityWithRetry(this.context, updated);
     if (response) {
       await this.saveCurrentConversationMessage(
         this.context.activity.conversation.id,
@@ -74,20 +85,52 @@ export class ThinkingHandler {
     }
   }
 
-  private generateAnswer(reply: CompletionResponsePayload | RagApiError) {
+  private generateAnswer(reply: CompletionResponsePayload | RagApiError): { answer: string; isError: boolean } {
     if (!isCompletionResponsePayload(reply)) {
       const shouldRetryLater = reply.code === 'LLM_SERVICE_FAILURE' || reply.code === 'SEARCH_FAILURE';
       const retryMessage = shouldRetryLater ? ' Please try again later.' : '';
       const errorReply = `🚫Sorry, I'm having some ${reply.category} issues right now and can't answer your question.${retryMessage} Error: ${reply.message}.`;
-      return errorReply;
+      return { answer: errorReply, isError: true };
     }
 
     // received reply successfully
     const answerWithReferences = this.addReferencesToReply(reply);
-    return this.addEndingText(answerWithReferences);
+    return { answer: answerWithReferences, isError: false };
   }
 
-  private async startCore(context: TurnContext, resourceId: string) {
+  /**
+   * Format the answer with conditional footer based on route_tenant.
+   * For error responses, returns the answer as-is without footer.
+   */
+  private async formatAnswer(answer: string, isError: boolean, routeTenant?: string): Promise<string> {
+    // For error responses, return plain text without footer
+    if (isError) {
+      return answer;
+    }
+
+    let footer = `💡 If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.`;
+
+    if (routeTenant) {
+      try {
+        // Get channel info (name and url) from tenant ID
+        const tenant = this.tenantConfigManager.getTenant(routeTenant);
+        if (!tenant) {
+          logger.warn(`Tenant not found for route_tenant: ${routeTenant}`, { meta: this.meta });
+        } else {
+          const displayName = tenant.channel_name || routeTenant;
+          const channelLink = tenant.channel_link ? `[${displayName}](${tenant.channel_link})` : `${displayName}`;
+          const redirectText = `💬 Not resolved? Please re-post in the 👉 ${channelLink} channel where our domain experts can provide a deeper dive.`;
+          footer = `${redirectText}\n\n${footer}`;
+        }
+      } catch (error) {
+        logger.error(`Failed to get tenant info for route_tenant: ${routeTenant}`, { error: error.message, meta: this.meta });
+      }
+    }
+
+    return `${answer}\n\n---\n\n${footer}`;
+  }
+
+  private async startCore(resourceId: string) {
     let count = 0;
     for (; count < this.maxRetryTimesForThinking; count++) {
       if (this.shouldStop || this.isRunning) break;
@@ -95,11 +138,11 @@ export class ThinkingHandler {
         type: 'message',
         id: resourceId,
         text: this.updateThinkingMessage(),
-        conversation: context.activity.conversation,
+        conversation: this.context.activity.conversation,
       } as any;
       try {
         this.isRunning = true;
-        await context.updateActivity(updated);
+        await updateActivityWithRetry(this.context, updated);
       } finally {
         this.isRunning = false;
       }
@@ -107,7 +150,7 @@ export class ThinkingHandler {
     }
     if (count === this.maxRetryTimesForThinking) {
       logger.warn('Thinking timer reached max retry times', { meta: this.meta });
-      await context.sendActivity('Thinking is taking too long, please try again later.');
+      await sendActivityWithRetry(this.context, 'Thinking is taking too long, please try again later.');
     }
   }
 
@@ -159,20 +202,16 @@ export class ThinkingHandler {
     return reply;
   }
 
-  private addEndingText(answer: string): string {
-    return answer + '\n\n> **NOTE:** If you have follow-up questions after my response, please @Azure SDK Q&A Bot to continue the conversation.';
-  }
-
-  private async trySendContactCard(context: TurnContext, conversationMessages: ConversationMessage[]) {
+  private async trySendContactCard(conversationMessages: ConversationMessage[]) {
     const hasContactCard = conversationMessages.find((msg) => msg.contactCard);
     if (!hasContactCard) {
       const card = createContactCard();
       const attachment = CardFactory.adaptiveCard(card);
       const replyCard = MessageFactory.attachment(attachment);
-      const response = await context.sendActivity(replyCard);
+      const response = await sendActivityWithRetry(this.context, replyCard);
       if (response) {
         const contactCardMessage: ConversationMessage = {
-          conversationId: context.activity.conversation.id,
+          conversationId: this.context.activity.conversation.id,
           activityId: response.id,
           contactCard: {
             version: contactCardVersion,
@@ -218,7 +257,7 @@ export class ThinkingHandler {
 
   private convertPayloadToReply(replyPayload: CompletionResponsePayload | RagApiError) {
     if (!isCompletionResponsePayload(replyPayload)) {
-      const answer = this.generateAnswer(replyPayload);
+      const { answer } = this.generateAnswer(replyPayload);
       return {
         answer,
         has_result: false,

@@ -34,8 +34,14 @@
             {
                 "requirement": "python",
                 "check": ["python", "--version"],
-                "instructions": ["Install Python from https://www.python.org/downloads/"],
+                "instructions": ["Install Python from https://www.python.org/downloads/ if using Windows or MacOS", "If using Ubuntu, run `sudo apt install python-is-python3`, `sudo apt install python3-pip`, `sudo apt install python3-venv`."],
                 "reason": "Python is required for all repos because it's used in a common Verify-Readme Powershell script."
+            },
+            {
+                "requirement": "pip",
+                "check": ["python", "-m", "pip", "--version"],
+                "instructions": ["python -m ensurepip", "If using Ubuntu, run `sudo apt install python3-pip`"],
+                "reason": "Pip is required for all repos because it's used in a common Verify-Readme Powershell script."
             }
         ],
         "java": [
@@ -68,7 +74,7 @@
             {
                 "requirement": "go",
                 "check": ["go", "version"],
-                "instructions": ["Download and install the latest Go version of the compiler on https://go.dev/dl/"]
+                "instructions": ["Download and install the latest Go version of the compiler on https://go.dev/dl/", "If using Ubuntu, run `sudo snap install go`"]
             },
             {
                 "requirement": "goimports",
@@ -81,8 +87,8 @@
                 "instructions": ["https://golangci-lint.run/docs/welcome/install/"]
             },
             {
-                "requirement": "generator",
-                "check": ["generator", "--help"],
+                "requirement": "generator >= 0.4.3",
+                "check": ["generator", "-v"],
                 "instructions": ["go install github.com/Azure/azure-sdk-for-go/eng/tools/generator@latest"]
             }
         ],

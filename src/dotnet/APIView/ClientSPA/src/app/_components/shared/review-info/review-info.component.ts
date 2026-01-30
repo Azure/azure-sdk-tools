@@ -1,5 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { MenubarModule } from 'primeng/menubar';
+import { RevisionOptionsComponent } from 'src/app/_components/revision-options/revision-options.component';
+import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { map } from 'rxjs';
 import { REVIEW_PAGE_NAME, SAMPLES_PAGE_NAME } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
@@ -9,9 +14,17 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-review-info',
-  templateUrl: './review-info.component.html',
-  styleUrls: ['./review-info.component.scss']
+    selector: 'app-review-info',
+    templateUrl: './review-info.component.html',
+    styleUrls: ['./review-info.component.scss'],
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        MenubarModule,
+        RevisionOptionsComponent,
+        LanguageNamesPipe
+    ]
 })
 export class ReviewInfoComponent {
   @Input() apiRevisions: APIRevision[] = [];
@@ -21,9 +34,11 @@ export class ReviewInfoComponent {
   @Input() diffApiRevisionId: string | null = '';
   @Input() userProfile: UserProfile | undefined;
   @Input() showPageoptionsButton: boolean = false;
+  @Input() showLeftNavigation: boolean = true;
 
   @Input() review : Review | undefined = undefined;
   @Output() pageOptionsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 
   showPageOptions: boolean = true;
 
@@ -57,5 +72,10 @@ export class ReviewInfoComponent {
   onRightPanelCheckChange(event: any) {
     this.showPageOptions = event.target.checked;
     this.pageOptionsEmitter.emit(event.target.checked);
+  }
+
+  onLeftPanelCheckChange(event: any) {
+    this.showLeftNavigation = event.target.checked;
+    this.showLeftNavigationEmitter.emit(event.target.checked);
   }
 }

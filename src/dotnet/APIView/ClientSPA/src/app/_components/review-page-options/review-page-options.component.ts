@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { InputSwitchChangeEvent } from 'primeng/inputswitch';
+import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotificationInfo, mapLanguageAliases, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
@@ -25,9 +25,10 @@ import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteN
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 
 @Component({
-  selector: 'app-review-page-options',
-  templateUrl: './review-page-options.component.html',
-  styleUrls: ['./review-page-options.component.scss']
+    selector: 'app-review-page-options',
+    templateUrl: './review-page-options.component.html',
+    styleUrls: ['./review-page-options.component.scss'],
+    standalone: false
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';
@@ -49,9 +50,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() showHiddenAPIEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() disableCodeLinesLazyLoadingEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() subscribeEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -71,11 +69,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
-  showHiddenAPISwitch : boolean = false;
-  showLeftNavigationSwitch : boolean = true;
   subscribeSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
-  disableCodeLinesLazyLoading: boolean = false;
   isCopilotReviewSupported: boolean = true;
 
   canToggleApproveAPIRevision: boolean = false;
@@ -85,7 +80,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   apiRevisionApprovalBtnClass: string = '';
   apiRevisionApprovalBtnLabel: string = '';
   showAPIRevisionApprovalModal: boolean = false;
-  showDisableCodeLinesLazyLoadingModal: boolean = false;
   overrideActiveConversationforApproval : boolean = false;
   overrideFatalDiagnosticsforApproval : boolean = false;
 
@@ -118,7 +112,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     { label: 'Changed types only', value: TREE_DIFF_STYLE },
     { label: 'Full diff', value: FULL_DIFF_STYLE }
   ];
-  selectedDiffStyle : string = this.diffStyleOptions[0];
+  selectedDiffStyle : string = this.diffStyleOptions[0].value;
 
   changeHistoryIcons : any = {
     'created': 'bi bi-plus-circle-fill created',
@@ -217,14 +211,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
  */
   onDiffStyleChange(event: any) {
     this.updateRoute();
-    this.diffStyleEmitter.emit(event.value.value);
+    this.diffStyleEmitter.emit(event.value);
   }
 
   /**
  * Callback for commentSwitch Change
  * @param event the Filter event
  */
-  onCommentsSwitchChange(event: InputSwitchChangeEvent) {
+  onCommentsSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showCommentsEmitter.emit(event.checked);
   }
@@ -233,7 +227,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for systemCommentSwitch Change
   * @param event the Filter event
   */
-  onShowSystemCommentsSwitchChange(event: InputSwitchChangeEvent) {
+  onShowSystemCommentsSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showSystemCommentsEmitter.emit(event.checked);
   }
@@ -242,7 +236,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for showDocumentationSwitch Change
   * @param event the Filter event
   */
-  onShowDocumentationSwitchChange(event: InputSwitchChangeEvent) {
+  onShowDocumentationSwitchChange(event: ToggleSwitchChangeEvent) {
     this.updateRoute();
     this.showDocumentationEmitter.emit(event.checked);
   }
@@ -251,49 +245,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   * Callback for showLeftnavigationSwitch Change
   * @param event the Filter event
   */
-  onShowLeftNavigationSwitchChange(event: InputSwitchChangeEvent) {
-    this.showLeftNavigationEmitter.emit(event.checked);
-  }
-
-  /**
-   * Disable Lazy Loading
-   * @param event the Filter event
-   */
-  onDisableLazyLoadingSwitchChange(event: InputSwitchChangeEvent) {
-    if (event.checked) {
-      this.showDisableCodeLinesLazyLoadingModal = true;
-    } else {
-      this.disableCodeLinesLazyLoadingEmitter.emit(event.checked);
-    }
-  }
-
-  /**
-   * Handle disable lazy loading modal hide
-   */
-  onDisableLazyLoadingModalHide() {
-    this.showDisableCodeLinesLazyLoadingModal = false;
-  }
-
-  /**
-   * Confirm disable lazy loading
-   */
-  onDisableLazyLoadingConfirm() {
-    this.disableCodeLinesLazyLoadingEmitter.emit(true);
-    this.showDisableCodeLinesLazyLoadingModal = false;
-  }
-
-  /**
-   * Cancel disable lazy loading
-   */
-  onDisableLazyLoadingCancel() {
-    this.showDisableCodeLinesLazyLoadingModal = false;
-  }
-
-  /**
-  * Callback for subscribeSwitch Change
-  * @param event the Filter event
-  */
-  onSubscribeSwitchChange(event: InputSwitchChangeEvent) {
+  onSubscribeSwitchChange(event: ToggleSwitchChangeEvent) {
     this.subscribeEmitter.emit(event.checked);
   }
 
@@ -301,16 +253,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
    * Callback for showLineNumbersSwitch Change
    * @param event the Filter event
    */
-  onShowLineNumbersSwitchChange(event: InputSwitchChangeEvent) {
+  onShowLineNumbersSwitchChange(event: ToggleSwitchChangeEvent) {
     this.showLineNumbersEmitter.emit(event.checked);
-  }
-
-   /**
-   * Callback for showHiddenAPISwitch Change
-   * @param event the Filter event
-   */
-  onShowHiddenAPISwitchChange(event: InputSwitchChangeEvent) {
-    this.showHiddenAPIEmitter.emit(event.checked);
   }
 
   handleAssignedReviewersChange() {
@@ -343,17 +287,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setSelectedDiffStyle() {
     const inputDiffStyle = this.diffStyleOptions.find(option => option.value === this.diffStyleInput);
-    this.selectedDiffStyle = (inputDiffStyle) ? inputDiffStyle : this.diffStyleOptions[0];
+    this.selectedDiffStyle = (inputDiffStyle) ? inputDiffStyle.value : this.diffStyleOptions[0].value;
   }
 
   setPageOptionValues() {
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
-    this.disableCodeLinesLazyLoading = this.userProfile?.preferences.disableCodeLinesLazyLoading ?? this.disableCodeLinesLazyLoading;
     this.showLineNumbersSwitch = (this.userProfile?.preferences.hideLineNumbers) ? false : this.showLineNumbersSwitch;
-    this.showLeftNavigationSwitch = (this.userProfile?.preferences.hideLeftNavigation) ? false : this.showLeftNavigationSwitch;
-    this.showHiddenAPISwitch = (this.userProfile?.preferences.showHiddenApis || this.hasHiddenAPIThatIsDiff || this.showHiddenAPISwitch) ? true : false;
   }
 
   setAPIRevisionApprovalStates() {
@@ -576,7 +517,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
             this.aiReviewGenerationState = 'Failed';
             this.generateAIReviewButtonText = 'Failed to generate copilot review';
           }
-          const notificationInfo = getAIReviewNotifiationInfo(aiReviewUpdate, window.location.origin);
+          const notificationInfo = getAIReviewNotificationInfo(aiReviewUpdate, window.location.origin);
           if (notificationInfo) {
             if (aiReviewUpdate.apirevisionId === this.activeAPIRevision?.id) {
               this.messageService.add(notificationInfo[1]);
@@ -641,7 +582,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
-    return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
+    // Determine base path - use /spa/browser/ if we're on spa.* hostname, otherwise use /
+    const basePath = window.location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
+    return `${window.location.protocol}//${window.location.host}${basePath}review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**

@@ -252,7 +252,7 @@ class ClassNode(NodeEntityBase):
             elif inspect.isclass(child_obj):
                 self.child_nodes.append(
                     ClassNode(
-                        name=child_obj.name,
+                        name=getattr(child_obj, "name", child_obj.__name__),
                         namespace=self.namespace,
                         parent_node=self,
                         obj=child_obj,

@@ -2,13 +2,12 @@ import {
   ApiFunction,
   ApiItem,
   ApiItemKind,
-  ExcerptToken,
-  ExcerptTokenKind,
   Parameter,
   TypeParameter,
 } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
 import { TokenGenerator } from "./index";
+import { createToken, processExcerptTokens } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiFunction {
   return item.kind === ApiItemKind.Function;
@@ -96,11 +95,8 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
   }
 
   // Extract structured properties
-  const parameters = (item as unknown as { readonly parameters: ReadonlyArray<Parameter> })
-    .parameters;
-  const typeParameters = (
-    item as unknown as { readonly typeParameters: ReadonlyArray<TypeParameter> }
-  ).typeParameters;
+  const parameters = item.parameters;
+  const typeParameters = item.typeParameters;
 
   // Add export and function keywords
   tokens.push(createToken(TokenKind.Keyword, "export", { hasSuffixSpace: true, deprecated }));
@@ -129,6 +125,17 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
           }),
         );
         tokens.push(createToken(TokenKind.Text, tp.constraintExcerpt.text.trim(), { deprecated }));
+      }
+
+      if (tp.defaultTypeExcerpt?.text.trim()) {
+        tokens.push(
+          createToken(TokenKind.Text, "=", {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        processExcerptTokens(tp.defaultTypeExcerpt.spannedTokens, tokens, deprecated);
       }
 
       if (index < typeParameters.length - 1) {

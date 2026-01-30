@@ -37,6 +37,7 @@ from src._apiview import (
     get_apiview_cosmos_client,
     get_approvers,
     get_comments_in_date_range,
+    resolve_package,
 )
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, DatabaseManager
@@ -48,7 +49,7 @@ from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name, run_prompty
-from src.agent._agent import get_main_agent, invoke_agent
+from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
 
@@ -180,7 +181,13 @@ def _local_review(
     reviewer.close()
 
 
-def run_evals(test_paths: list[str] = None, num_runs: int = 1, save: bool = False, use_recording: bool = False, style: str = "compact"):
+def run_evals(
+    test_paths: list[str] = None,
+    num_runs: int = 1,
+    save: bool = False,
+    use_recording: bool = False,
+    style: str = "compact",
+):
     """
     Runs the specified test case(s).
     """
@@ -459,9 +466,17 @@ def review_summarize(language: str, target: str, base: str = None):
         print(f"Error: {response.status_code} - {response.text}")
 
 
-def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
+def handle_agent_chat(
+    thread_id: Optional[str] = None, remote: bool = False, quiet: bool = False, readonly: bool = False
+):
     """
     Start or continue an interactive chat session with the agent.
+
+    Args:
+        thread_id: Optional thread ID to continue a previous conversation
+        remote: Whether to use remote API or local agent
+        quiet: If True, suppress error messages during tool execution (agent will retry automatically)
+        readonly: If True, force readonly mode even if user has write permissions
     """
 
     async def async_input(prompt: str) -> str:
@@ -469,6 +484,10 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
         return await asyncio.to_thread(input, prompt)
 
     async def chat():
+        # Suppress Azure SDK error logs if quiet mode is enabled
+        if quiet:
+            logging.getLogger("azure").setLevel(logging.CRITICAL)
+
         print(f"{BOLD}Interactive API Review Agent Chat. Type 'exit' to quit.\n{RESET}")
         messages = []
         current_thread_id = thread_id
@@ -497,6 +516,8 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                             f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
                         )
                     break
+                if not user_input.strip():
+                    continue
                 try:
                     payload = {"user_input": user_input}
                     if current_thread_id:
@@ -513,8 +534,20 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                 except Exception as e:
                     print(f"Error: {e}")
         else:
-            # Local mode: use async agent as before
-            async with get_main_agent() as agent:
+            # Local mode: select read-only vs read-write based on the caller's AAD token roles
+            token = _try_get_access_token()
+            claims = _get_unverified_token_claims(token) if token else {}
+
+            # Force readonly if flag is set, otherwise use permissions-based selection
+            if readonly:
+                agent_cm = get_readonly_agent
+            else:
+                agent_cm = get_readwrite_agent if _claims_is_writer(claims) else get_readonly_agent
+
+            mode = "readwrite" if agent_cm is get_readwrite_agent else "readonly"
+            print(f"{BOLD}Local agent mode:{RESET} {mode}\n")
+
+            with agent_cm() as (client, agent_id):
                 while True:
                     try:
                         user_input = await async_input(f"{BOLD_GREEN}You:{RESET} ")
@@ -534,13 +567,22 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                                 f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
                             )
                         break
+                    if not user_input.strip():
+                        continue
                     try:
+                        print(f"{BLUE}Processing...{RESET}", end="", flush=True)
                         response, thread_id_out, messages = await invoke_agent(
-                            agent=agent, user_input=user_input, thread_id=current_thread_id, messages=messages
+                            client=client,
+                            agent_id=agent_id,
+                            user_input=user_input,
+                            thread_id=current_thread_id,
+                            messages=messages,
                         )
+                        print(f"\r{' ' * 20}\r", end="", flush=True)  # Clear "Processing..." line
                         print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
                         current_thread_id = thread_id_out
                     except Exception as e:
+                        print(f"\r{' ' * 20}\r", end="", flush=True)  # Clear "Processing..." line
                         print(f"Error: {e}")
 
     asyncio.run(chat())
@@ -723,6 +765,46 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
         filtered_dicts.append(d)
     print(f"Found {len(filtered_dicts)} reviews in {pretty_language} between {start_date} and {end_date}.")
     return filtered_dicts
+
+
+def resolve_package_info(
+    package_query: str, language: str, version: str = None, environment: str = "production", remote: bool = False
+):
+    """
+    Resolves package information from a package query and language.
+    Returns the package name, review ID, and revision ID.
+    """
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/resolve-package"
+        payload = {
+            "packageQuery": package_query,
+            "language": language,
+            "environment": environment,
+        }
+        if version:
+            payload["version"] = version
+        try:
+            resp = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+            if resp.status_code == 200:
+                print(json.dumps(resp.json(), indent=2))
+            else:
+                print(f"Error: {resp.status_code} - {resp.text}")
+        except Exception as e:
+            print(f"Error: {e}")
+    else:
+        result = resolve_package(
+            package_query=package_query, language=language, version=version, environment=environment
+        )
+
+        if result:
+            if "error" in result:
+                print(f"Error: {result.get('error')} - Language: {result.get('language')}")
+            else:
+                print(json.dumps(result, indent=2))
+        else:
+            print(f"No package found matching '{package_query}' for language '{language}'")
 
 
 def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
@@ -1001,6 +1083,44 @@ def _build_auth_header():
     return {"Authorization": f"Bearer {token.token}"}
 
 
+def _try_get_access_token() -> Optional[str]:
+    """Best-effort token acquisition; returns None if not logged in."""
+    from src._credential import get_credential
+
+    credential = get_credential()
+    settings = SettingsManager()
+    app_id = settings.get("APP_ID")
+    scope = f"api://{app_id}/.default"
+    try:
+        token = credential.get_token(scope)
+    except ClientAuthenticationError:
+        return None
+    return token.token
+
+
+def _get_unverified_token_claims(token: str) -> dict:
+    """Decode JWT claims without verifying signature (used only for role selection UX)."""
+    if not token:
+        return {}
+    import jwt
+
+    try:
+        return jwt.decode(
+            token,
+            options={"verify_signature": False, "verify_aud": False, "verify_iss": False, "verify_exp": False},
+        )
+    except Exception:
+        return {}
+
+
+def _claims_is_writer(claims: dict) -> bool:
+    roles = claims.get("roles", [])
+    if isinstance(roles, str):
+        roles = roles.split()
+    token_roles = set(roles)
+    return ("Write" in token_roles) or ("App.Write" in token_roles)
+
+
 class CliCommandsLoader(CLICommandsLoader):
     """Loader for CLI commands related to APIView and review management."""
 
@@ -1011,6 +1131,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
             g.command("analyze-comments", "analyze_comments")
+            g.command("resolve-package", "resolve_package_info")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")
@@ -1298,6 +1419,18 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
                 options_list=["--thread-id", "-t"],
             )
+            ac.argument(
+                "quiet",
+                action="store_true",
+                help="Suppress error messages during tool execution. The agent will retry automatically.",
+                options_list=["--quiet", "-q"],
+            )
+            ac.argument(
+                "readonly",
+                action="store_true",
+                help="Force readonly mode, even if you have write permissions.",
+                options_list=["--readonly", "-r"],
+            )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
                 "container_name",
@@ -1348,6 +1481,40 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Language to filter comments (e.g., python)",
                 choices=ANALYZE_COMMENT_LANGUAGES,
                 options_list=("--language", "-l"),
+            )
+        with ArgumentsContext(self, "apiview resolve-package") as ac:
+            ac.argument(
+                "package_query",
+                type=str,
+                help="The package name or description to search for.",
+                options_list=["--package", "-p"],
+            )
+            ac.argument(
+                "language",
+                type=str,
+                help="The language of the package.",
+                options_list=["--language", "-l"],
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "version",
+                type=str,
+                help="Optional version to filter by. If not provided, gets the latest revision.",
+                options_list=["--version", "-v"],
+                default=None,
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API instead of local processing.",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

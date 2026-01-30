@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -30,8 +31,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             logger = new TestLogger<SpecWorkflowTool>();
             inputSanitizer = new InputSanitizer();
 
-            mockTypeSpecHelper.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>()))
-                .Returns(true);
+            mockTypeSpecHelper.Setup(x => x.IsRepoPathForPublicSpecRepoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
             mockTypeSpecHelper.Setup(x => x.IsTypeSpecProjectForMgmtPlane(It.IsAny<string>()))
                 .Returns(true);
 
@@ -47,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GenerateSDK_WhenPackageNameEmpty()
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -77,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task GenerateSDK_WhenLanguageNotInReleasePlan()
         {
             // Test 1: Different language than requested
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -103,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ToString(), Does.Contain("does not have a language specified"));
 
             // Test 2: Empty language
-            var releasePlanWithEmptyLanguage = new ReleasePlanDetails
+            var releasePlanWithEmptyLanguage = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -132,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GenerateSDK_WhenSDKInfoListIsEmpty()
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>() // Empty list - no SDK info at all
             };
@@ -155,7 +156,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task GenerateSdk_Uses_WorkItemApi()
         {
             // Test 1: Different language than requested
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -195,6 +196,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                 workItemId: 456
             );
 
+            Assert.That(result.TypeSpecProject, Is.EqualTo("specification/testcontoso/Contoso.Management"));
             Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
@@ -273,7 +275,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GetSDKPullRequestDetails_WithWorkItemId_ButNoSDKInfo_ReturnsError()
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>()
             };
@@ -290,7 +292,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         [Test]
         public async Task GetSDKPullRequestDetails_WithWorkItemId_ButDifferentLanguage_ReturnsError()
         {
-            var releasePlan = new ReleasePlanDetails
+            var releasePlan = new ReleasePlanWorkItem
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -376,11 +378,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService.ConfiguredSDKPullRequest = "https://github.com/Azure/azure-sdk-for-python/pull/789";
 
             var result = await specWorkflowTool.GetSDKPullRequestDetails("Python", workItemId: 0, buildId: 456);
-            
+
             Assert.IsNull(result.ResponseError);
             Assert.That(result.Details, Has.Some.Contains("SDK pull request details"));
             Assert.That(result.Details, Has.Some.Contains("https://github.com/Azure/azure-sdk-for-python/pull/789"));
             Assert.That(result.Language, Is.EqualTo(SdkLanguage.Python));
+        }
+
+        [Test]
+        public async Task GenerateSdk_With_Invalid_TypeSpec_Path()
+        {
+            var result = await specWorkflowTool.RunGenerateSdkAsync(
+                typespecProjectRoot: "InvalidPath/specification/testcontoso/Contoso.Management",
+                apiVersion: "2023-01-01",
+                sdkReleaseType: "beta",
+                language: "Java"
+            );
+            Assert.That(result.TypeSpecProject, Is.EqualTo(""));
+            Assert.That(result.Language, Is.EqualTo(SdkLanguage.Java));
+            Assert.That(result.ResponseErrors, Does.Contain("Invalid TypeSpec project root path [InvalidPath/specification/testcontoso/Contoso.Management]."));
         }
     }
 }

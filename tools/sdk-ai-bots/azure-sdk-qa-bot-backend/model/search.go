@@ -4,6 +4,45 @@ import (
 	"strings"
 )
 
+// ExpansionType defines how a chunk should be expanded
+type ExpansionType int
+
+const (
+	ExpansionNone         ExpansionType = iota // No expansion needed - use chunk as-is
+	ExpansionHierarchical                      // Expand based on header hierarchy
+	ExpansionQA                                // Expand based on Q&A pairs
+	ExpansionMapping                           // Expand based on TypeSpec to Swagger mapping
+)
+
+// ChunkWithExpansion wraps a chunk with its expansion strategy
+type ChunkWithExpansion struct {
+	Chunk     Index
+	Expansion ExpansionType
+}
+
+// ChunkHierarchy represents the header level of a chunk
+type ChunkHierarchy int
+
+const (
+	HierarchyHeader3 ChunkHierarchy = iota // Full chunk with header3 (most specific)
+	HierarchyHeader2                       // Chunk with header1 and header2
+	HierarchyHeader1                       // Chunk with only header1
+	HierarchyUnknown                       // Unknown or no headers
+)
+
+func (s ChunkHierarchy) String() string {
+	switch s {
+	case HierarchyHeader3:
+		return "HierarchyHeader3"
+	case HierarchyHeader2:
+		return "HierarchyHeader2"
+	case HierarchyHeader1:
+		return "HierarchyHeader1"
+	default:
+		return "HierarchyUnknown"
+	}
+}
+
 type AgenticSearchRequest struct {
 	Messages                 []KnowledgeAgentMessage   `json:"messages"`
 	KnowledgeSourceParams    []KnowledgeSourceParams   `json:"knowledgeSourceParams,omitempty"`
@@ -191,6 +230,8 @@ type Index struct {
 	Header3         string  `json:"header_3"`
 	OrdinalPosition int     `json:"ordinal_position"`
 	ContextID       Source  `json:"context_id"`
+	Scope           string  `json:"scope,omitempty"`
+	ServiceType     string  `json:"service_type,omitempty"`
 }
 
 type Knowledge struct {
@@ -247,11 +288,29 @@ func GetIndexLink(chunk Index) string {
 		return "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
 	case Source_AzureSDKForGo:
 		return "https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/" + path
+	case Source_AzureSDKForJava:
+		return "https://github.com/Azure/azure-sdk-for-java/blob/main/" + path
+	case Source_AzureSDKForJavaWiki:
+		path = TrimFileFormat(path)
+		return "https://github.com/Azure/azure-sdk-for-java/wiki/" + path
+	case Source_AutorestJava:
+		return "https://github.com/Azure/autorest.java/blob/main/" + path
 	case Source_StaticAzureDocs:
 		if chunk.Title == "Azure Versioning and Breaking Changes Policy V1.3.2" {
 			return "http://aka.ms/azbreakingchangespolicy"
 		}
 		return ""
+	case Source_AzureSDKForJavaScript:
+		return "https://github.com/Azure/azure-sdk-for-js/blob/main/" + path
+	case Source_AzureSDKForJavaScriptWiki:
+		path = TrimFileFormat(path)
+		return "https://github.com/Azure/azure-sdk-for-js/wiki/" + path
+	case Source_AzureSDKForNetDocs:
+		return "https://github.com/Azure/azure-sdk-for-net/blob/main/" + path
+	case Source_AzureSDKInternalWiki:
+		path = TrimFileFormat(path)
+		wikiPath := strings.ReplaceAll(path, "#", "/")
+		return "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki?wikiVersion=GBwikiMaster&pagePath=/" + wikiPath
 	default:
 		return ""
 	}

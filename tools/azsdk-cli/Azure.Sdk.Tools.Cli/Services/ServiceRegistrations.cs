@@ -11,10 +11,10 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -33,6 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
@@ -55,17 +56,27 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
-            services.AddSingleton<IRawOutputHelper>(_ => new OutputHelper(outputMode));
+            services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
+            if (outputMode == OutputHelper.OutputModes.Mcp)
+            {
+                services.AddSingleton<IRawOutputHelper, McpRawOutputHelper>();
+            }
+            else
+            {
+                services.AddSingleton<IRawOutputHelper>(_ => new OutputHelper(outputMode));
+            }
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
+            services.AddSingleton<INpmHelper, NpmHelper>();
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
             services.AddSingleton<IMavenHelper, MavenHelper>();
             services.AddSingleton<IPythonHelper, PythonHelper>();
+            services.AddSingleton<IGitCommandHelper, GitCommandHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
@@ -76,10 +87,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
-
-            // Telemetry
-            services.AddSingleton<ITelemetryService, TelemetryService>();
-            services.ConfigureOpenTelemetry();
 
             services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>
@@ -168,7 +175,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                         var loggerFactory = services.GetRequiredService<ILoggerFactory>();
                         var logger = loggerFactory.CreateLogger(toolType);
                         var telemetryService = services.GetRequiredService<ITelemetryService>();
-                        return new InstrumentedTool(telemetryService, logger, innerTool);
+                        var mcpServerContextAccessor = services.GetRequiredService<IMcpServerContextAccessor>();
+                        return new InstrumentedTool(telemetryService, logger, mcpServerContextAccessor, innerTool);
                     }));
                 }
             }

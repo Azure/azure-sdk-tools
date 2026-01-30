@@ -6,15 +6,15 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="manifest" href="/spa/manifest.webmanifest">
+  <link rel="manifest" href="/spa/browser/manifest.webmanifest">
   <meta name="theme-color" content="#1976d2">
-  
+
   <!-- Microsoft Clarity Analytics -->
   <script type="text/javascript">
     // Only load Clarity in production (exclude localhost, staging, dev environments)
     const excludedHosts = ['localhost', '127.0.0.1', 'apiviewstagingtest.com', 'apiviewuxtest.com'];
     const isProduction = !excludedHosts.includes(window.location.hostname);
-    
+
     if (isProduction) {
       (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

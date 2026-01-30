@@ -111,4 +111,74 @@ internal class LabelHelperTests
         Assert.That(duplicates.Count, Is.EqualTo(expectedDuplicates.Count));
         CollectionAssert.AreEqual(expectedDuplicates, duplicates, "Duplicate lists do not match");
     }
+
+    [Test]
+    // Test normalization removes # prefix
+    [TestCase("#e99695", "e99695")]
+    [TestCase("e99695", "e99695")]
+    [TestCase("#E99695", "e99695")]
+    [TestCase("E99695", "e99695")]
+    // Test with other colors
+    [TestCase("#ff0000", "ff0000")]
+    [TestCase("FF0000", "ff0000")]
+    // Test edge cases
+    [TestCase("", "")]
+    [TestCase("   ", "")]
+    [TestCase("#", "")]
+    public void TestNormalizeColorForComparison(string input, string expected)
+    {
+        var result = LabelHelper.NormalizeColorForComparison(input);
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    // Test colors are equal regardless of # prefix
+    [TestCase("#e99695", "e99695", true)]
+    [TestCase("e99695", "#e99695", true)]
+    [TestCase("#e99695", "#e99695", true)]
+    [TestCase("e99695", "e99695", true)]
+    // Test case-insensitive comparison
+    [TestCase("#E99695", "e99695", true)]
+    [TestCase("E99695", "#e99695", true)]
+    [TestCase("#e99695", "E99695", true)]
+    // Test different colors are not equal
+    [TestCase("e99695", "ff0000", false)]
+    [TestCase("#e99695", "#ff0000", false)]
+    [TestCase("e99695", "#ff0000", false)]
+    // Test edge cases
+    [TestCase("", "", true)]
+    [TestCase("e99695", "", false)]
+    [TestCase("", "e99695", false)]
+    public void TestAreColorsEqual(string color1, string color2, bool expected)
+    {
+        var result = LabelHelper.AreColorsEqual(color1, color2);
+        Assert.That(result, Is.EqualTo(expected));
+    }
+
+    [Test]
+    // Test that CheckServiceLabel works with colors that have # prefix
+    [TestCase("TestService,,#e99695\nAnotherService,,e99695", "TestService", LabelHelper.ServiceLabelStatus.Exists)]
+    [TestCase("TestService,,e99695\nAnotherService,,#e99695", "AnotherService", LabelHelper.ServiceLabelStatus.Exists)]
+    [TestCase("TestService,,#E99695\nAnotherService,,e99695", "TestService", LabelHelper.ServiceLabelStatus.Exists)]
+    public void TestCheckServiceLabelWithHashPrefix(string csvContent, string serviceLabel, LabelHelper.ServiceLabelStatus expected)
+    {
+        var actual = LabelHelper.CheckServiceLabel(csvContent, serviceLabel);
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    // Test that GetAllServiceLabels works with colors that have # prefix
+    [TestCase("ServiceA,,#e99695", "ServiceA")]
+    [TestCase("ServiceA,,#e99695\nServiceB,,e99695", "ServiceA,ServiceB")]
+    [TestCase("ServiceA,,e99695\nServiceB,,#e99695\nServiceC,,#E99695", "ServiceA,ServiceB,ServiceC")]
+    [TestCase("ServiceA,,#e99695\nNonService,,#123456\nServiceB,,e99695", "ServiceA,ServiceB")]
+    public void TestGetAllServiceLabelsWithHashPrefix(string csvContent, string expectedLabelsCsv)
+    {
+        var result = LabelHelper.GetAllServiceLabels(csvContent);
+        var expected = string.IsNullOrEmpty(expectedLabelsCsv) 
+            ? new List<string>() 
+            : expectedLabelsCsv.Split(',').ToList();
+
+        Assert.That(result, Is.EqualTo(expected));
+    }
 }

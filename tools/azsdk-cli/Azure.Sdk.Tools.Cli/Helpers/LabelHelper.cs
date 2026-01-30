@@ -6,6 +6,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public static class LabelHelper
     {
+        /// <summary>
+        /// The standard color code for service labels (without # prefix).
+        /// Note: GitHub API returns colors with # prefix (e.g., #e99695), but the CSV stores them without it.
+        /// Use NormalizeColorForComparison() to compare colors in different formats.
+        /// </summary>
         public const string SERVICE_LABELS_COLOR_CODE = "e99695";
 
         public enum ServiceLabelStatus
@@ -43,8 +48,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 // Check if this is the service we're looking for
                 if (label.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Check if it's a service label by color code
-                    if (color.Equals(SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase))
+                    // Check if it's a service label by color code (handle both formats with/without #)
+                    if (AreColorsEqual(color, SERVICE_LABELS_COLOR_CODE))
                     {
                         return ServiceLabelStatus.Exists;
                     }
@@ -171,8 +176,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 // Color is the last part (after last comma)
                 var color = columns[columns.Length - 1].Trim();
 
-                // Check if it's a service label by color code
-                if (color.Equals(SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase))
+                // Check if it's a service label by color code (handle both formats with/without #)
+                if (AreColorsEqual(color, SERVICE_LABELS_COLOR_CODE))
                 {
                     serviceLabels.Add(label);
                 }
@@ -205,6 +210,33 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             duplicates = labelCounts.Where(kvp => kvp.Value > 1).Select(kvp => kvp.Key).ToList();
             return duplicates.Count > 0;
+        }
+
+        /// <summary>
+        /// Normalizes a color code for comparison by removing any # prefix and converting to lowercase.
+        /// GitHub API returns colors with # prefix (e.g., "#e99695"), but CSV and gh CLI use format without # (e.g., "e99695").
+        /// </summary>
+        /// <param name="color">Color code with or without # prefix</param>
+        /// <returns>Normalized color code without # prefix in lowercase</returns>
+        public static string NormalizeColorForComparison(string color)
+        {
+            if (string.IsNullOrWhiteSpace(color))
+            {
+                return string.Empty;
+            }
+
+            return color.TrimStart('#').ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// Compares two color codes for equality, handling both formats (with and without # prefix).
+        /// </summary>
+        /// <param name="color1">First color code</param>
+        /// <param name="color2">Second color code</param>
+        /// <returns>True if colors are equal (ignoring # prefix and case), false otherwise</returns>
+        public static bool AreColorsEqual(string color1, string color2)
+        {
+            return NormalizeColorForComparison(color1).Equals(NormalizeColorForComparison(color2), StringComparison.OrdinalIgnoreCase);
         }
     }
 }

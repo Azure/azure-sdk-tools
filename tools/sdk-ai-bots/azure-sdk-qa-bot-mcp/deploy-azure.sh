@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 # Default values
 ENVIRONMENT="dev"
 RESOURCE_GROUP="azure-sdk-qa-bot-dev"
-APP_NAME="azure-sdk-qa-bot-mcp"
+APP_NAME="azure-sdk-code-review-mcp"
 ACR_NAME="azuresdkqabotdevcontainer"
 LOCATION="westus2"
 APP_SERVICE_PLAN="azuresdkqabot-dev-plan"

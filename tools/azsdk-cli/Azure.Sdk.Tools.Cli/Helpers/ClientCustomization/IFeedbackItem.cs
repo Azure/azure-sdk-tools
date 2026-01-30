@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 /// <summary>
 /// Represents a source of feedback for SDK customization (APIView comments, build errors, etc.)
 /// </summary>
-public interface IFeedbackInput
+public interface IFeedbackItem
 {
     /// <summary>
     /// Preprocesses the input and returns a standardized feedback context
@@ -56,27 +56,68 @@ public class FeedbackContext
 }
 
 /// <summary>
+/// Status of a feedback item during classification
+/// </summary>
+public enum FeedbackStatus
+{
+    /// <summary>
+    /// Item is still being worked on and can be customized
+    /// </summary>
+    CUSTOMIZABLE,
+    
+    /// <summary>
+    /// Item has been successfully resolved
+    /// </summary>
+    SUCCESS,
+    
+    /// <summary>
+    /// Item cannot be resolved and requires manual intervention
+    /// </summary>
+    FAILURE
+}
+
+/// <summary>
 /// Individual feedback item for classification
 /// </summary>
 public class FeedbackItem
 {
     /// <summary>
-    /// Unique identifier for tracking (e.g., LineNo, ErrorCode)
+    /// Unique identifier for the feedback item (auto-generated UUID).
     /// </summary>
-    public string Id { get; set; } = string.Empty;
+    public string Id { get; set; } = Guid.NewGuid().ToString();
     
     /// <summary>
-    /// Context information (e.g., line text, code snippet)
+    /// The feedback/error text
+    /// </summary>
+    public string Text { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Formatted version for prompt with Id, Text, and Context
+    /// </summary>
+    public string FormattedPrompt { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Current status of this feedback item
+    /// </summary>
+    public FeedbackStatus Status { get; set; } = FeedbackStatus.CUSTOMIZABLE;
+    
+    /// <summary>
+    /// Running context of changes applied for this item (newline-separated entries)
     /// </summary>
     public string Context { get; set; } = string.Empty;
     
     /// <summary>
-    /// The actual feedback comment/message
+    /// Next action guidance from the classifier (what should be done next)
     /// </summary>
-    public string Comment { get; set; } = string.Empty;
+    public string NextAction { get; set; } = string.Empty;
     
     /// <summary>
-    /// Formatted version for prompt
+    /// Reason for the classification decision
     /// </summary>
-    public string FormattedForPrompt { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Additional metadata specific to this feedback item
+    /// </summary>
+    public Dictionary<string, string> Metadata { get; set; } = new();
 }

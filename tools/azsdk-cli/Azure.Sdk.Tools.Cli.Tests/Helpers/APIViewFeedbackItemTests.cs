@@ -88,5 +88,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 Console.WriteLine($"Comment: {item.Comment}\n");
             }
         }
+        // TODO: should this first be split up by preprocessing agent?
+        // **Example: Multiple Comments with Mixed Context**
+        // Input: "1. Remove 'widget_' prefix since it's redundant.
+        // 2. Keep method name as is - consistent with REST API.
+        // 3. Update return type of LROPoller to None
     }
 }

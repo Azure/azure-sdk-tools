@@ -50,6 +50,12 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
             {
                 sb.AppendLine();
                 sb.AppendLine($"## {item.ItemId}");
+                
+                if (!string.IsNullOrEmpty(item.Text))
+                {
+                    sb.AppendLine($"**Text:** {item.Text}");
+                }
+                
                 sb.AppendLine($"**Classification:** {item.Classification}");
                 sb.AppendLine($"**Reason:** {item.Reason}");
                 
@@ -120,5 +126,6 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         public string Classification { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public string? NextAction { get; set; }
+        public string? Text { get; set; }
     }
 }

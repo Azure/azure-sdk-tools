@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Microsoft.Extensions.Configuration;
@@ -15,14 +16,25 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
+/// <summary>
+/// Result from applying TypeSpec customizations
+/// </summary>
+internal class TypeSpecCustomizationServiceResult
+{
+    public bool Success { get; set; }
+    public string[] ChangesSummary { get; set; } = Array.Empty<string>();
+    public string? FailureReason { get; set; }
+}
+
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, provides intelligent analysis and recommendations for updating customization code.")]
 public class CustomizedCodeUpdateTool: LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
-    private readonly FeedbackClassifier feedbackClassifier;
+    private readonly FeedbackClassifierService feedbackClassifier;
     private readonly IAPIViewFeedbackCustomizationsHelpers feedbackHelper;
     private readonly ILoggerFactory loggerFactory;
     private readonly IMicroagentHostService _microagentHost;
+    private readonly IConfiguration _configuration;
     private readonly string _model;
     
     /// <summary>
@@ -42,7 +54,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         IEnumerable<LanguageService> languageServices,
         IGitHelper gitHelper,
         ITspClientHelper tspClientHelper,
-        FeedbackClassifier feedbackClassifier,
+        FeedbackClassifierService feedbackClassifier,
         IAPIViewFeedbackCustomizationsHelpers feedbackHelper,
         ILoggerFactory loggerFactory,
         IMicroagentHostService microagentHost,
@@ -54,6 +66,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         this.feedbackHelper = feedbackHelper;
         this.loggerFactory = loggerFactory;
         _microagentHost = microagentHost;
+        _configuration = configuration;
         _model = configuration["AZURE_OPENAI_MODEL"] ?? "gpt-4o";
     }
 
@@ -69,15 +82,27 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         Arity = ArgumentArity.ExactlyOne
     };
 
+    private readonly Argument<string> packagePathArg = new("package-path")
+    {
+        Description = "Path to the SDK package directory",
+        Arity = ArgumentArity.ExactlyOne
+    };
+
+    private readonly Argument<string> tspProjectPathArg = new("tsp-project-path")
+    {
+        Description = "Path to the TypeSpec project directory",
+        Arity = ArgumentArity.ExactlyOne
+    };
+
     private readonly Option<string> apiViewUrlOption = new("--apiview-url")
     {
         Description = "APIView URL to fetch comments from for classification",
         Required = false
     };
 
-    private readonly Option<string> buildLogOption = new("--build-log")
+    private readonly Option<string> plainTextFeedbackOption = new("--plain-text-feedback")
     {
-        Description = "Path to build log file for classification",
+        Description = "Plain text feedback for classification (e.g., build errors)",
         Required = false
     };
 
@@ -131,117 +156,25 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     protected override Command GetCommand() =>
        new McpCommand("customized-update", "Update customized TypeSpec-generated client code with automated patch analysis.", CustomizedCodeUpdateToolName)
        {
-            updateCommitSha, 
-            SharedOptions.PackagePath,
+            updateCommitSha,
+            packagePathArg,
+            tspProjectPathArg,
             apiViewUrlOption,
-            buildLogOption
+            plainTextFeedbackOption
        };
-
-    private async Task<string?> DiscoverPackagePathAsync(string? language, string? packageName, CancellationToken ct)
-    {
-        if (string.IsNullOrEmpty(language) || string.IsNullOrEmpty(packageName))
-        {
-            logger.LogWarning("Cannot discover package path without language and package name");
-            return null;
-        }
-
-        // Map language to repo name
-        var repoName = language.ToLowerInvariant() switch
-        {
-            "python" => "azure-sdk-for-python",
-            "java" => "azure-sdk-for-java",
-            "javascript" or "typescript" => "azure-sdk-for-js",
-            "csharp" or "dotnet" => "azure-sdk-for-net",
-            "go" => "azure-sdk-for-go",
-            _ => null
-        };
-
-        if (repoName == null)
-        {
-            logger.LogWarning("Unknown language for repo discovery: {Language}", language);
-            return null;
-        }
-
-        // Try to discover repo root
-        try
-        {
-            var currentDir = Directory.GetCurrentDirectory();
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(currentDir, ct);
-            
-            // Verify this is the correct repo
-            var discoveredRepoName = await gitHelper.GetRepoNameAsync(repoRoot, ct);
-            if (!discoveredRepoName.Equals(repoName, StringComparison.OrdinalIgnoreCase))
-            {
-                logger.LogWarning("Discovered repo {DiscoveredRepo} does not match expected repo {ExpectedRepo}", 
-                    discoveredRepoName, repoName);
-                
-                // Try common locations
-                var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                var commonPaths = new[]
-                {
-                    Path.Combine(homeDir, "repos", repoName),
-                    Path.Combine(homeDir, repoName),
-                    Path.Combine(homeDir, "source", repoName),
-                    Path.Combine(homeDir, "src", repoName)
-                };
-
-                foreach (var path in commonPaths)
-                {
-                    if (Directory.Exists(path))
-                    {
-                        repoRoot = path;
-                        logger.LogInformation("Found repo at {RepoRoot}", repoRoot);
-                        break;
-                    }
-                }
-            }
-
-            // Construct package path: {repo_root}/sdk/{package_name}
-            // Search recursively under sdk/ since package may be nested (e.g., sdk/contoso/azure-contoso-widgetmanager)
-            var sdkDir = Path.Combine(repoRoot, "sdk");
-            if (!Directory.Exists(sdkDir))
-            {
-                logger.LogWarning("SDK directory does not exist: {SdkDir}", sdkDir);
-                return null;
-            }
-
-            // Search for package directory recursively
-            var matchingDirs = Directory.GetDirectories(sdkDir, packageName, SearchOption.AllDirectories);
-            
-            if (matchingDirs.Length == 0)
-            {
-                logger.LogWarning("Package directory not found under {SdkDir}: {PackageName}", sdkDir, packageName);
-                return null;
-            }
-            
-            if (matchingDirs.Length > 1)
-            {
-                logger.LogWarning("Multiple matches found for {PackageName}, using first: {Path}", packageName, matchingDirs[0]);
-            }
-            
-            var packagePath = matchingDirs[0];
-            logger.LogInformation("Discovered package path: {PackagePath}", packagePath);
-            return packagePath;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to discover package path for {Language}/{PackageName}", 
-                language, packageName);
-            return null;
-        }
-    }
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var spec = parseResult.GetValue(updateCommitSha);
-        var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+        var commitSha = parseResult.GetValue(updateCommitSha);
+        var packagePath = parseResult.GetValue(packagePathArg);
+        var tspProjectPath = parseResult.GetValue(tspProjectPathArg);
         var apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        var buildLogPath = parseResult.GetValue(buildLogOption);
+        var plainTextFeedback = parseResult.GetValue(plainTextFeedbackOption);
         
         try
         {
-            logger.LogInformation("Starting client update for {packagePath}", packagePath ?? "<auto-discover>");
-            return await RunUpdateAsync(spec, packagePath, apiViewUrl, buildLogPath, ct);
+            logger.LogInformation("Starting client update for {packagePath}", packagePath);
+            return await RunUpdateAsync(commitSha, packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, ct);
         }
         catch (Exception ex)
         {
@@ -257,22 +190,177 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(
-        string commitSha, 
-        string? packagePath = null, 
-        string? apiViewUrl = null, 
-        string? buildLogPath = null, 
+        string commitSha,
+        string packagePath,
+        string tspProjectPath,
+        string? apiViewUrl = null,
+        string? plainTextFeedback = null,
         CancellationToken ct = default)
-        => RunUpdateAsync(commitSha, packagePath, apiViewUrl, buildLogPath, ct);
+        => RunUpdateAsync(commitSha, packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, ct);
 
     private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(
-        string commitSha, 
-        string? packagePath, 
-        string? apiViewUrl, 
-        string? buildLogPath, 
+        string commitSha,
+        string packagePath,
+        string tspProjectPath,
+        string? apiViewUrl,
+        string? plainTextFeedback,
         CancellationToken ct)
     {
         try
         {
+
+            if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
+            {
+                return new CustomizedCodeUpdateResponse 
+                { 
+                    Message = $"Package path is required and must exist: {packagePath}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
+                    ResponseError = $"Package path does not exist: {packagePath}" 
+                };
+            }
+
+            if (string.IsNullOrEmpty(tspProjectPath) || !Directory.Exists(tspProjectPath))
+            {
+                return new CustomizedCodeUpdateResponse 
+                { 
+                    Message = $"TypeSpec project path is required and must exist: {tspProjectPath}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
+                    ResponseError = $"TypeSpec project path does not exist: {tspProjectPath}" 
+                };
+            }            
+            // If feedback sources provided, use feedback-driven classification
+            if (!string.IsNullOrEmpty(apiViewUrl) || !string.IsNullOrEmpty(plainTextFeedback))
+            {
+                // Create a classifier instance with the correct paths for tool operations
+                var classifier = new FeedbackClassifierService(
+                    _microagentHost,
+                    _configuration,
+                    loggerFactory,
+                    tspProjectPath,
+                    packagePath
+                );
+
+                // Step 1: Preprocess feedback
+                var feedbackContext = await PreprocessFeedback(apiViewUrl, plainTextFeedback, ct);
+
+                // Initialize tracking lists, which items set to customizable for now.
+                var customizable = feedbackContext.FeedbackItems.ToList();
+                var success = new List<FeedbackItem>();
+                var failure = new List<FeedbackItem>();
+
+                // Global context tracking all changes
+                var globalContext = new System.Text.StringBuilder();
+
+                // TODO: Truncate globalContext if needed later for token limits
+
+                var language = feedbackContext.Language ?? ExtractLanguageFromPackagePath(packagePath);
+
+                // Step 2: First classification (empty context - determines what needs TypeSpec work)
+                logger.LogInformation("=== First Classification ===");
+                await classifier.ClassifyAsync(customizable, globalContext.ToString(), language, null, null, ct);
+                MoveItemsByStatus(customizable, success, failure);
+
+                // TODO: TESTING - Output results and return early
+                OutputResults(customizable, success, failure, globalContext.ToString());
+                return BuildResponse(success, failure, customizable);
+
+                // Step 3: Apply TypeSpec customizations
+                logger.LogInformation("=== Applying TypeSpec Customizations ===");
+                var customizationResult = await ApplyCustomizations(customizable, tspProjectPath, language, globalContext.ToString(), ct);
+                
+                globalContext.AppendLine("=== TypeSpec Customizations ===");
+                if (!customizationResult.Success)
+                {
+                    globalContext.AppendLine($"Status: Failed");
+                    globalContext.AppendLine(customizationResult.FailureReason ?? "Unknown error");
+                    
+                    // Mark all remaining customizable items
+                    foreach (var item in customizable)
+                    {
+                        item.Context += $"\nTypeSpec Customizations Failed: {customizationResult.FailureReason}";
+                    }
+                }
+                else
+                {
+                    globalContext.AppendLine("Status: Success");
+                    foreach (var change in customizationResult.ChangesSummary)
+                    {
+                        globalContext.AppendLine(change);
+                    }
+                    
+                    // Parse which items were addressed and update their History
+                    var addressedItemIds = ParseAddressedItems(customizationResult.ChangesSummary);
+                    foreach (var item in customizable)
+                    {
+                        if (addressedItemIds.Contains(item.Id))
+                        {
+                            var changes = GetChangesForItem(item.Id, customizationResult.ChangesSummary);
+                            foreach (var change in changes)
+                            {
+                                item.Context += $"\n{change}";
+                            }
+                        }
+                        else
+                        {
+                            item.Context += "\nTypeSpec Customizations did not address this item";
+                        }
+                    }
+                }
+                globalContext.AppendLine();
+
+                // Step 4: Generate SDK from TypeSpec
+                logger.LogInformation("=== Generating SDK ===");
+                var generateResult = await GenerateSDK(tspProjectPath, language, globalContext.ToString(), ct);
+                globalContext.AppendLine("=== SDK Generation ===");
+                globalContext.AppendLine(generateResult.Success ? "Status: Success" : "Status: Failed");
+                globalContext.AppendLine(generateResult.Summary);
+                globalContext.AppendLine();
+
+                // Step 5: Build SDK
+                logger.LogInformation("=== Building SDK ===");
+                var buildResult = await BuildSDK(packagePath, language, globalContext.ToString(), ct);
+                globalContext.AppendLine("=== Build Result ===");
+                globalContext.AppendLine(buildResult.Success ? "Status: Success" : "Status: Failed");
+                globalContext.AppendLine(buildResult.Summary);
+                globalContext.AppendLine();
+
+                // If build failed, preprocess as plain text feedback
+                if (!buildResult.Success)
+                {
+                    var buildErrorText = $"Build failed after applying TypeSpec customizations:\n{buildResult.Summary}";
+                    var buildFeedbackContext = await PreprocessFeedback(null, buildErrorText, ct);
+                    
+                    if (buildFeedbackContext != null && buildFeedbackContext.FeedbackItems.Any())
+                    {
+                        customizable.AddRange(buildFeedbackContext.FeedbackItems);
+                        
+                        // Update original items to reference build failure
+                        foreach (var item in customizable.Except(buildFeedbackContext.FeedbackItems))
+                        {
+                            item.Context += "\nBuild failed - see build error items";
+                        }
+                    }
+                }
+                else
+                {
+                    // Build succeeded - update items
+                    foreach (var item in customizable)
+                    {
+                        item.Context += "\nBuild succeeded";
+                    }
+                }
+
+                // Step 6: Second classification (with full context)
+                logger.LogInformation("=== Second Classification ===");
+                await classifier.ClassifyAsync(customizable, globalContext.ToString(), language, null, null, ct);
+                MoveItemsByStatus(customizable, success, failure);
+
+                // Step 7: Output final results
+                OutputResults(customizable, success, failure, globalContext.ToString());
+                return BuildResponse(success, failure, customizable);
+            }
+
+            // Otherwise, run standard update flow without classification
             if (string.IsNullOrWhiteSpace(commitSha))
             {
                 return new CustomizedCodeUpdateResponse 
@@ -282,43 +370,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                     ResponseError = "Commit SHA is required." 
                 };
             }
-
-            // If feedback sources provided, use classification retry loop
-            if (!string.IsNullOrEmpty(apiViewUrl) || !string.IsNullOrEmpty(buildLogPath))
-            {
-                return await RunUpdateWithClassificationAsync(
-                    commitSha, 
-                    packagePath, 
-                    apiViewUrl, 
-                    buildLogPath, 
-                    ct);
-            }
-
-            // Otherwise, run standard update flow without classification
-            // Package path is required for standard flow
-            if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
-            {
-                return new CustomizedCodeUpdateResponse 
-                { 
-                    Message = $"Package path is required and must exist: {packagePath ?? "<not provided>"}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
-                    ResponseError = $"Package path does not exist: {packagePath}" 
-                };
-            }
-            
-            var languageService = await GetLanguageServiceAsync(packagePath, ct);
-            if (!languageService.IsCustomizedCodeUpdateSupported)
-            {
-                return new CustomizedCodeUpdateResponse 
-                { 
-                    Message = "Could not resolve a language service to perform SDK update.",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService, 
-                    ResponseError = "Could not resolve a language service to perform SDK update." 
-                };
-            }
-
-            // Standard update flow without classification
-            return await RunStandardUpdateAsync(commitSha, packagePath, languageService, ct);
+            return await RegenerateAndApplyCodeCustomizations(commitSha, packagePath, ct);
         }
         catch (Exception ex)
         {
@@ -333,198 +385,343 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     }
 
     /// <summary>
-    /// Runs the update workflow with feedback classification and retry loop.
+    /// Preprocesses feedback from APIView or plain text sources.
     /// </summary>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateWithClassificationAsync(
-        string commitSha,
-        string? packagePath,
+    private async Task<FeedbackContext?> PreprocessFeedback(
         string? apiViewUrl,
-        string? buildLogPath,
+        string? plainTextFeedback,
         CancellationToken ct)
     {
-        // Step 1: Extract feedback from provided sources
-        IFeedbackInput feedbackInput;
-        
+        IFeedbackItem? feedbackItem = null;
+
         if (!string.IsNullOrEmpty(apiViewUrl))
         {
-            var feedbackInputLogger = loggerFactory.CreateLogger<APIViewFeedbackInput>();
-            feedbackInput = new APIViewFeedbackInput(apiViewUrl, feedbackHelper, feedbackInputLogger);
+            var feedbackItemLogger = loggerFactory.CreateLogger<APIViewFeedbackItem>();
+            feedbackItem = new APIViewFeedbackItem(apiViewUrl, feedbackHelper, feedbackItemLogger);
         }
-        else if (!string.IsNullOrEmpty(buildLogPath))
+        else if (!string.IsNullOrEmpty(plainTextFeedback))
         {
-            // Read build log content
-            if (!File.Exists(buildLogPath))
-            {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = $"Build log file not found: {buildLogPath}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                    ResponseError = $"Build log file not found: {buildLogPath}"
-                };
-            }
-            var buildLogContent = await File.ReadAllTextAsync(buildLogPath, ct);
-            var feedbackInputLogger = loggerFactory.CreateLogger<BuildErrorFeedbackInput>();
-            feedbackInput = new BuildErrorFeedbackInput(buildLogContent, feedbackInputLogger);
-        }
-        else
-        {
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = "No feedback source provided",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                ResponseError = "Either --apiview-url or --build-log must be provided"
-            };
+            var feedbackItemLogger = loggerFactory.CreateLogger<BuildLogFeedbackItem>();
+            feedbackItem = new BuildLogFeedbackItem(plainTextFeedback, feedbackItemLogger);
         }
 
-        var feedbackContext = await feedbackInput.PreprocessAsync(ct);
+        var context = await feedbackItem.PreprocessAsync(ct);
+        return context;
+    }
+
+    /// <summary>
+    /// Moves items between lists based on their Status property.
+    /// </summary>
+    private void MoveItemsByStatus(
+        List<FeedbackItem> customizable,
+        List<FeedbackItem> success,
+        List<FeedbackItem> failure)
+    {
+        foreach (var item in customizable.ToList())
+        {
+            if (item.Status == FeedbackStatus.SUCCESS)
+            {
+                success.Add(item);
+                customizable.Remove(item);
+            }
+            else if (item.Status == FeedbackStatus.FAILURE)
+            {
+                failure.Add(item);
+                customizable.Remove(item);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds the final response from classified items.
+    /// </summary>
+    private CustomizedCodeUpdateResponse BuildResponse(
+        List<FeedbackItem> success,
+        List<FeedbackItem> failure,
+        List<FeedbackItem> customizable)
+    {
+        var classifications = new List<CustomizedCodeUpdateResponse.ItemClassificationDetails>();
         
-        // Auto-discover package path if not provided
-        if (string.IsNullOrEmpty(packagePath))
+        foreach (var item in success)
         {
-            packagePath = await DiscoverPackagePathAsync(feedbackContext.Language, feedbackContext.PackageName, ct);
-            if (string.IsNullOrEmpty(packagePath))
+            classifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
             {
-                logger.LogWarning("Could not discover package path for {Language}/{PackageName}. Proceeding with classification only.", 
-                    feedbackContext.Language, feedbackContext.PackageName);
-            }
+                ItemId = item.Id,
+                Classification = "SUCCESS",
+                Reason = !string.IsNullOrEmpty(item.Reason) ? item.Reason : "Item successfully resolved",
+                NextAction = item.NextAction,
+                Text = item.Text
+            });
         }
         
-        // Get language service after package path is determined (if we have a path)
-        LanguageService? languageService = null;
-        if (!string.IsNullOrEmpty(packagePath))
+        foreach (var item in failure)
         {
-            languageService = await GetLanguageServiceAsync(packagePath, ct);
-            if (!languageService.IsCustomizedCodeUpdateSupported)
+            classifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
             {
-                logger.LogWarning("Language service does not support customized code update. Proceeding with classification only.");
-                languageService = null;
-            }
+                ItemId = item.Id,
+                Classification = "FAILURE",
+                Reason = !string.IsNullOrEmpty(item.Reason) ? item.Reason : "Item could not be resolved",
+                NextAction = item.NextAction,
+                Text = item.Text
+            });
         }
         
-        var language = languageService?.Language.ToString() ?? feedbackContext.Language ?? "Unknown";
-        var context = new OrchestrationContext(feedbackContext.FormattedFeedback, language);
-
-        // Step 2: Classify each feedback item individually
-        logger.LogInformation("Classifying {Count} feedback items individually", feedbackContext.FeedbackItems.Count);
-        var itemClassifications = new List<(FeedbackItem Item, FeedbackClassifier.ClassificationResult Result)>();
-        
-        foreach (var item in feedbackContext.FeedbackItems)
+        foreach (var item in customizable)
         {
-            logger.LogInformation("Classifying item: {Id}", item.Id);
-            var itemContext = new OrchestrationContext(item.FormattedForPrompt, language);
-            var itemResult = await feedbackClassifier.ClassifyAsync(itemContext, ct);
-            itemClassifications.Add((item, itemResult));
-            
-            // Output individual classification
-            logger.LogInformation("--- Item {Id} Classification ---", item.Id);
-            logger.LogInformation("Classification: {Classification}", itemResult.Classification);
-            logger.LogInformation("Reason: {Reason}", itemResult.Reason);
-            if (!string.IsNullOrEmpty(itemResult.NextAction))
+            classifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
             {
-                logger.LogInformation("Next Action: {NextAction}", itemResult.NextAction);
-            }
-            logger.LogInformation("--------------------------------");
+                ItemId = item.Id,
+                Classification = "CUSTOMIZABLE",
+                Reason = !string.IsNullOrEmpty(item.Reason) ? item.Reason : "Item still in progress",
+                NextAction = item.NextAction,
+                Text = item.Text
+            });
         }
 
-        // Step 3: Return classifications for all items
-        logger.LogInformation("=== Classification Summary ===");
-        logger.LogInformation("Classified {Count} feedback items", itemClassifications.Count);
-        foreach (var (item, result) in itemClassifications)
-        {
-            logger.LogInformation("- {ItemId}: {Classification}", item.Id, result.Classification);
-        }
-        logger.LogInformation("============================");
-
-        // Step 4: For FAILURE items with NextAction, enhance guidance with detailed agent response
-        var enhancedClassifications = new List<CustomizedCodeUpdateResponse.ItemClassificationDetails>();
-        foreach (var (item, result) in itemClassifications)
-        {
-            if (result.Classification == "FAILURE" && !string.IsNullOrEmpty(result.NextAction))
-            {
-                logger.LogInformation("Enhancing guidance for failed item: {ItemId}", item.Id);
-                var enhancedGuidance = await EnhanceFailureGuidanceAsync(item, result, language, ct);
-                enhancedClassifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
-                {
-                    ItemId = item.Id,
-                    Classification = result.Classification,
-                    Reason = result.Reason,
-                    NextAction = enhancedGuidance
-                });
-            }
-            else
-            {
-                enhancedClassifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
-                {
-                    ItemId = item.Id,
-                    Classification = result.Classification,
-                    Reason = result.Reason,
-                    NextAction = result.NextAction
-                });
-            }
-        }
-
-        // Return response with all individual classifications
         return new CustomizedCodeUpdateResponse
         {
-            Message = $"Classified {itemClassifications.Count} feedback item(s)",
-            Classifications = enhancedClassifications
+            Message = $"Processing complete: {success.Count} succeeded, {failure.Count} failed, {customizable.Count} customizable",
+            Classifications = classifications
         };
     }
 
     /// <summary>
-    /// Enhances failure guidance by calling the agent with error context and next action.
+    /// Parses TypeSpec customization summary to extract addressed item IDs.
     /// </summary>
-    private async Task<string> EnhanceFailureGuidanceAsync(
-        FeedbackItem item,
-        FeedbackClassifier.ClassificationResult result,
+    private HashSet<string> ParseAddressedItems(string[] changesSummary)
+    {
+        var addressed = new HashSet<string>();
+        var pattern = @"\(addresses:\s*([0-9,\s]+)\)";
+        
+        foreach (var change in changesSummary)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(change, pattern);
+            if (match.Success)
+            {
+                var ids = match.Groups[1].Value
+                    .Split(',', System.StringSplitOptions.RemoveEmptyEntries)
+                    .Select(id => id.Trim());
+                
+                foreach (var id in ids)
+                {
+                    addressed.Add(id);
+                }
+            }
+        }
+        
+        return addressed;
+    }
+
+    /// <summary>
+    /// Gets the changes that were applied for a specific item.
+    /// </summary>
+    private List<string> GetChangesForItem(string itemId, string[] changesSummary)
+    {
+        var changes = new List<string>();
+        var pattern = $@"\(addresses:[^)]*\b{itemId}\b[^)]*\)";
+        
+        foreach (var change in changesSummary)
+        {
+            if (System.Text.RegularExpressions.Regex.IsMatch(change, pattern))
+            {
+                // Extract the change text before the (addresses: ...) part
+                var changeText = System.Text.RegularExpressions.Regex.Replace(
+                    change,
+                    @"\s*\(addresses:[^)]+\)\s*$",
+                    ""
+                ).Trim();
+                
+                changes.Add(changeText);
+            }
+        }
+        
+        return changes;
+    }
+
+    /// <summary>
+    /// Applies TypeSpec customizations to address feedback items.
+    /// </summary>
+    private async Task<TypeSpecCustomizationServiceResult> ApplyCustomizations(
+        List<FeedbackItem> customizableItems,
+        string tspProjectPath,
         string language,
+        string globalContext,
         CancellationToken ct)
     {
+        // TODO: Call ApplyTypeSpecCustomization service
+        // TODO: Explore a more structured format for summaries
+        
         try
         {
-            var prompt = $@"You are helping a developer fix an issue that cannot be resolved with TypeSpec changes alone.
-
-**Error Context:**
-{item.FormattedForPrompt}
-
-**Initial Classification:**
-- Reason: {result.Reason}
-- Suggested Action: {result.NextAction}
-
-**Your Task:**
-Provide detailed, actionable guidance for the {language} SDK to resolve this issue. Include:
-1. Specific files or locations to modify
-2. Code examples or patterns to follow
-3. Step-by-step instructions
-4. Any language-specific considerations for {language}
-
-Be concrete and specific. Avoid generic advice.";
-
-            var enhancedGuidance = await _microagentHost.RunAgentToCompletion(new Microagent<string>
+            // Placeholder - will be implemented with actual TypeSpec customization service
+            await Task.CompletedTask;
+            
+            return new TypeSpecCustomizationServiceResult
             {
-                Instructions = prompt,
-                Model = _model,
-                MaxToolCalls = 0 // No tools needed for this enhancement
-            }, ct);
-
-            return enhancedGuidance ?? result.NextAction;
+                Success = false,
+                ChangesSummary = Array.Empty<string>(),
+                FailureReason = "ApplyTypeSpecCustomization not yet implemented"
+            };
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to enhance guidance for item {ItemId}, using original NextAction", item.Id);
-            return result.NextAction ?? "Manual intervention required";
+            logger.LogError(ex, "Exception in ApplyCustomizations");
+            return new TypeSpecCustomizationServiceResult
+            {
+                Success = false,
+                ChangesSummary = Array.Empty<string>(),
+                FailureReason = ex.Message
+            };
         }
     }
 
     /// <summary>
-    /// Runs the standard update flow without classification (original behavior).
+    /// Generates SDK from TypeSpec project.
     /// </summary>
-    private async Task<CustomizedCodeUpdateResponse> RunStandardUpdateAsync(
-        string commitSha,
-        string packagePath,
-        LanguageService languageService,
+    private async Task<(bool Success, string Summary)> GenerateSDK(
+        string tspProjectPath,
+        string language,
+        string globalContext,
         CancellationToken ct)
     {
+        try
+        {
+            // TODO: Placeholder for real code
+            var tspLocationPath = Path.Combine(tspProjectPath, "tsp-location.yaml");
+            var result = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, tspProjectPath, null, isCli: false, ct);
+            
+            if (result.IsSuccessful)
+            {
+                return (true, "SDK generation succeeded");
+            }
+            else
+            {
+                return (false, $"SDK generation failed: {result.ResponseError}");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception in GenerateSDK");
+            return (false, $"SDK generation exception: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Builds the SDK and applies code repairs if needed.
+    /// </summary>
+    private async Task<(bool Success, string Summary)> BuildSDK(
+        string packagePath,
+        string language,
+        string globalContext,
+        CancellationToken ct)
+    {
+        // TODO: Build SDK and code repair
+        try
+        {
+            var languageService = await GetLanguageServiceAsync(packagePath, ct);
+            var (buildSuccess, buildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+            
+            if (buildSuccess)
+            {
+                return (true, "Build succeeded");
+            }
+            else
+            {
+                return (false, $"Build failed: {buildError}");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception in BuildSDK");
+            return (false, $"Build exception: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Outputs all feedback items grouped by status (test run format).
+    /// </summary>
+    private void OutputResults(
+        List<FeedbackItem> customizable,
+        List<FeedbackItem> success,
+        List<FeedbackItem> failure,
+        string globalContext)
+    {
+        logger.LogInformation("\n========================================");
+        logger.LogInformation("GLOBAL CONTEXT");
+        logger.LogInformation("========================================");
+        logger.LogInformation("{GlobalContext}", globalContext);
+        logger.LogInformation("");
+
+        if (success.Count > 0)
+        {
+            logger.LogInformation("========================================");
+            logger.LogInformation("✓ SUCCESS ({Count} items)", success.Count);
+            logger.LogInformation("========================================");
+            foreach (var item in success)
+            {
+                logger.LogInformation("Item: {Id}", item.Id);
+                logger.LogInformation("Text: {Text}", item.Text);
+                logger.LogInformation("Context:\n{Context}", item.Context);
+                logger.LogInformation("---");
+            }
+            logger.LogInformation("");
+        }
+
+        if (failure.Count > 0)
+        {
+            logger.LogInformation("========================================");
+            logger.LogInformation("✗ FAILURE ({Count} items)", failure.Count);
+            logger.LogInformation("========================================");
+            foreach (var item in failure)
+            {
+                logger.LogInformation("Item: {Id}", item.Id);
+                logger.LogInformation("Text: {Text}", item.Text);
+                logger.LogInformation("Context:\n{Context}", item.Context);
+                logger.LogInformation("---");
+            }
+            logger.LogInformation("");
+        }
+
+        if (customizable.Count > 0)
+        {
+            logger.LogInformation("========================================");
+            logger.LogInformation("⧗ CUSTOMIZABLE ({Count} items)", customizable.Count);
+            logger.LogInformation("========================================");
+            foreach (var item in customizable)
+            {
+                logger.LogInformation("Item: {Id}", item.Id);
+                logger.LogInformation("Text: {Text}", item.Text);
+                logger.LogInformation("Context:\n{Context}", item.Context);
+                logger.LogInformation("---");
+            }
+            logger.LogInformation("");
+        }
+
+        logger.LogInformation("========================================");
+        logger.LogInformation("SUMMARY: {Success} succeeded, {Failure} failed, {Customizable} in progress",
+            success.Count, failure.Count, customizable.Count);
+        logger.LogInformation("========================================");
+    }
+
+    /// <summary>
+    /// Applies code customizations: regenerates SDK from TypeSpec and patches customization files.
+    /// </summary>
+    private async Task<CustomizedCodeUpdateResponse> RegenerateAndApplyCodeCustomizations(
+        string commitSha,
+        string packagePath,
+        CancellationToken ct)
+    {
+        var languageService = await GetLanguageServiceAsync(packagePath, ct);
+        if (!languageService.IsCustomizedCodeUpdateSupported)
+        {
+            return new CustomizedCodeUpdateResponse 
+            { 
+                Message = "Could not resolve a language service to perform SDK update.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService, 
+                ResponseError = "Could not resolve a language service to perform SDK update." 
+            };
+        }
+
         var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
         var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
         if (!regenResult.IsSuccessful)
@@ -666,5 +863,18 @@ Be concrete and specific. Avoid generic advice.";
         logger.LogDebug("Patch application result: {Success}", patchesApplied);
 
         return patchesApplied;
+    }
+
+    /// <summary>
+    /// Extracts the language from a package path like "/path/to/azure-sdk-for-python".
+    /// </summary>
+    private static string ExtractLanguageFromPackagePath(string packagePath)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            packagePath, 
+            @"azure-sdk-for-([a-z]+)", 
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        
+        return match.Success ? match.Groups[1].Value : "Unknown";
     }
 }

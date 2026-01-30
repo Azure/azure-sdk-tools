@@ -4,10 +4,8 @@ using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
-using Azure.Sdk.Tools.Cli.Tools.Verify;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan

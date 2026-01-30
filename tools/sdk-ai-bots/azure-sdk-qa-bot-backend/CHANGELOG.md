@@ -1,5 +1,17 @@
 # Release History
 
+## 0.9.0 (2026-02-30)
+
+### Features Added
+
+* Add new tenant Authoring
+
+## 0.8.0 (2026-01-29)
+
+### Features Added
+
+* Add metadata for knowledge and clarify management-plane and data-plane
+
 ## 0.7.1 (2026-01-20)
 
 ### Bugs Fixed

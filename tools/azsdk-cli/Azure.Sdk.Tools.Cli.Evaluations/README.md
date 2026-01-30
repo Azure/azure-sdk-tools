@@ -143,6 +143,18 @@ To ensure evaluations reflect the intended Copilot behavior:
 - Release any azsdk-cli tool changes that impact Copilot Instructions before updating the instructions.
 - Significant tool updates or newly added tools must be released for their behavior to appear in Copilot Instructions and be validated by evaluations.
 
+### Tool Discoverability Testing
+
+When creating new MCP tools, add test prompts to [`TestData/TestPrompts.json`](TestData/TestPrompts.json) to validate that LLM agents can discover your tool from natural language queries. See the [New Tool Development Guide](../docs/new-tool.md#add-test-prompts-for-tool-discoverability) for details.
+
+```bash
+# Run tool discoverability tests
+dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~Evaluate_PromptToToolMatch"
+
+# Verify all tools have test prompts
+dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~AllToolsHaveTestPrompts"
+```
+
 ## Related Documentation
 
 - [Microsoft.Extensions.AI Evaluation Samples](https://github.com/dotnet/ai-samples/tree/main/src/microsoft-extensions-ai-evaluation/api)

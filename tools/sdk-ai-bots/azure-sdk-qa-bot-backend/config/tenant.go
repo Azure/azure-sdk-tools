@@ -1,6 +1,8 @@
 package config
 
-import "github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+import (
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+)
 
 type TenantConfig struct {
 	Sources                 []model.Source
@@ -24,6 +26,19 @@ var typespecSources = []model.Source{
 	model.Source_TypeSpecHttpSpecs,
 	model.Source_StaticAzureDocs,
 	model.Source_StaticTypeSpecToSwaggerMapping,
+}
+
+var azureTypespecAuthoringSources = []model.Source{
+	model.Source_AzureAPIGuidelines,
+	model.Source_AzureResourceManagerRPC,
+	model.Source_TypeSpecAzure,
+	model.Source_TypeSpecQA,
+	model.Source_TypeSpecAzureHttpSpecs,
+	model.Source_TypeSpec,
+	model.Source_AzureRestAPISpec,
+	model.Source_TypeSpecMigration,
+	model.Source_TypeSpecHttpSpecs,
+	model.Source_StaticAzureDocs,
 }
 
 var SourceTopK = map[model.Source]int{
@@ -93,6 +108,12 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		AgenticSearchPrompt:     "azure_sdk_onboarding/agentic_search.md",
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
 	},
+	model.TenantID_AzureTypespecAuthoring: {
+		PromptTemplate:          "azure_typespec_authoring/qa.md",
+		Sources:                 azureTypespecAuthoringSources,
+		IntentionPromptTemplate: "azure_typespec_authoring/intention.md",
+		AgenticSearchPrompt:     "azure_typespec_authoring/agentic_search.md",
+	},
 	model.TenantID_GeneralQaBot: {
 		PromptTemplate:          "general/qa.md",
 		IntentionPromptTemplate: "general/intention.md",
@@ -101,7 +122,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 	},
 	model.TenantID_APISpecReviewBot: {
 		PromptTemplate: "api_spec_review/qa.md",
-		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureRestAPISpec, model.Source_AzureSDKDocsEng},
+		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
 		},

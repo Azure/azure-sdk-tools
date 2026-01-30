@@ -1,6 +1,6 @@
 # Tools available in Azure SDK MCP server
 
-This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.5.13.
+This document provides a comprehensive list of all MCP (Model Context Protocol) tools and commands supported by the Azure SDK MCP server version 0.5.14.
 
 <style>
 table td:nth-child(2),
@@ -66,6 +66,7 @@ table th:nth-child(2) {
 |  | `azsdk pkg samples translate` | Translates sample files from source language to target package language |
 |  | `azsdk quokka` |  |
 |  | `azsdk release-plan list-overdue` |  |
+|  | `azsdk release-plan update-release-status` |  |
 |  | `azsdk apiview get-content` | Get content by APIView URL |
 |  | `azsdk list` |  |
 

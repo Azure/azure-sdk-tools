@@ -4,7 +4,7 @@ using Azure.Sdk.Tools.Cli.Attributes;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
-    public class ProductWorkItem : WorkItemBase
+    public class PackageWorkItem : WorkItemBase
     {
         [FieldName("Custom.Language")]
         public string Language { get; set; } = string.Empty;

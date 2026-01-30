@@ -12,6 +12,6 @@ Structure your response as a JSON object following this exact format:
       "content": string      // knowledge content supporting your answer
     }
   ],
-  "reasoning_progress": string // output your reasoning progress of generating the answer
+  "reasoning": string // output your reasoning of generating the answer
 }
 ```

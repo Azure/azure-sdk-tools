@@ -121,9 +121,15 @@ test.describe('Code Panel - Page Options Toggles', () => {
     // Line numbers should be visible by default
     const lineNumbers = page.locator('.line-number');
     await expect(lineNumbers.first()).toBeVisible();
+    
+    const settingsButton = page.locator('button.settings-btn');
+    await settingsButton.click();
+    await page.waitForSelector('.settings-panel', { state: 'visible' });
+    
     const lineNumbersToggle = page
-      .locator('li.list-group-item')
-      .filter({ hasText: 'Line numbers' })
+      .locator('.settings-panel')
+      .locator('label', { hasText: 'Line numbers' })
+      .locator('..')
       .locator('p-toggleswitch');
 
     // Click to hide
@@ -139,9 +145,16 @@ test.describe('Code Panel - Page Options Toggles', () => {
     // Comments should be visible by default
     const commentThreads = page.locator('app-comment-thread');
     await expect(commentThreads.first()).toBeVisible();
+    
+    const settingsButton = page.locator('button.settings-btn');
+    await settingsButton.click();
+    
+    await page.waitForSelector('.settings-panel', { state: 'visible' });
+    
     const commentsToggle = page
-      .locator('li.list-group-item')
-      .filter({ hasText: /^Comments$/ })
+      .locator('.settings-panel')
+      .locator('label', { hasText: /^Comments$/ })
+      .locator('..')
       .locator('p-toggleswitch');
 
     // Click to hide
@@ -159,10 +172,9 @@ test.describe('Code Panel - Page Options Toggles', () => {
     const reviewPage = new ReviewPage(page);
     // Left navigation should be visible by default
     await expect(reviewPage.leftNavigation).toBeVisible();
-    const leftNavToggle = page
-      .locator('li.list-group-item')
-      .filter({ hasText: 'Left navigation' })
-      .locator('p-toggleswitch');
+    
+    // The left navigation toggle is now in the review-info component (sidebar toggle button)
+    const leftNavToggle = page.locator('label[for="page-left-panel"]');
 
     // Click to hide
     await leftNavToggle.click();

@@ -77,7 +77,7 @@ public class AutoReviewController : ControllerBase
             _telemetryClient.TrackException(e, new Dictionary<string, string>
             {
                 { "operation", "UploadAutoReview" },
-                { "fileName", file?.FileName ?? "null" },
+                { "fileName", file != null ? Path.GetFileName(file.FileName) : "null" },
                 { "fileSize", file?.Length.ToString() ?? "0" },
                 { "label", label ?? "null" },
                 { "packageVersion", packageVersion ?? "null" },
@@ -160,8 +160,6 @@ public class AutoReviewController : ControllerBase
                 { "buildId", buildId ?? "null" },
                 { "artifactName", artifactName ?? "null" },
                 { "packageName", packageName ?? "null" },
-                { "originalFilePath", originalFilePath ?? "null" },
-                { "reviewFilePath", reviewFilePath ?? "null" },
                 { "label", label ?? "null" },
                 { "repoName", repoName ?? "null" },
                 { "project", project ?? "null" },

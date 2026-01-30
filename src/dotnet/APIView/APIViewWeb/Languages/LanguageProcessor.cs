@@ -88,13 +88,13 @@ namespace APIViewWeb
                         "stderr: " + Environment.NewLine +
                         error + Environment.NewLine;
                     
-                    _telemetryClient.TrackEvent($"RunProcess_Failed", new System.Collections.Generic.Dictionary<string, string>
+                    _telemetryClient.TrackEvent("RunProcess_Failed", new System.Collections.Generic.Dictionary<string, string>
                     {
                         { "language", Name },
-                        { "processName", processName },
+                        { "processName", Path.GetFileName(processName) },
                         { "exitCode", process.ExitCode.ToString() },
-                        { "stdout", output.ToString().Length > 1000 ? output.ToString().Substring(0, 1000) : output.ToString() },
-                        { "stderr", error.ToString().Length > 1000 ? error.ToString().Substring(0, 1000) : error.ToString() }
+                        { "stderrSummary", error.Length > 500 ? error.ToString().Substring(0, 500) + "..." : error.ToString() },
+                        { "stdoutSummary", output.Length > 500 ? output.ToString().Substring(0, 500) + "..." : output.ToString() }
                     });
 
                     throw new InvalidOperationException(processErrors);

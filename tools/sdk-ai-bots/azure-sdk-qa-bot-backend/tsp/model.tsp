@@ -37,6 +37,9 @@ union TenantID {
   
   @doc("API spec review bot")
   APISpecReviewBot: "api_spec_review_bot",
+  
+  @doc("Azure TypeSpec authoring bot")
+  AzureTypespecAuthoring: "azure_typespec_authoring",
 }
 
 @doc("Available data sources for knowledge retrieval")
@@ -130,6 +133,9 @@ union AdditionalInfoType {
   
   @doc("Image content")
   Image: "image",
+  
+  @doc("Text content")
+  Text: "text",
 }
 
 @doc("User reaction types for feedback")
@@ -172,9 +178,6 @@ model Message {
   
   @doc("The content of the message")
   content: string;
-  
-  @doc("The raw content of the message, used for searching")
-  raw_content?: string;
   
   @doc("The name of the message sender, used for system messages")
   name?: string;
@@ -279,7 +282,7 @@ model CompletionResponse {
   intention?: Intention;
   
   @doc("The reasoning progress of generating the answer")
-  reasoning_progress?: string;
+  reasoning?: string;
   
   @doc("The tenant ID the question is routed to")
   route_tenant?: TenantID;

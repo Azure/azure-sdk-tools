@@ -184,8 +184,6 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, opts Sear
 		allResults = allResults[:k]
 	}
 
-	log.Printf("Returning %d weighted search results from %d sources", len(allResults), len(opts.Sources))
-
 	return allResults, nil
 }
 
@@ -430,7 +428,7 @@ func (s *SearchClient) buildFilter(sources []model.Source, sourceFilter map[mode
 	for _, source := range sources {
 		filter := fmt.Sprintf("context_id eq '%s'", source)
 		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
-			filter = fmt.Sprintf("(%s and %s)", filter, sourceFilterStr)
+			filter = fmt.Sprintf("(%s and (%s))", filter, sourceFilterStr)
 		}
 		sourceFilters = append(sourceFilters, filter)
 	}

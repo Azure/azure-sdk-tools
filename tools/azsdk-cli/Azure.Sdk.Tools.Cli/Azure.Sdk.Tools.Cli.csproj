@@ -64,10 +64,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Configuration/RequirementsV1.json" />
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- Include changelog and documentation files in the package -->
     <None Include="CHANGELOG.md" Pack="true" PackagePath="CHANGELOG.md" />
     <None Include="../README.md" Pack="true" PackagePath="README.md" />

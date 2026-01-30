@@ -76,8 +76,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
 #if DEBUG
             ValidateCommandTree(rootCommand);
 #endif
+            // Disable response file support as it lead to unexpected behaviour when cli command takes package name with '@' symbol as value.
+            // @azure/template package name causes the parser to look for a response file named 'azure/template' which is not the intended behaviour.
+            var parseConfig = new CommandLineConfiguration(rootCommand)
+            {
+                ResponseFileTokenReplacer = null
+            };
 
-            var parseResult = rootCommand.Parse(args);
+            var parseResult = rootCommand.Parse(args, parseConfig);
             return await parseResult.InvokeAsync();
         }
 

@@ -8,7 +8,7 @@
 
 ### Bugs Fixed
 
-- Disabled response file handling for command line to avoid considering Javascript package name with '@' as response file name.
+- Disabled response file handling for command line to avoid considering JavaScript package name with '@' as response file name.
 
 ## 0.5.14 (2026-01-27)
 

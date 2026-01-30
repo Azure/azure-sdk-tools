@@ -1,11 +1,11 @@
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using IssueLabeler.Shared;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Azure.Storage.Blobs;
+using IssueLabeler.Shared;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace IssueLabelerService
@@ -36,7 +36,7 @@ namespace IssueLabelerService
 
             var structure = BuildSearchStructure();
             var result = await _ragService.SendMessageQnaAsync(_config.LabelInstructions, userPrompt, modelName, null, structure);
-        
+
             if (string.IsNullOrEmpty(result))
             {
                 _logger.LogInformation($"Open AI Response for {issue.RepositoryName} using the Open AI Labeler for issue #{issue.IssueNumber} had an empty response.");

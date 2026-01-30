@@ -556,6 +556,3 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generat
 
 # Azure SDK CLI Tool logs
 *.logs
-
-# sdk-sample-generator artifacts
-.artifacts/

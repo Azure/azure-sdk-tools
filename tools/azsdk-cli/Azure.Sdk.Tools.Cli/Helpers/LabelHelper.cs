@@ -236,7 +236,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <returns>True if colors are equal (ignoring # prefix and case), false otherwise</returns>
         public static bool AreColorsEqual(string color1, string color2)
         {
-            return NormalizeColorForComparison(color1).Equals(NormalizeColorForComparison(color2), StringComparison.OrdinalIgnoreCase);
+            return NormalizeColorForComparison(color1).Equals(NormalizeColorForComparison(color2), StringComparison.Ordinal);
         }
     }
 }

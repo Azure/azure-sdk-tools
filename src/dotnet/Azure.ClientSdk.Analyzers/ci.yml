@@ -26,19 +26,19 @@ extends:
   parameters:
     ToolDirectory: src/dotnet/Azure.ClientSdk.Analyzers
     CustomJobs:
-    - job: VerifyAPIViewBuilds
-      displayName: Verify APIView Still Builds
-      pool:
-        name: $(LINUXPOOL)
-        image: $(LINUXVMIMAGE)
-        os: linux
-      steps:
-      - template: /eng/pipelines/templates/steps/install-dotnet.yml
-      
-      - script: 'dotnet build -c Release'
-        displayName: 'Build APIView project'
-        workingDirectory: 'src/dotnet/APIView/APIView'
-        env:
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          DOTNET_CLI_TELEMETRY_OPTOUT: 1
-          DOTNET_MULTILEVEL_LOOKUP: 0
+      - job: VerifyAPIViewBuilds
+        displayName: Verify APIView Still Builds
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        steps:
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+          - script: 'dotnet build -c Release'
+            displayName: 'Build APIView project'
+            workingDirectory: 'src/dotnet/APIView/APIView'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0

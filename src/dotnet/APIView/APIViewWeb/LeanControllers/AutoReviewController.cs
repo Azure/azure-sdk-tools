@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,18 +23,21 @@ public class AutoReviewController : ControllerBase
     private readonly IAutoReviewService _autoReviewService;
     private readonly IEnumerable<LanguageService> _languageServices;
     private readonly IConfiguration _configuration;
+    private readonly TelemetryClient _telemetryClient;
 
     public AutoReviewController(ICodeFileManager codeFileManager, 
         IAPIRevisionsManager apiRevisionsManager,
         IAutoReviewService autoReviewService,
         IEnumerable<LanguageService> languageServices,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        TelemetryClient telemetryClient)
     {
         _codeFileManager = codeFileManager;
         _apiRevisionsManager = apiRevisionsManager;
         _autoReviewService = autoReviewService;
         _languageServices = languageServices;
         _configuration = configuration;
+        _telemetryClient = telemetryClient;
     }
 
     // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
@@ -70,6 +74,16 @@ public class AutoReviewController : ControllerBase
         }
         catch (Exception e)
         {
+            _telemetryClient.TrackException(e, new Dictionary<string, string>
+            {
+                { "operation", "UploadAutoReview" },
+                { "fileName", file?.FileName ?? "null" },
+                { "fileSize", file?.Length.ToString() ?? "0" },
+                { "label", label ?? "null" },
+                { "packageVersion", packageVersion ?? "null" },
+                { "packageType", packageType ?? "null" }
+            });
+
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError, new
             {
                 error = "Failed to create API review",
@@ -78,6 +92,7 @@ public class AutoReviewController : ControllerBase
             });
         }
 
+        _telemetryClient.TrackEvent("UploadAutoReview_NoFileProvided");
         return StatusCode(statusCode: StatusCodes.Status500InternalServerError, new
         {
             error = "Failed to create API review. No file provided."
@@ -139,6 +154,21 @@ public class AutoReviewController : ControllerBase
         }
         catch (Exception e)
         {
+            _telemetryClient.TrackException(e, new Dictionary<string, string>
+            {
+                { "operation", "CreateApiReview" },
+                { "buildId", buildId ?? "null" },
+                { "artifactName", artifactName ?? "null" },
+                { "packageName", packageName ?? "null" },
+                { "originalFilePath", originalFilePath ?? "null" },
+                { "reviewFilePath", reviewFilePath ?? "null" },
+                { "label", label ?? "null" },
+                { "repoName", repoName ?? "null" },
+                { "project", project ?? "null" },
+                { "packageVersion", packageVersion ?? "null" },
+                { "packageType", packageType ?? "null" }
+            });
+
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError, new
             {
                 error = "Failed to create API review from DevOps artifacts",

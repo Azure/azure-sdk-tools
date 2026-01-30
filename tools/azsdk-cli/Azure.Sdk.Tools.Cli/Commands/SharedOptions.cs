@@ -76,8 +76,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
         public static Option<string?> PackagePath = new("--package-path", "-p")
         {
-            Description = "Path to the package directory. If not provided with --apiview-url or --build-log, will auto-discover from feedback metadata",
-            Required = false,
+            Description = "Path to the package directory.",
+            Required = true,
         };
 
         public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)

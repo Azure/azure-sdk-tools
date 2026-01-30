@@ -16,16 +16,6 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
-/// <summary>
-/// Result from applying TypeSpec customizations
-/// </summary>
-internal class TypeSpecCustomizationServiceResult
-{
-    public bool Success { get; set; }
-    public string[] ChangesSummary { get; set; } = Array.Empty<string>();
-    public string? FailureReason { get; set; }
-}
-
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, provides intelligent analysis and recommendations for updating customization code.")]
 public class CustomizedCodeUpdateTool: LanguageMcpTool
 {
@@ -269,44 +259,14 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 var customizationResult = await ApplyCustomizations(customizable, tspProjectPath, language, globalContext.ToString(), ct);
                 
                 globalContext.AppendLine("=== TypeSpec Customizations ===");
-                if (!customizationResult.Success)
-                {
-                    globalContext.AppendLine($"Status: Failed");
-                    globalContext.AppendLine(customizationResult.FailureReason ?? "Unknown error");
-                    
-                    // Mark all remaining customizable items
-                    foreach (var item in customizable)
-                    {
-                        item.Context += $"\nTypeSpec Customizations Failed: {customizationResult.FailureReason}";
-                    }
-                }
-                else
-                {
-                    globalContext.AppendLine("Status: Success");
-                    foreach (var change in customizationResult.ChangesSummary)
-                    {
-                        globalContext.AppendLine(change);
-                    }
-                    
-                    // Parse which items were addressed and update their History
-                    var addressedItemIds = ParseAddressedItems(customizationResult.ChangesSummary);
-                    foreach (var item in customizable)
-                    {
-                        if (addressedItemIds.Contains(item.Id))
-                        {
-                            var changes = GetChangesForItem(item.Id, customizationResult.ChangesSummary);
-                            foreach (var change in changes)
-                            {
-                                item.Context += $"\n{change}";
-                            }
-                        }
-                        else
-                        {
-                            item.Context += "\nTypeSpec Customizations did not address this item";
-                        }
-                    }
-                }
+                globalContext.AppendLine(customizationResult);
                 globalContext.AppendLine();
+                
+                // Mark all customizable items with the customization result
+                foreach (var item in customizable)
+                {
+                    item.Context += $"\nTypeSpec Customizations: {customizationResult}";
+                }
 
                 // Step 4: Generate SDK from TypeSpec
                 logger.LogInformation("=== Generating SDK ===");
@@ -541,7 +501,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <summary>
     /// Applies TypeSpec customizations to address feedback items.
     /// </summary>
-    private async Task<TypeSpecCustomizationServiceResult> ApplyCustomizations(
+    private async Task<string> ApplyCustomizations(
         List<FeedbackItem> customizableItems,
         string tspProjectPath,
         string language,
@@ -556,22 +516,12 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             // Placeholder - will be implemented with actual TypeSpec customization service
             await Task.CompletedTask;
             
-            return new TypeSpecCustomizationServiceResult
-            {
-                Success = false,
-                ChangesSummary = Array.Empty<string>(),
-                FailureReason = "ApplyTypeSpecCustomization not yet implemented"
-            };
+            return "ApplyTypeSpecCustomization not yet implemented";
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Exception in ApplyCustomizations");
-            return new TypeSpecCustomizationServiceResult
-            {
-                Success = false,
-                ChangesSummary = Array.Empty<string>(),
-                FailureReason = ex.Message
-            };
+            return $"Error: {ex.Message}";
         }
     }
 

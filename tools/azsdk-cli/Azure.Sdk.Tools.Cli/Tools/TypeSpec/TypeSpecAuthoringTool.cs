@@ -25,11 +25,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private readonly ITypeSpecHelper _typeSpecHelper;
         /* the maximum number of characters allowed in a reference snippet */
         private const int MaxReferenceContentLength = 500;
-        private const string TypeSpecAuthoringToolCommandName = "consult";
+        private const string TypeSpecAuthoringToolCommandName = "generate-authoring-plan";
 
-        private readonly Argument<string> _requestArgument = new("typespec request")
+        private readonly Option<string> _requestOption = new("--request")
         {
             Description = "The TypeSpec‑related task or user request sent to an AI agent to produce a proposed solution or execution plan with references.",
+            Required = true,
         };
 
         private readonly Option<string> _additionalInformationOption = new("--additional-information")
@@ -58,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         {
             var command = new Command(TypeSpecAuthoringToolCommandName, "Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure service.")
             {
-                _requestArgument,
+                _requestOption,
                 _additionalInformationOption,
                 _typeSpecProjectPathOption,
             };
@@ -68,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var request = parseResult.GetValue(_requestArgument);
+            var request = parseResult.GetValue(_requestOption);
             var additionalInformation = parseResult.GetValue(_additionalInformationOption);
             var typespecProjectRootPath = parseResult.GetValue(_typeSpecProjectPathOption);
 
@@ -82,7 +83,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             {
                 _logger.LogInformation("Authoring with question: {Request}", request);
 
-                var response = await AuthoringWithAzureSDKDocumentation(
+                var response = await GenerateTypeSpecAuthoringPlan(
                   request,
                   additionalInformation,
                   typespecProjectRootPath,
@@ -105,12 +106,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
 
 
-        [McpServerTool(Name = "azsdk_typespec_consult")]
+        [McpServerTool(Name = "azsdk_typespec_generate_authoring_plan")]
         [Description(@"Generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.
 Pass in a `request` to get an AI-generated response with references.
 Returns an answer with supporting references and documentation links
 ")]
-        public async Task<TypeSpecAuthoringResponse> AuthoringWithAzureSDKDocumentation(
+        public async Task<TypeSpecAuthoringResponse> GenerateTypeSpecAuthoringPlan(
             [Description("The request to ask the AI agent")]
             string request,
             [Description("Additional information to consider for the TypeSpec project")]

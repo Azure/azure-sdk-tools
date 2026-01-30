@@ -286,7 +286,13 @@ func (s *CodeReviewService) agenticSearch(ctx context.Context, query string, sou
 		agenticSearchPrompt = "You are searching for Azure SDK design guidelines to review code. Generate targeted search queries to find relevant guidelines for API design, naming conventions, parameter handling, and SDK patterns."
 	}
 
-	resp, err := s.searchClient.AgenticSearch(ctx, query, sources, sourceFilter, agenticSearchPrompt)
+	resp, err := s.searchClient.AgenticSearch(ctx, query, search.AgenticSearchOptions{
+		SearchOptions: search.SearchOptions{
+			Sources:      sources,
+			SourceFilter: sourceFilter,
+		},
+		Prompt: agenticSearchPrompt,
+	})
 	if err != nil {
 		log.Printf("Agentic search error: %v", err)
 		return nil, err

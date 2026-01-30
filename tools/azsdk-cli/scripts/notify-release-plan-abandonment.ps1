@@ -129,6 +129,51 @@ function Send-EmailNotification {
     }
 }
 
+function Update-WorkItemState {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$WorkItemId,
+
+        [Parameter(Mandatory = $true)]
+        [string]$State
+    )
+
+    Write-Verbose "Updating work item $WorkItemId state to '$State'..."
+
+    $uri = "$DevOpsBaseUrl/wit/workitems/${WorkItemId}?api-version=$DevOpsApiVersion"
+
+    $headers = @{
+        "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$AzureDevOpsPAT"))
+        "Content-Type"  = "application/json-patch+json"
+    }
+
+    $patchDocument = @(
+        @{
+            op    = "add"
+            path  = "/fields/System.State"
+            value = $State
+        }
+    )
+
+    $jsonBody = $patchDocument | ConvertTo-Json -Depth 10
+
+    if ($DryRun) {
+        Write-Host "[DRY RUN] Would update work item $WorkItemId state to '$State'" -ForegroundColor Yellow
+        return $true
+    }
+
+    try {
+        $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Patch -Body $jsonBody
+        Write-Host "Successfully updated work item $WorkItemId state to '$State'" -ForegroundColor Green
+        return $true
+    }
+    catch {
+        Write-Warning "Failed to update work item $WorkItemId state: $_"
+        return $false
+    }
+}
+
 function Format-AbandonmentWarningEmail {
     [CmdletBinding()]
     param(
@@ -136,10 +181,10 @@ function Format-AbandonmentWarningEmail {
         [object]$WorkItem
     )
 
-    $ownerName = $WorkItem.fields.'Custom.PrimaryPM' ?? "Release Plan Owner"
-    $title = $WorkItem.fields.'System.Title' ?? "Unknown Release Plan"
-    $releasePlanId = $WorkItem.fields.'Custom.ReleasePlanID'
-    $releaseMonth = $WorkItem.fields.'Custom.SDKReleaseMonth' ?? "Not specified"
+    $ownerName = if ($WorkItem.fields.PSObject.Properties['Custom.PrimaryPM']) { $WorkItem.fields.'Custom.PrimaryPM' } else { "Release Plan Owner" }
+    $title = if ($WorkItem.fields.PSObject.Properties['System.Title']) { $WorkItem.fields.'System.Title' } else { "Unknown Release Plan" }
+    $releasePlanId = if ($WorkItem.fields.PSObject.Properties['Custom.ReleasePlanID']) { $WorkItem.fields.'Custom.ReleasePlanID' } else { "" }
+    $releaseMonth = if ($WorkItem.fields.PSObject.Properties['Custom.SDKReleaseMonth']) { $WorkItem.fields.'Custom.SDKReleaseMonth' } else { "Not specified" }
     $releasePlanUrl = "https://aka.ms/azsdk/release-planner/$releasePlanId"
 
     $body = @"
@@ -233,14 +278,22 @@ foreach ($workItemId in $WorkItemIds) {
     }
 
     # Format and send email
-    $releasePlanId = $workItem.fields.'Custom.ReleasePlanID'
+    $releasePlanId = if ($workItem.fields.PSObject.Properties['Custom.ReleasePlanID']) { $workItem.fields.'Custom.ReleasePlanID' } else { "" }
     $subject = "Notice: Release Plan $releasePlanId Scheduled for Abandonment"
     $body = Format-AbandonmentWarningEmail -WorkItem $workItem
 
     $emailSent = Send-EmailNotification -To $ownerEmail -Cc $CcEmail -Subject $subject -Body $body
 
     if ($emailSent) {
-        $successCount++
+        # Mark the work item as Abandoned
+        $stateUpdated = Update-WorkItemState -WorkItemId $workItemId -State "Abandoned"
+        if ($stateUpdated) {
+            $successCount++
+        }
+        else {
+            Write-Warning "Email sent but failed to update work item state for $workItemId"
+            $failureCount++
+        }
     }
     else {
         $failureCount++

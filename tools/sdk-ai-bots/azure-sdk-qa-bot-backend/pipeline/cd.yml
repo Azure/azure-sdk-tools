@@ -19,6 +19,7 @@ parameters:
     values:
       - default
       - authoring
+      - codereview
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml

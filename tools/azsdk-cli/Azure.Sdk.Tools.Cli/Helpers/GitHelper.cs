@@ -1,13 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface IGitHelper
     {
-        // Get the owner 
+        // Get the owner
         public Task<string> GetRepoOwnerNameAsync(string pathInRepo, bool findUpstreamParent = true, CancellationToken ct = default);
         public Task<string> GetRepoFullNameAsync(string pathInRepo, bool findUpstreamParent = true, CancellationToken ct = default);
         public Task<Uri> GetRepoRemoteUriAsync(string pathInRepo, CancellationToken ct = default);
@@ -35,12 +36,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
             var options = new GitOptions($"merge-base HEAD {targetBranchName}", repoRoot);
             var result = await gitCommandHelper.Run(options, ct);
-            
+
             if (result.ExitCode != 0)
             {
                 throw new InvalidOperationException($"Command '{options.ShortName}' failed: {result.Output.Trim()}");
             }
-            
+
             var mergeBaseSha = result.Stdout.Trim();
             var currentBranch = await GetBranchNameAsync(pathInRepo, ct);
             logger.LogDebug(
@@ -61,12 +62,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
             var options = new GitOptions("rev-parse --abbrev-ref HEAD", repoRoot);
             var result = await gitCommandHelper.Run(options, ct);
-            
+
             if (result.ExitCode != 0)
             {
                 throw new InvalidOperationException($"Command '{options.ShortName}' failed: {result.Output.Trim()}");
             }
-            
+
             return result.Stdout.Trim();
         }
 
@@ -81,12 +82,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
             var options = new GitOptions("remote get-url origin", repoRoot);
             var result = await gitCommandHelper.Run(options, ct);
-            
+
             if (result.ExitCode != 0)
             {
                 throw new InvalidOperationException($"Command '{options.ShortName}' failed: {result.Output.Trim()}");
             }
-            
+
             var remoteUrl = result.Stdout.Trim();
             var url = ConvertSshToHttpsUrl(remoteUrl);
             return new Uri(url);
@@ -180,7 +181,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 // Path might be a file or non-existent path - get its directory
                 workingDir = Path.GetDirectoryName(pathInRepo);
-                
+
                 // Handle edge cases like "C:" which returns null
                 if (string.IsNullOrEmpty(workingDir))
                 {
@@ -199,14 +200,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 // This correctly handles both normal repos and worktrees
                 var options = new GitOptions("rev-parse --show-toplevel", workingDir);
                 var result = await gitCommandHelper.Run(options, ct);
-                
+
                 if (result.ExitCode != 0)
                 {
                     throw new InvalidOperationException($"Git command failed: {result.Output.Trim()}");
                 }
-                
+
                 var repoRoot = result.Stdout.Trim();
-                
+                var repoDirectoryName = Path.GetFileName(repoRoot);
+                TelemetryPathSanitizer.AddAllowlistedSegment(repoDirectoryName);
+
                 // Normalize path separators: git returns forward slashes on Windows
                 return repoRoot.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
             }
@@ -230,7 +233,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 throw new ArgumentException("Invalid repository path.", nameof(pathInRepo));
             }
-            
+
             var uri = await GetRepoRemoteUriAsync(pathInRepo, ct);
             var segments = uri.Segments;
 

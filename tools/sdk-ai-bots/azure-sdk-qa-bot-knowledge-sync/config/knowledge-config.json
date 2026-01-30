@@ -14,14 +14,20 @@
           "path": "/website/src/content/docs/docs",
           "description": "TypeSpec documentation for API design",
           "folder": "typespec_docs",
-          "fileNameLowerCase": true
+          "fileNameLowerCase": true,
+          "metadata": {
+            "scope": "unbranded"
+          }
         },
         {
           "description": "TypeSpec HTTP specification test cases",
           "path": "/packages/http-specs/specs",
           "folder": "typespec_http_specs",
           "fileNameLowerCase": true,
-          "isSpectorTest": true
+          "isSpectorTest": true,
+          "metadata": {
+            "scope": "unbranded"
+          }
         }
       ]
     },
@@ -36,14 +42,52 @@
           "path": "/website/src/content/docs/docs",
           "description": "TypeSpec Azure-specific documentation",
           "folder": "typespec_azure_docs",
-          "fileNameLowerCase": true
+          "fileNameLowerCase": true,
+          "metadata": {
+            "scope": "branded"
+          },
+          "overrides": [
+            {
+              "pattern": "**/getstarted/azure-resource-manager/**",
+              "metadata": {
+                "service_type": "management-plane"
+              }
+            },
+            {
+              "pattern": "**/getstarted/azure-core/**",
+              "metadata": {
+                "service_type": "data-plane"
+              }
+            },
+            {
+              "pattern": "**/howtos/arm/**",
+              "metadata": {
+                "service_type": "management-plane"
+              }
+            },
+            {
+              "pattern": "**/migrate-swagger/checklists/migrate-arm-tips/**",
+              "metadata": {
+                "service_type": "management-plane"
+              }
+            },
+            {
+              "pattern": "**/migrate-swagger/checklists/migrate-dp-tips/**",
+              "metadata": {
+                "service_type": "data-plane"
+              }
+            }
+          ]
         },
         {
           "description": "TypeSpec Azure HTTP specification test cases",
           "path": "/packages/azure-http-specs/specs",
           "folder": "typespec_azure_http_specs",
           "fileNameLowerCase": true,
-          "isSpectorTest": true
+          "isSpectorTest": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -56,7 +100,10 @@
       "paths": [
         {
           "description": "Wiki documentation for Azure REST API specifications",
-          "folder": "azure_rest_api_specs_wiki"
+          "folder": "azure_rest_api_specs_wiki",
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -70,7 +117,10 @@
         {
           "description": "Documentation for Azure SDK for Python",
           "path": "/doc",
-          "folder": "azure_sdk_for_python_docs"
+          "folder": "azure_sdk_for_python_docs",
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -84,7 +134,10 @@
       "paths": [
         {
           "description": "Wiki documentation for Azure SDK for Python",
-          "folder": "azure_sdk_for_python_wiki"
+          "folder": "azure_sdk_for_python_wiki",
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -100,7 +153,11 @@
           "description": "Microsoft API design guidelines for Azure",
           "path": "/azure",
           "folder": "azure_api_guidelines",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded",
+            "service_type": "data-plane"
+          }
         }
       ]
     },
@@ -117,7 +174,11 @@
           "description": "Azure Resource Manager resource provider contract documentation",
           "path": "/v1.0",
           "folder": "azure_resource_manager_rpc",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded",
+            "service_type": "management-plane"
+          }
         }
       ]
     },
@@ -133,7 +194,10 @@
           "description": "Internal Azure SDK engineering documentation",
           "path": "/docs",
           "folder": "azure-sdk-docs-eng",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -170,7 +234,10 @@
           "description": "General Azure SDK guidelines and best practices",
           "path": "/docs",
           "folder": "azure-sdk-guidelines",
-          "ignoredPaths": ["redirects"]
+          "ignoredPaths": ["redirects"],
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -185,13 +252,19 @@
           "description": ".NET Azure SDK documentation",
           "path": "/doc",
           "folder": "azure_sdk_for_net_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         },
         {
           "description": ".NET Azure Resource Manager SDK documentation",
           "path": "/sdk/resourcemanager/Azure.ResourceManager/docs",
           "folder": "azure_sdk_for_net_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -205,7 +278,10 @@
         {
           "description": "Documentation for Azure SDK for Go",
           "path": "/documentation",
-          "folder": "azure_sdk_for_go_docs"
+          "folder": "azure_sdk_for_go_docs",
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -220,19 +296,29 @@
           "description": "Documentation for Azure SDK for Java",
           "path": "/doc",
           "folder": "azure_sdk_for_java_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         },
         {
           "description": "Resource Manager documentation for Azure SDK for Java",
           "path": "/sdk/resourcemanager/docs",
           "folder": "azure_sdk_for_java_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded",
+            "service_type": "management-plane"
+          }
         },
         {
           "description": "Contributing guidelines for Azure SDK for Java",
           "path": "/CONTRIBUTING.md",
           "folder": "azure_sdk_for_java_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -245,7 +331,10 @@
       "paths": [
         {
           "description": "Wiki documentation for Azure SDK for Java",
-          "folder": "azure_sdk_for_java_wiki"
+          "folder": "azure_sdk_for_java_wiki",
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -260,7 +349,10 @@
           "description": "AutoRest Java customization documentation",
           "path": "/customization-base/README.md",
           "folder": "autorest_java_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -275,7 +367,10 @@
           "description": "Documentation for Azure SDK for JavaScript",
           "path": "/documentation",
           "folder": "azure_sdk_for_js_docs",
-          "relativeByRepoPath": true
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     },
@@ -289,7 +384,46 @@
       "paths": [
         {
           "description": "Wiki documentation for Azure SDK for JavaScript",
-          "folder": "azure_sdk_for_js_wiki"
+          "folder": "azure_sdk_for_js_wiki",
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-rest-api-specs.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Azure REST API Breaking Change and Oad Rules Mapping",
+          "path": "/documentation/BreakingChange-Oad-Rules-Mapping.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/openapi-diff.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "OpenAPI Diff (OAD) rules documentation",
+          "path": "/docs",
+          "folder": "azure_openapi_diff_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
         }
       ]
     }

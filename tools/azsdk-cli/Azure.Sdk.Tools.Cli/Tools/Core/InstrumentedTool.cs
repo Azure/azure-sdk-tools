@@ -69,7 +69,7 @@ public class InstrumentedTool : DelegatingMcpServerTool
         }
         catch (Exception ex)
         {
-            activity?.AddException(ex);
+            TelemetryExceptionHelper.AddSanitizedException(activity, ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             throw;
         }
@@ -122,7 +122,7 @@ public class InstrumentedTool : DelegatingMcpServerTool
         }
         catch (JsonException ex)
         {
-            activity?.AddException(ex);
+            TelemetryExceptionHelper.AddSanitizedException(activity, ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             logger.LogError(ex, "Failed to deserialize contentBlock.Text for telemetry properties");
         }

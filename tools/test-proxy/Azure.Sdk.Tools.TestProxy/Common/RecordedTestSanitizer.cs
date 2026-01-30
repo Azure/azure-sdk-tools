@@ -32,6 +32,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public ApplyCondition Condition { get; protected set; } = null;
 
+        /// <summary>
+        /// Indicates which parts of a RecordEntry this sanitizer applies to.
+        /// By default, only applies to headers (Authorization header sanitization).
+        /// Derived sanitizers should override this to specify their scope.
+        /// </summary>
+        protected SanitizerScope _scope = SanitizerScope.Header;
+
+        /// <summary>
+        /// Checks if this sanitizer applies to a given part of the record.
+        /// </summary>
+        protected bool AppliesTo(SanitizerScope part) => (_scope & part) != 0;
+
         /// This is just a temporary workaround to avoid breaking tests that need to be re-recorded
         //  when updating the JsonPathSanitizer logic to avoid changing date formats when deserializing requests.
         //  this property will be removed in the future.
@@ -118,92 +130,64 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual string SanitizeVariable(string variableName, string environmentVariableValue) => environmentVariableValue;
 
-        public byte[] SanitizeMultipartBody(string boundary, byte[] raw)
+        /// <summary>
+        /// Sanitize a multipart body using the precached tree structure.
+        /// Walks the already-parsed tree, sanitizes content in each section recursively,
+        /// materializes the result, and assigns it back to the message body.
+        /// </summary>
+        public byte[] SanitizeMultipartBody(RequestOrResponse message)
         {
-            // Boundary might have been sanitised to "REDACTED", handle that.
-            boundary = MultipartUtilities.ResolveFirstBoundary(boundary, raw);
-
-            // Only run the LF→CRLF fixer once at the outermost level
-            // the reason we still do this instead of just using the body as-is, is that we may be loading up
-            // a recording from before we started storing the corrected multipart/mixed body.
-            byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(raw);
-
-            var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
-            using var outStream = new MemoryStream();
-
-            byte[] boundaryStart = Encoding.ASCII.GetBytes($"--{boundary}\r\n");
-            byte[] boundaryClose = Encoding.ASCII.GetBytes($"--{boundary}--\r\n");
-
-            try
+            if (message?.CachedBodyMetadata == null)
             {
+                throw new HttpException(HttpStatusCode.InternalServerError,
+                    "SanitizeMultipartBody called but no CachedBodyMetadata found. Ensure PreCacheBodyMetadata() was called during Sanitize().");
+            }
 
-                MultipartSection section;
-                while ((section = reader.ReadNextSectionAsync()
-                                         .GetAwaiter()
-                                         .GetResult()) != null)
+            // Walk the tree and sanitize each section
+            SanitizeMultipartSections(message.CachedBodyMetadata.Sections);
+
+            // Materialize the sanitized tree back to bytes and return
+            return message.CachedBodyMetadata.Materialize();
+        }
+
+        /// <summary>
+        /// Recursively sanitize all sections in a multipart body's cached metadata.
+        /// For text sections: applies text sanitizers.
+        /// For nested multipart sections: recurses through nested metadata.
+        /// For binary/other: leaves as-is (CR/LF normalization already done during precaching).
+        /// </summary>
+        private void SanitizeMultipartSections(List<PreCachedBodySection> sections)
+        {
+            foreach (var section in sections)
+            {
+                if (section.NestedMetadata != null)
                 {
-                    // we actually need to figure out the sanitization length _before_ we look at the headers
-                    // as if there is a Content-Length header we need to update it to reflect the new reality
-                    byte[] original = MultipartUtilities.ReadAllBytes(section.Body);
-                    byte[] fixedBody = MultipartUtilities.NormalizeBareLf(original);
-                    byte[] newBody;
+                    // This section contains nested multipart: recurse through its sections
+                    SanitizeMultipartSections(section.NestedMetadata.Sections);
+                }
+                else if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
+                {
+                    // Text content: sanitize it
+                    string text = enc.GetString(section.Body);
 
-                    if (MultipartUtilities.IsNestedMultipart(section.Headers, out var childBoundary))
-                    {
-                        newBody = SanitizeMultipartBody(childBoundary, fixedBody);
-                    }
-                    else if (ContentTypeUtilities.IsTextContentType(section.Headers, out var enc))
-                    {
-                        var sanitised = SanitizeTextBody(section.ContentType, enc.GetString(fixedBody));
-                        newBody = enc.GetBytes(sanitised);
-                    }
-                    else
-                    {
-                        // binary or application/http part – no extra sanitising,
-                        // but keep CR/LF corrections we just applied
-                        newBody = fixedBody;
-                    }
+                    // Extract content type from headers for sanitization context
+                    section.Headers.TryGetValue("Content-Type", out var contentType);
 
-                    // 1) opening boundary
-                    outStream.Write(boundaryStart);
-                    // 2) headers (by spec must be ASCII encoded)
-                    foreach (var h in section.Headers)
+                    var sanitised = SanitizeTextBody(contentType.ToString(), text);
+                    section.Body = enc.GetBytes(sanitised);
+
+                    // Update Content-Length header if present
+                    if (section.Headers.ContainsKey("Content-Length"))
                     {
-                        var newValue = h.Value;
-                        if (h.Key == "Content-Length")
-                        {
-                            var parsed = int.TryParse(h.Value[0], out var contentLength);
-                            if (parsed && contentLength != newBody.Length)
-                            {
-                                newValue = new StringValues(newBody.Length.ToString());
-                            }
-                        }
-                        var headerLine = $"{h.Key}: {newValue}\r\n";
-                        outStream.Write(Encoding.ASCII.GetBytes(headerLine));
+                        section.Headers["Content-Length"] = section.Body.Length.ToString();
                     }
-                    // 3) blank line between headers and body
-                    outStream.Write(MultipartUtilities.CrLf);
-                    // 4) output the revised body (or nothing if there is nothing in the body)
-                    outStream.Write(newBody);
-                    outStream.Write(MultipartUtilities.CrLf);
+                }
+                else
+                {
+                    // Binary or application/http: no sanitization needed
+                    // (CR/LF normalization already applied during precaching)
                 }
             }
-            catch (IOException ex)
-            {
-                var byteContent = Convert.ToBase64String(fixedRaw);
-                string message = $$"""
-The test-proxy is unexpectedly unable to read this section of the config during sanitization: \"{{ex.Message}}\"
-File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
-{{byteContent}}
-""";
-
-                throw new HttpException(HttpStatusCode.InternalServerError, message);
-            }
-
-            // 5) finally write closing boundary
-            outStream.Write(boundaryClose);
-
-            return outStream.ToArray();
         }
 
         public virtual void SanitizeBody(RequestOrResponse message)
@@ -214,7 +198,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
                 if (ContentTypeUtilities.IsMultipart(message.Headers, out var boundary))
                 {
-                    message.Body = SanitizeMultipartBody(boundary, message.Body);
+                    message.Body = SanitizeMultipartBody(message);
                 }
                 else if (message.TryGetBodyAsText(out string text))
                 {
@@ -231,24 +215,169 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
         public virtual void Sanitize(RecordEntry entry, bool matchingBodies = true)
         {
+            // Build precache metadata for any multipart bodies
+            // This happens ONCE per entry, then all sanitizers use the cached metadata
+            if (matchingBodies)
+            {
+                PreCacheBodyMetadata(entry.Request);
+                if (entry.RequestMethod != RequestMethod.Head)
+                {
+                    PreCacheBodyMetadata(entry.Response);
+                }
+
+                // add a couple assertions
+                if (entry.Request.Body != null && ContentTypeUtilities.IsMultipart(entry.Request.Headers, out _) && entry.Request.CachedBodyMetadata == null)
+                {
+                    throw new HttpException(HttpStatusCode.InternalServerError, "TestProxy sanitizer: Multipart request body exists but precaching failed - CachedBodyMetadata is null");
+                }
+                if (entry.Response.Body != null && ContentTypeUtilities.IsMultipart(entry.Response.Headers, out _) && entry.Response.CachedBodyMetadata == null)
+                {
+                    throw new HttpException(HttpStatusCode.InternalServerError, "TestProxy sanitizer: Multipart response body exists but precaching failed - CachedBodyMetadata is null");
+                }
+            }
+
             if (Condition == null || Condition.IsApplicable(entry))
             {
-                entry.RequestUri = SanitizeUri(entry.RequestUri);
+                if (AppliesTo(SanitizerScope.Uri))
+                {
+                    entry.RequestUri = SanitizeUri(entry.RequestUri);
+                }
 
-                SanitizeHeaders(entry.Request.Headers);
+                if (AppliesTo(SanitizerScope.Header))
+                {
+                    SanitizeHeaders(entry.Request.Headers);
+                }
 
-                if (matchingBodies)
+                if (matchingBodies && AppliesTo(SanitizerScope.Body))
                 {
                     SanitizeBody(entry.Request);
                 }
 
-                SanitizeHeaders(entry.Response.Headers);
+                if (AppliesTo(SanitizerScope.Header))
+                {
+                    SanitizeHeaders(entry.Response.Headers);
+                }
 
-                if (entry.RequestMethod != RequestMethod.Head && matchingBodies)
+                if (entry.RequestMethod != RequestMethod.Head && matchingBodies && AppliesTo(SanitizerScope.Body))
                 {
                     SanitizeBody(entry.Response);
                 }
             }
+        }
+
+        /// <summary>
+        /// Build cached body metadata from a request or response body.
+        /// Currently optimized for multipart bodies. Future extensibility: other body types.
+        /// This is called once per body during precache phase, then the metadata is reused.
+        /// If the message is not multipart or already has metadata, this is a no-op.
+        /// </summary>
+        public virtual void PreCacheBodyMetadata(RequestOrResponse message)
+        {
+            if (message?.Body == null || message.CachedBodyMetadata != null)
+            {
+                return;  // already has metadata, or no body
+            }
+
+            if (!ContentTypeUtilities.IsMultipart(message.Headers, out var boundary))
+            {
+                return;  // Not multipart, don't need to precache
+            }
+
+            // Build metadata structure from multipart body
+            boundary = MultipartUtilities.ResolveFirstBoundary(boundary, message.Body);
+            byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(message.Body);
+            var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
+
+            var metadata = new PreCachedBodyMetadata { Boundary = boundary };
+
+            try
+            {
+                MultipartSection section;
+                while ((section = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
+                {
+                    var bodySection = new PreCachedBodySection();
+
+                    // Copy headers - keep as StringValues
+                    foreach (var header in section.Headers)
+                    {
+                        bodySection.Headers[header.Key] = header.Value;
+                    }
+
+                    // Read body
+                    byte[] sectionBody = MultipartUtilities.ReadAllBytes(section.Body);
+                    bodySection.Body = sectionBody;
+
+                    // Check if section itself is multipart (nested)
+                    if (bodySection.Headers.TryGetValue("Content-Type", out var contentType) &&
+                        ContentTypeUtilities.IsMultiPart(contentType.ToString(), out var nestedBoundary))
+                    {
+                        bodySection.NestedMetadata = BuildNestedMultipartMetadata(sectionBody, nestedBoundary);
+                    }
+
+                    metadata.Sections.Add(bodySection);
+                }
+
+                message.CachedBodyMetadata = metadata;
+            }
+            catch (IOException ex)
+            {
+                var byteContent = Convert.ToBase64String(fixedRaw);
+                string message_text = $$"""
+The test-proxy is unexpectedly unable to build precached body metadata during precache: \"{{ex.Message}}\"
+File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
+{{byteContent}}
+""";
+                throw new HttpException(HttpStatusCode.InternalServerError, message_text);
+            }
+        }
+
+        /// <summary>
+        /// Helper for recursive nested multipart metadata
+        /// </summary>
+        private PreCachedBodyMetadata BuildNestedMultipartMetadata(byte[] body, string boundary)
+        {
+            boundary = MultipartUtilities.ResolveFirstBoundary(boundary, body);
+            byte[] fixedRaw = MultipartUtilities.NormalizeBareLf(body);
+            var reader = new MultipartReader(boundary, new MemoryStream(fixedRaw));
+
+            var metadata = new PreCachedBodyMetadata { Boundary = boundary };
+
+            try
+            {
+                MultipartSection section;
+                while ((section = reader.ReadNextSectionAsync().GetAwaiter().GetResult()) != null)
+                {
+                    var bodySection = new PreCachedBodySection();
+
+                    foreach (var header in section.Headers)
+                    {
+                        bodySection.Headers[header.Key] = header.Value.ToString();
+                    }
+
+                    byte[] sectionBody = MultipartUtilities.ReadAllBytes(section.Body);
+                    bodySection.Body = sectionBody;
+
+                    if (bodySection.Headers.TryGetValue("Content-Type", out var nested) &&
+                        ContentTypeUtilities.IsMultiPart(nested, out var nestedBoundary))
+                    {
+                        bodySection.NestedMetadata = BuildNestedMultipartMetadata(sectionBody, nestedBoundary);
+                    }
+
+                    metadata.Sections.Add(bodySection);
+                }
+            }
+            catch (IOException ex)
+            {
+                var byteContent = Convert.ToBase64String(fixedRaw);
+                string message = $$"""
+The test-proxy is unexpectedly unable to build nested multipart metadata during precache: \"{{ex.Message}}\"
+File an issue on Azure/azure-sdk-tools and include this base64 string for reproducibility:
+{{byteContent}}
+""";
+                throw new HttpException(HttpStatusCode.InternalServerError, message);
+            }
+
+            return metadata;
         }
 
         public virtual void Sanitize(RecordSession session)

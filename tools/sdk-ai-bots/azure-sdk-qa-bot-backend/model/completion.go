@@ -13,6 +13,7 @@ const (
 	TenantID_JavaScriptChannelQaBot TenantID = "javascript_channel_qa_bot"
 	TenantID_GeneralQaBot           TenantID = "general_qa_bot"
 	TenantID_APISpecReviewBot       TenantID = "api_spec_review_bot"
+	TenantID_AzureTypespecAuthoring TenantID = "azure_typespec_authoring"
 )
 
 type Source string
@@ -41,6 +42,8 @@ const (
 	Source_AzureSDKForJavaScript          Source = "azure_sdk_for_js_docs"
 	Source_AzureSDKForJavaScriptWiki      Source = "azure_sdk_for_js_wiki"
 	Source_AzureSDKForNetDocs             Source = "azure_sdk_for_net_docs"
+	Source_AzureRestAPISpecDocs           Source = "azure_rest_api_specs_docs"
+	Source_AzureOpenapiDiffDocs           Source = "azure_openapi_diff_docs"
 )
 
 type Role string
@@ -52,10 +55,9 @@ const (
 )
 
 type Message struct {
-	Role       Role    `json:"role" jsonschema:"required,description=The role of the message sender"`
-	Content    string  `json:"content" jsonschema:"required,description=The content of the message"`
-	RawContent *string `json:"raw_content,omitempty" jsonschema:"omitempty,description=The raw content of the message, used for searching"`
-	Name       *string `json:"name,omitempty" jsonschema:"omitempty,description=The name of the message sender, used for system messages"`
+	Role    Role    `json:"role" jsonschema:"required,description=The role of the message sender"`
+	Content string  `json:"content" jsonschema:"required,description=The content of the message"`
+	Name    *string `json:"name,omitempty" jsonschema:"omitempty,description=The name of the message sender, used for system messages"`
 }
 
 type Reference struct {
@@ -70,6 +72,7 @@ type AdditionalInfoType string
 const (
 	AdditionalInfoType_Link  AdditionalInfoType = "link"
 	AdditionalInfoType_Image AdditionalInfoType = "image"
+	AdditionalInfoType_Text  AdditionalInfoType = "text"
 )
 
 type AdditionalInfo struct {
@@ -87,17 +90,18 @@ type CompletionReq struct {
 	WithFullContext *bool            `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
 	WithPreprocess  *bool            `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
 	AdditionalInfos []AdditionalInfo `json:"additional_infos,omitempty" jsonschema:"omitempty,description=Additional information to provide to the agent, such as links or images"`
+	Intention       *Intention       `json:"intention,omitempty" jsonschema:"omitempty,description=Optional intention fields that override LLM intention recognition results"`
 }
 
 type CompletionResp struct {
-	ID                string           `json:"id" jsonschema:"required,description=The unique ID of the completion"`
-	Answer            string           `json:"answer" jsonschema:"required,description=The answer from the agent"`
-	HasResult         bool             `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
-	References        []Reference      `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
-	FullContext       *string          `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
-	Intention         *IntentionResult `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
-	ReasoningProgress *string          `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
-	RouteTenant       *TenantID        `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID the question is routed to"`
+	ID          string      `json:"id" jsonschema:"required,description=The unique ID of the completion"`
+	Answer      string      `json:"answer" jsonschema:"required,description=The answer from the agent"`
+	HasResult   bool        `json:"has_result" jsonschema:"required,description=Whether the agent has a result"` // TODO resultType
+	References  []Reference `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
+	FullContext *string     `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
+	Intention   *Intention  `json:"intention" jsonschema:"omitempty,description=The intention of the question"`
+	Reasoning   *string     `json:"reasoning,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
+	RouteTenant *TenantID   `json:"route_tenant,omitempty" jsonschema:"omitempty,description=The tenant ID the question is routed to"`
 }
 
 type QuestionScope string
@@ -108,12 +112,21 @@ const (
 	QuestionScope_Unbranded QuestionScope = "unbranded"
 )
 
-type IntentionResult struct {
-	Question           string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
-	Category           string        `json:"category" jsonschema:"required,description=The category of the question"`
-	SpecType           string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
-	Scope              QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
-	NeedsRagProcessing bool          `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
+type ServiceType string
+
+const (
+	ServiceType_Unknown         ServiceType = "unknown"
+	ServiceType_DataPlane       ServiceType = "data-plane"
+	ServiceType_ManagementPlane ServiceType = "management-plane"
+)
+
+type Intention struct {
+	Question           string         `json:"question" jsonschema:"required,description=The question to ask the agent"`
+	Category           string         `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType           *string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	NeedsRagProcessing bool           `json:"needs_rag_processing" jsonschema:"required,description=Whether to invoke RAG workflow"`
+	QuestionScope      *QuestionScope `json:"question_scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
+	ServiceType        *ServiceType   `json:"service_type,omitempty" jsonschema:"omitempty,description=The service type for filtering"`
 }
 
 type TenantRoutingResult struct {

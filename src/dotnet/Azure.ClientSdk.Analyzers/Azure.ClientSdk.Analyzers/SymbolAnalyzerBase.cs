@@ -11,7 +11,7 @@ namespace Azure.ClientSdk.Analyzers
         private const string ClientOptionsSuffix = "ClientOptions";
         private const string ClientsOptionsSuffix = "ClientsOptions";
         private const string AzureCoreClientOptions = "Azure.Core.ClientOptions";
-        private const string SystemClientModelClientSettings = "System.ClientModel.ClientSettings";
+        private const string SystemClientModelClientSettings = "System.ClientModel.Primitives.ClientSettings";
 
         public abstract SymbolKind[] SymbolKinds { get; }
         public abstract void Analyze(ISymbolAnalysisContext context);

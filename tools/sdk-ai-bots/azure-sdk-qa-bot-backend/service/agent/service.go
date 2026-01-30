@@ -57,12 +57,6 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
-	if req.Intention == nil {
-		req.Intention = &model.Intention{}
-	}
-	if req.Intention.QuestionScope == nil {
-		req.Intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
-	}
 	return nil
 }
 
@@ -103,15 +97,15 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// 3. Recognize intention
 	query := req.Message.Content
-	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
-		query = *req.Message.RawContent
-	}
+
 	intention, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, llmMessages)
 	if err != nil {
 		log.Printf("Intention recognize failed with error: %s", err)
 		return nil, err
 	}
-
+	if intention.QuestionScope == nil {
+		intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
+	}
 	// Apply intention override if provided
 	if req.Intention != nil {
 		if req.Intention.QuestionScope != nil {
@@ -414,6 +408,16 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.C
 						},
 					),
 				})
+			} else if info.Type == model.AdditionalInfoType_Text {
+				content := info.Content
+				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
+				}
+				msg := &azopenai.ChatRequestUserMessage{
+					Content: azopenai.NewChatRequestUserMessageContent(content),
+				}
+				llmMessages = append(llmMessages, msg)
 			}
 		}
 	}

@@ -40,6 +40,11 @@ public interface IGitCommandHelper
     public Task<ProcessResult> Run(GitOptions options, CancellationToken ct);
 }
 
+public interface INpmHelper
+{
+    public Task<ProcessResult> Run(NpmOptions options, CancellationToken ct);
+}
+
 public sealed class ProcessHelper(ILogger<ProcessHelper> logger, IRawOutputHelper outputHelper)
     : ProcessHelperBase<ProcessHelper>(logger, outputHelper), IProcessHelper
 {
@@ -74,4 +79,10 @@ public sealed class GitCommandHelper(ILogger<GitCommandHelper> logger, IRawOutpu
     : ProcessHelperBase<GitCommandHelper>(logger, outputHelper), IGitCommandHelper
 {
     public async Task<ProcessResult> Run(GitOptions options, CancellationToken ct) => await base.Run(options, ct);
+}
+
+public sealed class NpmHelper(ILogger<NpmHelper> logger, IRawOutputHelper outputHelper)
+    : ProcessHelperBase<NpmHelper>(logger, outputHelper), INpmHelper
+{
+    public async Task<ProcessResult> Run(NpmOptions options, CancellationToken ct) => await base.Run(options, ct);
 }

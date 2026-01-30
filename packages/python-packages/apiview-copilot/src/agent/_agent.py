@@ -79,6 +79,8 @@ def _get_or_create_agent(
     """
     settings = SettingsManager()
     model_deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
+    if not model_deployment_name:
+        raise ValueError("FOUNDRY_KERNEL_MODEL not configured in AppConfiguration.")
 
     # Search for existing agent by name
     logger.info("Searching for existing agent by name '%s'...", name)

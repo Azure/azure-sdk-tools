@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-# Azure SDK Code Review MCP Server Deployment Script
+# Azure SDK QA Bot MCP Server Deployment Script
 #
-# This script automates the deployment of the Code Review MCP Server to Azure App Service
+# This script automates the deployment of the Azure SDK QA Bot MCP Server to Azure App Service
 #
 # Usage:
 #   ./deploy-azure.sh -e dev|preview|prod [-r resource-group] [-n app-name]
@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 # Default values
 ENVIRONMENT="dev"
 RESOURCE_GROUP="azure-sdk-qa-bot-dev"
-APP_NAME="azure-sdk-code-review-mcp"
+APP_NAME="azure-sdk-qa-bot-mcp"
 ACR_NAME="azuresdkqabotdevcontainer"
 LOCATION="westus2"
 APP_SERVICE_PLAN="azuresdkqabot-dev-plan"
@@ -40,11 +40,11 @@ usage() {
     cat << EOF
 Usage: $0 [OPTIONS]
 
-Deploy Code Review MCP Server to Azure App Service (Dev Environment)
+Deploy Azure SDK QA Bot MCP Server to Azure App Service (Dev Environment)
 
 Optional:
     -r    Resource group name (default: azure-sdk-qa-bot-dev)
-    -n    App name (default: azure-sdk-code-review-mcp)
+    -n    App name (default: azure-sdk-qa-bot-mcp)
     -a    ACR name (default: azuresdkqabotdevcontainer)
     -l    Location (default: westus2)
     -p    App Service Plan (default: azuresdkqabot-dev-plan)
@@ -110,14 +110,14 @@ print_info "Backend URL: $BACKEND_URL/code_review"
 # Build Docker image
 print_info "Building Docker image..."
 IMAGE_TAG="${ENVIRONMENT}_$(git rev-parse --short HEAD)"
-docker build -t code-review-mcp:$IMAGE_TAG -f Dockerfile.http .
+docker build -t azure-sdk-qa-bot-mcp:$IMAGE_TAG -f Dockerfile.http .
 
 if [ $? -ne 0 ]; then
     print_error "Docker build failed"
     exit 1
 fi
 
-print_info "Docker image built: code-review-mcp:$IMAGE_TAG"
+print_info "Docker image built: azure-sdk-qa-bot-mcp:$IMAGE_TAG"
 
 # Login to ACR
 print_info "Logging in to Azure Container Registry..."
@@ -130,10 +130,10 @@ fi
 
 # Tag and push image
 print_info "Pushing image to ACR..."
-docker tag code-review-mcp:$IMAGE_TAG $ACR_NAME.azurecr.io/code-review-mcp:$IMAGE_TAG
-docker tag code-review-mcp:$IMAGE_TAG $ACR_NAME.azurecr.io/code-review-mcp:${ENVIRONMENT}-latest
-docker push $ACR_NAME.azurecr.io/code-review-mcp:$IMAGE_TAG
-docker push $ACR_NAME.azurecr.io/code-review-mcp:${ENVIRONMENT}-latest
+docker tag azure-sdk-qa-bot-mcp:$IMAGE_TAG $ACR_NAME.azurecr.io/azure-sdk-qa-bot-mcp:$IMAGE_TAG
+docker tag azure-sdk-qa-bot-mcp:$IMAGE_TAG $ACR_NAME.azurecr.io/azure-sdk-qa-bot-mcp:${ENVIRONMENT}-latest
+docker push $ACR_NAME.azurecr.io/azure-sdk-qa-bot-mcp:$IMAGE_TAG
+docker push $ACR_NAME.azurecr.io/azure-sdk-qa-bot-mcp:${ENVIRONMENT}-latest
 
 print_info "Image pushed to ACR"
 
@@ -146,7 +146,7 @@ if az webapp show --resource-group $RESOURCE_GROUP --name $APP_NAME &> /dev/null
     az webapp config container set \
         --resource-group $RESOURCE_GROUP \
         --name $APP_NAME \
-        --docker-custom-image-name $ACR_NAME.azurecr.io/code-review-mcp:$IMAGE_TAG
+        --docker-custom-image-name $ACR_NAME.azurecr.io/azure-sdk-qa-bot-mcp:$IMAGE_TAG
     
 else
     print_info "Creating new App Service..."
@@ -167,7 +167,7 @@ else
         --resource-group $RESOURCE_GROUP \
         --plan $APP_SERVICE_PLAN \
         --name $APP_NAME \
-        --deployment-container-image-name $ACR_NAME.azurecr.io/code-review-mcp:$IMAGE_TAG
+        --deployment-container-image-name $ACR_NAME.azurecr.io/azure-sdk-qa-bot-mcp:$IMAGE_TAG
     
     # Enable managed identity
     print_info "Enabling managed identity..."
@@ -229,6 +229,7 @@ AZURE_CLIENT_ID=$(az webapp identity show \
 
 APP_SETTINGS=(
     "CODE_REVIEW_API_URL=${BACKEND_URL}/code_review"
+    "COMPLETION_API_URL=${BACKEND_URL}/completion"
     "BACKEND_CLIENT_ID=$BACKEND_CLIENT_ID"
     "WEBSITES_PORT=8000"
     "DOCKER_REGISTRY_SERVER_URL=https://$ACR_NAME.azurecr.io"
@@ -287,7 +288,7 @@ if [[ "$HEALTH_CHECK" == *"healthy"* ]]; then
     echo ""
     echo '{
   "github.copilot.chat.mcp.servers": {
-    "azure-sdk-code-review": {
+    "azure-sdk-qa-bot": {
       "type": "sse",
       "url": "https://'$APP_URL'/sse",
       "authentication": {

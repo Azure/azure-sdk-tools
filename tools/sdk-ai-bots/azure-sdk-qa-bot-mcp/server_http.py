@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """
-HTTP-based MCP Server for Azure SDK Code Review API
+HTTP-based MCP Server for Azure SDK QA Bot
 
 This server exposes the MCP protocol over HTTP/SSE for deployment on Azure App Service.
 It supports Microsoft Entra ID authentication and forwards requests to the backend API.
+
+Provides tools for:
+1. Code review against Azure SDK guidelines
+2. Answering TypeSpec-related questions
 """
 
 import os
@@ -33,9 +37,16 @@ CODE_REVIEW_API_URL = os.getenv(
     "CODE_REVIEW_API_URL",
     "https://azuresdkqabot-dev-serve-codereview-ahefg8gpdxhngah0.westus2-01.azurewebsites.net/code_review"
 )
+COMPLETION_API_URL = os.getenv(
+    "COMPLETION_API_URL",
+    "https://azuresdkqabot-dev-serve-codereview-ahefg8gpdxhngah0.westus2-01.azurewebsites.net/completion"
+)
 BACKEND_CLIENT_ID = os.getenv("BACKEND_CLIENT_ID", "api://azure-sdk-qa-bot-dev")
 AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID")  # User-assigned managed identity client ID
 PORT = int(os.getenv("PORT", "8000"))
+
+# Fixed tenant for TypeSpec QA bot
+TENANT_ID = "azure_sdk_qa_bot"
 
 http_client: Optional[httpx.AsyncClient] = None
 credential: Optional[DefaultAzureCredential] = None
@@ -68,9 +79,10 @@ async def lifespan(app: FastAPI):
     """Manage application lifecycle"""
     global http_client, credential
 
-    logger.info("Starting Code Review MCP Server")
+    logger.info("Starting Azure SDK QA Bot MCP Server")
     logger.info(f"Listening on port: {PORT}")
-    logger.info(f"Backend API URL: {CODE_REVIEW_API_URL}")
+    logger.info(f"Code Review API URL: {CODE_REVIEW_API_URL}")
+    logger.info(f"Completion API URL: {COMPLETION_API_URL}")
     logger.info(f"Backend Client ID: {BACKEND_CLIENT_ID}")
     if AZURE_CLIENT_ID:
         logger.info(f"User-Assigned Managed Identity Client ID: {AZURE_CLIENT_ID}")
@@ -95,14 +107,14 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        logger.info("Shutting down Code Review MCP Server")
+        logger.info("Shutting down Azure SDK QA Bot MCP Server")
         if http_client:
             await http_client.aclose()
 
 
 app = FastAPI(
-    title="Azure SDK Code Review MCP Server",
-    description="MCP Server for reviewing SDK code against Azure guidelines",
+    title="Azure SDK QA Bot MCP Server",
+    description="MCP Server for reviewing SDK code and answering TypeSpec questions",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -136,7 +148,7 @@ async def get_backend_token() -> Optional[str]:
 async def root():
     return {
         "status": "healthy",
-        "service": "code-review-mcp",
+        "service": "azure-sdk-qa-bot-mcp",
         "version": "1.0.0"
     }
 
@@ -145,8 +157,9 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "service": "code-review-mcp",
-        "backend_url": CODE_REVIEW_API_URL
+        "service": "azure-sdk-qa-bot-mcp",
+        "code_review_url": CODE_REVIEW_API_URL,
+        "completion_url": COMPLETION_API_URL
     }
 
 
@@ -196,6 +209,61 @@ async def execute_code_review(arguments: dict) -> str:
     return format_review_result(result)
 
 
+async def execute_typespec_question(arguments: dict) -> str:
+    """Execute TypeSpec question completion."""
+    message = arguments.get("message")
+
+    if not message:
+        return "Error: 'message' is required"
+
+    history = arguments.get("history", [])
+    additional_context = arguments.get("additional_context", [])
+
+    # Build the completion request payload
+    payload = {
+        "tenant_id": TENANT_ID,
+        "message": {
+            "role": "user",
+            "content": message
+        }
+    }
+
+    # Add history if provided
+    if history:
+        payload["history"] = history
+
+    # Add additional info if provided
+    if additional_context:
+        payload["additional_infos"] = additional_context
+
+    backend_token = await get_backend_token()
+
+    headers = {"Content-Type": "application/json"}
+    if backend_token:
+        headers["Authorization"] = f"Bearer {backend_token}"
+        logger.info("Making authenticated request to completion API")
+    else:
+        logger.warning("No backend token available, making unauthenticated request")
+
+    try:
+        response = await http_client.post(
+            COMPLETION_API_URL,
+            json=payload,
+            headers=headers,
+            timeout=180.0
+        )
+        response.raise_for_status()
+        result = response.json()
+    except httpx.TimeoutException:
+        return "Error: Request timed out. The completion API may be slow or unavailable."
+    except httpx.HTTPStatusError as e:
+        return f"Error: HTTP {e.response.status_code} - {e.response.text}"
+    except httpx.RequestError as e:
+        return f"Error: Failed to connect to completion API: {str(e)}"
+
+    return format_completion_result(result)
+
+
 @app.get("/sse")
 async def sse_stream(request: Request):
     session_id = str(uuid.uuid4())
@@ -218,7 +286,7 @@ async def sse_stream(request: Request):
             "protocolVersion": "2024-11-05",
             "capabilities": {"tools": {}},
             "serverInfo": {
-                "name": "azure-sdk-code-review",
+                "name": "azure-sdk-qa-bot",
                 "version": "1.0.0"
             }
         }
@@ -305,7 +373,7 @@ async def process_mcp_message(body: dict) -> Optional[dict]:
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {}},
                 "serverInfo": {
-                    "name": "azure-sdk-code-review",
+                    "name": "azure-sdk-qa-bot",
                     "version": "1.0.0"
                 }
             }
@@ -323,7 +391,11 @@ async def process_mcp_message(body: dict) -> Optional[dict]:
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
 
-        if tool_name != "review_sdk_code":
+        if tool_name == "review_sdk_code":
+            result = await execute_code_review(arguments)
+        elif tool_name == "ask_typespec_question":
+            result = await execute_typespec_question(arguments)
+        else:
             return {
                 "jsonrpc": "2.0",
                 "id": body.get("id"),
@@ -333,7 +405,6 @@ async def process_mcp_message(body: dict) -> Optional[dict]:
                 }
             }
 
-        result = await execute_code_review(arguments)
         return {
             "jsonrpc": "2.0",
             "id": body.get("id"),
@@ -408,6 +479,74 @@ Supported languages: go, python, java, javascript, dotnet""",
                         },
                         "required": ["language", "code"]
                     }
+                },
+                {
+                    "name": "ask_typespec_question",
+                    "description": """Ask questions about TypeSpec for Azure API specifications.
+
+This tool provides answers to questions about:
+- TypeSpec language syntax and features
+- TypeSpec decorators and built-in types
+- Azure TypeSpec libraries (@azure-tools/typespec-azure-core, @azure-tools/typespec-azure-resource-manager, etc.)
+- API specification authoring with TypeSpec
+- TypeSpec project configuration and setup
+- Migrating from Swagger/OpenAPI to TypeSpec
+
+The tool uses RAG (Retrieval-Augmented Generation) to provide accurate answers based on official TypeSpec documentation.""",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "message": {
+                                "type": "string",
+                                "description": "The question to ask about TypeSpec"
+                            },
+                            "history": {
+                                "type": "array",
+                                "description": "Optional: Previous conversation history for context",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "role": {
+                                            "type": "string",
+                                            "enum": ["user", "assistant"],
+                                            "description": "The role of the message sender"
+                                        },
+                                        "content": {
+                                            "type": "string",
+                                            "description": "The content of the message"
+                                        }
+                                    },
+                                    "required": ["role", "content"]
+                                },
+                                "default": []
+                            },
+                            "additional_context": {
+                                "type": "array",
+                                "description": "Optional: Additional context such as links, images, or text",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": ["link", "image", "text"],
+                                            "description": "The type of additional information"
+                                        },
+                                        "content": {
+                                            "type": "string",
+                                            "description": "The content (text or base64 for images)"
+                                        },
+                                        "link": {
+                                            "type": "string",
+                                            "description": "The URL if type is 'link'"
+                                        }
+                                    },
+                                    "required": ["type", "content"]
+                                },
+                                "default": []
+                            }
+                        },
+                        "required": ["message"]
+                    }
                 }
             ]
         }
@@ -467,6 +606,37 @@ def format_review_result(result: dict) -> str:
         if idx < len(comments):
             output.append("---")
             output.append("")
+
+    return "\n".join(output)
+
+
+def format_completion_result(result: dict) -> str:
+    """Format the completion result into a readable string."""
+    output = []
+    
+    answer = result.get("answer", "")
+    has_result = result.get("has_result", False)
+    references = result.get("references", [])
+
+    if not has_result:
+        output.append("I couldn't find a specific answer to your question.")
+        output.append("")
+    
+    if answer:
+        output.append(answer)
+        output.append("")
+
+    if references:
+        output.append("## References")
+        output.append("")
+        for ref in references:
+            title = ref.get("title", "Untitled")
+            link = ref.get("link", "")
+            if link:
+                output.append(f"- [{title}]({link})")
+            else:
+                output.append(f"- {title}")
+        output.append("")
 
     return "\n".join(output)
 

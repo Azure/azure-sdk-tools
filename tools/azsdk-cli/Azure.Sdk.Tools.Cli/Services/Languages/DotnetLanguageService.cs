@@ -273,4 +273,165 @@ public sealed partial class DotnetLanguageService: LanguageService
             return false;
         }
     }
+
+    /// <summary>
+    /// Updates the package version in the .csproj file for .NET packages.
+    /// Also manages ApiCompatVersion when transitioning from a GA release.
+    /// Based on eng/scripts/Update-PkgVersion.ps1 from azure-sdk-for-net.
+    /// </summary>
+    protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
+        string packagePath,
+        string version,
+        string? releaseType,
+        CancellationToken ct)
+    {
+        logger.LogInformation("Updating .NET package version to {Version} at {PackagePath}", version, packagePath);
+
+        // Get package info to determine the package name
+        var packageInfo = await GetPackageInfo(packagePath, ct);
+        var packageName = packageInfo?.PackageName;
+
+        if (string.IsNullOrWhiteSpace(packageName))
+        {
+            logger.LogError("Could not determine package name for .NET package at {PackagePath}", packagePath);
+            return PackageOperationResponse.CreateFailure(
+                "Could not determine package name from package info.",
+                nextSteps: ["Ensure the package has a valid .csproj with GetPackageInfo target"]);
+        }
+
+        // Find the .csproj file: {packagePath}/src/{PackageName}.csproj
+        var srcPath = Path.Combine(packagePath, "src");
+        if (!Directory.Exists(srcPath))
+        {
+            logger.LogError("Source directory not found at {SrcPath}", srcPath);
+            return PackageOperationResponse.CreateFailure(
+                $"Source directory not found at: {srcPath}",
+                nextSteps: ["Ensure the package has a 'src' subdirectory with the .csproj file"]);
+        }
+
+        var csprojFiles = Directory.GetFiles(srcPath, "*.csproj");
+        if (csprojFiles.Length == 0)
+        {
+            logger.LogError("No .csproj file found in {SrcPath}", srcPath);
+            return PackageOperationResponse.CreateFailure(
+                $"No .csproj file found in: {srcPath}",
+                nextSteps: ["Ensure the package has a valid .csproj file in the src directory"]);
+        }
+
+        if (csprojFiles.Length > 1)
+        {
+            logger.LogError("Multiple .csproj files found in {SrcPath}: {Files}", srcPath, string.Join(", ", csprojFiles.Select(Path.GetFileName)));
+            return PackageOperationResponse.CreateFailure(
+                $"Multiple .csproj files found in: {srcPath}",
+                nextSteps: ["Remove the extra .csproj file(s) - only one .csproj file should exist in the src directory"]);
+        }
+
+        var csprojPath = csprojFiles[0];
+        logger.LogDebug("Using .csproj file: {CsprojPath}", csprojPath);
+
+        try
+        {
+            // Load the .csproj as XML, preserving whitespace
+            var csproj = new System.Xml.XmlDocument();
+            csproj.PreserveWhitespace = true;
+            csproj.Load(csprojPath);
+
+            // Find the <Version> element in Project/PropertyGroup
+            var versionNode = csproj.SelectSingleNode("//Project/PropertyGroup/Version");
+            if (versionNode == null)
+            {
+                logger.LogError("No <Version> element found in {CsprojPath}", csprojPath);
+                return PackageOperationResponse.CreateFailure(
+                    $"No <Version> element found in: {csprojPath}",
+                    nextSteps: [
+                        "Ensure the .csproj file has a <Version> element in a <PropertyGroup>",
+                        "Do not use <VersionPrefix> - use <Version> instead"
+                    ]);
+            }
+
+            var currentVersion = versionNode.InnerText;
+            logger.LogInformation("Current version: {CurrentVersion}, New version: {NewVersion}", currentVersion, version);
+
+            // Check if we need to add/update ApiCompatVersion
+            // ApiCompatVersion is set when transitioning from a GA (non-prerelease) version to a new version
+            var propertyGroup = versionNode.ParentNode;
+            if (propertyGroup != null && !IsPrerelease(currentVersion) && currentVersion != version)
+            {
+                var apiCompatVersionNode = propertyGroup.SelectSingleNode("ApiCompatVersion");
+                if (apiCompatVersionNode == null)
+                {
+                    // Create the ApiCompatVersion element
+                    var newApiCompatElement = csproj.CreateElement("ApiCompatVersion");
+                    newApiCompatElement.InnerText = currentVersion;
+
+                    // Insert after Version element with proper formatting
+                    var whitespace = versionNode.PreviousSibling;
+                    if (whitespace != null && whitespace.NodeType == System.Xml.XmlNodeType.Whitespace)
+                    {
+                        propertyGroup.InsertAfter(whitespace.CloneNode(true), versionNode);
+                    }
+                    propertyGroup.InsertAfter(newApiCompatElement, versionNode);
+
+                    // Add comment explaining ApiCompatVersion if not already present
+                    const string apiCompatComment = "The ApiCompatVersion is managed automatically and should not generally be modified manually.";
+                    var hasComment = false;
+                    foreach (System.Xml.XmlNode child in propertyGroup.ChildNodes)
+                    {
+                        if (child.NodeType == System.Xml.XmlNodeType.Comment && child.Value?.Contains("ApiCompatVersion") == true)
+                        {
+                            hasComment = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasComment)
+                    {
+                        var comment = csproj.CreateComment(apiCompatComment);
+                        if (whitespace != null && whitespace.NodeType == System.Xml.XmlNodeType.Whitespace)
+                        {
+                            propertyGroup.InsertAfter(whitespace.CloneNode(true), versionNode);
+                        }
+                        propertyGroup.InsertAfter(comment, versionNode);
+                    }
+
+                    logger.LogInformation("Added ApiCompatVersion: {ApiCompatVersion}", currentVersion);
+                }
+                else
+                {
+                    // Update existing ApiCompatVersion
+                    apiCompatVersionNode.InnerText = currentVersion;
+                    logger.LogInformation("Updated ApiCompatVersion: {ApiCompatVersion}", currentVersion);
+                }
+            }
+
+            // Update the Version element
+            versionNode.InnerText = version;
+
+            // Save the .csproj file
+            csproj.Save(csprojPath);
+
+            logger.LogInformation("Successfully updated version in {CsprojPath}", csprojPath);
+            return PackageOperationResponse.CreateSuccess(
+                $"Updated version from {currentVersion} to {version} in {Path.GetFileName(csprojPath)}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating version in {CsprojPath}", csprojPath);
+            return PackageOperationResponse.CreateFailure(
+                $"Error updating .csproj file: {ex.Message}",
+                nextSteps: ["Check if the .csproj file is valid XML", "Ensure you have write permissions"]);
+        }
+    }
+
+    /// <summary>
+    /// Determines if a version string represents a prerelease version.
+    /// Prerelease versions contain a hyphen followed by prerelease identifiers (e.g., 1.0.0-beta.1).
+    /// </summary>
+    private static bool IsPrerelease(string version)
+    {
+        // A prerelease version contains a hyphen after the patch number
+        // Examples: 1.0.0-beta.1, 2.0.0-alpha, 1.0.0-rc.1
+        // Non-prerelease: 1.0.0, 2.0.0
+        return version.Contains('-');
+    }
 }

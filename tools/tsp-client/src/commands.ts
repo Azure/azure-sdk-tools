@@ -14,7 +14,7 @@ import {
   removeDirectory,
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
-import { npmCommand, nodeCommand } from "./npm.js";
+import { npmCommand, npxCommand } from "./npm.js";
 import {
   compileTsp,
   discoverEntrypointFile,
@@ -619,7 +619,7 @@ export async function convertCommand(argv: any): Promise<void> {
     if (debug) {
       args.push("--debug");
     }
-    await nodeCommand(outputDir, args);
+    await npxCommand(outputDir, args);
 
     if (arm) {
       try {

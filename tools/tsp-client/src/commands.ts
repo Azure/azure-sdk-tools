@@ -604,6 +604,7 @@ export async function convertCommand(argv: any): Promise<void> {
       "autorest",
       "--openapi-to-typespec",
       "--csharp=false",
+      "--use=@autorest/openapi-to-typespec",
       `--output-folder="${outputDir}"`,
       `"${readme}"`,
     ];

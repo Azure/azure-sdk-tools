@@ -52,12 +52,9 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "@autorest/core": "^3.10.2",
-    "@autorest/openapi-to-typespec": ">=0.10.6 <1.0.0",
     "@azure-tools/typespec-autorest": ">=0.53.0 <1.0.0",
     "@azure/core-rest-pipeline": "^1.12.0",
     "@types/yargs": "^17.0.32",
-    "autorest": "^3.7.1",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
     "prompt-sync": "^4.2.0",

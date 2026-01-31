@@ -96,6 +96,10 @@
     { "toolName": "azsdk_typespec_check_project_in_public_repo", "prompt": "Is my TypeSpec project in azure-rest-api-specs?", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_typespec_init_project", "prompt": "Initialize a new TypeSpec project", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_typespec_init_project", "prompt": "Create a new TypeSpec project for my service", "category": "azure-rest-api-specs" },
+    { "toolName": "azsdk_typespec_init_project", "prompt": "I want to onboard my Azure service to TypeSpec", "category": "azure-rest-api-specs" },
+    { "toolName": "azsdk_typespec_init_project", "prompt": "Start a new ARM resource provider definition", "category": "azure-rest-api-specs" },
+    { "toolName": "azsdk_typespec_init_project", "prompt": "Set up TypeSpec for a data plane API", "category": "azure-rest-api-specs" },
+    { "toolName": "azsdk_typespec_init_project", "prompt": "How do I bootstrap a TypeSpec project for Azure SDK?", "category": "azure-rest-api-specs" },
 
     { "toolName": "azsdk_verify_setup", "prompt": "Verify my environment setup", "category": "all" },
     { "toolName": "azsdk_verify_setup", "prompt": "Check if I have all required tools installed", "category": "all" },

@@ -1,14 +1,15 @@
 import { ApiItem, ApiItemKind, ApiProperty, ApiPropertyItem } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
-import { TokenGenerator } from "./index";
-import { createToken, processExcerptTokens } from "./helpers";
+import { TokenGenerator, GeneratorResult } from "./index";
+import { createToken, parseTypeText } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiPropertyItem {
   return item.kind === ApiItemKind.Property || item.kind === ApiItemKind.PropertySignature;
 }
 
-function generate(item: ApiPropertyItem, deprecated?: boolean): ReviewToken[] {
+function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult {
   const tokens: ReviewToken[] = [];
+
   if (item.kind !== ApiItemKind.Property && item.kind !== ApiItemKind.PropertySignature) {
     throw new Error(
       `Invalid item ${item.displayName} of kind ${item.kind} for Property token generator.`,
@@ -31,14 +32,19 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): ReviewToken[] {
 
   tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
 
-  // Use spannedTokens if available, otherwise fall back to text
-  if (item.propertyTypeExcerpt.spannedTokens?.length) {
-    processExcerptTokens(item.propertyTypeExcerpt.spannedTokens, tokens, deprecated);
-  } else if (item.propertyTypeExcerpt.text) {
-    tokens.push(createToken(TokenKind.TypeName, item.propertyTypeExcerpt.text.trim(), { deprecated }));
+  const typeText = item.propertyTypeExcerpt.text;
+  let children;
+
+  if (typeText) {
+    children = parseTypeText(typeText, tokens, deprecated);
+    if (!children) {
+      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+    }
+  } else {
+    tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
   }
 
-  return tokens;
+  return { tokens, children };
 }
 
 export const propertyTokenGenerator: TokenGenerator<ApiPropertyItem> = {

@@ -599,7 +599,7 @@ export async function convertCommand(argv: any): Promise<void> {
     readme = normalizePath(resolve(readme));
   }
   try {
-    // Build the command  typespec
+    // Build the command to convert to typespec
     const args = [
       "autorest",
       "--openapi-to-typespec",

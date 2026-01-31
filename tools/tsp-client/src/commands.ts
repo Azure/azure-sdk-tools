@@ -631,7 +631,7 @@ export async function convertCommand(argv: any): Promise<void> {
     }
   } catch (err) {
     Logger.error(
-      `An error occurred during convert command. Verify that you have autorest installed and accessible. Error: ${err}`,
+      `An error occurred during convert command. Verify that autorest is accessible via npx (or installed globally) and try again. Error: ${err}`,
     );
     process.exit(1);
   }

@@ -94,7 +94,7 @@ if __name__ == "__main__":
             },
         )
 
-        response_completion_evaluator = ResponseCompletenessEvaluator(model_config=model_config)
+        response_completion_evaluator = ResponseCompletenessEvaluator(model_config=model_config, threshold=float(evaluate_threshold))
         response_completion_class = EvaluatorClass(
             "response_completeness",
             response_completion_evaluator,

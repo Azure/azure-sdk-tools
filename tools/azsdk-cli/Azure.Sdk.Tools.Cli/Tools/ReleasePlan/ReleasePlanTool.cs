@@ -42,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string linkSdkPrCommandName = "link-sdk-pr";
         private const string listOverdueReleasePlansCommandName = "list-overdue";
         private const string updateApiSpecPullRequestCommandName = "update-spec-pr";
+        private const string abandonReleasePlanCommandName = "abandon";
 
         // MCP Tool Names
         private const string GetReleasePlanForSpecPrToolName = "azsdk_get_release_plan_for_spec_pr";
@@ -53,6 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string CheckApiSpecReadyToolName = "azsdk_check_api_spec_ready_for_sdk";
         private const string LinkSdkPullRequestToolName = "azsdk_link_sdk_pull_request_to_release_plan";
         private const string UpdateApiSpecPullRequestToolName = "azsdk_update_api_spec_pull_request_in_release_plan";
+        private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
@@ -212,7 +214,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK", CheckApiSpecReadyToolName) { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt, },
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
-            new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, }
+            new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
+            new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan", AbandonReleasePlanToolName) { workItemIdOpt, releasePlanNumberOpt, }
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -265,6 +268,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 case updateApiSpecPullRequestCommandName:
                     return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt));
 
+                case abandonReleasePlanCommandName:
+                    return await AbandonReleasePlan(workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt));
+
                 default:
                     logger.LogError("Unknown command: {command}", command);
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -314,6 +320,48 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, "Failed to get release plan details");
                 return new ReleaseWorkflowResponse { ResponseError = $"Failed to get release plan details: {ex.Message}" };
+            }
+        }
+
+        [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'.")]
+        public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int workItemId = 0, int releasePlanId = 0)
+        {
+            try
+            {
+                if (workItemId == 0 && releasePlanId == 0)
+                {
+                    return new ReleaseWorkflowResponse { ResponseError = "Either work item ID or release plan ID must be provided." };
+                }
+
+                // Get the release plan to verify it exists
+                var releasePlan = workItemId != 0 
+                    ? await devOpsService.GetReleasePlanForWorkItemAsync(workItemId) 
+                    : await devOpsService.GetReleasePlanAsync(releasePlanId);
+
+                if (releasePlan == null)
+                {
+                    return new ReleaseWorkflowResponse { ResponseError = "Failed to find release plan." };
+                }
+
+                // Update the work item status to "Abandoned"
+                var fieldsToUpdate = new Dictionary<string, string>
+                {
+                    { "System.State", "Abandoned" }
+                };
+
+                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate);
+
+                logger.LogInformation("Successfully abandoned release plan {WorkItemId}", releasePlan.WorkItemId);
+
+                return new ReleaseWorkflowResponse
+                {
+                    Details = [$"Release plan {releasePlan.WorkItemId} has been successfully abandoned."]
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to abandon release plan");
+                return new ReleaseWorkflowResponse { ResponseError = $"Failed to abandon release plan: {ex.Message}" };
             }
         }
 

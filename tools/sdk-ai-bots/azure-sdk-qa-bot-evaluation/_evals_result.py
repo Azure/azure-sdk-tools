@@ -51,11 +51,12 @@ class EvalsResult:
         for metric in metrics:
             metric_key = f"outputs.{metric}.{metric}"
             if metric_key not in row:
-                return 0.0
+                logging.info(f"calculate_overall_score key:{metric_key} does not exits")
+                overall_score += 0.0
             else:
                 score = float(row[metric_key])
                 if math.isnan(score):
-                    return 0.0
+                    overall_score += 0.0
                 if f"{metric}_weight" in self._weights:
                     overall_score += score * self._weights[f"{metric}_weight"]
                 else:
@@ -319,15 +320,33 @@ class EvalsResult:
     def establish_baseline(self, all_results: dict[str, Any], is_ci: bool) -> None:
         """Establish the current results as the new baseline."""
 
+        def filter_keys_recursive(obj: Any, exclude_keys: list[str]) -> Any:
+            """Recursively filter out keys from nested dictionaries."""
+            if isinstance(obj, dict):
+                return {k: filter_keys_recursive(v, exclude_keys) 
+                        for k, v in obj.items() if k not in exclude_keys}
+            elif isinstance(obj, list):
+                return [filter_keys_recursive(item, exclude_keys) for item in obj]
+            return obj
+
         # only ask if we're not in CI
+        exclude_keys = ["knowledge_match_exact_matches",
+                        "knowledge_match_unexpected_refs",
+                        "knowledge_match_missing_refs",
+                        "reference_match_exact_matches",
+                        "reference_match_unexpected_refs",
+                        "reference_match_missing_refs",
+                        "knowledges"]
         if is_ci is False:
             establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
             if establish_baseline.lower() == "y":
                 for name, result in all_results.items():
+                    # result is a list of dicts, filter each dict recursively
+                    partial_result = filter_keys_recursive(result, exclude_keys)
                     baseline_name = f"{name.split('_')[0]}-test.json"
                     baseline_path = pathlib.Path(__file__).parent / "results" / baseline_name
                     with open(str(baseline_path), "w") as f:
-                        json.dump(result, indent=4, fp=f)
+                        json.dump(partial_result, indent=4, fp=f)
 
         # whether or not we establish a baseline, we want to write results to a temp dir
         log_path = pathlib.Path(__file__).parent / "results" / ".log"
@@ -335,10 +354,12 @@ class EvalsResult:
             log_path.mkdir(parents=True, exist_ok=True)
 
         for name, result in all_results.items():
+            # result is a list of dicts, filter each dict recursively
+            partial_result = filter_keys_recursive(result, exclude_keys)
             baseline_name = f"{name.split('_')[0]}-test.json"
             output_path = log_path / baseline_name
             with open(str(output_path), "w") as f:
-                json.dump(result, indent=4, fp=f)
+                json.dump(partial_result, indent=4, fp=f)
 
 
 __all__ = ["EvalsResult"]

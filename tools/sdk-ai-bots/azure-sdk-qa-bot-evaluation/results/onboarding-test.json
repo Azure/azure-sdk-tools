@@ -25,7 +25,7 @@
         "groundedness_threshold": 3.0,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The Response is mostly complete, covering the main process and requirements, but misses some minor details such as the manual .NET process and specific labels/tracking issues.",
         "overall_score": 6.6
     },
@@ -53,7 +53,7 @@
         "groundedness_threshold": NaN,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The response is mostly complete, covering the main workflow, review process, and escalation/support, but misses minor details about CODEOWNERS management and the explicit Arch Board review exemption.",
         "overall_score": 0.0
     },
@@ -82,7 +82,7 @@
         "groundedness_threshold": 3.0,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The response contains almost all relevant information from the ground truth, with only a minor omission regarding not needing to repeat some preview steps if already completed. Otherwise, it is thorough and accurate.",
         "overall_score": 6.6
     },
@@ -114,7 +114,7 @@
         "groundedness_threshold": 3.0,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The Response contains almost all relevant information from the Ground Truth, with only a minor omission about the main branch in the private repo being read-only and mirrored. All other claims and instructions are included and accurate.",
         "overall_score": 6.0
     },

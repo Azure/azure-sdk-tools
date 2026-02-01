@@ -323,6 +323,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
+        /// <summary>
+        /// Abandons a release plan by updating its status to 'Abandoned'.
+        /// </summary>
+        /// <param name="workItemId">The work item ID of the release plan (optional).</param>
+        /// <param name="releasePlanId">The release plan ID (optional).</param>
+        /// <returns>A response indicating success or failure of the operation.</returns>
+        /// <remarks>
+        /// Either workItemId or releasePlanId must be provided. If both are provided, workItemId takes precedence.
+        /// </remarks>
         [McpServerTool(Name = AbandonReleasePlanToolName), Description("Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'.")]
         public async Task<ReleaseWorkflowResponse> AbandonReleasePlan(int workItemId = 0, int releasePlanId = 0)
         {

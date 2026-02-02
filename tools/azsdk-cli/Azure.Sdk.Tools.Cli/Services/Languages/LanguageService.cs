@@ -371,6 +371,12 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     result: "partial");
             }
 
+            // If version update returned partial success (e.g., not implemented by specific language), return it directly
+            if (versionUpdateResult.Result is "partial")
+            {
+                return versionUpdateResult;
+            }
+
             return PackageOperationResponse.CreateSuccess(
                 $"Version {targetVersion} updated with release date {releaseDate}.",
                 nextSteps: ["Run validation checks", "Review the changes and commit"]);

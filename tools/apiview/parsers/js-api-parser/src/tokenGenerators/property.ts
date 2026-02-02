@@ -7,6 +7,21 @@ function isValid(item: ApiItem): item is ApiPropertyItem {
   return item.kind === ApiItemKind.Property || item.kind === ApiItemKind.PropertySignature;
 }
 
+/**
+ * Checks if the property is actually a getter accessor
+ */
+function isGetter(item: ApiPropertyItem): boolean {
+  // Check if any excerpt token contains the 'get' keyword at the start
+  if ("excerptTokens" in item) {
+    const excerptTokens = (item as any).excerptTokens;
+    if (excerptTokens?.length > 0) {
+      const firstTokenText = excerptTokens[0]?.text?.trim();
+      return firstTokenText === "get" || excerptTokens.some((t: any) => t.text?.trim() === "get");
+    }
+  }
+  return false;
+}
+
 function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult {
   const tokens: ReviewToken[] = [];
 
@@ -16,6 +31,30 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult 
     );
   }
 
+  // Check if this is a getter
+  if (isGetter(item)) {
+    tokens.push(createToken(TokenKind.Keyword, "get", { hasSuffixSpace: true, deprecated }));
+    tokens.push(createToken(TokenKind.MemberName, item.displayName, { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+
+    const typeText = item.propertyTypeExcerpt.text;
+    let children;
+
+    if (typeText) {
+      children = parseTypeText(typeText, tokens, deprecated);
+      if (!children) {
+        tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+      }
+    } else {
+      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+    }
+
+    return { tokens, children };
+  }
+
+  // Regular property handling
   if (item instanceof ApiProperty && item.isStatic) {
     tokens.push(createToken(TokenKind.Keyword, "static", { hasSuffixSpace: true, deprecated }));
   }

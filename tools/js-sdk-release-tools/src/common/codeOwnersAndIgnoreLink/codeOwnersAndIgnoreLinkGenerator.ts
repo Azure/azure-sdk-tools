@@ -81,7 +81,7 @@ function updateIgnoreLink(packageName: string) {
     const ignoreLinksPath = path.join(jsSdkRepoPath, "eng", "ignore-links.txt");
     let content = fs.readFileSync(ignoreLinksPath, "utf8");
     const learnLink = `https://learn.microsoft.com/javascript/api/${packageName}?view=azure-node-preview`;
-    const npmLink = `https://www.npmjs.com/package/@azure/${packageName}`;
+    const npmLink = `https://www.npmjs.com/package/${packageName}`;
 
     // Ensure the content ends with a newline
     if (!content.endsWith("\n")) {

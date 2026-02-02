@@ -25,5 +25,3 @@ export const generators: TokenGenerator[] = [
   methodTokenGenerator,
   propertyTokenGenerator,
 ];
-
-export { propertyTokenGenerator } from "./property";

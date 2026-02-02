@@ -1,4 +1,5 @@
 aiohttp==3.13.3
+azure-ai-projects==1.0.0b11
 azure-appconfiguration==1.7.1
 azure-cosmos==4.9.0
 azure-identity==1.21.0
@@ -10,9 +11,12 @@ colorama==0.4.6
 fastapi==0.121.2
 httpx==0.28.1
 knack==0.12.0
+<<<<<<< HEAD
 matplotlib==3.10.0
 openai==2.4.0
 prompty[azure]==0.1.49
+=======
+>>>>>>> 2a9f582cf (Initial changes.)
 python-dotenv==1.0.1
 pydantic==2.10.6
 PyJWT==2.10.1

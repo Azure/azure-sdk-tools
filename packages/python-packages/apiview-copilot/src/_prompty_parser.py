@@ -5,11 +5,11 @@
 # --------------------------------------------------------------------------
 
 """
-Module for parsing and executing .prompty files using Azure AI Projects.
+Module for parsing and executing .prompty files using Azure AI Foundry.
 
-This module replaces the prompty library with direct Azure OpenAI calls,
+This module replaces the prompty library with direct Azure AI inference calls,
 allowing us to keep .prompty files as a human-readable prompt format while
-using azure-ai-projects for LLM inference.
+using Azure AI Foundry for LLM inference.
 """
 
 import json
@@ -65,14 +65,30 @@ def _load_file_reference(base_path: Path, value: str) -> Any:
     return value
 
 
+def _json_default(obj):
+    """JSON encoder for non-serializable types."""
+    from datetime import date, datetime
+
+    if isinstance(obj, (date, datetime)):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+
+
 def _render_template(template: str, variables: dict) -> str:
     """Render a Jinja2-style template with simple {{variable}} substitution."""
     result = template
     for key, value in variables.items():
         # Handle both {{key}} and {{ key }} patterns
         patterns = [f"{{{{{key}}}}}", f"{{{{ {key} }}}}"]
+        # Convert dicts/lists to JSON for proper formatting
+        if isinstance(value, (dict, list)):
+            str_value = json.dumps(value, indent=2, default=_json_default)
+        elif value is not None:
+            str_value = str(value)
+        else:
+            str_value = ""
         for pattern in patterns:
-            result = result.replace(pattern, str(value) if value is not None else "")
+            result = result.replace(pattern, str_value)
     return result
 
 
@@ -133,8 +149,9 @@ def parse_prompty(file_path: str | Path) -> PromptyConfig:
 
     # Parse template sections
     # Look for system: and user: sections
-    system_match = re.search(r"^system:\s*\n(.*?)(?=^user:|^assistant:|$)", template_content, re.MULTILINE | re.DOTALL)
-    user_match = re.search(r"^user:\s*\n(.*?)(?=^system:|^assistant:|$)", template_content, re.MULTILINE | re.DOTALL)
+    # Note: Use \Z for end-of-string (not $ which matches end-of-line in MULTILINE mode)
+    system_match = re.search(r"^system:\s*\n(.*?)(?=^user:|^assistant:|\Z)", template_content, re.MULTILINE | re.DOTALL)
+    user_match = re.search(r"^user:\s*\n(.*?)(?=^system:|^assistant:|\Z)", template_content, re.MULTILINE | re.DOTALL)
 
     if system_match:
         config.system_template = system_match.group(1).strip()
@@ -150,7 +167,7 @@ def execute_prompty(
     configuration: dict = None,
     **kwargs,
 ) -> Any:
-    """Execute a .prompty file using Azure AI Projects.
+    """Execute a .prompty file using Azure AI Foundry.
 
     Args:
         file_path: Path to the .prompty file.
@@ -164,7 +181,9 @@ def execute_prompty(
     Raises:
         ValueError: If FOUNDRY_ENDPOINT or FOUNDRY_PROJECT are not configured.
     """
-    from azure.ai.projects import AIProjectClient
+    # azure.ai.inference is a transitive dependency of azure-ai-projects
+    from azure.ai.inference import ChatCompletionsClient
+    from azure.ai.inference.models import SystemMessage, UserMessage
     from azure.identity import DefaultAzureCredential
     from src._settings import SettingsManager
 
@@ -181,7 +200,7 @@ def execute_prompty(
     # Get settings
     settings = SettingsManager()
 
-    # Use Azure AI Projects client for inference
+    # Use Azure AI Foundry endpoint for inference
     foundry_endpoint = settings.get("FOUNDRY_ENDPOINT")
     foundry_project = settings.get("FOUNDRY_PROJECT")
 
@@ -190,41 +209,50 @@ def execute_prompty(
             "FOUNDRY_ENDPOINT and FOUNDRY_PROJECT must be configured in AppConfiguration to execute prompty files."
         )
 
+    # Construct the inference endpoint (similar to how agents does it)
+    # Format: {FOUNDRY_ENDPOINT}/models
+    inference_endpoint = f"{foundry_endpoint.rstrip('/')}/models"
+
     credential = DefaultAzureCredential()
-    client = AIProjectClient(
-        endpoint=foundry_endpoint,
-        project_name=foundry_project,
+    # Specify the cognitive services scope for Azure AI
+    client = ChatCompletionsClient(
+        endpoint=inference_endpoint,
         credential=credential,
+        credential_scopes=["https://cognitiveservices.azure.com/.default"],
     )
 
     # Build messages
     messages = []
     if system_content:
-        messages.append({"role": "system", "content": system_content})
-    messages.append({"role": "user", "content": user_content})
+        messages.append(SystemMessage(content=system_content))
+    messages.append(UserMessage(content=user_content))
 
-    # Build completion parameters
+    # Separate SDK-supported parameters from model-specific extras
+    # The azure-ai-inference SDK accepts these directly:
+    sdk_params = {"frequency_penalty", "presence_penalty", "temperature", "top_p", "max_tokens", "seed", "stop"}
+
     completion_params = {
         "model": config.azure_deployment,
         "messages": messages,
     }
+    model_extras = {}
 
-    # Add optional parameters
-    if config.parameters.get("max_completion_tokens"):
-        completion_params["max_tokens"] = config.parameters["max_completion_tokens"]
-    if config.parameters.get("temperature") is not None:
-        completion_params["temperature"] = config.parameters["temperature"]
-    if config.parameters.get("frequency_penalty") is not None:
-        completion_params["frequency_penalty"] = config.parameters["frequency_penalty"]
-    if config.parameters.get("presence_penalty") is not None:
-        completion_params["presence_penalty"] = config.parameters["presence_penalty"]
+    for key, value in config.parameters.items():
+        if key in sdk_params:
+            completion_params[key] = value
+        else:
+            # Pass non-SDK params (like max_completion_tokens, reasoning_effort) as model extras
+            model_extras[key] = value
+
+    if model_extras:
+        completion_params["model_extras"] = model_extras
 
     # Handle response format
     if config.response_format:
         completion_params["response_format"] = {"type": "json_object"}
 
     # Make the inference call
-    response = client.inference.chat.completions.create(**completion_params)
+    response = client.complete(**completion_params)
 
     # Extract content from response
     result_content = response.choices[0].message.content

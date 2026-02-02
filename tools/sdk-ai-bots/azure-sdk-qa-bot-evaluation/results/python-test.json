@@ -26,7 +26,7 @@
         "groundedness_threshold": 3.0,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The response covers the main cause, workaround, and environment variable advice, but omits the details about AZURE_TEST_RUN_LIVE and AZURE_SKIP_LIVE_RECORDING, making it mostly but not fully complete.",
         "overall_score": 6.0
     },
@@ -56,7 +56,7 @@
         "groundedness_threshold": NaN,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The response is mostly complete, missing only the specific direct link format with definitionId, but otherwise covers all relevant steps and information.",
         "overall_score": 0.0
     },
@@ -84,7 +84,7 @@
         "groundedness_threshold": 3.0,
         "response_completeness": 5.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with additional helpful details and references. The minor difference in config file naming does not affect completeness for this context.",
         "overall_score": 0.0
     },
@@ -113,7 +113,7 @@
         "groundedness_threshold": NaN,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The response is mostly complete, covering all major instructions and claims, but omits minor details about the Notes field and reference links.",
         "overall_score": 0.0
     },
@@ -142,7 +142,7 @@
         "groundedness_threshold": 3.0,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The response is mostly complete, covering nearly all major points from the ground truth, but misses a few minor details and alternative suggestions.",
         "overall_score": 6.6
     },
@@ -172,7 +172,7 @@
         "groundedness_threshold": NaN,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
-        "response_completeness_threshold": 3,
+        "response_completeness_threshold": 4,
         "response_completeness_reason": "The Response is mostly complete, thoroughly covering the causes and solutions for Sphinx docstring errors from TypeSpec, including actionable steps and examples. It only misses the alternative solution of disabling Sphinx in pyproject.toml, which is a minor omission.",
         "overall_score": 0.0
     },

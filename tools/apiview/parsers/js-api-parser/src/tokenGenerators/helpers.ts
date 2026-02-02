@@ -139,12 +139,22 @@ export function processExcerptTokens(
 }
 
 /**
+ * Creates indentation tokens (tabs) for a given depth
+ */
+function createIndentation(depth: number, deprecated?: boolean): ReviewToken | undefined {
+  if (depth <= 0) return undefined;
+  const tabs = "\t".repeat(depth);
+  return createToken(TokenKind.Text, tabs, { deprecated });
+}
+
+/**
  * Parses a TypeScript type AST node and builds ReviewLines with proper nesting
  */
 export function buildTypeNodeTokens(
   node: ts.Node,
   tokens: ReviewToken[],
   deprecated?: boolean,
+  depth: number = 0,
 ): ReviewLine[] | undefined {
   const children: ReviewLine[] = [];
 
@@ -153,7 +163,12 @@ export function buildTypeNodeTokens(
 
     for (const member of node.members) {
       const memberTokens: ReviewToken[] = [];
-      const memberChildren = buildTypeElementTokens(member, memberTokens, deprecated);
+
+      // Add indentation for this level
+      const indent = createIndentation(depth + 1, deprecated);
+      if (indent) memberTokens.push(indent);
+
+      const memberChildren = buildTypeElementTokens(member, memberTokens, deprecated, depth + 1);
 
       const childLine: ReviewLine = { Tokens: memberTokens };
       if (memberChildren?.length) {
@@ -162,11 +177,15 @@ export function buildTypeNodeTokens(
       children.push(childLine);
     }
 
+    // Add indentation for closing brace
+    const closingTokens: ReviewToken[] = [];
+    const closingIndent = createIndentation(depth, deprecated);
+    if (closingIndent) closingTokens.push(closingIndent);
+    closingTokens.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
+    closingTokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+
     children.push({
-      Tokens: [
-        createToken(TokenKind.Punctuation, "}", { deprecated }),
-        createToken(TokenKind.Punctuation, ";", { deprecated }),
-      ],
+      Tokens: closingTokens,
       IsContextEndLine: true,
     });
 
@@ -185,7 +204,7 @@ export function buildTypeNodeTokens(
           }),
         );
       }
-      const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated);
+      const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated, depth);
       if (nestedChildren?.length) {
         children.push(...nestedChildren);
       }
@@ -205,7 +224,7 @@ export function buildTypeNodeTokens(
           }),
         );
       }
-      const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated);
+      const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated, depth);
       if (nestedChildren?.length) {
         children.push(...nestedChildren);
       }
@@ -216,7 +235,7 @@ export function buildTypeNodeTokens(
   if (ts.isParenthesizedTypeNode(node)) {
     // Handle parenthesized types: (TypeA | TypeB)
     tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
-    const nestedChildren = buildTypeNodeTokens(node.type, tokens, deprecated);
+    const nestedChildren = buildTypeNodeTokens(node.type, tokens, deprecated, depth);
     tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
     if (nestedChildren?.length) {
       children.push(...nestedChildren);
@@ -225,8 +244,7 @@ export function buildTypeNodeTokens(
   }
 
   if (ts.isArrayTypeNode(node)) {
-    // Handle array types: Type[]
-    const nestedChildren = buildTypeNodeTokens(node.elementType, tokens, deprecated);
+    const nestedChildren = buildTypeNodeTokens(node.elementType, tokens, deprecated, depth);
     tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
     tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
     if (nestedChildren?.length) {
@@ -236,7 +254,6 @@ export function buildTypeNodeTokens(
   }
 
   if (ts.isTypeReferenceNode(node)) {
-    // Handle type references: SomeType, Generic<T>
     tokens.push(createToken(TokenKind.TypeName, node.typeName.getText(), { deprecated }));
     if (node.typeArguments?.length) {
       tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
@@ -246,7 +263,7 @@ export function buildTypeNodeTokens(
             createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
           );
         }
-        const nestedChildren = buildTypeNodeTokens(arg, tokens, deprecated);
+        const nestedChildren = buildTypeNodeTokens(arg, tokens, deprecated, depth);
         if (nestedChildren?.length) {
           children.push(...nestedChildren);
         }
@@ -256,7 +273,6 @@ export function buildTypeNodeTokens(
     return children.length > 0 ? children : undefined;
   }
 
-  // For simple/primitive types, add as appropriate token kind
   const text = node.getText();
   const tokenKind = getTokenKind(text);
   tokens.push(createToken(tokenKind, text, { deprecated }));
@@ -264,12 +280,13 @@ export function buildTypeNodeTokens(
 }
 
 /**
- * Builds tokens for a TypeScript type element AST node (property signature, index signature, etc.)
+ * Builds tokens for a TypeScript type element AST node
  */
 export function buildTypeElementTokens(
   member: ts.TypeElement,
   tokens: ReviewToken[],
   deprecated?: boolean,
+  depth: number = 0,
 ): ReviewLine[] | undefined {
   if (ts.isPropertySignature(member)) {
     const name = member.name.getText();
@@ -282,7 +299,7 @@ export function buildTypeElementTokens(
     tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
 
     if (member.type) {
-      const children = buildTypeNodeTokens(member.type, tokens, deprecated);
+      const children = buildTypeNodeTokens(member.type, tokens, deprecated, depth);
       if (!children) {
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
       }
@@ -305,7 +322,7 @@ export function buildTypeElementTokens(
     tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
 
     if (member.type) {
-      const children = buildTypeNodeTokens(member.type, tokens, deprecated);
+      const children = buildTypeNodeTokens(member.type, tokens, deprecated, depth);
       if (!children) {
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
       }
@@ -324,6 +341,7 @@ export function parseTypeText(
   typeText: string,
   tokens: ReviewToken[],
   deprecated?: boolean,
+  depth: number = 0,
 ): ReviewLine[] | undefined {
   const sourceText = `type T = ${typeText};`;
   const sourceFile = ts.createSourceFile(
@@ -336,7 +354,7 @@ export function parseTypeText(
 
   const typeAlias = sourceFile.statements[0];
   if (ts.isTypeAliasDeclaration(typeAlias) && typeAlias.type) {
-    return buildTypeNodeTokens(typeAlias.type, tokens, deprecated);
+    return buildTypeNodeTokens(typeAlias.type, tokens, deprecated, depth);
   }
 
   // Fallback: just add as text

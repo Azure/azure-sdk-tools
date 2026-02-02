@@ -1,5 +1,6 @@
 aiohttp==3.13.3
 azure-ai-agents==1.1.0
+azure-ai-projects==1.0.0b11
 azure-appconfiguration==1.7.1
 azure-cosmos==4.9.0
 azure-identity==1.21.0

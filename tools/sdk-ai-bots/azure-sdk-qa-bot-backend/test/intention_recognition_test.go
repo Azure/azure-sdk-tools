@@ -235,7 +235,7 @@ func TestIntentionRecognition_Ideas(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)

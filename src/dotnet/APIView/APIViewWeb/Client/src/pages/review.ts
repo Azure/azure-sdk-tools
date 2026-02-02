@@ -5,7 +5,7 @@ import * as rvM from "./review.module"
 import * as hp from "../shared/helpers";
 import * as cm from "../shared/comments.module";
 
-$(() => {  
+$(() => {
   const SHOW_DOC_CHECKBOX = ".show-documentation-checkbox";
   const SHOW_DOC_HREF = ".show-documentation-switch";
   const SHOW_DIFFONLY_CHECKBOX = ".show-diffonly-checkbox";
@@ -90,7 +90,7 @@ $(() => {
       $(SEL_HIDDEN_CLASS).toggleClass("d-none");
     });
   });
-  
+
   $(SHOW_DIFFONLY_CHECKBOX).on("click", e => {
     $(SHOW_DIFFONLY_HREF)[0].click();
   });
@@ -129,7 +129,7 @@ $(() => {
   $(TOGGLE_DOCUMENTATION).on("click", function(e){
     const documentedBy = $(this).data('documented-by');
     const codeLines = $(".code-window > tbody > .code-line");
-    
+
     for(var i = 0; i < documentedBy.length; i++) {
       $(codeLines[documentedBy[i] - 1]).toggleClass("hidden-row");
     }
@@ -184,7 +184,7 @@ $(() => {
     });
   });
 
-  
+
   /* BUTTON FOR REQUEST REVIEW (CHANGES BETWEEN REQUEST ALL AND REQUEST SELECTED IN THE REQUEST APPROVAL SECTION)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $('.selectReviewerForRequest').on("click", function () {
@@ -243,7 +243,7 @@ $(() => {
 
   // Manage Expand / Collapse State of options
   [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse"),
-    $("#associatedPRCollapse"), $("#associatedReviewsCollapse"), $("#generateAIReviewCollapse"), $("#apiRevisionOptionsCollapse")].forEach(function (value, index) {
+    $("#associatedPRCollapse"), $("#associatedReviewsCollapse"), $("#generateAIReviewCollapse")].forEach(function (value, index) {
     const id = value.attr("id");
     value.on('hidden.bs.collapse', function () {
       document.cookie = `${id}=hidden; max-age=${7 * 24 * 60 * 60}`;

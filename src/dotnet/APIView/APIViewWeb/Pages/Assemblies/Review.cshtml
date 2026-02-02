@@ -475,19 +475,6 @@
                 </li>
             }
         </ul>
-        <p class="h6">
-            <a data-bs-toggle="collapse" href="#apiRevisionOptionsCollapse" aria-expanded="true" aria-controls="apiRevisionOptionsCollapse">API Revision Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
-        </p>
-        @{
-            var apiRevisionOptionsCollapseState = " show";
-            if (Request.Cookies.ContainsKey("apiRevisionOptionsCollapse"))
-            {
-                if (!Request.Cookies["apiRevisionOptionsCollapse"].Equals("shown"))
-                    apiRevisionOptionsCollapseState = String.Empty;
-            }
-        }
-        <ul class="list-group collapse mb-3@(apiRevisionOptionsCollapseState)" id="apiRevisionOptionsCollapse">
-        </ul>
     </div>
 </div>
 <div class="container-fluid pt-2 @(mainContainerClass)" id="review-main-container">

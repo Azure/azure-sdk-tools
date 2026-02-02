@@ -143,8 +143,8 @@ export function processExcerptTokens(
  */
 function createIndentation(depth: number, deprecated?: boolean): ReviewToken | undefined {
   if (depth <= 0) return undefined;
-  const tabs = "\t".repeat(depth);
-  return createToken(TokenKind.Text, tabs, { deprecated });
+  const spaces = "  ".repeat(depth * 4); // 8 spaces per level
+  return createToken(TokenKind.Text, spaces, { deprecated });
 }
 
 /**
@@ -181,6 +181,8 @@ export function buildTypeNodeTokens(
     const closingTokens: ReviewToken[] = [];
     const closingIndent = createIndentation(depth, deprecated);
     if (closingIndent) closingTokens.push(closingIndent);
+    // ensure 4 spaces before '}'
+    closingTokens.push(createToken(TokenKind.Punctuation, "    ", { deprecated }));
     closingTokens.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
     closingTokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 
@@ -288,6 +290,17 @@ export function buildTypeElementTokens(
   deprecated?: boolean,
   depth: number = 0,
 ): ReviewLine[] | undefined {
+  // Handle modifiers (readonly, static, etc.)
+  const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
+  if (modifiers) {
+    for (const modifier of modifiers) {
+      const modifierText = modifier.getText();
+      tokens.push(
+        createToken(TokenKind.Keyword, modifierText, { hasSuffixSpace: true, deprecated }),
+      );
+    }
+  }
+
   if (ts.isPropertySignature(member)) {
     const name = member.name.getText();
     tokens.push(createToken(TokenKind.MemberName, name, { deprecated }));
@@ -328,6 +341,13 @@ export function buildTypeElementTokens(
       }
       return children;
     }
+  } else if (ts.isMethodSignature(member)) {
+    // Handle method signatures if needed
+    const name = member.name.getText();
+    tokens.push(createToken(TokenKind.MemberName, name, { deprecated }));
+    // Add method signature handling as needed...
+    tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+    return undefined;
   }
 
   tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));

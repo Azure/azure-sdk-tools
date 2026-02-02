@@ -10,7 +10,7 @@ from _evals_runner import EvalsRunner, EvaluatorClass
 from dotenv import load_dotenv
 from azure.ai.evaluation import SimilarityEvaluator, GroundednessEvaluator, ResponseCompletenessEvaluator
 from azure.identity import DefaultAzureCredential, AzureCliCredential
-from _evals_result import EvalsResult
+from _evals_result import EvalsResult, VerificationResult
 from eval import AzureBotEvaluator, AzureBotReferenceEvaluator
 
 if __name__ == "__main__":
@@ -241,9 +241,9 @@ if __name__ == "__main__":
         if args.baseline_check:
             evals_runner.evals_result.establish_baseline(all_results, args.is_ci)
         isPass = evals_runner.evals_result.verify_results(all_results, args.baseline_check)
-        if isPass == 2:
+        if isPass == VerificationResult.PASS_WITH_WARNING:
             print("##vso[task.logissue type=warning]Evaluation succeeded with warning. Some tests failed but suppressed.")
-        elif isPass == 1:
+        elif isPass == VerificationResult.FAIL:
             sys.exit(1)
     except Exception as e:
         logging.info(f"❌ Error occurred: {str(e)}")

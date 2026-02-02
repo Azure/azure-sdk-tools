@@ -1,4 +1,4 @@
-from enum import IntFlag
+from enum import IntFlag, Enum
 import json
 import logging
 import math
@@ -7,6 +7,11 @@ import re
 from typing import Any, Optional
 from tabulate import tabulate
 
+
+class VerificationResult(Enum):
+    PASS = "pass"
+    FAIL = "fail"
+    PASS_WITH_WARNING = "Pass with Warning"
 
 class EvalReturnCode(IntFlag):
     SUCCESS = 0
@@ -253,7 +258,7 @@ class EvalsResult:
 
             self.output_table(test_results, name, baseline_results)
 
-    def verify_results(self, all_results: dict[str, Any], with_baseline: bool = True) -> int:
+    def verify_results(self, all_results: dict[str, Any], with_baseline: bool = True) -> VerificationResult:
         """
         Verify evaluation results against baseline and suppression rules.
 
@@ -264,7 +269,7 @@ class EvalsResult:
         Returns:
             int: 0 if all scenarios pass, 1 if any scenario fails, 2 if all pass but some have warnings (suppressed failures).
         """
-        ret = 0
+        ret = VerificationResult.PASS
         failed_scenarios = []
         warning_scenarios = []
         metrics = self._metrics.keys()
@@ -303,10 +308,10 @@ class EvalsResult:
 
             if scenario_ret & EvalReturnCode.FAIL:
                 failed_scenarios.append(name)
-                ret = 1 # failed
+                ret = VerificationResult.FAIL # failed
             elif scenario_ret & EvalReturnCode.WARNING:
                 warning_scenarios.append(name)
-                ret = 2 # succeed with warning
+                ret = VerificationResult.PASS_WITH_WARNING # succeed with warning
 
         if failed_scenarios:
             logging.info(f"Failed Scenarios: {' '.join(failed_scenarios)}")
@@ -362,4 +367,4 @@ class EvalsResult:
                 json.dump(partial_result, indent=4, fp=f)
 
 
-__all__ = ["EvalsResult"]
+__all__ = ["EvalsResult", "VerificationResult"]

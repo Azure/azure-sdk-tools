@@ -11,12 +11,17 @@ function isValid(item: ApiItem): item is ApiPropertyItem {
  * Checks if the property is actually a getter accessor
  */
 function isGetter(item: ApiPropertyItem): boolean {
-  // Check if any excerpt token contains the 'get' keyword at the start
   if ("excerptTokens" in item) {
     const excerptTokens = (item as any).excerptTokens;
     if (excerptTokens?.length > 0) {
-      const firstTokenText = excerptTokens[0]?.text?.trim();
-      return firstTokenText === "get" || excerptTokens.some((t: any) => t.text?.trim() === "get");
+      const firstTokenText = excerptTokens[0]?.text;
+      if (firstTokenText) {
+        const trimmed = firstTokenText.trimStart();
+        // The getter keyword appears at the start of the excerpt, e.g., "get keyID(): "
+        if (trimmed.startsWith("get ")) {
+          return true;
+        }
+      }
     }
   }
   return false;

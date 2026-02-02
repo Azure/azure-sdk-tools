@@ -143,7 +143,7 @@ export function processExcerptTokens(
  */
 function createIndentation(depth: number, deprecated?: boolean): ReviewToken | undefined {
   if (depth <= 0) return undefined;
-  const spaces = "  ".repeat(depth * 4); // 8 spaces per level
+  const spaces = "  ".repeat(depth * 4); // depth * 8 spaces total (8 spaces per level)
   return createToken(TokenKind.Text, spaces, { deprecated });
 }
 

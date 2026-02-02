@@ -362,11 +362,12 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, opts Age
 
 	knowledgeSourceParams := []model.KnowledgeSourceParams{
 		{
-			KnowledgeSourceName: config.AppConfig.AI_SEARCH_KNOWLEDGE_SOURCE,
-			Kind:                model.KnowledgeSourceKindSearchIndex,
-			FilterAddOn:         s.buildFilter(opts.Sources, opts.SourceFilter, opts.QuestionScope, opts.ServicePlane),
-			RerankerThreshold:   to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
-			IncludeReferences:   to.Ptr(true),
+			KnowledgeSourceName:        config.AppConfig.AI_SEARCH_KNOWLEDGE_SOURCE,
+			Kind:                       model.KnowledgeSourceKindSearchIndex,
+			FilterAddOn:                s.buildFilter(opts.Sources, opts.SourceFilter, opts.QuestionScope, opts.ServicePlane),
+			RerankerThreshold:          to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
+			IncludeReferences:          to.Ptr(true),
+			IncludeReferenceSourceData: to.Ptr(true),
 		},
 	}
 

@@ -234,6 +234,7 @@ func processChunk(result model.Index) model.Knowledge {
 		Link:     model.GetIndexLink(result),
 		Content:  chunk,
 		Title:    strings.Join(titles, " | "),
+		Score:    result.RerankScore,
 	}
 }
 
@@ -544,14 +545,10 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	if resp.Response == nil {
 		return nil, nil
 	}
-	var docKeys []string
+	var chunks []model.Index
 	for _, reference := range resp.References {
-		docKeys = append(docKeys, reference.DocKey)
-	}
-	chunks, err := s.searchClient.BatchGetChunks(ctx, docKeys)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
+		reference.SourceData.RerankScore = reference.RerankerScore
+		chunks = append(chunks, *reference.SourceData)
 	}
 	log.Printf("Agentic search took: %v", time.Since(agenticSearchStart))
 	return chunks, nil
@@ -673,14 +670,15 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	allChunks := make([]model.ChunkWithExpansion, 0)
 
 	// Add knowledge search results with scoring based on relevance
-	for _, result := range vectorSearchedResults {
+	for _, chunk := range vectorSearchedResults {
 		// Skip low relevance results
-		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
-			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
+		if chunk.RerankScore < model.RerankScoreLowRelevanceThreshold {
+			log.Printf("Skipping result with low score: %s/%s, score: %f", chunk.ContextID, chunk.Title, chunk.RerankScore)
 			continue
 		}
-		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
-		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(result))
+		log.Printf("Vector searched chunk: %+v, rerankScore: %f", chunk, chunk.RerankScore)
+		chunk.SearchType = string(model.SearchType_Vector)
+		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
 	// Then, add agentic search results after vector search results
@@ -690,6 +688,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	}
 	for _, chunk := range agenticSearchedResults {
 		log.Printf("Agentic searched chunk: %+v", chunk)
+		chunk.SearchType = string(model.SearchType_Agentic)
 		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
@@ -754,7 +753,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	for i, chunk := range finalChunks {
 		knowledge := processChunk(chunk)
 		results = append(results, knowledge)
-		log.Printf("[%d] Source: %s, Title: %s", i+1, knowledge.Source, knowledge.Title)
+		log.Printf("[%d] SearchType: %s, Score: %f, Source: %s, Title: %s", i+1, chunk.SearchType, knowledge.Score, knowledge.Source, knowledge.Title)
 	}
 	log.Println("=====================================")
 

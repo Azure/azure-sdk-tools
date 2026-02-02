@@ -232,14 +232,24 @@ type Index struct {
 	ContextID       Source  `json:"context_id"`
 	Scope           string  `json:"scope,omitempty"`
 	ServiceType     string  `json:"service_type,omitempty"`
+
+	SearchType string `json:"search_type,omitempty"`
 }
 
+type SearchType string
+
+const (
+	SearchType_Vector  SearchType = "Vector Search"
+	SearchType_Agentic SearchType = "Agentic Search"
+)
+
 type Knowledge struct {
-	Source   Source `json:"document_source"`
-	FileName string `json:"document_filename"`
-	Title    string `json:"document_title"`
-	Link     string `json:"document_link"`
-	Content  string `json:"content"`
+	Source   Source  `json:"document_source"`
+	FileName string  `json:"document_filename"`
+	Title    string  `json:"document_title"`
+	Link     string  `json:"document_link"`
+	Content  string  `json:"content"`
+	Score    float64 `json:"score"`
 }
 
 func GetIndexLink(chunk Index) string {

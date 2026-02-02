@@ -25,7 +25,7 @@ func TestIntentionRecognition_TechnicalQuestion(t *testing.T) {
 		},
 	}
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.True(t, intentionResult.NeedsRagProcessing, "Technical question should require RAG processing")
@@ -48,7 +48,7 @@ func TestIntentionRecognition_PermissionMessage(t *testing.T) {
 		},
 	}
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.True(t, intentionResult.NeedsRagProcessing, "Permission question should require RAG processing")
@@ -72,7 +72,7 @@ func TestIntentionRecognition_GreetingMessage(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -105,7 +105,7 @@ func TestIntentionRecognition_ThankYouMessage(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -161,7 +161,7 @@ BOM, Spring Releases.`,
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -185,7 +185,7 @@ func TestIntentionRecongition_SuggestionsMessage(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -209,7 +209,7 @@ func TestIntentionRecognition_ReviewRequest(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("api_spec_review/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_APISpecReviewBot, "api_spec_review/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -260,7 +260,7 @@ func TestIntentionRecognition_PlaneDetection_FilePathResourceManager(t *testing.
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -284,7 +284,7 @@ func TestIntentionRecognition_PlaneDetection_FilePathDataPlane(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -308,7 +308,7 @@ func TestIntentionRecognition_PlaneDetection_ARMKeyword(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -332,7 +332,7 @@ func TestIntentionRecognition_PlaneDetection_MPGKeyword(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -356,7 +356,7 @@ func TestIntentionRecognition_PlaneDetection_DPGKeyword(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -380,7 +380,7 @@ func TestIntentionRecognition_PlaneDetection_PRLabelManagementPlane(t *testing.T
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -405,7 +405,7 @@ func TestIntentionRecognition_PlaneDetection_PRLabelDataPlane(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -430,7 +430,7 @@ func TestIntentionRecognition_PlaneDetection_UnknownNoSignal(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention("typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)

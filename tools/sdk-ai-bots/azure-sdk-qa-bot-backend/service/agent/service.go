@@ -98,7 +98,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 3. Recognize intention
 	query := req.Message.Content
 
-	intention, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, llmMessages)
+	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, llmMessages)
 	if err != nil {
 		log.Printf("Intention recognize failed with error: %s", err)
 		return nil, err
@@ -138,7 +138,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 4. Build prompt
-	prompt, err = s.buildPrompt(intention, knowledges, promptTemplate)
+	prompt, err = s.buildPrompt(req.TenantID, intention, knowledges, promptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -169,12 +169,14 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
+func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
 	start := time.Now()
 	promptParser := prompt.IntentionPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
+	promptStr, err := promptParser.ParsePrompt(map[string]string{
+		"tenant_id": string(tenantID),
+	}, promptTemplate)
 	if err != nil {
 		log.Printf("Failed to parse intention prompt: %v", err)
 		return nil, err
@@ -212,22 +214,18 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 
 func processChunk(result model.Index) model.Knowledge {
 	chunk := ""
-	title := ""
+	var titles []string
 	if len(result.Header1) > 0 {
 		chunk += "# " + result.Header1 + "\n"
-		title = result.Header1
+		titles = append(titles, result.Header1)
 	}
 	if len(result.Header2) > 0 {
 		chunk += "## " + result.Header2 + "\n"
-		if title == "" {
-			title = result.Header2
-		}
+		titles = append(titles, result.Header2)
 	}
 	if len(result.Header3) > 0 {
 		chunk += "### " + result.Header3 + "\n"
-		if title == "" {
-			title = result.Header3
-		}
+		titles = append(titles, result.Header3)
 	}
 	chunk += result.Chunk
 	return model.Knowledge{
@@ -235,7 +233,7 @@ func processChunk(result model.Index) model.Knowledge {
 		FileName: result.Title,
 		Link:     model.GetIndexLink(result),
 		Content:  chunk,
-		Title:    title,
+		Title:    strings.Join(titles, " | "),
 	}
 }
 
@@ -433,7 +431,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.C
 	return llmMessages
 }
 
-func (s *CompletionService) buildPrompt(intention *model.Intention, knowledges []model.Knowledge, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(tenantID model.TenantID, intention *model.Intention, knowledges []model.Knowledge, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, knowledge := range knowledges {
@@ -456,6 +454,7 @@ func (s *CompletionService) buildPrompt(intention *model.Intention, knowledges [
 	promptStr, err := promptParser.ParsePrompt(map[string]string{
 		"context":   string(knowledgeStr),
 		"intention": string(intentionStr),
+		"tenant_id": string(tenantID),
 	}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -512,7 +511,9 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	promptParser := prompt.AgenticSearchPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	agenticSearchPrompt, err := promptParser.ParsePrompt(nil, agenticSearchPromptTemplate)
+	agenticSearchPrompt, err := promptParser.ParsePrompt(map[string]string{
+		"tenant_id": string(req.TenantID),
+	}, agenticSearchPromptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -748,10 +749,14 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	wg.Wait()
 
 	// Build final result
+	log.Println("=========Final Search Result=========")
 	results := make([]model.Knowledge, 0)
-	for _, chunk := range finalChunks {
-		results = append(results, processChunk(chunk))
+	for i, chunk := range finalChunks {
+		knowledge := processChunk(chunk)
+		results = append(results, knowledge)
+		log.Printf("[%d] Source: %s, Title: %s", i+1, knowledge.Source, knowledge.Title)
 	}
+	log.Println("=====================================")
 
 	log.Printf("Search merge summary: %d agentic + %d knowledge → %d total chunks",
 		len(agenticSearchedResults), len(vectorSearchedResults), len(finalChunks))

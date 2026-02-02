@@ -174,5 +174,5 @@ func InitConfiguration() {
 	}
 	AppConfig = &config
 	AppConfig.AOAI_CHAT_COMPLETIONS_MODEL = "gpt-5.2"
-	AppConfig.AOAI_CHAT_REASONING_MODEL = "gpt-5-mini"
+	AppConfig.AOAI_CHAT_REASONING_MODEL = "gpt-5.2"
 }

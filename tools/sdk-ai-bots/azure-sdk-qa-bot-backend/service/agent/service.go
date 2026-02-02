@@ -185,11 +185,11 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 	}, messages...)
 
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		Messages:        messages,
-		DeploymentName:  to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
-		ResponseFormat:  &azopenai.ChatCompletionsJSONResponseFormat{},
-		Seed:            to.Ptr(int64(1)), // Fixed seed for deterministic output
-		ReasoningEffort: to.Ptr(azopenai.ReasoningEffortValueMedium),
+		Messages:       messages,
+		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
+		Temperature:    to.Ptr(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE),
 	}, nil)
 
 	if err != nil {

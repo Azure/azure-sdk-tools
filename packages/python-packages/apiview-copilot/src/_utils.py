@@ -62,16 +62,15 @@ def run_prompty(*, folder: str, filename: str, inputs: dict = None, **kwargs) ->
     :param folder: Folder containing the prompty file.
     :param filename: Name of the prompty file.
     :param inputs: Dictionary of inputs for the prompt.
-    :param kwargs: Additional keyword arguments to pass to prompty.execute.
+    :param kwargs: Additional keyword arguments passed to the execute function.
     """
-    import prompty
-    import prompty.azure
+    from src._prompty_parser import execute_prompty
     from src._settings import SettingsManager
 
     settings = SettingsManager()
     os.environ["OPENAI_ENDPOINT"] = settings.get("OPENAI_ENDPOINT")
     prompt_path = get_prompt_path(folder=folder, filename=filename)
-    return prompty.execute(prompt_path, inputs=inputs, **kwargs)
+    return execute_prompty(prompt_path, inputs=inputs, **kwargs)
 
 
 def to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:

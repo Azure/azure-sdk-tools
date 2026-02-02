@@ -6,8 +6,6 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any, Set
 
-import prompty
-import prompty.azure_beta
 import yaml
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -16,6 +14,7 @@ from pathlib import Path
 
 from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from evals._util import ensure_json_obj
+from src._prompty_parser import execute_prompty
 from src._settings import SettingsManager
 
 
@@ -35,7 +34,7 @@ def _mention_summarize_workflow(testcase: str, results: dict):
         "testcase": testcase,
         "results": results,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -52,7 +51,7 @@ def _mention_action_workflow(
         "other_comments": other_comments,
         "trigger_comment": trigger_comment,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -70,7 +69,7 @@ def _thread_resolution_action_workflow(
         "code": code,
         "comments": comments,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -84,7 +83,7 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
         "outline": outline,
         "content": content,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -97,7 +96,7 @@ def _filter_existing_comment(testcase: str, response: str, language: str, existi
         "existing": existing,
         "comment": comment,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -114,7 +113,7 @@ def _deduplicate_parser_issue(
         "issue_context": issue_context,
         "existing_issues": existing_issues,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -131,7 +130,7 @@ def _deduplicate_guidelines_issue(
         "issue_context": issue_context,
         "existing_issues": existing_issues,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 

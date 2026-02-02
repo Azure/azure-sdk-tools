@@ -129,51 +129,6 @@ function Send-EmailNotification {
     }
 }
 
-function Update-WorkItemState {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory = $true)]
-        [int]$WorkItemId,
-
-        [Parameter(Mandatory = $true)]
-        [string]$State
-    )
-
-    Write-Verbose "Updating work item $WorkItemId state to '$State'..."
-
-    $uri = "$DevOpsBaseUrl/wit/workitems/${WorkItemId}?api-version=$DevOpsApiVersion"
-
-    $headers = @{
-        "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$AzureDevOpsPAT"))
-        "Content-Type"  = "application/json-patch+json"
-    }
-
-    $patchDocument = @(
-        @{
-            op    = "add"
-            path  = "/fields/System.State"
-            value = $State
-        }
-    )
-
-    $jsonBody = $patchDocument | ConvertTo-Json -Depth 10
-
-    if ($DryRun) {
-        Write-Host "[DRY RUN] Would update work item $WorkItemId state to '$State'" -ForegroundColor Yellow
-        return $true
-    }
-
-    try {
-        $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Patch -Body $jsonBody
-        Write-Host "Successfully updated work item $WorkItemId state to '$State'" -ForegroundColor Green
-        return $true
-    }
-    catch {
-        Write-Warning "Failed to update work item $WorkItemId state: $_"
-        return $false
-    }
-}
-
 function Format-AbandonmentWarningEmail {
     [CmdletBinding()]
     param(
@@ -285,15 +240,7 @@ foreach ($workItemId in $WorkItemIds) {
     $emailSent = Send-EmailNotification -To $ownerEmail -Cc $CcEmail -Subject $subject -Body $body
 
     if ($emailSent) {
-        # Mark the work item as Abandoned
-        $stateUpdated = Update-WorkItemState -WorkItemId $workItemId -State "Abandoned"
-        if ($stateUpdated) {
-            $successCount++
-        }
-        else {
-            Write-Warning "Email sent but failed to update work item state for $workItemId"
-            $failureCount++
-        }
+        $successCount++
     }
     else {
         $failureCount++

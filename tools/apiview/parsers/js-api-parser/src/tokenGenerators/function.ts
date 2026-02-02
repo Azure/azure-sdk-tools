@@ -100,6 +100,8 @@ function generate(item: ApiFunction, deprecated?: boolean): GeneratorResult {
   tokens.push(createToken(TokenKind.Text, "):", { hasSuffixSpace: true, deprecated }));
   processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
 
+  tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+
   return { tokens };
 }
 

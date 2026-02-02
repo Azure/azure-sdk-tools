@@ -21,8 +21,6 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import colorama
-import prompty
-import prompty.azure
 import requests
 import yaml
 from azure.core.exceptions import ClientAuthenticationError

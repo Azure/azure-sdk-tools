@@ -26,5 +26,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
         /// </summary>
         [JsonPropertyName("additional_infos")]
         public List<AdditionalInfo> AdditionalInfos { get; set; } = new();
+
+        [JsonPropertyName("with_agentic_search")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? WithAgenticSearch { get; set; }
     }
 }

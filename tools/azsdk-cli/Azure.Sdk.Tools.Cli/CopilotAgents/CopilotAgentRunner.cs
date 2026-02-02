@@ -58,7 +58,10 @@ public class CopilotAgentRunner(
             {
                 Mode = SystemMessageMode.Append,
                 Content = agent.Instructions
-            }
+            },
+            // Disables copilot built-in tools
+            // copilot built-in tools may be enabled in the future as needed
+            AvailableTools = [.. tools.Select(t => t.Name)]
         };
         
         await using var session = await client.CreateSessionAsync(sessionConfig, ct);

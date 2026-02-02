@@ -368,7 +368,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 return PackageOperationResponse.CreateSuccess(
                     $"Changelog release date updated to {releaseDate}, but version file update requires additional steps.",
                     nextSteps: versionUpdateResult.NextSteps?.ToArray() ?? ["Manually update the package version in project files"],
-                    result: "partial");
+                    result: "partial",
+                    packageInfo: packageInfo);
             }
 
             // If version update returned partial success (e.g., not implemented by specific language), return it directly
@@ -379,7 +380,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
             return PackageOperationResponse.CreateSuccess(
                 $"Version {targetVersion} updated with release date {releaseDate}.",
-                nextSteps: ["Run validation checks", "Review the changes and commit"]);
+                nextSteps: ["Review the changes", "Run validation checks"],
+                packageInfo: packageInfo);
         }
 
         /// <summary>

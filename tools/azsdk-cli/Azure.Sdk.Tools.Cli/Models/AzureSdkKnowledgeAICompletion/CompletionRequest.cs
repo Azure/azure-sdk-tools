@@ -27,6 +27,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureSdkKnowledgeAICompletion
         [JsonPropertyName("additional_infos")]
         public List<AdditionalInfo> AdditionalInfos { get; set; } = new();
 
+        /// <summary>
+        /// Indicates whether to enable agentic search for this request. If null, the service default is used.
+        /// </summary>
         [JsonPropertyName("with_agentic_search")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public bool? WithAgenticSearch { get; set; }

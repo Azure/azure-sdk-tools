@@ -358,12 +358,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     { "System.State", "Abandoned" }
                 };
 
-                await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate);
+                var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlan.WorkItemId, fieldsToUpdate);
 
+                if (updatedWorkItem == null)
+                {
+                    logger.LogError("Failed to abandon release plan {WorkItemId}: work item update returned null", releasePlan.WorkItemId);
+                    return new ReleaseWorkflowResponse
+                    {
+                        ResponseError = $"Failed to abandon release plan {releasePlan.WorkItemId}: work item update failed."
+                    };
+                }
                 logger.LogInformation("Successfully abandoned release plan {WorkItemId}", releasePlan.WorkItemId);
 
                 return new ReleaseWorkflowResponse
                 {
+                    Status = "Success",
                     Details = [$"Release plan {releasePlan.WorkItemId} has been successfully abandoned."]
                 };
             }

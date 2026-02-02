@@ -3,46 +3,79 @@
         "testcase": "Python Live Test for async api",
         "expected": {
             "answer": "You're encountering an SSL certificate error when running live tests for async APIs, specifically when connecting to https://localhost:5001. This is the test proxy endpoint, and the error is likely due to certificate verification failing. Although the same code works for another team member, the issue may be caused by environment variables \u2014 either missing or incorrectly set.\nTo run live tests, make sure AZURE_TEST_RUN_LIVE is set to \"true\". If you also want to record, avoid setting AZURE_SKIP_LIVE_RECORDING. As a workaround for the SSL issue, set the environment variable PROXY_URL to http://localhost:5000 instead of using HTTPS. This bypasses certificate validation and resolves the issue.",
-            "reference_urls": [
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md",
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests-advanced.md"
+            "references": [
+                {
+                    "title": "Guide for test proxy troubleshooting | ServiceRequestError: Cannot connect to host",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md"
+                },
+                {
+                    "title": "Python SDK advanced testing guide | Use HTTPS test proxy endpoint",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests-advanced.md"
+                }
             ]
         },
         "actual": {
-            "answer": "The error you are seeing (`SSLCertVerificationError: certificate verify failed: self-signed certificate`) occurs because your async live tests are trying to connect to the test proxy at `https://localhost:5001`, but the SSL certificate used by the test proxy is self-signed and not trusted by default. This is a known issue for async tests in the Azure SDK Python repo when using HTTPS for the test proxy.\n\nHere's how you can resolve this:\n1. **Update your branch to latest main**: The test proxy's certificate is periodically rotated and automatically configured during proxy startup. First, make sure your branch is up-to-date with the latest changes from `main`.\n2. **Unset the `PROXY_URL` environment variable**: If updating doesn't resolve the issue, unset the `PROXY_URL` environment variable to default to HTTP (`http://localhost:5000`), which doesn't require certificate verification. This will allow your async tests to run without the SSL error.\n   - You can do this by removing or commenting out the line that sets `PROXY_URL` to `https://localhost:5001` in your environment or CI config.\n3. **If you require HTTPS**: If your tests or service specifically require HTTPS for the proxy, and you continue to encounter SSL errors after updating, reach out to the Azure SDK team for assistance with certificate setup for async environments, as async tests may exhibit inconsistent behavior with SSL verification.\n\n**Summary:** For most cases, running the test proxy over HTTP (`http://localhost:5000`) will resolve the issue. Only use HTTPS if you have a specific need and have coordinated certificate trust for your test environment.\n\nFor more details and troubleshooting steps, see the official guide below.",
-            "reference_urls": [
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md",
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests-advanced.md"
+            "answer": "The SSL certificate verification error you are seeing during live testing of async APIs is a common issue when the test proxy is configured to use HTTPS (e.g., PROXY_URL='https://localhost:5001'). This error typically occurs because the test proxy's self-signed certificate is not trusted by your environment, especially in async test scenarios.\n\nTo resolve this issue, follow these steps:\n\n1. **Update your branch to main**: Make sure your branch includes the latest changes from the main branch. The test proxy's certificate is occasionally rotated, and having the latest version ensures you have the correct certificate.\n\n2. **Default to HTTP if possible**: If your tests do not specifically require an HTTPS proxy endpoint, unset the PROXY_URL environment variable or set it to the default HTTP endpoint (http://localhost:5000). HTTP does not require certificate verification and avoids this issue entirely.\n\n   Example:\n   ```sh\n   unset PROXY_URL\n   # or in Windows\n   set PROXY_URL=\n   ```\n\n3. **If HTTPS is required**: If your tests must use HTTPS and you continue to see this error (especially for async tests), this is likely due to async-specific certificate handling issues that can be nondeterministic. In this case, reach out to the Azure SDK team for further assistance, as the certificate is supposed to be automatically configured but may fail in certain async environments.\n\n**Summary:**\n- Prefer using HTTP for the test proxy unless HTTPS is strictly required.\n- If HTTPS is required and you still see the error after updating your branch, contact the Azure SDK team for support.\n\nFor more details and troubleshooting steps, see the official guidance in the references below.",
+            "references": [
+                {
+                    "title": "Guide for test proxy troubleshooting | ServiceRequestError: Cannot connect to host",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md"
+                },
+                {
+                    "title": "Python SDK advanced testing guide | Use HTTPS test proxy endpoint",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests-advanced.md"
+                }
             ]
         },
         "similarity": 4.0,
         "gpt_similarity": 4.0,
         "similarity_result": "pass",
         "similarity_threshold": 4,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully grounded in the CONTEXT, accurately and thoroughly conveying all essential information needed to resolve the SSL certificate error for async tests with the Azure SDK test proxy.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3.0,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response covers the main cause, workaround, and environment variable advice, but omits the details about AZURE_TEST_RUN_LIVE and AZURE_SKIP_LIVE_RECORDING, making it mostly but not fully complete.",
-        "overall_score": 6.0
+        "response_completeness_reason": "The response contains most of the necessary information, including the error description and main workaround, but omits some minor details about environment variables and their roles in live testing.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.8461538461538461,
+        "knowledge_match_result": "pass",
+        "overall_score": NaN
     },
     {
         "testcase": "release pipeline link for Python SDK `azure-mgmt-resource-bicep`",
         "expected": {
             "answer": "To find the specific release pipeline link for the Python SDK `azure-mgmt-resource-bicep`, you typically need to locate the corresponding pipeline in Azure DevOps under the internal Azure SDK project. The naming convention for the pipeline is usually `python - <servicedir>`, where `<servicedir>` matches the service directory (in this case, likely resource or resource-bicep).\nHere is the general process:\n1. Go to [Azure DevOps - Azure SDK Internal Project](https://dev.azure.com/azure-sdk/internal/_build)\n2. Search for the pipeline named `python - resource` or similar, as the pipeline is named according to the service directory for management SDKs.\n3. The direct link format for a service pipeline is: `https://dev.azure.com/azure-sdk/internal/_build?definitionId=<ID>&_a=summary`\n- You can search for `resource` in the pipelines list to locate the exact one.",
-            "reference_urls": [
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md"
+            "references": [
+                {
+                    "title": "Run release SDK pipeline | SDK release pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "Release process | Python Package Index | Production - Deploy with Azure Dev Ops",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md"
+                }
             ]
         },
         "actual": {
-            "answer": "To find the specific release pipeline link for the Python SDK `azure-mgmt-resource-bicep`, you should go to the Azure SDK DevOps pipelines hub at https://dev.azure.com/azure-sdk/internal/_build?view=pipelines&option=recent. From there, select the 'python' folder and look for a pipeline named in the format `python - resource` or specifically related to `bicep` if available. Each service directory under `sdk/` in the azure-sdk-for-python repo usually has its own pipeline named as `python - <servicedir>`. For `azure-mgmt-resource-bicep`, check for a pipeline like `python - resource` or `python - resource-bicep`.\n\nDirect link to the pipelines hub (where you can search for the relevant pipeline):\nhttps://dev.azure.com/azure-sdk/internal/_build?view=pipelines&option=recent\n\nIf you do not see a pipeline specifically for `resource-bicep`, it might be included in the `python - resource` pipeline. You may need to confirm the exact service directory name in the repo (`sdk/resource/azure-mgmt-resource-bicep`) and match it with the pipeline naming.\n\nIf a pipeline does not exist yet for this package, you will need to create one by ensuring your PR contains the necessary `ci.yml` and `tests.yml` files and then running the `/azp run prepare-pipelines` comment on your GitHub PR to generate the required pipelines.",
-            "reference_urls": [
-                "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline",
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md"
+            "answer": "To find the release pipeline for the Python SDK package `azure-mgmt-resource-bicep`, follow these steps:\n\n1. Go to the Azure SDK Pipelines hub: https://dev.azure.com/azure-sdk/internal/_build?view=pipelines&option=recent\n2. In the list, look for the pipeline named `python - resource` (since the package is under the resource management group). The naming convention for management plane SDKs is typically `python - {service}`.\n3. The direct link to the pipeline for the resource management SDKs is:\n   https://dev.azure.com/azure-sdk/internal/_build?definitionId=1071&_a=summary\n\nThis pipeline is responsible for building and releasing all Python management SDKs under the `resource` service directory, including `azure-mgmt-resource-bicep`. When running the pipeline, you can select the specific package (`azure-mgmt-resource-bicep`) for release.\n\nIf you do not see your package listed, ensure that your `ci.yml` in `sdk/resource` includes your package in the `Artifacts` section, as only defined artifacts will have release stages.",
+            "references": [
+                {
+                    "title": "Run release SDK pipeline | SDK release pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "Release process | Python Package Index | Production - Deploy with Azure Dev Ops",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md"
+                },
+                {
+                    "title": "NOTE REGARDING ARTIFACTS",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/release.md"
+                }
             ]
         },
         "similarity": 5.0,
@@ -54,81 +87,42 @@
         "groundedness_reason": NaN,
         "groundedness_result": NaN,
         "groundedness_threshold": NaN,
-        "response_completeness": 4.0,
+        "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response is mostly complete, missing only the specific direct link format with definitionId, but otherwise covers all relevant steps and information.",
-        "overall_score": 0.0
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, accurately and thoroughly, with no missing statements.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.92,
+        "knowledge_match_result": "pass",
+        "overall_score": NaN
     },
     {
         "testcase": "Python SDK gen failing on relative tsp path",
         "expected": {
             "answer": "According to error log, it seems that your typespec refer to folder outside project folder but you don't declare it in `tspconfig.yaml`. You could add the missing dir like below then try again:\n```\n\"@azure-tools/typespec-client-generator-cli\":\nadditionalDirectories:\n- \"specification/keyvault/Security.KeyVault.Common/\"\n```",
-            "reference_urls": []
-        },
-        "actual": {
-            "answer": "The errors you are seeing\u2014'Couldn't resolve import \"../Discovery.Shared/namespace.tsp\"'\u2014are caused by the TypeSpec compiler not finding referenced .tsp files that live outside your main service directory. This is a common issue when your TypeSpec project uses relative imports to shared files located in sibling or parent directories.\n\nTo resolve this in the SDK generation pipeline, you need to update your per-project setup by configuring the `tsp-location.yaml` file to include all required directories using the `additionalDirectories` property. This ensures that the TypeSpec compiler can access not only your main directory, but also any additional folders needed for imports.\n\n**How to fix:**\n1. Locate or create a `tsp-location.yaml` file under your SDK package directory (e.g., `sdk/discovery-workspace/azure-discovery-workspace/tsp-location.yaml`).\n2. Specify the main directory and all additional directories needed for compilation, like so:\n\n```yaml\ndirectory: specification/discoverydev/Discovery.Workspace\ncommit: <your_commit_sha>\nrepo: Azure/azure-rest-api-specs\nadditionalDirectories:\n  - specification/discoverydev/Discovery.Shared\n```\n\nThis tells the pipeline to sync both your service folder and the shared folder before compiling. The relative imports (e.g., `../Discovery.Shared/namespace.tsp`) will then resolve successfully during TypeSpec compilation.\n\n**References for further reading:**\n- [How to use additionalDirectories in tsp-location.yaml](https://azure.github.io/typespec-azure/docs/howtos/generate-with-tsp-client/intro_tsp_client)\n- [Sample tsp-location.yaml setup](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tsp-location.yaml#L52)\n\nAfter updating your `tsp-location.yaml`, re-run the pipeline and the import errors should be resolved.",
-            "reference_urls": [
-                "https://azure.github.io/typespec-azure/docs/howtos/generate-with-tsp-client/intro_tsp_client",
-                "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+            "references": [
+                {
+                    "title": "SDK-Validation.md | Import Resolution Errors",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+                },
+                {
+                    "title": "Usage | Important concepts | Per project setup",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-with-tsp-client/intro_tsp_client"
+                }
             ]
         },
-        "similarity": 5.0,
-        "gpt_similarity": 5.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": NaN,
-        "gpt_groundedness": NaN,
-        "groundedness_reason": "",
-        "groundedness_result": "unknown",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 5.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with additional helpful details and references. The minor difference in config file naming does not affect completeness for this context.",
-        "overall_score": 0.0
-    },
-    {
-        "testcase": "MS Learning Documentation Categorization as \"Unknown\"",
-        "expected": {
-            "answer": "Yes, to ensure the documentation for azure-ai-transcription appears under the \"cognitive-services\" category on Microsoft Learn, you need to add or update the metadata for this package in the metadata CSV file located at https://github.com/Azure/azure-sdk/blob/main/_data/releases/latest/python-packages.csv.\nSpecifically, you should:\n1. Find (or add) the row for azure-ai-transcription in python-packages.csv.\n2. Set the MSDocService field to \"cognitive-services\". This value is used to correctly categorize the package in the Learn docs hierarchy.\n3. Ensure other relevant fields (ServiceName, DisplayName, Type, etc.) are filled in appropriately.\nAfter updating the CSV, commit and create a PR in the azure-sdk repo. Once merged, the next docs build will pick up the new metadata and your package will be categorized correctly.\nIf the Notes field for your package is set to \"Needs Review\", update it to another value to avoid automation overwriting your changes.\nReferences and field details can be found here:\n- [CSV field README](https://github.com/Azure/azure-sdk/blob/main/eng/README.md#csv-fields)\n- [Relevant CSV file for Python packages](https://github.com/Azure/azure-sdk/blob/main/_data/releases/latest/python-packages.csv)\nIn summary: Yes, registering your package in the metadata CSV with MSDocService: cognitive-services is required. This action will resolve the warning and correct the Learn categorization.\n**References**\n[Publish SDK reference docs / Onboard a released package | Azure-sdk-docs-eng](https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs)\n[Metadata CSV update process for Python | Azure Sdk For Python Docs](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/deprecation_process.md)",
-            "reference_urls": []
-        },
         "actual": {
-            "answer": "Yes, you need to update the metadata CSV for Python packages to correctly register the service so your documentation appears under the 'cognitive-services' category on Microsoft Learn. The warning and the docs showing up under 'unknown' indicate the service categorization is missing or incorrect.\n\nHere are the steps to resolve this:\n\n1. Open the `_data/releases/latest/python-packages.csv` file in the [azure-sdk repo](https://github.com/Azure/azure-sdk/tree/main/_data/releases/latest).\n2. Locate the entry for your package (`azure-ai-transcription`).\n3. Update the `MSDocService` field to `cognitive-services`. This ensures the docs system places your package in the correct service category.\n4. Make sure the other relevant fields (e.g., `ServiceName`, `DisplayName`, etc.) are correct for your package.\n5. Create a PR with your change. Once merged, the documentation system will pick up the update in the next scheduled build (usually Wednesday for API reference docs).\n\nThis change will resolve the warning and move your docs to the correct folder/category on Microsoft Learn.\n\nYou do NOT need to take any special steps in the release pipeline itself\u2014just ensure the CSV metadata is correct and the MSDocService field is set to `cognitive-services`.\n\nFor additional details or troubleshooting, refer to the documentation links below.",
-            "reference_urls": [
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/deprecation_process.md",
-                "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs",
-                "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
-            ]
-        },
-        "similarity": 5.0,
-        "gpt_similarity": 5.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": NaN,
-        "gpt_groundedness": NaN,
-        "groundedness_reason": NaN,
-        "groundedness_result": NaN,
-        "groundedness_threshold": NaN,
-        "response_completeness": 4.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response is mostly complete, covering all major instructions and claims, but omits minor details about the Notes field and reference links.",
-        "overall_score": 0.0
-    },
-    {
-        "testcase": "\"black\" job in pipeline fails, but when I run locally, the tool does not make any changes",
-        "expected": {
-            "answer": "The \"black\" job in the Azure SDK for Python pipeline can fail for reasons beyond just code formatting. Even if running \"black\" locally with the same version (24.4.0) does not produce changes, there are a few areas to check for a root cause:\n1. Run Black with the Same Arguments as the Pipeline:The pipeline runs \"black\" using tox with specific arguments. Make sure you are running locally in the same way. From the official guidance, run: `tox run -e black -c ../../../eng/tox/tox.ini --root . -- .` This ensures that the same config files, paths, and excludes are used. The pipeline may use a different configuration or target files that you are not formatting locally. Or you can tried the same command used by ci: `python -m azpysdk.main black --isolate sdk/ai/azure-ai-projects`.\n2. Check for Hidden Files or Config Differences: The pipeline uses the repository\u2019s configuration, including pyproject.toml and any exclude/include patterns. Local runs may inadvertently skip files due to local ignore files, environment differences, or working directory mismatches. Double-check that your local environment matches the CI context.\n3. Run `git status` or `git diff` to find out whether there are files already formatted but not pushed to the pr.\n4. Line Endings and Whitespace: Sometimes, black fails due to line ending differences (CRLF vs LF) or invisible whitespace issues that are not flagged locally. Make sure your files have consistent line endings (prefer LF in repo).\n5. Check the Pipeline Log for Specific Files: Review the pipeline's failure log closely to see which files are reported as needing formatting. Sometimes, it\u2019s a file outside your typical working set (such as generated code or test files).\n6. Reproduce in a Clean Environment: To eliminate local state issues, clone your repo in a fresh directory and re-run the pipeline\u2019s black command as above. If you confirm that running \"black\" via tox in a clean environment with the same version does not report changes, but the pipeline still fails, check for possible pipeline caching or artifact issues. Otherwise, use the pipeline log to identify exactly which file is causing the failure and focus on that file. Removing the check is not recommended; instead, focus on aligning your local runs with the pipeline invocation. If you continue to see unexplained failures, reach out in the Azure SDK language team channel with your findings and the specific pipeline log excerpt.",
-            "reference_urls": []
-        },
-        "actual": {
-            "answer": "Based on the Azure SDK for Python engineering system documentation, if you've enabled the 'black' check in your pyproject.toml (`[tool.azure-sdk-build]\nblack = true`), the CI pipeline will run black for code formatting validation. The pipeline currently uses black 24.4.0, as you've observed.\n\nIf running black 24.4.0 locally on your code does not result in any changes, but the pipeline still fails the black check, there are a few possible causes and recommended actions:\n\n1. **Check for Local vs CI Environment Differences:**\n   - The CI pipeline might apply black differently (e.g., using specific flags or a config file such as pyproject.toml settings, line length, exclude/include patterns, etc.). Ensure your local invocation matches the pipeline.\n   - The pipeline runs black via tox with the command:\n     ```\n     tox run -e black -c ../../../eng/tox/tox.ini --root . -- .\n     ```\n     Try running this exact command locally in your package root directory to mirror the CI environment. You may need to clone the azure-sdk-for-python repo and use its eng/tox/tox.ini.\n\n2. **Check for Hidden Files or Formatting Issues:**\n   - There could be files or directories formatted by black in CI that are ignored locally (e.g., via .gitignore, .dockerignore, or other config). Double-check that all files intended to be checked by black are included locally.\n   - Ensure there are no unstaged changes, CRLF vs LF line ending inconsistencies, or other subtle differences (see [test proxy troubleshooting](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md) for line break issues).\n\n3. **Check the Pipeline Log for Details:**\n   - The CI pipeline log for the 'black' job will indicate which file(s) failed the check and the nature of the formatting difference. Look for error messages or file paths in the log output.\n\n4. **Sync Your Local Environment:**\n   - Make sure your repo is fully up-to-date and clean (e.g., run `git clean -xfd` and `git reset --hard origin/branch`).\n   - If there are any pre-commit hooks or additional formatting tools, disable them to avoid conflicts.\n\n5. **Run Black in CI Mode Locally:**\n   - Use the exact tox invocation:\n     ```\n     tox run -e black -c ../../../eng/tox/tox.ini --root . -- .\n     ```\n     This will ensure black is run exactly as it is in CI.\n\nIf after following these steps the issue persists, share the specific error message from the pipeline log with the Python SDK team. Do not suppress or remove the check\u2014it's required for releases. You can reach out to the [Python Teams channel](https://teams.microsoft.com/l/channel/19%3ab97d98e6d22c41e0970a1150b484d935%40thread.skype/Language%2520-%2520Python?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) for support if you're blocked.",
-            "reference_urls": [
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/eng_sys_checks.md",
-                "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md",
-                "https://eng.ms/docs/products/azure-developer-experience/support/support"
+            "answer": "The 'import-not-found' errors during Python SDK generation are caused by the TypeSpec compiler not being able to locate the referenced files (e.g., '../Discovery.Shared/namespace.tsp'). This typically happens when the directory containing the imported .tsp files is not included in your TypeSpec configuration.\n\nTo resolve this:\n1. Locate your 'tspconfig.yaml' file in the root of your TypeSpec project (e.g., 'specification/discoverydev/Discovery.Workspace/tspconfig.yaml').\n2. Add an 'additionalDirectories' entry to the configuration, listing the relative path to the folder containing the shared .tsp files. For your case, it should look like:\n\n```yaml\nadditionalDirectories:\n  - ../Discovery.Shared\n```\n\n3. Ensure the path is correct and relative to the location of your 'tspconfig.yaml'.\n4. Commit and push the updated 'tspconfig.yaml', then re-run your pipeline.\n\nThis will instruct the TypeSpec tooling to sync and include the shared directory, resolving the import errors. For more details and a sample config, see the official guidance on import resolution errors.",
+            "references": [
+                {
+                    "title": "Table of Contents | Common Error Fix Guidance | Import Resolution Errors",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+                },
+                {
+                    "title": "Usage | Important concepts | Per project setup",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-with-tsp-client/intro_tsp_client"
+                }
             ]
         },
         "similarity": 5.0,
@@ -137,28 +131,45 @@
         "similarity_threshold": 4,
         "groundedness": 5.0,
         "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully grounded, complete, and directly supported by the CONTEXT without unsupported additions or omissions.",
+        "groundedness_reason": "The response is fully grounded, complete, and directly supported by the context, with no omissions or unsupported additions.",
         "groundedness_result": "pass",
         "groundedness_threshold": 3.0,
-        "response_completeness": 4.0,
+        "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response is mostly complete, covering nearly all major points from the ground truth, but misses a few minor details and alternative suggestions.",
-        "overall_score": 6.6
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, with no missing claims or steps, only a different example path.",
+        "reference_match": 0.5,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.9285714285714286,
+        "knowledge_match_result": "pass",
+        "overall_score": 8.428571428571429
     },
     {
-        "testcase": "Python emitter issue with bulleted list TypeSpec doc string, and other",
+        "testcase": "MS Learning Documentation Categorization as \"Unknown\"",
         "expected": {
-            "answer": "The Sphinx docstring errors you're seeing in the generated Python SDK (unexpected indentation, block quote ends without a blank line, duplicate explicit target names, bullet/definition list issues) are caused by how TypeSpec documentation comments are emitted into Python docstrings, especially when those comments use Markdown or formatting that doesn't map cleanly to reStructuredText (reST), which Sphinx expects.\nTo resolve these errors, there are two possible solutions:\n1. You need to ensure that the TypeSpec doc comments for the Response model and ServiceTier union are written in a way that avoids problematic Markdown constructs and closely follows what Sphinx/reST expects.\nHere are practical steps:\n- **Bullet/Definition List Formatting:** - Avoid using Markdown bullet lists (`*`, `-`, or `+`) or definition lists in your TypeSpec doc comments. Instead, use plain sentences, or, if you need a list, format it as numbered items with clear line breaks between each item. - If you must use a list, add a blank line before and after the list, and ensure each item starts on a new line. Do not nest lists or use complex indentation.\n- **Inline Strong/Emphasis Markup:** - If you use `**bold**` or `*italic*` in TypeSpec comments, Sphinx may misinterpret these if not balanced. Prefer using plain text or ensure that every start marker has a matching end marker.\n- **Explicit Targets (Links):** - If you use `[Learn more](url)` in doc comments, emitting these into Python docstrings can result in duplicate explicit target names. Use plain URLs or avoid repeating the same anchor text multiple times.\n- **Block Quotes:** - Avoid using Markdown block quotes (`>`) in TypeSpec doc comments. If you need to highlight something, use plain sentences.\n- **Unexpected Indentation:** - Ensure all TypeSpec doc comments are left-aligned, with no leading spaces or tabs before the text, unless you are deliberately creating a code block. For code blocks, use triple backticks and add blank lines before and after the block.\n- **General Style:** - Write documentation in simple paragraphs. Do not mix Markdown with reST, and avoid complex formatting. - Example of a safe docstring for a model property: ```tsp /** * The list of available service tiers. Possible values include: * 1. Basic - Entry-level tier. * 2. Standard - Recommended for most workloads. * 3. Premium - Advanced tier for high throughput. */ ``` - Avoid: ```tsp /** * - Basic * - Standard * - Premium */ ``` **Actionable Steps:** - Go to your TypeSpec definitions for Response and ServiceTier, and revise any doc comments containing bullet lists, definition lists, block quotes, repeated anchor text, or excessive indentation. Replace with simple sentences or numbered lists as above. - After making these changes, regenerate the Python SDK and run the Sphinx build again. The warnings/errors should be resolved. - For reference on Python docstring formatting and Sphinx compatibility, see the Azure Python SDK [docstring guidelines](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/docstring.md). If you need a specific example for ServiceTier: ```tsp /** * Service tier for deployment. Possible values: * 1. Basic: Entry-level tier. * 2. Standard: Recommended tier. * 3. Premium: Advanced tier for large workloads. */ union ServiceTier { ... } ``` And for Response model, ensure any lists or references are in plain sentences and do not use block quotes or repeated links.\n2. Or you can disable the sphinx environment within the pyproject.toml for the problematic package. By that way you won't hit these sphinx failures.\n```\n[tool.azure-sdk-build]\nsphinx = false\n```",
-            "reference_urls": []
+            "answer": "Yes, to ensure the documentation for azure-ai-transcription appears under the \"cognitive-services\" category on Microsoft Learn, you need to add or update the metadata for this package in the metadata CSV file located at https://github.com/Azure/azure-sdk/blob/main/_data/releases/latest/python-packages.csv.\nSpecifically, you should:\n1. Find (or add) the row for azure-ai-transcription in python-packages.csv.\n2. Set the MSDocService field to \"cognitive-services\". This value is used to correctly categorize the package in the Learn docs hierarchy.\n3. Ensure other relevant fields (ServiceName, DisplayName, Type, etc.) are filled in appropriately.\nAfter updating the CSV, commit and create a PR in the azure-sdk repo. Once merged, the next docs build will pick up the new metadata and your package will be categorized correctly.\nIf the Notes field for your package is set to \"Needs Review\", update it to another value to avoid automation overwriting your changes.\nReferences and field details can be found here:\n- [CSV field README](https://github.com/Azure/azure-sdk/blob/main/eng/README.md#csv-fields)\n- [Relevant CSV file for Python packages](https://github.com/Azure/azure-sdk/blob/main/_data/releases/latest/python-packages.csv)\nIn summary: Yes, registering your package in the metadata CSV with MSDocService: cognitive-services is required. This action will resolve the warning and correct the Learn categorization.\n**References**\n[Publish SDK reference docs / Onboard a released package | Azure-sdk-docs-eng](https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs)\n[Metadata CSV update process for Python | Azure Sdk For Python Docs](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/deprecation_process.md)",
+            "references": [
+                {
+                    "title": "Publish SDK reference docs | Onboard a released package | Packages released outside the Azure SDK engineering system",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Publish SDK reference docs | Onboard a released package | Packages released through the Azure SDK engineering system",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                }
+            ]
         },
         "actual": {
-            "answer": "The Python docstring errors during Sphinx build are caused by malformed or unstructured comments and documentation in your TypeSpec definitions. The TypeSpec Python emitter converts doc comments and type definitions into Python docstrings, which must be valid reStructuredText (reST) for Sphinx to parse them without errors. The most common causes for these errors are:\n\n1. **Malformed lists and indentation in TypeSpec doc comments**: Bullet lists, definition lists, or block quotes in TypeSpec doc comments that do not follow reST formatting rules (e.g., missing blank lines before/after lists, improper indentation, or inconsistent use of colons) will result in Sphinx warnings/errors like \"unexpected unindent\" or \"unexpected indentation\".\n2. **Duplicate explicit targets**: Using repeated explicit links (e.g., `.. _learn more:`) within a docstring will trigger Sphinx duplicate target warnings.\n3. **Inline unions**: For the `ServiceTier` union and the `conversation: { id: string; } | null` in `Response`, you should avoid inline union expressions and always use named unions/models, per Azure TypeSpec guidance ([no-unnamed-union](https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-unnamed-union)). Inline unions may also produce docstring output that Sphinx cannot reliably parse.\n\n**Concrete steps to resolve the issues:**\n\nA. **Doc comment hygiene**\n- Ensure all TypeSpec doc comments use valid reST formatting:\n  - Bullet lists: Each item should be preceded by a blank line and aligned with consistent indentation. End the list with a blank line.\n  - Block quotes: End block quotes with a blank line.\n  - Definition lists: Separate items with blank lines.\n- Avoid repeated explicit targets in links (e.g., avoid duplicating `.. _learn more:`).\n- Avoid any non-reST formatting in comments (including Markdown-only features).\n\nB. **Avoid inline union expressions**\n- For the `conversation` property in `Response`, instead of `{ id: string; } | null`, define a named model for the conversation object and use a named union for `ConversationOrNone`:\n  ```typespec\n  model Conversation {\n    id: string;\n  }\n  union ConversationOrNone {\n    Conversation,\n    null,\n  }\n  model Response {\n    ...Response_Pre_Update;\n    conversation: ConversationOrNone;\n  }\n  ```\n  This improves code generation and documentation consistency.\n\n- For `ServiceTier`, your union is correctly named, but ensure that any doc comments for the union or its members use valid reST (not Markdown). For example:\n  ```typespec\n  /**\n   * Represents the available service tiers.\n   *\n   * - auto: Automatically selected tier\n   * - default: Default tier\n   * - flex: Flexible tier\n   * - scale: Scalable tier\n   * - priority: Priority tier\n   */\n  union ServiceTier {\n    \"auto\",\n    \"default\",\n    \"flex\",\n    \"scale\",\n    \"priority\",\n  }\n  ```\n  - Add a blank line before the bullet list, ensure consistent indentation, and avoid trailing commas in comments.\n\nC. **General docstring formatting tips**\n- Only use reST features supported by Sphinx in doc comments. Avoid Markdown-only syntax.\n- Always end lists and blocks with blank lines in comments.\n- For definition lists, use the reST syntax:\n  ```\n  term\n    definition\n  ```\n\n**Summary**: Review and update your TypeSpec comments and type definitions to use only valid reST syntax, avoid inline unions, and provide clear, blank-line-separated doc comments. This will prevent malformed docstrings and eliminate Sphinx warnings/errors during documentation build.\n\nIf you have further errors, review the generated Python docstrings and compare with reST formatting rules, then adjust the corresponding TypeSpec comments.\n",
-            "reference_urls": [
-                "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/no-unnamed-union",
-                "https://typespec.io/docs/getting-started/typespec-for-openapi-dev",
-                "https://typespec.io/docs/language-basics/documentation",
-                "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+            "answer": "Yes, the issue is most likely due to missing or incorrect metadata in the CSV file, specifically the MSDocService field. For your package (azure-ai-transcription), you need to ensure that:\n\n1. The package is registered in the appropriate metadata CSV file (for Python, this is _data/releases/latest/python-packages.csv) with the correct values.\n2. The MSDocService field should be set to cognitive-services. This field is used to ensure the documentation appears under the correct service category on Microsoft Learn.\n\nIf the MSDocService is missing or incorrect, the documentation system cannot categorize your package properly, resulting in it appearing under 'unknown'.\n\nAction steps:\n- Open the python-packages.csv file in the azure-sdk repo.\n- Find (or add) the entry for azure-ai-transcription.\n- Set MSDocService to cognitive-services.\n- Save and commit your changes, then run the documentation automation pipeline again.\n\nOnce this is done and the pipeline completes, your documentation should appear under the correct 'cognitive-services' category on Microsoft Learn.\n\nIf you continue to see issues, double-check that the ServiceName and DisplayName fields are also set appropriately, and that there are no typos in the MSDocService value.",
+            "references": [
+                {
+                    "title": "Publish SDK reference docs | Onboard a released package | Packages released outside the Azure SDK engineering system",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Publish SDK reference docs | Onboard a released package",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                }
             ]
         },
         "similarity": 4.0,
@@ -173,17 +184,123 @@
         "response_completeness": 4.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 4,
-        "response_completeness_reason": "The Response is mostly complete, thoroughly covering the causes and solutions for Sphinx docstring errors from TypeSpec, including actionable steps and examples. It only misses the alternative solution of disabling Sphinx in pyproject.toml, which is a minor omission.",
-        "overall_score": 0.0
+        "response_completeness_reason": "The Response covers all major steps and fields but omits minor details (Notes field, PR process, references).",
+        "reference_match": 0.5,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.9130434782608695,
+        "knowledge_match_result": "pass",
+        "overall_score": NaN
     },
     {
-        "average_score": 1.8,
-        "total_evals": 7,
-        "similarity_pass_rate": 7,
+        "testcase": "\"black\" job in pipeline fails, but when I run locally, the tool does not make any changes",
+        "expected": {
+            "answer": "The \"black\" job in the Azure SDK for Python pipeline can fail for reasons beyond just code formatting. Even if running \"black\" locally with the same version (24.4.0) does not produce changes, there are a few areas to check for a root cause:\n1. Run Black with the Same Arguments as the Pipeline:The pipeline runs \"black\" using tox with specific arguments. Make sure you are running locally in the same way. From the official guidance, run: `tox run -e black -c ../../../eng/tox/tox.ini --root . -- .` This ensures that the same config files, paths, and excludes are used. The pipeline may use a different configuration or target files that you are not formatting locally. Or you can tried the same command used by ci: `python -m azpysdk.main black --isolate sdk/ai/azure-ai-projects`.\n2. Check for Hidden Files or Config Differences: The pipeline uses the repository\u2019s configuration, including pyproject.toml and any exclude/include patterns. Local runs may inadvertently skip files due to local ignore files, environment differences, or working directory mismatches. Double-check that your local environment matches the CI context.\n3. Run `git status` or `git diff` to find out whether there are files already formatted but not pushed to the pr.\n4. Line Endings and Whitespace: Sometimes, black fails due to line ending differences (CRLF vs LF) or invisible whitespace issues that are not flagged locally. Make sure your files have consistent line endings (prefer LF in repo).\n5. Check the Pipeline Log for Specific Files: Review the pipeline's failure log closely to see which files are reported as needing formatting. Sometimes, it\u2019s a file outside your typical working set (such as generated code or test files).\n6. Reproduce in a Clean Environment: To eliminate local state issues, clone your repo in a fresh directory and re-run the pipeline\u2019s black command as above. If you confirm that running \"black\" via tox in a clean environment with the same version does not report changes, but the pipeline still fails, check for possible pipeline caching or artifact issues. Otherwise, use the pipeline log to identify exactly which file is causing the failure and focus on that file. Removing the check is not recommended; instead, focus on aligning your local runs with the pipeline invocation. If you continue to see unexplained failures, reach out in the Azure SDK language team channel with your findings and the specific pipeline log excerpt.",
+            "references": [
+                {
+                    "title": "Azure SDK for Python - Engineering System | Analyze Checks | black",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/eng_sys_checks.md"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "The most common reason for the Azure SDK pipeline's 'black' job to fail when it passes locally is an environment mismatch\u2014especially differences in line endings (LF vs CRLF), file encodings, or the set of files being checked. Even if you use the same 'black' version (24.4.0), the pipeline may run on a different OS (e.g., Linux vs Windows), which can affect line endings. 'black' enforces consistent formatting, including line endings, and will fail if it detects differences.\n\nTo resolve this issue without removing the 'black' check:\n\n1. **Ensure consistent line endings:**\n   - Add a `.gitattributes` file at the root of your repo or the affected directory with the following content:\n     ```\n     * text=auto eol=lf\n     ```\n   - This forces Git to check out files with LF endings, matching what the pipeline expects.\n\n2. **Re-run 'black' after normalizing line endings:**\n   - After adding `.gitattributes`, re-checkout your files or run `git add --renormalize .` to normalize line endings, then run 'black' again and commit any changes.\n\n3. **Double-check the files being checked:**\n   - The pipeline may run 'black' on a different set of files than you do locally. Make sure you are running 'black' on the same paths as the pipeline (usually the package root or the entire repo).\n\n4. **Run the exact pipeline command locally:**\n   - The pipeline uses: `tox run -e black -c ../../../eng/tox/tox.ini --root . -- .`\n   - Try running this exact command from your package root to ensure you match the pipeline's behavior.\n\nBy following these steps, you should be able to resolve the 'black' check failures and keep the check enabled in your pipeline.",
+            "references": [
+                {
+                    "title": "Azure SDK for Python - Engineering System | Analyze Checks | black",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/eng_sys_checks.md"
+                },
+                {
+                    "title": "Guide for test proxy troubleshooting | Playback failures from inconsistent line breaks",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/test_proxy_troubleshooting.md"
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": NaN,
+        "gpt_groundedness": NaN,
+        "groundedness_reason": NaN,
+        "groundedness_result": NaN,
+        "groundedness_threshold": NaN,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response is mostly complete, covering the main causes and solutions, but misses some minor troubleshooting steps and recommendations found in the ground truth.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.8333333333333334,
+        "knowledge_match_result": "pass",
+        "overall_score": NaN
+    },
+    {
+        "testcase": "Python emitter issue with bulleted list TypeSpec doc string, and other",
+        "expected": {
+            "answer": "The Sphinx docstring errors you're seeing in the generated Python SDK (unexpected indentation, block quote ends without a blank line, duplicate explicit target names, bullet/definition list issues) are caused by how TypeSpec documentation comments are emitted into Python docstrings, especially when those comments use Markdown or formatting that doesn't map cleanly to reStructuredText (reST), which Sphinx expects.\nTo resolve these errors, there are two possible solutions:\n1. You need to ensure that the TypeSpec doc comments for the Response model and ServiceTier union are written in a way that avoids problematic Markdown constructs and closely follows what Sphinx/reST expects.\nHere are practical steps:\n- **Bullet/Definition List Formatting:** - Avoid using Markdown bullet lists (`*`, `-`, or `+`) or definition lists in your TypeSpec doc comments. Instead, use plain sentences, or, if you need a list, format it as numbered items with clear line breaks between each item. - If you must use a list, add a blank line before and after the list, and ensure each item starts on a new line. Do not nest lists or use complex indentation.\n- **Inline Strong/Emphasis Markup:** - If you use `**bold**` or `*italic*` in TypeSpec comments, Sphinx may misinterpret these if not balanced. Prefer using plain text or ensure that every start marker has a matching end marker.\n- **Explicit Targets (Links):** - If you use `[Learn more](url)` in doc comments, emitting these into Python docstrings can result in duplicate explicit target names. Use plain URLs or avoid repeating the same anchor text multiple times.\n- **Block Quotes:** - Avoid using Markdown block quotes (`>`) in TypeSpec doc comments. If you need to highlight something, use plain sentences.\n- **Unexpected Indentation:** - Ensure all TypeSpec doc comments are left-aligned, with no leading spaces or tabs before the text, unless you are deliberately creating a code block. For code blocks, use triple backticks and add blank lines before and after the block.\n- **General Style:** - Write documentation in simple paragraphs. Do not mix Markdown with reST, and avoid complex formatting. - Example of a safe docstring for a model property: ```tsp /** * The list of available service tiers. Possible values include: * 1. Basic - Entry-level tier. * 2. Standard - Recommended for most workloads. * 3. Premium - Advanced tier for high throughput. */ ``` - Avoid: ```tsp /** * - Basic * - Standard * - Premium */ ``` **Actionable Steps:** - Go to your TypeSpec definitions for Response and ServiceTier, and revise any doc comments containing bullet lists, definition lists, block quotes, repeated anchor text, or excessive indentation. Replace with simple sentences or numbered lists as above. - After making these changes, regenerate the Python SDK and run the Sphinx build again. The warnings/errors should be resolved. - For reference on Python docstring formatting and Sphinx compatibility, see the Azure Python SDK [docstring guidelines](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/docstring.md). If you need a specific example for ServiceTier: ```tsp /** * Service tier for deployment. Possible values: * 1. Basic: Entry-level tier. * 2. Standard: Recommended tier. * 3. Premium: Advanced tier for large workloads. */ union ServiceTier { ... } ``` And for Response model, ensure any lists or references are in plain sentences and do not use block quotes or repeated links.\n2. Or you can disable the sphinx environment within the pyproject.toml for the problematic package. By that way you won't hit these sphinx failures.\n```\n[tool.azure-sdk-build]\nsphinx = false\n```",
+            "references": [
+                {
+                    "title": "Docstrings | Docstrings",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/docstring.md"
+                },
+                {
+                    "title": "Python Guidelines: Documentation | Docstrings | Code snippets",
+                    "link": "https://azure.github.io/azure-sdk/python_documentation.html"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "To resolve Sphinx docstring errors and warnings (such as unexpected indentation, block quote issues, and duplicate explicit target names) in the emitted Python SDK, you need to ensure that the TypeSpec comments and descriptions for your models and unions are formatted in a way that produces valid reStructuredText (reST) when rendered as Python docstrings. The Python emitter translates TypeSpec comments directly into docstrings, so any formatting issues in the TypeSpec will propagate to Sphinx.\n\n**Key steps to resolve your issues:**\n\n1. **Bulleted/Definition Lists and Blank Lines:**\n   - In TypeSpec comments, always add a blank line before and after bulleted lists, block quotes, or definition lists. Sphinx/reST requires these blank lines to parse the structure correctly.\n   - Example (in TypeSpec):\n     ```\n     /// Description of the property.\n     ///\n     /// - Item 1\n     /// - Item 2\n     ///\n     ```\n\n2. **Indentation:**\n   - Ensure that all lines in multi-line comments are consistently indented. Avoid mixing tabs and spaces, and do not add extra indentation unless you are intentionally creating a code block.\n   - For block quotes or code blocks, use a blank line before and after, and indent the block consistently.\n\n3. **Duplicate Explicit Target Names:**\n   - This usually happens when the same link text (e.g., \"learn more\") is used multiple times in the same docstring. In TypeSpec, avoid repeating the same reference label in multiple places within the same comment block. If you need to reference the same link, use different labels or avoid explicit targets.\n\n4. **Union Types (like ServiceTier):**\n   - For unions of string literals, the Python emitter generates a `Union[Literal[...], str]` type. If you add a docstring to the union, ensure that any bulleted list of values is separated by blank lines and does not have extra indentation.\n   - Example:\n     ```\n     /// Service tier options:\n     ///\n     /// - \"auto\"\n     /// - \"default\"\n     /// - \"flex\"\n     /// - \"scale\"\n     /// - \"priority\"\n     ///\n     union ServiceTier {\n       \"auto\",\n       \"default\",\n       \"flex\",\n       \"scale\",\n       \"priority\",\n     }\n     ```\n\n5. **Model Docstrings (like Response):**\n   - Review all comments on properties and the model itself. Ensure that any lists, code blocks, or references are properly separated by blank lines and do not have duplicate link targets.\n   - If you are inheriting or spreading models (e.g., `...Response_Pre_Update`), check the parent model's comments as well.\n\n6. **Testing Locally:**\n   - After making changes, regenerate the SDK and run Sphinx locally using the recommended command:\n     ```\n     tox run -e sphinx -c ../../../eng/tox/tox.ini --root .\n     ```\n   - This will help you catch docstring issues before pushing changes.\n\n**Summary:**\n- Update your TypeSpec comments to follow reST/Sphinx formatting rules: blank lines around lists/blocks, consistent indentation, and unique link targets.\n- Regenerate the SDK and re-run Sphinx to verify the issues are resolved.\n\nIf you need more concrete examples, refer to the [Azure SDK Python docstring guidelines](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/docstring.md) for best practices.\n\nIf you still see issues after these changes, please share the specific TypeSpec comment blocks for further review.",
+            "references": [
+                {
+                    "title": "Docstrings | Docstrings",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/docstring.md"
+                },
+                {
+                    "title": "Python SDK Health Status Report | Explained | Sphinx (required check):",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/repo_health_status.md"
+                },
+                {
+                    "title": "Azure SDK for Python - Engineering System | Analyze Checks | Sphinx and docstring checker",
+                    "link": "https://github.com/Azure/azure-sdk-for-python/blob/main/doc/eng_sys_checks.md"
+                },
+                {
+                    "title": "Generated Types | Unions | Inline union of literals with same type",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The RESPONSE is fully grounded, complete, and directly supported by the CONTEXT, accurately conveying all essential information without introducing unsupported details or omitting critical points.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3.0,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The Response is mostly complete, covering the main solution and most actionable steps, but omits the alternative solution (disabling Sphinx) and some specific formatting warnings.",
+        "reference_match": 0.5,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.8214285714285714,
+        "knowledge_match_result": "pass",
+        "overall_score": 7.321428571428571
+    },
+    {
+        "average_score": NaN,
+        "total_evals": 6,
+        "similarity_pass_rate": 6,
         "groundedness_pass_rate": 2,
-        "response_completeness_pass_rate": 7,
+        "response_completeness_pass_rate": 6,
+        "reference_match_pass_rate": 3,
+        "knowledge_match_pass_rate": 6,
         "similarity_fail_rate": 0,
         "groundedness_fail_rate": 0,
-        "response_completeness_fail_rate": 0
+        "response_completeness_fail_rate": 0,
+        "reference_match_fail_rate": 3,
+        "knowledge_match_fail_rate": 0
     }
 ]

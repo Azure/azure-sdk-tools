@@ -683,7 +683,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 			continue
 		}
 		log.Printf("Vector searched chunk: %+v, rerankScore: %f", chunk, chunk.RerankScore)
-		chunk.SearchType = string(model.SearchType_Vector)
+		chunk.SearchType = model.SearchType_Vector
 		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
@@ -694,7 +694,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	}
 	for _, chunk := range agenticSearchedResults {
 		log.Printf("Agentic searched chunk: %+v", chunk)
-		chunk.SearchType = string(model.SearchType_Agentic)
+		chunk.SearchType = model.SearchType_Agentic
 		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 

@@ -233,7 +233,7 @@ type Index struct {
 	Scope           string  `json:"scope,omitempty"`
 	ServiceType     string  `json:"service_type,omitempty"`
 
-	SearchType string `json:"search_type,omitempty"`
+	SearchType SearchType `json:"search_type,omitempty"`
 }
 
 type SearchType string

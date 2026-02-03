@@ -106,6 +106,9 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	if intention.QuestionScope == nil {
 		intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
 	}
+	if len(intention.Question) > 0 {
+		query = fmt.Sprintf("category:%s question:%s", intention.Category, intention.Question)
+	}
 	// Apply intention override if provided
 	if req.Intention != nil {
 		if req.Intention.QuestionScope != nil {

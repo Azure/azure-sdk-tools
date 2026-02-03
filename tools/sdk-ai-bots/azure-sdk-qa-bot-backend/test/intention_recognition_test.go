@@ -217,8 +217,7 @@ func TestIntentionRecognition_ReviewRequest(t *testing.T) {
 	require.NotEmpty(t, intentionResult.Question)
 }
 
-func TestIntentionRecognition_Ideas(t *testing.T) {
-	config.LoadEnvFile()
+func TestIntentionRecognition_NonQuestion(t *testing.T) {
 	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()

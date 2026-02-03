@@ -63,10 +63,24 @@ public class CopilotAgentRunner(
             // copilot built-in tools may be enabled in the future as needed
             AvailableTools = [.. tools.Select(t => t.Name)]
         };
-        
-        await using var session = await client.CreateSessionAsync(sessionConfig, ct);
 
-        // TaskCompletionSource to signal when session is idle
+        ICopilotSessionWrapper session;
+        try
+        {
+            session = await client.CreateSessionAsync(sessionConfig, ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Any error creating a session is likely due to the CLI not being installed or misconfigured.
+            throw new InvalidOperationException(
+                "The GitHub Copilot CLI could not be found or failed to start. This tool requires the Copilot CLI to be installed. " +
+                "For installation instructions, see: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli",
+                ex);
+        }
+
+        await using (session)
+        {
+            // TaskCompletionSource to signal when session is idle
         TaskCompletionSource? sessionIdleTcs = null;
         // Track session errors that occur during processing
         SessionErrorEvent? sessionError = null;
@@ -181,5 +195,6 @@ public class CopilotAgentRunner(
 
         throw new InvalidOperationException(
             $"Agent did not return a valid result within {agent.MaxIterations} iterations");
+        } // end await using (session)
     }
 }

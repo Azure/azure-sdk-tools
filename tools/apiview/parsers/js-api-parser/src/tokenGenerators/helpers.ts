@@ -181,7 +181,10 @@ export function buildTypeNodeTokens(
     const closingTokens: ReviewToken[] = [];
     const closingIndent = createIndentation(depth, deprecated);
     if (closingIndent) closingTokens.push(closingIndent);
-    // ensure 4 spaces before '}'
+    // NOTE: We intentionally add exactly 4 spaces here (in addition to createIndentation above)
+    // to keep the closing '}' visually aligned with the type members in APIView. This spacing
+    // is part of the expected rendered output; do not change it to use createIndentation or a
+    // different width without verifying the impact on existing reviews.
     closingTokens.push(createToken(TokenKind.Text, "    ", { deprecated }));
     closingTokens.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
     closingTokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));

@@ -153,6 +153,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
                         packageInfo: result.PackageInfo,
                         nextSteps: ["Review the generated samples", "Test the samples to ensure they compile and run correctly"]);
 
+                // Set samples_count for telemetry tracking (including 0 for failed generations)
                 response.Result = new { samples_count = result.SamplesCount };
                 return response;
             }

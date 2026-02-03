@@ -60,7 +60,7 @@
               }
             },
             {
-              "pattern": "**/howtos/arm/**",
+              "pattern": "**/arm/**",
               "metadata": {
                 "service_type": "management-plane"
               }

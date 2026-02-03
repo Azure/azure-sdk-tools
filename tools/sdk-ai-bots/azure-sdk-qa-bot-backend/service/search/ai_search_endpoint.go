@@ -70,7 +70,7 @@ type SearchOptions struct {
 	Sources       []model.Source
 	SourceFilter  map[model.Source]string
 	QuestionScope *model.QuestionScope
-	ServicePlane  *model.ServiceType
+	ServiceType   *model.ServiceType
 }
 
 func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([]model.Index, error) {
@@ -133,7 +133,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, opts Sear
 	// If no sources specified, search all at once
 	if len(opts.Sources) == 0 {
 		baseReq.Top = k
-		baseReq.Filter = s.buildFilter(nil, opts.SourceFilter, opts.QuestionScope, opts.ServicePlane)
+		baseReq.Filter = s.buildFilter(nil, opts.SourceFilter, opts.QuestionScope, opts.ServiceType)
 		resp, err := s.QueryIndex(context.Background(), &baseReq)
 		if err != nil {
 			return nil, fmt.Errorf("QueryIndex() got an error: %v", err)
@@ -154,7 +154,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, opts Sear
 		if val, ok := config.SourceTopK[source]; ok {
 			req.Top = val
 		}
-		req.Filter = s.buildFilter([]model.Source{source}, opts.SourceFilter, opts.QuestionScope, opts.ServicePlane)
+		req.Filter = s.buildFilter([]model.Source{source}, opts.SourceFilter, opts.QuestionScope, opts.ServiceType)
 
 		resp, err := s.QueryIndex(context.Background(), &req)
 		if err != nil {
@@ -364,7 +364,7 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, opts Age
 		{
 			KnowledgeSourceName:        config.AppConfig.AI_SEARCH_KNOWLEDGE_SOURCE,
 			Kind:                       model.KnowledgeSourceKindSearchIndex,
-			FilterAddOn:                s.buildFilter(opts.Sources, opts.SourceFilter, opts.QuestionScope, opts.ServicePlane),
+			FilterAddOn:                s.buildFilter(opts.Sources, opts.SourceFilter, opts.QuestionScope, opts.ServiceType),
 			RerankerThreshold:          to.Ptr(float64(model.RerankScoreMediumRelevanceThreshold)),
 			IncludeReferences:          to.Ptr(true),
 			IncludeReferenceSourceData: to.Ptr(true),

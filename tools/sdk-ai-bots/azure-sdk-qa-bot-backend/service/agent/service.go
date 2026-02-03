@@ -529,7 +529,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 			Sources:       req.Sources,
 			SourceFilter:  sourceFilter,
 			QuestionScope: intention.QuestionScope,
-			ServicePlane:  intention.ServiceType,
+			ServiceType:   intention.ServiceType,
 		},
 		Prompt: agenticSearchPrompt,
 	})
@@ -626,7 +626,7 @@ func (s *CompletionService) vectorSearch(req *model.CompletionReq, query string,
 		Sources:       req.Sources,
 		SourceFilter:  sourceFilter,
 		QuestionScope: intention.QuestionScope,
-		ServicePlane:  intention.ServiceType,
+		ServiceType:   intention.ServiceType,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
@@ -753,7 +753,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	for i, chunk := range finalChunks {
 		knowledge := processChunk(chunk)
 		results = append(results, knowledge)
-		log.Printf("[%d] SearchType: %s, Score: %f, Source: %s, Title: %s", i+1, chunk.SearchType, knowledge.Score, knowledge.Source, knowledge.Title)
+		log.Printf("[%d] SearchType: %s, Score: %f, Source: %s, Title: %s, Link:%s, Scope:%s, ServiceType:%s", i+1, chunk.SearchType, knowledge.Score, knowledge.Source, knowledge.Title, knowledge.Link, chunk.Scope, chunk.ServiceType)
 	}
 	log.Println("=====================================")
 

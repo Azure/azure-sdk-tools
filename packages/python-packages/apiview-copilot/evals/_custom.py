@@ -211,7 +211,7 @@ class PromptyEvaluator(BaseEvaluator):
         self._model_config = {
             "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
             "api_key": settings.get("OPENAI_API_KEY"),
-            "azure_deployment": "gpt-4.1",
+            "azure_deployment": "gpt-5-mini",
             "api_version": "2025-03-01-preview",
         }
 

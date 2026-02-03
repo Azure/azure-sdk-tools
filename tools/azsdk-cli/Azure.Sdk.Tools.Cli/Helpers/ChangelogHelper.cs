@@ -33,14 +33,6 @@ public interface IChangelogHelper
     /// <param name="releaseDate">The release date in yyyy-MM-dd format.</param>
     /// <returns>Result indicating success or failure with details.</returns>
     ChangelogUpdateResult UpdateReleaseDate(string changelogPath, string version, string releaseDate);
-
-    /// <summary>
-    /// Checks if a changelog entry exists for the specified version.
-    /// </summary>
-    /// <param name="changelogPath">Path to the CHANGELOG.md file.</param>
-    /// <param name="version">The version to check.</param>
-    /// <returns>True if an entry exists for the version.</returns>
-    bool HasEntryForVersion(string changelogPath, string version);
 }
 
 /// <summary>
@@ -59,9 +51,25 @@ public class ChangelogData
     public required string HeaderBlock { get; init; }
 
     /// <summary>
-    /// Dictionary of version entries keyed by version string.
+    /// List of version entries in file order (newest first typically).
+    /// Use <see cref="TryGetEntry"/> for O(1) lookup by version.
     /// </summary>
-    public required Dictionary<string, ChangelogEntry> Entries { get; init; }
+    public required List<ChangelogEntry> Entries { get; init; }
+
+    // Lazy-initialized lookup dictionary for O(1) access by version
+    private Dictionary<string, ChangelogEntry>? _entriesLookup;
+
+    /// <summary>
+    /// Tries to get an entry by version string.
+    /// </summary>
+    /// <param name="version">The version to look up.</param>
+    /// <param name="entry">The entry if found.</param>
+    /// <returns>True if the entry exists.</returns>
+    public bool TryGetEntry(string version, out ChangelogEntry? entry)
+    {
+        _entriesLookup ??= Entries.ToDictionary(e => e.Version, e => e, StringComparer.OrdinalIgnoreCase);
+        return _entriesLookup.TryGetValue(version, out entry);
+    }
 }
 
 /// <summary>
@@ -163,13 +171,6 @@ public partial class ChangelogHelper : IChangelogHelper
     }
 
     /// <inheritdoc/>
-    public bool HasEntryForVersion(string changelogPath, string version)
-    {
-        var data = ParseChangelog(changelogPath);
-        return data?.Entries.ContainsKey(version) == true;
-    }
-
-    /// <inheritdoc/>
     public ChangelogUpdateResult UpdateReleaseDate(string changelogPath, string version, string releaseDate)
     {
         if (!File.Exists(changelogPath))
@@ -189,7 +190,7 @@ public partial class ChangelogHelper : IChangelogHelper
             return ChangelogUpdateResult.CreateFailure("Failed to parse changelog file.");
         }
 
-        if (!data.Entries.TryGetValue(version, out var entry))
+        if (!data.TryGetEntry(version, out var entry) || entry == null)
         {
             return ChangelogUpdateResult.CreateFailure(
                 $"No changelog entry found for version {version}. Run another tool first to update changelog content for this version.");
@@ -227,7 +228,7 @@ public partial class ChangelogHelper : IChangelogHelper
 
     private ChangelogData ParseChangelogContent(string[] lines)
     {
-        var entries = new Dictionary<string, ChangelogEntry>(StringComparer.OrdinalIgnoreCase);
+        var entries = new List<ChangelogEntry>();
         var headerLines = new List<string>();
         ChangelogEntry? currentEntry = null;
 
@@ -258,7 +259,7 @@ public partial class ChangelogHelper : IChangelogHelper
                     ReleaseTitle = line,
                     ReleaseContent = []
                 };
-                entries[version] = currentEntry;
+                entries.Add(currentEntry);
             }
             else if (currentEntry != null)
             {
@@ -295,9 +296,8 @@ public partial class ChangelogHelper : IChangelogHelper
             lines.Add(string.Empty);
         }
 
-        // Preserve original order from the file - entries are already stored in file order
-        // Sorting is only needed when adding new entries, not when updating existing ones
-        foreach (var entry in data.Entries.Values)
+        // Write entries in their original file order
+        foreach (var entry in data.Entries)
         {
             lines.Add(entry.ReleaseTitle);
             if (entry.ReleaseContent.Count == 0)

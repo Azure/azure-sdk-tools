@@ -335,27 +335,20 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     ]);
             }
 
-            // Check if an entry exists for this version
-            if (!changelogHelper.HasEntryForVersion(changelogPath, targetVersion))
+            // releaseDate is already validated and defaulted by VersionUpdateTool
+            // Update the changelog with the release date
+            // This will also validate that an entry exists for the version
+            var changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            if (!changelogResult.Success)
             {
-                logger.LogWarning("No changelog entry found for version {Version}", targetVersion);
+                logger.LogWarning("Failed to update changelog: {Message}", changelogResult.Message);
                 return PackageOperationResponse.CreateFailure(
-                    $"No changelog entry found for version {targetVersion}.",
+                    changelogResult.Message ?? "Failed to update changelog.",
                     packageInfo: packageInfo,
                     nextSteps: [
                         "Run another tool to update the changelog content for this version first",
                         "Then run this tool again to set the release date"
                     ]);
-            }
-
-            // releaseDate is already validated and defaulted by VersionUpdateTool
-            // Update the changelog with the release date
-            var changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
-            if (!changelogResult.Success)
-            {
-                return PackageOperationResponse.CreateFailure(
-                    changelogResult.Message ?? "Failed to update changelog.",
-                    packageInfo: packageInfo);
             }
 
             logger.LogInformation("Changelog updated successfully: {Message}", changelogResult.Message);
@@ -379,7 +372,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 return PackageOperationResponse.CreateSuccess(
                     versionUpdateResult.Message,
                     nextSteps: versionUpdateResult.NextSteps?.ToArray(),
-                    result: versionUpdateResult.Result,
+                    result: versionUpdateResult.Result as string,
                     packageInfo: packageInfo);
             }
 

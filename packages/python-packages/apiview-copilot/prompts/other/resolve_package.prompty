@@ -17,7 +17,7 @@ inputs:
 model:
   api: chat
   configuration:
-    azure_deployment: gpt-4.1
+    azure_deployment: gpt-5-mini
     api_version: 2025-03-01-preview
   parameters:
     temperature: 0.0

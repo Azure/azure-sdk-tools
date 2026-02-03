@@ -78,10 +78,10 @@ func (p *CompletionPromptParser) ParseResponse(response, template string) (*mode
 		return nil, err
 	}
 	return &model.CompletionResp{
-		Answer:            resp.Answer,
-		HasResult:         resp.HasResult,
-		References:        append([]model.Reference{}, resp.References...),
-		ReasoningProgress: &resp.ReasoningProgress,
+		Answer:     resp.Answer,
+		HasResult:  resp.HasResult,
+		References: append([]model.Reference{}, resp.References...),
+		Reasoning:  &resp.Reasoning,
 	}, nil
 }
 
@@ -89,10 +89,10 @@ type IntentionPromptParser struct {
 	*DefaultPromptParser
 }
 
-func (p *IntentionPromptParser) ParseResponse(response, template string) (*model.IntentionResult, error) {
+func (p *IntentionPromptParser) ParseResponse(response, template string) (*model.Intention, error) {
 	// Implement your response parsing logic here
 	// For example, you can unmarshal the response into a struct
-	var resp model.IntentionResult
+	var resp model.Intention
 	err := json.Unmarshal([]byte(response), &resp)
 	if err != nil {
 		return nil, err

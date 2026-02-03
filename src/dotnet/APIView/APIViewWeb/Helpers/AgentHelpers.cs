@@ -14,25 +14,28 @@ public class AgentHelpers
     private static readonly Regex azureSdkAgentTag = new Regex($@"(^|\s)@{Regex.Escape(ApiViewConstants.AzureSdkBotName)}\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    private static Dictionary<string, int> BuildElementIdToLineNumberMapping(RenderedCodeFile codeFile)
+    private static Dictionary<string, (int lineNumber, string lineText)> BuildElementIdToLineMapping(RenderedCodeFile codeFile)
     {
         var activeCodeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
         return activeCodeLines
-            .Select((elementId, lineNumber) => new { elementId.lineId, lineNumber })
+            .Select((line, index) => new { line.lineId, lineNumber = index + 1, line.lineText })
             .Where(x => !string.IsNullOrEmpty(x.lineId))
-            .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
+            .ToDictionary(x => x.lineId, x => (x.lineNumber, x.lineText ?? string.Empty));
     }
 
     public static List<ApiViewAgentComment> BuildCommentsForAgent(IEnumerable<CommentItemModel> comments,
         RenderedCodeFile codeFile)
     {
-        Dictionary<string, int> elementIdToLineNumber = BuildElementIdToLineNumberMapping(codeFile);
+        Dictionary<string, (int lineNumber, string lineText)> elementIdToLineMapping = BuildElementIdToLineMapping(codeFile);
 
         return (from comment in comments
-            where comment.ElementId != null && elementIdToLineNumber.ContainsKey(comment.ElementId)
+            where comment.ElementId != null && elementIdToLineMapping.ContainsKey(comment.ElementId)
+            let lineInfo = elementIdToLineMapping[comment.ElementId]
             select new ApiViewAgentComment
             {
-                LineNumber = elementIdToLineNumber[comment.ElementId],
+                LineNumber = lineInfo.lineNumber,
+                LineId = comment.ElementId,
+                LineText = lineInfo.lineText,
                 CreatedOn = comment.CreatedOn,
                 Upvotes = comment.Upvotes.Count,
                 Downvotes = comment.Downvotes.Count,
@@ -47,13 +50,16 @@ public class AgentHelpers
     public static List<ApiViewAgentComment> BuildDiagnosticsForAgent(IEnumerable<CodeDiagnostic> diagnostics,
         RenderedCodeFile codeFile)
     {
-        Dictionary<string, int> elementIdToLineNumber = BuildElementIdToLineNumberMapping(codeFile);
+        Dictionary<string, (int lineNumber, string lineText)> elementIdToLineMapping = BuildElementIdToLineMapping(codeFile);
 
         return (from diagnostic in diagnostics
-                where diagnostic.TargetId != null && elementIdToLineNumber.ContainsKey(diagnostic.TargetId)
+                where diagnostic.TargetId != null && elementIdToLineMapping.ContainsKey(diagnostic.TargetId)
+                let lineInfo = elementIdToLineMapping[diagnostic.TargetId]
             select new ApiViewAgentComment
             {
-                LineNumber = elementIdToLineNumber[diagnostic.TargetId],
+                LineNumber = lineInfo.lineNumber,
+                LineId = diagnostic.TargetId,
+                LineText = lineInfo.lineText,
                 CommentText = diagnostic.Text,
             }).ToList();
     }

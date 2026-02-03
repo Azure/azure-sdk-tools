@@ -50,10 +50,17 @@
     min-width: 100px;
     height: calc(100vh - 105px);
     padding: 0px;
-    overflow: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     background-color: var(--base-fg-color);
-    scroll-behavior: smooth;
     contain: size layout paint;
+}
+
+#review-content {
+    overflow: auto;
+    flex: 1;
+    scroll-behavior: smooth;
 }
 
 .review-approved {

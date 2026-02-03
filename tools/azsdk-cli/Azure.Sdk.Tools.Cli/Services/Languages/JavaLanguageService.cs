@@ -37,7 +37,7 @@ public sealed partial class JavaLanguageService : LanguageService
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Java package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
         
         if (packageName == null)
@@ -361,10 +361,5 @@ public sealed partial class JavaLanguageService : LanguageService
             logger.LogError(ex, "Failed to apply automated patches");
             return false;
         }
-    }
-
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-    {
-        return categories.TryGetValue("java", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 }

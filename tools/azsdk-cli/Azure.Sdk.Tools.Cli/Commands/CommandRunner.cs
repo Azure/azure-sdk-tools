@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Help;
+using OpenTelemetry.Trace;
 using Azure.Sdk.Tools.Cli.Commands.HostServer;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
@@ -54,6 +55,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
             // here so we can resolve those services in CLI mode as well.
             using var scope = serviceProvider.CreateAsyncScope();
             var scopedProvider = scope.ServiceProvider;
+
+            // Force TracerProvider instantiation so that it registers a listener for activity events
+            _ = scopedProvider.GetRequiredService<TracerProvider>();
+
             var toolInstances = toolTypes
                 .Select(t =>
                 {
@@ -71,8 +76,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
 #if DEBUG
             ValidateCommandTree(rootCommand);
 #endif
+            // Disable response file support as it led to unexpected behaviour when cli command takes package name with '@' symbol as value.
+            // @azure/template package name causes the parser to look for a response file named 'azure/template' which is not the intended behaviour.
+            var parseConfig = new CommandLineConfiguration(rootCommand)
+            {
+                ResponseFileTokenReplacer = null
+            };
 
-            var parseResult = rootCommand.Parse(args);
+            var parseResult = rootCommand.Parse(args, parseConfig);
             return await parseResult.InvokeAsync();
         }
 

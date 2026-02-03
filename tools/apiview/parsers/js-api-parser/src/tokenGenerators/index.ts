@@ -4,6 +4,7 @@ import { ApiItem } from "@microsoft/api-extractor-model";
 import { functionTokenGenerator } from "./function";
 import { interfaceTokenGenerator } from "./interfaces";
 import { classTokenGenerator } from "./class";
+import { methodTokenGenerator } from "./method";
 
 /**
  * Interface for token generators that create ReviewTokens from ApiItems.
@@ -30,4 +31,5 @@ export const generators: TokenGenerator[] = [
   classTokenGenerator,
   functionTokenGenerator,
   interfaceTokenGenerator,
+  methodTokenGenerator,
 ];

@@ -49,14 +49,18 @@ The question must be classified into one of these categories:
     - Are unclear or ambiguous about the Python SDK context
     - Don't relate directly to Azure Python SDK development or usage processes
 
+## Intent Service Type
+{{include "../templates/intention/intent_service_type.md"}}
+
 ## Need RAG Processing
 {{include "../templates/intention/need_rag_processing.md"}}
 
 # Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
-  "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the categories: api-design, code-generation, sdk-development, sdk-release, and sdk-usage,
+  "question": string,     // The rewritten standalone question
+  "category": string,     // Must be one of the categories: api-design, code-generation, sdk-development, sdk-release, and sdk-usage,
+  "service_type": string, // Must be one of the intent service types or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
 
@@ -65,8 +69,9 @@ Respond with a JSON object using this structure (no markdown formatting needed):
 Original: "How to generate python sdk from typespec?"
 Response:
 {
-  "question": "What steps should I follow to generate a Python SDK from a TypeSpec definition?",
+  "question": "What steps should I follow to generate a Python mgmt SDK from a TypeSpec definition?",
   "category": "code-generation",
+  "service_type": "management-plane",
   "needs_rag_processing": true
 }
 
@@ -75,6 +80,7 @@ Response:
 {
   "question": "What's the best practice for custom code to set custom polling endpoint in python sdk?",
   "category": "sdk-development",
+  "service_type": "unknown",
   "needs_rag_processing": true
 }
 
@@ -83,5 +89,6 @@ Response:
 {
   "question": "What's the way to find the link of release pipeline that associated with a specific python sdk",
   "category": "sdk-release",
+  "service_type": "unknown",
   "needs_rag_processing": true
 }

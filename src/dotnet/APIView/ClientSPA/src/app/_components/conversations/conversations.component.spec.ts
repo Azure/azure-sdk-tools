@@ -1,27 +1,54 @@
+import { vi } from 'vitest';
+vi.mock('ngx-simplemde', () => ({
+  SimplemdeModule: class {
+    static ɵmod = { id: 'SimplemdeModule', type: this, declarations: [], imports: [], exports: [] };
+    static ɵinj = { imports: [], providers: [] };
+    static forRoot() { return { ngModule: this, providers: [] }; }
+  },
+  SimplemdeOptions: class {},
+  SimplemdeComponent: class { value = ''; options = {}; valueChange = { emit: vi.fn() }; }
+}));
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { createMockSignalRService, createMockNotificationsService } from 'src/test-helpers/mock-services';
 
 import { ConversationsComponent } from './conversations.component';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { APIRevision } from 'src/app/_models/revision';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('ConversationComponent', () => {
   let component: ConversationsComponent;
   let fixture: ComponentFixture<ConversationsComponent>;
 
+  const mockSignalRService = createMockSignalRService();
+  const mockNotificationsService = createMockNotificationsService();
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [
         ConversationsComponent,
-        HttpClientTestingModule,
         ReviewPageModule,
         SharedAppModule
       ],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -31,7 +58,8 @@ describe('ConversationComponent', () => {
             queryParams: of(convertToParamMap({ activeApiRevisionId: 'test', diffApiRevisionId: 'test' }))
           }
         }
-      ]
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
     });
     fixture = TestBed.createComponent(ConversationsComponent);
     component = fixture.componentInstance;
@@ -121,3 +149,4 @@ describe('ConversationComponent', () => {
     });
   });
 });
+

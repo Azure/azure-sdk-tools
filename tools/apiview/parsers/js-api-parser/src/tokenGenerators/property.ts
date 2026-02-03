@@ -27,6 +27,44 @@ function isGetter(item: ApiPropertyItem): boolean {
   return false;
 }
 
+/**
+ * Checks if the property is actually a setter accessor
+ */
+function isSetter(item: ApiPropertyItem): boolean {
+  if ("excerptTokens" in item) {
+    const excerptTokens = (item as any).excerptTokens;
+    if (excerptTokens?.length > 0) {
+      const firstTokenText = excerptTokens[0]?.text;
+      if (firstTokenText) {
+        const trimmed = firstTokenText.trimStart();
+        // The setter keyword appears at the start of the excerpt, e.g., "set keyID(value: "
+        if (trimmed.startsWith("set ")) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Extracts setter parameter info from excerpt tokens
+ * Returns the parameter name and type text
+ */
+function getSetterParameterInfo(item: ApiPropertyItem): { paramName: string; paramType: string } {
+  if ("excerptTokens" in item) {
+    const excerptTokens = (item as any).excerptTokens;
+    // Join all excerpt token texts to get the full signature
+    const fullText = excerptTokens.map((t: any) => t.text).join("");
+    // Pattern: set name(paramName: ParamType)
+    const match = fullText.match(/set\s+\w+\s*\(\s*(\w+)\s*:\s*(.+?)\s*\)/);
+    if (match) {
+      return { paramName: match[1], paramType: match[2].trim() };
+    }
+  }
+  return { paramName: "value", paramType: item.propertyTypeExcerpt.text || "unknown" };
+}
+
 function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult {
   const tokens: ReviewToken[] = [];
 
@@ -53,6 +91,35 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult 
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
       }
     } else {
+      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+    }
+
+    return { tokens, children };
+  }
+
+  // Check if this is a setter
+  if (isSetter(item)) {
+    const { paramName, paramType } = getSetterParameterInfo(item);
+
+    tokens.push(createToken(TokenKind.Keyword, "set", { hasSuffixSpace: true, deprecated }));
+    tokens.push(createToken(TokenKind.MemberName, item.displayName, { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
+    tokens.push(createToken(TokenKind.MemberName, paramName, { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+
+    let children;
+    if (paramType) {
+      children = parseTypeText(paramType, tokens, deprecated);
+      if (!children) {
+        tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+        tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+      } else {
+        // If there are children (inline type), we need to close the parenthesis on the end line
+        // For now, add closing paren after the type
+        tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+      }
+    } else {
+      tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
       tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
     }
 

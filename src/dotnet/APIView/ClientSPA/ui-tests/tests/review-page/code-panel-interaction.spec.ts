@@ -119,7 +119,7 @@ test.describe('Code Panel - Page Options Toggles', () => {
 
   test('should toggle line numbers visibility on and off', async ({ page }) => {
     // Line numbers should be visible by default
-    const lineNumbers = page.locator('.line-number');
+    const lineNumbers = page.locator('.line-number-text');
     await expect(lineNumbers.first()).toBeVisible();
     
     const settingsButton = page.locator('button.settings-btn');
@@ -139,6 +139,42 @@ test.describe('Code Panel - Page Options Toggles', () => {
     // Click again to show
     await lineNumbersToggle.click();
     await expect(lineNumbers.first()).toBeVisible();
+  });
+
+  test('should allow adding comments when line numbers are hidden', async ({ page }) => {
+    const settingsButton = page.locator('button.settings-btn');
+    await settingsButton.click();
+    await page.waitForSelector('.settings-panel', { state: 'visible' });
+    
+    const lineNumbersToggle = page
+      .locator('.settings-panel')
+      .locator('label', { hasText: 'Line numbers' })
+      .locator('..')
+      .locator('p-toggleswitch');
+
+    await lineNumbersToggle.click();
+    
+    const lineNumbers = page.locator('.line-number-text');
+    await expect(lineNumbers.first()).not.toBeVisible();
+
+    await page.locator('app-code-panel').click({ position: { x: 300, y: 300 } });
+
+    const threadsBefore = await page.locator('app-comment-thread').count();
+    const codeLine = page.locator('.code-line').nth(4);
+    await codeLine.scrollIntoViewIfNeeded();
+
+    const lineActions = codeLine.locator('.line-actions');
+    await lineActions.hover();
+
+    const commentBtn = codeLine.locator('.line-actions .add-comment-btn');
+    await expect(commentBtn).toBeVisible({ timeout: 5000 });
+
+    await commentBtn.click();
+
+    await page.waitForSelector('app-comment-thread', { timeout: 5000 });
+    const threadsAfter = await page.locator('app-comment-thread').count();
+
+    expect(threadsAfter).toBeGreaterThan(threadsBefore);
   });
 
   test('should toggle comments visibility on and off', async ({ page }) => {

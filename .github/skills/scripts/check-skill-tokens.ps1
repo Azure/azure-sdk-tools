@@ -5,6 +5,10 @@
 .DESCRIPTION
     Validates that SKILL.md and reference files are under the recommended token limits.
     Uses the approximation of ~4 characters per token.
+    
+    Limits per agentskills.io spec:
+    - SKILL.md: < 5000 tokens recommended (~500 lines)
+    - references/*.md: Keep focused, loaded on-demand
 
 .PARAMETER SkillPath
     Path to a specific skill folder, or omit to check all skills.
@@ -127,3 +131,4 @@ if ($overHard -gt 0) {
 } elseif ($overSoft -gt 0) {
     Write-Host "`n⚠️ WARNING: Some files exceed soft limits. Consider moving content to references/." -ForegroundColor Yellow
 }
+

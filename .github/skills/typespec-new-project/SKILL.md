@@ -1,21 +1,19 @@
 ---
 name: typespec-new-project
 description: |
-  Initialize and bootstrap new TypeSpec projects for Azure services. USE FOR: onboard service to TypeSpec, create TypeSpec project, start ARM resource provider, set up data plane API, bootstrap TypeSpec for Azure SDK, initialize azure-core or azure-arm project, new TypeSpec definition.
-  DO NOT USE FOR: converting existing swagger (use azsdk_convert_swagger_to_typespec), validating TypeSpec (use azsdk_run_typespec_validation).
+  Initializes new TypeSpec projects for Azure services. TRIGGERS: create TypeSpec project, new TypeSpec, initialize TypeSpec, onboard service to TypeSpec, start ARM resource provider, set up data plane API, bootstrap TypeSpec, azure-arm project, azure-core project
 ---
 
-# TypeSpec New Project Skill
+# TypeSpec New Project
 
-Initialize a new TypeSpec project for Azure services.
+Initializes a new TypeSpec project for Azure SDK generation.
 
-## When to Use This Skill
+## When to Use
 
-- **Onboard** a new Azure service to TypeSpec
-- **Create** or **initialize** a new TypeSpec project
-- **Start** a new ARM resource provider definition
-- **Set up** TypeSpec for a data plane API
-- **Bootstrap** a TypeSpec project for Azure SDK generation
+- Onboard a new Azure service to TypeSpec
+- Create or initialize a new TypeSpec project
+- Start a new ARM resource provider definition
+- Set up TypeSpec for a data plane API
 
 ## Template Selection
 
@@ -44,15 +42,12 @@ Initialize a new TypeSpec project for Azure services.
 | `azsdk_convert_swagger_to_typespec` | Converting existing swagger to TypeSpec |
 | `azsdk_run_typespec_validation` | Validating TypeSpec after editing |
 
-See [references/detailed-guide.md](references/detailed-guide.md) for scenarios and troubleshooting
+## Troubleshooting
 
-### "Invalid --output-directory, must be under azure-rest-api-specs"
-- Ensure you've cloned the specs repo
-- Provide the full absolute path to a directory under `/specification/`
+See [references/detailed-guide.md](references/detailed-guide.md) for detailed scenarios.
 
-### "Invalid --template"
-- Use exactly `azure-arm` or `azure-core` (case-sensitive)
+**"Invalid --output-directory"**: Ensure path is under `azure-rest-api-specs/specification/`
 
-### "Directory not empty"
-- The output directory must be empty
-- Either clear it or choose a different path
+**"Invalid --template"**: Use exactly `azure-arm` or `azure-core` (case-sensitive)
+
+**"Directory not empty"**: Clear the directory or choose a different path

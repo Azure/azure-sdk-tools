@@ -142,5 +142,44 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 
             return true;
         }
+
+        /// <summary>
+        /// Gets the repository root by walking up from the current directory.
+        /// Looks for .git directory or azure-sdk-tools marker files.
+        /// </summary>
+        public static string GetRepositoryRoot()
+        {
+            // Try to get from environment first (CI scenarios)
+            var envRoot = Environment.GetEnvironmentVariable("REPO_ROOT") 
+                       ?? Environment.GetEnvironmentVariable("BUILD_SOURCESDIRECTORY")
+                       ?? Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
+            
+            if (!string.IsNullOrEmpty(envRoot) && Directory.Exists(envRoot))
+            {
+                return envRoot;
+            }
+
+            // Walk up from current directory
+            var current = new DirectoryInfo(Directory.GetCurrentDirectory());
+            while (current != null)
+            {
+                // Check for .git directory (most reliable)
+                if (Directory.Exists(Path.Combine(current.FullName, ".git")))
+                {
+                    return current.FullName;
+                }
+
+                // Check for known marker files in azure-sdk-tools
+                if (File.Exists(Path.Combine(current.FullName, "eng", "common", "mcp", "azure-sdk-mcp.ps1")))
+                {
+                    return current.FullName;
+                }
+
+                current = current.Parent;
+            }
+
+            throw new InvalidOperationException(
+                "Could not find repository root. Ensure you're running from within the azure-sdk-tools repository.");
+        }
     }
 }

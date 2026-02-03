@@ -62,6 +62,7 @@ For Azure SDK onboarding and development questions, follow this structured appro
 
 ## SDK release
 - **release(generation) date**: You should describe the release processes firstly and then given suggestions.
+- **release plan**: Every SDK release must create a new release plan in Release Planner.
 
 # KNOWLEDGE CONTEXT
 The following knowledge base content is retrieved based on user's question:

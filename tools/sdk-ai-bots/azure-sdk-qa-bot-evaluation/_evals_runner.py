@@ -17,8 +17,7 @@ from azure.storage.blob import BlobServiceClient
 import aiohttp
 import yaml
 
-
-def extract_links_from_references(references: List[Dict[str, Any]]) -> List[str]:
+def extract_title_and_link_from_references(references: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Map an array of reference objects to a string array of their 'link' properties.
 
@@ -31,15 +30,48 @@ def extract_links_from_references(references: List[Dict[str, Any]]) -> List[str]
     if not references:
         return []
 
-    links = []
+    refs = []
     for ref in references:
+        title: str = ""
+        link: str = ""
+
+        if isinstance(ref, dict) and "title" in ref and ref["title"]:
+            title = ref["title"]
+        elif isinstance(ref, dict) and "Title" in ref and ref["Title"]:  # Handle capitalized version
+            title = ref["Title"]
+
         if isinstance(ref, dict) and "link" in ref and ref["link"]:
-            links.append(ref["link"])
+            link = ref["link"]
         elif isinstance(ref, dict) and "Link" in ref and ref["Link"]:  # Handle capitalized version
-            links.append(ref["Link"])
+            link = ref["Link"]
+        
+        refs.append({"title": title, "link": link})
+    return refs
 
-    return links
+def extract_title_and_link_from_context(context: str) -> List[Dict[str, Any]]:
+    if not context:
+        return []
+    
+    docs = []
 
+    try:
+        docs_obj = json.loads(context)
+        for doc in docs_obj:
+            title: str = ""
+            link: str = ""
+            if isinstance(doc, dict) and "document_title" in doc and doc["document_title"]:
+                title = doc["document_title"]
+            
+            if isinstance(doc, dict) and "document_link" in doc and doc["document_link"]:
+                link = doc["document_link"]
+            
+            docs.append({"title": title, "link": link})
+    except (json.JSONDecodeError, TypeError) as exc:
+        logging.warning(
+            "Failed to parse context JSON in extract_title_and_link_from_context: %s",
+            exc,
+        )
+    return docs
 
 # class EvaluatorConfig:
 #     """Configuration for an evaluator"""
@@ -127,7 +159,7 @@ class EvalsRunner:
         num_to_run: int = 1,
     ):
         self._evaluators = evaluators or {}
-        self._evals_result: EvalsResult = evals_result or EvalsResult(None, {})
+        self._evals_result: EvalsResult = evals_result or EvalsResult(None, {}, None)
         self._num_to_run = num_to_run
         # Initialize the shared cache lazily once
         if EvalsRunner.channel_to_tenant_id_dict is None:
@@ -203,7 +235,6 @@ class EvalsRunner:
                             answer = api_response.get("answer", "")
                             full_context = api_response.get("full_context", "")
                             references = api_response.get("references", [])
-                            reference_urls = extract_links_from_references(references)
                             latency = time.time() - start_time
                             processed_test_data = {
                                 "query": record["query"],
@@ -212,10 +243,14 @@ class EvalsRunner:
                                 "context": full_context,
                                 "latency": latency,
                                 "response_length": len(answer),
-                                "expected_reference_urls": (
-                                    record["expected_reference_urls"] if "expected_reference_urls" in record else []
+                                "expected_knowledges": (
+                                    record["expected_knowledges"] if "expected_knowledges" in record else []
                                 ),
-                                "reference_urls": reference_urls,
+                                "knowledges": extract_title_and_link_from_context(full_context),
+                                "expected_references": (
+                                    record["expected_references"] if "expected_references" in record else []
+                                ),
+                                "references": extract_title_and_link_from_references(references),
                                 "testcase": record.get("testcase", "unknown"),
                             }
                             if processed_test_data:

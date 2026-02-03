@@ -143,16 +143,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
                 var result = await GenerateSamplesInternalAsync(
                     resolvedPrompt, packagePath, overwrite, model, extraContextPaths, ct);
 
-                if (result.SamplesCount == 0)
-                {
-                    return PackageOperationResponse.CreateSuccess(
+                var response = result.SamplesCount == 0
+                    ? PackageOperationResponse.CreateSuccess(
                         "Sample generation completed but no samples were generated.",
-                        nextSteps: ["Check the prompt for clarity", "Ensure the package has valid source files"]);
-                }
+                        packageInfo: result.PackageInfo,
+                        nextSteps: ["Check the prompt for clarity", "Ensure the package has valid source files"])
+                    : PackageOperationResponse.CreateSuccess(
+                        $"Successfully generated {result.SamplesCount} sample(s) for {result.Language} in {result.OutputDirectory}: {result.FileNames}",
+                        packageInfo: result.PackageInfo,
+                        nextSteps: ["Review the generated samples", "Test the samples to ensure they compile and run correctly"]);
 
-                return PackageOperationResponse.CreateSuccess(
-                    $"Successfully generated {result.SamplesCount} sample(s) for {result.Language} in {result.OutputDirectory}: {result.FileNames}",
-                    nextSteps: ["Review the generated samples", "Test the samples to ensure they compile and run correctly"]);
+                response.Result = new { samples_count = result.SamplesCount };
+                return response;
             }
             catch (ArgumentException ex)
             {
@@ -171,7 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             }
         }
 
-        private async Task<(int SamplesCount, string OutputDirectory, string Language, string FileNames)> GenerateSamplesInternalAsync(
+        private async Task<(int SamplesCount, string OutputDirectory, string Language, string FileNames, PackageInfo PackageInfo)> GenerateSamplesInternalAsync(
             string prompt,
             string packagePath,
             bool overwrite,
@@ -302,7 +304,7 @@ Scenarios description:
 
             logger.LogInformation("Sample generation completed");
             var fileNames = string.Join(", ", writtenSamples.Select(s => s.FileName));
-            return (writtenSamples.Count, resolvedOutputDirectory, language, fileNames);
+            return (writtenSamples.Count, resolvedOutputDirectory, language, fileNames, packageInfo);
         }
 
         private async Task<string> ResolvePromptAsync(string rawPrompt, CancellationToken ct)

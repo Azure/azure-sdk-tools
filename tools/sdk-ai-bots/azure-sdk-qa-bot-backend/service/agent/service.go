@@ -550,6 +550,9 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	}
 	var chunks []model.Index
 	for _, reference := range resp.References {
+		if reference.SourceData == nil {
+			continue
+		}
 		reference.SourceData.RerankScore = reference.RerankerScore
 		chunks = append(chunks, *reference.SourceData)
 	}

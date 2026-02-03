@@ -172,6 +172,4 @@ func InitConfiguration() {
 		log.Fatalf("Failed to unmarshal configuration: %v", err)
 	}
 	AppConfig = &config
-	AppConfig.AOAI_CHAT_COMPLETIONS_MODEL = "gpt-5.2"
-	AppConfig.AOAI_CHAT_REASONING_MODEL = "gpt-5.2"
 }

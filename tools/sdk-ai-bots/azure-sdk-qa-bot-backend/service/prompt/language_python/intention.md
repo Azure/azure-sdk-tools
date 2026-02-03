@@ -66,7 +66,7 @@ Original: "How to generate python sdk from typespec?"
 Response:
 {
   "question": "What steps should I follow to generate a Python mgmt SDK from a TypeSpec definition?",
-  "category": "code-generation",
+  "category": "sdk-generation",
   "service_type": "management-plane",
   "needs_rag_processing": true
 }

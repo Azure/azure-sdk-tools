@@ -10,6 +10,8 @@ GitHub copilot uses skills defined in `.github/skills`. Each skill9which is a di
 
 Skills should be used when you need to:
 
+
+- **create a detailed workflow instruction that connects various tasks**: A complete set of instructions in order to integrate various tasks, tools and commands to guide a user through complete workflow.  (e.g TypeSpec to SDK release workflow, Package generation to Prepare release workflow).
 - **Provide detailed instructions applicable for a task**: A set of instructions to be completed by agent to achieve a goal. (e.g. Analyze pipeline failure. Create a release plan)
 - **Automate repeatable workflows**: Tasks that follow a consistent pattern across multiple scenarios (e.g., TypeSpec validation, package generation, package test and validation, release planning)
 - **Build modular automation**: Create granular Skills that can be combined to construct larger workflow Skills

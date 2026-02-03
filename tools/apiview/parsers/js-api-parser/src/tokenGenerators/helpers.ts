@@ -247,11 +247,37 @@ export function buildTypeNodeTokens(
 
   if (ts.isArrayTypeNode(node)) {
     const nestedChildren = buildTypeNodeTokens(node.elementType, tokens, deprecated, depth);
-    tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
-    tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+
     if (nestedChildren?.length) {
+      // If element type has children (e.g., inline object),
+      // append [] to the context end line (the one with closing brace)
+      const lastChild = nestedChildren[nestedChildren.length - 1];
+      if (lastChild.IsContextEndLine && lastChild.Tokens) {
+        // Find the semicolon and insert [] before it
+        const semiIndex = lastChild.Tokens.findIndex(
+          (t) => t.Value === ";" && t.Kind === TokenKind.Punctuation,
+        );
+        if (semiIndex !== -1) {
+          // Insert [] before the semicolon
+          lastChild.Tokens.splice(
+            semiIndex,
+            0,
+            createToken(TokenKind.Punctuation, "[", { deprecated }),
+            createToken(TokenKind.Punctuation, "]", { deprecated }),
+          );
+        } else {
+          // No semicolon found, just append []
+          lastChild.Tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+          lastChild.Tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+        }
+      }
       children.push(...nestedChildren);
+    } else {
+      // Simple element type (e.g., string[]), just add [] to current tokens
+      tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+      tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
     }
+
     return children.length > 0 ? children : undefined;
   }
 

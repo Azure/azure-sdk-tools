@@ -2,14 +2,7 @@
 
 ## Definition
 
-A Skill is a reusable, focused unit of automation that encapsulates specific tasks or workflows for Azure SDK development. Skills provide structured instructions that enable automated agents to perform complex operations consistently across different contexts. Each Skill defines a clear scope, success criteria, and execution patterns that can be referenced and combined to build comprehensive workflows.
-
-Skills are implemented as structured documents that contain:
-- Task-specific instructions and procedures
-- Required tools and commands
-- Success criteria and validation steps
-- Common error scenarios and resolutions
-- Integration points with other Skills
+GitHub copilot uses skills defined in `.github/skills`. Each skill9which is a directory under `github/skills`) includes a `SKILL.md` which contains the metadata and instructions. You can also include examples and some scripts in the skill directory. Copilot picks a skill based on how its description matches and applicable based on the context and prompt.  Each skill should define instruction, success criteria, list of tools and commands to be used by the skill and an optional next supporting prompt for the user to help guide the user to next task.
 
 ## When to Use
 

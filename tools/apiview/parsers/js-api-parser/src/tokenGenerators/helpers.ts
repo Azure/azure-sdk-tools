@@ -182,7 +182,7 @@ export function buildTypeNodeTokens(
     const closingIndent = createIndentation(depth, deprecated);
     if (closingIndent) closingTokens.push(closingIndent);
     // ensure 4 spaces before '}'
-    closingTokens.push(createToken(TokenKind.Punctuation, "    ", { deprecated }));
+    closingTokens.push(createToken(TokenKind.Text, "    ", { deprecated }));
     closingTokens.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
     closingTokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 

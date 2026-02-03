@@ -372,10 +372,15 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     packageInfo: packageInfo);
             }
 
-            // If version update returned partial success (e.g., not implemented by specific language), return it directly
+            // If version update returned partial success (e.g., not implemented by specific language),
+            // wrap the result to include packageInfo while preserving message and next steps
             if (versionUpdateResult.Result is "partial")
             {
-                return versionUpdateResult;
+                return PackageOperationResponse.CreateSuccess(
+                    versionUpdateResult.Message,
+                    nextSteps: versionUpdateResult.NextSteps?.ToArray(),
+                    result: versionUpdateResult.Result,
+                    packageInfo: packageInfo);
             }
 
             return PackageOperationResponse.CreateSuccess(

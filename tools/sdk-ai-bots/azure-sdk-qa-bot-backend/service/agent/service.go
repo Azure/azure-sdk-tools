@@ -576,7 +576,7 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	// Start agentic search in a goroutine
 	go func() {
 		defer close(agenticCh)
-		chunks, err := s.agenticSearch(ctx, req.Message.Content, req, intention)
+		chunks, err := s.agenticSearch(ctx, query, req, intention)
 		agenticCh <- agenticResult{chunks: chunks, err: err}
 	}()
 

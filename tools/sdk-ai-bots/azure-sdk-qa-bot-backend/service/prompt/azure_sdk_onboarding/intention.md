@@ -35,6 +35,10 @@ The question must be classified into one of these categories:
     - SDK test
     - Schedule an SDK review
 
+- **sdk-review**: Questions about SDK review processes and guidelines, including:
+    - SDK review requirements
+    - SDK review process
+
 - **sdk-release**: Questions about SDK release lifecycle and processes, including:
     - SDK Release plannner
     - GA (General Availability) criteria and readiness

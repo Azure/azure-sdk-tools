@@ -597,11 +597,7 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	var agenticChunks []model.Index
 	if withAgenticSearch {
 		agenticRes := <-agenticCh
-		// if agenticRes.err != nil && vectorRes.err != nil {
-		// 	return nil, fmt.Errorf("both agentic and knowledge searches failed: agentic error: %v, knowledge error: %v", agenticRes.err, vectorRes.err)
-		// }
 
-		// var agenticChunks []model.Index
 		if agenticRes.err != nil {
 			log.Printf("Agentic search failed: %v", agenticRes.err)
 			agenticChunks = []model.Index{}

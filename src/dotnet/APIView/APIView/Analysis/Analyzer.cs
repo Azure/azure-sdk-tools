@@ -14,14 +14,18 @@ namespace APIView.Analysis
         public List<CodeDiagnostic> Results { get; } = new List<CodeDiagnostic>();
 
         private readonly List<SymbolAnalyzerBase> _analyzers = new List<SymbolAnalyzerBase>();
+        private readonly List<SdkAnalyzerAdapter> _sdkAnalyzers = new List<SdkAnalyzerAdapter>();
 
         public Analyzer()
         {
+            // Analyzers from Azure.ClientSdk.Analyzers (uses ISymbolAnalysisContext)
             _analyzers.Add(new ClientMethodsAnalyzer());
             _analyzers.Add(new ClientConstructorAnalyzer());
             _analyzers.Add(new ClientOptionsAnalyzer());
             _analyzers.Add(new BannedAssembliesAnalyzer());
-            //_analyzers.Add(new TypeNameAnalyzer());
+
+            // Analyzers from Azure.SdkAnalyzers (uses SymbolAnalysisContext)
+            _sdkAnalyzers.Add(new SdkAnalyzerAdapter(new Azure.SdkAnalyzers.TypeNameAnalyzer()));
         }
 
         public override void VisitAssembly(IAssemblySymbol symbol)
@@ -42,11 +46,21 @@ namespace APIView.Analysis
 
         public override void DefaultVisit(ISymbol symbol)
         {
+            // Run Azure.ClientSdk.Analyzers
             foreach (var rule in _analyzers)
             {
                 if (rule.SymbolKinds.Contains(symbol.Kind))
                 {
                     rule.Analyze(new Context(symbol, Results));
+                }
+            }
+
+            // Run Azure.SdkAnalyzers
+            foreach (var sdkAnalyzer in _sdkAnalyzers)
+            {
+                if (sdkAnalyzer.SymbolKinds.Contains(symbol.Kind))
+                {
+                    sdkAnalyzer.Analyze(symbol, Results);
                 }
             }
         }

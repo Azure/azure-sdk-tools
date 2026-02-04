@@ -98,7 +98,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   let buildNode = true;
   let buildChildren = true;
  
-  if (nodeIdHashed !== "root" && apiTreeBuilderData?.diffStyle === TREE_DIFF_STYLE && 
+  if (nodeIdHashed !== "root" && apiTreeBuilderData?.diffStyle === TREE_DIFF_STYLE && !node.isNodeWithDiff &&
     (!node.isNodeWithDiffInDescendants || (!apiTreeBuilderData?.showDocumentation && !node.isNodeWithNoneDocDiffInDescendants))) {
     buildNode = false;
     buildChildren = false;

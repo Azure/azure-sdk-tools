@@ -1,5 +1,15 @@
 # Release History
 
+## 0.9.0 (unreleased)
+
+### Features Added
+
+* Add new tenant Authoring
+
+### Other Changes
+
+* Enhance prompt and knowledge source for language channel tenant
+
 ## 0.8.0 (2026-01-29)
 
 ### Features Added

@@ -142,7 +142,7 @@ public class CommentsTokenAuthControllerTests
             .ReturnsAsync(mockCodeFile);
 
         _mockCommentsManager
-            .Setup(x => x.GetCommentsAsync(mockRevision.ReviewId, false, CommentType.APIRevision))
+            .Setup(x => x.GetCommentsAsync(mockRevision.ReviewId, false, CommentType.APIRevision, false))
             .ReturnsAsync(mockComments);
 
         ActionResult<List<ApiViewAgentComment>> result = await _controller.GetRevisionComments(apiRevisionId);

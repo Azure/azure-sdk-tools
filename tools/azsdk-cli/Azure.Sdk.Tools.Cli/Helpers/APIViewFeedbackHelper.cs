@@ -149,12 +149,11 @@ public class APIViewFeedbackHelpers : IAPIViewFeedbackHelpers
     {
         // Parse the URL to get revisionId and reviewId
         var (revisionId, reviewId) = ExtractIdsFromUrl(apiViewUrl);
-        var environment = DetectEnvironmentFromUrl(apiViewUrl);
         
-        _logger.LogInformation("Getting comments for revision {RevisionId} in review {ReviewId} (environment: {Environment})", revisionId, reviewId, environment);
+        _logger.LogInformation("Getting comments for revision {RevisionId} in review {ReviewId}", revisionId, reviewId);
         
         // Get comments from APIViewService - returns JSON string
-        var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId, environment);
+        var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
         
         if (string.IsNullOrWhiteSpace(commentsJson))
         {
@@ -314,14 +313,13 @@ Respond in JSON format:
     /// </summary>
     public async Task<ReviewMetadata> GetMetadata(string apiViewUrl)
     {
-        var environment = DetectEnvironmentFromUrl(apiViewUrl);
         var (revisionId, reviewId) = ExtractIdsFromUrl(apiViewUrl);
         
-        _logger.LogInformation("Getting metadata for revision {RevisionId} (environment: {Environment})", revisionId, environment);
+        _logger.LogInformation("Getting metadata for revision {RevisionId}", revisionId);
         
         // Call the metadata endpoint with revisionId
         var endpoint = $"/api/reviews/metadata?revisionId={revisionId}";
-        var metadataJson = await _apiViewHttpService.GetAsync(endpoint, environment);
+        var metadataJson = await _apiViewHttpService.GetAsync(endpoint);
         
         if (string.IsNullOrWhiteSpace(metadataJson))
         {
@@ -558,25 +556,5 @@ Respond in JSON format:
             _logger.LogWarning(ex, "Failed to parse tsp-location.yaml content");
             return (null, null);
         }
-    }
-
-    /// <summary>
-    /// Detects the APIView environment from the URL
-    /// </summary>
-    private static string DetectEnvironmentFromUrl(string apiViewUrl)
-    {
-        if (apiViewUrl.Contains("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase) ||
-            apiViewUrl.Contains("spa.apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase) ||
-            apiViewUrl.Contains("apiview-staging.dev", StringComparison.OrdinalIgnoreCase))
-        {
-            return "staging";
-        }
-        
-        if (apiViewUrl.Contains("localhost", StringComparison.OrdinalIgnoreCase))
-        {
-            return "local";
-        }
-        
-        return "production";
     }
 }

@@ -43,7 +43,8 @@
                     (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
                     (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
                     (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
-                    (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)">
+                    (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
+                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)">
                 </app-review-toolbar>
                 <div class="review-panel rounded" style="width: 100%; flex: 1; min-height: 0; overflow: hidden;">
                     <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"

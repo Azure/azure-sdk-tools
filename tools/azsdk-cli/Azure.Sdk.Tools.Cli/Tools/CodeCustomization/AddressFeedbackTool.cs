@@ -136,7 +136,7 @@ public class AddressFeedbackTool : MCPTool
             {
                 return new DefaultCommandResponse
                 {
-                    Message = $"=== DRY RUN ===\n\nTarget: {owner}/{repoName}\nTitle: {title}\n\n--- Issue Body ---\n{prompt}\n\n--- Would assign to: @copilot ---"
+                    Message = $"=== DRY RUN ===\n\nTarget: {owner}/{repoName}\nTitle: {title}\n\n--- Issue Body ---\n{prompt}\n\n--- Next step: Assign issue to Copilot coding agent ---"
                 };
             }
 
@@ -144,13 +144,9 @@ public class AddressFeedbackTool : MCPTool
             _logger.LogInformation("Creating issue in {Owner}/{Repo}", owner, repoName);
             var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt);
 
-            // Assign to copilot
-            _logger.LogInformation("Assigning issue #{Number} to @copilot", issue.Number);
-            await _gitHubService.AssignIssueAsync(owner, repoName, issue.Number, "copilot");
-
             return new DefaultCommandResponse
             {
-                Message = $"✓ Delegated to coding agent. Issue: {issue.HtmlUrl}"
+                Message = $"✓ Issue created: {issue.HtmlUrl}\n\n⚠️ Next step: Assign Copilot to this issue to start the coding agent.\n   In the issue, click 'Assignees' and select 'Copilot'."
             };
         }
         catch (Exception ex)
@@ -236,7 +232,7 @@ public class AddressFeedbackTool : MCPTool
             {
                 return new DefaultCommandResponse
                 {
-                    Message = $"=== DRY RUN ===\n\nTarget: {owner}/{repoName}\nTitle: {title}\n\n--- Issue Body ---\n{prompt}\n\n--- Would assign to: @copilot ---"
+                    Message = $"=== DRY RUN ===\n\nTarget: {owner}/{repoName}\nTitle: {title}\n\n--- Issue Body ---\n{prompt}\n\n--- Next step: Assign issue to Copilot coding agent ---"
                 };
             }
 
@@ -244,13 +240,9 @@ public class AddressFeedbackTool : MCPTool
             _logger.LogInformation("Creating issue in {Owner}/{Repo}", owner, repoName);
             var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt);
 
-            // Assign to copilot
-            _logger.LogInformation("Assigning issue #{Number} to @copilot", issue.Number);
-            await _gitHubService.AssignIssueAsync(owner, repoName, issue.Number, "copilot");
-
             return new DefaultCommandResponse
             {
-                Message = $"✓ Delegated to coding agent. Issue: {issue.HtmlUrl}"
+                Message = $"✓ Issue created: {issue.HtmlUrl}\n\n⚠️ Next step: Assign Copilot to this issue to start the coding agent.\n   In the issue, click 'Assignees' and select 'Copilot'."
             };
         }
         catch (Exception ex)

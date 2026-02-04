@@ -93,7 +93,6 @@ public class GitConnection
         public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body);
-        public Task AssignIssueAsync(string repoOwner, string repoName, int issueNumber, string assignee);
         public Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber);
         public Task<string?> GetFileFromPullRequest(string repoOwner, string repoName, int pullRequestNumber, string filePath);
         public Task<string?> GetFileFromBranch(string repoOwner, string repoName, string branch, string filePath);
@@ -150,13 +149,6 @@ public class GitConnection
                 Body = body
             };
             return await gitHubClient.Issue.Create(repoOwner, repoName, newIssue);
-        }
-
-        public async Task AssignIssueAsync(string repoOwner, string repoName, int issueNumber, string assignee)
-        {
-            logger.LogInformation("Assigning issue #{IssueNumber} in {Owner}/{Repo} to {Assignee}", issueNumber, repoOwner, repoName, assignee);
-            var update = new AssigneesUpdate(new[] { assignee });
-            await gitHubClient.Issue.Assignee.AddAssignees(repoOwner, repoName, issueNumber, update);
         }
 
         public async Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber)

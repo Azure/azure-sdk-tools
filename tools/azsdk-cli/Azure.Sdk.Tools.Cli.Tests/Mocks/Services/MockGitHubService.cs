@@ -332,10 +332,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(issue);
         }
 
-        public Task AssignIssueAsync(string repoOwner, string repoName, int issueNumber, string assignee)
+        public Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber)
         {
-            // Mock implementation - just return completed task
-            return Task.CompletedTask;
+            // Return a mock SHA
+            return Task.FromResult<string?>("abc123def456");
+        }
+
+        public Task<string?> GetFileFromPullRequest(string repoOwner, string repoName, int pullRequestNumber, string filePath)
+        {
+            // Return null to indicate file not found (default mock behavior)
+            return Task.FromResult<string?>(null);
+        }
+
+        public Task<string?> GetFileFromBranch(string repoOwner, string repoName, string branch, string filePath)
+        {
+            // Return null to indicate file not found (default mock behavior)
+            return Task.FromResult<string?>(null);
         }
     }
 }

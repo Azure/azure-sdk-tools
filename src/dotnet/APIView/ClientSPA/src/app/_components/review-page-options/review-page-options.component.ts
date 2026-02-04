@@ -116,6 +116,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   //Approvers Options
   selectedApprovers: string[] = [];
+  filteredApprovers: string[] = [];
+  reviewerSearchText: string = '';
 
   diffStyleOptions : any[] = [
     { label: 'Changed types only', value: TREE_DIFF_STYLE },
@@ -164,6 +166,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     if (changes['userProfile'] && changes['userProfile'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setPageOptionValues();
+    }
+
+    if (changes['preferredApprovers']) {
+      this.filteredApprovers = [...this.preferredApprovers];
+      this.reviewerSearchText = '';
     }
 
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
@@ -279,6 +286,32 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
           }
       });
     }
+  }
+
+  filterReviewers() {
+    if (!this.reviewerSearchText) {
+      this.filteredApprovers = [...this.preferredApprovers];
+    } else {
+      const searchLower = this.reviewerSearchText.toLowerCase();
+      this.filteredApprovers = this.preferredApprovers.filter(approver =>
+        approver.toLowerCase().includes(searchLower)
+      );
+    }
+  }
+
+  resetReviewerSearch() {
+    this.reviewerSearchText = '';
+    this.filteredApprovers = [...this.preferredApprovers];
+  }
+
+  toggleReviewer(approver: string) {
+    const index = this.selectedApprovers.indexOf(approver);
+    if (index === -1) {
+      this.selectedApprovers = [...this.selectedApprovers, approver];
+    } else {
+      this.selectedApprovers = this.selectedApprovers.filter(a => a !== approver);
+    }
+    this.handleAssignedReviewersChange();
   }
 
   formatSelectedApprovers(approvers: string[]): string {

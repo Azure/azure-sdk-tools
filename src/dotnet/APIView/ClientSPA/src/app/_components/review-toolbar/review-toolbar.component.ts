@@ -68,6 +68,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   @Output() codeLineSearchTextEmitter: EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter: EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
   @Output() copyReviewTextEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() commentNavigationEmitter: EventEmitter<number> = new EventEmitter<number>();
 
   private destroy$ = new Subject<void>();
 

@@ -87,7 +87,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// 2. Handle tenant routing if enabled
 	if tenantConfig.EnableRouting {
-		routedTenantID, routed = s.RouteTenant(req.TenantID, llmMessages)
+		routedTenantID, routed = s.RouteTenant(req.TenantID, req.ModelConfig, llmMessages)
 		if routed {
 			tenantConfig, _ = config.GetTenantConfig(routedTenantID)
 			req.Sources = tenantConfig.Sources
@@ -98,7 +98,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 3. Recognize intention
 	query := req.Message.Content
 
-	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, llmMessages)
+	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, req.ModelConfig, llmMessages)
 	if err != nil {
 		log.Printf("Intention recognize failed with error: %s", err)
 		return nil, err
@@ -151,7 +151,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	llmMessages = append([]azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
 	}, llmMessages...)
-	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
+	result, err := s.getLLMResult(req.ModelConfig, llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
@@ -172,7 +172,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
+func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
 	start := time.Now()
 	promptParser := prompt.IntentionPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
@@ -189,13 +189,24 @@ func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTe
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
 	}, messages...)
 
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+	options := azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
 		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
 		Temperature:    to.Ptr(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE),
-	}, nil)
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.ReasoningModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.ReasoningModel))
+	}
+
+	if modelConfig != nil && modelConfig.ReasoningModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.ReasoningModelTemperature))
+	}
+
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 
 	if err != nil {
 		log.Printf("LLM intention recognition failed: %v", err)
@@ -466,17 +477,27 @@ func (s *CompletionService) buildPrompt(tenantID model.TenantID, intention *mode
 	return promptStr, nil
 }
 
-func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
+func (s *CompletionService) getLLMResult(modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
 	completionStart := time.Now()
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		// This is a conversation in progress.
-		// NOTE: all messages count against token usage for this API.
+
+	options := azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: &s.model,
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
 		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TEMPERATURE)),
 		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
-	}, nil)
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.CompletionModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.CompletionModel))
+	}
+
+	if modelConfig != nil && modelConfig.CompletionModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.CompletionModelTemperature))
+	}
+
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 	if err != nil {
 		// Check if this is a rate limit error (429)
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {
@@ -770,7 +791,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 
 // RouteTenant attempts to route the request to a specialized tenant based on the question content.
 // Returns the routed tenant config and true if routing occurred, otherwise returns empty config and false.
-func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, messages []azopenai.ChatRequestMessageClassification) (model.TenantID, bool) {
+func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification) (model.TenantID, bool) {
 	routingStart := time.Now()
 	log.Printf("Starting tenant routing for tenant: %s", originalTenantID)
 
@@ -789,14 +810,25 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, message
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
 	}, messages...)
 
+	options := azopenai.ChatCompletionsOptions{
+		Messages:       routingMessages,
+		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
+		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
+		Temperature:    to.Ptr(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE),
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.ReasoningModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.ReasoningModel))
+	}
+
+	if modelConfig != nil && modelConfig.ReasoningModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.ReasoningModelTemperature))
+	}
+
 	// Call LLM for tenant routing
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		Messages:        routingMessages,
-		DeploymentName:  to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
-		ResponseFormat:  &azopenai.ChatCompletionsJSONResponseFormat{},
-		Seed:            to.Ptr(int64(1)), // Fixed seed for deterministic output
-		ReasoningEffort: to.Ptr(azopenai.ReasoningEffortValueMedium),
-	}, nil)
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 
 	if err != nil {
 		log.Printf("LLM tenant routing failed: %v", err)

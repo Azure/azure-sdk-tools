@@ -42,6 +42,12 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
     // Fall back to parameters.ts if metadata.json doesn't exist or doesn't have apiVersion
     logger.info('Failed to find api version in metadata.json, fallback to get api version type in operation\'s parameter');
     const parametersPath = join(packageRoot, "src/rest/parameters.ts");
+    const parametersExists = await exists(parametersPath);
+    if (!parametersExists) {
+        logger.warn(`parameters.ts does not exist at ${parametersPath}, this may affect API version detection`);
+        return ApiVersionType.None;
+    }
+    
     const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
     if (typeFromOperations !== ApiVersionType.None) {
         return typeFromOperations;

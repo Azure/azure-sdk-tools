@@ -131,65 +131,55 @@ def _build_metrics_segment(
     # need language set to compute IDs
     metrics.compute_ids()
 
-    # Count approved package versions (revisions), not unique reviews
-    # Each approved revision represents an approved package version
-    approved_revisions_count = sum(1 for r in reviews for rev in r.revisions if rev.approval is not None)
-    metrics.active_review_count = approved_revisions_count
+    # Extract approved revision metadata from get_active_reviews results
+    # Get only revisions that were approved during the period
+    approved_revisions = [rev for r in reviews for rev in r.revisions if rev.approval is not None]
 
-    # Count approved package versions with Copilot reviews
-    approved_revisions_with_copilot_count = sum(
-        1 for r in reviews for rev in r.revisions if rev.approval is not None and rev.has_copilot_review
-    )
-    metrics.active_copilot_review_count = approved_revisions_with_copilot_count
+    metrics.active_review_count = len(approved_revisions)
+    metrics.active_copilot_review_count = sum(1 for rev in approved_revisions if rev.has_copilot_review)
 
-    # Get reviews that have at least one approved revision (for comment filtering)
-    approved_reviews = [r for r in reviews if any(rev.approval is not None for rev in r.revisions)]
+    # Build a mapping of revision_id -> has_copilot for all approved revisions
+    revision_has_copilot = {}
+    for rev in approved_revisions:
+        for revision_id in rev.revision_ids:
+            revision_has_copilot[revision_id] = rev.has_copilot_review
 
-    # filter comments to just those for approved active reviews
-    active_review_ids = {r.review_id for r in approved_reviews}
-    active_review_comments = [c for c in comments if c.review_id in active_review_ids]
+    approved_revision_ids = set(revision_has_copilot.keys())
 
-    # sort the comments into human and AI comments
-    human_comments = []
-    ai_comments = []
-    for comment in active_review_comments:
-        if comment.comment_source == "AIGenerated":
-            ai_comments.append(comment)
+    # Filter comments to only those belonging to approved revisions, excluding Diagnostic
+    approved_revision_comments = [
+        c for c in comments if c.api_revision_id in approved_revision_ids and c.comment_source != "Diagnostic"
+    ]
+
+    # Categorize comments based on whether the revision has Copilot
+    ai_comments_with_copilot = []
+    human_comments_with_copilot = []
+    human_comments_without_copilot = []
+
+    for comment in approved_revision_comments:
+        has_copilot = revision_has_copilot.get(comment.api_revision_id, False)
+
+        if has_copilot:
+            if comment.comment_source == "AIGenerated":
+                ai_comments_with_copilot.append(comment)
+            else:
+                human_comments_with_copilot.append(comment)
         else:
-            human_comments.append(comment)
+            # For revisions without Copilot, all comments should be human
+            if comment.comment_source != "AIGenerated":
+                human_comments_without_copilot.append(comment)
 
-    # Identify reviews with Copilot based on has_copilot_review flag on approved revisions
-    active_review_ids_with_copilot = {
-        r.review_id
-        for r in approved_reviews
-        if any(rev.approval is not None and rev.has_copilot_review for rev in r.revisions)
-    }
-    active_review_ids_without_copilot = active_review_ids.difference(active_review_ids_with_copilot)
+    metrics.human_comment_count_with_ai = len(human_comments_with_copilot)
+    metrics.human_comment_count_without_ai = len(human_comments_without_copilot)
 
-    # sort the human comments into those which are part of a review with or without Copilot
-    human_comments_with_ai = []
-    human_comments_without_ai = []
-    for comment in human_comments:
-        if comment.review_id in active_review_ids_with_copilot:
-            human_comments_with_ai.append(comment)
-        elif comment.review_id in active_review_ids_without_copilot:
-            human_comments_without_ai.append(comment)
-    metrics.human_comment_count_with_ai = len(human_comments_with_ai)
-    metrics.human_comment_count_without_ai = len(human_comments_without_ai)
+    # Count AI comments only from approved revisions with Copilot (excluding deleted)
+    ai_comments_to_count = [c for c in ai_comments_with_copilot if not c.is_deleted]
 
-    # Only consider non-deleted AI comments
-    upvoted_ai_comments = []
-    neutral_ai_comments = []
-    downvoted_ai_comments = []
-    for comment in ai_comments:
-        if comment.is_deleted:
-            continue
-        if comment.downvotes:
-            downvoted_ai_comments.append(comment)
-        elif comment.upvotes:
-            upvoted_ai_comments.append(comment)
-        else:
-            neutral_ai_comments.append(comment)
+    # Categorize AI comments by vote status
+    upvoted_ai_comments = [c for c in ai_comments_to_count if c.upvotes]
+    downvoted_ai_comments = [c for c in ai_comments_to_count if c.downvotes]
+    neutral_ai_comments = [c for c in ai_comments_to_count if not c.upvotes and not c.downvotes]
+
     metrics.upvoted_ai_comment_count = len(upvoted_ai_comments)
     metrics.neutral_ai_comment_count = len(neutral_ai_comments)
     metrics.downvoted_ai_comment_count = len(downvoted_ai_comments)

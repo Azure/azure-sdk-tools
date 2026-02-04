@@ -1596,6 +1596,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+                query += $" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
 
                 var releasePlanWorkItems = await FetchWorkItemsAsync(query);
                 if (releasePlanWorkItems.Count == 0)

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+namespace Azure.Sdk.Tools.Cli.Helpers;
 
 
 /// <summary>
@@ -10,12 +10,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 public class APIViewFeedbackItem : IFeedbackItem
 {
     private readonly string _apiViewUrl;
-    private readonly IAPIViewFeedbackCustomizationsHelpers _helper;
+    private readonly IAPIViewFeedbackHelpers _helper;
     private readonly ILogger<APIViewFeedbackItem> _logger;
 
     public APIViewFeedbackItem(
         string apiViewUrl,
-        IAPIViewFeedbackCustomizationsHelpers helper,
+        IAPIViewFeedbackHelpers helper,
         ILogger<APIViewFeedbackItem> logger)
     {
         _apiViewUrl = apiViewUrl;

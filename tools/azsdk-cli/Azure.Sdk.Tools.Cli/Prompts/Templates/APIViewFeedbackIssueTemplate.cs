@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Text;
-using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
@@ -143,6 +143,7 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
               |--------|------------|---------|
               | <lineNo> | ✅ | Brief description of changes (or "No action needed" if feedback says keep as-is) |
               | <lineNo> | ⚠️ | Reason not addressed (unclear info, TypeSpec limitation, needs SDK code customization) |
+
             - Note: If a review comment CANNOT be addressed, explanation comments MUST NOT be added to the `client.tsp` file.
               ONLY explain in the "Summary" column why it could not be addressed.
             - Include SDK code customization guidance: {GetCodeCustomizationDocUrl(_language)}

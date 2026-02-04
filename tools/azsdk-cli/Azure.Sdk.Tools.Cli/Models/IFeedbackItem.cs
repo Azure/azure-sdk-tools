@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
 /// Represents a source of feedback for SDK customization (APIView comments, build errors, etc.)

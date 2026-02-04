@@ -11,7 +11,7 @@ using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 
-namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
 /// Represents complete metadata for an APIView review
@@ -71,7 +71,7 @@ public class ConsolidatedComment
 /// <summary>
 /// Helper interface for APIView feedback customizations operations
 /// </summary>
-public interface IAPIViewFeedbackCustomizationsHelpers
+public interface IAPIViewFeedbackHelpers
 {
     Task<List<ConsolidatedComment>> GetConsolidatedComments(string apiViewUrl);
     Task<ReviewMetadata> GetMetadata(string apiViewUrl);
@@ -120,20 +120,20 @@ internal class APIViewComment
 /// <summary>
 /// Helper class for APIView feedback customizations operations
 /// </summary>
-public class APIViewFeedbackCustomizationsHelpers : IAPIViewFeedbackCustomizationsHelpers
+public class APIViewFeedbackHelpers : IAPIViewFeedbackHelpers
 {
     private readonly IAPIViewService _apiViewService;
     private readonly IAPIViewHttpService _apiViewHttpService;
     private readonly OpenAIClient _openAIClient;
     private readonly IGitHubService _gitHubService;
-    private readonly ILogger<APIViewFeedbackCustomizationsHelpers> _logger;
+    private readonly ILogger<APIViewFeedbackHelpers> _logger;
 
-    public APIViewFeedbackCustomizationsHelpers(
+    public APIViewFeedbackHelpers(
         IAPIViewService apiViewService,
         IAPIViewHttpService apiViewHttpService,
         OpenAIClient openAIClient,
         IGitHubService gitHubService,
-        ILogger<APIViewFeedbackCustomizationsHelpers> logger)
+        ILogger<APIViewFeedbackHelpers> logger)
     {
         _apiViewService = apiViewService;
         _apiViewHttpService = apiViewHttpService;

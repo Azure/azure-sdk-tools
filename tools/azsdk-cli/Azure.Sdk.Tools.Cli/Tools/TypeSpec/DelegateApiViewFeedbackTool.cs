@@ -4,23 +4,22 @@
 using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools.CodeCustomization;
+namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
-[McpServerToolType, Description("Address APIView feedback by delegating to GitHub Copilot coding agent")]
-public class AddressFeedbackTool : MCPTool
+[Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
+public class DelegateApiViewFeedbackTool : MCPTool
 {
-    private const string ToolName = "azsdk_review_address_feedback";
+    private const string ToolName = "azsdk_tsp_delegate_apiview_feedback";
     
-    private readonly IAPIViewFeedbackCustomizationsHelpers _helper;
+    private readonly IAPIViewFeedbackHelpers _helper;
     private readonly IGitHubService _gitHubService;
-    private readonly ILogger<AddressFeedbackTool> _logger;
+    private readonly ILogger<DelegateApiViewFeedbackTool> _logger;
 
     private readonly Argument<string> _apiViewUrlArg = new("apiview-url")
     {
@@ -40,12 +39,12 @@ public class AddressFeedbackTool : MCPTool
         DefaultValueFactory = _ => false
     };
 
-    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Review];
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
-    public AddressFeedbackTool(
-        IAPIViewFeedbackCustomizationsHelpers helper,
+    public DelegateApiViewFeedbackTool(
+        IAPIViewFeedbackHelpers helper,
         IGitHubService gitHubService,
-        ILogger<AddressFeedbackTool> logger)
+        ILogger<DelegateApiViewFeedbackTool> logger)
     {
         _helper = helper;
         _gitHubService = gitHubService;
@@ -53,7 +52,7 @@ public class AddressFeedbackTool : MCPTool
     }
 
     protected override Command GetCommand() =>
-        new McpCommand("address-feedback", "Delegate APIView feedback to coding agent", ToolName)
+        new McpCommand("delegate-apiview-feedback", "Delegate APIView feedback to coding agent for TypeSpec customizations", ToolName)
         {
             _apiViewUrlArg,
             _repoOption,
@@ -159,8 +158,8 @@ public class AddressFeedbackTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = ToolName), Description("Address APIView feedback by delegating to GitHub Copilot coding agent")]
-    public async Task<DefaultCommandResponse> AddressFeedbackAsync(
+    [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
+    public async Task<DefaultCommandResponse> DelegateApiViewFeedbackAsync(
         string apiViewUrl,
         string repo = "Azure/azure-rest-api-specs",
         bool dryRun = false,

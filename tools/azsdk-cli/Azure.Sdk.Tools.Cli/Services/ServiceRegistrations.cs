@@ -11,7 +11,6 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -40,7 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
             services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
             services.AddSingleton<IAPIViewService, APIViewService>();
-            services.AddSingleton<IAPIViewFeedbackCustomizationsHelpers, APIViewFeedbackCustomizationsHelpers>();
+            services.AddSingleton<IAPIViewFeedbackHelpers, APIViewFeedbackHelpers>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();

@@ -110,6 +110,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync();
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label);
+        public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -1581,6 +1582,77 @@ namespace Azure.Sdk.Tools.Cli.Services
         private static string GetWorkItemHtmlUrl(int workItemId)
         {
             return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}/_workitems/edit/{workItemId}";
+        }
+
+        public async Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath)
+        {
+            try
+            {
+                logger.LogInformation("Searching for release plan with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+
+                // Query for release plans with the given TypeSpec project path
+                var escapedPath = typeSpecProjectPath?.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                    return null;
+                }
+
+                // Get the first matching release plan
+                var releasePlanWorkItem = releasePlanWorkItems[0];
+                logger.LogInformation("Found release plan work item {workItemId}", releasePlanWorkItem.Id);
+
+                // Get parent work item (Product/Epic work item)
+                if (releasePlanWorkItem.Relations == null || !releasePlanWorkItem.Relations.Any())
+                {
+                    logger.LogWarning("Release plan {workItemId} has no relations", releasePlanWorkItem.Id);
+                    return null;
+                }
+
+                var parentRelation = releasePlanWorkItem.Relations.FirstOrDefault(r => r.Rel.Equals("System.LinkTypes.Hierarchy-Reverse"));
+                if (parentRelation == null)
+                {
+                    logger.LogWarning("Release plan {workItemId} has no parent work item", releasePlanWorkItem.Id);
+                    return null;
+                }
+
+                // Extract parent work item ID from the URL
+                var parentWorkItemId = int.Parse(parentRelation.Url.Split('/').Last());
+                logger.LogInformation("Found parent work item {parentWorkItemId}", parentWorkItemId);
+
+                // Get parent work item details
+                var parentWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(parentWorkItemId, expand: WorkItemExpand.All);
+                if (parentWorkItem == null || parentWorkItem.Id == null)
+                {
+                    logger.LogError("Failed to retrieve parent work item {parentWorkItemId}", parentWorkItemId);
+                    return null;
+                }
+
+                // Extract product information from parent work item (Epic)
+                var productInfo = new ProductInfo
+                {
+                    WorkItemId = parentWorkItem.Id ?? 0,
+                    Title = parentWorkItem.Fields.TryGetValue("System.Title", out object? value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductServiceTreeId = parentWorkItem.Fields.TryGetValue("Custom.ProductServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ServiceId = parentWorkItem.Fields.TryGetValue("Custom.ServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    PackageDisplayName = parentWorkItem.Fields.TryGetValue("Custom.PackageDisplayName", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductContactPM = parentWorkItem.Fields.TryGetValue("Custom.PrimaryPM", out value) ? value?.ToString() ?? string.Empty : string.Empty
+                };
+
+                logger.LogInformation("Successfully retrieved product info from work item {workItemId}", productInfo.WorkItemId);
+                return productInfo;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get product info for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                throw new Exception($"Failed to get product info for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
+            }
         }
     }
 }

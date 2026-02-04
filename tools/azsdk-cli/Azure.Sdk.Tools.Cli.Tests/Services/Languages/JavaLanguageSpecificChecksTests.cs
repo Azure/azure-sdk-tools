@@ -36,7 +36,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 NullLogger<JavaLanguageService>.Instance,
                 new Mock<ICommonValidationHelpers>().Object,
                 Mock.Of<IFileHelper>(),
-                Mock.Of<ISpecGenSdkConfigHelper>());
+                Mock.Of<ISpecGenSdkConfigHelper>(),
+                Mock.Of<IChangelogHelper>());
         }
 
         #region Setup Helpers
@@ -975,7 +976,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
-                    Mock.Of<ISpecGenSdkConfigHelper>());
+                    Mock.Of<ISpecGenSdkConfigHelper>(),
+                    Mock.Of<IChangelogHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1030,7 +1032,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
-                    Mock.Of<ISpecGenSdkConfigHelper>());
+                    Mock.Of<ISpecGenSdkConfigHelper>(),
+                    Mock.Of<IChangelogHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1085,7 +1088,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
-                    Mock.Of<ISpecGenSdkConfigHelper>());
+                    Mock.Of<ISpecGenSdkConfigHelper>(),
+                    Mock.Of<IChangelogHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1140,7 +1144,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
-                    Mock.Of<ISpecGenSdkConfigHelper>());
+                    Mock.Of<ISpecGenSdkConfigHelper>(),
+                    Mock.Of<IChangelogHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);

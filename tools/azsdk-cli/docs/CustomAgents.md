@@ -120,4 +120,4 @@ Microagents are the **legacy approach** and should generally not be used for new
 
 ## Related Documentation
 
-- [Skills](Skills.md) - Procedural instructions for GitHub Copilot
+- [Skills](skills-guidelines.md) - Procedural instructions for GitHub Copilot

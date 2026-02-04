@@ -1,4 +1,4 @@
-# Azure SDK tools guidelines to use skills
+# Skills in azsdk-cli
 
 This document provides comprehensive guidelines for creating skills.GitHub copilot uses skills defined in `.github/skills`. Each skill9which is a directory under `github/skills`) includes a `SKILL.md` which contains the metadata and instructions. You can also include examples and some scripts in the skill directory. Copilot identifies a skill based on its description and how semantically matches the prompt in a given context.  Each skill should define instruction, success criteria, list of tools and commands to be used by the skill and an optional next prompt for the user so agent can recommend the next step.
 

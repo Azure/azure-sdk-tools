@@ -214,9 +214,11 @@ public class CopilotAgentRunner(
             }
 
             // Success
+            tokenUsageHelper.LogUsage();
             return capturedResult;
         }
 
+        tokenUsageHelper.LogUsage();
         throw new InvalidOperationException(
             $"Agent did not return a valid result within {agent.MaxIterations} iterations");
     }

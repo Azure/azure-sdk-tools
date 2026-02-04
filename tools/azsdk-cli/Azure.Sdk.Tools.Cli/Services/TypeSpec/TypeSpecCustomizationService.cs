@@ -122,8 +122,6 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
 
         var result = await copilotAgentRunner.RunAsync(agent, ct);
 
-        tokenUsageHelper.LogUsage();
-
         logger.LogInformation("TypeSpecCustomization copilot agent completed. Success: {Success}", result.Success);
 
         return result;

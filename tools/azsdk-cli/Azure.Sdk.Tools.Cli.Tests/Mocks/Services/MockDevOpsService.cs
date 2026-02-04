@@ -239,7 +239,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     ProductServiceTreeId = "12345678-1234-5678-9012-123456789012",
                     ServiceId = "87654321-4321-8765-1234-210987654321",
                     PackageDisplayName = "Contoso Management",
-                    ProductContactPM = "test@microsoft.com"
+                    ProductServiceTreeLink = "https://servicetree.msftcloudes.com/main.html#/ServiceModel/Service/12345678-1234-5678-9012-123456789012"
                 });
             }
             

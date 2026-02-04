@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public string ProductServiceTreeId { get; set; } = string.Empty;
 
         /// <summary>
-        /// Service ID (same as Service Tree ID)
+        /// Associated Service Service Tree ID
         /// </summary>
         public string ServiceId { get; set; } = string.Empty;
 
@@ -24,9 +24,9 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         public string PackageDisplayName { get; set; } = string.Empty;
 
         /// <summary>
-        /// Product contact PM (Primary PM)
+        /// Product Service Tree Link
         /// </summary>
-        public string ProductContactPM { get; set; } = string.Empty;
+        public string ProductServiceTreeLink { get; set; } = string.Empty;
 
         /// <summary>
         /// Work item ID of the product/epic work item

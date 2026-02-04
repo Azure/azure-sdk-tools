@@ -638,7 +638,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ProductInfo.ProductServiceTreeId, Is.EqualTo("12345678-1234-5678-9012-123456789012"));
             Assert.That(result.ProductInfo.ServiceId, Is.EqualTo("87654321-4321-8765-1234-210987654321"));
             Assert.That(result.ProductInfo.PackageDisplayName, Is.EqualTo("Contoso Management"));
-            Assert.That(result.ProductInfo.ProductContactPM, Is.EqualTo("test@microsoft.com"));
+            Assert.That(result.ProductInfo.ProductServiceTreeLink, Is.EqualTo("https://servicetree.msftcloudes.com/main.html#/ServiceModel/Service/12345678-1234-5678-9012-123456789012"));
             Assert.IsNull(result.ResponseError);
         }
 

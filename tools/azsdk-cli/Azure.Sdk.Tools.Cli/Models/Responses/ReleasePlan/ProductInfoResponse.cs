@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
                 result.AppendLine($"Product Service Tree ID: {ProductInfo.ProductServiceTreeId}");
                 result.AppendLine($"Service ID: {ProductInfo.ServiceId}");
                 result.AppendLine($"Package Display Name: {ProductInfo.PackageDisplayName}");
-                result.AppendLine($"Product Contact PM: {ProductInfo.ProductContactPM}");
+                result.AppendLine($"Product Service Tree Link: {ProductInfo.ProductServiceTreeLink}");
                 result.AppendLine($"Product Work Item ID: {ProductInfo.WorkItemId}");
                 result.AppendLine($"Product Title: {ProductInfo.Title}");
             }

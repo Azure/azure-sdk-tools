@@ -543,7 +543,8 @@ export class ReviewPageComponent implements OnInit {
           userName: this.userProfile!.userName,
           email: this.userProfile!.email,
           languages: this.userProfile!.languages,
-          preferences: this.userProfile!.preferences
+          preferences: this.userProfile!.preferences,
+          permissions: this.userProfile!.permissions
         };
         this.userProfile = userProfile;
       }

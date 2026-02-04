@@ -158,10 +158,18 @@ public class CopilotAgentRunner(
             // Wait for the session to become idle (all tool calls completed)
             // Use cancellation-aware wait with timeout to prevent indefinite hangs
             logger.LogDebug("Waiting for session to become idle...");
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            linkedCts.CancelAfter(agent.IdleTimeout);
-            await sessionIdleTcs.Task.WaitAsync(linkedCts.Token);
-            
+            using var timeoutCts = new CancellationTokenSource(agent.IdleTimeout);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+            try
+            {
+                await sessionIdleTcs.Task.WaitAsync(linkedCts.Token);
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            {
+                throw new TimeoutException(
+                    $"Agent session idle timeout of {agent.IdleTimeout} was exceeded while waiting for the agent to complete.");
+            }
+
             logger.LogDebug("Message completed, capturedResult is {HasResult}", capturedResult != null ? "set" : "null");
 
             // Check if there was a session error

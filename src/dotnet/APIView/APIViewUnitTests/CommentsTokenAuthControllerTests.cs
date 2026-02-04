@@ -57,7 +57,7 @@ public class CommentsTokenAuthControllerTests
             .ReturnsAsync(mockCodeFile);
 
         _mockCommentsManager
-            .Setup(x => x.GetCommentsAsync(mockRevision.ReviewId, false, CommentType.APIRevision))
+            .Setup(x => x.GetCommentsAsync(mockRevision.ReviewId, false, CommentType.APIRevision, It.IsAny<bool>()))
             .ReturnsAsync(mockComments);
 
         // Act
@@ -68,7 +68,7 @@ public class CommentsTokenAuthControllerTests
         Assert.IsType<List<ApiViewAgentComment>>(jsonResult.Value);
         _mockApiRevisionsManager.Verify(x => x.GetAPIRevisionAsync(apiRevisionId), Times.Once);
         _mockCodeFileRepository.Verify(x => x.GetCodeFileAsync(mockRevision, false), Times.Once);
-        _mockCommentsManager.Verify(x => x.GetCommentsAsync(mockRevision.ReviewId, false, CommentType.APIRevision), Times.Once);
+        _mockCommentsManager.Verify(x => x.GetCommentsAsync(mockRevision.ReviewId, false, CommentType.APIRevision, It.IsAny<bool>()), Times.Once);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class CommentsTokenAuthControllerTests
         Assert.Equal("API revision not found", jsonResult.Value);
         _mockApiRevisionsManager.Verify(x => x.GetAPIRevisionAsync(invalidRevisionId), Times.Once);
         _mockCodeFileRepository.Verify(x => x.GetCodeFileAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<bool>()), Times.Never);
-        _mockCommentsManager.Verify(x => x.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()), Times.Never);
+        _mockCommentsManager.Verify(x => x.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public class CommentsTokenAuthControllerTests
             .ReturnsAsync(mockCodeFile);
 
         _mockCommentsManager
-            .Setup(x => x.GetCommentsAsync(mockRevision.ReviewId, false, CommentType.APIRevision))
+            .Setup(x => x.GetCommentsAsync(mockRevision.ReviewId, false, CommentType.APIRevision, false))
             .ReturnsAsync(mockComments);
 
         ActionResult<List<ApiViewAgentComment>> result = await _controller.GetRevisionComments(apiRevisionId);

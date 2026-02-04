@@ -200,7 +200,7 @@ public class CopilotAgentRunner(
                         ? str
                         : JsonSerializer.Serialize(validation.Reason);
                     logger.LogWarning("Agent result failed validation: {Reason}. Retrying.", reason);
-                    prompt = $"The result you provided did not pass validation: {reason}. Please try again.";
+                    prompt = $"The result you provided did not pass validation: {reason}. Try again.";
                     continue;
                 }
             }

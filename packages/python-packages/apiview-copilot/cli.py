@@ -770,7 +770,16 @@ def get_active_reviews(
                 # Extract just the date from approval timestamp (YYYY-MM-DD)
                 approval_date = rev.approval[:10] if rev.approval else "n/a"
                 version_type = rev.version_type
-                summary_data.append((r.name, rev.package_version, status, copilot_status, approval_date, version_type))
+                summary_data.append(
+                    (
+                        r.name or "unknown",
+                        rev.package_version or "unknown",
+                        status,
+                        copilot_status,
+                        approval_date,
+                        version_type,
+                    )
+                )
 
         # Calculate column widths for proper alignment
         if summary_data:

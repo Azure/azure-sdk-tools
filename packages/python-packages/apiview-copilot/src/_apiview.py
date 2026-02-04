@@ -1,4 +1,5 @@
 import asyncio
+import re
 import sys
 from dataclasses import dataclass, field
 from typing import Optional
@@ -40,10 +41,12 @@ def get_version_type(version: Optional[str]) -> str:
     # Check for Python-style beta versions (e.g., 1.0.0b1)
     if "b" in version_lower:
         # Check if 'b' appears after digits (indicating beta)
-        import re
-
         if re.search(r"\d+b\d+", version_lower):
             return "beta"
+
+    # Check for 0.x.x versions - these are not GA per semantic versioning
+    if re.match(r"^0\.", version):
+        return "beta"
 
     # If no pre-release indicators found, consider it GA
     return "GA"

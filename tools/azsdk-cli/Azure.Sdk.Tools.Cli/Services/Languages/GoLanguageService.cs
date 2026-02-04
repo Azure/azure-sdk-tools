@@ -131,11 +131,6 @@ public partial class GoLanguageService : LanguageService
         }
     }
 
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-    {
-        return categories.TryGetValue("go", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
-    }
-
     public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
         // Go customization files can live in different locations depending on the package.

@@ -142,14 +142,16 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
             expectedCODEOWNERSContent,
         );
 
-        // Check ignore-links.txt update
-        const newIgnoreLink = `https://learn.microsoft.com/javascript/api/${mockPackageName}?view=azure-node-preview`;
+        // Check ignore-links.txt update - should add both learn link and npm link
+        const learnLink = `https://learn.microsoft.com/javascript/api/${mockPackageName}?view=azure-node-preview`;
+        const npmLink = `https://www.npmjs.com/package/${mockPackageName}`;
         // Check if mockIgnoreLinksContent already ends with a newline
         let expectedIgnoreLinksContent = mockIgnoreLinksContent;
         if (!expectedIgnoreLinksContent.endsWith("\n")) {
             expectedIgnoreLinksContent += "\n";
         }
-        expectedIgnoreLinksContent += newIgnoreLink + "\n";
+        expectedIgnoreLinksContent += learnLink + "\n";
+        expectedIgnoreLinksContent += npmLink + "\n";
 
         expect(fsModule.writeFileSync).toHaveBeenNthCalledWith(
             2,
@@ -198,24 +200,26 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
         );
     });
 
-    test("should not add duplicate entry to ignore-links.txt if link already exists", async () => {
+    test("should not add duplicate entry to ignore-links.txt if both links already exist", async () => {
         // Setup mock for tryGetNpmView to return undefined (package doesn't exist)
         vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue(undefined);
 
-        // Create the new ignore link
-        const newIgnoreLink = `https://learn.microsoft.com/javascript/api/${mockPackageName}?view=azure-node-preview`;
+        // Create both links
+        const learnLink = `https://learn.microsoft.com/javascript/api/${mockPackageName}?view=azure-node-preview`;
+        const npmLink = `https://www.npmjs.com/package/${mockPackageName}`;
 
-        // Modify mockIgnoreLinksContent to include the entry already
-        const contentWithExistingLink =
-            mockIgnoreLinksContent + "\n" + newIgnoreLink;
+        // Modify mockIgnoreLinksContent to include both entries already
+        const contentWithExistingLinks =
+            mockIgnoreLinksContent + "\n" + learnLink + "\n" + npmLink;
 
         vi.mocked(fsModule.readFileSync).mockImplementation((path, options) => {
             if (path === mockCodeOwnersPath) {
                 return mockCODEOWNERSContent;
             }
             if (path === mockIgnoreLinksPath) {
-                return contentWithExistingLink;
-            } return "";
+                return contentWithExistingLinks;
+            }
+            return "";
         });
 
         // Call the function
@@ -238,6 +242,86 @@ describe("generateCodeOwnersAndIgnoreLinkForPackage", () => {
         expect(fsModule.writeFileSync).not.toHaveBeenCalledWith(
             mockIgnoreLinksPath,
             expect.any(String),
+        );
+    });
+
+    test("should add npm link when only learn link exists", async () => {
+        // Setup mock for tryGetNpmView to return undefined (package doesn't exist)
+        vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue(undefined);
+
+        // Create the learn link
+        const learnLink = `https://learn.microsoft.com/javascript/api/${mockPackageName}?view=azure-node-preview`;
+        const npmLink = `https://www.npmjs.com/package/${mockPackageName}`;
+
+        // Modify mockIgnoreLinksContent to include only the learn link
+        const contentWithLearnLink =
+            mockIgnoreLinksContent + "\n" + learnLink;
+
+        vi.mocked(fsModule.readFileSync).mockImplementation((path, options) => {
+            if (path === mockCodeOwnersPath) {
+                return mockCODEOWNERSContent;
+            }
+            if (path === mockIgnoreLinksPath) {
+                return contentWithLearnLink;
+            }
+            return "";
+        });
+
+        // Call the function
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
+            mockPackageFolderPath,
+            mockPackageName
+        );
+
+        // Check that fs.writeFileSync was called twice (for CODEOWNERS and ignore-links.txt)
+        expect(fsModule.writeFileSync).toHaveBeenCalledTimes(2);
+
+        // Check ignore-links.txt was updated with npm link
+        const expectedContent = contentWithLearnLink + "\n" + npmLink + "\n";
+        expect(fsModule.writeFileSync).toHaveBeenNthCalledWith(
+            2,
+            mockIgnoreLinksPath,
+            expectedContent,
+        );
+    });
+
+    test("should add learn link when only npm link exists", async () => {
+        // Setup mock for tryGetNpmView to return undefined (package doesn't exist)
+        vi.mocked(npmUtilsModule.tryGetNpmView).mockResolvedValue(undefined);
+
+        // Create the npm link
+        const learnLink = `https://learn.microsoft.com/javascript/api/${mockPackageName}?view=azure-node-preview`;
+        const npmLink = `https://www.npmjs.com/package/${mockPackageName}`;
+
+        // Modify mockIgnoreLinksContent to include only the npm link
+        const contentWithNpmLink =
+            mockIgnoreLinksContent + "\n" + npmLink;
+
+        vi.mocked(fsModule.readFileSync).mockImplementation((path, options) => {
+            if (path === mockCodeOwnersPath) {
+                return mockCODEOWNERSContent;
+            }
+            if (path === mockIgnoreLinksPath) {
+                return contentWithNpmLink;
+            }
+            return "";
+        });
+
+        // Call the function
+        await codeOwnersModule.tryGenerateCodeOwnersAndIgnoreLinkForPackage(
+            mockPackageFolderPath,
+            mockPackageName
+        );
+
+        // Check that fs.writeFileSync was called twice (for CODEOWNERS and ignore-links.txt)
+        expect(fsModule.writeFileSync).toHaveBeenCalledTimes(2);
+
+        // Check ignore-links.txt was updated with learn link
+        const expectedContent = contentWithNpmLink + "\n" + learnLink + "\n";
+        expect(fsModule.writeFileSync).toHaveBeenNthCalledWith(
+            2,
+            mockIgnoreLinksPath,
+            expectedContent,
         );
     });
 });

@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Services;
@@ -469,6 +470,28 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(It.IsAny<int>(), It.IsAny<Dictionary<string, string>>()),
                 Times.Never);
+        }
+
+        [Test]
+        public void Verify_cli_parses_package_name()
+        {
+            var command = packageReleaseStatusTool.GetCommandInstances().First();
+            var parseConfig = new CommandLineConfiguration(command)
+            {
+                ResponseFileTokenReplacer = null
+            };
+
+            var parseResult = command.Parse("--package-name @azure/template --language JavaScript", parseConfig);
+            Assert.That(parseResult.Errors, Is.Empty);
+
+            parseResult = command.Parse("--package-name sdk/template/aztemplate --language Go", parseConfig);
+            Assert.That(parseResult.Errors, Is.Empty);
+
+            parseResult = command.Parse("--package-name azure-template --language Python", parseConfig);
+            Assert.That(parseResult.Errors, Is.Empty);
+
+            parseResult = command.Parse("--package-name Azure.Template --language .NET", parseConfig);
+            Assert.That(parseResult.Errors, Is.Empty);
         }
     }
 }

@@ -4,6 +4,7 @@ public interface IAPIViewService
 {
     Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType);
     Task<string?> GetCommentsByRevisionAsync(string revisionId);
+    Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment);
 }
 
 public class APIViewService : IAPIViewService
@@ -23,6 +24,19 @@ public class APIViewService : IAPIViewService
     {
         string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
         string? result = await _httpService.GetAsync(endpoint);
+
+        if (result == null)
+        {
+            _logger.LogWarning("No comments found for revision {RevisionId}", revisionId);
+        }
+
+        return result;
+    }
+
+    public async Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment)
+    {
+        string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
+        string? result = await _httpService.GetAsync(endpoint, environment);
 
         if (result == null)
         {

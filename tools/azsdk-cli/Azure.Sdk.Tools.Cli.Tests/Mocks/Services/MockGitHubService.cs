@@ -324,5 +324,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 stateReason: null
             );
         }
+
+        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body)
+        {
+            // Create a mock issue
+            var issue = CreateMockIssue(repoOwner, repoName, 1);
+            return Task.FromResult(issue);
+        }
+
+        public Task AssignIssueAsync(string repoOwner, string repoName, int issueNumber, string assignee)
+        {
+            // Mock implementation - just return completed task
+            return Task.CompletedTask;
+        }
     }
 }

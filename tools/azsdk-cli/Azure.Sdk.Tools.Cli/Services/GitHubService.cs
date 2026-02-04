@@ -92,6 +92,11 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
+        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body);
+        public Task AssignIssueAsync(string repoOwner, string repoName, int issueNumber, string assignee);
+        public Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber);
+        public Task<string?> GetFileFromPullRequest(string repoOwner, string repoName, int pullRequestNumber, string filePath);
+        public Task<string?> GetFileFromBranch(string repoOwner, string repoName, string branch, string filePath);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null);
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state);
@@ -124,6 +129,7 @@ public class GitConnection
             var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
             return pullRequest;
         }
+
         public async Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state)
         {
             // This method now accepts title, body, and state directly, so caller must fetch the PR first if needed.
@@ -134,6 +140,97 @@ public class GitConnection
                 State = state
             };
             await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber, update);
+        }
+
+        public async Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body)
+        {
+            logger.LogInformation("Creating issue in {RepoOwner}/{RepoName}: {Title}", repoOwner, repoName, title);
+            var newIssue = new NewIssue(title)
+            {
+                Body = body
+            };
+            return await gitHubClient.Issue.Create(repoOwner, repoName, newIssue);
+        }
+
+        public async Task AssignIssueAsync(string repoOwner, string repoName, int issueNumber, string assignee)
+        {
+            logger.LogInformation("Assigning issue #{IssueNumber} in {Owner}/{Repo} to {Assignee}", issueNumber, repoOwner, repoName, assignee);
+            var update = new AssigneesUpdate(new[] { assignee });
+            await gitHubClient.Issue.Assignee.AddAssignees(repoOwner, repoName, issueNumber, update);
+        }
+
+        public async Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber)
+        {
+            try
+            {
+                logger.LogInformation("Getting head SHA for PR #{PullRequestNumber} in {Owner}/{Repo}", pullRequestNumber, repoOwner, repoName);
+                var pr = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+                return pr?.Head?.Sha;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get head SHA for PR #{PullRequestNumber}", pullRequestNumber);
+                return null;
+            }
+        }
+
+        public async Task<string?> GetFileFromPullRequest(string repoOwner, string repoName, int pullRequestNumber, string filePath)
+        {
+            try
+            {
+                logger.LogInformation("Getting file {FilePath} from PR #{PullRequestNumber} in {Owner}/{Repo}", filePath, pullRequestNumber, repoOwner, repoName);
+                var pr = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
+                if (pr?.Head?.Sha == null)
+                {
+                    logger.LogWarning("Could not get head SHA for PR #{PullRequestNumber}", pullRequestNumber);
+                    return null;
+                }
+                
+                var contents = await gitHubClient.Repository.Content.GetAllContentsByRef(repoOwner, repoName, filePath, pr.Head.Sha);
+                if (contents == null || contents.Count == 0)
+                {
+                    logger.LogInformation("File {FilePath} not found in PR #{PullRequestNumber}", filePath, pullRequestNumber);
+                    return null;
+                }
+                
+                return contents[0].Content;
+            }
+            catch (Octokit.NotFoundException)
+            {
+                logger.LogInformation("File {FilePath} not found in PR #{PullRequestNumber}", filePath, pullRequestNumber);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get file {FilePath} from PR #{PullRequestNumber}", filePath, pullRequestNumber);
+                return null;
+            }
+        }
+
+        public async Task<string?> GetFileFromBranch(string repoOwner, string repoName, string branch, string filePath)
+        {
+            try
+            {
+                logger.LogInformation("Getting file {FilePath} from branch {Branch} in {Owner}/{Repo}", filePath, branch, repoOwner, repoName);
+                var contents = await gitHubClient.Repository.Content.GetAllContentsByRef(repoOwner, repoName, filePath, branch);
+                if (contents == null || contents.Count == 0)
+                {
+                    logger.LogInformation("File {FilePath} not found in branch {Branch}", filePath, branch);
+                    return null;
+                }
+                
+                return contents[0].Content;
+            }
+            catch (Octokit.NotFoundException)
+            {
+                logger.LogInformation("File {FilePath} not found in branch {Branch}", filePath, branch);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get file {FilePath} from branch {Branch}", filePath, branch);
+                return null;
+            }
         }
 
         public async Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName)

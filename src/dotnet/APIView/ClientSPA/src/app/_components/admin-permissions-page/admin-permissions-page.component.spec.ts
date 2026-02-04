@@ -55,7 +55,6 @@ describe('AdminPermissionsPageComponent', () => {
             showComments: true,
             showSystemComments: true,
             disableCodeLinesLazyLoading: false,
-            scrollBarSize: 'small' as any,
             language: [],
             approvedLanguages: []
         },

@@ -1285,7 +1285,7 @@
     {
         "testcase": "How to make an interface internal ?",
         "expected": {
-            "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted",
+            "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp and use @@access decorator to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted",
             "references": [
                 {
                     "title": "Decorators | Azure.ClientGenerator.Core | `@access`",

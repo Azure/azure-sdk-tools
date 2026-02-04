@@ -31,7 +31,7 @@ Otherwise → Skill (.github/skills/)
 The primary factors for choosing between skills and programmatic agents are:
 
 1. **User in the loop vs headless execution**
-   - **Skill**: User is interacting with Copilot, can see/approve changes, agent uses its built-in tools (e.g. TypeSpec Authoring skill)
+   - **Skill**: The user is interacting with Copilot, can see/approve changes, agent uses its built-in tools (e.g. TypeSpec Authoring skill)
    - **Programmatic agent**: Running headless in a CLI command or CI pipeline, no user interaction
 
 2. **Language-agnostic vs language-specific (for shared scenarios)**
@@ -115,7 +115,7 @@ Microagents are the **legacy approach** and should generally not be used for new
 |----------|----------------|
 | Headless/automated execution (CLI, CI) | **Copilot SDK Agent** |
 | Language-specific prompts or logic | **Copilot SDK Agent** |
-| User-facing, language-agnostic guidance | **Skill** (start here, graduate if needed) |
+| User-facing, language-agnostic guidance | **skill** (start here, graduate if needed) |
 | Users must manually select a mode | **Custom Agent** (.github/agents/) |
 
 ## Related Documentation

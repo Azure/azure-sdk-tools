@@ -1,11 +1,11 @@
 # Skills in azsdk-cli
 
-This document provides comprehensive guidelines for creating skills.GitHub copilot uses skills defined in `.github/skills`. Each skill9which is a directory under `github/skills`) includes a `SKILL.md` which contains the metadata and instructions. You can also include examples and some scripts in the skill directory. Copilot identifies a skill based on its description and how semantically matches the prompt in a given context.  Each skill should define instruction, success criteria, list of tools and commands to be used by the skill and an optional next prompt for the user so agent can recommend the next step.
+This document provides comprehensive guidelines for creating skills. GitHub copilot uses skills defined in `.github/skills`. Each skill (which is a directory under `.github/skills`) includes a `SKILL.md` which contains the metadata and instructions. You can also include examples and some scripts in the skill directory. Copilot identifies a skill based on its description and how it semantically matches the prompt in a given context. Each skill should define instruction, success criteria, list of tools and commands to be used by the skill, and an optional next prompt for the user so the agent can recommend the next step.
 
 ## When to Use
 
-Instructions for copilot/agent can be either included in copilot-instructions.md or as a skill. Instructions in the copilot instruction file are included as part of every prompt with the LLM and this makes it costly token use when some of these  instructions are task specific and not applicable globally for all prompts. 
-Skill helps to reduce the token usage by using the instructions in the skill only on demand basis. Skill can use a combination of instruction, mcp tool and commands to run a series of tasks.
+Instructions for copilot/agent can be either included in `copilot-instructions.md` or provided as a skill. Instructions in the copilot instructions file are included as part of every prompt sent to the LLM, which makes token usage costly when some of these instructions are task-specific and not applicable globally to all prompts.
+Skills help to reduce the token usage by using the instructions in the skill only on demand basis. A skill can use a combination of instruction, MCP tool and commands to run a series of tasks.
 
 
 | Skill | Copilot Instructions |
@@ -41,7 +41,7 @@ Skills should be used when you need to:
 
 ## Where to store the skills
 
-GitHub copilot requires all skills in `.github/skills` directory. Some skills are language or repo specific and some skills are common across all repos. A repo specific skill can be created in `'github/skills` in the repo itself. If a skill is applicable for more than one language and if instructions are same then skill should be created in `Azure/azure-sdk-tools` repo and sync them to all repos. One challenge is to avoid naming collision between local skill and centrally stored skill. A global skill should have a suffix `global` and local skill can have suffix `local` to avoid the name collision. For e.g. package-generate-skill-global.
+GitHub copilot requires all skills in `.github/skills` directory. Some skills are language or repo specific and some skills are common across all repos. A repo specific skill can be created in `'github/skills` in the repo itself. If a skill is applicable for more than one language and if instructions are same then skill should be created in `Azure/azure-sdk-tools` repo and sync them to all repos. One challenge is to avoid naming collision between local skill and centrally stored skill. A global skill should have a suffix `global` and local skill can have suffix `local` to avoid the name collision. For example, `package-generate-skill-global`.
 
 ### Language-Dependent and Repository-Specific Skills
 
@@ -59,10 +59,10 @@ Engineering system has a pipeline to sync all changes in the `eng/common` in azu
 
 To distribute Skills from azure-sdk-tools to individual Azure SDK repositories:
 
-- submit a PR to create or edit a skill in `Azure/azure-sdk-tools.
+- submit a PR to create or edit a skill in `Azure/azure-sdk-tools`.
 - Skills in `eng/common/.github/skills` are synced to `.github/skills` in individual SDK repositories using engsys pipeline.
-- Changes to the engineering systems common sync framework are required to enable this synchronization
-- The sync process ensures that all repositories benefit from centralized Skill updates
+- Changes to the engineering systems common sync framework are required to enable this synchronization.
+- The sync process ensures that all repositories benefit from centralized Skill updates.
 
 ## What to Include in Skill Instructions
 
@@ -117,7 +117,7 @@ Each Skill should maintain a list of:
 - CLI commands invoked
 - External dependencies required
 
-This information will support evaluation frameworks and helps identify any gaps in skill goal for various prompts.
+This information will support evaluation frameworks and will help identify any gaps in skill goal for various prompts.
 
 ## How to test
 

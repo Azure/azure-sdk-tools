@@ -109,7 +109,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         var tools = CreateTools(typespecProjectPath);
 
         // Create and run the copilot agent
-        var agent = new CopilotAgent<TypeSpecCustomizationResult>
+        var agent = new CopilotAgent<TypeSpecCustomizationServiceResult>
         {
             Instructions = instructions,
             Tools = tools,
@@ -126,12 +126,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
 
         logger.LogInformation("TypeSpecCustomization copilot agent completed. Success: {Success}", result.Success);
 
-        return new TypeSpecCustomizationServiceResult
-        {
-            Success = result.Success,
-            ChangesSummary = result.ChangesSummary,
-            FailureReason = result.FailureReason
-        };
+        return result;
     }
 
     /// <summary>

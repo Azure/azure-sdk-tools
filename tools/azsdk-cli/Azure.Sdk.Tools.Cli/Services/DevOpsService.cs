@@ -1623,7 +1623,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
 
                 // Extract parent work item ID from the URL
-                var parentWorkItemId = int.Parse(parentRelation.Url.Split('/').Last());
+                var urlParts = parentRelation.Url.Split('/');
+                if (!int.TryParse(urlParts.Last(), out int parentWorkItemId))
+                {
+                    logger.LogError("Failed to parse parent work item ID from URL: {url}", parentRelation.Url);
+                    return null;
+                }
                 logger.LogInformation("Found parent work item {parentWorkItemId}", parentWorkItemId);
 
                 // Get parent work item details

@@ -16,7 +16,8 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan
         public ProductInfo? ProductInfo { get; set; }
 
         [JsonPropertyName("message")]
-        public string Message { get; set; } = string.Empty;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Message { get; set; }
 
         protected override string Format()
         {

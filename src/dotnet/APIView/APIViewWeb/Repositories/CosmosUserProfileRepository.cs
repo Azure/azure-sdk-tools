@@ -1,11 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Configuration;
 
@@ -57,6 +60,47 @@ namespace APIViewWeb
             {
                 return Result.Failure;
             }
+        }
+
+        public async Task<IEnumerable<string>> GetAllUsernamesAsync()
+        {
+            var queryable = _userProfileContainer.GetItemLinqQueryable<UserProfileModel>();
+            var query = queryable.Select(u => u.UserName);
+
+            using var iterator = query.ToFeedIterator();
+            var users = new List<string>();
+            while (iterator.HasMoreResults)
+            {
+                var response = await iterator.ReadNextAsync();
+                users.AddRange(response);
+            }
+
+            return users;
+        }
+
+        public async Task<IEnumerable<string>> GetExistingUsersAsync(IEnumerable<string> userNames)
+        {
+            var existingUsers = new List<string>();
+            var userNamesList = userNames.ToList();
+            
+            if (userNamesList.Count == 0)
+            {
+                return existingUsers;
+            }
+
+            var queryable = _userProfileContainer.GetItemLinqQueryable<UserProfileModel>();
+            IQueryable<string> query = queryable
+                .Where(u => userNamesList.Contains(u.UserName))
+                .Select(u => u.UserName);
+
+            using var iterator = query.ToFeedIterator();
+            while (iterator.HasMoreResults)
+            {
+                var response = await iterator.ReadNextAsync();
+                existingUsers.AddRange(response);
+            }
+
+            return existingUsers;
         }
     }
 }

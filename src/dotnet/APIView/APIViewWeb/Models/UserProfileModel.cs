@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System.Text.Json.Serialization;
+using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Models
 {
@@ -26,6 +27,8 @@ namespace APIViewWeb.Models
         
         public string Email { get; set; }
         public UserPreferenceModel Preferences { get; set; }
-
+        
+        [JsonPropertyName("permissions")]
+        public EffectivePermissions Permissions { get; set; }
     }
 }

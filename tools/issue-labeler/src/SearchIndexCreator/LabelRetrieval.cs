@@ -86,7 +86,7 @@ namespace SearchIndexCreator
         {
             BlobServiceClient client = new(
                 new Uri($"https://{accountName}.blob.core.windows.net/"),
-                new DefaultAzureCredential());
+                new AzureCliCredential());
 
             return client;
         }

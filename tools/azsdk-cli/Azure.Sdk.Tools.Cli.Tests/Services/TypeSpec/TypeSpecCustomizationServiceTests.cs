@@ -12,14 +12,10 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Services.TypeSpec;
 
 /// <summary>
-/// Manual integration tests for <see cref="TypeSpecCustomizationService"/> that verify
-/// actual LLM calls work correctly through the GitHub Copilot SDK.
-/// 
-/// These tests are disabled by default because they require GitHub Copilot credentials.
-/// To run: dotnet test --filter "FullyQualifiedName~TypeSpecCustomizationServiceLiveTests"
+/// Tests for <see cref="TypeSpecCustomizationService"/>.
 /// </summary>
 [TestFixture]
-internal class TypeSpecCustomizationServiceLiveTests
+internal class TypeSpecCustomizationServiceTests
 {
     private string typeSpecProjectPath = null!;
 
@@ -61,6 +57,11 @@ internal class TypeSpecCustomizationServiceLiveTests
             new TestLogger<GitHelper>());
     }
 
+    /// <summary>
+    /// Live integration test that makes actual LLM calls through the GitHub Copilot SDK.
+    /// Requires GitHub Copilot CLI to be installed and authenticated.
+    /// Will be skipped if Copilot is not available.
+    /// </summary>
     [Test]
     public async Task ApplyCustomization_WithRealCopilotSdk_CompletesSuccessfully()
     {
@@ -129,7 +130,6 @@ internal class TypeSpecCustomizationServiceLiveTests
     }
 
     [Test]
-    [Explicit("Manual test - requires GitHub Copilot credentials")]
     public void ApplyCustomization_WithInvalidPath_ThrowsArgumentException()
     {
         var logger = new TestLogger<TypeSpecCustomizationService>();
@@ -153,5 +153,47 @@ internal class TypeSpecCustomizationServiceLiveTests
                 "Some customization request"));
 
         Assert.That(ex!.Message, Does.Contain("Invalid TypeSpec project path"));
+    }
+
+    [Test]
+    public void ApplyCustomization_WithInvalidReferenceDocPath_ThrowsFileNotFoundException()
+    {
+        var logger = new TestLogger<TypeSpecCustomizationService>();
+        var copilotAgentRunner = Mock.Of<ICopilotAgentRunner>();
+        var npxHelper = Mock.Of<INpxHelper>();
+        var tokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var gitHelper = CreateRealGitHelper();
+        var typeSpecHelper = new TypeSpecHelper(gitHelper);
+
+        var service = new TypeSpecCustomizationService(
+            logger,
+            copilotAgentRunner,
+            npxHelper,
+            tokenUsageHelper,
+            typeSpecHelper,
+            gitHelper);
+
+        var ex = Assert.ThrowsAsync<FileNotFoundException>(async () =>
+            await service.ApplyCustomizationAsync(
+                typeSpecProjectPath,
+                "Some customization request",
+                referenceDocPath: "/nonexistent/customizing-client-tsp.md"));
+
+        Assert.That(ex!.Message, Does.Contain("Reference document not found"));
+    }
+
+    [Test]
+    public async Task ReferenceDocDiscovery_FindsDocumentInEngCommonKnowledge()
+    {
+        var gitHelper = CreateRealGitHelper();
+
+        // Discover repo root from the test project path
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(typeSpecProjectPath);
+        Assert.That(repoRoot, Is.Not.Null.And.Not.Empty, "Should find repository root");
+
+        // Check that the reference doc exists at the expected location
+        var expectedPath = Path.Combine(repoRoot!, "eng", "common", "knowledge", "customizing-client-tsp.md");
+        Assert.That(File.Exists(expectedPath), Is.True,
+            $"Reference document should exist at {expectedPath}");
     }
 }

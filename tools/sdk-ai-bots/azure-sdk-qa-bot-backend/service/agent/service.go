@@ -237,7 +237,6 @@ func processChunk(result model.Index) model.Knowledge {
 		Link:     model.GetIndexLink(result),
 		Content:  chunk,
 		Title:    strings.Join(titles, " | "),
-		Score:    result.RerankScore,
 	}
 }
 
@@ -759,7 +758,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	for i, chunk := range finalChunks {
 		knowledge := processChunk(chunk)
 		results = append(results, knowledge)
-		log.Printf("[%d] SearchType: %s, Score: %f, Source: %s, Title: %s, Link:%s, Scope:%s, ServiceType:%s", i+1, chunk.SearchType, knowledge.Score, knowledge.Source, knowledge.Title, knowledge.Link, chunk.Scope, chunk.ServiceType)
+		log.Printf("[%d] SearchType: %s, Score: %f, Source: %s, Title: %s, Link:%s, Scope:%s, ServiceType:%s", i+1, chunk.SearchType, chunk.RerankScore, knowledge.Source, knowledge.Title, knowledge.Link, chunk.Scope, chunk.ServiceType)
 	}
 	log.Println("=====================================")
 

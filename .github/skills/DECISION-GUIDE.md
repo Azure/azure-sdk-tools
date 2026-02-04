@@ -125,14 +125,117 @@ User: "Help me migrate my Spring Boot app"
 3. Skill guides: Interpretation of results, next steps
 ```
 
-## Testing Your Choice
+## Anti-Patterns: When NOT to Use a Skill
 
-| Approach | Test Method |
-|----------|-------------|
-| **Skill** | `dotnet test --filter "Category=skills"` in `Azure.Sdk.Tools.Cli.Evaluations` |
-| **MCP Tool** | `dotnet test --filter "Category=mcp"` in `Azure.Sdk.Tools.Cli.Evaluations` |
+Skills are **not** the right choice when:
 
-Both use the same `PromptToToolMatchEvaluator` to measure discoverability.
+### ❌ Execution is Required
+
+| Bad Skill Candidate | Why | Use Instead |
+|---------------------|-----|-------------|
+| `verify_setup` | Needs to run `python --version`, `node --version`, etc. | MCP Tool |
+| `build_code` | Must invoke Maven/Gradle and parse errors | MCP Tool |
+| `run_tests` | Must execute test runner and report results | MCP Tool |
+| `get_pipeline_status` | Requires API call to Azure DevOps | MCP Tool |
+
+**Rule**: If it needs to **execute commands** or **call APIs**, it's a tool.
+
+### ❌ Output Must Be Structured Data
+
+| Bad Skill Candidate | Why | Use Instead |
+|---------------------|-----|-------------|
+| `list_packages` | Returns JSON array of packages | MCP Tool |
+| `get_release_plan` | Returns structured release data | MCP Tool |
+| `analyze_dependencies` | Returns dependency graph | MCP Tool |
+
+**Rule**: If other tools or automation consume the output, it's a tool.
+
+### ❌ Authentication is Required
+
+| Bad Skill Candidate | Why | Use Instead |
+|---------------------|-----|-------------|
+| `create_pr` | Needs GitHub token | MCP Tool |
+| `publish_package` | Needs npm/NuGet credentials | MCP Tool |
+| `deploy_resources` | Needs Azure credentials | MCP Tool |
+
+**Rule**: If it touches auth tokens or credentials, it's a tool.
+
+### ❌ The Workflow is a Single Command
+
+| Bad Skill Candidate | Why | Use Instead |
+|---------------------|-----|-------------|
+| "Run linter" | Just `npm run lint` | Tool or copilot-instructions |
+| "Format code" | Just `dotnet format` | Tool or copilot-instructions |
+
+**Rule**: If a single command does the job, a skill adds overhead without value.
+
+## Evaluation Checklist
+
+Before committing to Skill vs Tool, validate your choice:
+
+### 1. Can It Be a Skill?
+
+- [ ] **No code execution needed** - Skill can't run `python`, `npm`, `dotnet`
+- [ ] **No API calls required** - Skill can't call REST APIs  
+- [ ] **No authentication needed** - Skill has no access to tokens/creds
+- [ ] **Output is guidance, not data** - Skill produces prose, not JSON
+
+*If any checkbox is unchecked → Use a Tool*
+
+### 2. Should It Be a Skill?
+
+- [ ] **Workflow has 3+ steps** - Simple tasks don't need skills
+- [ ] **Steps vary by context** - Same workflow, different paths
+- [ ] **Guidance changes frequently** - Markdown is easier to update than C#
+- [ ] **Multiple repos need customization** - Skills can be tailored per-repo
+
+*If most checkboxes are unchecked → Consider if a skill adds value*
+
+### 3. Skill Quality Checklist
+
+- [ ] **Folder name** is lowercase, hyphenated (e.g., `typespec-new-project`)
+- [ ] **`name:`** in frontmatter matches folder name exactly
+- [ ] **`description:`** includes trigger phrases users would say
+- [ ] **SKILL.md body** uses imperative form ("Do X", not "You should do X")
+- [ ] **Referenced files** actually exist (`references/`, `scripts/`)
+- [ ] **Tested** with prompts in `tests/your-skill/prompts.json`
+- [ ] **Triggers correctly** when using listed phrases
+
+### 4. Test Your Choice
+
+| Test | How | Pass Criteria |
+|------|-----|---------------|
+| **Discoverability** | Run `dotnet test --filter "Category=skills"` | Prompts trigger the skill |
+| **Effectiveness** | Manual test with real scenario | Workflow completes correctly |
+| **No false triggers** | Test with unrelated prompts | Skill doesn't activate incorrectly |
+
+## Evaluation Framework
+
+### Current State: Discoverability Only ✅
+
+We can measure: *"Does the prompt trigger the right skill/tool?"*
+
+```
+Prompt → PromptToToolMatchEvaluator → Pass/Fail
+```
+
+### Missing: Effectiveness ❓
+
+We need to measure: *"Did using the skill lead to successful task completion?"*
+
+| Eval Type | What It Measures | How to Test | Status |
+|-----------|------------------|-------------|--------|
+| **Discoverability** | Does prompt trigger skill/tool? | `PromptToToolMatchEvaluator` | ✅ Have |
+| **Relevance** | Is triggered skill/tool appropriate? | Manual review or LLM-as-judge | ❌ Missing |
+| **Completeness** | Did workflow complete? | End-to-end test with assertions | ❌ Missing |
+| **Correctness** | Was output correct? | Golden file comparison | ❌ Missing |
+| **Efficiency** | How many tokens/turns? | Measure conversation length | ❌ Missing |
+
+### When to Invest in Effectiveness Evals
+
+- **Now (1 skill)**: Manual testing is sufficient
+- **3-5 skills**: Consider LLM-as-judge for relevance
+- **10+ skills**: Invest in end-to-end automation
 
 ## References
 

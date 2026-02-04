@@ -860,10 +860,16 @@ def resolve_package_info(
 
 
 def report_metrics(
-    start_date: str, end_date: str, environment: str = "production", markdown: bool = False, save: bool = False
+    start_date: str,
+    end_date: str,
+    environment: str = "production",
+    markdown: bool = False,
+    save: bool = False,
+    charts: bool = False,
+    exclude: list = None,
 ) -> dict:
     """Generate a report of APIView metrics between two dates."""
-    return get_metrics_report(start_date, end_date, environment, markdown, save)
+    return get_metrics_report(start_date, end_date, environment, markdown, save, charts, exclude)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -1615,6 +1621,19 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment"],
                 default="production",
                 choices=["production", "staging"],
+            )
+            ac.argument(
+                "charts",
+                action="store_true",
+                help="Generate PNG charts from the metrics and save to scratch/charts/.",
+            )
+            ac.argument(
+                "exclude",
+                type=str,
+                nargs="*",
+                help="Languages to exclude from the report (e.g., --exclude Java Go).",
+                options_list=["--exclude", "-x"],
+                default=None,
             )
         with ArgumentsContext(self, "permissions") as ac:
             ac.argument(

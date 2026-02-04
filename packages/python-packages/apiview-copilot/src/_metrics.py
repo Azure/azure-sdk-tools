@@ -1,10 +1,10 @@
 from dataclasses import asdict, dataclass, field
 from datetime import date
-from typing import Dict, Optional
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from src._apiview import (
     ActiveReviewMetadata,
-    ActiveRevisionMetadata,
     get_active_reviews,
     get_comments_in_date_range,
 )
@@ -92,9 +92,15 @@ class MetricsSegment:
 
 
 def get_metrics_report(
-    start_date: str, end_date: str, environment: str, markdown: bool = False, save: bool = False
+    start_date: str,
+    end_date: str,
+    environment: str,
+    markdown: bool = False,
+    save: bool = False,
+    charts: bool = False,
+    exclude: Optional[List[str]] = None,
 ) -> Optional[dict]:
-    data = _build_metrics_data(start_date=start_date, end_date=end_date, environment=environment)
+    data = _build_metrics_data(start_date=start_date, end_date=end_date, environment=environment, exclude=exclude)
     if not data:
         raise ValueError("No data found for metrics report")
     if save:
@@ -109,6 +115,8 @@ def get_metrics_report(
             except Exception as e:
                 print(f"Error upserting document {doc.id}: {e}")
     report = _build_metrics_report(data)
+    if charts:
+        _generate_charts(report, start_date, end_date)
     if markdown:
         inputs = {"data": report}
         summary = run_prompty(folder="other", filename="summarize_metrics", inputs=inputs)
@@ -306,11 +314,16 @@ def _build_metrics_report(data: Dict[str, MetricsSegment]) -> dict:
     return report
 
 
-def _build_metrics_data(start_date: str, end_date: str, environment: str) -> Optional[Dict[str, MetricsSegment]]:
+def _build_metrics_data(
+    start_date: str, end_date: str, environment: str, exclude: Optional[List[str]] = None
+) -> Optional[Dict[str, MetricsSegment]]:
     """Package metrics data for a report or publishing."""
     # filter out C and C++ since they are not supported by Copilot
     # See: https://github.com/Azure/azure-sdk-tools/issues/10465
     pretty_languages_to_omit = ["c++", "c", "typespec", "swagger", "xml"]
+    # Add user-specified exclusions (case-insensitive)
+    if exclude:
+        pretty_languages_to_omit.extend([lang.lower() for lang in exclude])
     active_reviews = get_active_reviews(
         start_date, end_date, environment=environment, omit_languages=pretty_languages_to_omit
     )
@@ -329,3 +342,132 @@ def _build_metrics_data(start_date: str, end_date: str, environment: str) -> Opt
         )
 
     return results
+
+
+def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
+    """Generate PNG charts from the metrics report."""
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("matplotlib is required for chart generation. Install it with: pip install matplotlib")
+        return
+
+    metrics = report.get("metrics", {})
+    # Get per-language data sorted, then append "overall" at the end
+    languages = sorted([lang for lang in metrics.keys() if lang != "overall"])
+    if "overall" in metrics:
+        languages_with_overall = languages + ["Overall"]
+        # Create a metrics lookup that maps "Overall" to the "overall" key
+        metrics_lookup = {lang: metrics[lang] for lang in languages}
+        metrics_lookup["Overall"] = metrics["overall"]
+    else:
+        languages_with_overall = languages
+        metrics_lookup = metrics
+
+    if not languages:
+        print("No language-specific metrics to chart.")
+        return
+
+    output_dir = Path("scratch/charts")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Chart 1: Adoption - stacked bar with copilot (green) and non-copilot (yellow)
+    copilot_counts = [metrics_lookup[lang]["adoption"]["copilot_review_count"] for lang in languages_with_overall]
+    total_counts = [metrics_lookup[lang]["adoption"]["active_review_count"] for lang in languages_with_overall]
+    non_copilot_counts = [t - c for t, c in zip(total_counts, copilot_counts)]
+
+    plt.figure(figsize=(12, 6))
+    x = range(len(languages_with_overall))
+    plt.bar(x, copilot_counts, color="green", label="Copilot Reviews")
+    plt.bar(x, non_copilot_counts, bottom=copilot_counts, color="gold", label="Non-Copilot Reviews")
+    plt.xlabel("Language")
+    plt.ylabel("Review Count")
+    plt.title(f"Copilot Adoption by Language\n({start_date} to {end_date})")
+    plt.xticks(x, languages_with_overall, rotation=45, ha="right")
+    plt.legend(loc="upper right")
+    for i, (c, nc) in enumerate(zip(copilot_counts, non_copilot_counts)):
+        total = c + nc
+        if total > 0:
+            plt.text(i, total + 0.5, str(total), ha="center", va="bottom", fontsize=8)
+    plt.tight_layout()
+    adoption_path = output_dir / "adoption.png"
+    plt.savefig(adoption_path, dpi=150)
+    plt.close()
+    print(f"Saved: {adoption_path}")
+
+    # Chart 2: Comment Quality - stacked percent bar chart
+    # Order from bottom to top: good, implicit_good, neutral, implicit_bad, bad, deleted
+    categories = ["good", "implicit_good", "neutral", "implicit_bad", "bad", "deleted"]
+    colors = ["darkgreen", "lightgreen", "gray", "lightcoral", "red", "darkred"]
+    labels = ["Good (upvoted)", "Implicit Good", "Neutral", "Implicit Bad", "Bad (downvoted)", "Deleted"]
+
+    plt.figure(figsize=(12, 6))
+    x = range(len(languages_with_overall))
+    bottom = [0.0] * len(languages_with_overall)
+
+    for cat, color, label in zip(categories, colors, labels):
+        values = [metrics_lookup[lang]["comment_quality"].get(cat, 0) for lang in languages_with_overall]
+        plt.bar(x, values, bottom=bottom, color=color, label=label)
+        bottom = [b + v for b, v in zip(bottom, values)]
+
+    plt.xlabel("Language")
+    plt.ylabel("Fraction of AI Comments")
+    plt.title(f"AI Comment Quality by Language\n({start_date} to {end_date})")
+    plt.xticks(x, languages_with_overall, rotation=45, ha="right")
+    plt.ylim(0, 1.05)
+    plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=6, fontsize=8)
+    plt.tight_layout()
+    plt.subplots_adjust(bottom=0.25)
+    quality_path = output_dir / "comment_quality.png"
+    plt.savefig(quality_path, dpi=150)
+    plt.close()
+    print(f"Saved: {quality_path}")
+
+    # Chart 3: Human-Copilot Split - for languages WITH copilot reviews
+    # Stacked bar: human comments + AI comments
+    langs_with_copilot = [lang for lang in languages_with_overall if metrics_lookup[lang]["adoption"]["copilot_review_count"] > 0]
+
+    if langs_with_copilot:
+        human_with_ai = [metrics_lookup[lang]["comment_makeup"]["human_comment_count_with_ai"] for lang in langs_with_copilot]
+        ai_counts = [metrics_lookup[lang]["comment_makeup"]["ai_comment_count"] for lang in langs_with_copilot]
+
+        plt.figure(figsize=(12, 6))
+        x = range(len(langs_with_copilot))
+        plt.bar(x, ai_counts, color="steelblue", label="AI Comments")
+        plt.bar(x, human_with_ai, bottom=ai_counts, color="lightgreen", label="Human Comments")
+        plt.xlabel("Language")
+        plt.ylabel("Comment Count")
+        plt.title(f"Human vs AI Comments (Reviews with Copilot)\n({start_date} to {end_date})")
+        plt.xticks(x, langs_with_copilot, rotation=45, ha="right")
+        plt.legend(loc="upper right")
+        for i, (ai, hum) in enumerate(zip(ai_counts, human_with_ai)):
+            total = ai + hum
+            if total > 0:
+                plt.text(i, total + 0.5, str(total), ha="center", va="bottom", fontsize=8)
+        plt.tight_layout()
+        split_path = output_dir / "human_copilot_split.png"
+        plt.savefig(split_path, dpi=150)
+        plt.close()
+        print(f"Saved: {split_path}")
+    else:
+        print("No languages with Copilot reviews for human-copilot split chart.")
+
+    # Chart 4: Human Comments With vs Without Copilot - side-by-side bars
+    human_with = [metrics_lookup[lang]["comment_makeup"]["human_comment_count_with_ai"] for lang in languages_with_overall]
+    human_without = [metrics_lookup[lang]["comment_makeup"]["human_comment_count_without_copilot"] for lang in languages_with_overall]
+
+    plt.figure(figsize=(12, 6))
+    x = range(len(languages_with_overall))
+    width = 0.35
+    plt.bar([i - width / 2 for i in x], human_with, width, color="lightgreen", label="With Copilot")
+    plt.bar([i + width / 2 for i in x], human_without, width, color="salmon", label="Without Copilot")
+    plt.xlabel("Language")
+    plt.ylabel("Human Comment Count")
+    plt.title(f"Human Comments: With vs Without Copilot\n({start_date} to {end_date})")
+    plt.xticks(x, languages_with_overall, rotation=45, ha="right")
+    plt.legend(loc="upper right")
+    plt.tight_layout()
+    compare_path = output_dir / "human_comments_comparison.png"
+    plt.savefig(compare_path, dpi=150)
+    plt.close()
+    print(f"Saved: {compare_path}")

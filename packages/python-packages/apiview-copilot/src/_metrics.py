@@ -32,10 +32,14 @@ class MetricsSegment:
     human_comment_count_with_ai: Optional[int] = None
     human_comment_count_without_ai: Optional[int] = None
 
-    # AI comment classifications
+    # AI comment classifications (mutually exclusive, sum to total_ai_comment_count)
+    total_ai_comment_count: Optional[int] = None
     upvoted_ai_comment_count: Optional[int] = None
-    neutral_ai_comment_count: Optional[int] = None
     downvoted_ai_comment_count: Optional[int] = None
+    deleted_ai_comment_count: Optional[int] = None
+    implicit_good_ai_comment_count: Optional[int] = None
+    implicit_bad_ai_comment_count: Optional[int] = None
+    neutral_ai_comment_count: Optional[int] = None
 
     # Dimension (e.g., {"language": "python"}) or {} for "All"
     dimension: Dict[str, str] = field(default_factory=dict)
@@ -131,27 +135,32 @@ def _build_metrics_segment(
     # need language set to compute IDs
     metrics.compute_ids()
 
-    # Extract approved revision metadata from get_active_reviews results
-    # Get only revisions that were approved during the period
-    approved_revisions = [rev for r in reviews for rev in r.revisions if rev.approval is not None]
+    # Extract ALL revisions from get_active_reviews results
+    all_revisions = [rev for r in reviews for rev in r.revisions]
+    approved_revisions = [rev for rev in all_revisions if rev.approval is not None]
 
     metrics.active_review_count = len(approved_revisions)
     metrics.active_copilot_review_count = sum(1 for rev in approved_revisions if rev.has_copilot_review)
 
-    # Build a mapping of revision_id -> has_copilot for all approved revisions
+    # Build mappings for all revisions and approved revisions
+    all_revision_ids = set()
+    approved_revision_ids = set()
     revision_has_copilot = {}
-    for rev in approved_revisions:
-        for revision_id in rev.revision_ids:
-            revision_has_copilot[revision_id] = rev.has_copilot_review
 
-    approved_revision_ids = set(revision_has_copilot.keys())
+    for rev in all_revisions:
+        for revision_id in rev.revision_ids:
+            all_revision_ids.add(revision_id)
+            revision_has_copilot[revision_id] = rev.has_copilot_review
+            if rev.approval is not None:
+                approved_revision_ids.add(revision_id)
 
     # Filter comments to only those belonging to approved revisions, excluding Diagnostic
+    # (for human comment counts - comment_makeup metrics)
     approved_revision_comments = [
         c for c in comments if c.api_revision_id in approved_revision_ids and c.comment_source != "Diagnostic"
     ]
 
-    # Categorize comments based on whether the revision has Copilot
+    # Categorize comments based on whether the revision has Copilot (for comment_makeup)
     ai_comments_with_copilot = []
     human_comments_with_copilot = []
     human_comments_without_copilot = []
@@ -172,17 +181,43 @@ def _build_metrics_segment(
     metrics.human_comment_count_with_ai = len(human_comments_with_copilot)
     metrics.human_comment_count_without_ai = len(human_comments_without_copilot)
 
-    # Count AI comments only from approved revisions with Copilot (excluding deleted)
-    ai_comments_to_count = [c for c in ai_comments_with_copilot if not c.is_deleted]
+    # For comment_quality: count ALL AI comments across ALL active revisions (approved + unapproved)
+    all_ai_comments = [
+        c for c in comments if c.api_revision_id in all_revision_ids and c.comment_source == "AIGenerated"
+    ]
 
-    # Categorize AI comments by vote status
-    upvoted_ai_comments = [c for c in ai_comments_to_count if c.upvotes]
-    downvoted_ai_comments = [c for c in ai_comments_to_count if c.downvotes]
-    neutral_ai_comments = [c for c in ai_comments_to_count if not c.upvotes and not c.downvotes]
+    # Categorize AI comments (mutually exclusive, in priority order)
+    deleted_ai_comments = []
+    downvoted_ai_comments = []
+    upvoted_ai_comments = []
+    implicit_good_ai_comments = []
+    implicit_bad_ai_comments = []
+    neutral_ai_comments = []
 
-    metrics.upvoted_ai_comment_count = len(upvoted_ai_comments)
-    metrics.neutral_ai_comment_count = len(neutral_ai_comments)
+    for c in all_ai_comments:
+        if c.is_deleted:
+            deleted_ai_comments.append(c)
+        elif c.downvotes:
+            # Any downvote trumps upvotes
+            downvoted_ai_comments.append(c)
+        elif c.upvotes:
+            upvoted_ai_comments.append(c)
+        elif c.is_resolved:
+            implicit_good_ai_comments.append(c)
+        elif c.api_revision_id in approved_revision_ids:
+            # In approved revision, not resolved, no votes = implicit bad
+            implicit_bad_ai_comments.append(c)
+        else:
+            # In unapproved revision, not resolved, no votes = neutral
+            neutral_ai_comments.append(c)
+
+    metrics.total_ai_comment_count = len(all_ai_comments)
+    metrics.deleted_ai_comment_count = len(deleted_ai_comments)
     metrics.downvoted_ai_comment_count = len(downvoted_ai_comments)
+    metrics.upvoted_ai_comment_count = len(upvoted_ai_comments)
+    metrics.implicit_good_ai_comment_count = len(implicit_good_ai_comments)
+    metrics.implicit_bad_ai_comment_count = len(implicit_bad_ai_comments)
+    metrics.neutral_ai_comment_count = len(neutral_ai_comments)
 
     return metrics
 
@@ -194,42 +229,26 @@ def _calculate_adoption_rate(segment: MetricsSegment) -> float:
     return segment.active_copilot_review_count / segment.active_review_count
 
 
-def _calculate_ai_comment_count(segment: MetricsSegment) -> int:
-    """Calculate the total number of AI comments."""
-    return segment.upvoted_ai_comment_count + segment.downvoted_ai_comment_count + segment.neutral_ai_comment_count
-
-
-def _calculate_good_comment_rate(segment: MetricsSegment) -> float:
-    """Calculate the rate of good AI comments."""
-    total = _calculate_ai_comment_count(segment)
+def _calculate_rate(count: int, total: int) -> float:
+    """Calculate a rate as count / total, returning 0.0 if total is 0."""
     if total == 0:
         return 0.0
-    return segment.upvoted_ai_comment_count / total
-
-
-def _calculate_bad_comment_rate(segment: MetricsSegment) -> float:
-    """Calculate the rate of bad AI comments."""
-    total = _calculate_ai_comment_count(segment)
-    if total == 0:
-        return 0.0
-    return segment.downvoted_ai_comment_count / total
-
-
-def _calculate_neutral_comment_rate(segment: MetricsSegment) -> float:
-    """Calculate the rate of neutral AI comments."""
-    total = _calculate_ai_comment_count(segment)
-    if total == 0:
-        return 0.0
-    return segment.neutral_ai_comment_count / total
+    return count / total
 
 
 def _calculate_ai_comment_rate(segment: MetricsSegment) -> float:
-    """Calculate the rate of AI comments."""
-    ai_count = _calculate_ai_comment_count(segment)
+    """Calculate the rate of AI comments in comment_makeup (approved revisions only)."""
+    # For comment_makeup, we use the sum of non-deleted AI comments from approved revisions
+    # This excludes deleted and includes only upvoted + downvoted + implicit_good + implicit_bad
+    # (neutral are in unapproved revisions, so excluded from comment_makeup ai_comment_count)
+    ai_count = (
+        segment.upvoted_ai_comment_count
+        + segment.downvoted_ai_comment_count
+        + segment.implicit_good_ai_comment_count
+        + segment.implicit_bad_ai_comment_count
+    )
     total = ai_count + segment.human_comment_count_with_ai
-    if total == 0:
-        return 0.0
-    return ai_count / total
+    return _calculate_rate(ai_count, total)
 
 
 def _build_metrics_report(data: Dict[str, MetricsSegment]) -> dict:
@@ -250,15 +269,37 @@ def _build_metrics_report(data: Dict[str, MetricsSegment]) -> dict:
                 "adoption_rate": fmt(_calculate_adoption_rate(segment)),
             },
             "comment_quality": {
-                "ai_comment_count": _calculate_ai_comment_count(segment),
-                "good": fmt(_calculate_good_comment_rate(segment)),
-                "bad": fmt(_calculate_bad_comment_rate(segment)),
-                "neutral": fmt(_calculate_neutral_comment_rate(segment)),
+                # Total AI comments across ALL active revisions (approved + unapproved)
+                "ai_comment_count": segment.total_ai_comment_count,
+                # Backward compat fractions
+                "good": fmt(_calculate_rate(segment.upvoted_ai_comment_count, segment.total_ai_comment_count)),
+                "bad": fmt(_calculate_rate(segment.downvoted_ai_comment_count, segment.total_ai_comment_count)),
+                "neutral": fmt(_calculate_rate(segment.neutral_ai_comment_count, segment.total_ai_comment_count)),
+                # New detailed counts and fractions
+                "good_count": segment.upvoted_ai_comment_count,
+                "bad_count": segment.downvoted_ai_comment_count,
+                "deleted_count": segment.deleted_ai_comment_count,
+                "deleted": fmt(_calculate_rate(segment.deleted_ai_comment_count, segment.total_ai_comment_count)),
+                "implicit_good_count": segment.implicit_good_ai_comment_count,
+                "implicit_good": fmt(
+                    _calculate_rate(segment.implicit_good_ai_comment_count, segment.total_ai_comment_count)
+                ),
+                "implicit_bad_count": segment.implicit_bad_ai_comment_count,
+                "implicit_bad": fmt(
+                    _calculate_rate(segment.implicit_bad_ai_comment_count, segment.total_ai_comment_count)
+                ),
+                "neutral_count": segment.neutral_ai_comment_count,
             },
             "comment_makeup": {
                 "human_comment_count_without_copilot": segment.human_comment_count_without_ai,
                 "human_comment_count_with_ai": segment.human_comment_count_with_ai,
-                "ai_comment_count": _calculate_ai_comment_count(segment),
+                # For comment_makeup, ai_comment_count is from approved revisions only (excluding deleted + neutral)
+                "ai_comment_count": (
+                    segment.upvoted_ai_comment_count
+                    + segment.downvoted_ai_comment_count
+                    + segment.implicit_good_ai_comment_count
+                    + segment.implicit_bad_ai_comment_count
+                ),
                 "ai_comment_rate": fmt(_calculate_ai_comment_rate(segment)),
             },
         }

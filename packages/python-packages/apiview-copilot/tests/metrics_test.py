@@ -137,6 +137,15 @@ class TestMetrics:
             "good": 0.5,
             "bad": 0.5,
             "neutral": 0.0,
+            "good_count": 1,
+            "bad_count": 1,
+            "deleted_count": 0,
+            "deleted": 0.0,
+            "implicit_good_count": 0,
+            "implicit_good": 0.0,
+            "implicit_bad_count": 0,
+            "implicit_bad": 0.0,
+            "neutral_count": 0,
         }
 
         cm = overall["comment_makeup"]
@@ -270,12 +279,30 @@ class TestMetrics:
             "good": 1.0,
             "bad": 0.0,
             "neutral": 0.0,
+            "good_count": 1,
+            "bad_count": 0,
+            "deleted_count": 0,
+            "deleted": 0.0,
+            "implicit_good_count": 0,
+            "implicit_good": 0.0,
+            "implicit_bad_count": 0,
+            "implicit_bad": 0.0,
+            "neutral_count": 0,
         }
         assert java_cq == {
             "ai_comment_count": 1,
             "good": 0.0,
             "bad": 1.0,
             "neutral": 0.0,
+            "good_count": 0,
+            "bad_count": 1,
+            "deleted_count": 0,
+            "deleted": 0.0,
+            "implicit_good_count": 0,
+            "implicit_good": 0.0,
+            "implicit_bad_count": 0,
+            "implicit_bad": 0.0,
+            "neutral_count": 0,
         }
         assert py_cm == {
             "human_comment_count_without_copilot": 0,
@@ -398,12 +425,21 @@ class TestMetrics:
         # Also check comment_quality and comment_makeup for Python
         py_cq = report["metrics"][py_key]["comment_quality"]
         py_cm = report["metrics"][py_key]["comment_makeup"]
-        # Only one AI comment in Python reviews, no upvotes/downvotes
+        # Only one AI comment in Python reviews (rev1, approved), no upvotes/downvotes/resolved = implicit_bad
         assert py_cq == {
             "ai_comment_count": 1,
             "good": 0.0,
             "bad": 0.0,
-            "neutral": 1.0,
+            "neutral": 0.0,
+            "good_count": 0,
+            "bad_count": 0,
+            "deleted_count": 0,
+            "deleted": 0.0,
+            "implicit_good_count": 0,
+            "implicit_good": 0.0,
+            "implicit_bad_count": 1,
+            "implicit_bad": 1.0,
+            "neutral_count": 0,
         }
         assert py_cm == {
             "human_comment_count_without_copilot": 0,
@@ -727,3 +763,486 @@ class TestMetrics:
         assert py_metrics["comment_quality"]["ai_comment_count"] == 1  # Only c1
         assert py_metrics["comment_makeup"]["human_comment_count_with_ai"] == 1  # Only c3
         assert py_metrics["comment_makeup"]["ai_comment_count"] == 1  # Only c1
+
+    @patch("src._metrics.get_active_reviews")
+    @patch("src._metrics.get_comments_in_date_range")
+    def test_comment_quality_deleted_comments(self, mock_get_comments, mock_get_reviews):
+        """Test that deleted AI comments only count in deleted_count, not other categories."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        created_on = "2026-01-07T00:00:00Z"
+        comments = [
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Deleted AI comment with upvotes",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1"],
+                "Downvotes": [],
+                "IsDeleted": True,  # Deleted - should only count as deleted, not good
+            },
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Deleted AI comment",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsDeleted": True,  # Deleted
+            },
+            {
+                "id": "c3",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Non-deleted AI comment with upvotes",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user2"],
+                "Downvotes": [],
+                "IsDeleted": False,
+            },
+        ]
+
+        mock_get_reviews.return_value = [review1]
+        mock_get_comments.return_value = comments
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+
+        assert cq["ai_comment_count"] == 3  # All 3 AI comments counted
+        assert cq["deleted_count"] == 2  # c1 and c2
+        assert cq["deleted"] == round(2 / 3, 2)
+        assert cq["good_count"] == 1  # Only c3 (non-deleted with upvotes)
+        assert cq["bad_count"] == 0
+        assert cq["implicit_good_count"] == 0
+        assert cq["implicit_bad_count"] == 0
+        assert cq["neutral_count"] == 0
+
+    @patch("src._metrics.get_active_reviews")
+    @patch("src._metrics.get_comments_in_date_range")
+    def test_comment_quality_implicit_good(self, mock_get_comments, mock_get_reviews):
+        """Test that resolved AI comments with no votes count as implicit_good."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        created_on = "2026-01-07T00:00:00Z"
+        comments = [
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Resolved AI comment",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsResolved": True,  # Resolved, no votes = implicit good
+            },
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Unresolved AI comment",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsResolved": False,  # Unresolved, no votes, approved = implicit bad
+            },
+        ]
+
+        mock_get_reviews.return_value = [review1]
+        mock_get_comments.return_value = comments
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+
+        assert cq["ai_comment_count"] == 2
+        assert cq["implicit_good_count"] == 1  # c1
+        assert cq["implicit_good"] == 0.5
+        assert cq["implicit_bad_count"] == 1  # c2
+        assert cq["implicit_bad"] == 0.5
+
+    @patch("src._metrics.get_active_reviews")
+    @patch("src._metrics.get_comments_in_date_range")
+    def test_comment_quality_implicit_bad(self, mock_get_comments, mock_get_reviews):
+        """Test that AI comments in approved revisions with no action count as implicit_bad."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",  # Approved
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        created_on = "2026-01-07T00:00:00Z"
+        comments = [
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "AI comment with no action",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsResolved": False,
+            },
+        ]
+
+        mock_get_reviews.return_value = [review1]
+        mock_get_comments.return_value = comments
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+
+        assert cq["ai_comment_count"] == 1
+        assert cq["implicit_bad_count"] == 1
+        assert cq["implicit_bad"] == 1.0
+        assert cq["good_count"] == 0
+        assert cq["bad_count"] == 0
+        assert cq["neutral_count"] == 0
+
+    @patch("src._metrics.get_active_reviews")
+    @patch("src._metrics.get_comments_in_date_range")
+    def test_comment_quality_neutral_unapproved(self, mock_get_comments, mock_get_reviews):
+        """Test that AI comments in unapproved revisions with no action count as neutral."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval=None,  # NOT approved
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        created_on = "2026-01-07T00:00:00Z"
+        comments = [
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "AI comment in unapproved revision",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+                "IsResolved": False,
+            },
+        ]
+
+        mock_get_reviews.return_value = [review1]
+        mock_get_comments.return_value = comments
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+
+        assert cq["ai_comment_count"] == 1
+        assert cq["neutral_count"] == 1
+        assert cq["neutral"] == 1.0
+        assert cq["implicit_bad_count"] == 0
+        assert cq["good_count"] == 0
+        assert cq["bad_count"] == 0
+
+    @patch("src._metrics.get_active_reviews")
+    @patch("src._metrics.get_comments_in_date_range")
+    def test_comment_quality_downvotes_trump_upvotes(self, mock_get_comments, mock_get_reviews):
+        """Test that any downvote trumps upvotes - comment counts as bad, not good."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                )
+            ],
+        )
+
+        created_on = "2026-01-07T00:00:00Z"
+        comments = [
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "AI comment with both up and downvotes",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1", "user2"],  # Multiple upvotes
+                "Downvotes": ["user3"],  # One downvote - should trump upvotes
+            },
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "AI comment with only upvotes",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1"],
+                "Downvotes": [],  # No downvotes = good
+            },
+        ]
+
+        mock_get_reviews.return_value = [review1]
+        mock_get_comments.return_value = comments
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+
+        assert cq["ai_comment_count"] == 2
+        assert cq["bad_count"] == 1  # c1 (downvote trumps upvotes)
+        assert cq["good_count"] == 1  # c2
+        assert cq["neutral_count"] == 0
+        assert cq["implicit_good_count"] == 0
+        assert cq["implicit_bad_count"] == 0
+
+    @patch("src._metrics.get_active_reviews")
+    @patch("src._metrics.get_comments_in_date_range")
+    def test_comment_quality_ai_count_includes_unapproved(self, mock_get_comments, mock_get_reviews):
+        """Test that ai_comment_count includes comments from BOTH approved and unapproved revisions."""
+        reviews = [
+            ActiveReviewMetadata(
+                review_id="review1",
+                name="azure-storage-blob",
+                language="Python",
+                revisions=[
+                    ActiveRevisionMetadata(
+                        revision_ids=["rev1"],
+                        package_version="1.0.0",
+                        approval="2026-01-06T00:00:00Z",  # Approved
+                        has_copilot_review=True,
+                        version_type="GA",
+                    )
+                ],
+            ),
+            ActiveReviewMetadata(
+                review_id="review2",
+                name="azure-core",
+                language="Python",
+                revisions=[
+                    ActiveRevisionMetadata(
+                        revision_ids=["rev2"],
+                        package_version="2.0.0",
+                        approval=None,  # NOT approved
+                        has_copilot_review=True,
+                        version_type="GA",
+                    )
+                ],
+            ),
+        ]
+
+        created_on = "2026-01-07T00:00:00Z"
+        comments = [
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",  # Approved revision
+                "CommentText": "AI comment in approved",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1"],
+                "Downvotes": [],
+            },
+            {
+                "id": "c2",
+                "ReviewId": "review2",
+                "APIRevisionId": "rev2",  # Unapproved revision
+                "CommentText": "AI comment in unapproved",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": [],
+                "Downvotes": [],
+            },
+        ]
+
+        mock_get_reviews.return_value = reviews
+        mock_get_comments.return_value = comments
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+        cm = report["metrics"]["Python"]["comment_makeup"]
+
+        # comment_quality.ai_comment_count includes ALL active revisions
+        assert cq["ai_comment_count"] == 2
+        assert cq["good_count"] == 1  # c1
+        assert cq["neutral_count"] == 1  # c2 (unapproved, no action)
+
+        # comment_makeup.ai_comment_count only includes approved revisions
+        assert cm["ai_comment_count"] == 1  # Only c1
+
+    @patch("src._metrics.get_active_reviews")
+    @patch("src._metrics.get_comments_in_date_range")
+    def test_comment_quality_categories_sum_to_total(self, mock_get_comments, mock_get_reviews):
+        """Test that all category counts sum exactly to ai_comment_count."""
+        review1 = ActiveReviewMetadata(
+            review_id="review1",
+            name="azure-storage-blob",
+            language="Python",
+            revisions=[
+                ActiveRevisionMetadata(
+                    revision_ids=["rev1"],
+                    package_version="1.0.0",
+                    approval="2026-01-06T00:00:00Z",
+                    has_copilot_review=True,
+                    version_type="GA",
+                ),
+                ActiveRevisionMetadata(
+                    revision_ids=["rev2"],
+                    package_version="2.0.0",
+                    approval=None,  # Unapproved
+                    has_copilot_review=True,
+                    version_type="GA",
+                ),
+            ],
+        )
+
+        created_on = "2026-01-07T00:00:00Z"
+        comments = [
+            # Deleted
+            {
+                "id": "c1",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Deleted",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "IsDeleted": True,
+            },
+            # Bad (downvoted)
+            {
+                "id": "c2",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Bad",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Downvotes": ["user1"],
+            },
+            # Good (upvoted, no downvotes)
+            {
+                "id": "c3",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Good",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "Upvotes": ["user1"],
+            },
+            # Implicit good (resolved, no votes)
+            {
+                "id": "c4",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Implicit good",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+                "IsResolved": True,
+            },
+            # Implicit bad (approved, not resolved, no votes)
+            {
+                "id": "c5",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev1",
+                "CommentText": "Implicit bad",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+            },
+            # Neutral (unapproved, not resolved, no votes)
+            {
+                "id": "c6",
+                "ReviewId": "review1",
+                "APIRevisionId": "rev2",
+                "CommentText": "Neutral",
+                "CreatedBy": "azure-sdk",
+                "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
+            },
+        ]
+
+        mock_get_reviews.return_value = [review1]
+        mock_get_comments.return_value = comments
+
+        report = metrics.get_metrics_report("2026-01-01", "2026-01-31", environment="test")
+        cq = report["metrics"]["Python"]["comment_quality"]
+
+        # Verify counts
+        assert cq["ai_comment_count"] == 6
+        assert cq["deleted_count"] == 1
+        assert cq["bad_count"] == 1
+        assert cq["good_count"] == 1
+        assert cq["implicit_good_count"] == 1
+        assert cq["implicit_bad_count"] == 1
+        assert cq["neutral_count"] == 1
+
+        # Verify sum equals total
+        total_from_categories = (
+            cq["deleted_count"]
+            + cq["bad_count"]
+            + cq["good_count"]
+            + cq["implicit_good_count"]
+            + cq["implicit_bad_count"]
+            + cq["neutral_count"]
+        )
+        assert total_from_categories == cq["ai_comment_count"]

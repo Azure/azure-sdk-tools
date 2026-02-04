@@ -16,6 +16,7 @@ table th:nth-child(2) {
 | azsdk_analyze_log_file | `azsdk azp log analyze` | Analyzes a log file for errors and issues |
 | azsdk_analyze_pipeline | `azsdk azp analyze` | Analyze azure pipeline for failures. Set analyzeWithAgent to false unless requested otherwise by the user |
 | azsdk_apiview_get_comments | `azsdk apiview get-comments` | Get all the comments of an APIView API using the APIView URL |
+| azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'. |
 | azsdk_check_api_spec_ready_for_sdk | `azsdk release-plan check-api-readiness` | Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params. |
 | azsdk_check_service_label |  | Checks if a service label exists and returns its details |
 | azsdk_convert_swagger_to_typespec | `azsdk tsp convert` | Converts an existing Azure service swagger definition to a TypeSpec project. Returns path to the created project. |

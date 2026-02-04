@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -98,6 +99,66 @@ public class ReviewsTokenAuthController : ControllerBase
         {
             _logger.LogError(ex, "Error resolving review/revision");
             return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while resolving.");
+        }
+    }
+
+    /// <summary>
+    ///     Returns the canonical APIView review URL for a given package and language.
+    ///     By default redirects to the review page. Use redirect=false to get JSON response instead.
+    /// </summary>
+    /// <param name="package">Package query (e.g., "Azure.Storage.Blobs", "azure-storage-blob")</param>
+    /// <param name="language">Language (e.g., "C#", "Python", "Java", "JavaScript")</param>
+    /// <param name="version">Optional package version. If not specified, uses latest revision.</param>
+    /// <param name="redirect">If true (default), redirects to review page. If false, returns JSON with URL.</param>
+    /// <returns>Redirect to review page (default) or JSON response with URL</returns>
+    /// <example>
+    ///     GET /review?package=Azure.Storage.Blobs&amp;language=C# - Redirects to review
+    ///     GET /review?package=Azure.Storage.Blobs&amp;language=C#&amp;redirect=false - Returns { "url": "..." }
+    /// </example>
+    [HttpGet("/review", Name = "GetReviewUrl")]
+    public async Task<IActionResult> GetReviewUrl(
+        [FromQuery] string package,
+        [FromQuery] string language,
+        [FromQuery] string version = null,
+        [FromQuery] bool redirect = true)
+    {
+        if (string.IsNullOrEmpty(package) || string.IsNullOrEmpty(language))
+        {
+            return BadRequest(
+                "Both 'package' and 'language' parameters are required. Example: /review?package=Azure.Storage.Blobs&language=C#");
+        }
+
+        try
+        {
+            ResolvePackageResponse result = await reviewSearch.ResolvePackageQuery(package, language, version);
+
+            if (result == null)
+            {
+                return NotFound($"Could not find an APIView review for package '{package}' in language '{language}'" +
+                                (version != null ? $" with version '{version}'" : "") + ". " +
+                                "Please verify the package name and language are correct.");
+            }
+
+            string reviewUrl = ManagerHelpers.ResolveReviewUrl(
+                result.ReviewId,
+                result.RevisionId,
+                result.Language,
+                _configuration,
+                _languageServices);
+
+            if (redirect)
+            {
+                return Redirect(reviewUrl);
+            }
+
+            return new LeanJsonResult(new { url = reviewUrl }, StatusCodes.Status200OK);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resolving review URL for package: {Package}, language: {Language}", package,
+                language);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "An error occurred while looking up the review. Please try again later.");
         }
     }
 

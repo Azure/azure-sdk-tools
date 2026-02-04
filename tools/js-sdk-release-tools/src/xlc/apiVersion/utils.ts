@@ -7,7 +7,7 @@ import { glob } from 'glob';
 import { exists } from 'fs-extra';
 import { tryGetNpmView } from "../../common/npmUtils.js";
 import { getLatestStableVersion, isBetaVersion } from "../../utils/version.js";
-
+import fs from 'fs';
 import unixify from 'unixify';
 
 function tryFindVersionInFunctionBody(func: FunctionDeclaration): string | undefined {
@@ -158,4 +158,30 @@ export const getApiVersionTypeFromNpm = async (
     return latestVersion && !isBetaVersion(latestVersion)
         ? ApiVersionType.Stable
         : ApiVersionType.Preview;
+};
+
+export const getApiVersionTypeFromMetadata = async (
+    packageRoot: string
+): Promise<ApiVersionType> => {
+    const metadataPath = path.join(packageRoot, 'metadata.json');
+    if (!(await exists(metadataPath))) {
+        return ApiVersionType.None;
+    }
+    
+    try {
+        const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
+        const metadata = JSON.parse(metadataContent);
+        const apiVersion = metadata.apiVersion;
+        
+        if (!apiVersion) {
+            logger.warn(`metadata.json exists at ${metadataPath} but does not contain apiVersion field`);
+            return ApiVersionType.None;
+        }
+        
+        logger.info(`Found apiVersion "${apiVersion}" in metadata.json`);
+        return apiVersion.indexOf('-preview') >= 0 ? ApiVersionType.Preview : ApiVersionType.Stable;
+    } catch (error) {
+        logger.warn(`Failed to read or parse metadata.json at ${metadataPath}: ${error}`);
+        return ApiVersionType.None;
+    }
 };

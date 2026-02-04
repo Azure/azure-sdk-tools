@@ -277,6 +277,69 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.postMessage(arrayBuffer);
     });
 
+    it('test Changes Only mode shows added lines', (done) => {
+      apiTreeBuilder.onmessage = ({ data }) => {
+        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+          const codePanelRowData = data.payload as CodePanelRowData[];
+          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'added');
+          
+          expect(linesWithDiff.length).toBeGreaterThan(0);
+          expect(linesWithDiff.some(row => row.diffKind === 'added')).toBe(true);
+        }
+        done();
+      };
+
+      apiTreeBuilder.onerror = (error) => {
+        done.fail(error.message);
+      };
+  
+      const apiTreeBuilderData : ApiTreeBuilderData = {
+        diffStyle: 'trees', // Changes Only mode
+        showDocumentation: false,
+        showComments: false,
+        showSystemComments: false,
+        showHiddenApis: false
+      };
+
+      const jsonString = JSON.stringify(contentWithAddedOnly);
+      const encoder = new TextEncoder();
+      const arrayBuffer = encoder.encode(jsonString).buffer;
+  
+      apiTreeBuilder.postMessage(apiTreeBuilderData);
+      apiTreeBuilder.postMessage(arrayBuffer);
+    });
+
+    it('test Changes Only mode shows removed lines', (done) => {
+      apiTreeBuilder.onmessage = ({ data }) => {
+        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+          const codePanelRowData = data.payload as CodePanelRowData[];
+          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed');
+          expect(linesWithDiff.length).toBeGreaterThan(0);
+          expect(linesWithDiff.some(row => row.diffKind === 'removed')).toBe(true);
+        }
+        done();
+      };
+
+      apiTreeBuilder.onerror = (error) => {
+        done.fail(error.message);
+      };
+  
+      const apiTreeBuilderData : ApiTreeBuilderData = {
+        diffStyle: 'trees', // Changes Only mode
+        showDocumentation: false,
+        showComments: false,
+        showSystemComments: false,
+        showHiddenApis: false
+      };
+
+      const jsonString = JSON.stringify(contentWithRemovedOnly);
+      const encoder = new TextEncoder();
+      const arrayBuffer = encoder.encode(jsonString).buffer;
+  
+      apiTreeBuilder.postMessage(apiTreeBuilderData);
+      apiTreeBuilder.postMessage(arrayBuffer);
+    });
+
     it('Test Only Attribute line diff', (done) => {
       apiTreeBuilder.onmessage = ({ data }) => {
         if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {

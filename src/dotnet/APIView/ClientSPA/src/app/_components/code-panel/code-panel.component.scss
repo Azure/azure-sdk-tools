@@ -191,13 +191,20 @@
         &.has-comment-btn::after {
             display: none;
         }
+
+        // When line numbers are hidden, don't reserve space for them
+        &.hide-line-numbers {
+            .line-number {
+                display: none;
+            }
+        }
         
         .add-comment-btn {
             opacity: 0;
             visibility: hidden;
             transition: all 0.2s ease;
             padding: 3px 6px;
-            margin-left: 6px;
+            margin-left: -2px;
             border: 1px solid #d0d7de;
             background: white;
             color: #57606a;

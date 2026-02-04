@@ -114,14 +114,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   ];
   selectedDiffStyle : string = this.diffStyleOptions[0].value;
 
-  changeHistoryIcons : any = {
-    'created': 'bi bi-plus-circle-fill created',
-    'approved': 'bi bi-check-circle-fill approved',
-    'approvalReverted': 'bi bi-arrow-left-circle-fill approval-reverted',
-    'deleted': 'bi bi-trash3-fill deleted',
-    'unDeleted': 'bi bi-plus-circle-fill undeleted'
-  };
-
   constructor(
     private configService: ConfigService, private reviewsService: ReviewsService, private route: ActivatedRoute,
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,

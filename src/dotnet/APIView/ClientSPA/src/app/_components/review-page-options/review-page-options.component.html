@@ -156,24 +156,6 @@
     </ul>
     </app-page-options-section>
 
-    <app-page-options-section sectionName="Change History" [collapsedInput]="true">
-    <ul class="list-group">
-        <li class="list-group-item change-history">
-            <p-timeline [value]="activeAPIRevision?.changeHistory">
-                <ng-template pTemplate="marker" let-changeHistory>
-                    <span [style]="{ 'background-color': changeHistory.color }">
-                        <i [class]="changeHistoryIcons[changeHistory.changeAction]"></i>
-                    </span>
-                </ng-template>
-                <ng-template pTemplate="content" let-changeHistory>
-                    <div class="p-text-primary small">{{ changeHistory.changeAction | titlecase }}</div>
-                    <div class="p-text-secondary small">{{ changeHistory.changedBy }}</div>
-                    <div class="p-text-secondary small">{{ (changeHistory.changedOn) ? (changeHistory.changedOn | timeago) : "" }}</div>
-                </ng-template>
-            </p-timeline>
-        </li>
-    </ul>    </app-page-options-section>
-
     <p-dialog header="Approve APIRevision"
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
     [style]="{ width: '40dvw' }">

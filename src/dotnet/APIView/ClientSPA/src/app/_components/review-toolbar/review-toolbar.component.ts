@@ -9,6 +9,7 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { PopoverModule } from 'primeng/popover';
+import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { ButtonGroupModule } from 'primeng/buttongroup';
 import { DialogModule } from 'primeng/dialog';
@@ -35,6 +36,7 @@ import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
     InputIconModule,
     InputTextModule,
     PopoverModule,
+    TooltipModule,
     ButtonModule,
     ButtonGroupModule,
     DialogModule,
@@ -65,6 +67,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   @Output() showHiddenAPIEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter: EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter: EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
+  @Output() copyReviewTextEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   private destroy$ = new Subject<void>();
 
@@ -303,7 +306,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
     const searchInfo = this.codeLineSearchInfo;
     if (searchInfo && searchInfo.currentMatch && searchInfo.totalMatchCount !== undefined && direction !== 0) {
       let newMatch = searchInfo.currentMatch;
-      
+
       if (direction > 0) {
         if (newMatch.next) {
           newMatch = newMatch.next;
@@ -321,7 +324,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
           }
         }
       }
-      
+
       this.codeLineSearchInfoEmitter.emit(new CodeLineSearchInfo(newMatch, searchInfo.totalMatchCount));
     }
   }
@@ -329,6 +332,10 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   clearReviewSearch() {
     this.codeLineSearchText.setValue('');
     this.codeLineSearchTextEmitter.emit('');
+  }
+
+  copyReviewText() {
+    this.copyReviewTextEmitter.emit(this.isDiffView);
   }
 
   mapRevisionToMenu(apiRevisions: APIRevision[]) {

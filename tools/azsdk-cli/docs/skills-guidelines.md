@@ -1,21 +1,30 @@
-# Skills
+# Azure SDK tools guidelines to use skills
 
-## Definition
-
-GitHub copilot uses skills defined in `.github/skills`. Each skill9which is a directory under `github/skills`) includes a `SKILL.md` which contains the metadata and instructions. You can also include examples and some scripts in the skill directory. Copilot picks a skill based on how its description matches and applicable based on the context and prompt.  Each skill should define instruction, success criteria, list of tools and commands to be used by the skill and an optional next supporting prompt for the user to help guide the user to next task.
+This document provides comprehensive guidelines for creating skills.GitHub copilot uses skills defined in `.github/skills`. Each skill9which is a directory under `github/skills`) includes a `SKILL.md` which contains the metadata and instructions. You can also include examples and some scripts in the skill directory. Copilot identifies a skill based on its description and how semantically matches the prompt in a given context.  Each skill should define instruction, success criteria, list of tools and commands to be used by the skill and an optional next prompt for the user so agent can recommend the next step.
 
 ## When to Use
+
+Instructions for copilot/agent can be either included in copilot-instructions.md or as a skill. Instructions in the copilot instruction file are included as part of every prompt with the LLM and this makes it costly token use when some of these  instructions are task specific and not applicable globally for all prompts. 
+Skill helps to reduce the token usage by using the instructions in the skill only on demand basis. Skill can use a combination of instruction, mcp tool and commands to run a series of tasks.
+
+
+| Skill | Copilot Instructions |
+|-------|---------------------|
+| Specific tasks and workflows | Repository-wide conventions, General coding conventions |
+| Detailed workflow instructions | Output format preferences |
+| Automate repeatable workflows | Interaction logging |
+| Build modular automation | Confirmation policies |
+| Provide consistent execution | Communication patterns |
+| Task-specific commands and procedures | Cross-cutting concerns |
 
 ### Use Skills for Specific Tasks and Workflows
 
 Skills should be used when you need to:
 
-
 - **create a detailed workflow instruction that connects various tasks**: A complete set of instructions in order to integrate various tasks, tools and commands to guide a user through complete workflow.  (e.g TypeSpec to SDK release workflow, Package generation to Prepare release workflow).
-- **Provide detailed instructions applicable for a task**: A set of instructions to be completed by agent to achieve a goal. (e.g. Analyze pipeline failure. Create a release plan)
+- **Provide detailed instructions applicable for a task**: A set of instructions to be completed by agent to achieve a goal. (e.g. Analyze pipeline failure. Create a release plan, verify setup)
 - **Automate repeatable workflows**: Tasks that follow a consistent pattern across multiple scenarios (e.g., TypeSpec validation, package generation, package test and validation, release planning)
 - **Build modular automation**: Create granular Skills that can be combined to construct larger workflow Skills
-- **Reference from other Skills**: Enable Skills to call or reference other Skills to build complex multi-step processes
 - **Provide consistent execution**: Ensure that tasks are performed the same way regardless of who or what triggers them
 
 ### Examples of Skill Usage
@@ -30,11 +39,13 @@ Skills should be used when you need to:
 - **Granular Skills**: Focus on single, atomic operations (e.g., "validate TypeSpec schema", "compile package", "run unit tests")
 - **Workflow Skills**: Combine multiple granular Skills to accomplish end-to-end processes (e.g., "complete package validation" might reference validation, build, and test Skills)
 
-## Repository to Store Them
+## Where to store the skills
+
+GitHub copilot requires all skills in `.github/skills` directory. Some skills are language or repo specific and some skills are common across all repos. A repo specific skill can be created in `'github/skills` in the repo itself. If a skill is applicable for more than one language and if instructions are same then skill should be created in `Azure/azure-sdk-tools` repo and sync them to all repos. One challenge is to avoid naming collision between local skill and centrally stored skill. A global skill should have a suffix `global` and local skill can have suffix `local` to avoid the name collision. For e.g. package-generate-skill-global.
 
 ### Language-Dependent and Repository-Specific Skills
 
-Skills that are specific to a particular language or repository should be stored within that repository. This ensures that Skills remain closely aligned with the codebase they support.
+Skills that are specific to a particular language or repository should be stored within that repository.
 
 **Example**: TypeSpec validation Skills specific to azure-rest-api-specs should be stored in the azure-rest-api-specs repository at `.github/skills/`.
 
@@ -42,12 +53,15 @@ Skills that are specific to a particular language or repository should be stored
 
 Skills that apply to multiple repositories with the same instructions should be placed in the `eng/common/.github/skills` directory within the azure-sdk-tools repository. This enables sharing of common automation patterns across all Azure SDK repositories.
 
-### Engineering Common Sync Framework
+### How to sync skills across the repos
+
+Engineering system has a pipeline to sync all changes in the `eng/common` in azure-sdk-tools repo to `eng/common` in all repos. This can be enhanced to support the sync of skills to `github/skills`.
 
 To distribute Skills from azure-sdk-tools to individual Azure SDK repositories:
 
-- Skills in `eng/common/.github/skills` are synced to `.github/skills` in individual SDK repositories
-- Changes to the engineering common sync framework are required to enable this synchronization
+- submit a PR to create or edit a skill in `Azure/azure-sdk-tools.
+- Skills in `eng/common/.github/skills` are synced to `.github/skills` in individual SDK repositories using engsys pipeline.
+- Changes to the engineering systems common sync framework are required to enable this synchronization
 - The sync process ensures that all repositories benefit from centralized Skill updates
 
 ## What to Include in Skill Instructions
@@ -58,7 +72,7 @@ When writing Skill instructions:
 
 1. **Use azsdk-cli commands** or **MCP tools** that abstract language-specific implementations
 2. Only use language-specific commands when no CLI or MCP wrapper exists
-3. This approach ensures Skills remain portable and easier to maintain
+3. This approach ensures Skills remain portable and easier to maintain across all repos.
 
 **Example**: Prefer `azsdk pkg validate --package-path ./sdk/storage` over language-specific commands like `dotnet test` or `pytest`.
 
@@ -95,7 +109,7 @@ Possible Causes: Network issues, service unavailable, incorrect test configurati
 Fix: Check service endpoint availability, verify authentication, increase timeout in test configuration
 ```
 
-### Maintain Tool and Command Lists
+### Define a section to list Tool and Commands used by skill.
 
 Each Skill should maintain a list of:
 
@@ -103,13 +117,13 @@ Each Skill should maintain a list of:
 - CLI commands invoked
 - External dependencies required
 
-This information supports evaluation frameworks and helps identify tool coverage gaps.
+This information will support evaluation frameworks and helps identify any gaps in skill goal for various prompts.
 
-## How to Test
+## How to test
 
 ### Current Evaluation Framework Limitations
 
-The current evaluation framework primarily focuses on testing Copilot instructions and has limited support for Skill-specific testing. Enhancement is needed to provide comprehensive Skill validation.
+The current evaluation framework primarily focuses on testing Copilot instructions and has no support for Skill-specific testing. Enhancement is needed to provide comprehensive Skill validation.
 
 ### Required Testing Capabilities
 

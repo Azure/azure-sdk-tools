@@ -396,10 +396,10 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
     print(f"Saved: {adoption_path}")
 
     # Chart 2: Comment Quality - stacked percent bar chart
-    # Order from bottom to top: good, implicit_good, neutral, implicit_bad, bad, deleted
-    categories = ["good", "implicit_good", "neutral", "implicit_bad", "bad", "deleted"]
-    colors = ["darkgreen", "lightgreen", "gray", "lightcoral", "red", "darkred"]
-    labels = ["Good (upvoted)", "Implicit Good", "Neutral", "Implicit Bad", "Bad (downvoted)", "Deleted"]
+    # Order from bottom to top: good, implicit_good, implicit_bad, bad, deleted (neutral omitted - ambiguous)
+    categories = ["good", "implicit_good", "implicit_bad", "bad", "deleted"]
+    colors = ["darkgreen", "lightgreen", "lightcoral", "red", "darkred"]
+    labels = ["Good (upvoted)", "Implicit Good", "Implicit Bad", "Bad (downvoted)", "Deleted"]
 
     plt.figure(figsize=(12, 6))
     x = range(len(languages_with_overall))
@@ -415,7 +415,7 @@ def _generate_charts(report: dict, start_date: str, end_date: str) -> None:
     plt.title(f"AI Comment Quality by Language\n({start_date} to {end_date})")
     plt.xticks(x, languages_with_overall, rotation=45, ha="right")
     plt.ylim(0, 1.05)
-    plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=6, fontsize=8)
+    plt.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=5, fontsize=8)
     plt.tight_layout()
     plt.subplots_adjust(bottom=0.25)
     quality_path = output_dir / "comment_quality.png"

@@ -62,9 +62,14 @@ internal class TypeSpecCustomizationServiceLiveTests
     }
 
     [Test]
-    [Explicit("Manual test - requires GitHub Copilot credentials")]
     public async Task ApplyCustomization_WithRealCopilotSdk_CompletesSuccessfully()
     {
+
+        if (!await CopilotTestHelper.IsCopilotAvailableAsync())
+        {
+            Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
+        }
+
         var logger = new TestLogger<TypeSpecCustomizationService>();
         var rawOutputHelper = Mock.Of<IRawOutputHelper>();
         var npxHelper = new NpxHelper(

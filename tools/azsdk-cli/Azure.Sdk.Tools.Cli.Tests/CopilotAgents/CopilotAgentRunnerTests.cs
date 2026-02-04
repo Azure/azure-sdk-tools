@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using GitHub.Copilot.SDK;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -36,6 +37,8 @@ internal class CopilotAgentRunnerTests
 
         // Setup client mock
         clientMock = new Mock<ICopilotClientWrapper>();
+        clientMock.Setup(c => c.GetAuthStatusAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CopilotAuthStatus(IsAuthenticated: true));
         clientMock.Setup(c => c.CreateSessionAsync(
                 It.IsAny<SessionConfig>(),
                 It.IsAny<CancellationToken>()))
@@ -559,4 +562,147 @@ internal class CopilotAgentRunnerTests
 
         Assert.That(capturedPrompt, Does.Contain("String validation error"));
     }
+
+    [Test]
+    public void RunAsync_WithInvalidCliPath_ThrowsCliNotFoundError()
+    {
+        // Arrange - Use a fake CLI path that doesn't exist
+        var copilotClient = new CopilotClient(new CopilotClientOptions
+        {
+            UseStdio = true,
+            AutoStart = true,
+            UseLoggedInUser = false,
+            CliPath = "/nonexistent/path/to/copilot-cli"
+        });
+        var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
+        var localTokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var runner = new CopilotAgentRunner(
+            copilotClientWrapper,
+            localTokenUsageHelper,
+            new TestLogger<CopilotAgentRunner>());
+
+        var agent = new CopilotAgent<AuthTestResult>
+        {
+            Instructions = "Test instructions",
+            Tools = []
+        };
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await runner.RunAsync(agent));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ex!.Message, Does.Contain("GitHub Copilot CLI could not be found"));
+            Assert.That(ex.Message, Does.Contain("install"));
+        });
+
+    }
+
+    [Test]
+    public void RunAsync_WithInvalidGitHubToken_ThrowsNotAuthenticatedError()
+    {
+        // Arrange - Use an invalid GitHub token
+        var copilotClient = new CopilotClient(new CopilotClientOptions
+        {
+            UseStdio = true,
+            AutoStart = true,
+            UseLoggedInUser = false,
+            GithubToken = "invalid_token_that_will_not_work"
+        });
+        var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
+        var localTokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var runner = new CopilotAgentRunner(
+            copilotClientWrapper,
+            localTokenUsageHelper,
+            new TestLogger<CopilotAgentRunner>());
+
+        var agent = new CopilotAgent<AuthTestResult>
+        {
+            Instructions = "Test instructions",
+            Tools = []
+        };
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await runner.RunAsync(agent));
+
+        Assert.That(ex!.Message, Does.Contain("not authenticated").Or.Contain("could not be found"));
+    }
+
+    [Test]
+    public void RunAsync_WhenGetAuthStatusThrows_ThrowsCliNotFoundError()
+    {
+        // Arrange - Mock the client wrapper to throw when GetAuthStatusAsync is called
+        var mockClientWrapper = new Mock<ICopilotClientWrapper>();
+        mockClientWrapper
+            .Setup(c => c.GetAuthStatusAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("CLI process failed to start"));
+
+        var localTokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var runner = new CopilotAgentRunner(
+            mockClientWrapper.Object,
+            localTokenUsageHelper,
+            new TestLogger<CopilotAgentRunner>());
+
+        var agent = new CopilotAgent<AuthTestResult>
+        {
+            Instructions = "Test instructions",
+            Tools = []
+        };
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await runner.RunAsync(agent));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ex!.Message, Does.Contain("GitHub Copilot CLI could not be found"));
+            Assert.That(ex.InnerException, Is.Not.Null);
+        });
+
+        Assert.That(ex.InnerException!.Message, Does.Contain("CLI process failed"));
+    }
+
+    [Test]
+    public void RunAsync_WhenNotAuthenticated_ThrowsNotAuthenticatedError()
+    {
+        // Arrange - Mock the client wrapper to return IsAuthenticated = false
+        var mockClientWrapper = new Mock<ICopilotClientWrapper>();
+        mockClientWrapper
+            .Setup(c => c.GetAuthStatusAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CopilotAuthStatus(IsAuthenticated: false));
+
+        var localTokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var runner = new CopilotAgentRunner(
+            mockClientWrapper.Object,
+            localTokenUsageHelper,
+            new TestLogger<CopilotAgentRunner>());
+
+        var agent = new CopilotAgent<AuthTestResult>
+        {
+            Instructions = "Test instructions",
+            Tools = []
+        };
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await runner.RunAsync(agent));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ex!.Message, Does.Contain("not authenticated"));
+            Assert.That(ex.Message, Does.Contain("copilot login"));
+        });
+
+    }
+
+    /// <summary>
+    /// Simple result type for authentication tests.
+    /// </summary>
+    private record AuthTestResult
+    {
+        public bool Success { get; init; }
+    }
+
 }

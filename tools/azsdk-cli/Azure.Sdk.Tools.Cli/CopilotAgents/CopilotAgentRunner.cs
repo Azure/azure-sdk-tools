@@ -11,11 +11,41 @@ public class CopilotAgentRunner(
     CopilotTokenUsageHelper tokenUsageHelper,
     ILogger<CopilotAgentRunner> logger) : ICopilotAgentRunner
 {
+    /// <summary>
+    /// Ensures the GitHub Copilot CLI is installed and authenticated.
+    /// Throws a descriptive exception if not available or not authenticated.
+    /// </summary>
+    private async Task EnsureAuthenticatedAsync(CancellationToken ct)
+    {
+        CopilotAuthStatus authStatus;
+        try
+        {
+            authStatus = await client.GetAuthStatusAsync(ct);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new InvalidOperationException(
+                "The GitHub Copilot CLI could not be found or failed to start. This tool requires the Copilot CLI to be installed. " +
+                "For installation instructions, see: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli",
+                ex);
+        }
+
+        if (!authStatus.IsAuthenticated)
+        {
+            throw new InvalidOperationException(
+                "GitHub Copilot is not authenticated. Please authenticate using the GitHub Copilot CLI by running: copilot login");
+        }
+
+        logger.LogDebug("Copilot authentication verified");
+    }
 
     public async Task<TResult> RunAsync<TResult>(
         CopilotAgent<TResult> agent,
         CancellationToken ct = default) where TResult : notnull
     {
+        // Ensure Copilot CLI is available and authenticated before proceeding
+        await EnsureAuthenticatedAsync(ct);
+
         // Validate no tool is named "Exit" (reserved name) - case-insensitive
         if (agent.Tools.Any(t => string.Equals(t.Name, "Exit", StringComparison.OrdinalIgnoreCase)))
         {
@@ -64,23 +94,9 @@ public class CopilotAgentRunner(
             AvailableTools = [.. tools.Select(t => t.Name)]
         };
 
-        ICopilotSessionWrapper session;
-        try
-        {
-            session = await client.CreateSessionAsync(sessionConfig, ct);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            // Any error creating a session is likely due to the CLI not being installed or misconfigured.
-            throw new InvalidOperationException(
-                "The GitHub Copilot CLI could not be found or failed to start. This tool requires the Copilot CLI to be installed. " +
-                "For installation instructions, see: https://docs.github.com/en/copilot/how-tos/copilot-cli/install-copilot-cli",
-                ex);
-        }
+        await using var session = await client.CreateSessionAsync(sessionConfig, ct);
 
-        await using (session)
-        {
-            // TaskCompletionSource to signal when session is idle
+        // TaskCompletionSource to signal when session is idle
         TaskCompletionSource? sessionIdleTcs = null;
         // Track session errors that occur during processing
         SessionErrorEvent? sessionError = null;
@@ -195,6 +211,5 @@ public class CopilotAgentRunner(
 
         throw new InvalidOperationException(
             $"Agent did not return a valid result within {agent.MaxIterations} iterations");
-        } // end await using (session)
     }
 }

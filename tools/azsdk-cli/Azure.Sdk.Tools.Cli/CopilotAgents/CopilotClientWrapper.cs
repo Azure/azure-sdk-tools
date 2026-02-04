@@ -14,4 +14,10 @@ public class CopilotClientWrapper(CopilotClient client) : ICopilotClientWrapper
         var session = await client.CreateSessionAsync(config, cancellationToken);
         return new CopilotSessionWrapper(session);
     }
+
+    public async Task<CopilotAuthStatus> GetAuthStatusAsync(CancellationToken cancellationToken = default)
+    {
+        var authStatus = await client.GetAuthStatusAsync(cancellationToken);
+        return new CopilotAuthStatus(authStatus.IsAuthenticated);
+    }
 }

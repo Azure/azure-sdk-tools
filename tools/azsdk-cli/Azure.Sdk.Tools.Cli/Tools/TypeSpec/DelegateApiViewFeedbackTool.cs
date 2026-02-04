@@ -27,10 +27,10 @@ public class DelegateApiViewFeedbackTool : MCPTool
         Arity = ArgumentArity.ExactlyOne
     };
 
-    private readonly Option<string> _repoOption = new("--repo")
+    private readonly Option<string?> _repoOption = new("--repo")
     {
-        Description = "Target repository (format: owner/repo)",
-        DefaultValueFactory = _ => "Azure/azure-rest-api-specs"
+        Description = "Target repository override (format: owner/repo). If not specified, derives from APIView metadata.",
+        DefaultValueFactory = _ => null
     };
 
     private readonly Option<bool> _dryRunOption = new("--dry-run")
@@ -62,32 +62,11 @@ public class DelegateApiViewFeedbackTool : MCPTool
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var apiViewUrl = parseResult.GetValue(_apiViewUrlArg);
-        var repo = parseResult.GetValue(_repoOption);
+        var repoOverride = parseResult.GetValue(_repoOption);
         var dryRun = parseResult.GetValue(_dryRunOption);
 
         try
         {
-            // Validate APIView URL
-            if (!IsValidApiViewUrl(apiViewUrl!))
-            {
-                return new DefaultCommandResponse
-                {
-                    Message = "Invalid APIView URL. Expected format: https://apiview.dev/... or https://apiview-staging.dev/..."
-                };
-            }
-
-            // Validate repo format
-            var repoParts = repo!.Split('/');
-            if (repoParts.Length != 2)
-            {
-                return new DefaultCommandResponse
-                {
-                    Message = $"Invalid repository format: '{repo}'. Expected format: owner/repo"
-                };
-            }
-            var owner = repoParts[0];
-            var repoName = repoParts[1];
-
             _logger.LogInformation("Fetching APIView feedback from {Url}", apiViewUrl);
 
             // Get consolidated comments and metadata
@@ -105,9 +84,15 @@ public class DelegateApiViewFeedbackTool : MCPTool
             _logger.LogInformation("Found {Count} actionable comment(s) for {Package} ({Language})",
                 comments.Count, metadata.PackageName, metadata.Language);
 
-            // Detect commit SHA and TypeSpec project path
+            // Detect commit SHA, TypeSpec project path, and target repo
             _logger.LogInformation("Detecting commit SHA and TypeSpec project path");
-            var (commitSha, tspProjectPath) = await _helper.DetectShaAndTspPath(metadata, owner, repoName);
+            var (commitSha, tspProjectPath, detectedRepo) = await _helper.DetectShaAndTspPath(metadata);
+
+            // Use override repo if specified, otherwise use detected repo, fallback to default
+            var targetRepo = !string.IsNullOrEmpty(repoOverride) ? repoOverride : detectedRepo ?? "Azure/azure-rest-api-specs";
+            var repoParts = targetRepo.Split('/');
+            var owner = repoParts[0];
+            var repoName = repoParts[1];
             
             if (!string.IsNullOrEmpty(commitSha))
             {
@@ -117,6 +102,8 @@ public class DelegateApiViewFeedbackTool : MCPTool
             {
                 _logger.LogInformation("Detected TypeSpec project path: {TspProjectPath}", tspProjectPath);
             }
+            _logger.LogInformation("Target repository: {Owner}/{Repo} (detected: {Detected}, override: {Override})", 
+                owner, repoName, detectedRepo, repoOverride);
 
             // Build prompt using template
             var template = new APIViewFeedbackIssueTemplate(
@@ -128,7 +115,7 @@ public class DelegateApiViewFeedbackTool : MCPTool
                 tspProjectPath);
             
             var prompt = template.BuildPrompt();
-            var title = $"[SDK Customization] Apply TypeSpec client customizations for {metadata.PackageName} ({metadata.Language})";
+            var title = $"Address APIView feedback for {metadata.PackageName} ({metadata.Language})";
 
             // Dry run check
             if (dryRun)
@@ -167,27 +154,6 @@ public class DelegateApiViewFeedbackTool : MCPTool
     {
         try
         {
-            // Validate APIView URL
-            if (!IsValidApiViewUrl(apiViewUrl))
-            {
-                return new DefaultCommandResponse
-                {
-                    Message = "Invalid APIView URL. Expected format: https://apiview.dev/... or https://apiview-staging.dev/..."
-                };
-            }
-
-            // Validate repo format
-            var repoParts = repo.Split('/');
-            if (repoParts.Length != 2)
-            {
-                return new DefaultCommandResponse
-                {
-                    Message = $"Invalid repository format: '{repo}'. Expected format: owner/repo"
-                };
-            }
-            var owner = repoParts[0];
-            var repoName = repoParts[1];
-
             _logger.LogInformation("Fetching APIView feedback from {Url}", apiViewUrl);
 
             // Get consolidated comments and metadata
@@ -202,9 +168,15 @@ public class DelegateApiViewFeedbackTool : MCPTool
                 };
             }
 
-            // Detect commit SHA and TypeSpec project path
+            // Detect commit SHA, TypeSpec project path, and target repo
             _logger.LogInformation("Detecting commit SHA and TypeSpec project path");
-            var (commitSha, tspProjectPath) = await _helper.DetectShaAndTspPath(metadata, owner, repoName);
+            var (commitSha, tspProjectPath, detectedRepo) = await _helper.DetectShaAndTspPath(metadata);
+
+            // Use override repo if specified, otherwise use detected repo, fallback to default
+            var targetRepo = !string.IsNullOrEmpty(repo) ? repo : detectedRepo ?? "Azure/azure-rest-api-specs";
+            var repoParts = targetRepo.Split('/');
+            var owner = repoParts[0];
+            var repoName = repoParts[1];
             
             if (!string.IsNullOrEmpty(commitSha))
             {
@@ -224,7 +196,7 @@ public class DelegateApiViewFeedbackTool : MCPTool
                 commitSha,
                 tspProjectPath);
             var prompt = template.BuildPrompt();
-            var title = $"[TypeSpec] Address APIView feedback for {metadata.PackageName}";
+            var title = $"Address APIView feedback for {metadata.PackageName} ({metadata.Language})";
 
             // Dry-run mode: preview issue
             if (dryRun)
@@ -252,18 +224,5 @@ public class DelegateApiViewFeedbackTool : MCPTool
                 Message = $"Error: {ex.Message}"
             };
         }
-    }
-
-    private static bool IsValidApiViewUrl(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            return false;
-        }
-
-        return url.StartsWith("https://apiview.dev/", StringComparison.OrdinalIgnoreCase) ||
-               url.StartsWith("https://apiview-staging.dev/", StringComparison.OrdinalIgnoreCase) ||
-               url.StartsWith("https://spa.apiviewstagingtest.com/", StringComparison.OrdinalIgnoreCase) ||
-               url.StartsWith("https://spa.apiview.dev/", StringComparison.OrdinalIgnoreCase);
     }
 }

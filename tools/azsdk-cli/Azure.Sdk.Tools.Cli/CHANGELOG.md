@@ -1,11 +1,38 @@
 # Release History
 
-## 0.5.12 (2026-01-21)
+## 0.5.16 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.5.15 (2026-01-30)
+
+### Features Added
+
+- Added new MCP tools azsdk_package_generate_samples and azsdk_package_translate_samples for end-to-end sample workflows.
+
+### Bugs Fixed
+
+- Disabled response file handling for command line to avoid considering JavaScript package name with '@' as response file name.
+
+## 0.5.14 (2026-01-27)
+
+### Features Added
+
+- Added a new CLI command to update the package release status in release plan.
+
+## 0.5.13 (2026-01-23)
 
 ### Features Added
 
 - Improved error message when GitHub authentication fails to include GitHub CLI installation and authentication instructions
 - Added TypeSpecProject to the telemetry data for the `azsdk_package_generate_code` tool
+- Added email notification support for overdue release plan owners.
 - Added support for GitHub URLs in TypeSpecHelper methods to accept URLs like `https://github.com/Azure/azure-rest-api-specs/blob/main/specification/...` in addition to local paths
 - MCP server now forwards log and subprocess output to MCP logging notifications instead of stdout
 - Added `APISpecProjectPath` property to Release Plan Work Item to track the TypeSpec project path in release plans

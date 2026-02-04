@@ -102,10 +102,7 @@ describe('ReviewPageOptionsComponent', () => {
       expect(component.showCommentsSwitch).toEqual(true);
       expect(component.showSystemCommentsSwitch).toEqual(true);
       expect(component.showDocumentationSwitch).toEqual(true);
-      expect(component.showHiddenAPISwitch).toEqual(false);
-      expect(component.showLeftNavigationSwitch).toEqual(true);
       expect(component.showLineNumbersSwitch).toEqual(true);
-      expect(component.disableCodeLinesLazyLoading).toEqual(false);
     })
   });
 

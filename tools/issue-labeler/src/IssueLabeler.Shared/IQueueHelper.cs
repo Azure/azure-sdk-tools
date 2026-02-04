@@ -177,14 +177,19 @@ namespace IssueLabeler.Shared
 
         private QueueClient GetQueueClient(string queueName = null)
         {
+            var credential = new ChainedTokenCredential(
+                new ManagedIdentityCredential(),
+                new AzureCliCredential()
+            );
+
             if (queueName == null)
             {
-                return new QueueClient(_queueAccountUri, new DefaultAzureCredential());
+                return new QueueClient(_queueAccountUri, credential);
             }
 
             var builder = new UriBuilder(_queueAccountUri);
             builder.Path = queueName;
-            return new QueueClient(builder.Uri, new DefaultAzureCredential());
+            return new QueueClient(builder.Uri, credential);
         }
 
         public async Task CleanupQueue()

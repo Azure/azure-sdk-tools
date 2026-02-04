@@ -26,6 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         private IEnvironmentHelper environmentHelper;
         private readonly IGitHelper gitHelper;
         private IInputSanitizer inputSanitizer;
+        private HttpClient httpClient;
 
         public ReleasePlanManualTests()
         {
@@ -37,9 +38,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             logger = new TestLogger<ReleasePlanTool>();
             gitHubService = new Mock<IGitHubService>().Object;
             inputSanitizer = new InputSanitizer();
+            httpClient = new Mock<HttpClient>().Object;
 
             var typeSpecHelperMock = new Mock<ITypeSpecHelper>();
-            typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>())).Returns(true);
+            typeSpecHelperMock.Setup(x => x.IsRepoPathForPublicSpecRepoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
             typeSpecHelper = typeSpecHelperMock.Object;
 
             var userHelperMock = new Mock<IUserHelper>();
@@ -51,10 +53,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             environmentHelper = environmentHelperMock.Object;
 
             var gitHelperMock = new Mock<IGitHelper>();
-            gitHelperMock.Setup(x => x.GetBranchName(It.IsAny<string>())).Returns("testBranch");
+            gitHelperMock.Setup(x => x.GetBranchNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("testBranch");
             gitHelper = gitHelperMock.Object;
 
-            releasePlan = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer);
+            releasePlan = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient);
         }
 
         [Test] // disabled by default because it makes real API calls

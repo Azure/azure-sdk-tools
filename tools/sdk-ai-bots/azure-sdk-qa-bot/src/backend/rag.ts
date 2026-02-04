@@ -80,6 +80,7 @@ export interface CompletionResponsePayload {
   intension?: IntensionResult;
   Category?: string;
   ReasoningProgress?: string;
+  route_tenant?: string;
 }
 
 export function isCompletionResponsePayload(

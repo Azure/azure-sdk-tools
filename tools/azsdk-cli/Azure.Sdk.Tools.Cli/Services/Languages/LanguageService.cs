@@ -255,11 +255,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             }
         }               
 
-        public virtual List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-        {
-            throw new NotImplementedException("Environment requirements are not implemented for this language.");
-        }
-
         /// <summary>
         /// Updates the package metadata content for a specified package.
         /// </summary>
@@ -370,7 +365,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
                 // Get repository root path from project path
-                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+                string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
                     return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.", null);

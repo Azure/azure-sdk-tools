@@ -30,6 +30,19 @@ const (
 	HierarchyUnknown                       // Unknown or no headers
 )
 
+func (s ChunkHierarchy) String() string {
+	switch s {
+	case HierarchyHeader3:
+		return "HierarchyHeader3"
+	case HierarchyHeader2:
+		return "HierarchyHeader2"
+	case HierarchyHeader1:
+		return "HierarchyHeader1"
+	default:
+		return "HierarchyUnknown"
+	}
+}
+
 type AgenticSearchRequest struct {
 	Messages                 []KnowledgeAgentMessage   `json:"messages"`
 	KnowledgeSourceParams    []KnowledgeSourceParams   `json:"knowledgeSourceParams,omitempty"`
@@ -217,6 +230,8 @@ type Index struct {
 	Header3         string  `json:"header_3"`
 	OrdinalPosition int     `json:"ordinal_position"`
 	ContextID       Source  `json:"context_id"`
+	Scope           string  `json:"scope,omitempty"`
+	ServiceType     string  `json:"service_type,omitempty"`
 }
 
 type Knowledge struct {
@@ -292,6 +307,16 @@ func GetIndexLink(chunk Index) string {
 		return "https://github.com/Azure/azure-sdk-for-js/wiki/" + path
 	case Source_AzureSDKForNetDocs:
 		return "https://github.com/Azure/azure-sdk-for-net/blob/main/" + path
+	case Source_AzureSDKInternalWiki:
+		path = TrimFileFormat(path)
+		wikiPath := strings.ReplaceAll(path, "#", "/")
+		return "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki?wikiVersion=GBwikiMaster&pagePath=/" + wikiPath
+	case Source_AzureRestAPISpecDocs:
+		// Handle documents from azure-rest-api-specs documentation
+		return "https://github.com/Azure/azure-rest-api-specs/blob/main/" + path
+	case Source_AzureOpenapiDiffDocs:
+		// Handle documents from openapi-diff/docs
+		return "https://github.com/Azure/openapi-diff/blob/main/" + path
 	default:
 		return ""
 	}

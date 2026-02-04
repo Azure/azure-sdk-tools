@@ -20,9 +20,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
         }
 
 #pragma warning disable MCP003 // Tool methods must return Response types, built-in value types, or string
-        public LanguageService GetLanguageService(string packagePath)
+        public async Task<LanguageService> GetLanguageServiceAsync(string packagePath, CancellationToken ct = default)
         {
-            var language = SdkLanguageHelpers.GetLanguageForRepoPath(gitHelper, packagePath);
+            var language = await SdkLanguageHelpers.GetLanguageForRepoPathAsync(gitHelper, packagePath, ct);
             if (language == SdkLanguage.Unknown)
             {
                 return null;

@@ -1,0 +1,173 @@
+<div class="review-toolbar d-flex align-items-center ps-2 py-1 pe-2">
+    <!-- Diff Revision Dropdown -->
+    <span *ngIf="diffApiRevisionsMenu.length > 0" class="d-flex align-items-center me-3">
+        <label class="small fw-semibold me-2" for="diff-api-revision-select">Diff :</label>
+        <p-select
+            [options]="diffApiRevisionsMenu"
+            [(ngModel)]="selectedDiffAPIRevision"
+            optionLabel="resolvedLabel"
+            dataKey="id"
+            inputId="diff-api-revision-select"
+            data-clarity-region="toolbar-diff-api-revision-dropdown"
+            [panelStyle]="{'width':'40dvw'}"
+            [filter]="true"
+            [resetFilterOnHide]="true"
+            (onHide)="resetDropDownFilter()"
+            (onChange)="diffApiRevisionChange($event)"
+            [showClear]="true"
+            (onClear)="diffApiRevisionClear($event)"
+            placeholder="-"
+            styleClass="compact-dropdown"
+            overlayStyleClass="compact-dropdown-panel"
+            appendTo="body"
+            scrollHeight="400px">
+            <ng-template pTemplate="filter" let-options="options">
+                <div class="d-flex flex-column gap-1" (click)="$event.stopPropagation()">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" aria-label="Diff APIRevision Filter" placeholder="Filter"
+                        [(ngModel)]="diffApiRevisionsSearchValue" (keyup)="diffApiRevisionSearchFunction($event)">
+                    </div>
+                    <p-selectButton
+                    styleClass="apiview-toggle-button-group"
+                    [options]="filterOptions"
+                    [(ngModel)]="diffApiRevisionsFilterValue"
+                    (onChange)="diffApiRevisionFilterFunction($event)">
+                        <ng-template let-item pTemplate="item">
+                            <span class="p-button-label">
+                                <i *ngIf="item.icon" [class]="item.icon"></i>
+                                {{ item.label }}
+                            </span>
+                        </ng-template>
+                    </p-selectButton>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="selectedItem" let-item>
+                <div class="d-flex align-items-center selected-item-content" *ngIf="item">
+                    <i class="{{ item.typeClass }}"></i>
+                    <span *ngIf="item.prNo"> {{ item.prNo }}</span>
+                    <span *ngIf="item.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ item.packageVersion }}</span>
+                    <i class="fas fa-check-circle text-success ms-2" *ngIf="item.isApproved"></i>
+                    <span *ngIf="item.apiRevisionType !== 'Automatic'" class="ms-2">{{ item.createdBy }}</span>
+                    <span *ngIf="item.isReleased" class="emphasis-badge success ms-2">released: {{ item.releasedOn | timeago }}</span>
+                    <span *ngIf="(item.apiRevisionType === 'Manual' || item.language === 'TypeSpec') && item.label" class="ms-2">{{ item.label }}</span>
+                </div>
+                <div *ngIf="!item">Select Revision</div>
+            </ng-template>
+            <ng-template let-apiRevision pTemplate="item">
+                <div class="d-flex flex-wrap align-items-center revision-option-item">
+                    <i class="{{ apiRevision.typeClass }}"></i>
+                    <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
+                    <span *ngIf="apiRevision.language != 'TypeSpec'" class="emphasis-badge info ms-2">version: {{ apiRevision.packageVersion }}</span>
+                    <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
+                    <span *ngIf="apiRevision.apiRevisionType !== 'Automatic'" class="ms-2">{{ apiRevision.createdBy }}</span>
+                    <span *ngIf="apiRevision.isLatestGA" class="emphasis-badge warn small ms-2">Latest GA</span>
+                    <span *ngIf="apiRevision.isLatestApproved" class="emphasis-badge warn small ms-2">Latest Approved</span>
+                    <span *ngIf="apiRevision.isLatestMain" class="emphasis-badge warn small ms-2">Latest Auto</span>
+                    <span *ngIf="apiRevision.isLatestReleased" class="emphasis-badge warn small ms-2">Latest Released</span>
+                    <div class="small w-100">
+                        <span class="emphasis-badge secondary">created: {{ apiRevision.createdOn | timeago }}</span>
+                        <span class="emphasis-badge secondary ms-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
+                        <span *ngIf="apiRevision.isReleased" class="emphasis-badge success ms-2">released: {{ apiRevision.releasedOn | timeago }}</span>
+                    </div>
+                    <div *ngIf="(apiRevision.apiRevisionType === 'Manual' || apiRevision.language === 'TypeSpec') && apiRevision.label">{{ apiRevision.label }}</div>
+                </div>
+            </ng-template>
+        </p-select>
+    </span>
+
+    <!-- Diff Style Toggle -->
+    <span *ngIf="isDiffView && contentHasDiff !== false" class="d-flex align-items-center diff-style-toggle-wrapper me-3">
+        <p-selectButton (onChange)="onDiffStyleChange($event)" [options]="diffStyleOptions" [(ngModel)]="selectedDiffStyle" [unselectable]="true" optionLabel="label" optionValue="value" styleClass="neutral-toggle-group">
+            <ng-template let-item pTemplate="item">
+                <span [style.font-weight]="item.value === selectedDiffStyle ? '700' : '400'">
+                    {{ item.label }}
+                </span>
+            </ng-template>
+        </p-selectButton>
+    </span>
+
+    <!-- Diff Navigation Buttons -->
+    <div *ngIf="isDiffView && contentHasDiff" class="me-3">
+        <p-buttongroup>
+            <p-button (onClick)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" [text]="true" size="small">
+                <i class="bi bi-arrow-up"></i>
+            </p-button>
+            <p-button (onClick)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.next)" [text]="true" size="small">
+                <i class="bi bi-arrow-down"></i>
+            </p-button>
+        </p-buttongroup>
+    </div>
+
+    <!-- Search Bar and Controls -->
+    <div class="ms-auto d-flex align-items-center gap-2">
+        <p-iconField iconPosition="left">
+            <p-inputIcon styleClass="pi pi-search" />
+            <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search" class="review-search-input" data-clarity-region="toolbar-review-search-input" style="width: 200px;"/>
+        </p-iconField>
+        <div [class.d-none]="!showSearchControls" [class.d-flex]="showSearchControls" class="align-items-center gap-1">
+            <small class="review-search-info text-nowrap">{{ currentMatchIndexValue }} of {{ totalMatchCountValue }}</small>
+        </div>
+        <div *ngIf="showSearchControls">
+            <p-buttongroup>
+                <p-button (onClick)="navigateSearch(-1)" [text]="true" size="small" data-clarity-region="toolbar-review-search-up" ariaLabel="Previous match" title="Previous match">
+                    <i class="bi bi-chevron-up"></i>
+                </p-button>
+                <p-button (onClick)="navigateSearch(1)" [text]="true" size="small" data-clarity-region="toolbar-review-search-down" ariaLabel="Next match" title="Next match">
+                    <i class="bi bi-chevron-down"></i>
+                </p-button>
+                <p-button (onClick)="clearReviewSearch()" [text]="true" size="small" data-clarity-region="toolbar-review-search-clear" ariaLabel="Clear search" title="Clear search">
+                    <i class="bi bi-x-lg"></i>
+                </p-button>
+            </p-buttongroup>
+        </div>
+        
+        <!-- Settings Gear Icon with Popover -->
+        <button type="button" class="search-nav-btn settings-btn" (click)="settingsPanel.toggle($event)" data-clarity-region="toolbar-settings-button" aria-label="Page settings" title="Page settings">
+            <i class="bi bi-gear"></i>
+        </button>
+    </div>
+    <p-popover #settingsPanel styleClass="settings-panel">
+        <ng-template pTemplate="content">
+            <div class="settings-content p-3">
+                <h6 class="mb-3">Page Settings</h6>
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <label class="mb-0">Comments</label>
+                        <p-toggleswitch [(ngModel)]="showCommentsSwitch" (onChange)="onCommentsSwitchChange($event)" data-clarity-region="toolbar-toggle-comments" />
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <label class="mb-0">System comments</label>
+                        <p-toggleswitch [(ngModel)]="showSystemCommentsSwitch" (onChange)="onShowSystemCommentsSwitchChange($event)" data-clarity-region="toolbar-toggle-diagnostics" />
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <label class="mb-0">Documentation</label>
+                        <p-toggleswitch [(ngModel)]="showDocumentationSwitch" (onChange)="onShowDocumentationSwitchChange($event)" data-clarity-region="toolbar-toggle-documentation" />
+                    </div>
+                    <div *ngIf="hasHiddenAPIs" class="d-flex align-items-center justify-content-between">
+                        <label class="mb-0">Hidden APIs</label>
+                        <p-toggleswitch [(ngModel)]="showHiddenAPISwitch" (onChange)="onShowHiddenAPISwitchChange($event)" data-clarity-region="toolbar-toggle-hidden-apis" />
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <label class="mb-0">Line numbers</label>
+                        <p-toggleswitch [(ngModel)]="showLineNumbersSwitch" (onChange)="onShowLineNumbersSwitchChange($event)" data-clarity-region="toolbar-toggle-line-numbers"/>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <label class="mb-0">Disable lazy loading</label>
+                        <p-toggleswitch [(ngModel)]="disableCodeLinesLazyLoading" (onChange)="onDisableLazyLoadingSwitchChange($event)" data-clarity-region="toolbar-toggle-disable-lazy-loading"/>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+    </p-popover>
+
+    <p-dialog header="Disable Lazy Loading"
+        [modal]="true" [(visible)]="showDisableCodeLinesLazyLoadingModal"
+        [style]="{ width: '30dvw' }" (onHide)="onDisableLazyLoadingModalHide()">
+        <p>Disabling lazy loading will load all code lines at once. This may lead to degraded performance.</p>
+        <div class="d-grid gap-2 mt-2">
+            <button class="btn btn-primary" type="button" (click)="onDisableLazyLoadingConfirm()">Disable</button>
+            <button class="btn btn-link" type="button" (click)="onDisableLazyLoadingCancel()">Cancel</button>
+        </div>
+    </p-dialog>
+</div>

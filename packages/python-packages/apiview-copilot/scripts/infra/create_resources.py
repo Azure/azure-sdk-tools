@@ -1102,6 +1102,7 @@ def populate_settings(v: Variables):
             "foundry_endpoint",
             "foundry_kernel_model",
             "foundry_api_version",
+            "foundry_project",
             "openai_endpoint",
             "rg_name",
             "search_endpoint",

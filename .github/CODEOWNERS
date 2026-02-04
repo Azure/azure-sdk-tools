@@ -35,7 +35,7 @@
 /tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/          @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
-/tools/js-sdk-release-tools/            @qiaozha @MaryGao
+/tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803
 /tools/keyvault-mock-attestation/       @maorleger
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter

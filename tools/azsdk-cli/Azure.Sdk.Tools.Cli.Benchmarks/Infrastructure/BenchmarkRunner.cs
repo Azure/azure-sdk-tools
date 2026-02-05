@@ -20,6 +20,11 @@ public class BenchmarkOptions
     /// Cleanup policy after run.
     /// </summary>
     public CleanupPolicy CleanupPolicy { get; init; } = CleanupPolicy.OnSuccess;
+
+    /// <summary>
+    /// Override model to use (for future use).
+    /// </summary>
+    public string? Model { get; init; }
 }
 
 /// <summary>
@@ -61,6 +66,11 @@ public class BenchmarkResult
     /// Gets the path to the workspace where the benchmark was executed.
     /// </summary>
     public string? WorkspacePath { get; init; }
+
+    /// <summary>
+    /// Gets whether the workspace was cleaned up after execution.
+    /// </summary>
+    public bool WorkspaceCleanedUp { get; init; }
 }
 
 /// <summary>
@@ -109,7 +119,8 @@ public class BenchmarkRunner : IDisposable
                 WorkingDirectory = workspace.RepoPath,
                 Prompt = scenario.Prompt,
                 Timeout = scenario.Timeout,
-                AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath
+                AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath,
+                Model = options.Model ?? BenchmarkDefaults.DefaultModel
             };
             var execResult = await executor.ExecuteAsync(execConfig);
 
@@ -122,6 +133,15 @@ public class BenchmarkRunner : IDisposable
             // For POC, we consider it passed if execution completed and there's a diff
             var passed = execResult.Completed && !string.IsNullOrWhiteSpace(gitDiff);
 
+            // Determine if cleanup will happen based on policy
+            var willCleanup = options.CleanupPolicy switch
+            {
+                CleanupPolicy.Always => true,
+                CleanupPolicy.Never => false,
+                CleanupPolicy.OnSuccess => passed,
+                _ => false
+            };
+
             var result = new BenchmarkResult
             {
                 ScenarioName = scenario.Name,
@@ -130,7 +150,8 @@ public class BenchmarkRunner : IDisposable
                 Duration = stopwatch.Elapsed,
                 GitDiff = gitDiff,
                 ToolCalls = execResult.ToolCalls,
-                WorkspacePath = workspace.RootPath
+                WorkspacePath = workspace.RootPath,
+                WorkspaceCleanedUp = willCleanup
             };
 
             // 5. Cleanup
@@ -141,6 +162,15 @@ public class BenchmarkRunner : IDisposable
         catch (Exception ex)
         {
             stopwatch.Stop();
+
+            // Determine if cleanup will happen (passed=false in exception case)
+            var willCleanup = options.CleanupPolicy switch
+            {
+                CleanupPolicy.Always => true,
+                CleanupPolicy.Never => false,
+                CleanupPolicy.OnSuccess => false, // Failed, so won't cleanup on-success
+                _ => false
+            };
 
             if (workspace != null)
             {
@@ -153,7 +183,8 @@ public class BenchmarkRunner : IDisposable
                 Passed = false,
                 Error = ex.Message,
                 Duration = stopwatch.Elapsed,
-                WorkspacePath = workspace?.RootPath
+                WorkspacePath = workspace?.RootPath,
+                WorkspaceCleanedUp = willCleanup
             };
         }
     }

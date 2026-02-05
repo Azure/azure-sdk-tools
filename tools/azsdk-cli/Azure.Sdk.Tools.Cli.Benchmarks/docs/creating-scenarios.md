@@ -227,34 +227,43 @@ Run your scenario locally to verify it works before committing:
 
 ```bash
 cd Azure.Sdk.Tools.Cli.Benchmarks
-dotnet run
+
+# List scenarios to verify yours is discovered
+dotnet run -- list
+
+# Run your specific scenario
+dotnet run -- run my-scenario
 ```
 
 ## Running Your Scenario
 
-### Option 1: Update Program.cs
+Scenarios are **automatically discovered** via reflection. Any class that:
 
-Modify `Program.cs` to run your scenario:
+1. Inherits from `BenchmarkScenario`
+2. Is not abstract
+3. Has a parameterless constructor
 
-```csharp
-public static async Task<int> Main(string[] args)
-{
-    var scenario = new MyScenario();  // Use your scenario class
-    var options = new BenchmarkOptions
-    {
-        CleanupPolicy = CleanupPolicy.OnSuccess
-    };
+...will be discovered and available to run.
 
-    using var runner = new BenchmarkRunner();
-    var result = await runner.RunAsync(scenario, options);
+### Using the CLI
 
-    // ... result handling
-}
+```bash
+# List all discovered scenarios
+dotnet run -- list
+
+# Run a specific scenario by name
+dotnet run -- run my-scenario
+
+# Run all scenarios
+dotnet run -- run --all
+
+# Run with options
+dotnet run -- run my-scenario --cleanup never
 ```
 
-### Option 2: Create a Test
+### Using Tests (Optional)
 
-Create a test class for your scenario:
+For IDE integration or CI, you can also create NUnit tests:
 
 ```csharp
 [TestFixture]

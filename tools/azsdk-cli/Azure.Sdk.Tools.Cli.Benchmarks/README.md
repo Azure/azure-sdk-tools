@@ -36,10 +36,31 @@ dotnet build
 ### Run
 
 ```sh
-dotnet run
+# List all available scenarios
+dotnet run -- list
+
+# Run a specific scenario by name
+dotnet run -- run rename-client-property
+
+# Run all scenarios
+dotnet run -- run --all
+
+# Run with options
+dotnet run -- run rename-client-property --model gpt-4o --cleanup never
 ```
 
-This runs the default scenario and reports pass/fail status along with tool calls and git diff output.
+### CLI Options
+
+| Command | Description |
+|---------|-------------|
+| `list` | List all available scenarios with name, description, and tags |
+| `run <name>` | Run a specific scenario by name |
+| `run --all` | Run all discovered scenarios |
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--model <model>` | Model to use for agent execution | `claude-opus-4.5` |
+| `--cleanup <policy>` | Cleanup policy: `always`, `never`, `on-success` | `on-success` |
 
 ### Environment Variables
 

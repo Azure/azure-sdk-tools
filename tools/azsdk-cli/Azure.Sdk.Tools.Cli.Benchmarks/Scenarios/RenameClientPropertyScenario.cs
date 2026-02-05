@@ -31,18 +31,9 @@ public class RenameClientPropertyScenario : BenchmarkScenario
 
     /// <inheritdoc />
     public override string Prompt => """
-        In the file specification/ai/Face/models.common.tsp, find the AddFaceFromUrlRequest model.
-        It has a property called 'url' with a @clientName decorator set to "uri" for csharp.
-        
-        Change the @clientName value from "uri" to "imageUri".
-        
-        The current line looks like:
-        @clientName("uri", "csharp")
-        
-        Change it to:
-        @clientName("imageUri", "csharp")
-        
-        Only make this single change. Do not modify anything else.
+        In the specification/ai/Face project, find the AddFaceFromUrlRequest model.
+        It has a property called 'url' that's been renamed to "uri" in c#.
+        Change that to imageUri for c#.
         """;
 
     /// <inheritdoc />

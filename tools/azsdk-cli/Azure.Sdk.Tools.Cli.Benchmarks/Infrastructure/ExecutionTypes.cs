@@ -1,6 +1,17 @@
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
 /// <summary>
+/// Default values for benchmark execution.
+/// </summary>
+public static class BenchmarkDefaults
+{
+    /// <summary>
+    /// The default model to use for benchmark execution.
+    /// </summary>
+    public const string DefaultModel = "claude-opus-4.5";
+}
+
+/// <summary>
 /// Configuration for executing a benchmark scenario.
 /// </summary>
 public class ExecutionConfig
@@ -16,6 +27,9 @@ public class ExecutionConfig
 
     /// <summary>Path to azsdk MCP server executable (optional override).</summary>
     public string? AzsdkMcpPath { get; init; }
+
+    /// <summary>The model to use for the agent session.</summary>
+    public string Model { get; init; } = BenchmarkDefaults.DefaultModel;
 }
 
 /// <summary>

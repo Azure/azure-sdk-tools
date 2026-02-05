@@ -35,6 +35,7 @@ public class SessionExecutor : IDisposable
             {
                 WorkingDirectory = config.WorkingDirectory,
                 McpServers = mcpServers,
+                Model = config.Model,
                 Streaming = true,
                 Hooks = new SessionHooks
                 {

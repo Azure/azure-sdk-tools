@@ -17,7 +17,7 @@ public class DelegateApiViewFeedbackTool : MCPTool
 {
     private const string ToolName = "azsdk_tsp_delegate_apiview_feedback";
     
-    private readonly IAPIViewFeedbackHelpers _helper;
+    private readonly IAPIViewFeedbackHelper _helper;
     private readonly IGitHubService _gitHubService;
     private readonly ILogger<DelegateApiViewFeedbackTool> _logger;
 
@@ -42,7 +42,7 @@ public class DelegateApiViewFeedbackTool : MCPTool
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
     public DelegateApiViewFeedbackTool(
-        IAPIViewFeedbackHelpers helper,
+        IAPIViewFeedbackHelper helper,
         IGitHubService gitHubService,
         ILogger<DelegateApiViewFeedbackTool> logger)
     {

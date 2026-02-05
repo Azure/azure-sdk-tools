@@ -46,12 +46,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Verb: "samples",
             Description: "Sample operations for SDK packages"
         );
-
-        public static readonly CommandGroup Review = new(
-            Verb: "review",
-            Description: "APIView review and feedback operations"
-        );
-
         public static readonly CommandGroup PackageTest = new(
             Verb: "test",
             Description: "Test operations for SDK packages"

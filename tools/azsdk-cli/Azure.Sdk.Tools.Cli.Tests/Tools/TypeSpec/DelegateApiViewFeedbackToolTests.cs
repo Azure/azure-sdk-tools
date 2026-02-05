@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec;
 public class DelegateApiViewFeedbackToolTests
 {
     private DelegateApiViewFeedbackTool _tool = null!;
-    private Mock<IAPIViewFeedbackHelpers> _mockHelper = null!;
+    private Mock<IAPIViewFeedbackHelper> _mockHelper = null!;
     private Mock<IGitHubService> _mockGitHubService = null!;
     private TestLogger<DelegateApiViewFeedbackTool> _logger = null!;
 
@@ -23,7 +23,7 @@ public class DelegateApiViewFeedbackToolTests
     public void Setup()
     {
         _logger = new TestLogger<DelegateApiViewFeedbackTool>();
-        _mockHelper = new Mock<IAPIViewFeedbackHelpers>();
+        _mockHelper = new Mock<IAPIViewFeedbackHelper>();
         _mockGitHubService = new Mock<IGitHubService>();
         _tool = new DelegateApiViewFeedbackTool(_mockHelper.Object, _mockGitHubService.Object, _logger);
     }

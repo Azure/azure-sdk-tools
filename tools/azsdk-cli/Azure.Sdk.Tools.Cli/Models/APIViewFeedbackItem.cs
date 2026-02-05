@@ -10,12 +10,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 public class APIViewFeedbackItem : IFeedbackItem
 {
     private readonly string _apiViewUrl;
-    private readonly IAPIViewFeedbackHelpers _helper;
+    private readonly IAPIViewFeedbackHelper _helper;
     private readonly ILogger<APIViewFeedbackItem> _logger;
 
     public APIViewFeedbackItem(
         string apiViewUrl,
-        IAPIViewFeedbackHelpers helper,
+        IAPIViewFeedbackHelper helper,
         ILogger<APIViewFeedbackItem> logger)
     {
         _apiViewUrl = apiViewUrl;

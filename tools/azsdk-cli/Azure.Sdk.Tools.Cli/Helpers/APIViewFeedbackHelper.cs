@@ -71,7 +71,7 @@ public class ConsolidatedComment
 /// <summary>
 /// Helper interface for APIView feedback customizations operations
 /// </summary>
-public interface IAPIViewFeedbackHelpers
+public interface IAPIViewFeedbackHelper
 {
     Task<List<ConsolidatedComment>> GetConsolidatedComments(string apiViewUrl);
     Task<ReviewMetadata> GetMetadata(string apiViewUrl);
@@ -120,20 +120,20 @@ internal class APIViewComment
 /// <summary>
 /// Helper class for APIView feedback customizations operations
 /// </summary>
-public class APIViewFeedbackHelpers : IAPIViewFeedbackHelpers
+public class APIViewFeedbackHelper : IAPIViewFeedbackHelper
 {
     private readonly IAPIViewService _apiViewService;
     private readonly IAPIViewHttpService _apiViewHttpService;
     private readonly OpenAIClient _openAIClient;
     private readonly IGitHubService _gitHubService;
-    private readonly ILogger<APIViewFeedbackHelpers> _logger;
+    private readonly ILogger<APIViewFeedbackHelper> _logger;
 
-    public APIViewFeedbackHelpers(
+    public APIViewFeedbackHelper(
         IAPIViewService apiViewService,
         IAPIViewHttpService apiViewHttpService,
         OpenAIClient openAIClient,
         IGitHubService gitHubService,
-        ILogger<APIViewFeedbackHelpers> logger)
+        ILogger<APIViewFeedbackHelper> logger)
     {
         _apiViewService = apiViewService;
         _apiViewHttpService = apiViewHttpService;
@@ -171,12 +171,6 @@ public class APIViewFeedbackHelpers : IAPIViewFeedbackHelpers
         {
             _logger.LogError(ex, "Failed to deserialize comments JSON for revision {RevisionId}", revisionId);
             throw new InvalidOperationException($"Failed to parse APIView response for revision {revisionId}", ex);
-        }
-        
-        if (comments == null)
-        {
-            _logger.LogError("Deserialized comments are null for revision {RevisionId}", revisionId);
-            throw new InvalidOperationException($"APIView response deserialized to null for revision {revisionId}");
         }
         
         if (!comments.Any())

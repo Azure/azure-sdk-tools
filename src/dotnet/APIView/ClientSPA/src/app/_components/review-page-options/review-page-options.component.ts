@@ -13,6 +13,7 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { PullRequestsService } from 'src/app/_services/pull-requests/pull-requests.service';
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
 import { FormControl } from '@angular/forms';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { environment } from 'src/environments/environment';
 import { MessageService } from 'primeng/api';
@@ -79,6 +80,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   subscribeSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
   isCopilotReviewSupported: boolean = true;
+  isAdmin: boolean = false;
 
   canToggleApproveAPIRevision: boolean = false;
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
@@ -129,7 +131,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     private configService: ConfigService, private reviewsService: ReviewsService, private route: ActivatedRoute,
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
-    private signalRService: SignalRService, private notificationsService: NotificationsService) { }
+    private signalRService: SignalRService, private notificationsService: NotificationsService,
+    private permissionsService: PermissionsService) { }
 
   async ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
@@ -166,6 +169,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     if (changes['userProfile'] && changes['userProfile'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setPageOptionValues();
+      this.isAdmin = this.permissionsService.isAdmin(this.userProfile?.permissions);
     }
 
     if (changes['preferredApprovers']) {

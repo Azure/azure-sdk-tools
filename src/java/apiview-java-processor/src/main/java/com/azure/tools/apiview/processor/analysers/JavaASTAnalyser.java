@@ -1045,8 +1045,11 @@ public class JavaASTAnalyser implements Analyser {
                 } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
                     // Skip if not public API
                     return false;
+                } else {
+                    // Skip if fromJson or toJson methods from a JsonSerializable implementation, as these are not really
+                    // part of the public API contract, but rather implementation details of the JSON serialization mechanism.
+                    return !isFromOrToJsonMethod(typeDeclaration, callableDeclaration);
                 }
-                return true;
             })
             .sorted(this::sortMethods)
             .collect(collector)
@@ -1058,6 +1061,24 @@ public class JavaASTAnalyser implements Analyser {
                 }
                 group.forEach(callableDeclaration -> visitDefinition(callableDeclaration, parentLine));
             });
+    }
+
+    private boolean isFromOrToJsonMethod(TypeDeclaration<?> typeDeclaration, CallableDeclaration<?> callableDeclaration) {
+        if (typeDeclaration instanceof ClassOrInterfaceDeclaration) {
+            ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
+            return classOrInterfaceDeclaration.getImplementedTypes() != null && classOrInterfaceDeclaration.getImplementedTypes()
+                    .stream()
+                    .anyMatch(implementedType -> {
+                        if (implementedType.getNameAsString().equals("JsonSerializable")) {
+                            if (callableDeclaration.getNameAsString().equals("toJson") ||
+                                    callableDeclaration.getNameAsString().equals("fromJson")) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+        }
+        return false;
     }
 
     private void visitExtendsAndImplements(TypeDeclaration<?> typeDeclaration, ReviewLine definitionLine) {

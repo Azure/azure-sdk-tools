@@ -1,49 +1,102 @@
-# Skills in azsdk-cli
+# Skills and copilot instructions in Azure SDK cli
 
-This document provides comprehensive guidelines for creating skills. GitHub copilot uses skills defined in `.github/skills`. Each skill (which is a directory under `.github/skills`) includes a `SKILL.md` which contains the metadata and instructions. You can also include examples and some scripts in the skill directory. Copilot identifies a skill based on its description and how it semantically matches the prompt in a given context. Each skill should define instruction, success criteria, list of tools and commands to be used by the skill, and an optional next prompt for the user so the agent can recommend the next step.
+This document provides comprehensive guidelines for creating skills. GitHub Copilot uses skills defined in `.github/skills`. Each skill (which is a directory under `.github/skills`) includes a `SKILL.md` file which contains the metadata and instructions. You can also include examples and some scripts in the skill directory. Copilot identifies a skill based on its description and how it semantically matches the prompt in a given context. Each skill should define instruction, success criteria, list of tools and commands to be used by the skill, and an optional next prompt for the user so the agent can recommend the next step.
 
-## When to Use
+## When to Use Skill
 
-Instructions for copilot/agent can be either included in `copilot-instructions.md` or provided as a skill. Instructions in the copilot instructions file are included as part of every prompt sent to the LLM, which makes token usage costly when some of these instructions are task-specific and not applicable globally to all prompts.
-Skills help to reduce the token usage by using the instructions in the skill only on demand basis. A skill can use a combination of instruction, MCP tool and commands to run a series of tasks.
+| Component                | Used for                                      |
+|--------------------------|-----------------------------------------------|
+| **Skills**               | For workflows and multiple commands           |
+| **MCP**                  | For deterministic tasks                       |
+| **Copilot instructions** | For repository-wide conventions and behaviors |
+
+Skills are for workflows/sets of instructions, while MCP tools are for deterministic tasks. You should ask the question before creating a skill: Does Copilot need to follow a set of instructions or commands/tools, or does it need to follow a workflow to achieve the goal for a given prompt? For example, the user prompt "Generate and release SDK from TypeSpec" is definitely not a deterministic atomic task. Copilot needs to run multiple steps in this case.
+
+Skills should be used when you want Copilot to run multi-step instructions and workflows. It can also be used to build the workflows that can be automated. In case of Azure SDK tooling, following are a great examples to use skill.
+
+- **TypeSpec authoring**: This includes multi-step tasks to guide the user to define/update TypeSpec definition. It will also validate the generated TypeSpec.
+- **TypeSpec to SDK generation**: This connects various tasks to build the end to end workflow. This skill will use several modular skills. For e.g. sdk generation skill.
+- **Generate, test and validate SDK**: run sdk generation, build and test. It can invoke TypeSpec customization skill if SDK generation fails. This skill also can include sample SDK generation failures and fixes.
+- **Prepare SDK release**: Update package metadata, change log and read me, create pull request. This can also verify package approval and help user to get SDK ready for release.
+- **TypeSpec customization**: runs TypeSpec changes and skill can refer various examples to help customize spec.
+
+We should not write a skill for a task that can be completed by one MCP tool call. If an MCP tool can get the results for a prompt, then it should not be added as a skill.
+
+Following are a few examples of **not** skill candidates:
+
+- **Release SDK**: It's just one MCP tool call to release a package.
+- Test a package
+- Validate package
+- Verify setup
+
+When you are in doubt whether to write a skill or just leave the functionality in the MCP, create a skill. Skills use MCP tools or CLI commands.
+
+## How to Define a Skill
+
+Main component of the skill is markdown file names `SKILL.md` that contains the instructions. A skill can contain additional reference docs to help LLM make decision better. One usage is to create an `example.md` and include it in referencing document. Each skill is added as folder in `.github/skills` in the repo root. Following is the folder structure for a skill.
+
+```
+skill-name/
+├── SKILL.md              # Required: main instructions
+├── references/           # Optional: additional documentation
+│   ├── examples.md
+│   └── troubleshooting.md
+```
+
+**Skill name**: Azure SDK tools will have skills applicable for just one repo or shared across multiple repos. More details about skill names can be found in the "Where to Create the Skill" section below.
+
+### Skill.md structure
+
+Each skill contains `name`, `description`, and instructions. The description field determines the success factor of whether a skill is selected by the LLM for a given context and prompt. The LLM loads the description for all skills and makes a decision to choose a skill based on how it matches the prompt in a given context. Following is the skill template:
+
+```yaml
+---
+name: skill-name
+description: |
+  One-line description of what the skill does.
+  USE FOR: List various scenarios
+  DO NOT USE FOR: List any possible conflicting scenarios if applicable.
+  TOOLS/COMMANDS: List mcp tools and commands
+---
+```
+
+**Skill Body Structure:**
+
+```markdown
+
+# Skill Title
+
+## MCP Tools Used
+
+| MCP Tool | Purpose |
+|----------|---------|
+| `azsdk_xxx` | Reason to use |
+| `azsdk_yyy` | Reason to use |
+
+## CLI commands used
+
+| CLI command | Purpose |
+|----------|---------|
+| `azsdk command` | Reason to use |
+| `azsdk command` | Reason to use |
+
+## Steps
+
+### Step 1: Action Name
+
+Invoke `azsdk_xxx` MCP tool or CLI command.
+
+### Step 2: Process the output and invoke `azsdk_yyy`
+
+### Step 3: Use skill package generation skill if step 2 completed successfully.
 
 
-| Skill | Copilot Instructions |
-|-------|---------------------|
-| Specific tasks and workflows | Repository-wide conventions, General coding conventions |
-| Detailed workflow instructions | Output format preferences |
-| Automate repeatable workflows | Interaction logging |
-| Build modular automation | Confirmation policies |
-| Provide consistent execution | Communication patterns |
-| Task-specific commands and procedures | Cross-cutting concerns |
+## Related Skills
+- For X: `package generation`
+- For Y: `prepare SDK release`
+```
 
-### Use Skills for Specific Tasks and Workflows
-
-Skills should be used when you need to:
-
-- **create a detailed workflow instruction that connects various tasks**: A complete set of instructions in order to integrate various tasks, tools and commands to guide a user through complete workflow.  (e.g TypeSpec to SDK release workflow, Package generation to Prepare release workflow).
-- **Provide detailed instructions applicable for a task**: A set of instructions to be completed by agent to achieve a goal. (e.g. Analyze pipeline failure. Create a release plan, verify setup)
-- **Automate repeatable workflows**: Tasks that follow a consistent pattern across multiple scenarios (e.g., TypeSpec validation, package generation, package test and validation, release planning)
-- **Build modular automation**: Create granular Skills that can be combined to construct larger workflow Skills
-- **Provide consistent execution**: Ensure that tasks are performed the same way regardless of who or what triggers them
-
-### Examples of Skill Usage
-
-- **TypeSpec Validation**: Automate the process of validating TypeSpec projects against schema and configuration requirements
-- **Package Generation**: Standardize the steps for generating SDK packages from TypeSpec definitions
-- **Package Test & Validation**: Ensure packages meet quality standards through automated testing and validation
-- **Release Planner**: Coordinate the release planning process across multiple packages and languages
-
-### Granular Skills vs. Workflow Skills
-
-- **Granular Skills**: Focus on single, atomic operations (e.g., "validate TypeSpec schema", "compile package", "run unit tests")
-- **Workflow Skills**: Combine multiple granular Skills to accomplish end-to-end processes (e.g., "complete package validation" might reference validation, build, and test Skills)
-
-## Where to store the skills
-
-GitHub copilot requires all skills in `.github/skills` directory. Some skills are language or repo specific and some skills are common across all repos. A repo specific skill can be created in `'github/skills` in the repo itself. If a skill is applicable for more than one language and if instructions are same then skill should be created in `Azure/azure-sdk-tools` repo and sync them to all repos. One challenge is to avoid naming collision between local skill and centrally stored skill. A global skill should have a suffix `global` and local skill can have suffix `local` to avoid the name collision. For example, `package-generate-skill-global`.
-
-### Language-Dependent and Repository-Specific Skills
+## Where to Create the Skill
 
 Skills that are specific to a particular language or repository should be stored within that repository.
 
@@ -64,100 +117,15 @@ To distribute Skills from azure-sdk-tools to individual Azure SDK repositories:
 - Changes to the engineering systems common sync framework are required to enable this synchronization.
 - The sync process ensures that all repositories benefit from centralized Skill updates.
 
-## What to Include in Skill Instructions
+## How to Test
 
-### Prefer Language-Independent Commands
+We need to do mainly following two tests:
 
-When writing Skill instructions:
+- **Skill selection accuracy**: This test ensures correct skill is loaded by LLM for a prompt in a given context.
+Eval framework for azsdk cli currently does not support skills. This requires an enhancement to support evaluate how LLM matches a prompt to skill. A skill selection scenario should be added that contains a list of prompts and context and expected skill to be used.
+Eval will verifies the scenario to check if skill is loaded as expected for a prompt.
 
-1. **Use azsdk-cli commands** or **MCP tools** that abstract language-specific implementations
-2. Only use language-specific commands when no CLI or MCP wrapper exists
-3. This approach ensures Skills remain portable and easier to maintain across all repos.
-
-**Example**: Prefer `azsdk pkg validate --package-path ./sdk/storage` over language-specific commands like `dotnet test` or `pytest`.
-
-### Define Success Criteria
-
-Every Skill must clearly define what success means for its execution. Include:
-
-- Expected outputs or artifacts
-- Validation checkpoints
-- Exit conditions (both success and failure)
-- Next steps after successful completion
-
-**Example**: For a package build Skill, success means: compiled artifacts exist in the expected output directory, no build errors occurred, and all dependencies resolved successfully.
-
-### Include Sample Errors and Fixes
-
-To improve agent effectiveness and reduce iteration cycles, include:
-
-- **Common errors**: Document frequently encountered errors with clear descriptions
-- **Possible causes**: Explain why these errors typically occur
-- **Resolution steps**: Provide specific actions to resolve each error
-
-**Example for TypeSpec Validation**:
-```
-Common Error: "Unknown decorator @example"
-Possible Cause: Missing or incorrect import statement
-Fix: Add `import "@azure-tools/typespec-azure-core";` to main.tsp
-```
-
-**Example for Test Failures**:
-```
-Common Error: "Test timeout after 30 seconds"
-Possible Causes: Network issues, service unavailable, incorrect test configuration
-Fix: Check service endpoint availability, verify authentication, increase timeout in test configuration
-```
-
-### Define a section to list Tool and Commands used by skill.
-
-Each Skill should maintain a list of:
-
-- MCP tools used
-- CLI commands invoked
-- External dependencies required
-
-This information will support evaluation frameworks and will help identify any gaps in skill goal for various prompts.
-
-## How to test
-
-### Current Evaluation Framework Limitations
-
-The current evaluation framework primarily focuses on testing Copilot instructions and has no support for Skill-specific testing. Enhancement is needed to provide comprehensive Skill validation.
-
-### Required Testing Capabilities
-
-To properly test Skills, the evaluation framework should support:
-
-1. **Skill Selection Testing**
-   - Verify the correct Skill is selected for a given task or prompt
-   - Test disambiguation when multiple Skills could apply
-   - Validate Skill matching accuracy
-
-2. **Conflict and Ambiguity Detection**
-   - Identify when multiple Skills provide contradictory instructions
-   - Detect overlapping Skill responsibilities
-   - Test resolution strategies for ambiguous scenarios
-
-3. **Scenario-Based Execution Verification**
-   - Validate that Skills execute the correct tools and commands
-   - Verify proper parameter passing to tools
-   - Ensure correct sequencing of operations in workflow Skills
-   - Test error handling and recovery paths
-
-4. **Integration Testing**
-   - Test Skills that reference other Skills
-   - Verify data flow between composed Skills
-   - Validate end-to-end workflow execution
-
-### Manual Testing
-
-Until automated evaluation is enhanced, Skills should be tested manually by:
-
-- Running the Skill in representative scenarios
-- Verifying all commands execute successfully
-- Checking that success criteria are met
-- Testing error scenarios and recovery paths
+- **Skill workflow completion test**: This test is required to make sure LLM uses the steps in the workflow as expected. A scenario for this test contains all the commands and mcp tools expected to be used for an end to end skill completion and corresponding context and expected steps to be completed. Eval test will make sure LLM completed all expected steps and executed all mcp tools/commands.
 
 ## Copilot Instructions
 

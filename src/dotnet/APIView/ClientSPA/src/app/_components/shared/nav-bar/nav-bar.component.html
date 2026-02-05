@@ -60,6 +60,12 @@
                         <li class="theme-row">
                             <span class="theme-label">Theme</span>
                             <div class="theme-buttons">
+                                <a *ngIf="isAdmin"
+                                    href="/theme-test"
+                                    class="theme-btn"
+                                    title="Theme Test Page (Admin)">
+                                    <i class="bi bi-palette"></i>
+                                </a>
                                 <button type="button"
                                     class="theme-btn"
                                     [class.active]="selectedTheme.data === 'light-theme'"

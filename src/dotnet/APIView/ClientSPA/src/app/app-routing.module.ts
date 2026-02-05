@@ -6,8 +6,10 @@ import { AuthGuard } from './_guards/auth.guard';
 import { ADMIN_PERMISSIONS_PAGE_NAME, CONVERSATION_PAGE_NAME, INDEX_PAGE_NAME, PROFILE_PAGE_NAME, REVIEW_PAGE_NAME, REVISION_PAGE_NAME, SAMPLES_PAGE_NAME } from './_helpers/router-helpers';
 import { ProfilePageComponent } from './_components/profile-page/profile-page.component';
 import { AdminPermissionsPageComponent } from './_components/admin-permissions-page/admin-permissions-page.component';
+import { ThemeTestComponent } from './_components/theme-test/theme-test.component';
 
 const routes: Routes = [
+  { path: 'theme-test', component: ThemeTestComponent }, // Dev-only: theme comparison page
   { path: '', component: IndexPageComponent, canActivate: [AuthGuard], data: { pageName: INDEX_PAGE_NAME } },
   { path: '',
      runGuardsAndResolvers: 'always',

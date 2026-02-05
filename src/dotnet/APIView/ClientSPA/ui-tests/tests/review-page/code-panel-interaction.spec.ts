@@ -88,12 +88,11 @@ test.describe('Code Panel - Line Click Actions', () => {
 
     await codeLine.scrollIntoViewIfNeeded();
 
-    // Hover over the line-number-container to trigger visibility of add-comment-btn
-    const lineNumberContainer = codeLine.locator('.line-number-container');
-    await lineNumberContainer.hover();
+    // Hover over the code line to trigger visibility of add-comment-btn
+    await codeLine.hover();
 
-    // Find the add comment button inside .line-actions (next to the line number)
-    const commentBtn = codeLine.locator('.line-actions .add-comment-btn');
+    // Find the add comment button inside .line-hover-actions
+    const commentBtn = codeLine.locator('.line-hover-actions .add-comment-btn');
 
     // Verify the comment button is visible on hover
     await expect(commentBtn).toBeVisible({ timeout: 5000 });
@@ -121,11 +120,11 @@ test.describe('Code Panel - Page Options Toggles', () => {
     // Line numbers should be visible by default
     const lineNumbers = page.locator('.line-number-text');
     await expect(lineNumbers.first()).toBeVisible();
-    
+
     const settingsButton = page.locator('button.settings-btn');
     await settingsButton.click();
     await page.waitForSelector('.settings-panel', { state: 'visible' });
-    
+
     const lineNumbersToggle = page
       .locator('.settings-panel')
       .locator('label', { hasText: 'Line numbers' })
@@ -145,7 +144,7 @@ test.describe('Code Panel - Page Options Toggles', () => {
     const settingsButton = page.locator('button.settings-btn');
     await settingsButton.click();
     await page.waitForSelector('.settings-panel', { state: 'visible' });
-    
+
     const lineNumbersToggle = page
       .locator('.settings-panel')
       .locator('label', { hasText: 'Line numbers' })
@@ -153,7 +152,7 @@ test.describe('Code Panel - Page Options Toggles', () => {
       .locator('p-toggleswitch');
 
     await lineNumbersToggle.click();
-    
+
     const lineNumbers = page.locator('.line-number-text');
     await expect(lineNumbers.first()).not.toBeVisible();
 
@@ -164,9 +163,9 @@ test.describe('Code Panel - Page Options Toggles', () => {
     await codeLine.scrollIntoViewIfNeeded();
 
     const lineActions = codeLine.locator('.line-actions');
-    await lineActions.hover();
+    await codeLine.hover();
 
-    const commentBtn = codeLine.locator('.line-actions .add-comment-btn');
+    const commentBtn = codeLine.locator('.line-hover-actions .add-comment-btn');
     await expect(commentBtn).toBeVisible({ timeout: 5000 });
 
     await commentBtn.click();
@@ -181,12 +180,12 @@ test.describe('Code Panel - Page Options Toggles', () => {
     // Comments should be visible by default
     const commentThreads = page.locator('app-comment-thread');
     await expect(commentThreads.first()).toBeVisible();
-    
+
     const settingsButton = page.locator('button.settings-btn');
     await settingsButton.click();
-    
+
     await page.waitForSelector('.settings-panel', { state: 'visible' });
-    
+
     const commentsToggle = page
       .locator('.settings-panel')
       .locator('label', { hasText: /^Comments$/ })
@@ -208,7 +207,7 @@ test.describe('Code Panel - Page Options Toggles', () => {
     const reviewPage = new ReviewPage(page);
     // Left navigation should be visible by default
     await expect(reviewPage.leftNavigation).toBeVisible();
-    
+
     // The left navigation toggle is now in the review-info component (sidebar toggle button)
     const leftNavToggle = page.locator('label[for="page-left-panel"]');
 

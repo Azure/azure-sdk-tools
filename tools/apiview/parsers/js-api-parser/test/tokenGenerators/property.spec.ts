@@ -121,11 +121,8 @@ describe("Property Token Generator", () => {
 
       const { tokens } = propertyTokenGenerator.generate(mockItem, true);
 
-      expect(tokens[0]).to.deep.include({
-        Kind: TokenKind.MemberName,
-        Value: "deprecatedProp",
-        IsDeprecated: true,
-      });
+      // All tokens should be marked as deprecated
+      expect(tokens.every((t) => t.IsDeprecated === true)).to.be.true;
     });
 
     it("should throw error for invalid item kind", () => {
@@ -236,15 +233,17 @@ describe("Property Token Generator", () => {
 
       const { tokens } = propertyTokenGenerator.generate(mockItem, true);
 
+      // All tokens should be marked as deprecated
+      expect(tokens.every((t) => t.IsDeprecated === true)).to.be.true;
+
+      // Verify specific tokens exist with correct values
       expect(tokens[0]).to.deep.include({
         Kind: TokenKind.MemberName,
         Value: "deprecatedSignature",
-        IsDeprecated: true,
       });
       expect(tokens[2]).to.deep.include({
         Kind: TokenKind.Keyword,
         Value: "string",
-        IsDeprecated: true,
       });
     });
   });
@@ -297,16 +296,12 @@ describe("Property Token Generator", () => {
 
       const { tokens } = propertyTokenGenerator.generate(mockItem, true);
 
-      expect(tokens[0]).to.deep.include({
-        Kind: TokenKind.Keyword,
-        Value: "get",
-        IsDeprecated: true,
-      });
-      expect(tokens[1]).to.deep.include({
-        Kind: TokenKind.MemberName,
-        Value: "deprecatedGetter",
-        IsDeprecated: true,
-      });
+      // All tokens should be marked as deprecated
+      expect(tokens.every((t) => t.IsDeprecated === true)).to.be.true;
+
+      // Verify specific tokens exist with correct values
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "get" });
+      expect(tokens[1]).to.deep.include({ Kind: TokenKind.MemberName, Value: "deprecatedGetter" });
     });
 
     it("should handle getter with leading whitespace in excerpt", () => {
@@ -408,16 +403,12 @@ describe("Property Token Generator", () => {
 
       const { tokens } = propertyTokenGenerator.generate(mockItem, true);
 
-      expect(tokens[0]).to.deep.include({
-        Kind: TokenKind.Keyword,
-        Value: "set",
-        IsDeprecated: true,
-      });
-      expect(tokens[1]).to.deep.include({
-        Kind: TokenKind.MemberName,
-        Value: "deprecatedSetter",
-        IsDeprecated: true,
-      });
+      // All tokens should be marked as deprecated
+      expect(tokens.every((t) => t.IsDeprecated === true)).to.be.true;
+
+      // Verify specific tokens exist with correct values
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "set" });
+      expect(tokens[1]).to.deep.include({ Kind: TokenKind.MemberName, Value: "deprecatedSetter" });
     });
 
     it("should handle setter with leading whitespace in excerpt", () => {

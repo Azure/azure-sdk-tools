@@ -92,7 +92,7 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
-        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body);
+        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body, List<string>? assignees = null);
         public Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber);
         public Task<string?> GetFileFromPullRequest(string repoOwner, string repoName, int pullRequestNumber, string filePath);
         public Task<string?> GetFileFromBranch(string repoOwner, string repoName, string branch, string filePath);
@@ -141,13 +141,22 @@ public class GitConnection
             await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber, update);
         }
 
-        public async Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body)
+        public async Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body, List<string>? assignees = null)
         {
             logger.LogInformation("Creating issue in {RepoOwner}/{RepoName}: {Title}", repoOwner, repoName, title);
             var newIssue = new NewIssue(title)
             {
                 Body = body
             };
+            
+            if (assignees != null && assignees.Count > 0)
+            {
+                foreach (var assignee in assignees)
+                {
+                    newIssue.Assignees.Add(assignee);
+                }
+            }
+            
             return await gitHubClient.Issue.Create(repoOwner, repoName, newIssue);
         }
 

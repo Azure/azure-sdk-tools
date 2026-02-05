@@ -126,13 +126,14 @@ public class DelegateApiViewFeedbackTool : MCPTool
                 };
             }
 
-            // Create issue
-            _logger.LogInformation("Creating issue in {Owner}/{Repo}", owner, repoName);
-            var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt);
+            // Create issue and assign to Copilot
+            _logger.LogInformation("Creating issue in {Owner}/{Repo} and assigning to Copilot", owner, repoName);
+            var assignees = new List<string> { "copilot-swe-agent[bot]" };
+            var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt, assignees);
 
             return new DefaultCommandResponse
             {
-                Message = $"✓ Issue created: {issue.HtmlUrl}\n\n⚠️ Next step: Assign Copilot to this issue to start the coding agent.\n   In the issue, click 'Assignees' and select 'Copilot'."
+                Message = $"✓ Issue created and assigned to Copilot: {issue.HtmlUrl}\n\n⏳ Copilot will start working on this issue shortly. Watch for the 👀 reaction and draft PR."
             };
         }
         catch (Exception ex)
@@ -207,13 +208,14 @@ public class DelegateApiViewFeedbackTool : MCPTool
                 };
             }
 
-            // Create issue
-            _logger.LogInformation("Creating issue in {Owner}/{Repo}", owner, repoName);
-            var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt);
+            // Create issue and assign to Copilot
+            _logger.LogInformation("Creating issue in {Owner}/{Repo} and assigning to Copilot", owner, repoName);
+            var assignees = new List<string> { "copilot-swe-agent[bot]" };
+            var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt, assignees);
 
             return new DefaultCommandResponse
             {
-                Message = $"✓ Issue created: {issue.HtmlUrl}\n\n⚠️ Next step: Assign Copilot to this issue to start the coding agent.\n   In the issue, click 'Assignees' and select 'Copilot'."
+                Message = $"✓ Issue created and assigned to Copilot: {issue.HtmlUrl}\n\n⏳ Copilot will start working on this issue shortly. Watch for the 👀 reaction and draft PR."
             };
         }
         catch (Exception ex)

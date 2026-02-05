@@ -44,7 +44,7 @@ public class DelegateApiViewFeedbackToolTests
 
         Assert.That(response.Message, Does.Contain("No actionable comments"));
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()), Times.Never);
     }
 
     #endregion
@@ -196,7 +196,7 @@ public class DelegateApiViewFeedbackToolTests
         var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: true);
 
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()), Times.Never);
     }
 
     [Test]
@@ -215,7 +215,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockGitHubService.Setup(x => x.CreateIssueAsync(
             "Azure", 
             "azure-rest-api-specs", 
-            It.Is<string>(title => title.Contains("[TypeSpec]") && title.Contains("azure-test-package")),
+            It.Is<string>(title => title.Contains("Address APIView feedback") && title.Contains("azure-test-package")),
             It.Is<string>(body => 
                 body.Contains("**Package Name**: azure-test-package") &&
                 body.Contains("**Language**: Python") &&
@@ -223,7 +223,8 @@ public class DelegateApiViewFeedbackToolTests
                 body.Contains("## Feedback to Address") &&
                 body.Contains("## Constraints") &&
                 body.Contains("## Output Requirements") &&
-                body.Contains("| LineNo | Element | LineText | CommentText |"))))
+                body.Contains("| LineNo | Element | LineText | CommentText |")),
+            It.IsAny<List<string>?>()))
             .ReturnsAsync(mockIssue);
 
         var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: false);
@@ -232,7 +233,8 @@ public class DelegateApiViewFeedbackToolTests
         Assert.That(response.Message, Does.Contain("https://github.com/Azure/azure-rest-api-specs/issues/42"));
         
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
-            "Azure", "azure-rest-api-specs", It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            "Azure", "azure-rest-api-specs", It.IsAny<string>(), It.IsAny<string>(), 
+            It.Is<List<string>>(a => a != null && a.Count == 1 && a[0] == "copilot-swe-agent[bot]")), Times.Once);
     }
 
     #endregion
@@ -263,7 +265,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockHelper.Setup(x => x.GetMetadata(apiViewUrl)).ReturnsAsync(metadata);
         _mockHelper.Setup(x => x.DetectShaAndTspPath(metadata))
             .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
-        _mockGitHubService.Setup(x => x.CreateIssueAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+        _mockGitHubService.Setup(x => x.CreateIssueAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()))
             .ThrowsAsync(new Octokit.ApiException("GitHub API rate limit exceeded", System.Net.HttpStatusCode.Forbidden));
 
         var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: false);

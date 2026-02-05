@@ -325,7 +325,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             );
         }
 
-        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body)
+        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body, List<string>? assignees = null)
         {
             // Create a mock issue
             var issue = CreateMockIssue(repoOwner, repoName, 1);

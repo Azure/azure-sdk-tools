@@ -246,6 +246,29 @@ describe("Property Token Generator", () => {
         Value: "string",
       });
     });
+
+    it("should mark optional property signature tokens as deprecated including question mark", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "deprecatedOptionalSignature",
+        isReadonly: false,
+        isOptional: true,
+        propertyTypeExcerpt: { text: "boolean" },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem, true);
+
+      // All tokens should be marked as deprecated
+      expect(tokens.every((t) => t.IsDeprecated === true)).to.be.true;
+
+      // Verify specific tokens
+      expect(tokens[0]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "deprecatedOptionalSignature",
+      });
+      expect(tokens[1]).to.deep.include({ Kind: TokenKind.Punctuation, Value: "?" });
+      expect(tokens[1].IsDeprecated).to.be.true;
+    });
   });
 
   describe("generate - Getter", () => {
@@ -457,6 +480,289 @@ describe("Property Token Generator", () => {
 
       expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "set" });
       expect(tokens[1]).to.deep.include({ Kind: TokenKind.MemberName, Value: "unionSetter" });
+    });
+  });
+
+  describe("generate - PropertySignature", () => {
+    it("should mark all tokens including optional marker as deprecated", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "deprecatedOptionalProp",
+        isReadonly: false,
+        isOptional: true,
+        propertyTypeExcerpt: { text: "string" },
+      } as unknown as ApiProperty;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem, true);
+
+      // All tokens should be marked as deprecated
+      expect(tokens.every((t) => t.IsDeprecated === true)).to.be.true;
+
+      // Verify the optional marker specifically
+      const questionToken = tokens.find((t) => t.Value === "?");
+      expect(questionToken).to.exist;
+      expect(questionToken?.IsDeprecated).to.be.true;
+    });
+  });
+
+  describe("generate - Nested Properties", () => {
+    it("should generate children for property with inline object type", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "nestedProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ name: string; age: number; }" },
+      } as unknown as ApiProperty;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "nestedProp" });
+      expect(tokens[1]).to.deep.include({ Kind: TokenKind.Punctuation, Value: ":" });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
+
+    it("should generate children for readonly property with inline object type", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "readonlyNestedProp",
+        isReadonly: true,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ id: string; }" },
+      } as unknown as ApiProperty;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "readonly" });
+      expect(tokens[1]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "readonlyNestedProp",
+      });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
+
+    it("should generate children for optional property with inline object type", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "optionalNestedProp",
+        isReadonly: false,
+        isOptional: true,
+        propertyTypeExcerpt: { text: "{ value: boolean; }" },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "optionalNestedProp",
+      });
+      expect(tokens[1]).to.deep.include({ Kind: TokenKind.Punctuation, Value: "?" });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
+
+    it("should mark all children tokens as deprecated when property is deprecated", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "deprecatedNestedProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ name: string; }" },
+      } as unknown as ApiProperty;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem, true);
+
+      // Parent tokens should be deprecated
+      expect(tokens.every((t) => t.IsDeprecated === true)).to.be.true;
+
+      // Children should exist and all their tokens should be deprecated
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+      children!.forEach((child) => {
+        child.Tokens?.forEach((token) => {
+          expect(token.IsDeprecated).to.be.true;
+        });
+      });
+    });
+
+    it("should generate children for property with nested object containing multiple properties", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "complexNestedProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ firstName: string; lastName: string; age: number; }" },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "complexNestedProp" });
+      expect(children).to.exist;
+      // Should have children for each property plus closing brace
+      expect(children!.length).to.be.greaterThan(1);
+    });
+
+    it("should generate children for property with deeply nested object type", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "deeplyNestedProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ outer: { inner: string; }; }" },
+      } as unknown as ApiProperty;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "deeplyNestedProp" });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
+
+    it("should generate children for property with array of objects type", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "arrayOfObjectsProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ name: string; }[]" },
+      } as unknown as ApiProperty;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "arrayOfObjectsProp",
+      });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
+
+    it("should generate children for property with union type containing inline object", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "unionWithObjectProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "string | { custom: boolean; }" },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "unionWithObjectProp",
+      });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
+
+    it("should not generate children for simple type property", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "simpleProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "string" },
+      } as unknown as ApiProperty;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.MemberName, Value: "simpleProp" });
+      expect(children).to.be.undefined;
+    });
+
+    it("should not generate children for array of primitives property", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "primitiveArrayProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "string[]" },
+      } as unknown as ApiProperty;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "primitiveArrayProp",
+      });
+      expect(children).to.be.undefined;
+    });
+
+    it("should generate children with context end line for inline object", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "objectWithEndLine",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ prop: string; }" },
+      } as unknown as ApiProperty;
+
+      const { children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(children).to.exist;
+      // Last child should be the context end line with closing brace
+      const lastChild = children![children!.length - 1];
+      expect(lastChild.IsContextEndLine).to.be.true;
+    });
+
+    it("should generate children for property with optional nested properties", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "nestedOptionalProps",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ required: string; optional?: number; }" },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "nestedOptionalProps",
+      });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
+
+    it("should generate children for property with readonly nested properties", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "nestedReadonlyProps",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ readonly id: string; readonly name: string; }" },
+      } as unknown as ApiProperty;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "nestedReadonlyProps",
+      });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
+
+    it("should generate children for property with index signature", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "indexSignatureProp",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: { text: "{ [key: string]: number; }" },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      expect(tokens[0]).to.deep.include({
+        Kind: TokenKind.MemberName,
+        Value: "indexSignatureProp",
+      });
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
     });
   });
 });

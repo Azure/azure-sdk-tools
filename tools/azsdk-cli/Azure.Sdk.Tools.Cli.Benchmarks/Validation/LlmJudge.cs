@@ -43,50 +43,67 @@ public class LlmJudge : IDisposable
         string model = "claude-sonnet-4.5",
         CancellationToken cancellationToken = default)
     {
-        _client ??= new CopilotClient();
+        // Use a temp directory to avoid loading copilot-instructions.md or skills
+        var tempDir = Path.Combine(Path.GetTempPath(), $"llm-judge-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
 
-        var sessionConfig = new SessionConfig
+        try
         {
-            Model = model,
-            Streaming = false,
-            SystemMessage = new SystemMessageConfig
+            _client ??= new CopilotClient(new CopilotClientOptions
             {
-                Mode = SystemMessageMode.Replace,
-                Content = systemPrompt
-            },
-            // Disable all tools - we just want a text response
-            AvailableTools = [],
-            McpServers = null
-        };
+                Cwd = tempDir
+            });
 
-        await using var session = await _client.CreateSessionAsync(sessionConfig);
+            var sessionConfig = new SessionConfig
+            {
+                Model = model,
+                Streaming = false,
+                SystemMessage = new SystemMessageConfig
+                {
+                    Mode = SystemMessageMode.Replace,
+                    Content = systemPrompt
+                },
+                // Disable all tools - we just want a text response
+                AvailableTools = [],
+                McpServers = null,
+                // Disable infinite sessions to keep context clean
+                InfiniteSessions = new InfiniteSessionConfig { Enabled = false }
+            };
 
-        var messageOptions = new MessageOptions { Prompt = userPrompt };
-        await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(2));
+            await using var session = await _client.CreateSessionAsync(sessionConfig);
 
-        // Get the last assistant message content
-        var messages = await session.GetMessagesAsync();
-        var lastAssistantMessage = messages
-            .OfType<AssistantMessageEvent>()
-            .LastOrDefault();
-        
-        var responseContent = lastAssistantMessage?.Data?.Content ?? "";
+            var messageOptions = new MessageOptions { Prompt = userPrompt };
+            await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(2));
 
-        // Parse the response - look for PASS or FAIL
-        var passed = responseContent.Contains("PASS", StringComparison.OrdinalIgnoreCase) &&
-                     !responseContent.Contains("FAIL", StringComparison.OrdinalIgnoreCase);
-        
-        // If response contains FAIL, it's a failure
-        if (responseContent.Contains("FAIL", StringComparison.OrdinalIgnoreCase))
-        {
-            passed = false;
+            // Get the last assistant message content
+            var messages = await session.GetMessagesAsync();
+            var lastAssistantMessage = messages
+                .OfType<AssistantMessageEvent>()
+                .LastOrDefault();
+            
+            var responseContent = lastAssistantMessage?.Data?.Content ?? "";
+
+            // Parse the response - look for PASS or FAIL
+            var passed = responseContent.Contains("PASS", StringComparison.OrdinalIgnoreCase) &&
+                        !responseContent.Contains("FAIL", StringComparison.OrdinalIgnoreCase);
+            
+            // If response contains FAIL, it's a failure
+            if (responseContent.Contains("FAIL", StringComparison.OrdinalIgnoreCase))
+            {
+                passed = false;
+            }
+
+            return new JudgmentResult
+            {
+                Passed = passed,
+                Reasoning = responseContent
+            };
         }
-
-        return new JudgmentResult
+        finally
         {
-            Passed = passed,
-            Reasoning = responseContent
-        };
+            // Cleanup temp directory
+            try { Directory.Delete(tempDir, recursive: true); } catch { /* ignore */ }
+        }
     }
 
     public void Dispose()

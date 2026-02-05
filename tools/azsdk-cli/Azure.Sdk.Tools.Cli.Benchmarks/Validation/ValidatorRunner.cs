@@ -61,6 +61,18 @@ public class ValidatorRunner
                 var status = result.Passed ? "✓" : "✗";
                 Console.WriteLine($"    {status} {result.Message ?? (result.Passed ? "Passed" : "Failed")}");
 
+                // Print details if present (for debugging validators or failed validations)
+                if (!string.IsNullOrWhiteSpace(result.Details))
+                {
+                    Console.WriteLine($"    --- Details ---");
+                    // Indent each line of details
+                    foreach (var line in result.Details.Split('\n'))
+                    {
+                        Console.WriteLine($"    {line}");
+                    }
+                    Console.WriteLine($"    --- End Details ---");
+                }
+
                 if (!result.Passed && _options.StopOnFirstFailure)
                 {
                     Console.WriteLine("  Stopping on first failure");

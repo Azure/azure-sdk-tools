@@ -1,17 +1,5 @@
 # TypeSpec Validation
 
-Common questions about TypeSpec validation errors and CI fixes.
+Common issues and solutions for TypeSpec validation errors and CI fixes.
 
----
-
-<!-- Add Q&A entries below following this format:
-
-## question
-[Clear, generalized question]
-
-## answer
-[Comprehensive answer]
-
----
-
--->
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

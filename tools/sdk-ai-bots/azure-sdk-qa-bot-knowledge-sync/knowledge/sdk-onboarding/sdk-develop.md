@@ -1,17 +1,5 @@
 # SDK Development
 
-Common questions about SDK regeneration, testing, and reviews.
+Common issues and solutions for SDK regeneration, testing, and reviews.
 
----
-
-<!-- Add Q&A entries below following this format:
-
-## question
-[Clear, generalized question]
-
-## answer
-[Comprehensive answer]
-
----
-
--->
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

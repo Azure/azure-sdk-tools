@@ -1,17 +1,5 @@
 # SDK Review
 
-Common questions about SDK review processes and requirements.
+Common issues and solutions for SDK review processes and requirements.
 
----
-
-<!-- Add Q&A entries below following this format:
-
-## question
-[Clear, generalized question]
-
-## answer
-[Comprehensive answer]
-
----
-
--->
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

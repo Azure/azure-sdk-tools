@@ -1,17 +1,5 @@
 # SDK Onboarding
 
-Common questions about Azure service prerequisites and onboarding requirements.
+Common issues and solutions for Azure service prerequisites and onboarding requirements.
 
----
-
-<!-- Add Q&A entries below following this format:
-
-## question
-[Clear, generalized question]
-
-## answer
-[Comprehensive answer]
-
----
-
--->
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

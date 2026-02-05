@@ -1,14 +1,10 @@
 # TypeSpec Decorators
 
-Common questions about TypeSpec decorators and their usage.
+Common issues and solutions for TypeSpec decorators and their usage.
 
----
+## TypeSpec @pattern decorator does not support negative lookahead in regex
 
-## question
-Does TypeSpec support negative lookahead in regex patterns for the `@pattern` decorator?
-
-## answer
-No, TypeSpec's `@pattern` decorator only supports simple regex syntax, the same as OpenAPI. Negative lookahead and other advanced regex features are not supported.
+TypeSpec's `@pattern` decorator only supports simple regex syntax, the same as OpenAPI. Negative lookahead and other advanced regex features are not supported.
 
 Note that `@pattern` is primarily for documentation purposes from the SDK's perspective - it won't validate at runtime regardless of the pattern complexity.
 

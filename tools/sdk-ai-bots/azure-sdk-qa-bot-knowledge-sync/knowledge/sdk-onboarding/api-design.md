@@ -1,17 +1,5 @@
 # API Design
 
-Common questions about REST API design principles and best practices.
+Common issues and solutions for REST API design principles and best practices.
 
----
-
-<!-- Add Q&A entries below following this format:
-
-## question
-[Clear, generalized question]
-
-## answer
-[Comprehensive answer]
-
----
-
--->
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

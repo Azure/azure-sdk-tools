@@ -1,5 +1,5 @@
-# SDK Release
+# .NET SDK Generation
 
-Common issues and solutions for SDK release lifecycle and processes.
+Common issues and solutions for .NET SDK code generation and tsp-client.
 
 <!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

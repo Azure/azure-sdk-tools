@@ -1,17 +1,5 @@
 # TypeSpec Versioning
 
-Common questions about API versioning and avoiding breaking changes in TypeSpec.
+Common issues and solutions for API versioning and avoiding breaking changes in TypeSpec.
 
----
-
-<!-- Add Q&A entries below following this format:
-
-## question
-[Clear, generalized question]
-
-## answer
-[Comprehensive answer]
-
----
-
--->
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

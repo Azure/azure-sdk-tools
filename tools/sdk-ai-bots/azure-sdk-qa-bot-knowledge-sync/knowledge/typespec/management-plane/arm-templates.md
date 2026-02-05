@@ -1,17 +1,5 @@
 # TypeSpec ARM Templates
 
-Common questions about selecting and using ARM resource templates in TypeSpec.
+Common issues and solutions for selecting and using ARM resource templates in TypeSpec.
 
----
-
-<!-- Add Q&A entries below following this format:
-
-## question
-[Clear, generalized question]
-
-## answer
-[Comprehensive answer]
-
----
-
--->
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

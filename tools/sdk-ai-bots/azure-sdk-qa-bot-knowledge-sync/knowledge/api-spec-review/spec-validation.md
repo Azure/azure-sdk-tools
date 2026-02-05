@@ -1,17 +1,5 @@
 # Spec Validation
 
-Common questions about API spec pipeline errors, CI failures, and linting issues.
+Common issues and solutions for API spec pipeline errors, CI failures, and linting issues.
 
----
-
-<!-- Add Q&A entries below following this format:
-
-## question
-[Clear, generalized question]
-
-## answer
-[Comprehensive answer]
-
----
-
--->
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

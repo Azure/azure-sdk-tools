@@ -51,10 +51,10 @@ For the existing static Q&A that has accumulated over time:
 │   ┌─────────────────┐                                                       │
 │   │ Q&A 2025_01-03  │──▶ Vendor A ──▶ PR #1                                │
 │   └─────────────────┘                    │                                  │
-│   ┌─────────────────┐                    │     ┌──────────────────────┐     │
-│   │ Q&A 2025_04-06  │──▶ Vendor B ──▶ PR #2 ──▶│  Refined Knowledge │     │
-│   └─────────────────┘                    │     │  Base (GitHub)       │     │
-│   ┌─────────────────┐                    │     └──────────────────────┘     │
+│   ┌─────────────────┐                    │       ┌──────────────────────┐   │
+│   │ Q&A 2025_04-06  │──▶ Vendor B ──▶ PR #2 ──▶│  Refined Knowledge    │  │
+│   └─────────────────┘                    │       │  Base (GitHub)       │   │
+│   ┌─────────────────┐                    │       └──────────────────────┘   │
 │   │ Q&A 2025_07-09  │──▶ Vendor C ──▶ PR #3                                │
 │   └─────────────────┘                                                       │
 │                                                                             │
@@ -146,18 +146,13 @@ No, only simple syntax same as openapi. Documented on the `@pattern` decorator..
 
 💡**Refined Knowledge:**
 ```markdown
-## question
-Does TypeSpec support negative lookahead in regex patterns for the `@pattern` decorator?
+## TypeSpec @pattern decorator does not support negative lookahead in regex
 
-## answer
-No, TypeSpec's `@pattern` decorator only supports simple regex syntax, the same as OpenAPI. 
-Negative lookahead and other advanced regex features are not supported.
+TypeSpec's `@pattern` decorator only supports simple regex syntax, the same as OpenAPI. Negative lookahead and other advanced regex features are not supported.
 
-Note that `@pattern` is primarily for documentation purposes from the SDK's perspective - 
-it won't validate at runtime regardless of the pattern complexity.
+Note that `@pattern` is primarily for documentation purposes from the SDK's perspective - it won't validate at runtime regardless of the pattern complexity.
 
-For complex name validation requirements (length, character restrictions, position rules), 
-consider:
+For complex name validation requirements (length, character restrictions, position rules), consider:
 1. Using `@minLength` and `@maxLength` for length constraints
 2. Using a simplified `@pattern` for basic character class validation
 3. Implementing additional validation logic in your service layer
@@ -181,20 +176,23 @@ Can you try running npm install again? Also check your Node.js version.
 
 ### Transformation Guidelines
 
-#### 2.1 Generalize the Question
+#### 2.1 Generalize the Topic
 
-| Before | After |
-|--------|-------|
-| "Hi Team, I'm working on StorageDiscoveryScope and..." | "How do I..." |
-| "We're trying to implement X for our Azure Foo service" | "How do I implement X in TypeSpec?" |
-| "John mentioned that..." | Remove personal references entirely |
+Transform the original question into a descriptive topic:
 
-#### 2.2 Enhance the Answer
+| Before (Raw Q&A) | After (Topic) |
+|------------------|----------------------|
+| "Hi Team, does typespec allow negative lookahead?" | `## TypeSpec @pattern decorator does not support negative lookahead` |
+| "We're getting error X when doing Y" | `## How to fix error X when doing Y` |
+| "What's the best practice for Z?" | `## Best practice for implementing Z` |
+
+#### 2.2 Enhance the Content
 
 - **Add context**: Explain *why*, not just *what*
-- **Provide examples**: Include code snippets where applicable
-- **Cover edge cases**: Address common variations of the question
+- **Provide examples**: Include short code snippets where applicable (5-15 lines)
+- **Cover edge cases**: Address common variations of the scenario
 - **Remove temporal references**: Replace "currently" or "as of now" with version-specific info
+- **Use structured format**: Use bullet points, numbered lists, or bold for key points
 
 #### 2.3 What to Avoid in Refined Knowledge
 
@@ -218,20 +216,21 @@ The refined knowledge should be **general and reusable**. Avoid including:
 
 #### 2.4 Format Standards
 
-Each curated knowledge entry MUST follow this format:
+Knowledge entries use a simple heading-based format optimized for AI Search chunking:
 
 ```markdown
-## question
-[Clear, generalized question in natural language]
+# Category Title
 
-## answer
-[Comprehensive answer with the following structure:]
+Brief description of this category.
 
-1. **Direct Answer**: Start with a clear, direct response to the question
-2. **Explanation**: Provide context and reasoning
-3. **Example** (if applicable): Include code snippets or configuration examples
-4. **Best Practices** (if applicable): Highlight recommended approaches
+## Descriptive topic heading that describes the scenario or question
 
+Content with the solution, explanation, and examples.
+Keep each topic focused and concise (100-300 words ideal).
+
+## Another topic heading
+
+More content...
 ```
 
 ## Step 3: Organize by Category

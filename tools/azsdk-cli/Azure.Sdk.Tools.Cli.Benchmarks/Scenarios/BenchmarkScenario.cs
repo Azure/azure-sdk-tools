@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 
@@ -70,7 +71,11 @@ public abstract class BenchmarkScenario
     /// </summary>
     public virtual TimeSpan Timeout => TimeSpan.FromMinutes(5);
 
-    // === VALIDATION (placeholder for POC) ===
-    // Validators will be added later - for now just return empty
-    // public abstract IEnumerable<IValidator> Validators { get; }
+    // === VALIDATION ===
+
+    /// <summary>
+    /// Gets the validators to run after agent execution.
+    /// Empty list means manual validation (POC mode).
+    /// </summary>
+    public virtual IEnumerable<IValidator> Validators => [];
 }

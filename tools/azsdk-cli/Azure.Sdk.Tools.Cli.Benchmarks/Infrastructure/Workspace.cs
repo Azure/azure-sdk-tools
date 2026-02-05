@@ -32,10 +32,11 @@ public class Workspace : IDisposable
     /// <summary>
     /// Gets the git diff of all uncommitted changes in the repository.
     /// </summary>
+    /// <param name="contextLines">Number of context lines to include around each change (default: 3).</param>
     /// <returns>The git diff output as a string.</returns>
-    public async Task<string> GetGitDiffAsync()
+    public async Task<string> GetGitDiffAsync(int contextLines = 3)
     {
-        return await RunGitCommandAsync("diff");
+        return await RunGitCommandAsync("diff", $"-U{contextLines}");
     }
 
     /// <summary>

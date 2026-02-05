@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
+using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
@@ -71,6 +72,11 @@ public class BenchmarkResult
     /// Gets whether the workspace was cleaned up after execution.
     /// </summary>
     public bool WorkspaceCleanedUp { get; init; }
+
+    /// <summary>
+    /// Gets the validation summary (null if no validators defined).
+    /// </summary>
+    public ValidationSummary? Validation { get; init; }
 }
 
 /// <summary>
@@ -128,10 +134,35 @@ public class BenchmarkRunner : IDisposable
             Console.WriteLine($"[Benchmark] Capturing git diff...");
             var gitDiff = await workspace.GetGitDiffAsync();
 
+            // 5. Validation
+            ValidationSummary? validation = null;
+            var validators = scenario.Validators.ToList();
+
+            if (validators.Count > 0)
+            {
+                Console.WriteLine($"[Benchmark] Running {validators.Count} validator(s)...");
+
+                var validationContext = new ValidationContext
+                {
+                    Workspace = workspace,
+                    GitDiff = gitDiff,
+                    ToolCalls = execResult.ToolCalls,
+                    Messages = execResult.Messages,
+                    ExecutionCompleted = execResult.Completed,
+                    ExecutionError = execResult.Error,
+                    ScenarioName = scenario.Name
+                };
+
+                var validatorRunner = new ValidatorRunner();
+                validation = await validatorRunner.RunAsync(validators, validationContext);
+            }
+
             stopwatch.Stop();
 
-            // For POC, we consider it passed if execution completed and there's a diff
-            var passed = execResult.Completed && !string.IsNullOrWhiteSpace(gitDiff);
+            // Determine pass/fail based on validation (or POC logic if no validators)
+            var passed = validators.Count > 0
+                ? validation!.Passed
+                : execResult.Completed && !string.IsNullOrWhiteSpace(gitDiff); // POC fallback
 
             // Determine if cleanup will happen based on policy
             var willCleanup = options.CleanupPolicy switch
@@ -151,10 +182,11 @@ public class BenchmarkRunner : IDisposable
                 GitDiff = gitDiff,
                 ToolCalls = execResult.ToolCalls,
                 WorkspacePath = workspace.RootPath,
-                WorkspaceCleanedUp = willCleanup
+                WorkspaceCleanedUp = willCleanup,
+                Validation = validation
             };
 
-            // 5. Cleanup
+            // 6. Cleanup
             await _workspaceManager.CleanupAsync(workspace, options.CleanupPolicy, passed);
 
             return result;
@@ -184,7 +216,8 @@ public class BenchmarkRunner : IDisposable
                 Error = ex.Message,
                 Duration = stopwatch.Elapsed,
                 WorkspacePath = workspace?.RootPath,
-                WorkspaceCleanedUp = willCleanup
+                WorkspaceCleanedUp = willCleanup,
+                Validation = null
             };
         }
     }

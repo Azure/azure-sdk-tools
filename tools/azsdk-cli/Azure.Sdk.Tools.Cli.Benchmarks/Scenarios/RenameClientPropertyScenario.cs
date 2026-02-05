@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
+using Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 
@@ -38,4 +40,34 @@ public class RenameClientPropertyScenario : BenchmarkScenario
 
     /// <inheritdoc />
     public override TimeSpan Timeout => TimeSpan.FromMinutes(3);
+
+    /// <inheritdoc />
+    public override IEnumerable<IValidator> Validators =>
+    [
+        new FileExistsValidator("Target file exists",
+            "specification/ai/Face/models.common.tsp"),
+
+        new ContainsValidator("Has @clientName decorator",
+            filePath: "specification/ai/Face/models.common.tsp",
+            patterns: ["@clientName"]),
+
+        new ContainsValidator("Has new imageUri name",
+            filePath: "specification/ai/Face/models.common.tsp",
+            patterns: ["imageUri"]),
+
+        new ExpectedDiffValidator("Diff matches expected change",
+            expectedDiff: """
+                diff --git a/specification/ai/Face/models.common.tsp b/specification/ai/Face/models.common.tsp
+                --- a/specification/ai/Face/models.common.tsp
+                +++ b/specification/ai/Face/models.common.tsp
+                @@ -155,7 +155,7 @@
+                 @doc("Add face from url request.")
+                 model AddFaceFromUrlRequest is AddFaceOptions {
+                -  @clientName("uri", "csharp")
+                +  @clientName("imageUri", "csharp")
+                   @doc("URL of input image.")
+                   url: url;
+                 }
+                """)
+    ];
 }

@@ -22,11 +22,16 @@ export class LinkContentExtractor {
       }
 
       try {
-        let details: PRDetails | IssueDetails;
+        let details: PRDetails | IssueDetails | undefined;
         if (isPR) {
           details = await this.githubClient.getPullRequestDetails(url.href, meta);
         } else {
           details = await this.githubClient.getIssueDetails(url.href, meta);
+        }
+
+        if (!details) {
+          contents.push({ text: '', url, error: new Error('Failed to fetch details') });
+          continue;
         }
 
         let text = ``;

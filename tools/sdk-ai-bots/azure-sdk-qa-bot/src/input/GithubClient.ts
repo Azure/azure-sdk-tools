@@ -45,12 +45,12 @@ export class GithubClient {
     this.octokit = new Octokit({ auth: this.authToken });
   }
 
-  public async getPullRequestDetails(prUrl: string, meta: object): Promise<PRDetails> {
+  public async getPullRequestDetails(prUrl: string, meta: object): Promise<PRDetails | undefined> {
     // 1. Parse owner, repo, pull_number from URL
     const match = prUrl.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
     if (!match) {
       logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, { meta });
-      return { comments: { review: [], issue: [] }, reviews: [], basic: { labels: [], title: '' }, diff: '' };
+      return undefined;
     }
 
     const [, owner, repo, pullNumberStr] = match;
@@ -64,6 +64,10 @@ export class GithubClient {
       this.tryGetPullDiff(owner, repo, pullNumber, prUrl),
     ]);
 
+    if (!basicInfo && !issueComments && !reviewComments && !reviews && !diff) {
+      return undefined;
+    }
+
     return {
       comments: { review: reviewComments, issue: issueComments },
       reviews,
@@ -72,12 +76,12 @@ export class GithubClient {
     };
   }
 
-  public async getIssueDetails(issueUrl: string, meta: object): Promise<IssueDetails> {
+  public async getIssueDetails(issueUrl: string, meta: object): Promise<IssueDetails | undefined> {
     // Parse owner, repo, issue_number from URL
     const match = issueUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/);
     if (!match) {
       logger.warn(`Invalid Issue URL: ${issueUrl}. Ignore`, { meta });
-      return { title: '', body: '', state: '', labels: [], comments: [] };
+      return undefined;
     }
 
     const [, owner, repo, issueNumberStr] = match;
@@ -87,6 +91,10 @@ export class GithubClient {
       this.tryGetIssueBasicInfo(owner, repo, issueNumber, issueUrl),
       this.tryListIssueComments(owner, repo, issueNumber, issueUrl),
     ]);
+
+    if (!basicInfo && !comments) {
+      return undefined;
+    }
 
     return {
       title: basicInfo?.title ?? '',
@@ -112,7 +120,7 @@ export class GithubClient {
       const parameters = { owner, repo, pull_number: id };
       const response = await this.octokit.pulls.get(parameters);
       const pr = response.data;
-      const labels = pr.labels.map((lbl) => lbl.name);
+      const labels = pr.labels.map((lbl) => lbl.name).filter((lbl) => !!lbl);
       const title = pr.title;
       return { labels, title };
     } catch (error) {
@@ -131,7 +139,9 @@ export class GithubClient {
       const parameters = { owner, repo, issue_number: id };
       const response = await this.octokit.issues.get(parameters);
       const issue = response.data;
-      const labels = issue.labels.map((lbl) => (typeof lbl === 'string' ? lbl : lbl.name ?? ''));
+      const labels = issue.labels
+        .map((lbl) => (typeof lbl === 'string' ? lbl : lbl.name))
+        .filter((lbl) => !!lbl);
       return {
         title: issue.title,
         body: issue.body ?? '',

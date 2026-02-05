@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Models;
+
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
@@ -32,7 +34,7 @@ public class FeedbackContext
     /// <summary>
     /// Target SDK language (e.g., python, csharp, java)
     /// </summary>
-    public string? Language { get; set; }
+    public SdkLanguage? Language { get; set; }
     
     /// <summary>
     /// Service name for the SDK

@@ -41,6 +41,13 @@
                     </a>
                 </li>
 
+                <!-- Admin Settings icon (for admins) -->
+                <li *ngIf="isLoggedIn && isAdmin" class="nav-item">
+                    <a routerLink="/admin/permissions" class="nav-link nav-icon" aria-label="Admin Settings" title="Admin Settings" data-clarity-region="admin-settings-button">
+                        <i class="bi bi-shield-lock"></i>
+                    </a>
+                </li>
+
                 <!-- User profile avatar with dropdown -->
                 <li *ngIf="isLoggedIn" class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User profile menu" data-clarity-region="user-profile-menu">

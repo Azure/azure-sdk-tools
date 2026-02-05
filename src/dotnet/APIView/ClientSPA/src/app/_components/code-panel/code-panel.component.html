@@ -21,7 +21,7 @@
           </span>
       </div>
       <div class="line-hover-actions" *ngIf="canAddComment(item) || item.toggleDocumentationClasses?.includes('can-show')">
-          <button *ngIf="canAddComment(item)" type="button" class="hover-action-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
+          <button *ngIf="canAddComment(item)" type="button" class="hover-action-btn add-comment-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
             <i class="bi bi-chat"></i>
           </button>
           <span *ngIf="item.toggleDocumentationClasses?.includes('can-show')" class="hover-action-btn toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>

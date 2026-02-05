@@ -119,9 +119,11 @@ Each activity is logged as a structured, append-only text block. One block repre
 | `ActivityType` | Type of activity |
 | `UserInput` | Full verbatim user request |
 | `Action` | Description of action taken |
+| `SDK process step` | TypeSpec authoring, package generation, release planning, sdk release etc |
 | `Component` | Tool, skill, CLI command, or instruction name |
 | `Outcome` | `success`, `failure`, `partial`, or `skipped` |
 | `OutcomeDetails` | Human-readable explanation of the outcome |
+| `ReleasePlanId` | Release plan Id if it's available to tag to activity |
 
 ### 5.2 Activity Types
 
@@ -178,7 +180,7 @@ azsdk telemetry ingest activity-log --path .azsdk-agent-activity.log
 - No editor dependency
 - Telemetry visibility is delayed
 
-## 8.2. VS Code Extension Ingestion (Alternate option to CLI based ingestion)
+### 8.2. VS Code Extension Ingestion (Alternate option to CLI based ingestion)
 
 Copilot continues to write activity entries locally to the `.azsdk-agent-activity.log` file in the repository or workspace root.
 
@@ -210,3 +212,12 @@ A dedicated VS Code extension is responsible for monitoring this file and ingest
 - Enables editor-specific enrichment and correlation
 - Requires explicit extension installation
 - Telemetry limited to VS Code users
+
+## 9. Telemetry report
+
+Telemetry db will have additional details like client type( vscode, visual studio, github coding agent, copilot CLI etc), device details (non PII) along with activity status. Power bi dashboard will show:
+
+- summary of overall user activity using agent tools
+- Usage of different component types( skill, mcp tool cli command)
+- List of Azure SDK steps and usage and what type of component is used.
+- Identify the time it takes from planning a release --> TypeSpec completion --> sdk generation --> sdk release. Each activity is tagged using a release plan so we can identify the overall end to end time.

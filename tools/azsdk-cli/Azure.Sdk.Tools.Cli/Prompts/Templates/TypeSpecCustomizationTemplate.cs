@@ -111,8 +111,8 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
            b. Compile the TypeSpec project
            c. If compilation succeeds, proceed to next change
            d. If compilation fails, rollback and try alternative approach
-          4. After changes compile, review any compiler warnings and attempt reasonable fixes without sacrificing required customizations
-          5. Continue until all changes are successfully applied
+        4. After changes compile, review any compiler warnings and attempt reasonable fixes without sacrificing required customizations
+        5. Continue until all changes are successfully applied
 
         **Final Output:**
         Provide a summary of all successfully applied changes, including:

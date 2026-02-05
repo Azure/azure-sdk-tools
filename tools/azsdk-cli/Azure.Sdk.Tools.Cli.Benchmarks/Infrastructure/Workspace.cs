@@ -48,6 +48,46 @@ public class Workspace : IDisposable
     }
 
     /// <summary>
+    /// Runs a command in the repository directory.
+    /// </summary>
+    /// <param name="command">The command to run (e.g., "npm", "dotnet").</param>
+    /// <param name="args">Arguments to pass to the command.</param>
+    /// <returns>The standard output of the command.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the command exits with a non-zero exit code.</exception>
+    public async Task<string> RunCommandAsync(string command, params string[] args)
+    {
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = command,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = RepoPath
+        };
+
+        foreach (var arg in args)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
+
+        using var process = new Process { StartInfo = startInfo };
+        process.Start();
+
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"Command '{command} {string.Join(" ", args)}' failed with exit code {process.ExitCode}.\nStderr: {error}");
+        }
+
+        return output;
+    }
+
+    /// <summary>
     /// Runs a git command in the repository directory.
     /// </summary>
     private async Task<string> RunGitCommandAsync(params string[] args)

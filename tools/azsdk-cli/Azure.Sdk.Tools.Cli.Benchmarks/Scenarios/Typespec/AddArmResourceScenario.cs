@@ -41,6 +41,12 @@ public class AddArmResourceScenario : BenchmarkScenario
     public override TimeSpan Timeout => TimeSpan.FromMinutes(3);
 
     /// <inheritdoc />
+    public override async Task SetupAsync(Workspace workspace)
+    {
+        await workspace.RunCommandAsync("npm", "ci");
+    }
+
+    /// <inheritdoc />
     public override IEnumerable<IValidator> Validators =>
     [
         // Debug: Report what context is loaded
@@ -76,6 +82,11 @@ public class AddArmResourceScenario : BenchmarkScenario
         // Verify main.tsp imports the new asset file
         new ContainsValidator("main.tsp imports asset",
             filePath: "specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp",
-            patterns: ["asset.tsp"])
+            patterns: ["asset.tsp"]),
+
+        // Verify the project compiles successfully
+        new CommandValidator("tsp compile succeeds",
+            command: "tsp",
+            arguments: ["compile", "./specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp"])
     ];
 }

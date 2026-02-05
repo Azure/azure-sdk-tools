@@ -33,9 +33,9 @@ The Azure SDK QA Bot collects Q&A from real conversations in Teams channels. The
 └─────────────────────┘     └──────────────────────┘     └─────────────────────┘
 ```
 
-### Processing Modes
+### Processing Stages
 
-#### Mode 1: Batch Processing (Existing Static Q&A)
+#### Stage 1: Batch Processing (Existing Static Q&A)
 
 For the existing static Q&A that has accumulated over time:
 
@@ -43,25 +43,7 @@ For the existing static Q&A that has accumulated over time:
 2. **Parallel Work**: Multiple vendors can work on different date ranges simultaneously
 3. **Review & Merge**: Each vendor submits PRs for their assigned portion, which are reviewed and merged
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    Batch Processing for Existing Q&A                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   ┌─────────────────┐                                                       │
-│   │ Q&A 2025_01-03  │──▶ Vendor A ──▶ PR #1                                │
-│   └─────────────────┘                    │                                  │
-│   ┌─────────────────┐                    │       ┌──────────────────────┐   │
-│   │ Q&A 2025_04-06  │──▶ Vendor B ──▶ PR #2 ──▶│  Refined Knowledge    │  │
-│   └─────────────────┘                    │       │  Base (GitHub)       │   │
-│   ┌─────────────────┐                    │       └──────────────────────┘   │
-│   │ Q&A 2025_07-09  │──▶ Vendor C ──▶ PR #3                                │
-│   └─────────────────┘                                                       │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-#### Mode 2: Incremental Processing (Weekly Badcase Review)
+#### Stage 2: Incremental Processing (Weekly Badcase Review)
 
 For ongoing Q&A collected from weekly badcase reviews:
 
@@ -106,7 +88,7 @@ For ongoing Q&A collected from weekly badcase reviews:
 
 https://ms.portal.azure.com/#view/Microsoft_Azure_Storage/ContainerMenuBlade/~/overview/storageAccountId/%2Fsubscriptions%2Fa18897a6-7e44-457d-9260-f2854c0aca42%2FresourceGroups%2Fazure-sdk-qa-bot%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Fazuresdkqabotstorage/path/knowledge/etag/%220x8DDEF6ED60F97A7%22/defaultId//publicAccessVal/None
 
-### Criteria for Good Knowledge Candidates
+### Criteria for Good Candidates
 
 | Criteria | Good Candidate | Poor Candidate |
 |----------|----------------|----------------|
@@ -115,6 +97,8 @@ https://ms.portal.azure.com/#view/Microsoft_Azure_Storage/ContainerMenuBlade/~/o
 | **Clarity** | Question and answer are self-contained | Requires extensive context to understand |
 | **Longevity** | Information remains valid over time | Information is time-sensitive or outdated |
 | **Completeness** | Answer fully addresses the question | Answer is partial or requires follow-up |
+
+If question meets most of the "Good Candidate" criteria, proceed to Step 2. If it meets "Poor Candidate" criteria, skip it.
 
 ### Examples
 
@@ -170,13 +154,71 @@ Can you try running npm install again? Also check your Node.js version.
 
 *Reason: Too specific to user's environment, lacks complete solution, likely a temporary setup issue.*
 
-## Step 2: Transform Q&A into Generalized Knowledge
+## Step 2: Verify if Knowledge is needed
+
+Before adding new knowledge, follow this verification process:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    Knowledge Verification Workflow                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │ Step 1: Test with Bot (without static Q&A)                          │   │
+│   │         Run backend locally, remove static_typespec_qa              │   │
+│   │         Ask the original question                                   │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                              │                                              │
+│               ┌──────────────┴──────────────┐                               │
+│               ▼                             ▼                               │
+│      Bot answers correctly?           Bot cannot answer                     │
+│               │                             │                               │
+│               ▼                             ▼                               │
+│      ✅ No need to add            ┌─────────────────────────────────────┐   │
+│         (knowledge exists)        │ Step 2: Search existing knowledge  │   │
+│                                   │         Use AI Search portal       │   │
+│                                   └─────────────────────────────────────┘   │
+│                                             │                               │
+│                              ┌──────────────┴──────────────┐                │
+│                              ▼                             ▼                │
+│                     Similar knowledge          No similar knowledge         │
+│                     exists?                    found                        │
+│                              │                             │                │
+│                              ▼                             ▼                │
+│                     ⚠️ Bot issue              ✅ Add new knowledge          │
+│                     (track & skip)            (proceed to Step 2)           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**1. Test with Bot Locally**
+
+1. Remove `static_typespec_qa` from the knowledge sources(already done)
+2. Run the backend service locally(reference tools\sdk-ai-bots\azure-sdk-qa-bot-backend\README.md)
+3. Ask the bot the original question from the raw Q&A
+4. If the bot gives a correct answer → **No need to add** (knowledge already exists in other sources)
+
+**2. Search Existing Knowledge in AI Search**
+
+If the bot cannot answer correctly, search for existing knowledge:
+
+- AI Search Portal: [azure-sdk-knowledge index](https://ms.portal.azure.com/#view/Microsoft_Azure_Search/Index.ReactView/id/%2Fsubscriptions%2Fa18897a6-7e44-457d-9260-f2854c0aca42%2FresourceGroups%2Fazure-sdk-qa-bot-dev%2Fproviders%2FMicrosoft.Search%2FsearchServices%2Fazuresdkqabot-dev-search%23azure-sdk-knowledge/location/West%20US%202/sku/standard)
+- Search for keywords related to the question
+- Check if similar content already exists
+
+**3. Determine Action**
+
+| Scenario | Action |
+|----------|--------|
+| Bot answers correctly | ✅ Skip - knowledge not needed |
+| No similar knowledge found | ✅ Add new knowledge (proceed to transformation) |
+| Similar knowledge exists but bot fails | ⚠️ This is a bot issue, not a knowledge gap. Skip and add a comment in the PR noting this is a retrieval/answer quality issue to track |
+
+## Step 3: Transform Q&A into Generalized Knowledge
 
 > You could leverage Copilot to help with the transformation following the guidelines below.
 
-### Transformation Guidelines
-
-#### 2.1 Generalize the Topic
+### 3.1 Generalize the Topic
 
 Transform the original question into a descriptive topic:
 
@@ -186,7 +228,7 @@ Transform the original question into a descriptive topic:
 | "We're getting error X when doing Y" | `## How to fix error X when doing Y` |
 | "What's the best practice for Z?" | `## Best practice for implementing Z` |
 
-#### 2.2 Enhance the Content
+### 3.2 Enhance the Content
 
 - **Add context**: Explain *why*, not just *what*
 - **Provide examples**: Include short code snippets where applicable (5-15 lines)
@@ -194,7 +236,7 @@ Transform the original question into a descriptive topic:
 - **Remove temporal references**: Replace "currently" or "as of now" with version-specific info
 - **Use structured format**: Use bullet points, numbered lists, or bold for key points
 
-#### 2.3 What to Avoid in Refined Knowledge
+### 3.3 What to Avoid in Refined Knowledge
 
 The refined knowledge should be **general and reusable**. Avoid including:
 
@@ -214,7 +256,7 @@ The refined knowledge should be **general and reusable**. Avoid including:
 - Use placeholder names like `MyResource`, `YourOperation`
 - Show the pattern, not the full implementation
 
-#### 2.4 Format Standards
+#### 3.4 Format Standards
 
 Knowledge entries use a simple heading-based format optimized for AI Search chunking:
 
@@ -233,7 +275,7 @@ Keep each topic focused and concise (100-300 words ideal).
 More content...
 ```
 
-## Step 3: Organize by Category
+## Step 4: Organize by Category
 
 ### Category Structure
 
@@ -300,6 +342,6 @@ knowledge/
 │   └── sdk-usage.md                    # Runtime usage and troubleshooting
 ```
 
-## Step 4: Submit via Pull Request
+## Step 5: Submit commit into the pull request
 
 <!-- TODO -->

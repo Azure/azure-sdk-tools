@@ -59,28 +59,6 @@
         background: transparent !important;
     }
 
-    .change-history {
-        .deleted {
-            color: red;
-        }
-
-        .approval-reverted {
-            color: red;
-        }
-
-        .created {
-            color: darkorange;
-        }
-
-        .approved {
-            color: forestgreen;
-        }
-
-        .undeleted {
-            color: yellow;
-        }
-    }
-
     .review-search-icon {
         padding-inline-start: 0.2rem;
         padding-inline-end: 0.2rem;

@@ -73,6 +73,7 @@ namespace APIViewWeb
             services.AddApplicationInsightsTelemetry();
             services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
             services.AddAzureAppConfiguration();
+            services.AddMemoryCache();
 
             services.AddResponseCompression(options =>
             {
@@ -129,6 +130,7 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
             services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
+            services.AddSingleton<ICosmosPermissionsRepository, CosmosPermissionsRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
@@ -143,6 +145,7 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IPermissionsManager, PermissionsManager>();
             services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
             services.AddSingleton<UserProfileCache>();
 

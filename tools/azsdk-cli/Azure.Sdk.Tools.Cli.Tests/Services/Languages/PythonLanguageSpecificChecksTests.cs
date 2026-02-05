@@ -35,7 +35,8 @@ internal class PythonLanguageSpecificChecksTests
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
             Mock.Of<IFileHelper>(),
-            Mock.Of<ISpecGenSdkConfigHelper>());
+            Mock.Of<ISpecGenSdkConfigHelper>(),
+            Mock.Of<IChangelogHelper>());
     }
 
     #region HasCustomizations Tests

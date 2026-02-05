@@ -9,7 +9,6 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { PopoverModule } from 'primeng/popover';
-import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { ButtonGroupModule } from 'primeng/buttongroup';
 import { DialogModule } from 'primeng/dialog';
@@ -36,7 +35,6 @@ import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
     InputIconModule,
     InputTextModule,
     PopoverModule,
-    TooltipModule,
     ButtonModule,
     ButtonGroupModule,
     DialogModule,
@@ -112,6 +110,9 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   // Search properties
   codeLineSearchText: FormControl = new FormControl('');
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
+
+  // Copy button state
+  copyTextSuccess: boolean = false;
 
   // Safe display properties
   currentMatchIndexValue: number = 0;
@@ -336,7 +337,11 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   }
 
   copyReviewText() {
+    this.copyTextSuccess = true;
     this.copyReviewTextEmitter.emit(this.isDiffView);
+    setTimeout(() => {
+      this.copyTextSuccess = false;
+    }, 1500);
   }
 
   mapRevisionToMenu(apiRevisions: APIRevision[]) {

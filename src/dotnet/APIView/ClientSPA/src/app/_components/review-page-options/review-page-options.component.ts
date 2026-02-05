@@ -65,7 +65,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() namespaceApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() commentThreadNavigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() diffNavigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-  @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
@@ -96,7 +95,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
-  copyReviewTextButtonText : string = 'Copy review text';
   generateAIReviewButtonText : string = AI_REVIEW_BUTTON_TEXT.GENERATE;
   readonly AI_REVIEW_BUTTON_TEXT = AI_REVIEW_BUTTON_TEXT;
   aiReviewGenerationState : 'NotStarted' | 'InProgress' | 'Completed' | 'Failed' = 'NotStarted';
@@ -449,22 +447,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setSubscribeSwitch() {
     this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
-  }
-
-  copyReviewText(event: Event) {
-    const icon = (event?.target as Element).firstChild as HTMLElement;
-
-    icon.classList.remove('bi-clipboard');
-    icon.classList.add('bi-clipboard-check');
-    this.copyReviewTextButtonText = 'Review text copied!';
-
-    setTimeout(() => {
-      this.copyReviewTextButtonText = 'Copy review text';
-      icon.classList.remove('bi-clipboard-check');
-      icon.classList.add('bi-clipboard');
-    }, 1500);
-
-    this.copyReviewTextEmitter.emit(this.isDiffView);
   }
 
   generateAIReview() {

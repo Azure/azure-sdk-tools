@@ -142,8 +142,8 @@
         </div>
 
         <!-- Copy Review Text Button -->
-        <button type="button" class="search-nav-btn" (click)="copyReviewText()" data-clarity-region="toolbar-copy-review-text" aria-label="Copy review text" title="Copy review text">
-            <i class="bi bi-clipboard"></i>
+        <button type="button" class="search-nav-btn" (click)="copyReviewText()" data-clarity-region="toolbar-copy-review-text" aria-label="Copy review text" [title]="copyTextSuccess ? 'Review text copied!' : 'Copy review text'">
+            <i class="bi" [ngClass]="copyTextSuccess ? 'bi-clipboard-check' : 'bi-clipboard'"></i>
         </button>
 
         <!-- Settings Gear Icon with Popover -->

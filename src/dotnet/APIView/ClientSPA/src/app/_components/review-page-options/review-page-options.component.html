@@ -67,15 +67,22 @@
 
     <hr class="my-2">
     <div class="px-1 py-2">
-        <div class="d-flex justify-content-between align-items-center mb-2 cursor-pointer" (click)="reviewersPanel.toggle($event)">
+        <div class="d-flex justify-content-between align-items-center mb-2 cursor-pointer"
+            role="button"
+            tabindex="0"
+            aria-label="Select reviewers"
+            data-clarity-region="reviewers-gear"
+            (click)="reviewersPanel.toggle($event)"
+            (keydown.enter)="reviewersPanel.toggle($event)"
+            (keydown.space)="reviewersPanel.toggle($event); $event.preventDefault()">
             <h6 class="mb-0 fw-semibold">Reviewers</h6>
-            <button type="button" class="btn btn-link p-0 text-muted" data-clarity-region="reviewers-gear" aria-label="Select reviewers" title="Select reviewers">
+            <span class="btn btn-link p-0 text-muted" aria-hidden="true" tabindex="-1" title="Select reviewers">
                 <i class="bi bi-gear"></i>
-            </button>
+            </span>
         </div>
         <div *ngIf="selectedApprovers.length > 0; else noReviewers">
             <div *ngFor="let approver of selectedApprovers" class="d-flex align-items-center py-1">
-                <img src="https://github.com/{{ approver }}.png?size=30" class="me-2 rounded-circle" width="20" height="20" />
+                <img src="https://github.com/{{ approver }}.png?size=30" class="me-2 rounded-circle" width="20" height="20" [attr.alt]="approver + ' avatar'" />
                 <span class="small">{{ approver }}</span>
             </div>
         </div>
@@ -92,6 +99,7 @@
                         <input type="text"
                             class="form-control form-control-sm pe-4"
                             placeholder="Type or choose a user"
+                            aria-label="Search reviewers"
                             [(ngModel)]="reviewerSearchText"
                             (input)="filterReviewers()">
                         <button *ngIf="reviewerSearchText"
@@ -110,9 +118,14 @@
                     <div *ngFor="let approver of filteredApprovers"
                         class="d-flex align-items-center px-3 py-2 reviewer-item cursor-pointer"
                         [class.selected]="selectedApprovers.includes(approver)"
-                        (click)="toggleReviewer(approver)">
-                        <i class="bi bi-check me-2" style="font-size: 1.25rem;" [style.visibility]="selectedApprovers.includes(approver) ? 'visible' : 'hidden'"></i>
-                        <img src="https://github.com/{{ approver }}.png?size=30" class="me-2 rounded-circle" width="20" height="20" />
+                        role="checkbox"
+                        [attr.aria-checked]="selectedApprovers.includes(approver)"
+                        tabindex="0"
+                        (click)="toggleReviewer(approver)"
+                        (keydown.enter)="toggleReviewer(approver)"
+                        (keydown.space)="toggleReviewer(approver); $event.preventDefault()">
+                        <i class="bi bi-check me-2" style="font-size: 1.25rem;" [style.visibility]="selectedApprovers.includes(approver) ? 'visible' : 'hidden'" aria-hidden="true"></i>
+                        <img src="https://github.com/{{ approver }}.png?size=30" class="me-2 rounded-circle" width="20" height="20" [attr.alt]="approver + ' avatar'" />
                         <span class="small">{{ approver }}</span>
                     </div>
                 </div>

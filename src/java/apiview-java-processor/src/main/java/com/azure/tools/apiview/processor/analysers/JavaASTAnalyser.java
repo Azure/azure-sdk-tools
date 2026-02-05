@@ -1092,27 +1092,26 @@ public class JavaASTAnalyser implements Analyser {
      * @return true if the method is a serialization method, false otherwise
      */
     private boolean isSerializationMethod(TypeDeclaration<?> typeDeclaration, CallableDeclaration<?> callableDeclaration) {
-        if (typeDeclaration instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
-            return classOrInterfaceDeclaration.getImplementedTypes() != null && classOrInterfaceDeclaration.getImplementedTypes()
-                    .stream()
-                    .anyMatch(implementedType -> {
-                        if (implementedType.getNameAsString().equals("JsonSerializable")) {
-                            if (callableDeclaration.getNameAsString().equals("toJson") ||
-                                    callableDeclaration.getNameAsString().equals("fromJson")) {
-                                return true;
-                            }
-                        }
-                        if (implementedType.getNameAsString().equals("XmlSerializable")) {
-                            if (callableDeclaration.getNameAsString().equals("toXml") ||
-                                    callableDeclaration.getNameAsString().equals("fromXml")) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    });
+        if (!typeDeclaration.isClassOrInterfaceDeclaration()) {
+            return false;
         }
-        return false;
+        ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
+        if (classOrInterfaceDeclaration.isInterface()) {
+            return false;
+        }
+
+        String methodName = callableDeclaration.getNameAsString();
+        return classOrInterfaceDeclaration.getImplementedTypes()
+                .stream()
+                .anyMatch(implementedType -> {
+                    String interfaceName = implementedType.getNameAsString();
+                    boolean isJsonSerializationMethod = (interfaceName.equals("JsonSerializable") || interfaceName.equals("com.azure.json.JsonSerializable"))
+                            && (methodName.equals("toJson") || methodName.equals("fromJson"));
+                    boolean isXmlSerializationMethod = (interfaceName.equals("XmlSerializable") || interfaceName.equals("com.azure.xml.XmlSerializable"))
+                            && (methodName.equals("toXml") || methodName.equals("fromXml"));
+
+                    return isJsonSerializationMethod || isXmlSerializationMethod;
+                });
     }
 
     private void visitExtendsAndImplements(TypeDeclaration<?> typeDeclaration, ReviewLine definitionLine) {

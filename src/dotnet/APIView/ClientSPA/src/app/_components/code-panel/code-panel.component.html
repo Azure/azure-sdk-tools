@@ -19,12 +19,14 @@
               </ng-template>
             </p-menu>
           </span>
-          <button *ngIf="canAddComment(item)" type="button" class="add-comment-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
+      </div>
+      <div class="line-hover-actions" *ngIf="canAddComment(item) || item.toggleDocumentationClasses?.includes('can-show')">
+          <button *ngIf="canAddComment(item)" type="button" class="hover-action-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
             <i class="bi bi-chat"></i>
           </button>
-          <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
+          <span *ngIf="item.toggleDocumentationClasses?.includes('can-show')" class="hover-action-btn toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
       </div>
-      <div class="code-line-content" [style.padding-left.px]="((item.indent-1) * 15)">
+      <div class="code-line-content" [style.margin-left.px]="(item.indent-1) * 15">
           <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)"
           [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
       </div>

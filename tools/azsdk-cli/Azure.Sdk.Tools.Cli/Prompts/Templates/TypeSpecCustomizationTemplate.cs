@@ -15,22 +15,22 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
 
     private readonly string customizationRequest;
     private readonly string typespecProjectPath;
-    private readonly string referenceDocPath;
+    private readonly string referenceDocContent;
 
     /// <summary>
     /// Initializes a new TypeSpec customization template with the specified parameters.
     /// </summary>
     /// <param name="customizationRequest">The customization request (build error, user prompt, API feedback, etc.)</param>
     /// <param name="typespecProjectPath">Path to the TypeSpec project (contains tspconfig.yaml)</param>
-    /// <param name="referenceDocPath">Path to the customizing-client-tsp.md reference document</param>
+    /// <param name="referenceDocContent">Content of the customizing-client-tsp.md reference document</param>
     public TypeSpecCustomizationTemplate(
         string customizationRequest,
         string typespecProjectPath,
-        string referenceDocPath)
+        string referenceDocContent)
     {
         this.customizationRequest = customizationRequest;
         this.typespecProjectPath = typespecProjectPath;
-        this.referenceDocPath = referenceDocPath;
+        this.referenceDocContent = referenceDocContent;
     }
 
     /// <summary>
@@ -39,7 +39,6 @@ public class TypeSpecCustomizationTemplate : BasePromptTemplate
     /// <returns>Complete structured prompt for TypeSpec client.tsp customization</returns>
     public override string BuildPrompt()
     {
-        var referenceDocContent = File.ReadAllText(referenceDocPath);
         var taskInstructions = BuildTaskInstructions(referenceDocContent);
         var constraints = BuildTaskConstraints();
         var outputRequirements = BuildOutputRequirements();

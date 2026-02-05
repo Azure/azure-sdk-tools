@@ -96,11 +96,14 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
 
         logger.LogInformation("Using reference doc: {RefDoc}", referenceDocPath);
 
+        // Read the reference doc content
+        var referenceDocContent = await File.ReadAllTextAsync(referenceDocPath, ct);
+
         // Build the prompt template
         var template = new TypeSpecCustomizationTemplate(
             customizationRequest: customizationRequest,
             typespecProjectPath: typespecProjectPath,
-            referenceDocPath: referenceDocPath);
+            referenceDocContent: referenceDocContent);
 
         var instructions = template.BuildPrompt();
         logger.LogDebug("Generated prompt with {Length} characters", instructions.Length);

@@ -28,8 +28,9 @@ public class SessionExecutor : IDisposable
             }
             _client = new CopilotClient();
 
-            // Build MCP server config if path provided
-            var mcpServers = BuildMcpServers(config.AzsdkMcpPath);
+            // Build MCP server config - try explicit path first, then load from workspace
+            var mcpServers = BuildMcpServers(config.AzsdkMcpPath) 
+                ?? await McpConfigLoader.LoadFromWorkspaceAsync(config.WorkingDirectory);
 
             var sessionConfig = new SessionConfig
             {

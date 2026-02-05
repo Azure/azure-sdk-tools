@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using GitHub.Copilot.SDK;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
@@ -45,10 +46,14 @@ public class ContextReportValidator : IValidator
                 Cwd = context.RepoPath
             });
 
+            // Load MCP servers from workspace so we can verify they're available
+            var mcpServers = await McpConfigLoader.LoadFromWorkspaceAsync(context.RepoPath);
+
             var sessionConfig = new SessionConfig
             {
                 Model = Model,
                 Streaming = false,
+                McpServers = mcpServers,
                 // DON'T replace system message - we want to see what's loaded
                 // AvailableTools = [] would disable tools, but we want to see what's available
                 InfiniteSessions = new InfiniteSessionConfig { Enabled = false }
@@ -59,19 +64,13 @@ public class ContextReportValidator : IValidator
             var prompt = """
                 Please provide a complete report of your current context:
 
-                1. **System Prompt**: Summarize the key instructions in your system prompt. What are you being told to do or not do? Any special rules?
+                1. **MCP Servers/Tools**: List ALL MCP server tools that are available to you. Look for tools with names like "azure-sdk-mcp-*" or "azsdk_*". List each tool name.
 
-                2. **Copilot Instructions**: Are there any copilot instructions loaded (from .github/copilot-instructions.md or similar)? If so, summarize them.
+                2. **Tool Test**: If you have access to a tool named something like "azure-sdk-mcp-azsdk_verify_setup" or similar, please call it now to verify the MCP server is working. Report the result.
 
-                3. **Skills**: List any skills that are available to you.
+                3. **Working Directory**: What is your current working directory?
 
-                4. **MCP Servers/Tools**: List any MCP servers or custom tools that are configured.
-
-                5. **Files in Context**: List any files that have been pre-loaded into your context.
-
-                6. **Working Directory**: What is your current working directory?
-
-                Be thorough - this is for debugging purposes.
+                Be thorough - this is for debugging MCP server connectivity.
                 """;
 
             var messageOptions = new MessageOptions { Prompt = prompt };

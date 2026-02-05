@@ -1,10 +1,10 @@
-# Azure SDK Copilot Agent Activity Logging Design
+# Logging Design for the Azure SDK Tools Agent Copilot Activity
 
 ---
 
 ## 1. Overview
 
-This document describes the design for deterministic, high‑priority logging of Copilot agent activities related to Azure SDK usage.
+This document describes the design for deterministic, high‑priority logging of Copilot agent activities related to Azure SDK Tools Agent usage.
 
 The primary goal is to collect structured activity data that enables identification of user usage gaps, skill and tool usage and overall agent workflow usage to develop Azure SDK. This data will be used to improve Copilot skills, tools, prompts, and overall user experience.
 
@@ -178,7 +178,7 @@ azsdk telemetry ingest activity-log --path .azsdk-agent-activity.log
 - No editor dependency
 - Telemetry visibility is delayed
 
-## 9. VS Code Extension Ingestion (Alternate option to CLI based ingestion)
+## 8.2. VS Code Extension Ingestion (Alternate option to CLI based ingestion)
 
 Copilot continues to write activity entries locally to the `.azsdk-agent-activity.log` file in the repository or workspace root.
 

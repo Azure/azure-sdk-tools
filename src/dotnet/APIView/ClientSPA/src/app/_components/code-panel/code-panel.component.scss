@@ -177,20 +177,7 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        
-        // Reserve space for the button even when it doesn't exist (e.g., on removed lines)
-        &::after {
-            content: '';
-            display: inline-block;
-            width: 28px; // padding (6px) + icon width (14px) + padding (6px) + borders (2px) = 28px
-            height: 26px; // matches button height
-            margin-left: 6px; // matches button margin-left
-        }
-        
-        // When the button exists, hide the spacer
-        &.has-comment-btn::after {
-            display: none;
-        }
+        margin-right: 4px;
 
         // When line numbers are hidden, don't reserve space for them
         &.hide-line-numbers {
@@ -198,53 +185,40 @@
                 display: none;
             }
         }
-        
-        .add-comment-btn {
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            padding: 3px 6px;
-            margin-left: -2px;
-            border: 1px solid #d0d7de;
-            background: white;
-            color: #57606a;
-            cursor: pointer;
-            font-size: 13px;
-            line-height: 1;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-
-            &:hover {
-                background: #f6f8fa;
-                border-color: #1f232826;
-                color: #24292f;
-            }
-
-            &:active {
-                background: #eaeef2;
-                border-color: #1f232826;
-            }
-
-            &:focus {
-                outline: 2px solid #0969da;
-                outline-offset: 2px;
-            }
-
-            i {
-                font-size: 14px;
-            }
-        }
-
-        &:hover .add-comment-btn {
-            opacity: 1;
-            visibility: visible;
-        }
     }
 
     .line-number-text {
         display: inline-block;
+    }
+
+    .add-comment-btn {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s ease;
+        padding: 0;
+        margin: 0 2px;
+        border: none;
+        background: transparent;
+        color: var(--base-text-color);
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            color: var(--primary-color);
+        }
+
+        i {
+            font-size: 14px;
+        }
+    }
+
+    .line-actions:hover .add-comment-btn {
+        opacity: 1;
+        visibility: visible;
     }
 
     .line-actions {

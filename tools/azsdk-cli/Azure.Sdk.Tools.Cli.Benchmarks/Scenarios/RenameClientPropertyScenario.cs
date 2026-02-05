@@ -45,7 +45,7 @@ public class RenameClientPropertyScenario : BenchmarkScenario
     public override IEnumerable<IValidator> Validators =>
     [
         // Debug: Report what context is loaded
-        new ContextReportValidator(),
+        // new ContextReportValidator(),
 
         new FileExistsValidator("Target file exists",
             "specification/ai/Face/models.common.tsp"),

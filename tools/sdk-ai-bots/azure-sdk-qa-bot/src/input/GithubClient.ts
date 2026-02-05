@@ -116,8 +116,7 @@ export class GithubClient {
       const title = pr.title;
       return { labels, title };
     } catch (error) {
-      // TODO: use logger instead
-      console.error(`Failed to get basic info for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to get basic info for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }
@@ -135,12 +134,12 @@ export class GithubClient {
       const labels = issue.labels.map((lbl) => (typeof lbl === 'string' ? lbl : lbl.name ?? ''));
       return {
         title: issue.title,
-        body: issue.body,
+        body: issue.body ?? '',
         state: issue.state,
         labels,
       };
     } catch (error) {
-      console.error(`Failed to get basic info for issue ${issueUrl}: ${error}`);
+      logger.error(`Failed to get basic info for issue ${issueUrl}: ${error}`);
       return undefined;
     }
   }
@@ -160,7 +159,7 @@ export class GithubClient {
         .map((d) => this.getCommentWithUser(d.user, d.body));
       return comments;
     } catch (error) {
-      console.error(`Failed to list comments for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to list comments for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }
@@ -180,7 +179,7 @@ export class GithubClient {
         .map((d) => this.getCommentWithUser(d.user, d.body));
       return comments;
     } catch (error) {
-      console.error(`Failed to list review comments for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to list review comments for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }
@@ -200,7 +199,7 @@ export class GithubClient {
       }));
       return reviews;
     } catch (error) {
-      console.error(`Failed to list reviews for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to list reviews for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }
@@ -213,7 +212,7 @@ export class GithubClient {
       const diff = response.data as unknown as string;
       return diff;
     } catch (error) {
-      console.error(`Failed to get diff for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to get diff for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }

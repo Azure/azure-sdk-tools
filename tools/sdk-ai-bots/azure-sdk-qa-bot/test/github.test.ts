@@ -41,6 +41,10 @@ vi.mock('@octokit/rest', () => {
             body: 'Another inline comment on the code changes.',
             user: { login: 'reviewer2', type: 'User' },
           },
+          {
+            body: 'Automated code review bot comment.',
+            user: { login: 'codecov', type: 'Bot' },
+          },
         ],
       }),
     },
@@ -62,6 +66,10 @@ vi.mock('@octokit/rest', () => {
           {
             body: 'Another general comment.',
             user: { login: 'reviewer2', type: 'User' },
+          },
+          {
+            body: 'This is an automated bot comment.',
+            user: { login: 'github-actions', type: 'Bot' },
           },
         ],
       }),
@@ -148,6 +156,23 @@ describe('GitHub PR Details Fetcher', () => {
       diff: '',
     });
   });
+
+  it('should filter out Bot comments from PR comments', async () => {
+    const prUrl = 'https://github.com/Azure/azure-rest-api-specs/pull/34286';
+
+    const githubClient = new GithubClient();
+    const details = await githubClient.getPullRequestDetails(prUrl, {});
+
+    // Verify Bot comments are filtered out from review comments (mock includes 3 comments, 1 is Bot)
+    expect(details.comments.review).toHaveLength(2);
+    expect(details.comments.review.map((c) => c.name)).not.toContain('codecov');
+    expect(details.comments.review.every((c) => c.type !== 'Bot')).toBe(true);
+
+    // Verify Bot comments are filtered out from issue comments (mock includes 3 comments, 1 is Bot)
+    expect(details.comments.issue).toHaveLength(2);
+    expect(details.comments.issue.map((c) => c.name)).not.toContain('github-actions');
+    expect(details.comments.issue.every((c) => c.type !== 'Bot')).toBe(true);
+  });
 });
 
 describe('GitHub Issue Details Fetcher', () => {
@@ -207,5 +232,17 @@ describe('GitHub Issue Details Fetcher', () => {
     // Should successfully parse and fetch
     expect(details.title).toBe('Test Issue Title');
     expect(details.state).toBe('open');
+  });
+
+  it('should filter out Bot comments from issue comments', async () => {
+    const issueUrl = 'https://github.com/Azure/azure-sdk-for-js/issues/12345';
+
+    const githubClient = new GithubClient();
+    const details = await githubClient.getIssueDetails(issueUrl, {});
+
+    // Verify Bot comments are filtered out (mock includes 3 comments, 1 is Bot)
+    expect(details.comments).toHaveLength(2);
+    expect(details.comments.map((c) => c.name)).not.toContain('github-actions');
+    expect(details.comments.every((c) => c.type !== 'Bot')).toBe(true);
   });
 });

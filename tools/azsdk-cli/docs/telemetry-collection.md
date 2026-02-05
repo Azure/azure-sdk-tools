@@ -161,7 +161,7 @@ If writing to the activity log fails:
 
 ## 8. Ingestion Architecture
 
-### 8.1 ACtivity Ingestion using CLI
+### 8.1 Activity Ingestion using CLI
 
 Copilot writes to `.azsdk-agent-activity.log`. Copilot instruction contains the instruction to push activity logs to telemetry periodically. Copilot will run below azsdk cli command to push activity log entries and CLI parses new log entries and emits telemetry to Application Insights. This will also clear entires in the activity log to make sure activity log size is not taking up a lot of space.
 

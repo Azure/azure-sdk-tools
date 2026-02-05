@@ -8,65 +8,12 @@ using System.Web;
 using Microsoft.Extensions.Logging;
 using OpenAI;
 using OpenAI.Chat;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
+using Azure.Sdk.Tools.Cli.Tools.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
-
-/// <summary>
-/// Represents complete metadata for an APIView review
-/// </summary>
-public class ReviewMetadata
-{
-    [JsonPropertyName("reviewId")]
-    public string ReviewId { get; set; } = string.Empty;
-    
-    [JsonPropertyName("packageName")]
-    public string PackageName { get; set; } = string.Empty;
-    
-    [JsonPropertyName("language")]
-    public string Language { get; set; } = string.Empty;
-    
-    [JsonPropertyName("revision")]
-    public RevisionMetadata? Revision { get; set; }
-}
-
-/// <summary>
-/// Represents revision-specific metadata from APIView
-/// </summary>
-public class RevisionMetadata
-{
-    [JsonPropertyName("revisionId")]
-    public string RevisionId { get; set; } = string.Empty;
-    
-    [JsonPropertyName("pullRequestNo")]
-    public int? PullRequestNo { get; set; }
-    
-    [JsonPropertyName("pullRequestRepository")]
-    public string? PullRequestRepository { get; set; }
-    
-    [JsonPropertyName("revisionLabel")]
-    public string? RevisionLabel { get; set; }
-}
-
-/// <summary>
-/// Represents a consolidated comment from a discussion thread
-/// </summary>
-// TODO: Add ThreadUrl property for direct links to APIView discussion threads
-public class ConsolidatedComment
-{
-    public string ThreadId { get; set; } = string.Empty;
-    public int LineNo { get; set; }
-    
-    /// <summary>
-    /// Line identifier from APIView. Note: _lineId is Python-specific and serves as 
-    /// placeholder for fullObjectPath until fullObjectPath is added to APIView API.
-    /// </summary>
-    public string? LineId { get; set; } = string.Empty;
-    
-    public string LineText { get; set; } = string.Empty;
-    public string Comment { get; set; } = string.Empty;
-}
 
 /// <summary>
 /// Helper interface for APIView feedback customizations operations
@@ -76,45 +23,6 @@ public interface IAPIViewFeedbackHelper
     Task<List<ConsolidatedComment>> GetConsolidatedComments(string apiViewUrl);
     Task<ReviewMetadata> GetMetadata(string apiViewUrl);
     Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata);
-}
-
-/// <summary>
-/// Represents a raw comment from APIView API
-/// </summary>
-internal class APIViewComment
-{
-    [JsonPropertyName("lineNo")]
-    public int LineNo { get; set; }
-    
-    [JsonPropertyName("_lineId")]
-    public string? LineId { get; set; }
-    
-    [JsonPropertyName("_lineText")]
-    public string? LineText { get; set; }
-    
-    [JsonPropertyName("createdOn")]
-    public string? CreatedOn { get; set; }
-    
-    [JsonPropertyName("upvotes")]
-    public int Upvotes { get; set; }
-    
-    [JsonPropertyName("downvotes")]
-    public int Downvotes { get; set; }
-    
-    [JsonPropertyName("createdBy")]
-    public string? CreatedBy { get; set; }
-    
-    [JsonPropertyName("commentText")]
-    public string? CommentText { get; set; }
-    
-    [JsonPropertyName("isResolved")]
-    public bool IsResolved { get; set; }
-    
-    [JsonPropertyName("severity")]
-    public string? Severity { get; set; }
-    
-    [JsonPropertyName("threadId")]
-    public string? ThreadId { get; set; }
 }
 
 /// <summary>
@@ -148,7 +56,7 @@ public class APIViewFeedbackHelper : IAPIViewFeedbackHelper
     public async Task<List<ConsolidatedComment>> GetConsolidatedComments(string apiViewUrl)
     {
         // Parse the URL to get revisionId and reviewId
-        var (revisionId, reviewId) = ExtractIdsFromUrl(apiViewUrl);
+        var (revisionId, reviewId) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
         
         _logger.LogInformation("Getting comments for revision {RevisionId} in review {ReviewId}", revisionId, reviewId);
         
@@ -307,13 +215,12 @@ Respond in JSON format:
     /// </summary>
     public async Task<ReviewMetadata> GetMetadata(string apiViewUrl)
     {
-        var (revisionId, reviewId) = ExtractIdsFromUrl(apiViewUrl);
+        var (revisionId, reviewId) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
         
         _logger.LogInformation("Getting metadata for revision {RevisionId}", revisionId);
         
-        // Call the metadata endpoint with revisionId
-        var endpoint = $"/api/reviews/metadata?revisionId={revisionId}";
-        var metadataJson = await _apiViewHttpService.GetAsync(endpoint);
+        // Get metadata from APIViewService
+        var metadataJson = await _apiViewService.GetMetadata(revisionId);
         
         if (string.IsNullOrWhiteSpace(metadataJson))
         {
@@ -348,29 +255,6 @@ Respond in JSON format:
             metadata.Revision?.RevisionLabel);
 
         return metadata;
-    }
-
-    /// <summary>
-    /// Extracts revision ID and review ID from an APIView URL
-    /// </summary>
-    private static (string revisionId, string reviewId) ExtractIdsFromUrl(string apiViewUrl)
-    {
-        var uri = new Uri(apiViewUrl);
-        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        
-        // Extract revisionId from query parameter
-        var revisionId = query["activeApiRevisionId"] ?? string.Empty;
-        
-        // Extract reviewId from path (format: /review/{reviewId})
-        var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        var reviewId = segments.Length >= 2 && segments[0] == "review" ? segments[1] : string.Empty;
-        
-        if (string.IsNullOrEmpty(revisionId) || string.IsNullOrEmpty(reviewId))
-        {
-            throw new ArgumentException($"Could not extract IDs from URL: {apiViewUrl}");
-        }
-        
-        return (revisionId, reviewId);
     }
 
     /// <summary>

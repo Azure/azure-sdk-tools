@@ -26,6 +26,11 @@ public class BenchmarkOptions
     /// Override model to use (for future use).
     /// </summary>
     public string? Model { get; init; }
+
+    /// <summary>
+    /// Show agent activity during execution.
+    /// </summary>
+    public bool Verbose { get; init; }
 }
 
 /// <summary>
@@ -120,15 +125,35 @@ public class BenchmarkRunner : IDisposable
             // 3. Execution - run agent
             Console.WriteLine($"[Benchmark] Executing scenario prompt...");
             using var executor = new SessionExecutor();
+
+            // Track activity line length for clearing
+            var lastActivityLength = 0;
+            Action<string>? onActivity = options.Verbose ? (activity) =>
+            {
+                // Clear previous line and write new activity
+                var clearPadding = lastActivityLength > activity.Length
+                    ? new string(' ', lastActivityLength - activity.Length)
+                    : "";
+                Console.Write($"\r  {activity}{clearPadding}");
+                lastActivityLength = activity.Length;
+            } : null;
+
             var execConfig = new ExecutionConfig
             {
                 WorkingDirectory = workspace.RepoPath,
                 Prompt = scenario.Prompt,
                 Timeout = scenario.Timeout,
                 AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath,
-                Model = options.Model ?? BenchmarkDefaults.DefaultModel
+                Model = options.Model ?? BenchmarkDefaults.DefaultModel,
+                OnActivity = onActivity
             };
             var execResult = await executor.ExecuteAsync(execConfig);
+
+            // Clear activity line if verbose was enabled
+            if (options.Verbose && lastActivityLength > 0)
+            {
+                Console.Write($"\r{new string(' ', lastActivityLength + 2)}\r");
+            }
 
             // 4. Capture git diff
             Console.WriteLine($"[Benchmark] Capturing git diff...");

@@ -40,6 +40,11 @@ public class SessionExecutor : IDisposable
                 Streaming = true,
                 Hooks = new SessionHooks
                 {
+                    OnPreToolUse = (input, invocation) =>
+                    {
+                        config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
+                        return Task.FromResult<PreToolUseHookOutput?>(null);
+                    },
                     OnPostToolUse = (input, invocation) =>
                     {
                         toolCalls.Add(input.ToolName);

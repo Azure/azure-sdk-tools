@@ -30,6 +30,12 @@ public class ExecutionConfig
 
     /// <summary>The model to use for the agent session.</summary>
     public string Model { get; init; } = BenchmarkDefaults.DefaultModel;
+
+    /// <summary>
+    /// Optional callback for activity updates during execution.
+    /// Called with activity description (e.g., "Calling tool: view").
+    /// </summary>
+    public Action<string>? OnActivity { get; init; }
 }
 
 /// <summary>

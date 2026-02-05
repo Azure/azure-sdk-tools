@@ -25,13 +25,17 @@ public class Program
             "--cleanup",
             () => CleanupPolicy.OnSuccess,
             "Cleanup policy for workspaces (always, never, on-success)");
+        var verboseOption = new Option<bool>(
+            "--verbose",
+            "Show agent activity during execution");
 
         runCommand.AddArgument(nameArgument);
         runCommand.AddOption(allOption);
         runCommand.AddOption(modelOption);
         runCommand.AddOption(cleanupOption);
+        runCommand.AddOption(verboseOption);
 
-        runCommand.SetHandler(HandleRunCommand, nameArgument, allOption, modelOption, cleanupOption);
+        runCommand.SetHandler(HandleRunCommand, nameArgument, allOption, modelOption, cleanupOption, verboseOption);
         rootCommand.AddCommand(runCommand);
 
         return await rootCommand.InvokeAsync(args);
@@ -66,7 +70,7 @@ public class Program
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string? model, CleanupPolicy cleanup)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string? model, CleanupPolicy cleanup, bool verbose)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -122,7 +126,8 @@ public class Program
         var options = new BenchmarkOptions
         {
             CleanupPolicy = cleanup,
-            Model = model
+            Model = model,
+            Verbose = verbose
         };
 
         var results = new List<(BenchmarkScenario Scenario, BenchmarkResult Result)>();

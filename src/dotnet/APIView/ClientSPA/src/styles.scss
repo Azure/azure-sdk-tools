@@ -16,6 +16,9 @@ body {
 // Reviewers panel popover - appended to body so needs global styles
 .p-popover.reviewers-panel {
     padding: 0 !important;
+    z-index: 10000 !important;
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
     .p-popover-content {
         padding: 0 !important;
     }

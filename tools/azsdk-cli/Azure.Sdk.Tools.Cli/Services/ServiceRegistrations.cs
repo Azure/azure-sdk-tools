@@ -90,6 +90,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Copilot SDK services for new agents (CopilotAgent<T> pattern)
             services.AddScoped<CopilotTokenUsageHelper>();
+            // CopilotClient is a singleton because it manages the CLI process connection.
+            // Each request creates its own CopilotSession via CreateSessionAsync(), which isolates conversation state.
             services.AddSingleton<CopilotClient>(sp =>
             {
                 var logger = sp.GetService<ILogger<CopilotClient>>();

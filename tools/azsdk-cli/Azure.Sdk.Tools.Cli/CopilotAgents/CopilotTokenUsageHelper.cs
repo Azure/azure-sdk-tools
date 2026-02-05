@@ -1,9 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Helpers;
-using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
 namespace Azure.Sdk.Tools.Cli.CopilotAgents;
 
@@ -17,37 +15,13 @@ namespace Azure.Sdk.Tools.Cli.CopilotAgents;
 /// 
 /// To avoid overcounting, we track the previous cumulative inputTokens and compute deltas.
 /// </summary>
-public class CopilotTokenUsageHelper(IRawOutputHelper outputHelper)
+public class CopilotTokenUsageHelper(IRawOutputHelper outputHelper) : TokenUsageHelper(outputHelper)
 {
-    // Sum of output tokens (these ARE incremental per turn)
-    private double totalOutputTokens = 0;
-
     // Previous cumulative input tokens (for delta calculation)
     private double previousCumulativeInputTokens = 0;
 
     // Previous cumulative cache read tokens (for delta calculation)
     private double previousCumulativeCacheReadTokens = 0;
-
-    // Count API calls (turns)
-    private int turnCount = 0;
-
-    // Models used
-    private IEnumerable<string> modelsUsed = [];
-
-    /// <summary>
-    /// Total processed input tokens (actual tokens sent, excluding cache hits).
-    /// </summary>
-    public double PromptTokens { get; private set; } = 0;
-
-    /// <summary>
-    /// Total output tokens generated.
-    /// </summary>
-    public double CompletionTokens => totalOutputTokens;
-
-    /// <summary>
-    /// Total billable tokens (processed input + output).
-    /// </summary>
-    public double TotalTokens => PromptTokens + CompletionTokens;
 
     /// <summary>
     /// Records token usage for a single turn/API call.
@@ -59,8 +33,7 @@ public class CopilotTokenUsageHelper(IRawOutputHelper outputHelper)
     /// <param name="cacheWriteTokens">Tokens written to cache this turn.</param>
     public void Add(string model, double inputTokens, double outputTokens, double cacheReadTokens = 0, double cacheWriteTokens = 0)
     {
-        turnCount++;
-        modelsUsed = modelsUsed.Union([model]);
+        ModelsUsed = ModelsUsed.Union([model]);
 
         // inputTokens is cumulative, so compute the delta from previous turn
         var inputTokensDelta = inputTokens - previousCumulativeInputTokens;
@@ -74,24 +47,9 @@ public class CopilotTokenUsageHelper(IRawOutputHelper outputHelper)
         previousCumulativeCacheReadTokens = cacheReadTokens;
 
         // Sum incremental values
-        totalOutputTokens += outputTokens;
+        CompletionTokens += outputTokens;
         PromptTokens += processedInputThisTurn;
 
-        Activity.Current?.SetCustomProperty(TagName.PromptTokens, PromptTokens.ToString("F0"));
-        Activity.Current?.SetCustomProperty(TagName.CompletionTokens, CompletionTokens.ToString("F0"));
-        Activity.Current?.SetCustomProperty(TagName.TotalTokens, TotalTokens.ToString("F0"));
-        Activity.Current?.SetCustomProperty(TagName.ModelsUsed, string.Join(",", modelsUsed.OrderBy(m => m)));
-    }
-
-    /// <summary>
-    /// Logs a summary of token usage to the console.
-    /// </summary>
-    public void LogUsage()
-    {
-        var models = string.Join(", ", modelsUsed);
-
-        outputHelper.OutputConsole("--------------------------------------------------------------------------------");
-        outputHelper.OutputConsole($"[token usage][{models}] input: {PromptTokens}, output: {CompletionTokens}, total: {TotalTokens}");
-        outputHelper.OutputConsole("--------------------------------------------------------------------------------");
+        UpdateTelemetry();
     }
 }

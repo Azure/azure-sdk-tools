@@ -5,17 +5,22 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public class TokenUsageHelper(IRawOutputHelper outputHelper)
 {
-    protected double PromptTokens { get; set; } = 0;
-    protected double CompletionTokens { get; set; } = 0;
+    public double PromptTokens { get; protected set; } = 0;
+    public double CompletionTokens { get; protected set; } = 0;
     public double TotalTokens => PromptTokens + CompletionTokens;
     protected IEnumerable<string> ModelsUsed { get; set; } = [];
 
-    public void Add(string model, long inputTokens, long outputTokens)
+    public virtual void Add(string model, long inputTokens, long outputTokens)
     {
         ModelsUsed = ModelsUsed.Union([model]);
         PromptTokens += inputTokens;
         CompletionTokens += outputTokens;
 
+        UpdateTelemetry();
+    }
+
+    protected void UpdateTelemetry()
+    {
         Activity.Current?.SetCustomProperty(TagName.PromptTokens, PromptTokens.ToString("F0"));
         Activity.Current?.SetCustomProperty(TagName.CompletionTokens, CompletionTokens.ToString("F0"));
         Activity.Current?.SetCustomProperty(TagName.TotalTokens, TotalTokens.ToString("F0"));

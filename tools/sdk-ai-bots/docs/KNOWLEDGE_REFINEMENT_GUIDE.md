@@ -33,11 +33,78 @@ The Azure SDK QA Bot collects Q&A from real conversations in Teams channels. The
 └─────────────────────┘     └──────────────────────┘     └─────────────────────┘
 ```
 
+### Processing Modes
+
+#### Mode 1: Batch Processing (Existing Static Q&A)
+
+For the existing static Q&A that has accumulated over time:
+
+1. **Assignment**: Divide the existing Q&A files by date ranges or categories and assign to vendors for collaborative processing
+2. **Parallel Work**: Multiple vendors can work on different date ranges simultaneously
+3. **Review & Merge**: Each vendor submits PRs for their assigned portion, which are reviewed and merged
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    Batch Processing for Existing Q&A                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌─────────────────┐                                                       │
+│   │ Q&A 2025_01-03  │──▶ Vendor A ──▶ PR #1                                │
+│   └─────────────────┘                    │                                  │
+│   ┌─────────────────┐                    │     ┌──────────────────────┐     │
+│   │ Q&A 2025_04-06  │──▶ Vendor B ──▶ PR #2 ──▶│  Refined Knowledge │     │
+│   └─────────────────┘                    │     │  Base (GitHub)       │     │
+│   ┌─────────────────┐                    │     └──────────────────────┘     │
+│   │ Q&A 2025_07-09  │──▶ Vendor C ──▶ PR #3                                │
+│   └─────────────────┘                                                       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Mode 2: Incremental Processing (Weekly Badcase Review)
+
+For ongoing Q&A collected from weekly badcase reviews:
+
+1. **Weekly Collection**: Vendor collects badcases (poor bot responses) each week
+2. **Evaluate**: For each badcase, determine if the root cause is missing knowledge
+3. **Decision**: Judge if the Q&A is suitable for adding to the knowledge base using the criteria in Step 1
+4. **Add Knowledge**: If suitable, transform and add the knowledge following this guide
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    Incremental Processing for Weekly Badcases               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Weekly Badcase    ┌─────────────────────────────────────────────────┐    │
+│   Collection        │                                                 │    │
+│        │            │   Is the badcase caused by missing knowledge?   │    │
+│        ▼            │                                                 │    │
+│   ┌─────────┐       │   YES ──▶ Is it a good knowledge candidate?     │    │
+│   │ Badcase │──────▶│              │                                  │    │
+│   │ Review  │       │              ▼                                  │    │
+│   └─────────┘       │   YES ──▶ Transform & Add to KB ──▶ Submit PR   │    │
+│                     │                                                 │    │
+│                     │   NO  ──▶ Skip (log reason for future ref)      │    │
+│                     │                                                 │    │
+│                     └─────────────────────────────────────────────────┘    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Weekly Badcase Checklist:**
+
+- [ ] Review all badcases from the past week
+- [ ] Identify badcases caused by missing or incomplete knowledge
+- [ ] Evaluate each candidate using the criteria in Step 1
+- [ ] For suitable candidates, transform following Step 2 guidelines
+- [ ] Organize into appropriate category following Step 3
+- [ ] Submit PR with the new knowledge entries
+
 ## Step 1: Evaluate Raw Q&A for Knowledge Potential
 
 ### Data Source
 
-https://ms.portal.azure.com/#view/Microsoft_Azure_Storage/ContainerMenuBlade/~/overview/storageAccountId/%2Fsubscriptions%2Fa18897a6-7e44-457d-9260-f2854c0aca42%2FresourceGroups%2Fazure-sdk-qa-bot%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Fazuresdkqabotstorage/path/evaluation-dataset/etag/%220x8DDEF6EC73F0C18%22/defaultId//publicAccessVal/None
+https://ms.portal.azure.com/#view/Microsoft_Azure_Storage/ContainerMenuBlade/~/overview/storageAccountId/%2Fsubscriptions%2Fa18897a6-7e44-457d-9260-f2854c0aca42%2FresourceGroups%2Fazure-sdk-qa-bot%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Fazuresdkqabotstorage/path/knowledge/etag/%220x8DDEF6ED60F97A7%22/defaultId//publicAccessVal/None
 
 ### Criteria for Good Knowledge Candidates
 
@@ -129,7 +196,27 @@ Can you try running npm install again? Also check your Node.js version.
 - **Cover edge cases**: Address common variations of the question
 - **Remove temporal references**: Replace "currently" or "as of now" with version-specific info
 
-#### 2.3 Format Standards
+#### 2.3 What to Avoid in Refined Knowledge
+
+The refined knowledge should be **general and reusable**. Avoid including:
+
+| ❌ Avoid | Reason |
+|----------|--------|
+| **PR links** (e.g., `https://github.com/.../pull/123`) | Too specific, PRs may be closed/merged |
+| **Long code blocks** (> 20 lines) | Hard to maintain, often too specific |
+| **Specific service/resource names** | Use generic examples like "YourService" |
+| **User names or email addresses** | Privacy concerns |
+| **Internal URLs or file paths** | Not accessible to all users |
+| **Commit hashes or branch names** | Temporary references |
+| **Screenshots of specific PRs/issues** | Context-dependent |
+| **Version-specific workarounds** | May become outdated |
+
+**Good practice for code examples:**
+- Keep code snippets short and focused (5-15 lines ideal)
+- Use placeholder names like `MyResource`, `YourOperation`
+- Show the pattern, not the full implementation
+
+#### 2.4 Format Standards
 
 Each curated knowledge entry MUST follow this format:
 

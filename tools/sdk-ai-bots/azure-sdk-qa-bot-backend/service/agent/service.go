@@ -87,7 +87,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// 2. Handle tenant routing if enabled
 	if tenantConfig.EnableRouting {
-		routedTenantID, routed = s.RouteTenant(req.TenantID, llmMessages)
+		routedTenantID, routed = s.RouteTenant(req.TenantID, req.ModelConfig, llmMessages)
 		if routed {
 			tenantConfig, _ = config.GetTenantConfig(routedTenantID)
 			req.Sources = tenantConfig.Sources
@@ -98,13 +98,16 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 3. Recognize intention
 	query := req.Message.Content
 
-	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, llmMessages)
+	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, req.ModelConfig, llmMessages)
 	if err != nil {
 		log.Printf("Intention recognize failed with error: %s", err)
 		return nil, err
 	}
 	if intention.QuestionScope == nil {
 		intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
+	}
+	if len(intention.Question) > 0 {
+		query = fmt.Sprintf("category:%s question:%s", intention.Category, intention.Question)
 	}
 	// Apply intention override if provided
 	if req.Intention != nil {
@@ -148,7 +151,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	llmMessages = append([]azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
 	}, llmMessages...)
-	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
+	result, err := s.getLLMResult(req.ModelConfig, llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
@@ -169,7 +172,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
+func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
 	start := time.Now()
 	promptParser := prompt.IntentionPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
@@ -186,12 +189,24 @@ func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTe
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
 	}, messages...)
 
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+	options := azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
-		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE)),
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-	}, nil)
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
+		Temperature:    to.Ptr(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE),
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.ReasoningModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.ReasoningModel))
+	}
+
+	if modelConfig != nil && modelConfig.ReasoningModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.ReasoningModelTemperature))
+	}
+
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 
 	if err != nil {
 		log.Printf("LLM intention recognition failed: %v", err)
@@ -462,16 +477,27 @@ func (s *CompletionService) buildPrompt(tenantID model.TenantID, intention *mode
 	return promptStr, nil
 }
 
-func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
+func (s *CompletionService) getLLMResult(modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
 	completionStart := time.Now()
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		// This is a conversation in progress.
-		// NOTE: all messages count against token usage for this API.
+
+	options := azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: &s.model,
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
 		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TEMPERATURE)),
-	}, nil)
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.CompletionModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.CompletionModel))
+	}
+
+	if modelConfig != nil && modelConfig.CompletionModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.CompletionModelTemperature))
+	}
+
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 	if err != nil {
 		// Check if this is a rate limit error (429)
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {
@@ -526,7 +552,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 			Sources:       req.Sources,
 			SourceFilter:  sourceFilter,
 			QuestionScope: intention.QuestionScope,
-			ServicePlane:  intention.ServiceType,
+			ServiceType:   intention.ServiceType,
 		},
 		Prompt: agenticSearchPrompt,
 	})
@@ -542,14 +568,13 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	if resp.Response == nil {
 		return nil, nil
 	}
-	var docKeys []string
+	var chunks []model.Index
 	for _, reference := range resp.References {
-		docKeys = append(docKeys, reference.DocKey)
-	}
-	chunks, err := s.searchClient.BatchGetChunks(ctx, docKeys)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
+		if reference.SourceData == nil {
+			continue
+		}
+		reference.SourceData.RerankScore = reference.RerankerScore
+		chunks = append(chunks, *reference.SourceData)
 	}
 	log.Printf("Agentic search took: %v", time.Since(agenticSearchStart))
 	return chunks, nil
@@ -577,7 +602,7 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	// Start agentic search in a goroutine
 	go func() {
 		defer close(agenticCh)
-		chunks, err := s.agenticSearch(ctx, req.Message.Content, req, intention)
+		chunks, err := s.agenticSearch(ctx, query, req, intention)
 		agenticCh <- agenticResult{chunks: chunks, err: err}
 	}()
 
@@ -627,7 +652,7 @@ func (s *CompletionService) vectorSearch(req *model.CompletionReq, query string,
 		Sources:       req.Sources,
 		SourceFilter:  sourceFilter,
 		QuestionScope: intention.QuestionScope,
-		ServicePlane:  intention.ServiceType,
+		ServiceType:   intention.ServiceType,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
@@ -671,14 +696,15 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	allChunks := make([]model.ChunkWithExpansion, 0)
 
 	// Add knowledge search results with scoring based on relevance
-	for _, result := range vectorSearchedResults {
+	for _, chunk := range vectorSearchedResults {
 		// Skip low relevance results
-		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
-			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
+		if chunk.RerankScore < model.RerankScoreLowRelevanceThreshold {
+			log.Printf("Skipping result with low score: %s/%s, score: %f", chunk.ContextID, chunk.Title, chunk.RerankScore)
 			continue
 		}
-		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
-		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(result))
+		log.Printf("Vector searched chunk: %+v, rerankScore: %f", chunk, chunk.RerankScore)
+		chunk.SearchType = model.SearchType_Vector
+		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
 	// Then, add agentic search results after vector search results
@@ -688,6 +714,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	}
 	for _, chunk := range agenticSearchedResults {
 		log.Printf("Agentic searched chunk: %+v", chunk)
+		chunk.SearchType = model.SearchType_Agentic
 		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
@@ -752,7 +779,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	for i, chunk := range finalChunks {
 		knowledge := processChunk(chunk)
 		results = append(results, knowledge)
-		log.Printf("[%d] Source: %s, Title: %s", i+1, knowledge.Source, knowledge.Title)
+		log.Printf("[%d] SearchType: %s, Score: %f, Source: %s, Title: %s, Link:%s, Scope:%s, ServiceType:%s", i+1, chunk.SearchType, chunk.RerankScore, knowledge.Source, knowledge.Title, knowledge.Link, chunk.Scope, chunk.ServiceType)
 	}
 	log.Println("=====================================")
 
@@ -764,7 +791,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 
 // RouteTenant attempts to route the request to a specialized tenant based on the question content.
 // Returns the routed tenant config and true if routing occurred, otherwise returns empty config and false.
-func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, messages []azopenai.ChatRequestMessageClassification) (model.TenantID, bool) {
+func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification) (model.TenantID, bool) {
 	routingStart := time.Now()
 	log.Printf("Starting tenant routing for tenant: %s", originalTenantID)
 
@@ -783,12 +810,25 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, message
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
 	}, messages...)
 
-	// Call LLM for tenant routing
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+	options := azopenai.ChatCompletionsOptions{
 		Messages:       routingMessages,
 		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-	}, nil)
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
+		Temperature:    to.Ptr(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE),
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.ReasoningModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.ReasoningModel))
+	}
+
+	if modelConfig != nil && modelConfig.ReasoningModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.ReasoningModelTemperature))
+	}
+
+	// Call LLM for tenant routing
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 
 	if err != nil {
 		log.Printf("LLM tenant routing failed: %v", err)

@@ -672,6 +672,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNull(result.ProductInfo);
             Assert.IsNotNull(result.ResponseError);
             Assert.That(result.ResponseError, Does.Contain("TypeSpec project path cannot be empty"));
+        }
+
+        [Test]
         public async Task Test_Abandon_ReleasePlan_With_WorkItemId_Success()
         {
             // Act

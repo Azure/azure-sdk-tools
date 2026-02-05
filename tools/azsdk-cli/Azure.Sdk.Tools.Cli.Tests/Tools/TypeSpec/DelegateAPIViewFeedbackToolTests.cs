@@ -12,26 +12,26 @@ using Octokit;
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec;
 
 [TestFixture]
-public class DelegateApiViewFeedbackToolTests
+public class DelegateAPIViewFeedbackToolTests
 {
-    private DelegateApiViewFeedbackTool _tool = null!;
+    private DelegateAPIViewFeedbackTool _tool = null!;
     private Mock<IAPIViewFeedbackHelper> _mockHelper = null!;
     private Mock<IGitHubService> _mockGitHubService = null!;
-    private TestLogger<DelegateApiViewFeedbackTool> _logger = null!;
+    private TestLogger<DelegateAPIViewFeedbackTool> _logger = null!;
 
     [SetUp]
     public void Setup()
     {
-        _logger = new TestLogger<DelegateApiViewFeedbackTool>();
+        _logger = new TestLogger<DelegateAPIViewFeedbackTool>();
         _mockHelper = new Mock<IAPIViewFeedbackHelper>();
         _mockGitHubService = new Mock<IGitHubService>();
-        _tool = new DelegateApiViewFeedbackTool(_mockHelper.Object, _mockGitHubService.Object, _logger);
+        _tool = new DelegateAPIViewFeedbackTool(_mockHelper.Object, _mockGitHubService.Object, _logger);
     }
 
     #region No Comments Tests
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WithNoComments_ReturnsNoActionableComments()
+    public async Task DelegateAPIViewFeedbackAsync_WithNoComments_ReturnsNoActionableComments()
     {
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
@@ -40,7 +40,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockHelper.Setup(x => x.GetMetadata(apiViewUrl)).ReturnsAsync(metadata);
 
         // Not using dry run - should still not create issue when no comments
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: false);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
 
         Assert.That(response.Message, Does.Contain("No actionable comments"));
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
@@ -52,7 +52,7 @@ public class DelegateApiViewFeedbackToolTests
     #region PR-based SHA Detection Tests
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WithSpecsRepoPullRequest_DetectsCommitShaAndDirectory()
+    public async Task DelegateAPIViewFeedbackAsync_WithSpecsRepoPullRequest_DetectsCommitShaAndDirectory()
     {
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         var comments = CreateSampleComments();
@@ -63,7 +63,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockHelper.Setup(x => x.DetectShaAndTspPath(metadata))
             .ReturnsAsync(("abc123sha", "specification/widget/Widget", "Azure/azure-rest-api-specs"));
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: true);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
 
         Assert.That(response.Message, Does.Contain("DRY RUN"));
         Assert.That(response.Message, Does.Contain("abc123sha"));
@@ -74,7 +74,7 @@ public class DelegateApiViewFeedbackToolTests
     }
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WithSdkRepoPullRequest_GetsRepoFromTspLocation()
+    public async Task DelegateAPIViewFeedbackAsync_WithSdkRepoPullRequest_GetsRepoFromTspLocation()
     {
         // PR is in azure-sdk-for-python, tsp-location.yaml points to specs repo
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
@@ -87,7 +87,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockHelper.Setup(x => x.DetectShaAndTspPath(metadata))
             .ReturnsAsync(("sdksha456", "specification/widget/Widget", "Azure/azure-rest-api-specs"));
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: true);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
 
         Assert.That(response.Message, Does.Contain("DRY RUN"));
         Assert.That(response.Message, Does.Contain("sdksha456"));
@@ -101,7 +101,7 @@ public class DelegateApiViewFeedbackToolTests
     #region Branch-based SHA Detection Tests
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WithBranchLabel_DetectsCommitShaAndDirectory()
+    public async Task DelegateAPIViewFeedbackAsync_WithBranchLabel_DetectsCommitShaAndDirectory()
     {
         // RevisionLabel contains branch name that can be used to detect SHA
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
@@ -113,7 +113,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockHelper.Setup(x => x.DetectShaAndTspPath(metadata))
             .ReturnsAsync(("branchsha456", "specification/widget/Widget.Management", "Azure/azure-rest-api-specs"));
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: true);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
 
         Assert.That(response.Message, Does.Contain("branchsha456"));
         Assert.That(response.Message, Does.Contain("specification/widget/Widget.Management"));
@@ -121,7 +121,7 @@ public class DelegateApiViewFeedbackToolTests
     }
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WithBranchLabel_NoShaDetected_FallsBackToDefault()
+    public async Task DelegateAPIViewFeedbackAsync_WithBranchLabel_NoShaDetected_FallsBackToDefault()
     {
         // Branch doesn't exist or can't find SHA - should still work with fallback
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
@@ -133,7 +133,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockHelper.Setup(x => x.DetectShaAndTspPath(metadata))
             .ReturnsAsync((null, null, null));
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: true);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
 
         Assert.That(response.Message, Does.Contain("DRY RUN"));
         Assert.That(response.Message, Does.Not.Contain("**Commit SHA**"));
@@ -146,7 +146,7 @@ public class DelegateApiViewFeedbackToolTests
     #region Multiple Comments Tests
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WithMultipleCommentsInThread_ConsolidatesCorrectly()
+    public async Task DelegateAPIViewFeedbackAsync_WithMultipleCommentsInThread_ConsolidatesCorrectly()
     {
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         // Multiple comments in a single thread - simulates back-and-forth discussion
@@ -168,7 +168,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockHelper.Setup(x => x.DetectShaAndTspPath(metadata))
             .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: true);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
 
         // Verify the consolidated comment appears in the output
         Assert.That(response.Message, Does.Contain("FooModel"));
@@ -182,7 +182,7 @@ public class DelegateApiViewFeedbackToolTests
     #region Issue Creation Tests
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WithDryRun_DoesNotCreateIssue()
+    public async Task DelegateAPIViewFeedbackAsync_WithDryRun_DoesNotCreateIssue()
     {
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         var comments = CreateSampleComments();
@@ -193,14 +193,14 @@ public class DelegateApiViewFeedbackToolTests
         _mockHelper.Setup(x => x.DetectShaAndTspPath(metadata))
             .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: true);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
 
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()), Times.Never);
     }
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_CreatesIssue_WithCorrectTitleAndBody()
+    public async Task DelegateAPIViewFeedbackAsync_CreatesIssue_WithCorrectTitleAndBody()
     {
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         var comments = CreateSampleComments();
@@ -227,7 +227,7 @@ public class DelegateApiViewFeedbackToolTests
             It.IsAny<List<string>?>()))
             .ReturnsAsync(mockIssue);
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: false);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
 
         Assert.That(response.Message, Does.Contain("Issue created"));
         Assert.That(response.Message, Does.Contain("https://github.com/Azure/azure-rest-api-specs/issues/42"));
@@ -242,20 +242,20 @@ public class DelegateApiViewFeedbackToolTests
     #region Error Handling Tests
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WhenHelperThrowsException_ReturnsError()
+    public async Task DelegateAPIViewFeedbackAsync_WhenHelperThrowsException_ReturnsError()
     {
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         _mockHelper.Setup(x => x.GetConsolidatedComments(apiViewUrl))
             .ThrowsAsync(new InvalidOperationException("APIView service unavailable"));
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl);
 
         Assert.That(response.Message, Does.Contain("Error:"));
         Assert.That(response.Message, Does.Contain("APIView service unavailable"));
     }
 
     [Test]
-    public async Task DelegateApiViewFeedbackAsync_WhenGitHubServiceThrowsException_ReturnsError()
+    public async Task DelegateAPIViewFeedbackAsync_WhenGitHubServiceThrowsException_ReturnsError()
     {
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         var comments = CreateSampleComments();
@@ -268,7 +268,7 @@ public class DelegateApiViewFeedbackToolTests
         _mockGitHubService.Setup(x => x.CreateIssueAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()))
             .ThrowsAsync(new Octokit.ApiException("GitHub API rate limit exceeded", System.Net.HttpStatusCode.Forbidden));
 
-        var response = await _tool.DelegateApiViewFeedbackAsync(apiViewUrl, dryRun: false);
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
 
         Assert.That(response.Message, Does.Contain("Error:"));
     }

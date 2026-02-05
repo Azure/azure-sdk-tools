@@ -13,13 +13,13 @@ using Azure.Sdk.Tools.Cli.Tools.Core;
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
-public class DelegateApiViewFeedbackTool : MCPTool
+public class DelegateAPIViewFeedbackTool : MCPTool
 {
     private const string ToolName = "azsdk_tsp_delegate_apiview_feedback";
     
     private readonly IAPIViewFeedbackHelper _helper;
     private readonly IGitHubService _gitHubService;
-    private readonly ILogger<DelegateApiViewFeedbackTool> _logger;
+    private readonly ILogger<DelegateAPIViewFeedbackTool> _logger;
 
     private readonly Argument<string> _apiViewUrlArg = new("apiview-url")
     {
@@ -41,10 +41,10 @@ public class DelegateApiViewFeedbackTool : MCPTool
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
-    public DelegateApiViewFeedbackTool(
+    public DelegateAPIViewFeedbackTool(
         IAPIViewFeedbackHelper helper,
         IGitHubService gitHubService,
-        ILogger<DelegateApiViewFeedbackTool> logger)
+        ILogger<DelegateAPIViewFeedbackTool> logger)
     {
         _helper = helper;
         _gitHubService = gitHubService;
@@ -147,7 +147,7 @@ public class DelegateApiViewFeedbackTool : MCPTool
     }
 
     [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
-    public async Task<DefaultCommandResponse> DelegateApiViewFeedbackAsync(
+    public async Task<DefaultCommandResponse> DelegateAPIViewFeedbackAsync(
         string apiViewUrl,
         string repo = "Azure/azure-rest-api-specs",
         bool dryRun = false,

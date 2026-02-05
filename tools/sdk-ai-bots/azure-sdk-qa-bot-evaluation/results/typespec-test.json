@@ -1285,7 +1285,7 @@
     {
         "testcase": "How to make an interface internal ?",
         "expected": {
-            "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted\u2014as long as you remove all previously generated SDK output before regenerating. Or you can use _patch.py to customize the code.",
+            "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp and use @@access decorator to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted",
             "references": [
                 {
                     "title": "Decorators | Azure.ClientGenerator.Core | `@access`",

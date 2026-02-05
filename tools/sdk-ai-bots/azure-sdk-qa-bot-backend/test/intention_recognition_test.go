@@ -25,7 +25,7 @@ func TestIntentionRecognition_TechnicalQuestion(t *testing.T) {
 		},
 	}
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.True(t, intentionResult.NeedsRagProcessing, "Technical question should require RAG processing")
@@ -48,7 +48,7 @@ func TestIntentionRecognition_PermissionMessage(t *testing.T) {
 		},
 	}
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.True(t, intentionResult.NeedsRagProcessing, "Permission question should require RAG processing")
@@ -72,7 +72,7 @@ func TestIntentionRecognition_GreetingMessage(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -105,7 +105,7 @@ func TestIntentionRecognition_ThankYouMessage(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -161,7 +161,7 @@ BOM, Spring Releases.`,
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -185,7 +185,7 @@ func TestIntentionRecongition_SuggestionsMessage(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -209,11 +209,36 @@ func TestIntentionRecognition_ReviewRequest(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_APISpecReviewBot, "api_spec_review/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_APISpecReviewBot, "api_spec_review/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
 	require.True(t, intentionResult.NeedsRagProcessing, "Review request should require RAG processing")
+	require.NotEmpty(t, intentionResult.Question)
+}
+
+func TestIntentionRecognition_NonQuestion(t *testing.T) {
+	config.InitConfiguration()
+	config.InitSecrets()
+	config.InitOpenAIClient()
+
+	service, err := agent.NewCompletionService()
+	require.NoError(t, err)
+
+	// Test case: Non-question message (should not need RAG processing)
+	messages := []model.Message{
+		{
+			Role:    model.Role_User,
+			Content: " I'd like to explore some ideas of using TypeSpec with WASI 0.3. The 0.3 preview may coming out soon with https://wasi.dev/roadmap . First, I'd like to be able to use the TypeSpec compiler in a WASI component. It would be possible if the Node.js calls were put behind interfaces, so it could be bundled without it. It would be great to make some progress on https://github.com/microsoft/typespec/issues/5502 . I've already done a bit of hacking on this with Copilot assistance. Second, I'd like to be able to generate server-side web components that would handle the web routing and serialization and allow other component languages to implement the generated component interface.\nThis roadmap is a living document representing projected timelines for WASI releases. Goals and projections are provisional and subject to revision.",
+		},
+	}
+
+	llmMessages := convertToLLMMessages(messages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
+
+	require.NoError(t, err)
+	require.NotNil(t, intentionResult)
+	require.False(t, intentionResult.NeedsRagProcessing)
 	require.NotEmpty(t, intentionResult.Question)
 }
 
@@ -234,7 +259,7 @@ func TestIntentionRecognition_PlaneDetection_FilePathResourceManager(t *testing.
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -258,7 +283,7 @@ func TestIntentionRecognition_PlaneDetection_FilePathDataPlane(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -282,7 +307,7 @@ func TestIntentionRecognition_PlaneDetection_ARMKeyword(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -306,7 +331,7 @@ func TestIntentionRecognition_PlaneDetection_MPGKeyword(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -330,7 +355,7 @@ func TestIntentionRecognition_PlaneDetection_DPGKeyword(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult.ServiceType)
@@ -354,7 +379,7 @@ func TestIntentionRecognition_PlaneDetection_PRLabelManagementPlane(t *testing.T
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -379,7 +404,7 @@ func TestIntentionRecognition_PlaneDetection_PRLabelDataPlane(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)
@@ -404,7 +429,7 @@ func TestIntentionRecognition_PlaneDetection_UnknownNoSignal(t *testing.T) {
 	}
 
 	llmMessages := convertToLLMMessages(messages)
-	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", llmMessages)
+	intentionResult, err := service.RecognizeIntention(model.TenantID_AzureSDKQaBot, "typespec/intention.md", nil, llmMessages)
 
 	require.NoError(t, err)
 	require.NotNil(t, intentionResult)

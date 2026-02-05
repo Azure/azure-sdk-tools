@@ -92,9 +92,9 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
             : string.Empty;
 
         return $"""
-            Apply TypeSpec client customizations to address APIView feedback comments.
+            # Current Task
 
-            ## Current Task
+            Apply TypeSpec client customizations to address APIView feedback comments.
 
             **Package Name**: {_packageName}
             **Language**: {_language}
@@ -138,11 +138,22 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
         return $"""
             - If a Commit SHA is provided, use it as the base for your changes
             - Include the APIView URL in PR description
-            - PR description MUST include a markdown table in EXACTLY this format (do not change column names):
+            - Update ONLY the client.tsp file(s) for the spec directory referenced by this APIView. Do not modify other spec directories, even if feedback mentions related namespaces.
+              
+              Example of feedback that should only update `specification/ai/Azure.AI.Projects/client.tsp`:
+              - Package Name: azure-ai-projects
+                - LineNo 227: `azure.ai.projects.aio.operations.AgentsOperations.delete:async.returntype` | Return 'None' on delete.
+                - LineNo 10120: `azure.ai.projects.telemetry.trace_function` | Does this need to be a public function?
+              
+              These should NOT also update `specification/ai/Azure.AI.Agents/client.tsp` even though they mention Agents-related elements.
+            
+            - CRITICAL: You MUST update the PR description with a summary table. The PR description MUST include a markdown table in EXACTLY this format (do not change column names):
               | LineNo | Addressed? | Summary |
               |--------|------------|---------|
               | <lineNo> | ✅ | Brief description of changes (or "No action needed" if feedback says keep as-is) |
               | <lineNo> | ⚠️ | Reason not addressed (unclear info, TypeSpec limitation, needs SDK code customization) |
+              
+              Include one row for EVERY LineNo from the feedback table above. This table is required even if the PR is long.
 
             - Note: If a review comment CANNOT be addressed, explanation comments MUST NOT be added to the `client.tsp` file.
               ONLY explain in the "Summary" column why it could not be addressed.

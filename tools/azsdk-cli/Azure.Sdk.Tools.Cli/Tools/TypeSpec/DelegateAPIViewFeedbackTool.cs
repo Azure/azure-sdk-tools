@@ -122,7 +122,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             {
                 return new DefaultCommandResponse
                 {
-                    Message = $"=== DRY RUN ===\n\nTarget: {owner}/{repoName}\nTitle: {title}\n\n--- Issue Body ---\n{prompt}\n\n--- Next step: Assign issue to Copilot coding agent ---"
+                    Message = $"=== DRY RUN ===\n\nTarget: {owner}/{repoName}\nTitle: {title}\n\n--- Issue Body ---\n{prompt}"
                 };
             }
 
@@ -133,7 +133,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             return new DefaultCommandResponse
             {
-                Message = $"✓ Issue created and assigned to Copilot: {issue.HtmlUrl}\n\n⏳ Copilot will start working on this issue shortly. Watch for the 👀 reaction and draft PR."
+                Message = $"✓ Issue created: {issue.HtmlUrl}\n✓ Copilot assigned. Watch for the 👀 reaction and draft PR."
             };
         }
         catch (Exception ex)
@@ -204,7 +204,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             {
                 return new DefaultCommandResponse
                 {
-                    Message = $"=== DRY RUN ===\n\nTarget: {owner}/{repoName}\nTitle: {title}\n\n--- Issue Body ---\n{prompt}\n\n--- Next step: Assign issue to Copilot coding agent ---"
+                    Message = $"=== DRY RUN ===\n\nTarget: {owner}/{repoName}\nTitle: {title}\n\n--- Issue Body ---\n{prompt}"
                 };
             }
 
@@ -215,7 +215,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             return new DefaultCommandResponse
             {
-                Message = $"✓ Issue created and assigned to Copilot: {issue.HtmlUrl}\n\n⏳ Copilot will start working on this issue shortly. Watch for the 👀 reaction and draft PR."
+                Message = $"✓ Issue created: {issue.HtmlUrl}\n✓ Copilot assigned. Watch for the 👀 reaction and draft PR."
             };
         }
         catch (Exception ex)

@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added support for version number and release date update in the CHANGELOG.md for data plane package.
+
 ### Breaking Changes
 
 ### Bugs Fixed

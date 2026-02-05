@@ -672,6 +672,53 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNull(result.ProductInfo);
             Assert.IsNotNull(result.ResponseError);
             Assert.That(result.ResponseError, Does.Contain("TypeSpec project path cannot be empty"));
+        public async Task Test_Abandon_ReleasePlan_With_WorkItemId_Success()
+        {
+            // Act
+            var result = await releasePlanTool.AbandonReleasePlan(workItemId: 100, releasePlanId: 0);
+
+            // Assert
+            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
+            Assert.IsNotNull(result.Details);
+            Assert.That(result.Details.Count, Is.GreaterThan(0));
+            Assert.That(result.Details[0], Does.Contain("abandoned"));
+        }
+
+        [Test]
+        public async Task Test_Abandon_ReleasePlan_With_ReleasePlanId_Success()
+        {
+            // Act
+            var result = await releasePlanTool.AbandonReleasePlan(workItemId: 0, releasePlanId: 123);
+
+            // Assert
+            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
+            Assert.IsNotNull(result.Details);
+            Assert.That(result.Details.Count, Is.GreaterThan(0));
+            Assert.That(result.Details[0], Does.Contain("abandoned"));
+        }
+
+        [Test]
+        public async Task Test_Abandon_ReleasePlan_Without_Ids_ReturnsError()
+        {
+            // Act
+            var result = await releasePlanTool.AbandonReleasePlan(workItemId: 0, releasePlanId: 0);
+
+            // Assert
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("Either work item ID or release plan ID must be provided"));
+        }
+
+        [Test]
+        public async Task Test_Abandon_ReleasePlan_With_Both_Ids_Success()
+        {
+            // Act - when both are provided, workItemId takes precedence
+            var result = await releasePlanTool.AbandonReleasePlan(workItemId: 100, releasePlanId: 123);
+
+            // Assert
+            Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");
+            Assert.IsNotNull(result.Details);
+            Assert.That(result.Details.Count, Is.GreaterThan(0));
+            Assert.That(result.Details[0], Does.Contain("abandoned"));
         }
     }
 }

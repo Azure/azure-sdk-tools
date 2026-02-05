@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +15,7 @@ import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -25,6 +26,7 @@ import { environment } from 'src/environments/environment';
     imports: [
         CommonModule,
         FormsModule,
+        RouterModule,
         DrawerModule,
         SelectButtonModule,
         TimeagoModule
@@ -45,6 +47,7 @@ export class NavBarComponent implements OnInit {
   isLoggedIn: boolean = false;
   reviewId: string | null = null;
   isApprover: boolean = false;
+  isAdmin: boolean = false;
 
   // Theme options
   themes : SelectItemModel[] = [
@@ -56,7 +59,7 @@ export class NavBarComponent implements OnInit {
 
   constructor(private userProfileService: UserProfileService, private configService: ConfigService,
     private notificationsService: NotificationsService, private authService: AuthService, private route: ActivatedRoute,
-    private http: HttpClient
+    private http: HttpClient, private permissionsService: PermissionsService
   ) { }
 
   ngOnInit(): void {
@@ -71,6 +74,7 @@ export class NavBarComponent implements OnInit {
       this.userProfile = userProfile;
       if (isLoggedIn && userProfile) {
         this.checkApproverStatus();
+        this.checkAdminStatus(userProfile);
         // Initialize theme selection from user preferences
         const currentTheme = this.themes.find(t => t.data === userProfile.preferences.theme);
         if (currentTheme) {
@@ -126,6 +130,21 @@ export class NavBarComponent implements OnInit {
         this.isApprover = false;
       }
     });
+  }
+
+  private checkAdminStatus(userProfile: UserProfile) {
+    if (userProfile.permissions) {
+      this.isAdmin = this.permissionsService.isAdmin(userProfile.permissions);
+    } else {
+      this.permissionsService.getMyPermissions().subscribe({
+        next: (permissions) => {
+          this.isAdmin = this.permissionsService.isAdmin(permissions);
+        },
+        error: () => {
+          this.isAdmin = false;
+        }
+      });
+    }
   }
 
   changeTheme(theme: SelectItemModel) {

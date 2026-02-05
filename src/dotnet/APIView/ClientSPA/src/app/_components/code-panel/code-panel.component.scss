@@ -177,6 +177,7 @@
         position: relative;
         display: inline-flex;
         align-items: center;
+        margin-right: 4px;
 
         // Reserve space for the button even when it doesn't exist (e.g., on removed lines)
         &::after {
@@ -245,6 +246,36 @@
 
     .line-number-text {
         display: inline-block;
+    }
+
+    .add-comment-btn {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s ease;
+        padding: 0;
+        margin: 0 2px;
+        border: none;
+        background: transparent;
+        color: var(--base-text-color);
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            color: var(--primary-color);
+        }
+
+        i {
+            font-size: 14px;
+        }
+    }
+
+    .line-actions:hover .add-comment-btn {
+        opacity: 1;
+        visibility: visible;
     }
 
     .line-actions {

@@ -33,9 +33,17 @@ public class Workspace : IDisposable
     /// Gets the git diff of all uncommitted changes in the repository.
     /// </summary>
     /// <param name="contextLines">Number of context lines to include around each change (default: 3).</param>
+    /// <param name="includeUntracked">Whether to include untracked (newly created) files in the diff (default: true).</param>
     /// <returns>The git diff output as a string.</returns>
-    public async Task<string> GetGitDiffAsync(int contextLines = 3)
+    public async Task<string> GetGitDiffAsync(int contextLines = 3, bool includeUntracked = true)
     {
+        if (includeUntracked)
+        {
+            // Stage intent-to-add for all untracked files so they appear in the diff.
+            // This doesn't actually stage file contents, just makes git aware of them.
+            await RunGitCommandAsync("add", "--intent-to-add", ".");
+        }
+
         return await RunGitCommandAsync("diff", $"-U{contextLines}");
     }
 

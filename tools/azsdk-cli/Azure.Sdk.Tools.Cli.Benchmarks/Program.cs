@@ -176,22 +176,13 @@ public class Program
             Console.WriteLine($"  - {tool}");
         }
 
-        Console.WriteLine("\n=== Git Diff ===");
-        if (string.IsNullOrWhiteSpace(result.GitDiff))
-        {
-            Console.WriteLine("(no changes)");
-        }
-        else
-        {
-            Console.WriteLine(result.GitDiff);
-        }
-
         if (result.WorkspacePath != null)
         {
             Console.WriteLine($"\nWorkspace: {result.WorkspacePath}");
             if (result.WorkspaceCleanedUp)
             {
                 Console.WriteLine("  Status: cleaned up");
+                Console.WriteLine("  Tip: Run with --cleanup never to preserve the workspace and inspect diffs manually.");
             }
             else
             {

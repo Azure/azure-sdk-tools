@@ -134,7 +134,18 @@ public class BenchmarkRunner : IDisposable
             Console.WriteLine($"[Benchmark] Capturing git diff...");
             var gitDiff = await workspace.GetGitDiffAsync();
 
-            // 5. Validation
+            // 5. Write execution log to workspace
+            Console.WriteLine($"[Benchmark] Writing execution log...");
+            await workspace.WriteExecutionLogAsync(
+                scenario.Name,
+                execResult.Messages,
+                execResult.ToolCalls,
+                gitDiff,
+                stopwatch.Elapsed,
+                execResult.Completed,
+                execResult.Error);
+
+            // 6. Validation
             ValidationSummary? validation = null;
             var validators = scenario.Validators.ToList();
 
@@ -186,7 +197,7 @@ public class BenchmarkRunner : IDisposable
                 Validation = validation
             };
 
-            // 6. Cleanup
+            // 7. Cleanup
             await _workspaceManager.CleanupAsync(workspace, options.CleanupPolicy, passed);
 
             return result;

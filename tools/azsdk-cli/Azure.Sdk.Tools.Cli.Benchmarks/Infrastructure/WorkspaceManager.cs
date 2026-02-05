@@ -189,37 +189,63 @@ public class WorkspaceManager
 
     /// <summary>
     /// Runs a git command and throws if it fails.
+    /// Retries with exponential backoff if a lock file error is detected.
     /// </summary>
     private static async Task RunGitCommandAsync(string workingDirectory, params string[] args)
     {
+        const int maxRetries = 10;
+        const int baseDelayMs = 500;
+
         var arguments = string.Join(" ", args.Select(EscapeArgument));
 
-        var startInfo = new ProcessStartInfo
+        for (int attempt = 0; attempt <= maxRetries; attempt++)
         {
-            FileName = "git",
-            Arguments = arguments,
-            WorkingDirectory = workingDirectory,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = arguments,
+                WorkingDirectory = workingDirectory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
-        using var process = new Process { StartInfo = startInfo };
-        process.Start();
+            using var process = new Process { StartInfo = startInfo };
+            process.Start();
 
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
 
-        if (process.ExitCode != 0)
-        {
+            if (process.ExitCode == 0)
+            {
+                return;
+            }
+
+            // Check if this is a lock file error that we should retry
+            if (IsLockFileError(error) && attempt < maxRetries)
+            {
+                var delayMs = baseDelayMs * (1 << attempt); // Exponential backoff: 500ms, 1s, 2s, 4s, ...
+                await Task.Delay(delayMs);
+                continue;
+            }
+
             throw new InvalidOperationException(
                 $"Git command failed with exit code {process.ExitCode}: git {arguments}\n" +
                 $"Working directory: {workingDirectory}\n" +
                 $"Output: {output}\n" +
                 $"Error: {error}");
         }
+    }
+
+    /// <summary>
+    /// Checks if a git error message indicates a lock file conflict.
+    /// </summary>
+    private static bool IsLockFileError(string error)
+    {
+        return error.Contains(".lock': File exists", StringComparison.OrdinalIgnoreCase) ||
+               error.Contains("Unable to create", StringComparison.OrdinalIgnoreCase) && error.Contains(".lock", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

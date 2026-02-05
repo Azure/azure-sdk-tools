@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
@@ -138,6 +139,49 @@ public class Workspace : IDisposable
     {
         var fullPath = Path.Combine(RepoPath, relativePath);
         return await File.ReadAllTextAsync(fullPath);
+    }
+
+    /// <summary>
+    /// Writes the benchmark execution log to the workspace root directory.
+    /// The log includes messages, tool calls, and other execution details.
+    /// </summary>
+    /// <param name="scenarioName">The name of the scenario that was executed.</param>
+    /// <param name="messages">The messages from the Copilot SDK session.</param>
+    /// <param name="toolCalls">The list of tool calls made during execution.</param>
+    /// <param name="gitDiff">The git diff of changes made during execution.</param>
+    /// <param name="duration">The duration of the execution.</param>
+    /// <param name="passed">Whether the benchmark passed.</param>
+    /// <param name="error">Optional error message if the benchmark failed.</param>
+    public async Task WriteExecutionLogAsync(
+        string scenarioName,
+        IReadOnlyList<object> messages,
+        IReadOnlyList<string> toolCalls,
+        string? gitDiff,
+        TimeSpan duration,
+        bool passed,
+        string? error = null)
+    {
+        var log = new
+        {
+            Scenario = scenarioName,
+            Timestamp = DateTime.UtcNow.ToString("o"),
+            Duration = duration.ToString(),
+            Passed = passed,
+            Error = error,
+            ToolCalls = toolCalls,
+            Messages = messages,
+            GitDiff = gitDiff
+        };
+
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        var json = JsonSerializer.Serialize(log, options);
+        var logPath = Path.Combine(RootPath, "benchmark-log.json");
+        await File.WriteAllTextAsync(logPath, json);
     }
 
     /// <summary>

@@ -4,6 +4,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Web;
 using Microsoft.Extensions.Logging;
 using OpenAI;
@@ -183,22 +184,86 @@ Respond in JSON format:
             ?? Environment.GetEnvironmentVariable("OPENAI_MODEL") 
             ?? "gpt-4o";
 
-        var chatClient = _openAIClient.GetChatClient(modelName);
-        var messages = new[] { new UserChatMessage(prompt) };
-        var response = await chatClient.CompleteChatAsync(messages);
-        var result = response.Value.Content[0].Text;
-
-        // Strip markdown code blocks if present (OpenAI sometimes wraps JSON in ```json ... ```)
-        var jsonText = result.Trim();
-        if (jsonText.StartsWith("```"))
+        try
         {
-            // Remove markdown code blocks
-            var lines = jsonText.Split('\n');
-            jsonText = string.Join('\n', lines.Skip(1).Take(lines.Length - 2));
-        }
+            var chatClient = _openAIClient.GetChatClient(modelName);
+            var messages = new[] { new UserChatMessage(prompt) };
+            var response = await chatClient.CompleteChatAsync(messages);
+            
+            // Validate response structure
+            if (response?.Value?.Content == null || response.Value.Content.Count == 0)
+            {
+                _logger.LogWarning("OpenAI returned empty or null response for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
+                return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
+            }
 
-        // Parse OpenAI response
-        var jsonResponse = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonText);
+            var result = response.Value.Content[0].Text;
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                _logger.LogWarning("OpenAI returned empty text for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
+                return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
+            }
+
+            // Strip markdown code blocks if present (OpenAI sometimes wraps JSON in ```json ... ```)
+            var jsonText = result.Trim();
+            var match = Regex.Match(jsonText, @"```(?:json)?\s*(.*?)\s*```", RegexOptions.Singleline);
+            if (match.Success)
+            {
+                jsonText = match.Groups[1].Value.Trim();
+            }
+
+            // Parse OpenAI response
+            Dictionary<string, object>? jsonResponse;
+            try
+            {
+                jsonResponse = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonText);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse OpenAI JSON response for ThreadId {ThreadId}, LineNo {LineNo}. Raw response: {Response}. Using fallback.", threadId, lineNo, result);
+                return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
+            }
+            
+            // Extract comment from JSON response
+            var comment = jsonResponse?.TryGetValue("comment", out var commentValue) == true 
+                ? commentValue?.ToString() 
+                : null;
+                
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                _logger.LogWarning("OpenAI response missing or empty 'comment' field for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
+                return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
+            }
+            
+            return new ConsolidatedComment
+            {
+                ThreadId = threadId,
+                LineNo = lineNo,
+                LineId = lineId,
+                LineText = lineText,
+                Comment = comment
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "OpenAI consolidation failed for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
+            return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
+        }
+    }
+
+    /// <summary>
+    /// Creates a fallback consolidated comment by concatenating all comments in the thread
+    /// </summary>
+    private static ConsolidatedComment CreateFallbackComment(
+        List<APIViewComment> groupedComments,
+        string threadId,
+        int lineNo,
+        string lineId,
+        string lineText)
+    {
+        // Format: [user: comment, user: comment, ...]
+        var commentChain = string.Join(", ", groupedComments.Select(c => 
+            $"{c.CreatedBy}: {c.CommentText}"));
         
         return new ConsolidatedComment
         {
@@ -206,7 +271,7 @@ Respond in JSON format:
             LineNo = lineNo,
             LineId = lineId,
             LineText = lineText,
-            Comment = jsonResponse?["comment"]?.ToString() ?? string.Empty
+            Comment = $"[{commentChain}]"
         };
     }
 

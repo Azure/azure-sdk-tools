@@ -19,6 +19,14 @@ export interface PRDetails {
   diff: string;
 }
 
+export interface IssueDetails {
+  title: string;
+  body: string;
+  state: string;
+  labels: string[];
+  comments: CommentEx[];
+}
+
 type User = components['schemas']['nullable-simple-user'];
 
 interface CommentEx {
@@ -64,6 +72,31 @@ export class GithubClient {
     };
   }
 
+  public async getIssueDetails(issueUrl: string, meta: object): Promise<IssueDetails> {
+    // Parse owner, repo, issue_number from URL
+    const match = issueUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/);
+    if (!match) {
+      logger.warn(`Invalid Issue URL: ${issueUrl}. Ignore`, { meta });
+      return { title: '', body: '', state: '', labels: [], comments: [] };
+    }
+
+    const [, owner, repo, issueNumberStr] = match;
+    const issueNumber = Number(issueNumberStr);
+
+    const [basicInfo, comments] = await Promise.all([
+      this.tryGetIssueBasicInfo(owner, repo, issueNumber, issueUrl),
+      this.tryListIssueComments(owner, repo, issueNumber, issueUrl),
+    ]);
+
+    return {
+      title: basicInfo?.title ?? '',
+      body: basicInfo?.body ?? '',
+      state: basicInfo?.state ?? '',
+      labels: basicInfo?.labels ?? [],
+      comments: comments ?? [],
+    };
+  }
+
   private getCommentWithUser(commentUser: User, commentBody: string): CommentEx {
     return { name: commentUser.login, type: commentUser.type, comment: commentBody };
   }
@@ -85,6 +118,29 @@ export class GithubClient {
     } catch (error) {
       // TODO: use logger instead
       console.error(`Failed to get basic info for pull request ${prUrl}: ${error}`);
+      return undefined;
+    }
+  }
+
+  private async tryGetIssueBasicInfo(
+    owner: string,
+    repo: string,
+    id: number,
+    issueUrl: string
+  ): Promise<{ title: string; body: string; state: string; labels: string[] } | undefined> {
+    try {
+      const parameters = { owner, repo, issue_number: id };
+      const response = await this.octokit.issues.get(parameters);
+      const issue = response.data;
+      const labels = issue.labels.map((lbl) => (typeof lbl === 'string' ? lbl : lbl.name ?? ''));
+      return {
+        title: issue.title,
+        body: issue.body,
+        state: issue.state,
+        labels,
+      };
+    } catch (error) {
+      console.error(`Failed to get basic info for issue ${issueUrl}: ${error}`);
       return undefined;
     }
   }

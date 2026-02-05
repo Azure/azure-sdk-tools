@@ -751,7 +751,7 @@ def get_apiview_comments(revision_id: str, environment: str = "production") -> d
 
 def get_active_reviews(
     start_date: str, end_date: str, language: str, environment: str = "production", summary: bool = False
-) -> list:
+) -> list | None:
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
     """

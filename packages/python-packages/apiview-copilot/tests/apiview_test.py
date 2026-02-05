@@ -19,7 +19,79 @@ import pytest
 sys.modules["azure.cosmos"] = MagicMock()
 sys.modules["azure.cosmos.exceptions"] = MagicMock()
 
-from src._apiview import get_active_reviews, resolve_package
+from src._apiview import get_active_reviews, get_version_type, resolve_package
+
+
+class TestGetVersionType:
+    """Tests for get_version_type function."""
+
+    # Python-style beta versions (e.g., 1.0.0b1)
+    @pytest.mark.parametrize(
+        "version,expected",
+        [
+            ("1.0.0b1", "beta"),
+            ("1.0b1", "beta"),
+            ("12.28.0b1", "beta"),
+            ("1.2.3b4", "beta"),  # This IS a valid Python beta, not a false positive
+            ("2.0.0b12", "beta"),
+        ],
+    )
+    def test_python_style_beta_versions(self, version, expected):
+        """Python beta versions using 'bN' suffix should be detected as beta."""
+        assert get_version_type(version) == expected
+
+    # Standard pre-release indicators
+    @pytest.mark.parametrize(
+        "version,expected",
+        [
+            ("1.0.0-beta.1", "beta"),
+            ("1.0.0-alpha.1", "beta"),
+            ("1.0.0-rc.1", "beta"),
+            ("1.0.0-dev.1", "beta"),
+            ("1.0.0-preview.1", "beta"),
+            ("1.0.0-BETA", "beta"),
+            ("1.0.0-Alpha", "beta"),
+        ],
+    )
+    def test_standard_prerelease_indicators(self, version, expected):
+        """Versions with standard pre-release indicators should be beta."""
+        assert get_version_type(version) == expected
+
+    # 0.x versions (not GA per semantic versioning)
+    @pytest.mark.parametrize(
+        "version,expected",
+        [
+            ("0.1.0", "beta"),
+            ("0.9.9", "beta"),
+            ("0.0.1", "beta"),
+        ],
+    )
+    def test_zero_major_versions_are_beta(self, version, expected):
+        """0.x.x versions should be beta per semantic versioning."""
+        assert get_version_type(version) == expected
+
+    # GA versions
+    @pytest.mark.parametrize(
+        "version,expected",
+        [
+            ("1.0.0", "GA"),
+            ("12.28.0", "GA"),
+            ("2.3.4", "GA"),
+            ("100.0.0", "GA"),
+        ],
+    )
+    def test_ga_versions(self, version, expected):
+        """Stable release versions should be GA."""
+        assert get_version_type(version) == expected
+
+    # Edge cases
+    def test_none_version_returns_unknown(self):
+        """None version should return unknown."""
+        assert get_version_type(None) == "unknown"
+
+    def test_empty_version_returns_unknown(self):
+        """Empty string should return unknown."""
+        assert get_version_type("") == "unknown"
 
 
 class MockContainerClient:

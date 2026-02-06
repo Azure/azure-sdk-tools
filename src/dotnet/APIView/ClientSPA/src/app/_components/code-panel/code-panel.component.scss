@@ -30,10 +30,12 @@
 
     .code-line {
         display: grid;
+        position: relative;
         --max-cell-width: 0px;
         grid-template-columns: minmax(auto, max-content) 1fr;
         width: 500% !important;
-        contain: layout style;
+        contain: style;
+        overflow: visible;
 
         &.diagnostics {
             padding-left: calc(var(--max-line-number-width) + 50px);
@@ -161,6 +163,7 @@
         position: relative;
         white-space: pre;
         color: var(--base-text-color);
+        padding-left: 12px;
     }
 
     .line-number {
@@ -177,20 +180,7 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        
-        // Reserve space for the button even when it doesn't exist (e.g., on removed lines)
-        &::after {
-            content: '';
-            display: inline-block;
-            width: 28px; // padding (6px) + icon width (14px) + padding (6px) + borders (2px) = 28px
-            height: 26px; // matches button height
-            margin-left: 6px; // matches button margin-left
-        }
-        
-        // When the button exists, hide the spacer
-        &.has-comment-btn::after {
-            display: none;
-        }
+        margin-right: 4px;
 
         // When line numbers are hidden, don't reserve space for them
         &.hide-line-numbers {
@@ -198,38 +188,45 @@
                 display: none;
             }
         }
-        
-        .add-comment-btn {
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            padding: 3px 6px;
-            margin-left: -2px;
-            border: 1px solid #d0d7de;
-            background: white;
-            color: #57606a;
+    }
+
+    .line-number-text {
+        display: inline-block;
+    }
+
+    .line-hover-actions {
+        position: absolute;
+        left: 32px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 6px;
+        background: var(--base-fg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.15s ease, visibility 0.15s ease;
+        z-index: 1001;
+
+        .hover-action-btn {
+            padding: 3px;
+            margin: 0;
+            border: none;
+            background: transparent;
+            color: var(--base-text-color);
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1;
-            border-radius: 6px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
 
             &:hover {
-                background: #f6f8fa;
-                border-color: #1f232826;
-                color: #24292f;
-            }
-
-            &:active {
-                background: #eaeef2;
-                border-color: #1f232826;
-            }
-
-            &:focus {
-                outline: 2px solid #0969da;
-                outline-offset: 2px;
+                color: var(--primary-color);
             }
 
             i {
@@ -237,14 +234,19 @@
             }
         }
 
-        &:hover .add-comment-btn {
-            opacity: 1;
-            visibility: visible;
+        .toggle-documentation-btn {
+            &.hide {
+                display: none;
+            }
+            &.can-show {
+                color: var(--base-text-color);
+            }
         }
     }
 
-    .line-number-text {
-        display: inline-block;
+    .code-line:hover .line-hover-actions {
+        opacity: 1;
+        visibility: visible;
     }
 
     .line-actions {
@@ -252,8 +254,8 @@
         text-align: right;
         white-space: nowrap;
         padding-left: 5px;
-        padding-right: 0px;
-        border-right: none;
+        padding-right: 6px;
+        border-right: 1px solid var(--border-color);
         cursor: pointer;
         position: sticky;
         left: 0;
@@ -269,7 +271,7 @@
     .toggle-documentation-btn {
         color: transparent;
         &.hide {
-            visibility: invisible;
+            visibility: hidden;
         }
     }
 
@@ -362,7 +364,7 @@
         }
 
         .annotationName {
-            color: var(--java-anotation-name-color);
+            color: var(--java-annotation-name-color);
         }
 
         .stringLiteral {

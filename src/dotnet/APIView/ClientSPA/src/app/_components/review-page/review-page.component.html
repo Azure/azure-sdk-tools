@@ -43,7 +43,9 @@
                     (disableCodeLinesLazyLoadingEmitter)="handleDisableCodeLinesLazyLoadingEmitter($event)"
                     (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
                     (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
-                    (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)">
+                    (showHiddenAPIEmitter)="handleShowHiddenAPIEmitter($event)"
+                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
+                    (commentNavigationEmitter)="handleCommentThreadNavigationEmitter($event)">
                 </app-review-toolbar>
                 <div class="review-panel rounded" style="width: 100%; flex: 1; min-height: 0; overflow: hidden;">
                     <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
@@ -93,7 +95,6 @@
                     (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
                     (commentThreadNavigationEmitter)="handleCommentThreadNavigationEmitter($event)"
                     (diffNavigationEmitter)="handleDiffNavigationEmitter($event)"
-                    (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
                     (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
                     (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
                     (namespaceApprovalEmitter)="handleNamespaceApprovalEmitter($event)"></app-review-page-options>

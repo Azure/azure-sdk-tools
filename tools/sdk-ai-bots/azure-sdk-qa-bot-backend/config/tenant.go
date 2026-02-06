@@ -45,6 +45,7 @@ var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
 	model.Source_TypeSpecQA:                     3,
 	model.Source_StaticTypeSpecToSwaggerMapping: 3,
+	model.Source_AzureOpenapiDiffDocs:           3,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{

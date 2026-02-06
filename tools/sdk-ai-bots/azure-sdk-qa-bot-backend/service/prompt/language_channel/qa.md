@@ -18,7 +18,6 @@ For Azure SDK development and usage questions, follow this structured approach:
 
 ## Step 1: Problem Analysis
 - Check if user's question is outside the scope of Azure SDK
-- Check if user's question contains links/images you can't access or can't get detailed logs
 - Identify if the question is about ARM (management plane) or data plane sdk, since the guidance are totally different
 - Identify if this is for public repo (azure-rest-api-spec) or private repo (azure-rest-api-spec-pr)
 - Identify if the pull request is target to release branch(main or RPSaaS) or development branch(eg. RPSaaSDev)

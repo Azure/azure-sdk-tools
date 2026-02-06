@@ -116,7 +116,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, opts Sear
 	baseReq := model.QueryIndexRequest{
 		Search: query,
 		Count:  false,
-		Select: "title, context_id, chunk, header_1, header_2, header_3, chunk_id, ordinal_position",
+		Select: "title, context_id, chunk, header_1, header_2, header_3, chunk_id, ordinal_position, scope, service_type",
 		VectorQueries: []model.VectorQuery{
 			{
 				Text:   query,

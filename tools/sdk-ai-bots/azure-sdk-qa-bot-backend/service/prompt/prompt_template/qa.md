@@ -17,7 +17,6 @@ For Azure SDK onboarding and development questions, follow this structured appro
 ## Step 1: Problem Analysis
 - Check the question's intention: {{placeholder}}
 - Check if the user's question is within the scope of {{placeholder}}
-- Check if user's question contains links/images you can't access or can't get detailed logs
 - ......
 
 ## Step 2: Knowledge Evaluation

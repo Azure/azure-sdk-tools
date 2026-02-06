@@ -622,6 +622,59 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_FindProduct_with_valid_typespec_path()
+        {
+            // Arrange
+            var typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
+
+            // Act
+            var result = await releasePlanTool.GetProductByTypeSpecPath(typeSpecProjectPath);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.ProductInfo);
+            Assert.That(result.ProductInfo.WorkItemId, Is.EqualTo(12345));
+            Assert.That(result.ProductInfo.Title, Is.EqualTo("Contoso Management Product"));
+            Assert.That(result.ProductInfo.ProductServiceTreeId, Is.EqualTo("12345678-1234-5678-9012-123456789012"));
+            Assert.That(result.ProductInfo.ServiceId, Is.EqualTo("87654321-4321-8765-1234-210987654321"));
+            Assert.That(result.ProductInfo.PackageDisplayName, Is.EqualTo("Contoso Management"));
+            Assert.That(result.ProductInfo.ProductServiceTreeLink, Is.EqualTo("https://servicetree.msftcloudes.com/main.html#/ServiceModel/Service/12345678-1234-5678-9012-123456789012"));
+            Assert.IsNull(result.ResponseError);
+        }
+
+        [Test]
+        public async Task Test_FindProduct_with_nonexistent_typespec_path()
+        {
+            // Arrange
+            var typeSpecProjectPath = "specification/nonexistent/Service";
+
+            // Act
+            var result = await releasePlanTool.GetProductByTypeSpecPath(typeSpecProjectPath);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsNull(result.ProductInfo);
+            Assert.IsNull(result.ResponseError);
+            Assert.That(result.Message, Does.Contain("No release plan found"));
+        }
+
+        [Test]
+        public async Task Test_FindProduct_with_empty_typespec_path()
+        {
+            // Arrange
+            var typeSpecProjectPath = "";
+
+            // Act
+            var result = await releasePlanTool.GetProductByTypeSpecPath(typeSpecProjectPath);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsNull(result.ProductInfo);
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("TypeSpec project path cannot be empty"));
+        }
+
+        [Test]
         public async Task Test_Abandon_ReleasePlan_With_WorkItemId_Success()
         {
             // Act

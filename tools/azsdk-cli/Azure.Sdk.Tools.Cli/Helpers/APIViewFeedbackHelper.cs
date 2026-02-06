@@ -1,11 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Web;
 using Microsoft.Extensions.Logging;
 using OpenAI;
 using OpenAI.Chat;
@@ -32,20 +29,17 @@ public interface IAPIViewFeedbackHelper
 public class APIViewFeedbackHelper : IAPIViewFeedbackHelper
 {
     private readonly IAPIViewService _apiViewService;
-    private readonly IAPIViewHttpService _apiViewHttpService;
     private readonly OpenAIClient _openAIClient;
     private readonly IGitHubService _gitHubService;
     private readonly ILogger<APIViewFeedbackHelper> _logger;
 
     public APIViewFeedbackHelper(
         IAPIViewService apiViewService,
-        IAPIViewHttpService apiViewHttpService,
         OpenAIClient openAIClient,
         IGitHubService gitHubService,
         ILogger<APIViewFeedbackHelper> logger)
     {
         _apiViewService = apiViewService;
-        _apiViewHttpService = apiViewHttpService;
         _openAIClient = openAIClient;
         _gitHubService = gitHubService;
         _logger = logger;
@@ -82,7 +76,7 @@ public class APIViewFeedbackHelper : IAPIViewFeedbackHelper
             throw new InvalidOperationException($"Failed to parse APIView response for revision {revisionId}", ex);
         }
         
-        if (!comments.Any())
+        if (comments?.Count == 0)
         {
             _logger.LogInformation("No comments found for revision {RevisionId}", revisionId);
             return new List<ConsolidatedComment>();
@@ -93,7 +87,7 @@ public class APIViewFeedbackHelper : IAPIViewFeedbackHelper
             .Where(c => !c.IsResolved && c.Severity != "Question" && !string.IsNullOrWhiteSpace(c.CommentText))
             .ToList();
         
-        if (!filteredComments.Any())
+        if (filteredComments.Count == 0)
         {
             _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering (all resolved or questions)", revisionId);
             return new List<ConsolidatedComment>();
@@ -448,15 +442,6 @@ Respond in JSON format:
         }
     }
 
-    /// <summary>
-    /// Resolves TypeSpec source location from tsp-location.yaml file
-    /// </summary>
-    private async Task<(string? commitSha, string? tspProjectPath)> ResolveTspSourceLocation(string owner, string repo, int? prNumber = null, string? branch = null)
-    {
-        var (commitSha, tspProjectPath, _) = await ResolveTspSourceLocationWithRepo(owner, repo, prNumber, branch);
-        return (commitSha, tspProjectPath);
-    }
-    
     /// <summary>
     /// Resolves TypeSpec source location from tsp-location.yaml file, including the target specs repo
     /// </summary>

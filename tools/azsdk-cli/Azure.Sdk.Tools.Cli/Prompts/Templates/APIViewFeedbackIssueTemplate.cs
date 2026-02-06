@@ -2,15 +2,12 @@
 // Licensed under the MIT License.
 
 using System.Text;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 /// <summary>
-/// Template for Phase A execution - applying TypeSpec client customizations based on API review feedback.
-/// Creates GitHub issues for TypeSpec customization work from pre-classified PHASE_A feedback.
+/// GitHub issue prompt for resolving APIView feedback with TypeSpec customization.
 /// </summary>
 public class APIViewFeedbackIssueTemplate : BasePromptTemplate
 {

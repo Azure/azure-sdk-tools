@@ -62,6 +62,11 @@ public class DelegateAPIViewFeedbackTool : MCPTool
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var apiViewUrl = parseResult.GetValue(_apiViewUrlArg);
+        if (string.IsNullOrEmpty(apiViewUrl))
+        {
+            return new DefaultCommandResponse { Message = "APIView URL is required" };
+        }
+
         var repoOverride = parseResult.GetValue(_repoOption);
         var dryRun = parseResult.GetValue(_dryRunOption);
 
@@ -70,10 +75,10 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             _logger.LogInformation("Fetching APIView feedback from {Url}", apiViewUrl);
 
             // Get consolidated comments and metadata
-            var comments = await _helper.GetConsolidatedComments(apiViewUrl!);
-            var metadata = await _helper.GetMetadata(apiViewUrl!);
+            var comments = await _helper.GetConsolidatedComments(apiViewUrl);
+            var metadata = await _helper.GetMetadata(apiViewUrl);
 
-            if (comments == null || comments.Count == 0)
+            if (comments.Count == 0)
             {
                 return new DefaultCommandResponse
                 {
@@ -90,9 +95,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Use override repo if specified, otherwise use detected repo, fallback to default
             var targetRepo = !string.IsNullOrEmpty(repoOverride) ? repoOverride : detectedRepo ?? "Azure/azure-rest-api-specs";
-            var repoParts = targetRepo.Split('/');
-            var owner = repoParts[0];
-            var repoName = repoParts[1];
+            var (owner, repoName) = (targetRepo.Split('/')[0], targetRepo.Split('/')[1]);
             
             if (!string.IsNullOrEmpty(commitSha))
             {
@@ -109,7 +112,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             var template = new APIViewFeedbackIssueTemplate(
                 metadata.PackageName,
                 metadata.Language,
-                apiViewUrl!,
+                apiViewUrl,
                 comments,
                 commitSha,
                 tspProjectPath);
@@ -175,9 +178,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Use override repo if specified, otherwise use detected repo, fallback to default
             var targetRepo = !string.IsNullOrEmpty(repo) ? repo : detectedRepo ?? "Azure/azure-rest-api-specs";
-            var repoParts = targetRepo.Split('/');
-            var owner = repoParts[0];
-            var repoName = repoParts[1];
+            var (owner, repoName) = (targetRepo.Split('/')[0], targetRepo.Split('/')[1]);
             
             if (!string.IsNullOrEmpty(commitSha))
             {

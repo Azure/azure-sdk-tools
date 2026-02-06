@@ -1279,7 +1279,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = GetServiceDetailsToolName), Description("Get service and service tree product details for a product using TypeSpec project path: Get service tree product details (service tree ID, service ID, package display name).")]
+        [McpServerTool(Name = GetServiceDetailsToolName), Description("Get service and service tree product details for a product using TypeSpec project path: Get service tree product details (service tree ID, service ID, package display name, product service tree link).")]
         public async Task<ProductInfoResponse> GetProductByTypeSpecPath(string typeSpecProjectPath)
         {
             try

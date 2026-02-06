@@ -1605,6 +1605,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return null;
                 }
 
+                if (releasePlanWorkItems.Count > 1)
+                {
+                    logger.LogWarning(
+                        "Multiple release plan work items ({count}) found for TypeSpec project path: {typeSpecProjectPath}. Using the first one.",
+                        releasePlanWorkItems.Count,
+                        typeSpecProjectPath);
+                }
                 // Get the first matching release plan
                 var releasePlanWorkItem = releasePlanWorkItems[0];
                 logger.LogInformation("Found release plan work item {workItemId}", releasePlanWorkItem.Id);

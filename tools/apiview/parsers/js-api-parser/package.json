@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@microsoft/api-extractor-model": "^7.29.8",
-    "js-tokens": "^9.0.0"
+    "js-tokens": "^9.0.0",
+    "yargs": "^17.7.2"
   },
   "files": [
     "dist",
@@ -20,6 +21,7 @@
     "@eslint/js": "^9.10.0",
     "@types/eslint__js": "^8.42.3",
     "@types/node": "^18.0.0",
+    "@types/yargs": "^17.0.33",
     "eslint": "^9.10.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",

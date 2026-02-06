@@ -2,6 +2,8 @@ import { ApiModel } from "@microsoft/api-extractor-model";
 import { readFile, writeFile } from "node:fs/promises";
 import { generateApiView } from "./generate";
 import { CrossLanguageMetadata } from "./models";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 
 function getPackageVersion(fileName: string) {
   const match = fileName.match(/.*_(?<version>.*)\.api\.json/);
@@ -38,21 +40,41 @@ async function loadMetadata(fileName: string): Promise<Record<string, string> | 
 }
 
 async function main() {
-  if (process.argv.length < 4) {
-    console.log("Please run this tool with proper input");
-    console.log(
-      "ts-genapi <Path to api-extractor JSON output> <Path to apiviewFile> [Path to metadata.json]",
-    );
-    process.exit(1);
-  }
-  const { Name, PackageName, PackageVersion, dependencies, apiModel } = await loadApiJson(
-    process.argv[2],
-  );
+  const argv = await yargs(hideBin(process.argv))
+    .usage("ts-genapi <input> [options]")
+    .command("$0 <input>", "Generate APIView token file from API extractor output", (yargs) => {
+      return yargs
+        .positional("input", {
+          describe: "Path to api-extractor JSON output file",
+          type: "string",
+          demandOption: true,
+        })
+        .option("output", {
+          alias: "o",
+          describe: "Path to output APIView file",
+          type: "string",
+          demandOption: true,
+        })
+        .option("metadata-file", {
+          alias: "m",
+          describe: "Path to metadata.json file for cross-language definitions",
+          type: "string",
+        });
+    })
+    .help()
+    .alias("help", "h")
+    .version(false)
+    .strict()
+    .parseAsync();
+
+  const input = argv.input as string;
+  const output = argv.output as string;
+  const metadataFile = argv["metadata-file"] as string | undefined;
+
+  const { Name, PackageName, PackageVersion, dependencies, apiModel } = await loadApiJson(input);
 
   // Load cross-language metadata if provided
-  const crossLanguageDefinitionIds = process.argv[4]
-    ? await loadMetadata(process.argv[4])
-    : undefined;
+  const crossLanguageDefinitionIds = metadataFile ? await loadMetadata(metadataFile) : undefined;
 
   const result = JSON.stringify(
     generateApiView({
@@ -69,7 +91,7 @@ async function main() {
     }),
   );
 
-  await writeFile(process.argv[3], result);
+  await writeFile(output, result);
 }
 
 main().catch(console.error);

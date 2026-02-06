@@ -11,6 +11,7 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using FluentAssertions;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +28,7 @@ namespace APIViewUnitTests
         private readonly Mock<IAutoReviewService> _mockAutoReviewService;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly List<LanguageService> _languageServices;
+        private readonly TelemetryClient _telemetryClient;
         private readonly AutoReviewController _controller;
 
         public AutoReviewControllerTests()
@@ -40,13 +42,15 @@ namespace APIViewUnitTests
             {
                 new MockLanguageService("C#", false)
             };
+            _telemetryClient = new TelemetryClient();
 
             _controller = new AutoReviewController(
                 _mockCodeFileManager.Object,
                 _mockApiRevisionsManager.Object,
                 _mockAutoReviewService.Object,
                 _languageServices,
-                _mockConfiguration.Object);
+                _mockConfiguration.Object,
+                _telemetryClient);
 
             // Set up the HTTP context with a mock user principal
             SetupControllerContext();

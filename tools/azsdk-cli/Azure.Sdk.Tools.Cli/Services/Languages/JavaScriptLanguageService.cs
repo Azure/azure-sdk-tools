@@ -19,8 +19,9 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
         IFileHelper fileHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+        IChangelogHelper changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.npxHelper = npxHelper;
     }

@@ -81,7 +81,7 @@ tenants:
     it('should throw error when download throws', async () => {
       mockBlobClientManager.downloadBlobContent.mockRejectedValue(new Error('Network error'));
 
-      await expect(manager.initialize()).rejects.toThrow('Failed to load tenant configuration');
+      await expect(manager.initialize()).rejects.toThrow('Failed to initialize tenant configuration: config could not be loaded from blob storage');
     });
   });
 

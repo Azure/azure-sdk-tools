@@ -69,9 +69,10 @@ public abstract class PythonRequirementBase : Requirement
         var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
         var exeName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "python.exe" : "python";
 
-        // 1. Check AZSDKTOOLS_PYTHON_VENV_PATH environment variable first (delegates to PythonOptions)
-        var resolved = PythonOptions.ResolvePythonExecutable("python");
-        if (resolved != "python")
+        // 1. Check AZSDKTOOLS_PYTHON_VENV_PATH environment variable
+        const string pythonName = "python";
+        var resolved = PythonOptions.ResolvePythonExecutable(pythonName);
+        if (!string.Equals(resolved, pythonName, StringComparison.Ordinal))
         {
             // PythonOptions resolved to a venv path from the environment variable
             if (!File.Exists(resolved))

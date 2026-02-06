@@ -195,7 +195,9 @@ public static class CoreRequirements
         public override string[] CheckCommand => ["python", "-m", "pip", "--version"];
 
         public override string? Reason => "Pip is required for all repos because it's used in a common Verify-Readme Powershell script.";
-        public override bool IsAutoInstallable => true;
+        public override bool IsAutoInstallable => false;
+
+        public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
 
         public override string[][]? GetInstallCommands(RequirementContext ctx)
         {

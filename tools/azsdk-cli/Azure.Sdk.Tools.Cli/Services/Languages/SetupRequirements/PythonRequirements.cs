@@ -12,6 +12,9 @@ namespace Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 /// </summary>
 public abstract class PythonRequirementBase : Requirement
 {
+    private const string PythonRepoName = "azure-sdk-for-python";
+    private const string VenvEnvironmentVariable = "AZSDKTOOLS_PYTHON_VENV_PATH";
+
     /// <summary>
     /// The raw check command before Python executable resolution.
     /// </summary>
@@ -22,6 +25,14 @@ public abstract class PythonRequirementBase : Requirement
     /// Override in subclasses to specify the pip install package/path.
     /// </summary>
     protected abstract string PipInstallTarget { get; }
+
+    /// <summary>
+    /// Whether the PipInstallTarget is a path relative to the azure-sdk-for-python repo root.
+    /// When true, the install will validate that the context repo is azure-sdk-for-python
+    /// and resolve the target relative to that repo root.
+    /// Override to return false for requirements that install from PyPI (e.g., "pytest").
+    /// </summary>
+    protected virtual bool IsRepoRelativeInstall => true;
 
     /// <summary>
     /// Resolves the Python executable path at runtime.
@@ -45,9 +56,72 @@ public abstract class PythonRequirementBase : Requirement
     public override bool IsAutoInstallable => true;
 
     /// <summary>
-    /// Handles venv creation/activation and pip install for Python tool requirements.
-    /// 1. Checks if a venv exists at {repoRoot}/.venv; creates one if not.
-    /// 2. Resolves the venv Python executable.
+    /// Resolves the venv path and Python executable for installs.
+    /// Resolution order:
+    /// 1. AZSDKTOOLS_PYTHON_VENV_PATH environment variable
+    /// 2. Existing .venv directory at the repo root
+    /// 3. Create a new .venv at the repo root
+    /// </summary>
+    private async Task<(string? pythonExe, RequirementCheckOutput? error)> ResolveVenvPythonAsync(
+        Func<string[], Task<ProcessResult>> runCommand,
+        RequirementContext ctx)
+    {
+        var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
+        var exeName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "python.exe" : "python";
+
+        // 1. Check AZSDKTOOLS_PYTHON_VENV_PATH environment variable first
+        var envVenvPath = Environment.GetEnvironmentVariable(VenvEnvironmentVariable);
+        if (!string.IsNullOrWhiteSpace(envVenvPath))
+        {
+            if (!Directory.Exists(envVenvPath))
+            {
+                return (null, new RequirementCheckOutput
+                {
+                    Success = false,
+                    Error = $"Python venv path specified in {VenvEnvironmentVariable} does not exist: {envVenvPath}"
+                });
+            }
+
+            var envPythonExe = Path.Combine(envVenvPath, binDir, exeName);
+            if (!File.Exists(envPythonExe))
+            {
+                return (null, new RequirementCheckOutput
+                {
+                    Success = false,
+                    Error = $"Python executable not found in venv specified by {VenvEnvironmentVariable}: {envPythonExe}"
+                });
+            }
+
+            return (envPythonExe, null);
+        }
+
+        // 2. Check for existing .venv at repo root
+        var repoVenvPath = Path.Combine(ctx.RepoRoot, ".venv");
+        var repoVenvPythonExe = Path.Combine(repoVenvPath, binDir, exeName);
+        if (Directory.Exists(repoVenvPath) && File.Exists(repoVenvPythonExe))
+        {
+            return (repoVenvPythonExe, null);
+        }
+
+        // 3. Create a new .venv at repo root
+        var createResult = await runCommand(["python", "-m", "venv", repoVenvPath]);
+        if (createResult.ExitCode != 0)
+        {
+            return (null, new RequirementCheckOutput
+            {
+                Success = false,
+                Output = createResult.Output?.Trim(),
+                Error = $"Failed to create venv at {repoVenvPath}: {createResult.Output?.Trim()}"
+            });
+        }
+
+        return (repoVenvPythonExe, null);
+    }
+
+    /// <summary>
+    /// Handles venv resolution and pip install for Python tool requirements.
+    /// 1. Resolves the venv Python executable (env var → existing .venv → create new).
+    /// 2. Resolves the pip install target (validating azure-sdk-for-python repo for relative paths).
     /// 3. Runs pip install for the requirement's PipInstallTarget.
     /// </summary>
     public override async Task<RequirementCheckOutput> RunInstallAsync(
@@ -55,39 +129,32 @@ public abstract class PythonRequirementBase : Requirement
         RequirementContext ctx,
         CancellationToken ct = default)
     {
-        var venvPath = Path.Combine(ctx.RepoRoot, ".venv");
-
-        // Create venv if it doesn't exist
-        if (!Directory.Exists(venvPath))
+        // Resolve venv Python executable
+        var (pythonExe, venvError) = await ResolveVenvPythonAsync(runCommand, ctx);
+        if (venvError != null)
         {
-            var createResult = await runCommand(["python", "-m", "venv", venvPath]);
-            if (createResult.ExitCode != 0)
+            return venvError;
+        }
+
+        // Resolve pip install target
+        var installTarget = PipInstallTarget;
+        if (IsRepoRelativeInstall)
+        {
+            // Repo-relative installs require the azure-sdk-for-python repo
+            if (!ctx.RepoName.Equals(PythonRepoName, StringComparison.OrdinalIgnoreCase))
             {
                 return new RequirementCheckOutput
                 {
                     Success = false,
-                    Output = createResult.Output?.Trim(),
-                    Error = $"Failed to create venv at {venvPath}: {createResult.Output?.Trim()}"
+                    Error = $"Cannot install '{Name}': the install target '{installTarget}' is relative to the " +
+                            $"{PythonRepoName} repo, but the current repo is '{ctx.RepoName}'. " +
+                            $"Please run this from the root of the {PythonRepoName} repository."
                 };
             }
-        }
-
-        // Resolve the venv Python executable
-        var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-        var pythonExe = Path.Combine(venvPath, binDir, "python");
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            pythonExe += ".exe";
-        }
-
-        // Resolve pip install target path (may be relative to repo root)
-        var installTarget = PipInstallTarget;
-        if (!installTarget.StartsWith("http") && !Path.IsPathRooted(installTarget))
-        {
             installTarget = Path.Combine(ctx.RepoRoot, installTarget);
         }
 
-        var installResult = await runCommand([pythonExe, "-m", "pip", "install", installTarget]);
+        var installResult = await runCommand([pythonExe!, "-m", "pip", "install", installTarget]);
 
         return new RequirementCheckOutput
         {
@@ -165,6 +232,7 @@ public static class PythonRequirements
         public override string? MinVersion => "8.3.5";
         protected override string[] RawCheckCommand => ["pytest", "--version"];
         protected override string PipInstallTarget => "pytest";
+        protected override bool IsRepoRelativeInstall => false;
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {

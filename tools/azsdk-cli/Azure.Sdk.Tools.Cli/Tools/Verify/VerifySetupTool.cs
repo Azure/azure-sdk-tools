@@ -124,6 +124,7 @@ public class VerifySetupTool : LanguageMcpTool
             // If auto-install is enabled, attempt to install failed requirements that support it
             if (autoInstall && failedReqs.Count > 0)
             {
+                logger.LogInformation("Auto-install is enabled. Attempting to auto-install requirements that support it.");
                 var installable = failedReqs.Where(f => f.req.IsAutoInstallable).ToList();
                 var notInstallable = failedReqs.Where(f => !f.req.IsAutoInstallable).ToList();
 
@@ -255,8 +256,8 @@ public class VerifySetupTool : LanguageMcpTool
             if (!checkResult.Success)
             {
                 var instructions = req.GetInstructions(ctx);
-                logger.LogError("Requirement {Requirement} check failed.\n\nInstructions: {Instructions}", 
-                    req.Name, string.Join(", ", instructions));
+                logger.LogError("Requirement {Requirement} check failed", 
+                    req.Name);
                 return new DefaultCommandResponse
                 {
                     Message = $"Requirement {req.Name} check failed: {checkResult.Error ?? checkResult.Output}."

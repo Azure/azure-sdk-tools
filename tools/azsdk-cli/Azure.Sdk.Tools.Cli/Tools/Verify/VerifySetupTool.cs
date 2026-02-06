@@ -155,7 +155,7 @@ public class VerifySetupTool : LanguageMcpTool
                                 Instructions = instructions,
                                 RequirementStatusDetails = $"{req.Name} was auto-installed successfully.",
                                 Reason = req.Reason,
-                                WasAutoInstalled = true,
+                                AutoInstallAttempted = true,
                                 IsAutoInstallable = true
                             });
                         }
@@ -168,7 +168,7 @@ public class VerifySetupTool : LanguageMcpTool
                                 Instructions = instructions,
                                 RequirementStatusDetails = $"{req.Name} install completed but verification still fails: {recheck.Message}",
                                 Reason = req.Reason,
-                                AutoInstallFailed = true,
+                                AutoInstallAttempted = true,
                                 AutoInstallError = recheck.Message,
                                 IsAutoInstallable = true
                             });
@@ -183,7 +183,7 @@ public class VerifySetupTool : LanguageMcpTool
                             Instructions = instructions,
                             RequirementStatusDetails = result.Message ?? $"Requirement {req.Name} check failed.",
                             Reason = req.Reason,
-                            AutoInstallFailed = true,
+                            AutoInstallAttempted = true,
                             AutoInstallError = installResult.Error ?? installResult.Output,
                             IsAutoInstallable = true
                         });

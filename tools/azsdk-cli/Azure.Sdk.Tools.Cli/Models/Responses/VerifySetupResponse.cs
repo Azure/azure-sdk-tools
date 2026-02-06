@@ -24,11 +24,11 @@ public class VerifySetupResponse : CommandResponse
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
 
-                if (result.WasAutoInstalled)
+                if (result.AutoInstallSucceeded)
                 {
                     sb.AppendLine($"        - Auto-installed successfully");
                 }
-                else if (result.AutoInstallFailed)
+                else if (result.AutoInstallAttempted && !result.AutoInstallSucceeded)
                 {
                     sb.AppendLine($"        - Auto-install failed: {result.AutoInstallError}");
                     sb.AppendLine($"        - Instructions: {string.Join(", ", result.Instructions)}");
@@ -36,6 +36,10 @@ public class VerifySetupResponse : CommandResponse
                 else
                 {
                     sb.AppendLine($"        - Instructions: {string.Join(", ", result.Instructions)}");
+                    if (result.IsAutoInstallable)
+                    {
+                        sb.AppendLine($"        - Tip: Re-run with --auto-install to install this automatically");
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(result.NotAutoInstallableReason))
@@ -49,6 +53,8 @@ public class VerifySetupResponse : CommandResponse
                 }
                 sb.AppendLine($"        - Requirement Status Details: {result.RequirementStatusDetails}\n");
             }
+
+            
         }
         else
         {
@@ -80,17 +86,18 @@ public class RequirementCheckResult
     /// </summary>
     public string? Reason { get; set; }
     /// <summary>
-    /// Whether the requirement was successfully auto-installed.
+    /// Whether auto-install was attempted for this requirement.
+    /// Check AutoInstallError to determine success (null = success, non-null = failure).
     /// </summary>
-    [JsonPropertyName("wasAutoInstalled")]
+    [JsonPropertyName("autoInstallAttempted")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public bool WasAutoInstalled { get; set; }
+    public bool AutoInstallAttempted { get; set; }
     /// <summary>
-    /// Whether auto-install was attempted but failed.
+    /// Whether auto-install was attempted and succeeded.
     /// </summary>
-    [JsonPropertyName("autoInstallFailed")]
+    [JsonPropertyName("autoInstallSucceeded")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public bool AutoInstallFailed { get; set; }
+    public bool AutoInstallSucceeded => AutoInstallAttempted && AutoInstallError == null;
     /// <summary>
     /// Error message if auto-install was attempted but failed.
     /// </summary>

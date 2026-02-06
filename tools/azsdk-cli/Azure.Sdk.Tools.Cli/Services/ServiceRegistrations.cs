@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
-            services.AddSingleton<IAPIViewFeedbackHelper, APIViewFeedbackHelper>();
+            services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();

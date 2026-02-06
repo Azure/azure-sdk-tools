@@ -11,33 +11,33 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 
-namespace Azure.Sdk.Tools.Cli.Helpers;
+namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
 /// Helper interface for APIView feedback customizations operations
 /// </summary>
-public interface IAPIViewFeedbackHelper
+public interface IAPIViewFeedbackService
 {
-    Task<List<ConsolidatedComment>> GetConsolidatedComments(string apiViewUrl);
-    Task<ReviewMetadata> GetMetadata(string apiViewUrl);
+    Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId);
+    Task<ReviewMetadata> GetMetadata(string revisionId);
     Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata);
 }
 
 /// <summary>
 /// Helper class for APIView feedback customizations operations
 /// </summary>
-public class APIViewFeedbackHelper : IAPIViewFeedbackHelper
+public class APIViewFeedbackService : IAPIViewFeedbackService
 {
     private readonly IAPIViewService _apiViewService;
     private readonly OpenAIClient _openAIClient;
     private readonly IGitHubService _gitHubService;
-    private readonly ILogger<APIViewFeedbackHelper> _logger;
+    private readonly ILogger<APIViewFeedbackService> _logger;
 
-    public APIViewFeedbackHelper(
+    public APIViewFeedbackService(
         IAPIViewService apiViewService,
         OpenAIClient openAIClient,
         IGitHubService gitHubService,
-        ILogger<APIViewFeedbackHelper> logger)
+        ILogger<APIViewFeedbackService> logger)
     {
         _apiViewService = apiViewService;
         _openAIClient = openAIClient;
@@ -46,14 +46,11 @@ public class APIViewFeedbackHelper : IAPIViewFeedbackHelper
     }
 
     /// <summary>
-    /// Gets consolidated comments from an APIView URL by filtering, grouping, and consolidating comments
+    /// Gets consolidated comments from an APIView revision by filtering, grouping, and consolidating comments
     /// </summary>
-    public async Task<List<ConsolidatedComment>> GetConsolidatedComments(string apiViewUrl)
+    public async Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId)
     {
-        // Parse the URL to get revisionId and reviewId
-        var (revisionId, reviewId) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
-        
-        _logger.LogInformation("Getting comments for revision {RevisionId} in review {ReviewId}", revisionId, reviewId);
+        _logger.LogInformation("Getting comments for revision {RevisionId}", revisionId);
         
         // Get comments from APIViewService - returns JSON string
         var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
@@ -270,12 +267,10 @@ Respond in JSON format:
     }
 
     /// <summary>
-    /// Gets complete metadata (language, packageName, PR info, etc.) for an APIView URL
+    /// Gets complete metadata (language, packageName, PR info, etc.) for an APIView revision
     /// </summary>
-    public async Task<ReviewMetadata> GetMetadata(string apiViewUrl)
+    public async Task<ReviewMetadata> GetMetadata(string revisionId)
     {
-        var (revisionId, reviewId) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
-        
         _logger.LogInformation("Getting metadata for revision {RevisionId}", revisionId);
         
         // Get metadata from APIViewService
@@ -284,7 +279,7 @@ Respond in JSON format:
         if (string.IsNullOrWhiteSpace(metadataJson))
         {
             _logger.LogError("Failed to get metadata from APIView for revision {RevisionId}", revisionId);
-            throw new InvalidOperationException($"Failed to resolve APIView URL: {apiViewUrl}");
+            throw new InvalidOperationException($"Failed to get metadata for revision: {revisionId}");
         }
 
         // Deserialize metadata
@@ -296,13 +291,13 @@ Respond in JSON format:
         catch (JsonException ex)
         {
             _logger.LogError(ex, "Failed to deserialize metadata JSON for revision {RevisionId}", revisionId);
-            throw new InvalidOperationException($"Failed to parse metadata for APIView URL: {apiViewUrl}", ex);
+            throw new InvalidOperationException($"Failed to parse metadata for revision: {revisionId}", ex);
         }
         
         if (metadata == null)
         {
             _logger.LogError("Deserialized metadata is null for revision {RevisionId}", revisionId);
-            throw new InvalidOperationException($"Failed to deserialize metadata for APIView URL: {apiViewUrl}");
+            throw new InvalidOperationException($"Failed to deserialize metadata for revision: {revisionId}");
         }
 
         _logger.LogInformation(

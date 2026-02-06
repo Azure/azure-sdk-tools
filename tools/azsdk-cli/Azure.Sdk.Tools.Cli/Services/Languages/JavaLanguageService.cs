@@ -269,7 +269,15 @@ public sealed partial class JavaLanguageService : LanguageService
 
             // Just get the list of files - microagent will read content as needed
             var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
+            
+            // Provide FULL paths so the LLM doesn't get confused about where files are
+            // The ReadFile tool base is packagePath, so we give paths relative to that
             var customizationFiles = javaFiles
+                .Select(f => Path.GetRelativePath(packagePath, f))
+                .ToList();
+            
+            // Also provide the relative-to-customization-root paths for the patch tool
+            var patchFilePaths = javaFiles
                 .Select(f => Path.GetRelativePath(customizationRoot, f))
                 .ToList();
 
@@ -286,6 +294,11 @@ public sealed partial class JavaLanguageService : LanguageService
                 Name = "ClientCustomizationCodePatch",
                 Description = "Apply code patches to customization files only (never generated code)"
             };
+
+            // Cancel the agent after first successful patch to prevent wasted tokens.
+            // The repair loop will rebuild and re-invoke if more patches are needed.
+            using var patchCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            patchTool.OnPatchApplied = () => patchCts.Cancel();
 
             // Safety limit on tool calls per patching session. This is a heuristic -
             // if real-world usage shows the model needs more calls to complete valid fixes,
@@ -310,12 +323,22 @@ public sealed partial class JavaLanguageService : LanguageService
             {
                 await microagentHost.RunAgentToCompletion(agentDefinition, ct);
             }
+            catch (OperationCanceledException) when (patchTool.AppliedPatches.Count > 0)
+            {
+                // Expected - agent was cancelled after a successful patch
+                logger.LogDebug("Agent stopped after successful patch application");
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancelled externally (not by us), re-throw
+                throw;
+            }
             catch (Exception agentEx)
             {
                 // Microagent may have hit MaxToolCalls limit but still applied patches
                 logger.LogDebug(agentEx, "Microagent terminated early");
             }
-            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", patchTool.AppliedPatches.Count);
+            logger.LogInformation("[STAGE] Patch application completed, patches applied: {PatchCount}", patchTool.AppliedPatches.Count);
 
             return patchTool.AppliedPatches;
         }

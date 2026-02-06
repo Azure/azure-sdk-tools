@@ -24,6 +24,11 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
     /// </summary>
     public List<AppliedPatch> AppliedPatches { get; } = [];
 
+    /// <summary>
+    /// Callback invoked after a successful patch. Used to cancel the agent to prevent wasted tokens.
+    /// </summary>
+    public Action? OnPatchApplied { get; set; }
+
     public override async Task<ClientCustomizationCodePatchOutput> Invoke(ClientCustomizationCodePatchInput input, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(input.FilePath))
@@ -67,7 +72,10 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
             var description = GeneratePatchDescription(input.OldContent, input.NewContent);
             AppliedPatches.Add(new AppliedPatch(input.FilePath, description, occurrences));
 
-            return new ClientCustomizationCodePatchOutput(true, $"Patch applied to {input.FilePath}");
+            // Signal to the caller that a patch was applied - stop the agent to prevent wasted tokens
+            OnPatchApplied?.Invoke();
+
+            return new ClientCustomizationCodePatchOutput(true, $"Patch applied to {input.FilePath} ({occurrences} replacement(s))");
         }
         catch (Exception ex)
         {

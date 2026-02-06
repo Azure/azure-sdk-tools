@@ -397,7 +397,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 if (result.ExitCode != 0)
                 {
                     var errorMessage = $"Build failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}";
-                    logger.LogError("Build failed: {ErrorMessage}", errorMessage);
+                    logger.LogDebug("Build failed: {ErrorMessage}", errorMessage);
                     return (false, errorMessage, packageInfo);
                 }
 

@@ -52,19 +52,23 @@ public class JavaErrorDrivenPatchTemplate(
         - Add error handling or new features
         
         ## FILE STRUCTURE
-        - Package Path (ReadFile base): {packagePath}
+        - Package Path: {packagePath}
         - Customization Root: {customizationRoot}
-        - Customization Files (use ReadFile to examine):
+        
+        **For ReadFile tool**: Use paths relative to Package Path (listed below)
+        **For ClientCustomizationCodePatch tool**: Use just the filename (e.g., "DocumentIntelligenceCustomizations.java")
+        
+        Customization Files (full paths for ReadFile):
         {fileList}
         
         ## WORKFLOW
         1. **Parse the error**: Identify the exact issue from the build error
-        2. **Read relevant files**: Use ReadFile to examine:
-           - The customization file(s) that might need fixing
-           - The generated code referenced in the error (to find new names after renames)
+        2. **Read relevant files**: Use ReadFile with the FULL path from the list above
+           - Read the customization file(s) that might need fixing
+           - Read generated code referenced in the error (to find new names after renames)
         3. **Locate the fix**: Find the exact string in customization that needs updating
-        4. **Apply fix**: Use ClientCustomizationCodePatch tool with exact replacement
-        5. **Return result**: true if fix applied, false if unable to fix
+        4. **Apply fix**: Use ClientCustomizationCodePatch with just the FILENAME (not full path)
+        5. **STOP**: After a successful patch, you're done - don't try more patches
         
         ## KEY INSIGHT: TypeSpec Renames
         When you see "cannot find symbol" or "method not found" errors:

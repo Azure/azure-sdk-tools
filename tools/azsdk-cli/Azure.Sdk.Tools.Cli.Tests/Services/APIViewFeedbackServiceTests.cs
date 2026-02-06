@@ -227,13 +227,31 @@ commit: 'sha789xyz'
 directory: 'specification/foo/data-plane/Foo'
 repo: 'Azure/azure-rest-api-specs'
 ";
-        _mockGitHubService.Setup(x => x.GetFileFromPullRequest("Azure", "azure-sdk-for-python", 456, "tsp-location.yaml"))
+        
+        // Mock GitHub Code Search to find tsp-location.yaml
+        // SearchCode constructor: (string name, string path, string sha, string url, string gitUrl, string htmlUrl, Repository repository)
+        var searchCodeItem = new Octokit.SearchCode(
+            "tsp-location.yaml",                        // name
+            "sdk/search/TestPackage/tsp-location.yaml", // path
+            null,                                        // sha
+            null,                                        // url
+            null,                                        // gitUrl
+            null,                                        // htmlUrl
+            null);                                       // repository
+        var searchResult = new Octokit.SearchCodeResult(1, false, new[] { searchCodeItem });
+        _mockGitHubService.Setup(x => x.SearchFilesAsync(It.Is<string>(q => q.Contains("azure-sdk-for-python"))))
+            .ReturnsAsync(searchResult);
+        
+        _mockGitHubService.Setup(x => x.GetFileFromPullRequest("Azure", "azure-sdk-for-python", 456, "sdk/search/TestPackage/tsp-location.yaml"))
             .ReturnsAsync(tspLocationYaml);
 
         // Act
         var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata);
 
-        // Assert
+        // Assert - verify mocks were called
+        _mockGitHubService.Verify(x => x.SearchFilesAsync(It.IsAny<string>()), Times.AtLeastOnce());
+        _mockGitHubService.Verify(x => x.GetFileFromPullRequest("Azure", "azure-sdk-for-python", 456, "sdk/search/TestPackage/tsp-location.yaml"), Times.AtLeastOnce());
+        
         Assert.That(commitSha, Is.EqualTo("sha789xyz"));
         Assert.That(tspProjectPath, Is.EqualTo("specification/foo/data-plane/Foo"));
         Assert.That(targetRepo, Is.EqualTo("Azure/azure-rest-api-specs"));
@@ -257,7 +275,22 @@ commit: 'branch-sha'
 directory: 'specification/bar/resource-manager/Bar'
 repo: 'Azure/azure-rest-api-specs'
 ";
-        _mockGitHubService.Setup(x => x.GetFileFromBranch("Azure", "azure-sdk-for-python", "feature/my-branch", "tsp-location.yaml"))
+        
+        // Mock GitHub Code Search to find tsp-location.yaml
+        // SearchCode constructor: (string name, string path, string sha, string url, string gitUrl, string htmlUrl, Repository repository)
+        var searchCodeItem2 = new Octokit.SearchCode(
+            "tsp-location.yaml",                      // name
+            "sdk/bar/TestPackage/tsp-location.yaml",  // path
+            null,                                      // sha
+            null,                                      // url
+            null,                                      // gitUrl
+            null,                                      // htmlUrl
+            null);                                     // repository
+        var searchResult2 = new Octokit.SearchCodeResult(1, false, new[] { searchCodeItem2 });
+        _mockGitHubService.Setup(x => x.SearchFilesAsync(It.Is<string>(q => q.Contains("azure-sdk-for-python"))))
+            .ReturnsAsync(searchResult2);
+        
+        _mockGitHubService.Setup(x => x.GetFileFromBranch("Azure", "azure-sdk-for-python", "feature/my-branch", "sdk/bar/TestPackage/tsp-location.yaml"))
             .ReturnsAsync(tspLocationYaml);
 
         // Act

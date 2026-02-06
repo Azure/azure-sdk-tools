@@ -1,3 +1,6 @@
+using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Models;
+
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewService
@@ -5,7 +8,7 @@ public interface IAPIViewService
     Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType);
     Task<string?> GetCommentsByRevisionAsync(string revisionId);
     Task<string?> GetMetadata(string revisionId);
-    Task<string?> Resolve(string reviewId, string revisionId);
+    Task<ResolvePackageResponse?> Resolve(string url);
 }
 
 public class APIViewService : IAPIViewService
@@ -60,16 +63,26 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> Resolve(string reviewId, string revisionId)
+    public async Task<ResolvePackageResponse?> Resolve(string url)
     {
-        string endpoint = $"/api/reviews/resolve?link=https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}";
+        string endpoint = $"/api/reviews/resolve?link={url}";
         string? result = await _httpService.GetAsync(endpoint);
 
         if (result == null)
         {
-            _logger.LogWarning("Failed to resolve review {ReviewId} with revision {RevisionId}", reviewId, revisionId);
+            _logger.LogWarning("Failed to resolve URL {Url}", url);
+            return null;
         }
 
-        return result;
+        try
+        {
+            var resolveResponse = JsonSerializer.Deserialize<ResolvePackageResponse>(result);
+            return resolveResponse;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to deserialize resolve response for URL {Url}", url);
+            return null;
+        }
     }
 }

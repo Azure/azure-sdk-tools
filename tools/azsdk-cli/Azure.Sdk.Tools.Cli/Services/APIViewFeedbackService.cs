@@ -301,32 +301,44 @@ Respond in JSON format:
         }
 
         // Get additional metadata from resolve endpoint (includes revisionLabel)
+        await ParseRevisionLabel(metadata, revisionId);
+
+        _logger.LogInformation(
+            "Retrieved metadata - Package: {PackageName}, Language: {Language}, PR: {PullRequestNo}, Repo: {PullRequestRepository}, Label: {RevisionLabel}",
+            metadata.PackageName,
+            metadata.Language,
+            metadata.Revision?.PullRequestNo,
+            metadata.Revision?.PullRequestRepository,
+            metadata.Revision?.RevisionLabel);
+
+        return metadata;
+    }
+
+    /// <summary>
+    /// Retrieves and sets the RevisionLabel from the resolve endpoint
+    /// </summary>
+    // TODO: Resolve endpoint needs to be called to get RevisionLabel. This can be removed once SourceBranch field is available in metadata: https://github.com/Azure/azure-sdk-tools/issues/13661
+    private async Task ParseRevisionLabel(ReviewMetadata metadata, string revisionId)
+    {
         _logger.LogInformation("Attempting to get revisionLabel from resolve endpoint - ReviewId: {ReviewId}, HasRevision: {HasRevision}",
             metadata.ReviewId, metadata.Revision != null);
 
         if (!string.IsNullOrEmpty(metadata.ReviewId) && metadata.Revision != null)
         {
-            _logger.LogInformation("Calling Resolve endpoint for ReviewId: {ReviewId}, RevisionId: {RevisionId}", metadata.ReviewId, revisionId);
-            var resolveJson = await _apiViewService.Resolve(metadata.ReviewId, revisionId);
-            if (!string.IsNullOrWhiteSpace(resolveJson))
+            string apiViewUrl = $"https://apiview.dev/review/{metadata.ReviewId}?activeApiRevisionId={revisionId}";
+            _logger.LogInformation("Calling Resolve endpoint for URL: {Url}", apiViewUrl);
+            var resolveResponse = await _apiViewService.Resolve(apiViewUrl);
+            if (resolveResponse != null)
             {
-                _logger.LogInformation("Resolve response received: {Response}", resolveJson);
-                try
+                _logger.LogInformation("Resolve response received - RevisionLabel: {RevisionLabel}", resolveResponse.RevisionLabel);
+                if (!string.IsNullOrWhiteSpace(resolveResponse.RevisionLabel))
                 {
-                    var resolveData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(resolveJson);
-                    if (resolveData != null && resolveData.TryGetValue("revisionLabel", out var labelElement))
-                    {
-                        metadata.Revision.RevisionLabel = labelElement.GetString();
-                        _logger.LogInformation("Retrieved revisionLabel from resolve endpoint: {RevisionLabel}", metadata.Revision.RevisionLabel);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Resolve response does not contain revisionLabel field");
-                    }
+                    metadata.Revision.RevisionLabel = resolveResponse.RevisionLabel;
+                    _logger.LogInformation("Retrieved revisionLabel from resolve endpoint: {RevisionLabel}", metadata.Revision.RevisionLabel);
                 }
-                catch (JsonException ex)
+                else
                 {
-                    _logger.LogWarning(ex, "Failed to parse resolve response for revision {RevisionId}", revisionId);
+                    _logger.LogWarning("Resolve response does not contain revisionLabel");
                 }
             }
             else
@@ -338,16 +350,6 @@ Respond in JSON format:
         {
             _logger.LogWarning("Cannot call Resolve endpoint - ReviewId is null or empty, or Revision is null");
         }
-
-        _logger.LogInformation(
-            "Retrieved metadata - Package: {PackageName}, Language: {Language}, PR: {PullRequestNo}, Repo: {PullRequestRepository}, Label: {RevisionLabel}",
-            metadata.PackageName,
-            metadata.Language,
-            metadata.Revision?.PullRequestNo,
-            metadata.Revision?.PullRequestRepository,
-            metadata.Revision?.RevisionLabel);
-
-        return metadata;
     }
 
     /// <summary>

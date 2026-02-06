@@ -145,6 +145,11 @@ public abstract class PythonRequirementBase : Requirement
             }
             installTarget = Path.Combine(ctx.RepoRoot, installTarget);
         }
+        
+        if (MinVersion != null)
+        {
+            installTarget = $"{installTarget}>={MinVersion}";
+        }
 
         var installOptions = new ProcessOptions(
             pythonExe!,
@@ -238,7 +243,7 @@ public static class PythonRequirements
             return [
                 "Navigate to the Python SDK repository root directory",
                 "Ensure your virtual environment is activated",
-                "python -m pip install pytest",
+                $"python -m pip install pytest>={MinVersion}",
             ];
         }
     }

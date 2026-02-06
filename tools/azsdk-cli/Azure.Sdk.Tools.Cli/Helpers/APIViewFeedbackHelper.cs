@@ -338,15 +338,15 @@ Respond in JSON format:
             
             _logger.LogInformation("Detected PR #{PrNumber} in {PrRepo}", prNumber, prRepo);
             
-            // Parse owner/repo from PullRequestRepository (format: "Azure/azure-rest-api-specs")
-            var prParts = prRepo.Split('/');
-            if (prParts.Length != 2)
+            // Validate repository format
+            if (prRepo.Split('/').Length != 2)
             {
-                _logger.LogWarning("Invalid PR repository format: {PrRepo}", prRepo);
+                _logger.LogWarning("Invalid PR repository format: {PrRepo}. Expected format: 'owner/repo'", prRepo);
                 return (null, null, null);
             }
-            var prOwner = prParts[0];
-            var prRepoName = prParts[1];
+
+            // Parse owner/repo from PullRequestRepository (format: "Azure/azure-rest-api-specs")
+            var (prOwner, prRepoName) = (prRepo.Split('/')[0], prRepo.Split('/')[1]);
             
             // Check if this is the specs repo - target repo is the PR repo
             if (prRepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase))

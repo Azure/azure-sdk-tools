@@ -95,6 +95,16 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Use override repo if specified, otherwise use detected repo, fallback to default
             var targetRepo = !string.IsNullOrEmpty(repoOverride) ? repoOverride : detectedRepo ?? "Azure/azure-rest-api-specs";
+            
+            // Validate repository format
+            if (targetRepo.Split('/').Length != 2)
+            {
+                return new DefaultCommandResponse
+                {
+                    Message = $"Invalid repository format: '{targetRepo}'. Expected format: 'owner/repo'"
+                };
+            }
+            
             var (owner, repoName) = (targetRepo.Split('/')[0], targetRepo.Split('/')[1]);
             
             if (!string.IsNullOrEmpty(commitSha))
@@ -178,6 +188,16 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Use override repo if specified, otherwise use detected repo, fallback to default
             var targetRepo = !string.IsNullOrEmpty(repo) ? repo : detectedRepo ?? "Azure/azure-rest-api-specs";
+            
+            // Validate repository format
+            if (targetRepo.Split('/').Length != 2)
+            {
+                return new DefaultCommandResponse
+                {
+                    Message = $"Invalid repository format: '{targetRepo}'. Expected format: 'owner/repo'"
+                };
+            }
+            
             var (owner, repoName) = (targetRepo.Split('/')[0], targetRepo.Split('/')[1]);
             
             if (!string.IsNullOrEmpty(commitSha))

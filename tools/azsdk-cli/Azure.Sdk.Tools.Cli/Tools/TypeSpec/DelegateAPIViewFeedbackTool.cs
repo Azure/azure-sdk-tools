@@ -87,14 +87,6 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             // Extract revision ID from URL
             var (revisionId, reviewId) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
 
-            if (string.IsNullOrEmpty(revisionId) || string.IsNullOrEmpty(reviewId))
-            {
-                return new DefaultCommandResponse
-                {
-                    Message = $"Invalid APIView URL: '{apiViewUrl}'. Expected format: https://apiview.dev/review/{{reviewId}}?activeApiRevisionId={{revisionId}}"
-                };
-            }
-
             _logger.LogInformation("Extracted revisionId: {RevisionId}, reviewId: {ReviewId}", revisionId, reviewId);
 
             // Get consolidated comments and metadata

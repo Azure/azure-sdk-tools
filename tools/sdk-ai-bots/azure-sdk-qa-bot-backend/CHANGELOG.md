@@ -9,6 +9,7 @@
 ### Other Changes
 
 * Enhance prompt and knowledge source for language channel tenant
+* Add WithAgenticSearch parameter to the Completion API to enable or disable agentic search.
 
 ## 0.8.0 (2026-01-29)
 

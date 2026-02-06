@@ -5,11 +5,10 @@ description: Verifies that the environment is set up with the required installat
 
 # Verify Setup
 
-ALWAYS verify the core requirements. Then, choose to verify language requirements based on the user's working repo, or their explicit request. 
-
-Run the 'Check Command' for each requirement, and chain together commands when possible for efficiency. If missing, provide 'Installation Instructions' based on the user's platform.
-
-When a specific path is needed for an installation instruction, find it for the user and provide the exact command they can run.
+- ALWAYS verify the core requirements. Then, choose to verify language requirements based on the user's working repo, or their explicit request. 
+- Run the 'Check Command' for each requirement, and chain check commands together for better user experience. If missing, provide 'Installation Instructions' based on the user's platform.
+- When a specific path is needed for an installation instruction, find it for the user and provide the exact command they can run.
+- If a 'Min Version' is specified, ensure that the user's version satisfies it
 
 ## Core Requirements
 
@@ -35,9 +34,10 @@ When a specific path is needed for an installation instruction, find it for the 
 ## Handling Results
 
 ### Success Response
-All requirements are installed. The environment is ready for Python SDK development.
+All requirements are installed. The environment is ready for SDK development.
 
 ### Failure Response
 
 1. Summarize missing requirement information
-2. If the user wants help installing missing requirements, execute the 'Install Command' for requirements where auto-install is true. For others, explain why you cannot install (system-level installations will not be auto installed)
+2. Ask the user if they want help installing missing requirements.
+3. If the user wants help, execute the 'Install Command' for requirements where auto-install is true. For others, explain why you cannot install (system-level installations will not be auto installed)

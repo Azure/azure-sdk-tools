@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 public class DelegateAPIViewFeedbackTool : MCPTool
 {
     private const string ToolName = "azsdk_tsp_delegate_apiview_feedback";
-    
+
     private readonly IAPIViewFeedbackService _service;
     private readonly IGitHubService _gitHubService;
     private readonly ILogger<DelegateAPIViewFeedbackTool> _logger;
@@ -86,6 +86,15 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Extract revision ID from URL
             var (revisionId, reviewId) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
+
+            if (string.IsNullOrEmpty(revisionId) || string.IsNullOrEmpty(reviewId))
+            {
+                return new DefaultCommandResponse
+                {
+                    Message = $"Invalid APIView URL: '{apiViewUrl}'. Expected format: https://apiview.dev/review/{{reviewId}}?activeApiRevisionId={{revisionId}}"
+                };
+            }
+
             _logger.LogInformation("Extracted revisionId: {RevisionId}, reviewId: {ReviewId}", revisionId, reviewId);
 
             // Get consolidated comments and metadata
@@ -109,7 +118,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Use override repo if specified, otherwise use detected repo, fallback to default
             var targetRepo = !string.IsNullOrEmpty(repo) ? repo : detectedRepo ?? "Azure/azure-rest-api-specs";
-            
+
             // Validate repository format
             if (targetRepo.Split('/').Length != 2)
             {
@@ -118,9 +127,9 @@ public class DelegateAPIViewFeedbackTool : MCPTool
                     Message = $"Invalid repository format: '{targetRepo}'. Expected format: 'owner/repo'"
                 };
             }
-            
+
             var (owner, repoName) = (targetRepo.Split('/')[0], targetRepo.Split('/')[1]);
-            
+
             if (!string.IsNullOrEmpty(commitSha))
             {
                 _logger.LogInformation("Detected commit SHA: {CommitSha}", commitSha);
@@ -129,7 +138,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             {
                 _logger.LogInformation("Detected TypeSpec project path: {TspProjectPath}", tspProjectPath);
             }
-            _logger.LogInformation("Target repository: {Owner}/{Repo} (detected: {Detected}, override: {Override})", 
+            _logger.LogInformation("Target repository: {Owner}/{Repo} (detected: {Detected}, override: {Override})",
                 owner, repoName, detectedRepo, repo);
 
             // Build prompt using template
@@ -140,7 +149,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
                 comments,
                 commitSha,
                 tspProjectPath);
-            
+
             var prompt = template.BuildPrompt();
             var title = $"Address APIView feedback for {metadata.PackageName} ({metadata.Language})";
 

@@ -349,5 +349,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             // Return null to indicate file not found (default mock behavior)
             return Task.FromResult<string?>(null);
         }
+
+        public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery)
+        {
+            // Return empty search results (default mock behavior)
+            var emptyResult = new SearchCodeResult(0, false, new List<SearchCode>());
+            return Task.FromResult(emptyResult);
+        }
     }
 }

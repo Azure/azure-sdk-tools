@@ -51,10 +51,10 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
     public async Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId)
     {
         _logger.LogInformation("Getting comments for revision {RevisionId}", revisionId);
-        
+
         // Get comments from APIViewService - returns JSON string
         var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
-        
+
         if (string.IsNullOrWhiteSpace(commentsJson))
         {
             _logger.LogError("Failed to retrieve comments from APIView for revision {RevisionId}", revisionId);
@@ -72,7 +72,7 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
             _logger.LogError(ex, "Failed to deserialize comments JSON for revision {RevisionId}", revisionId);
             throw new InvalidOperationException($"Failed to parse APIView response for revision {revisionId}", ex);
         }
-        
+
         if (comments?.Count == 0)
         {
             _logger.LogInformation("No comments found for revision {RevisionId}", revisionId);
@@ -83,13 +83,13 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
         var filteredComments = comments
             .Where(c => !c.IsResolved && c.Severity != "Question" && !string.IsNullOrWhiteSpace(c.CommentText))
             .ToList();
-        
+
         if (filteredComments.Count == 0)
         {
             _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering (all resolved or questions)", revisionId);
             return new List<ConsolidatedComment>();
         }
-        
+
         _logger.LogInformation("Found {Count} actionable comment(s) after filtering", filteredComments.Count);
 
         // 2. Group comments by threadId and order by createdOn
@@ -102,12 +102,12 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
 
         // 3. Consolidate grouped comments using OpenAI
         var consolidatedComments = new List<ConsolidatedComment>();
-        
+
         foreach (var group in groupedComments)
         {
             var consolidated = await ConsolidateComments(group.Value);
             consolidatedComments.Add(consolidated);
-            
+
             _logger.LogInformation(
                 "Consolidated discussion - ThreadId: {ThreadId}, LineNo: {LineNo}, Comment: {Comment}",
                 consolidated.ThreadId,
@@ -143,7 +143,7 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
         }
 
         // Build discussion text from grouped comments
-        var discussion = string.Join("\n\n", groupedComments.Select((c, idx) => 
+        var discussion = string.Join("\n\n", groupedComments.Select((c, idx) =>
             $"Comment {idx + 1} (by {c.CreatedBy} at {c.CreatedOn}):\n{c.CommentText}"));
 
         var prompt = $@"Read the following API review discussion thread and extract the final decision or action in a clear, direct statement.
@@ -171,8 +171,8 @@ Respond in JSON format:
   ""comment"": ""direct actionable statement""
 }}";
 
-        var modelName = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT") 
-            ?? Environment.GetEnvironmentVariable("OPENAI_MODEL") 
+        var modelName = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT")
+            ?? Environment.GetEnvironmentVariable("OPENAI_MODEL")
             ?? "gpt-4o";
 
         try
@@ -180,7 +180,7 @@ Respond in JSON format:
             var chatClient = _openAIClient.GetChatClient(modelName);
             var messages = new[] { new UserChatMessage(prompt) };
             var response = await chatClient.CompleteChatAsync(messages);
-            
+
             // Validate response structure
             if (response?.Value?.Content == null || response.Value.Content.Count == 0)
             {
@@ -214,18 +214,18 @@ Respond in JSON format:
                 _logger.LogWarning(ex, "Failed to parse OpenAI JSON response for ThreadId {ThreadId}, LineNo {LineNo}. Raw response: {Response}. Using fallback.", threadId, lineNo, result);
                 return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
             }
-            
+
             // Extract comment from JSON response
-            var comment = jsonResponse?.TryGetValue("comment", out var commentValue) == true 
-                ? commentValue?.ToString() 
+            var comment = jsonResponse?.TryGetValue("comment", out var commentValue) == true
+                ? commentValue?.ToString()
                 : null;
-                
+
             if (string.IsNullOrWhiteSpace(comment))
             {
                 _logger.LogWarning("OpenAI response missing or empty 'comment' field for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
                 return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
             }
-            
+
             return new ConsolidatedComment
             {
                 ThreadId = threadId,
@@ -253,9 +253,9 @@ Respond in JSON format:
         string lineText)
     {
         // Format: [user: comment, user: comment, ...]
-        var commentChain = string.Join(", ", groupedComments.Select(c => 
+        var commentChain = string.Join(", ", groupedComments.Select(c =>
             $"{c.CreatedBy}: {c.CommentText}"));
-        
+
         return new ConsolidatedComment
         {
             ThreadId = threadId,
@@ -272,10 +272,10 @@ Respond in JSON format:
     public async Task<ReviewMetadata> ParseReviewMetadata(string revisionId)
     {
         _logger.LogInformation("Getting metadata for revision {RevisionId}", revisionId);
-        
+
         // Get metadata from APIViewService
         var metadataJson = await _apiViewService.GetMetadata(revisionId);
-        
+
         if (string.IsNullOrWhiteSpace(metadataJson))
         {
             _logger.LogError("Failed to get metadata from APIView for revision {RevisionId}", revisionId);
@@ -293,11 +293,50 @@ Respond in JSON format:
             _logger.LogError(ex, "Failed to deserialize metadata JSON for revision {RevisionId}", revisionId);
             throw new InvalidOperationException($"Failed to parse metadata for revision: {revisionId}", ex);
         }
-        
+
         if (metadata == null)
         {
             _logger.LogError("Deserialized metadata is null for revision {RevisionId}", revisionId);
             throw new InvalidOperationException($"Failed to deserialize metadata for revision: {revisionId}");
+        }
+
+        // Get additional metadata from resolve endpoint (includes revisionLabel)
+        _logger.LogInformation("Attempting to get revisionLabel from resolve endpoint - ReviewId: {ReviewId}, HasRevision: {HasRevision}",
+            metadata.ReviewId, metadata.Revision != null);
+
+        if (!string.IsNullOrEmpty(metadata.ReviewId) && metadata.Revision != null)
+        {
+            _logger.LogInformation("Calling Resolve endpoint for ReviewId: {ReviewId}, RevisionId: {RevisionId}", metadata.ReviewId, revisionId);
+            var resolveJson = await _apiViewService.Resolve(metadata.ReviewId, revisionId);
+            if (!string.IsNullOrWhiteSpace(resolveJson))
+            {
+                _logger.LogInformation("Resolve response received: {Response}", resolveJson);
+                try
+                {
+                    var resolveData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(resolveJson);
+                    if (resolveData != null && resolveData.TryGetValue("revisionLabel", out var labelElement))
+                    {
+                        metadata.Revision.RevisionLabel = labelElement.GetString();
+                        _logger.LogInformation("Retrieved revisionLabel from resolve endpoint: {RevisionLabel}", metadata.Revision.RevisionLabel);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Resolve response does not contain revisionLabel field");
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to parse resolve response for revision {RevisionId}", revisionId);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Resolve endpoint returned empty response");
+            }
+        }
+        else
+        {
+            _logger.LogWarning("Cannot call Resolve endpoint - ReviewId is null or empty, or Revision is null");
         }
 
         _logger.LogInformation(
@@ -312,12 +351,12 @@ Respond in JSON format:
     }
 
     /// <summary>
-    /// Detects commit SHA and TypeSpec project path from review metadata
+    /// Detects commit SHA, TypeSpec project path, and TypeSpec repository that an APIView was generated from given review metadata, if available
     /// </summary>
     public async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata)
     {
         _logger.LogInformation("Detecting commit SHA and TypeSpec project path for {Package}", metadata.PackageName);
-        
+
         var revision = metadata.Revision;
         if (revision == null)
         {
@@ -325,14 +364,13 @@ Respond in JSON format:
             return (null, null, null);
         }
 
-        // Scenario 1: PR exists
         if (revision.PullRequestNo.HasValue && !string.IsNullOrEmpty(revision.PullRequestRepository))
         {
             var prRepo = revision.PullRequestRepository;
             var prNumber = revision.PullRequestNo.Value;
-            
+
             _logger.LogInformation("Detected PR #{PrNumber} in {PrRepo}", prNumber, prRepo);
-            
+
             // Validate repository format
             if (prRepo.Split('/').Length != 2)
             {
@@ -342,66 +380,29 @@ Respond in JSON format:
 
             // Parse owner/repo from PullRequestRepository (format: "Azure/azure-rest-api-specs")
             var (prOwner, prRepoName) = (prRepo.Split('/')[0], prRepo.Split('/')[1]);
-            
-            // Check if this is the specs repo - target repo is the PR repo
-            if (prRepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase))
+
+            // Scenario 1: If PR info is provided and PR is in specs (public or private) repo, get SHA directly from PR head
+            if (prRepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase) ||
+                prRepoName.Equals("azure-rest-api-specs-pr", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogInformation("PR is in azure-rest-api-specs - getting head SHA");
-                var sha = await GetPrHeadSha(prOwner, prRepoName, prNumber);
-                if (sha != null)
-                {
-                    _logger.LogInformation("Retrieved commit SHA from specs PR: {Sha}", sha);
-                    return (sha, null, prRepo);
-                }
-                return (null, null, prRepo);
+                return await GetTspShaFromSpecsRepoPR(prOwner, prRepoName, prNumber, prRepo);
             }
-            // Scenario 2: PR in SDK repo - parse tsp-location.yaml to get specs repo
-            else
-            {
-                _logger.LogInformation("PR is in SDK repo {PrRepo} - parsing tsp-location.yaml", prRepo);
-                var (sha, tspPath, specsRepo) = await ResolveTspSourceLocationWithRepo(prOwner, prRepoName, prNumber: prNumber);
-                if (sha != null || tspPath != null || specsRepo != null)
-                {
-                    _logger.LogInformation("Retrieved from tsp-location.yaml - SHA: {Sha}, TSP Path: {TspPath}, Repo: {Repo}", sha, tspPath, specsRepo);
-                    return (sha, tspPath, specsRepo);
-                }
-            }
+
+            // Scenario 2: If PR info is provided and PR is in language repo, tsp-location.yaml should be parsed to get specs repo and SHA
+            return await GetTspShaFromLanguageRepoPR(prOwner, prRepoName, prNumber, prRepo, metadata.PackageName, metadata.Language);
         }
-        
-        // Scenario 3: Branch in RevisionLabel - need to determine which SDK repo
-        if (!string.IsNullOrEmpty(revision.RevisionLabel) && revision.RevisionLabel.Contains('/'))
+
+        // Scenario 3: If PR info is not provided, then APIView was generated from source branch in the language SDK repo and tsp-location.yaml should be parsed from there
+        // TODO: RevisionLabel currently provides SourceBranch info. Should be updated to use SourceBranch field once it's available: https://github.com/Azure/azure-sdk-tools/issues/13661
+        if (!string.IsNullOrEmpty(revision.RevisionLabel))
         {
-            _logger.LogInformation("Detected branch in RevisionLabel: {RevisionLabel}", revision.RevisionLabel);
-            
-            // Parse branch from RevisionLabel (format: "owner:branch" or "branch")
-            var branchOwner = "Azure";
-            var branch = revision.RevisionLabel;
-            
-            if (revision.RevisionLabel.Contains(':'))
-            {
-                var parts = revision.RevisionLabel.Split(':');
-                branchOwner = parts[0];
-                branch = parts[1];
-            }
-            
-            // Determine the SDK repo from language
-            var sdkRepo = GetSdkRepoFromLanguage(metadata.Language);
-            if (sdkRepo != null)
-            {
-                _logger.LogInformation("Parsing tsp-location.yaml from branch {Branch} in {Repo}", branch, sdkRepo);
-                var (sha, tspPath, specsRepo) = await ResolveTspSourceLocationWithRepo(branchOwner, sdkRepo, branch: branch);
-                if (sha != null || tspPath != null || specsRepo != null)
-                {
-                    _logger.LogInformation("Retrieved from tsp-location.yaml in branch - SHA: {Sha}, TSP Path: {TspPath}, Repo: {Repo}", sha, tspPath, specsRepo);
-                    return (sha, tspPath, specsRepo);
-                }
-            }
+            return await GetTspShaFromLanguageRepoBranch(revision.RevisionLabel, metadata.PackageName, metadata.Language);
         }
-        
+
         _logger.LogInformation("No commit SHA or TypeSpec path detected");
         return (null, null, null);
     }
-    
+
     /// <summary>
     /// Gets the SDK repository name from the language
     /// </summary>
@@ -416,6 +417,78 @@ Respond in JSON format:
             "go" or "golang" => "azure-sdk-for-go",
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Gets the TypeSpec SHA from an azure-rest-api-specs repository PR (public or private)
+    /// </summary>
+    private async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> GetTspShaFromSpecsRepoPR(
+        string prOwner,
+        string prRepoName,
+        int prNumber,
+        string prRepo)
+    {
+        _logger.LogInformation("PR is in {RepoName} - getting head SHA", prRepoName);
+        var sha = await GetPrHeadSha(prOwner, prRepoName, prNumber);
+        if (sha != null)
+        {
+            _logger.LogInformation("Retrieved commit SHA from specs PR: {Sha}", sha);
+            return (sha, null, prRepo);
+        }
+        return (null, null, prRepo);
+    }
+
+    /// <summary>
+    /// Gets the TypeSpec SHA from a language SDK repository PR by parsing tsp-location.yaml
+    /// </summary>
+    private async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> GetTspShaFromLanguageRepoPR(
+        string prOwner,
+        string prRepoName,
+        int prNumber,
+        string prRepo,
+        string packageName,
+        string? language)
+    {
+        _logger.LogInformation("PR is in SDK repo {PrRepo} - parsing tsp-location.yaml", prRepo);
+        var (sha, tspPath, specsRepo) = await ResolveTspSourceInfo(prOwner, prRepoName, packageName, language, prNumber: prNumber);
+        if (sha != null || tspPath != null || specsRepo != null)
+        {
+            _logger.LogInformation("Retrieved from tsp-location.yaml - SHA: {Sha}, TSP Path: {TspPath}, Repo: {Repo}", sha, tspPath, specsRepo);
+            return (sha, tspPath, specsRepo);
+        }
+        return (null, null, null);
+    }
+
+    /// <summary>
+    /// Gets the TypeSpec SHA from a language SDK repository branch by parsing tsp-location.yaml
+    /// </summary>
+    private async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> GetTspShaFromLanguageRepoBranch(
+        string revisionLabel,
+        string packageName,
+        string? language)
+    {
+        // Parse branch from RevisionLabel (format: "Source Branch:main")
+        var branch = revisionLabel;
+        if (revisionLabel.StartsWith("Source Branch:", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation("Detected branch in RevisionLabel: {RevisionLabel}", revisionLabel);
+            branch = revisionLabel.Substring("Source Branch:".Length).Trim();
+        }
+
+        // Determine the SDK repo from language (assume Azure org)
+        var branchOwner = "Azure";
+        var sdkRepo = GetSdkRepoFromLanguage(language);
+        if (sdkRepo != null)
+        {
+            _logger.LogInformation("Parsing tsp-location.yaml from branch {Branch} in {Owner}/{Repo}", branch, branchOwner, sdkRepo);
+            var (sha, tspPath, specsRepo) = await ResolveTspSourceInfo(branchOwner, sdkRepo, packageName, language, branch: branch);
+            if (sha != null || tspPath != null || specsRepo != null)
+            {
+                _logger.LogInformation("Retrieved from tsp-location.yaml in branch - SHA: {Sha}, TSP Path: {TspPath}, Repo: {Repo}", sha, tspPath, specsRepo);
+                return (sha, tspPath, specsRepo);
+            }
+        }
+        return (null, null, null);
     }
 
     /// <summary>
@@ -439,41 +512,110 @@ Respond in JSON format:
 
     /// <summary>
     /// Resolves TypeSpec source location from tsp-location.yaml file, including the target specs repo
+    /// Uses GitHub Code Search to find the file at pattern: sdk/*/packageName/tsp-location.yaml
     /// </summary>
-    private async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> ResolveTspSourceLocationWithRepo(string owner, string repo, int? prNumber = null, string? branch = null)
+    private async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> ResolveTspSourceInfo(string owner, string repo, string packageName, string? language, int? prNumber = null, string? branch = null)
     {
         try
         {
+            // Find tsp-location.yaml using GitHub Code Search with pattern: sdk/*/packageName/tsp-location.yaml
+            var tspLocationPath = await FindTspLocationPath(owner, repo, packageName);
+
+            if (string.IsNullOrEmpty(tspLocationPath))
+            {
+                _logger.LogWarning("Could not find tsp-location.yaml for package {PackageName} in {Owner}/{Repo}", packageName, owner, repo);
+                return (null, null, null);
+            }
+
+            _logger.LogInformation("Found tsp-location.yaml at path: {TspLocationPath}", tspLocationPath);
+
             string? fileContent;
-            
+
             if (prNumber.HasValue)
             {
                 _logger.LogInformation("Getting tsp-location.yaml from PR #{PrNumber} in {Owner}/{Repo}", prNumber.Value, owner, repo);
-                fileContent = await _gitHubService.GetFileFromPullRequest(owner, repo, prNumber.Value, "tsp-location.yaml");
+                fileContent = await _gitHubService.GetFileFromPullRequest(owner, repo, prNumber.Value, tspLocationPath);
             }
             else if (!string.IsNullOrEmpty(branch))
             {
                 _logger.LogInformation("Getting tsp-location.yaml from branch {Branch} in {Owner}/{Repo}", branch, owner, repo);
-                fileContent = await _gitHubService.GetFileFromBranch(owner, repo, branch, "tsp-location.yaml");
+                fileContent = await _gitHubService.GetFileFromBranch(owner, repo, branch, tspLocationPath);
             }
             else
             {
                 _logger.LogWarning("Neither PR number nor branch specified for tsp-location.yaml lookup");
                 return (null, null, null);
             }
-            
+
             if (string.IsNullOrEmpty(fileContent))
             {
                 _logger.LogInformation("tsp-location.yaml not found");
                 return (null, null, null);
             }
-            
+
             return ParseTspLocationYamlWithRepo(fileContent);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to resolve TypeSpec source location from tsp-location.yaml");
             return (null, null, null);
+        }
+    }
+
+    /// <summary>
+    /// Finds tsp-location.yaml path using GitHub Code Search with pattern: sdk/*/packageName/tsp-location.yaml
+    /// The * matches exactly one directory level (the service name)
+    /// </summary>
+    private async Task<string?> FindTspLocationPath(string owner, string repo, string packageName)
+    {
+        try
+        {
+            // Use GitHub Code Search API to find the file
+            // Search query: filename:tsp-location.yaml repo:owner/repo path:sdk
+            // We can't use wildcards in path, so search all tsp-location.yaml files and filter by package name
+            var searchQuery = $"filename:tsp-location.yaml repo:{owner}/{repo} path:sdk";
+
+            _logger.LogInformation("Searching for tsp-location.yaml with query: {SearchQuery}", searchQuery);
+
+            var results = await _gitHubService.SearchFilesAsync(searchQuery);
+
+            if (results.Items.Count == 0)
+            {
+                _logger.LogWarning("No tsp-location.yaml found in sdk/ directory");
+                return null;
+            }
+
+            // Filter results to match pattern sdk/*/packageName/tsp-location.yaml (exactly one level deep)
+            var matchingPath = results.Items
+                .Select(item => item.Path)
+                .FirstOrDefault(path =>
+                {
+                    // Check if path matches sdk/{service}/{package}/tsp-location.yaml pattern
+                    var parts = path.Split('/');
+                    return parts.Length == 4 &&
+                           parts[0] == "sdk" &&
+                           parts[2] == packageName &&
+                           parts[3] == "tsp-location.yaml";
+                });
+
+            if (matchingPath == null)
+            {
+                _logger.LogWarning("Found {Count} tsp-location.yaml files but none match pattern sdk/*/{{packageName}}/tsp-location.yaml for package {PackageName}",
+                    results.Items.Count, packageName);
+                return null;
+            }
+
+            if (results.Items.Count > 1)
+            {
+                _logger.LogInformation("Multiple tsp-location.yaml files found, using: {Path}", matchingPath);
+            }
+
+            return matchingPath;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching for tsp-location.yaml for package {PackageName}", packageName);
+            return null;
         }
     }
 
@@ -487,7 +629,7 @@ Respond in JSON format:
             string? commit = null;
             string? directory = null;
             string? targetRepo = null;
-            
+
             // Simple line-by-line parsing for commit, directory, and repo fields
             var lines = yamlContent.Split('\n');
             foreach (var line in lines)
@@ -507,7 +649,7 @@ Respond in JSON format:
                     targetRepo = trimmedLine.Substring(5).Trim().Trim('\'', '\"');
                 }
             }
-            
+
             _logger.LogInformation("Parsed tsp-location.yaml - Commit: {Commit}, Directory: {Directory}, Repo: {Repo}", commit, directory, targetRepo);
             return (commit, directory, targetRepo);
         }

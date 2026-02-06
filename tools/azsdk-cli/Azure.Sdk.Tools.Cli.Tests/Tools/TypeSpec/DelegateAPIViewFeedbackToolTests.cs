@@ -73,6 +73,37 @@ public class DelegateAPIViewFeedbackToolTests
     }
 
     [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithSpecsPRRepoPullRequest_CreatesIssueInSpecsPRRepo()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithPullRequest(prNumber: 12345, prRepo: "Azure/azure-rest-api-specs-pr");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("prsha789", "specification/widget/Widget", "Azure/azure-rest-api-specs-pr"));
+
+        var mockIssue = CreateMockIssue(99, "https://github.com/Azure/azure-rest-api-specs-pr/issues/99");
+        _mockGitHubService.Setup(x => x.CreateIssueAsync(
+            "Azure", 
+            "azure-rest-api-specs-pr", 
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<List<string>?>()))
+            .ReturnsAsync(mockIssue);
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
+
+        Assert.That(response.Message, Does.Contain("Issue created"));
+        Assert.That(response.Message, Does.Contain("https://github.com/Azure/azure-rest-api-specs-pr/issues/99"));
+        
+        _mockGitHubService.Verify(x => x.CreateIssueAsync(
+            "Azure", "azure-rest-api-specs-pr", It.IsAny<string>(), It.IsAny<string>(), 
+            It.Is<List<string>>(a => a != null && a.Count == 1 && a[0] == "copilot-swe-agent[bot]")), Times.Once);
+    }
+
+    [Test]
     public async Task DelegateAPIViewFeedbackAsync_WithSdkRepoPullRequest_GetsRepoFromTspLocation()
     {
         // PR is in azure-sdk-for-python, tsp-location.yaml points to specs repo
@@ -100,12 +131,12 @@ public class DelegateAPIViewFeedbackToolTests
     #region Branch-based SHA Detection Tests
 
     [Test]
-    public async Task DelegateAPIViewFeedbackAsync_WithBranchLabel_DetectsCommitShaAndDirectory()
+    public async Task DelegateAPIViewFeedbackAsync_WithSourceBranchLabel_DetectsCommitShaAndDirectory()
     {
-        // RevisionLabel contains branch name that can be used to detect SHA
+        // RevisionLabel contains "Source Branch:" prefix that should be parsed
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         var comments = CreateSampleComments();
-        var metadata = CreateMetadataWithBranch(branchLabel: "feature/add-widget-api");
+        var metadata = CreateMetadataWithBranch(branchLabel: "Source Branch:main");
 
         _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
         _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);

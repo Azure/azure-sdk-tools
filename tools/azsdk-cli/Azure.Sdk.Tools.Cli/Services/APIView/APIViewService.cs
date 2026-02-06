@@ -5,6 +5,7 @@ public interface IAPIViewService
     Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType);
     Task<string?> GetCommentsByRevisionAsync(string revisionId);
     Task<string?> GetMetadata(string revisionId);
+    Task<string?> Resolve(string reviewId, string revisionId);
 }
 
 public class APIViewService : IAPIViewService
@@ -54,6 +55,19 @@ public class APIViewService : IAPIViewService
         if (result == null)
         {
             _logger.LogWarning("No metadata found for revision {RevisionId}", revisionId);
+        }
+
+        return result;
+    }
+
+    public async Task<string?> Resolve(string reviewId, string revisionId)
+    {
+        string endpoint = $"/api/reviews/resolve?link=https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId}";
+        string? result = await _httpService.GetAsync(endpoint);
+
+        if (result == null)
+        {
+            _logger.LogWarning("Failed to resolve review {ReviewId} with revision {RevisionId}", reviewId, revisionId);
         }
 
         return result;

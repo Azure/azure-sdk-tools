@@ -105,6 +105,7 @@ public class GitConnection
         public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path, string? branch = null);
         public Task<HashSet<string>?> GetPublicOrgMembership(string username);
         public Task<bool> HasWritePermission(string owner, string repo, string username);
+        public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -667,6 +668,12 @@ public class GitConnection
                 logger.LogError(ex, "Error validating permissions for user: {Username}", username);
                 throw;
             }
+        }
+
+        public async Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery)
+        {
+            var searchRequest = new Octokit.SearchCodeRequest(searchQuery);
+            return await gitHubClient.Search.SearchCode(searchRequest);
         }
     }
 }

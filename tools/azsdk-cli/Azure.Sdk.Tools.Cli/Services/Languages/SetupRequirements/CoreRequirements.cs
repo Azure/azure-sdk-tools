@@ -195,15 +195,15 @@ public static class CoreRequirements
         public override string[] CheckCommand => ["python", "-m", "pip", "--version"];
 
         public override string? Reason => "Pip is required for all repos because it's used in a common Verify-Readme Powershell script.";
-        public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
+        public override bool IsAutoInstallable => true;
 
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
         {
             if (ctx.IsLinux)
             {
-                return ["sudo apt install python3-pip"];
+                return [["sudo", "apt", "install", "python3-pip"]];
             }
-            return ["python -m ensurepip"];
+            return [["python", "-m", "ensurepip", "--upgrade"]];
         }
     }
 }

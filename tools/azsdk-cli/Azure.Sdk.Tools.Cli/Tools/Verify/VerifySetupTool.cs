@@ -26,7 +26,6 @@ public class VerifySetupTool : LanguageMcpTool
         this.processHelper = processHelper;
     }
 
-    private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
     private const string OUTPUT_VERSION_PATTERN = @"[\d\.]+";
     private const string VerifySetupToolName = "azsdk_verify_setup";
 
@@ -236,22 +235,9 @@ public class VerifySetupTool : LanguageMcpTool
 
     private async Task<DefaultCommandResponse> RunCheck(Requirement req, RequirementContext ctx, CancellationToken ct)
     {
-        // Create a delegate that captures execution details
-        async Task<ProcessResult> runCommand(string[] command)
-        {
-            var options = new ProcessOptions(
-                command[0],
-                args: command.Skip(1).ToArray(),
-                timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
-                logOutputStream: false,
-                workingDirectory: ctx.PackagePath
-            );
-            return await processHelper.Run(options, ct);
-        }
-
         try
         {
-            var checkResult = await req.RunCheckAsync(runCommand, ctx, ct);
+            var checkResult = await req.RunCheckAsync(processHelper, ctx, ct);
 
             if (!checkResult.Success)
             {
@@ -292,22 +278,9 @@ public class VerifySetupTool : LanguageMcpTool
 
     private async Task<RequirementCheckOutput> RunInstall(Requirement req, RequirementContext ctx, CancellationToken ct)
     {
-        // Create a delegate that captures execution details for install commands
-        async Task<ProcessResult> runCommand(string[] command)
-        {
-            var options = new ProcessOptions(
-                command[0],
-                args: command.Skip(1).ToArray(),
-                timeout: TimeSpan.FromMinutes(5),
-                logOutputStream: true,
-                workingDirectory: ctx.PackagePath
-            );
-            return await processHelper.Run(options, ct);
-        }
-
         try
         {
-            return await req.RunInstallAsync(runCommand, ctx, ct);
+            return await req.RunInstallAsync(processHelper, ctx, ct);
         }
         catch (Exception ex)
         {

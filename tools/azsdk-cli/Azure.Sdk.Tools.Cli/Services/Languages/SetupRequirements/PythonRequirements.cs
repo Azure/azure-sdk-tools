@@ -13,7 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 public abstract class PythonRequirementBase : Requirement
 {
     private const string PythonRepoName = "azure-sdk-for-python";
-    private const string VenvEnvironmentVariable = "AZSDKTOOLS_PYTHON_VENV_PATH";
 
     /// <summary>
     /// The raw check command before Python executable resolution.
@@ -58,41 +57,32 @@ public abstract class PythonRequirementBase : Requirement
     /// <summary>
     /// Resolves the venv path and Python executable for installs.
     /// Resolution order:
-    /// 1. AZSDKTOOLS_PYTHON_VENV_PATH environment variable
+    /// 1. AZSDKTOOLS_PYTHON_VENV_PATH environment variable (via PythonOptions)
     /// 2. Existing .venv directory at the repo root
     /// 3. Create a new .venv at the repo root
     /// </summary>
     private async Task<(string? pythonExe, RequirementCheckOutput? error)> ResolveVenvPythonAsync(
-        Func<string[], Task<ProcessResult>> runCommand,
-        RequirementContext ctx)
+        IProcessHelper processHelper,
+        RequirementContext ctx,
+        CancellationToken ct)
     {
         var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
         var exeName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "python.exe" : "python";
 
-        // 1. Check AZSDKTOOLS_PYTHON_VENV_PATH environment variable first
-        var envVenvPath = Environment.GetEnvironmentVariable(VenvEnvironmentVariable);
-        if (!string.IsNullOrWhiteSpace(envVenvPath))
+        // 1. Check AZSDKTOOLS_PYTHON_VENV_PATH environment variable first (delegates to PythonOptions)
+        var resolved = PythonOptions.ResolvePythonExecutable("python");
+        if (resolved != "python")
         {
-            if (!Directory.Exists(envVenvPath))
+            // PythonOptions resolved to a venv path from the environment variable
+            if (!File.Exists(resolved))
             {
                 return (null, new RequirementCheckOutput
                 {
                     Success = false,
-                    Error = $"Python venv path specified in {VenvEnvironmentVariable} does not exist: {envVenvPath}"
+                    Error = $"Python executable resolved from AZSDKTOOLS_PYTHON_VENV_PATH does not exist: {resolved}"
                 });
             }
-
-            var envPythonExe = Path.Combine(envVenvPath, binDir, exeName);
-            if (!File.Exists(envPythonExe))
-            {
-                return (null, new RequirementCheckOutput
-                {
-                    Success = false,
-                    Error = $"Python executable not found in venv specified by {VenvEnvironmentVariable}: {envPythonExe}"
-                });
-            }
-
-            return (envPythonExe, null);
+            return (resolved, null);
         }
 
         // 2. Check for existing .venv at repo root
@@ -104,7 +94,8 @@ public abstract class PythonRequirementBase : Requirement
         }
 
         // 3. Create a new .venv at repo root
-        var createResult = await runCommand(["python", "-m", "venv", repoVenvPath]);
+        var createResult = await RunCommandAsync(
+            processHelper, ["python", "-m", "venv", repoVenvPath], ctx, ct, InstallTimeout);
         if (createResult.ExitCode != 0)
         {
             return (null, new RequirementCheckOutput
@@ -125,12 +116,12 @@ public abstract class PythonRequirementBase : Requirement
     /// 3. Runs pip install for the requirement's PipInstallTarget.
     /// </summary>
     public override async Task<RequirementCheckOutput> RunInstallAsync(
-        Func<string[], Task<ProcessResult>> runCommand,
+        IProcessHelper processHelper,
         RequirementContext ctx,
         CancellationToken ct = default)
     {
         // Resolve venv Python executable
-        var (pythonExe, venvError) = await ResolveVenvPythonAsync(runCommand, ctx);
+        var (pythonExe, venvError) = await ResolveVenvPythonAsync(processHelper, ctx, ct);
         if (venvError != null)
         {
             return venvError;
@@ -154,7 +145,14 @@ public abstract class PythonRequirementBase : Requirement
             installTarget = Path.Combine(ctx.RepoRoot, installTarget);
         }
 
-        var installResult = await runCommand([pythonExe!, "-m", "pip", "install", installTarget]);
+        var installOptions = new ProcessOptions(
+            pythonExe!,
+            args: ["-m", "pip", "install", installTarget],
+            timeout: InstallTimeout,
+            logOutputStream: true,
+            workingDirectory: ctx.PackagePath
+        );
+        var installResult = await processHelper.Run(installOptions, ct);
 
         return new RequirementCheckOutput
         {

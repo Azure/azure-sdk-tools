@@ -50,12 +50,12 @@ public static class GoRequirements
             => ctx.Languages.Contains(SdkLanguage.Go);
 
         public override async Task<RequirementCheckOutput> RunCheckAsync(
-            Func<string[], Task<ProcessResult>> runCommand,
+            IProcessHelper processHelper,
             RequirementContext ctx,
             CancellationToken ct = default)
         {
             // Try running goimports with -h flag
-            var result = await runCommand(["goimports", "-h"]);
+            var result = await RunCommandAsync(processHelper, ["goimports", "-h"], ctx, ct);
             
             // goimports -h returns exit code 2 but outputs help text, so check for output
             bool found = result.Output?.Contains("usage:") == true || result.ExitCode == 0;

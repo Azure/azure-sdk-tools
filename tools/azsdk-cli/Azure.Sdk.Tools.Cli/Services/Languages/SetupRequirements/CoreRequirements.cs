@@ -55,7 +55,7 @@ public static class CoreRequirements
         }
 
         public override async Task<RequirementCheckOutput> RunCheckAsync(
-            Func<string[], Task<ProcessResult>> runCommand,
+            IProcessHelper processHelper,
             RequirementContext ctx,
             CancellationToken ct = default)
         {
@@ -74,7 +74,7 @@ public static class CoreRequirements
                 command = ["npm", "exec", "--prefix", tspClientPath, "--no", "--", "tsp-client", "--version"];
             }
 
-            var result = await runCommand(command);
+            var result = await RunCommandAsync(processHelper, command, ctx, ct);
             return new RequirementCheckOutput
             {
                 Success = result.ExitCode == 0,
@@ -141,11 +141,11 @@ public static class CoreRequirements
         }
 
         public override async Task<RequirementCheckOutput> RunCheckAsync(
-            Func<string[], Task<ProcessResult>> runCommand,
+            IProcessHelper processHelper,
             RequirementContext ctx,
             CancellationToken ct = default)
         {
-            var result = await runCommand(["git", "config", "--get", "core.longpaths"]);
+            var result = await RunCommandAsync(processHelper, ["git", "config", "--get", "core.longpaths"], ctx, ct);
             
 
             bool isEnabled = result.ExitCode == 0 && 

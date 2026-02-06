@@ -55,15 +55,49 @@ public abstract class Requirement
     public virtual string[]? CheckCommand => null;
 
     /// <summary>
-    /// Runs the requirement check. Override for custom validation logic.
-    /// The runCommand delegate handles execution details (timeout, working directory, etc.)
+    /// Default timeout for check commands (30 seconds).
+    /// Override in subclasses for commands that need more or less time.
     /// </summary>
-    /// <param name="runCommand">Delegate to execute a command and return the result.</param>
+    protected virtual TimeSpan CheckTimeout => TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Default timeout for install commands (5 minutes).
+    /// Override in subclasses for installs that need more or less time.
+    /// </summary>
+    protected virtual TimeSpan InstallTimeout => TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Helper to execute a command via the process helper with standard defaults.
+    /// Subclasses that need custom ProcessOptions (e.g., PythonOptions) can call
+    /// processHelper.Run() directly instead.
+    /// </summary>
+    protected async Task<ProcessResult> RunCommandAsync(
+        IProcessHelper processHelper,
+        string[] command,
+        RequirementContext ctx,
+        CancellationToken ct,
+        TimeSpan? timeout = null,
+        bool logOutputStream = false)
+    {
+        var options = new ProcessOptions(
+            command[0],
+            args: command.Skip(1).ToArray(),
+            timeout: timeout ?? CheckTimeout,
+            logOutputStream: logOutputStream,
+            workingDirectory: ctx.PackagePath
+        );
+        return await processHelper.Run(options, ct);
+    }
+
+    /// <summary>
+    /// Runs the requirement check. Override for custom validation logic.
+    /// </summary>
+    /// <param name="processHelper">Process execution helper.</param>
     /// <param name="ctx">The current environment context.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The result of the requirement check.</returns>
     public virtual async Task<RequirementCheckOutput> RunCheckAsync(
-        Func<string[], Task<ProcessResult>> runCommand,
+        IProcessHelper processHelper,
         RequirementContext ctx,
         CancellationToken ct = default)
     {
@@ -73,7 +107,7 @@ public abstract class Requirement
                 $"Requirement '{Name}' must define CheckCommand or override RunCheckAsync");
         }
 
-        var result = await runCommand(CheckCommand);
+        var result = await RunCommandAsync(processHelper, CheckCommand, ctx, ct);
         return new RequirementCheckOutput
         {
             Success = result.ExitCode == 0,
@@ -135,12 +169,12 @@ public abstract class Requirement
     /// The default implementation executes each command from <see cref="GetInstallCommands"/> sequentially,
     /// short-circuiting on the first failure.
     /// </summary>
-    /// <param name="runCommand">Delegate to execute a command and return the result.</param>
+    /// <param name="processHelper">Process execution helper.</param>
     /// <param name="ctx">The current environment context.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The result of the install operation.</returns>
     public virtual async Task<RequirementCheckOutput> RunInstallAsync(
-        Func<string[], Task<ProcessResult>> runCommand,
+        IProcessHelper processHelper,
         RequirementContext ctx,
         CancellationToken ct = default)
     {
@@ -162,7 +196,7 @@ public abstract class Requirement
 
         foreach (var command in commands)
         {
-            var result = await runCommand(command);
+            var result = await RunCommandAsync(processHelper, command, ctx, ct, InstallTimeout, logOutputStream: true);
             if (result.ExitCode != 0)
             {
                 return new RequirementCheckOutput

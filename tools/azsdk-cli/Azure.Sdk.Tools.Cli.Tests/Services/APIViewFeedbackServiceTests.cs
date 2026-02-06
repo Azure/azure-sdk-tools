@@ -107,10 +107,10 @@ public class APIViewFeedbackServiceTests
 
     #endregion
 
-    #region GetMetadata Tests
+    #region ParseReviewMetadata Tests
 
     [Test]
-    public async Task GetMetadata_WithValidResponse_ReturnsDeserializedMetadata()
+    public async Task ParseReviewMetadata_WithValidResponse_ReturnsDeserializedMetadata()
     {
         // Arrange
         var revisionId = "test-revision";
@@ -126,7 +126,7 @@ public class APIViewFeedbackServiceTests
             .ReturnsAsync(metadataJson);
 
         // Act
-        var result = await _service.GetMetadata(revisionId);
+        var result = await _service.ParseReviewMetadata(revisionId);
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -136,7 +136,7 @@ public class APIViewFeedbackServiceTests
     }
 
     [Test]
-    public void GetMetadata_WithEmptyResponse_ThrowsInvalidOperationException()
+    public void ParseReviewMetadata_WithEmptyResponse_ThrowsInvalidOperationException()
     {
         // Arrange
         var revisionId = "test-revision";
@@ -145,12 +145,12 @@ public class APIViewFeedbackServiceTests
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await _service.GetMetadata(revisionId));
+            async () => await _service.ParseReviewMetadata(revisionId));
         Assert.That(ex!.Message, Does.Contain("Failed to get metadata for revision"));
     }
 
     [Test]
-    public void GetMetadata_WithInvalidJson_ThrowsInvalidOperationException()
+    public void ParseReviewMetadata_WithInvalidJson_ThrowsInvalidOperationException()
     {
         // Arrange
         var revisionId = "test-revision";
@@ -159,12 +159,12 @@ public class APIViewFeedbackServiceTests
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await _service.GetMetadata(revisionId));
+            async () => await _service.ParseReviewMetadata(revisionId));
         Assert.That(ex!.Message, Does.Contain("Failed to parse metadata for revision"));
     }
 
     [Test]
-    public void GetMetadata_WithNullAfterDeserialization_ThrowsInvalidOperationException()
+    public void ParseReviewMetadata_WithNullAfterDeserialization_ThrowsInvalidOperationException()
     {
         // Arrange
         var revisionId = "test-revision";
@@ -173,7 +173,7 @@ public class APIViewFeedbackServiceTests
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await _service.GetMetadata(revisionId));
+            async () => await _service.ParseReviewMetadata(revisionId));
         Assert.That(ex!.Message, Does.Contain("Failed to deserialize metadata for revision"));
     }
 

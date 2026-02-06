@@ -90,7 +90,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Get consolidated comments and metadata
             var comments = await _service.GetConsolidatedComments(revisionId);
-            var metadata = await _service.GetMetadata(revisionId);
+            var metadata = await _service.ParseReviewMetadata(revisionId);
 
             if (comments.Count == 0)
             {

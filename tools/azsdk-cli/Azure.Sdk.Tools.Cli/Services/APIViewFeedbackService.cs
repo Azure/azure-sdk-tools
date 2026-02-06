@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface IAPIViewFeedbackService
 {
     Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId);
-    Task<ReviewMetadata> GetMetadata(string revisionId);
+    Task<ReviewMetadata> ParseReviewMetadata(string revisionId);
     Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata);
 }
 
@@ -269,7 +269,7 @@ Respond in JSON format:
     /// <summary>
     /// Gets complete metadata (language, packageName, PR info, etc.) for an APIView revision
     /// </summary>
-    public async Task<ReviewMetadata> GetMetadata(string revisionId)
+    public async Task<ReviewMetadata> ParseReviewMetadata(string revisionId)
     {
         _logger.LogInformation("Getting metadata for revision {RevisionId}", revisionId);
         

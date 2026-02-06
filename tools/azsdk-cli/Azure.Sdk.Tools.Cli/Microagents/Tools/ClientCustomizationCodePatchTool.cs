@@ -25,7 +25,7 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
     public List<AppliedPatch> AppliedPatches { get; } = [];
 
     /// <summary>
-    /// Callback invoked after a successful patch. Used to cancel the agent to prevent wasted tokens.
+    /// Optional callback invoked after a successful patch. Can be used for progress tracking.
     /// </summary>
     public Action? OnPatchApplied { get; set; }
 

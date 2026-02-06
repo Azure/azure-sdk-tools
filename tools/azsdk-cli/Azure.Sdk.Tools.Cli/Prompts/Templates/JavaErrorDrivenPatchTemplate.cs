@@ -68,7 +68,7 @@ public class JavaErrorDrivenPatchTemplate(
            - Read generated code referenced in the error (to find new names after renames)
         3. **Locate the fix**: Find the exact string in customization that needs updating
         4. **Apply fix**: Use ClientCustomizationCodePatch with just the FILENAME (not full path)
-        5. **STOP**: After a successful patch, you're done - don't try more patches
+        5. **Fix ALL affected files**: If multiple customization files have the same broken reference, fix ALL of them
         
         ## KEY INSIGHT: TypeSpec Renames
         When you see "cannot find symbol" or "method not found" errors:
@@ -107,10 +107,12 @@ public class JavaErrorDrivenPatchTemplate(
         - Preserve code formatting and indentation
         - If uncertain about the fix → Return false (let human review)
         
-        **CRITICAL: STOP AFTER SUCCESS**
-        - After a ClientCustomizationCodePatch returns Success=true, IMMEDIATELY return true
-        - DO NOT try additional patches - you will corrupt the file
-        - If a patch fails with "Old content not found", the file may have changed - read it again or stop
+        **CRITICAL: FIX ALL RELATED ERRORS**
+        - The error message may mention ONE broken reference, but the same issue may appear in MULTIPLE customization files
+        - Fix ALL occurrences in ALL customization files
+        - After each successful patch, check if other customization files have the SAME broken reference
+        - If a patch fails with "Old content not found", read the file again to get the EXACT current content
+        - Use the Exit tool to signal completion only after you've fixed all files
         
         **Discovery Process for Renames:**
         When error says "cannot find symbol" or "method not found":

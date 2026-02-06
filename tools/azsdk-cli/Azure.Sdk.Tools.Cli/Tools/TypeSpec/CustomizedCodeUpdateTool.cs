@@ -77,8 +77,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         buildError,
         "",
         "## Analysis",
-        "The remaining errors are in **generated code** (not customization files).",
-        "This tool can only patch customization files - it cannot modify generated code.",
+        "The remaining errors are in **generated code** or in customization files that could not be automatically fixed.",
+        "This tool attempted multiple repair iterations but was unable to resolve all issues.",
         "",
         "## Common Causes",
         "- TypeSpec renamed a property, and the emitter's partial-update kept handwritten",
@@ -208,71 +208,99 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 };
             }
 
-            // Error-driven repair: attempt to fix build errors automatically
+            // Error-driven repair: attempt to fix build errors automatically with iterative cycles
             logger.LogInformation("[STAGE] Found customizations at: {CustomizationRoot}", customizationRoot);
-            logger.LogInformation("[STAGE] Applying error-driven patches...");
 
-            // Pass build error to microagent for repair
-            var patches = await ApplyPatchesAsync(
-                commitSha, 
-                customizationRoot, 
-                packagePath, 
-                languageService, 
-                initialBuildError!,
-                ct);
+            const int maxRepairIterations = 3;
+            var allPatches = new List<AppliedPatch>();
+            string currentBuildError = initialBuildError!;
 
-            if (patches.Count == 0)
+            for (int iteration = 1; iteration <= maxRepairIterations; iteration++)
             {
-                logger.LogInformation("[STAGE] No patches applied - automatic patching found nothing to fix.");
-                return new CustomizedCodeUpdateResponse
+                logger.LogInformation("[STAGE] Repair iteration {Iteration}/{Max} - applying error-driven patches...", iteration, maxRepairIterations);
+
+                // Pass build error to microagent for repair
+                var patches = await ApplyPatchesAsync(
+                    commitSha,
+                    customizationRoot,
+                    packagePath,
+                    languageService,
+                    currentBuildError,
+                    ct);
+
+                allPatches.AddRange(patches);
+
+                if (patches.Count == 0)
                 {
-                    Message = "No patches applied - automatic patching found nothing to fix.",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
-                    ResponseError = initialBuildError,
-                    AppliedPatches = null,
-                    NextSteps = GetPatchesFailedNextSteps().ToList()
-                };
+                    if (allPatches.Count == 0)
+                    {
+                        logger.LogInformation("[STAGE] No patches applied - automatic patching found nothing to fix.");
+                        return new CustomizedCodeUpdateResponse
+                        {
+                            Message = "No patches applied - automatic patching found nothing to fix.",
+                            ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
+                            ResponseError = currentBuildError,
+                            AppliedPatches = null,
+                            NextSteps = GetPatchesFailedNextSteps().ToList()
+                        };
+                    }
+                    // Previous iterations applied patches but this one found nothing more to fix
+                    logger.LogInformation("[STAGE] No more patches to apply after {TotalPatches} total patches.", allPatches.Count);
+                    break;
+                }
+
+                // Regenerate after patches
+                logger.LogInformation("[STAGE] Regenerating code after patches (iteration {Iteration})...", iteration);
+                var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(packagePath, commitSha, ct);
+                if (!regenSuccess)
+                {
+                    logger.LogInformation("[STAGE] Code regeneration failed: {Error}", regenError);
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Message = $"Code regeneration failed after applying patches: {regenError}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
+                        ResponseError = regenError,
+                        AppliedPatches = allPatches,
+                        NextSteps = GetPatchesFailedNextSteps().ToList()
+                    };
+                }
+
+                // Build to validate
+                logger.LogInformation("[STAGE] Validating build after patches (iteration {Iteration})...", iteration);
+                var (postPatchBuildSuccess, postPatchBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+
+                if (postPatchBuildSuccess)
+                {
+                    logger.LogInformation("[STAGE] Build passed after repairs ({TotalPatches} patches in {Iterations} iteration(s)).", allPatches.Count, iteration);
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Message = "Build passed after repairs.",
+                        AppliedPatches = allPatches,
+                        NextSteps = SuccessNextSteps.ToList()
+                    };
+                }
+
+                // Check if the error changed - if same error, no point retrying
+                if (postPatchBuildError == currentBuildError)
+                {
+                    logger.LogInformation("[STAGE] Build error unchanged after iteration {Iteration} - stopping repair loop.", iteration);
+                    break;
+                }
+
+                // Error changed - there's a new/different error, try another iteration
+                logger.LogInformation("[STAGE] Build error changed after iteration {Iteration}, will attempt another repair cycle.", iteration);
+                currentBuildError = postPatchBuildError!;
             }
 
-            // Regenerate after patches
-            logger.LogInformation("[STAGE] Regenerating code after patches...");
-            var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(packagePath, commitSha, ct);
-            if (!regenSuccess)
-            {
-                logger.LogInformation("[STAGE] Code regeneration failed: {Error}", regenError);
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = $"Code regeneration failed after applying patches: {regenError}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
-                    ResponseError = regenError,
-                    NextSteps = GetPatchesFailedNextSteps().ToList()
-                };
-            }
-
-            // Build to validate
-            logger.LogInformation("[STAGE] Validating build after patches...");
-            var (postPatchBuildSuccess, postPatchBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-
-            if (postPatchBuildSuccess)
-            {
-                logger.LogInformation("[STAGE] Build passed after repairs.");
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = "Build passed after repairs.",
-                    AppliedPatches = patches,
-                    NextSteps = SuccessNextSteps.ToList()
-                };
-            }
-
-            // Build still failing after patches - remaining errors are likely in generated code
-            logger.LogInformation("[STAGE] Build still failing after patches. Remaining errors likely in generated code.");
+            // Build still failing after all iterations
+            logger.LogInformation("[STAGE] Build still failing after {TotalPatches} patches across repair iterations. Remaining errors may be in generated code.", allPatches.Count);
             return new CustomizedCodeUpdateResponse
             {
-                Message = $"Patches applied but build still failing: {postPatchBuildError}",
+                Message = $"Patches applied but build still failing: {currentBuildError}",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
-                ResponseError = postPatchBuildError,
-                AppliedPatches = patches,
-                NextSteps = GetMaxIterationsReachedNextSteps(postPatchBuildError ?? "Unknown error").ToList()
+                ResponseError = currentBuildError,
+                AppliedPatches = allPatches,
+                NextSteps = GetMaxIterationsReachedNextSteps(currentBuildError ?? "Unknown error").ToList()
             };
         }
         catch (Exception ex)

@@ -295,18 +295,13 @@ public sealed partial class JavaLanguageService : LanguageService
                 Description = "Apply code patches to customization files only (never generated code)"
             };
 
-            // Cancel the agent after first successful patch to prevent wasted tokens.
-            // The repair loop will rebuild and re-invoke if more patches are needed.
-            using var patchCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            patchTool.OnPatchApplied = () => patchCts.Cancel();
-
             // Safety limit on tool calls per patching session. This is a heuristic -
             // if real-world usage shows the model needs more calls to complete valid fixes,
-            // this should be tuned based on observed behavior. Typical fix needs 2-5 calls.
+            // this should be tuned based on observed behavior.
             var agentDefinition = new Microagent<bool>
             {
                 Instructions = prompt,
-                MaxToolCalls = 15,
+                MaxToolCalls = 30,
                 Tools =
                 [
                     new ReadFileTool(packagePath)
@@ -323,14 +318,9 @@ public sealed partial class JavaLanguageService : LanguageService
             {
                 await microagentHost.RunAgentToCompletion(agentDefinition, ct);
             }
-            catch (OperationCanceledException) when (patchTool.AppliedPatches.Count > 0)
-            {
-                // Expected - agent was cancelled after a successful patch
-                logger.LogDebug("Agent stopped after successful patch application");
-            }
             catch (OperationCanceledException)
             {
-                // Cancelled externally (not by us), re-throw
+                // Cancelled externally, re-throw
                 throw;
             }
             catch (Exception agentEx)

@@ -335,13 +335,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         {
             try
             {
-                // Skip build for Python projects early (Python SDKs don't require compilation)
-                if (Language == SdkLanguage.Python)
-                {
-                    logger.LogDebug("Python SDK - skipping build");
-                    return (true, null, null);
-                }
-
                 logger.LogInformation("Building SDK for project path: {PackagePath}", packagePath);
 
                 // Validate package path

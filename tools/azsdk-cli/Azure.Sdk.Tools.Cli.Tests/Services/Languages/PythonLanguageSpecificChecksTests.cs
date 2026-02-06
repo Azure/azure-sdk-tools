@@ -1,4 +1,5 @@
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -35,7 +36,8 @@ internal class PythonLanguageSpecificChecksTests
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
             Mock.Of<IFileHelper>(),
-            Mock.Of<ISpecGenSdkConfigHelper>());
+            Mock.Of<ISpecGenSdkConfigHelper>(),
+            Mock.Of<IMicroagentHostService>());
     }
 
     #region HasCustomizations Tests

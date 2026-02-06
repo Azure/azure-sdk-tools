@@ -58,7 +58,7 @@ public class SdkBuildToolTests
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, mockMicrohostAgent.Object),
             new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
             new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),

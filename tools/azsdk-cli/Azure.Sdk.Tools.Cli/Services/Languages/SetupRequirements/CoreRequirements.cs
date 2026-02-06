@@ -27,6 +27,7 @@ public static class CoreRequirements
         public override string Name => "Node.js";
         public override string? MinVersion => "22.16.0";
         public override string[] CheckCommand => ["node", "--version"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.LanguageRuntime;
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -42,9 +43,19 @@ public static class CoreRequirements
     {
         public override string Name => "tsp-client";
         public override string? MinVersion => "0.24.0";
+        public override bool IsAutoInstallable => true;
+
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
+        {
+            var workingDir = ctx.IsSpecsRepo()
+                ? ctx.RepoRoot
+                : Path.Combine(ctx.RepoRoot, "eng", "common", "tsp-client");
+
+            return [["npm", "ci", "--prefix", workingDir]];
+        }
 
         public override async Task<RequirementCheckOutput> RunCheckAsync(
-            Func<string[], Task<ProcessResult>> runCommand,
+            IProcessHelper processHelper,
             RequirementContext ctx,
             CancellationToken ct = default)
         {
@@ -63,26 +74,13 @@ public static class CoreRequirements
                 command = ["npm", "exec", "--prefix", tspClientPath, "--no", "--", "tsp-client", "--version"];
             }
 
-            var result = await runCommand(command);
+            var result = await RunCommandAsync(processHelper, command, ctx, ct);
             return new RequirementCheckOutput
             {
                 Success = result.ExitCode == 0,
                 Output = result.Output?.Trim(),
                 Error = result.ExitCode != 0 ? result.Output?.Trim() : null
             };
-        }
-
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
-        {
-            // special case for specs repo
-            if (ctx.IsSpecsRepo())
-            {
-                return [
-                    $"cd {ctx.RepoRoot}",
-                    "npm ci"
-                ];
-            }
-            return ["cd eng/common/tsp-client", "npm ci"];
         }
     }
 
@@ -91,17 +89,15 @@ public static class CoreRequirements
         public override string Name => "tsp";
         public override string? MinVersion => "1.0.0";
         public override string[] CheckCommand => ["tsp", "--version"];
+        public override bool IsAutoInstallable => true;
 
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
         {
             if (ctx.IsSpecsRepo())
             {
-                return [
-                    $"cd {ctx.RepoRoot}",
-                    "npm ci"
-                ];
+                return [["npm", "ci", "--prefix", ctx.RepoRoot]];
             }
-            return ["npm install -g @typespec/compiler@latest"];
+            return [["npm", "install", "-g", "@typespec/compiler@latest"]];
         }
     }
 
@@ -110,6 +106,7 @@ public static class CoreRequirements
         public override string Name => "PowerShell";
         public override string? MinVersion => "7.0";
         public override string[] CheckCommand => ["pwsh", "--version"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.SystemTool;
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -122,6 +119,7 @@ public static class CoreRequirements
         public override string Name => "GitHub CLI";
         public override string? MinVersion => "2.30.0";
         public override string[] CheckCommand => ["gh", "--version"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.SystemTool;
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -132,6 +130,10 @@ public static class CoreRequirements
     public class LongPathsRequirement : Requirement
     {
         public override string Name => "Git long paths";
+        public override bool IsAutoInstallable => true;
+
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
+            => [["git", "config", "--global", "core.longpaths", "true"]];
 
         public override bool ShouldCheck(RequirementContext ctx)
         {
@@ -139,11 +141,11 @@ public static class CoreRequirements
         }
 
         public override async Task<RequirementCheckOutput> RunCheckAsync(
-            Func<string[], Task<ProcessResult>> runCommand,
+            IProcessHelper processHelper,
             RequirementContext ctx,
             CancellationToken ct = default)
         {
-            var result = await runCommand(["git", "config", "--get", "core.longpaths"]);
+            var result = await RunCommandAsync(processHelper, ["git", "config", "--get", "core.longpaths"], ctx, ct);
             
 
             bool isEnabled = result.ExitCode == 0 && 
@@ -172,6 +174,7 @@ public static class CoreRequirements
         public override string? MinVersion => "3.9";
 
         public override string? Reason => "Python is required for all repos because it's used in a common Verify-Readme Powershell script.";
+        public override string? NotAutoInstallableReason => NotInstallableReasons.LanguageRuntime;
 
         public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
@@ -192,14 +195,17 @@ public static class CoreRequirements
         public override string[] CheckCommand => ["python", "-m", "pip", "--version"];
 
         public override string? Reason => "Pip is required for all repos because it's used in a common Verify-Readme Powershell script.";
+        public override bool IsAutoInstallable => false;
 
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
+        public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
+
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
         {
             if (ctx.IsLinux)
             {
-                return ["sudo apt install python3-pip"];
+                return [["sudo", "apt", "install", "python3-pip"]];
             }
-            return ["python -m ensurepip"];
+            return [["python", "-m", "ensurepip", "--upgrade"]];
         }
     }
 }

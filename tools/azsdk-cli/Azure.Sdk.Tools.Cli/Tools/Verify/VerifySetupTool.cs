@@ -26,7 +26,6 @@ public class VerifySetupTool : LanguageMcpTool
         this.processHelper = processHelper;
     }
 
-    private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
     private const string OUTPUT_VERSION_PATTERN = @"[\d\.]+";
     private const string VerifySetupToolName = "azsdk_verify_setup";
 
@@ -57,10 +56,17 @@ public class VerifySetupTool : LanguageMcpTool
         AllowMultipleArgumentsPerToken = true
     };
 
+    private readonly Option<bool> autoInstallParam = new("--auto-install", "-i")
+    {
+        Description = "Automatically install requirements that support auto-installation.",
+        Required = false,
+    };
+
     protected override Command GetCommand() =>
         new McpCommand("setup", "Verify environment setup for MCP release tools", VerifySetupToolName)
         {
             languagesParam,
+            autoInstallParam,
             SharedOptions.PackagePath
         };
 
@@ -68,11 +74,12 @@ public class VerifySetupTool : LanguageMcpTool
     {
         var parsed = GetLanguagesFromOption(parseResult);
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-        return await VerifySetup(parsed, packagePath, ct);
+        var autoInstall = parseResult.GetValue(autoInstallParam);
+        return await VerifySetup(parsed, packagePath, autoInstall, ct);
     }
 
-    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check.")]
-    public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, CancellationToken ct = default)
+    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. Set autoInstall to true to automatically install requirements that support auto-installation.")]
+    public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, bool autoInstall = false, CancellationToken ct = default)
     {
         try
         {
@@ -102,29 +109,96 @@ public class VerifySetupTool : LanguageMcpTool
 
             var results = await Task.WhenAll(checkTasks);
 
+            // Collect failed requirements
+            var failedReqs = new List<(Requirement req, DefaultCommandResponse result)>();
+
             foreach (var (req, result) in results)
             {
-                var instructions = req.GetInstructions(ctx).ToList();
-                
-                var displayName = req.Name;
-                
-                // Display version constraints if applicable
-                if (req.MinVersion != null)
-                {
-                    displayName = $"{req.Name} (>= {req.MinVersion})";
-                }
-
                 if (result.Message != null)
                 {
-                    response.Results.Add(new RequirementCheckResult
-                    {
-                        Requirement = displayName,
-                        Instructions = instructions,
-                        RequirementStatusDetails = result.Message,
-                        Reason = req.Reason
-                    });
+                    failedReqs.Add((req, result));
                 }
             }
+
+            // If auto-install is enabled, attempt to install failed requirements that support it
+            if (autoInstall && failedReqs.Count > 0)
+            {
+                logger.LogInformation("Auto-install is enabled. Attempting to auto-install requirements that support it.");
+                var installable = failedReqs.Where(f => f.req.IsAutoInstallable).ToList();
+                var notInstallable = failedReqs.Where(f => !f.req.IsAutoInstallable).ToList();
+
+                // Report non-installable failures
+                foreach (var (req, result) in notInstallable)
+                {
+                    AddFailedResult(response, req, result, ctx);
+                }
+
+                // Run installs sequentially (order may matter for dependencies)
+                foreach (var (req, result) in installable)
+                {
+                    logger.LogInformation("Auto-installing requirement: {Requirement}", req.Name);
+
+                    var installResult = await RunInstall(req, ctx, ct);
+                    var displayName = GetDisplayName(req);
+                    var instructions = req.GetInstructions(ctx).ToList();
+
+                    if (installResult.Success)
+                    {
+                        // Re-run the check to verify the install succeeded
+                        var recheck = await RunCheck(req, ctx, ct);
+                        if (recheck.Message == null)
+                        {
+                            logger.LogInformation("Requirement {Requirement} auto-installed and verified successfully.", req.Name);
+                            response.Results.Add(new RequirementCheckResult
+                            {
+                                Requirement = displayName,
+                                Instructions = instructions,
+                                RequirementStatusDetails = $"{req.Name} was auto-installed successfully.",
+                                Reason = req.Reason,
+                                AutoInstallAttempted = true,
+                                IsAutoInstallable = true
+                            });
+                        }
+                        else
+                        {
+                            logger.LogWarning("Requirement {Requirement} install completed but verification still fails: {Message}", req.Name, recheck.Message);
+                            response.Results.Add(new RequirementCheckResult
+                            {
+                                Requirement = displayName,
+                                Instructions = instructions,
+                                RequirementStatusDetails = $"{req.Name} install completed but verification still fails: {recheck.Message}",
+                                Reason = req.Reason,
+                                AutoInstallAttempted = true,
+                                AutoInstallError = recheck.Message,
+                                IsAutoInstallable = true
+                            });
+                        }
+                    }
+                    else
+                    {
+                        logger.LogError("Auto-install failed for {Requirement}: {Error}", req.Name, installResult.Error);
+                        response.Results.Add(new RequirementCheckResult
+                        {
+                            Requirement = displayName,
+                            Instructions = instructions,
+                            RequirementStatusDetails = result.Message ?? $"Requirement {req.Name} check failed.",
+                            Reason = req.Reason,
+                            AutoInstallAttempted = true,
+                            AutoInstallError = installResult.Error ?? installResult.Output,
+                            IsAutoInstallable = true
+                        });
+                    }
+                }
+            }
+            else
+            {
+                // No auto-install: report all failures with installability info
+                foreach (var (req, result) in failedReqs)
+                {
+                    AddFailedResult(response, req, result, ctx);
+                }
+            }
+
             return response;
         }
         catch (Exception ex)
@@ -137,30 +211,39 @@ public class VerifySetupTool : LanguageMcpTool
         }
     }
 
+    private void AddFailedResult(VerifySetupResponse response, Requirement req, DefaultCommandResponse result, RequirementContext ctx)
+    {
+        var instructions = req.GetInstructions(ctx).ToList();
+        var displayName = GetDisplayName(req);
+
+        response.Results ??= new List<RequirementCheckResult>();
+        response.Results.Add(new RequirementCheckResult
+        {
+            Requirement = displayName,
+            Instructions = instructions,
+            RequirementStatusDetails = result.Message ?? $"Requirement {req.Name} check failed.",
+            Reason = req.Reason,
+            IsAutoInstallable = req.IsAutoInstallable,
+            NotAutoInstallableReason = req.NotAutoInstallableReason
+        });
+    }
+
+    private static string GetDisplayName(Requirement req)
+    {
+        return req.MinVersion != null ? $"{req.Name} (>= {req.MinVersion})" : req.Name;
+    }
+
     private async Task<DefaultCommandResponse> RunCheck(Requirement req, RequirementContext ctx, CancellationToken ct)
     {
-        // Create a delegate that captures execution details
-        async Task<ProcessResult> runCommand(string[] command)
-        {
-            var options = new ProcessOptions(
-                command[0],
-                args: command.Skip(1).ToArray(),
-                timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
-                logOutputStream: false,
-                workingDirectory: ctx.PackagePath
-            );
-            return await processHelper.Run(options, ct);
-        }
-
         try
         {
-            var checkResult = await req.RunCheckAsync(runCommand, ctx, ct);
+            var checkResult = await req.RunCheckAsync(processHelper, ctx, ct);
 
             if (!checkResult.Success)
             {
                 var instructions = req.GetInstructions(ctx);
-                logger.LogError("Requirement {Requirement} check failed.\n\nInstructions: {Instructions}", 
-                    req.Name, string.Join(", ", instructions));
+                logger.LogError("Requirement {Requirement} check failed", 
+                    req.Name);
                 return new DefaultCommandResponse
                 {
                     Message = $"Requirement {req.Name} check failed: {checkResult.Error ?? checkResult.Output}."
@@ -191,6 +274,23 @@ public class VerifySetupTool : LanguageMcpTool
         }
 
         return new DefaultCommandResponse();
+    }
+
+    private async Task<RequirementCheckOutput> RunInstall(Requirement req, RequirementContext ctx, CancellationToken ct)
+    {
+        try
+        {
+            return await req.RunInstallAsync(processHelper, ctx, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Install for requirement {Requirement} threw an exception.", req.Name);
+            return new RequirementCheckOutput
+            {
+                Success = false,
+                Error = $"Install threw an exception: {ex.Message}"
+            };
+        }
     }
 
     private async Task<RequirementContext> CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null, CancellationToken ct = default)

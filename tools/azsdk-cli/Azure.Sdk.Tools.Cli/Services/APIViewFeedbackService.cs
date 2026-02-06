@@ -327,18 +327,26 @@ Respond in JSON format:
         {
             string apiViewUrl = $"https://apiview.dev/review/{metadata.ReviewId}?activeApiRevisionId={revisionId}";
             _logger.LogInformation("Calling Resolve endpoint for URL: {Url}", apiViewUrl);
-            var resolveResponse = await _apiViewService.Resolve(apiViewUrl);
-            if (resolveResponse != null)
+            var resolveJson = await _apiViewService.Resolve(apiViewUrl);
+            if (!string.IsNullOrWhiteSpace(resolveJson))
             {
-                _logger.LogInformation("Resolve response received - RevisionLabel: {RevisionLabel}", resolveResponse.RevisionLabel);
-                if (!string.IsNullOrWhiteSpace(resolveResponse.RevisionLabel))
+                _logger.LogInformation("Resolve response received: {Response}", resolveJson);
+                try
                 {
-                    metadata.Revision.RevisionLabel = resolveResponse.RevisionLabel;
-                    _logger.LogInformation("Retrieved revisionLabel from resolve endpoint: {RevisionLabel}", metadata.Revision.RevisionLabel);
+                    var resolveData = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(resolveJson);
+                    if (resolveData != null && resolveData.TryGetValue("revisionLabel", out var labelElement))
+                    {
+                        metadata.Revision.RevisionLabel = labelElement.GetString();
+                        _logger.LogInformation("Retrieved revisionLabel from resolve endpoint: {RevisionLabel}", metadata.Revision.RevisionLabel);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Resolve response does not contain revisionLabel field");
+                    }
                 }
-                else
+                catch (JsonException ex)
                 {
-                    _logger.LogWarning("Resolve response does not contain revisionLabel");
+                    _logger.LogWarning(ex, "Failed to parse resolve response for revision {RevisionId}", revisionId);
                 }
             }
             else

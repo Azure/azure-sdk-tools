@@ -628,7 +628,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var typeSpecProjectPath = "specification/testcontoso/Contoso.Management";
 
             // Act
-            var result = await releasePlanTool.FindProductByTypeSpecPath(typeSpecProjectPath);
+            var result = await releasePlanTool.GetProductByTypeSpecPath(typeSpecProjectPath);
 
             // Assert
             Assert.IsNotNull(result);
@@ -649,7 +649,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var typeSpecProjectPath = "specification/nonexistent/Service";
 
             // Act
-            var result = await releasePlanTool.FindProductByTypeSpecPath(typeSpecProjectPath);
+            var result = await releasePlanTool.GetProductByTypeSpecPath(typeSpecProjectPath);
 
             // Assert
             Assert.IsNotNull(result);
@@ -665,7 +665,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var typeSpecProjectPath = "";
 
             // Act
-            var result = await releasePlanTool.FindProductByTypeSpecPath(typeSpecProjectPath);
+            var result = await releasePlanTool.GetProductByTypeSpecPath(typeSpecProjectPath);
 
             // Assert
             Assert.IsNotNull(result);

@@ -23,7 +23,26 @@ public class VerifySetupResponse : CommandResponse
             foreach (var result in Results)
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
-                sb.AppendLine($"        - Instructions: {string.Join(", ", result.Instructions)}");
+
+                if (result.WasAutoInstalled)
+                {
+                    sb.AppendLine($"        - Auto-installed successfully");
+                }
+                else if (result.AutoInstallFailed)
+                {
+                    sb.AppendLine($"        - Auto-install failed: {result.AutoInstallError}");
+                    sb.AppendLine($"        - Instructions: {string.Join(", ", result.Instructions)}");
+                }
+                else
+                {
+                    sb.AppendLine($"        - Instructions: {string.Join(", ", result.Instructions)}");
+                }
+
+                if (!string.IsNullOrEmpty(result.NotAutoInstallableReason))
+                {
+                    sb.AppendLine($"        - Not auto-installable: {result.NotAutoInstallableReason}");
+                }
+
                 if (!string.IsNullOrEmpty(result.Reason))
                 {
                     sb.AppendLine($"        - Reason: {result.Reason}");
@@ -60,4 +79,34 @@ public class RequirementCheckResult
     /// The reason for the requirement.
     /// </summary>
     public string? Reason { get; set; }
+    /// <summary>
+    /// Whether the requirement was successfully auto-installed.
+    /// </summary>
+    [JsonPropertyName("wasAutoInstalled")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool WasAutoInstalled { get; set; }
+    /// <summary>
+    /// Whether auto-install was attempted but failed.
+    /// </summary>
+    [JsonPropertyName("autoInstallFailed")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool AutoInstallFailed { get; set; }
+    /// <summary>
+    /// Error message if auto-install was attempted but failed.
+    /// </summary>
+    [JsonPropertyName("autoInstallError")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AutoInstallError { get; set; }
+    /// <summary>
+    /// Whether this requirement supports auto-installation.
+    /// </summary>
+    [JsonPropertyName("isAutoInstallable")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool IsAutoInstallable { get; set; }
+    /// <summary>
+    /// Reason why this requirement cannot be auto-installed, if applicable.
+    /// </summary>
+    [JsonPropertyName("notAutoInstallableReason")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? NotAutoInstallableReason { get; set; }
 }

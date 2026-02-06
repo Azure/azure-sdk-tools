@@ -22,6 +22,7 @@ public static class GoRequirements
     {
         public override string Name => "Go";
         public override string[] CheckCommand => ["go", "version"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.LanguageRuntime;
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.Go);
@@ -40,6 +41,10 @@ public static class GoRequirements
     public class GoImportsRequirement : Requirement
     {
         public override string Name => "goimports";
+        public override bool IsAutoInstallable => true;
+
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
+            => [["go", "install", "golang.org/x/tools/cmd/goimports@latest"]];
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.Go);
@@ -62,17 +67,13 @@ public static class GoRequirements
                 Error = found ? null : "goimports not found in PATH"
             };
         }
-
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
-        {
-            return ["go install golang.org/x/tools/cmd/goimports@latest"];
-        }
     }
 
     public class GolangCiLintRequirement : Requirement
     {
         public override string Name => "golangci-lint";
         public override string[] CheckCommand => ["golangci-lint", "--version"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.SystemTool;
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.Go);
@@ -88,13 +89,12 @@ public static class GoRequirements
         public override string Name => "generator";
         public override string? MinVersion => "0.4.3";
         public override string[] CheckCommand => ["generator", "-v"];
+        public override bool IsAutoInstallable => true;
+
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
+            => [["go", "install", "github.com/Azure/azure-sdk-for-go/eng/tools/generator@latest"]];
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.Go);
-
-        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
-        {
-            return ["go install github.com/Azure/azure-sdk-for-go/eng/tools/generator@latest"];
-        }
     }
 }

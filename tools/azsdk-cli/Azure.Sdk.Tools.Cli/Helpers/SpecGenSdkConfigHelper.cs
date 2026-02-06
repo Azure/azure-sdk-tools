@@ -342,7 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 timeout: TimeSpan.FromMinutes(timeoutMinutes)
             );
 
-            _logger.LogInformation("Created command process options: {Command} {Args}", options.Command, string.Join(" ", options.Args));
+            _logger.LogDebug("Created command process options: {Command} {Args}", options.Command, string.Join(" ", options.Args));
             return options;
         }
 

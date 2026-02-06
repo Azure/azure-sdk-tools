@@ -157,7 +157,7 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         return new TestRunResponse(result);
     }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override string? HasCustomizations(string packagePath, CancellationToken ct)
     {
         // In azure-sdk-for-js, the presence of a "generated" folder at the same level
         // as package.json indicates the package has customizations (code outside generated/).
@@ -167,17 +167,24 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             var generatedFolder = Path.Combine(packagePath, GeneratedFolderName);
             if (Directory.Exists(generatedFolder))
             {
-                logger.LogDebug("Found JavaScript generated folder at {GeneratedFolder}", generatedFolder);
-                return true;
+                // If generated folder exists, customizations are everything outside it
+                var srcDir = Path.Combine(packagePath, "src");
+                if (Directory.Exists(srcDir))
+                {
+                    logger.LogDebug("Found JavaScript customization root at {SrcDir}", srcDir);
+                    return srcDir;
+                }
+                // Fall back to package path if no src folder
+                return packagePath;
             }
 
             logger.LogDebug("No JavaScript generated folder found in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Error searching for JavaScript customization files in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
     }
 }

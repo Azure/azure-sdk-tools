@@ -117,7 +117,7 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     return (packageName, packageVersion);
 }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {
         // Python SDKs can have _patch.py files in multiple locations within the package:
         // e.g., azure/packagename/_patch.py, azure/packagename/models/_patch.py, azure/packagename/operations/_patch.py
@@ -136,17 +136,17 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
                 if (HasNonEmptyAllExport(patchFile))
                 {
                     logger.LogDebug("Found Python _patch.py with customizations at {PatchFile}", patchFile);
-                    return true;
+                    return packagePath; // Return package path since patches are scattered
                 }
             }
 
             logger.LogDebug("No Python _patch.py files with customizations found in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Error searching for Python customization files in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
     }
 

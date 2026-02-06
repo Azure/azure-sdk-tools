@@ -245,95 +245,69 @@ public sealed partial class JavaLanguageService : LanguageService
         return Task.FromResult(new List<ApiChange>());
     }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {
         // In azure-sdk-for-java layout, customizations live under:
         //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
-        // Example (document intelligence):
-        //   package path: .../azure-ai-documentintelligence
-        //   customization: .../azure-ai-documentintelligence/customization/src/main/java
-        // TODO: In the future, check tspconfig.yaml for "customization-class" directive for definitive detection.
-
-        try
-        {
-            var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
-            if (Directory.Exists(customizationSourceRoot))
-            {
-                logger.LogDebug("Found Java customization directory at {CustomizationPath}", customizationSourceRoot);
-                return true;
-            }
-
-            logger.LogDebug("No Java customization directory found in {PackagePath}", packagePath);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error searching for Java customization files in {PackagePath}", packagePath);
-            return false;
-        }
+        var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
+        return Directory.Exists(customizationSourceRoot) ? customizationSourceRoot : null;
     }
 
-    public override async Task<bool> ApplyPatchesAsync(
+    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string commitSha,
         string customizationRoot,
         string packagePath,
+        string buildError,
         CancellationToken ct)
     {
         try
         {
-            logger.LogInformation("Generating automated patches for customization files");
-            logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
-            logger.LogInformation("Package path: {PackagePath}", packagePath);
-            logger.LogInformation("Commit SHA: {CommitSha}", commitSha);
-
-            // Read all .java files under customizationRoot and concatenate their contents into customizationContent
-            var customizationContentBuilder = new System.Text.StringBuilder();
-
-            if (Directory.Exists(customizationRoot))
+            if (!Directory.Exists(customizationRoot))
             {
-                var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
-                logger.LogInformation("Found {FileCount} Java customization files in {Root}", javaFiles.Length, customizationRoot);
-
-                foreach (var file in javaFiles)
-                {
-                    logger.LogDebug("Reading customization file: {File}", file);
-                    var fileContent = await File.ReadAllTextAsync(file, ct);
-                    logger.LogInformation("File {File} has {Lines} lines and {Characters} characters",
-                        Path.GetFileName(file), fileContent.Split('\n').Length, fileContent.Length);
-
-                    // Use relative path from customizationRoot for the LLM to reference
-                    var relativePath = Path.GetRelativePath(customizationRoot, file);
-                    customizationContentBuilder.AppendLine($"// File: {relativePath}");
-                    customizationContentBuilder.AppendLine(fileContent);
-                    customizationContentBuilder.AppendLine();
-                }
-            }
-            else
-            {
-                logger.LogWarning("Customization root directory does not exist: {Root}", customizationRoot);
-                return false;
+                logger.LogDebug("Customization root does not exist: {Root}", customizationRoot);
+                return [];
             }
 
-            var customizationContent = customizationContentBuilder.ToString();
+            // Just get the list of files - microagent will read content as needed
+            var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
+            
+            // Provide FULL paths so the LLM doesn't get confused about where files are
+            // The ReadFile tool base is packagePath, so we give paths relative to that
+            var customizationFiles = javaFiles
+                .Select(f => Path.GetRelativePath(packagePath, f))
+                .ToList();
+            
+            // Also provide the relative-to-customization-root paths for the patch tool
+            var patchFilePaths = javaFiles
+                .Select(f => Path.GetRelativePath(customizationRoot, f))
+                .ToList();
 
-            // For now, using placeholder generated code - TODO: implement proper old/new code comparison  
-            // Future enhancement: read actual generated files and compare them
-            var oldGeneratedCode = "// TODO: Read actual old generated code for comparison";
-            var newGeneratedCode = "// TODO: Read actual new generated code for comparison";
-
-            // Build prompt for direct patch application using the java patch template
-            var prompt = new JavaPatchGenerationTemplate(
-                oldGeneratedCode,
-                newGeneratedCode,
+            // Build error-driven prompt
+            var prompt = new JavaErrorDrivenPatchTemplate(
+                buildError,
                 packagePath,
-                customizationContent,
                 customizationRoot,
-                commitSha).BuildPrompt();
-            logger.LogInformation("Generated prompt for patch analysis with {ContentLength} characters", prompt.Length);
+                customizationFiles).BuildPrompt();
 
+            // Create patch tool so we can retrieve applied patches after microagent completes
+            var patchTool = new ClientCustomizationCodePatchTool(customizationRoot)
+            {
+                Name = "ClientCustomizationCodePatch",
+                Description = "Apply code patches to customization files only (never generated code)"
+            };
+
+            // Cancel the agent after first successful patch to prevent wasted tokens.
+            // The repair loop will rebuild and re-invoke if more patches are needed.
+            using var patchCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            patchTool.OnPatchApplied = () => patchCts.Cancel();
+
+            // Safety limit on tool calls per patching session. This is a heuristic -
+            // if real-world usage shows the model needs more calls to complete valid fixes,
+            // this should be tuned based on observed behavior. Typical fix needs 2-5 calls.
             var agentDefinition = new Microagent<bool>
             {
                 Instructions = prompt,
+                MaxToolCalls = 15,
                 Tools =
                 [
                     new ReadFileTool(packagePath)
@@ -341,26 +315,38 @@ public sealed partial class JavaLanguageService : LanguageService
                         Name = "ReadFile",
                         Description = "Read files from the package directory (generated code, customization files, etc.)"
                     },
-                    new ClientCustomizationCodePatchTool(customizationRoot)
-                    {
-                        Name = "ClientCustomizationCodePatch",
-                        Description = "Apply code patches directly to customization files"
-                    }
+                    patchTool
                 ]
             };
 
-            // Use microagent system to apply patches directly
-            logger.LogInformation("Sending prompt to microagent for direct patch application");
-            var patchApplicationSuccess = await microagentHost.RunAgentToCompletion(agentDefinition, ct);
-            logger.LogInformation("Patch application completed with result: {Success}", patchApplicationSuccess);
+            // Use microagent system to apply patches
+            try
+            {
+                await microagentHost.RunAgentToCompletion(agentDefinition, ct);
+            }
+            catch (OperationCanceledException) when (patchTool.AppliedPatches.Count > 0)
+            {
+                // Expected - agent was cancelled after a successful patch
+                logger.LogDebug("Agent stopped after successful patch application");
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancelled externally (not by us), re-throw
+                throw;
+            }
+            catch (Exception agentEx)
+            {
+                // Microagent may have hit MaxToolCalls limit but still applied patches
+                logger.LogDebug(agentEx, "Microagent terminated early");
+            }
+            logger.LogInformation("[STAGE] Patch application completed, patches applied: {PatchCount}", patchTool.AppliedPatches.Count);
 
-            // Return the result of patch application
-            return patchApplicationSuccess;
+            return patchTool.AppliedPatches;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to apply automated patches");
-            return false;
+            logger.LogError(ex, "Failed to apply error-driven patches");
+            return [];
         }
     }
 }

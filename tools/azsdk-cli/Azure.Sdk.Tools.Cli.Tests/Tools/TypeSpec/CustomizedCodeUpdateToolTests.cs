@@ -2,6 +2,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Moq;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -28,8 +29,8 @@ public class CustomizedCodeUpdateToolAutoTests
         public override bool IsCustomizedCodeUpdateSupported => true;
         public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override bool HasCustomizations(string packagePath, CancellationToken ct) => false; // No customizations found
-        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(false);
+        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => null; // No customizations
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct) => Task.FromResult(new List<AppliedPatch>());
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
             => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null)); // Mock successful build
@@ -57,9 +58,9 @@ public class CustomizedCodeUpdateToolAutoTests
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
-        public override bool HasCustomizations(string packagePath, CancellationToken ct) => true; // Has customizations
-        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
-            => Task.FromResult(true); // Simulate successful patch application
+        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization"); // Has customizations
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct)
+            => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.py", "test patch", 1) }); // Simulate successful patch application
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
             => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null)); // Mock successful build
@@ -97,7 +98,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
         Assert.That(run.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide next steps guidance");
-        Assert.That(run.Message, Does.Contain("No customization"), "Should indicate no customizations found");
+        // With error-driven flow: build passes → success, message reflects build success
+        Assert.That(run.Message, Does.Contain("Build passed"), "Should indicate build passed");
     }
 
     [Test]
@@ -117,8 +119,9 @@ public class CustomizedCodeUpdateToolAutoTests
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
         var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(first.ErrorCode, Is.Null, "Should complete successfully without errors");
-        Assert.That(first.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for applied patches");
-        Assert.That(first.Message, Does.Contain("Patches applied"), "Should indicate patches were applied successfully");
+        Assert.That(first.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance");
+        // With error-driven flow: build passes first → success (no repair needed if build passes)
+        Assert.That(first.Message, Does.Contain("Build passed"), "Should indicate build passed");
     }
 
     [Test]
@@ -143,6 +146,105 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(resp.Message, Does.Contain("Build failed"), "Should indicate build failure in message");
     }
 
+    [Test]
+    public async Task ErrorDrivenRepair_BuildFailsThenSucceeds_CompletesSuccessfully()
+    {
+        var tsp = new MockTspHelper();
+        var gitHelper = new Mock<IGitHelper>();
+        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
+        var svc = new TestLanguageServiceBuildFailThenPass();
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
+            .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var pkg = CreateTempPackageDir();
+        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
+        var resp = await tool.UpdateAsync("abc123def456abc123def456abc123def456abc1", packagePath: pkg, ct: CancellationToken.None);
+        // Should succeed after error-driven repair
+        Assert.That(resp.ErrorCode, Is.Null, "Should complete successfully after repair");
+        Assert.That(resp.Message, Does.Contain("repair iteration"), "Should indicate repair was performed");
+    }
+
+    [Test]
+    public async Task ErrorDrivenRepair_MaxIterationsReached_ReturnsGuidance()
+    {
+        var tsp = new MockTspHelper();
+        var gitHelper = new Mock<IGitHelper>();
+        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
+        var svc = new TestLanguageServiceBuildAlwaysFails();
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
+            .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
+        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var pkg = CreateTempPackageDir();
+        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
+        var resp = await tool.UpdateAsync("abc123", packagePath: pkg, ct: CancellationToken.None);
+        // Should exhaust max iterations and return guidance
+        Assert.That(resp.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed), "Should have build failure error code");
+        Assert.That(resp.Message, Does.Contain("Max repair iterations"), "Should indicate max iterations reached");
+        Assert.That(resp.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for manual fix");
+    }
+
+    // Language service that fails first build, then passes second build (successful repair)
+    private class TestLanguageServiceBuildFailThenPass : LanguageService
+    {
+        public override SdkLanguage Language { get; } = SdkLanguage.Java;
+        public override bool IsCustomizedCodeUpdateSupported => true;
+        private int _buildCalls = 0;
+        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
+        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
+        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        {
+            _buildCalls++;
+            if (_buildCalls == 1)
+            {
+                return Task.FromResult<(bool, string?, PackageInfo?)>((false, "variable operationId is already defined", null));
+            }
+            return Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null));
+        }
+        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
+        {
+            PackagePath = packagePath,
+            RepoRoot = "/mock/repo",
+            RelativePath = "sdk/mock/package",
+            PackageName = "mock-package",
+            ServiceName = "mock",
+            PackageVersion = "1.0.0",
+            SamplesDirectory = "/mock/samples",
+            Language = SdkLanguage.Java,
+            SdkType = SdkType.Dataplane
+        });
+    }
+
+    // Language service that always fails build with same error (stall scenario)
+    private class TestLanguageServiceBuildAlwaysFails : LanguageService
+    {
+        public override SdkLanguage Language { get; } = SdkLanguage.Java;
+        public override bool IsCustomizedCodeUpdateSupported => true;
+        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
+        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
+        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+            => Task.FromResult<(bool, string?, PackageInfo?)>((false, "same error every time", null));
+        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
+        {
+            PackagePath = packagePath,
+            RepoRoot = "/mock/repo",
+            RelativePath = "sdk/mock/package",
+            PackageName = "mock-package",
+            ServiceName = "mock",
+            PackageVersion = "1.0.0",
+            SamplesDirectory = "/mock/samples",
+            Language = SdkLanguage.Java,
+            SdkType = SdkType.Dataplane
+        });
+    }
+
     private class TestLanguageServiceFailThenFix: LanguageService
     {
         public override SdkLanguage Language { get; } = SdkLanguage.Java;
@@ -151,8 +253,8 @@ public class CustomizedCodeUpdateToolAutoTests
         private Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override bool HasCustomizations(string packagePath, CancellationToken ct) => true; // Has customizations
-        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(true); // Simulate patches applied
+        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization"); // Has customizations
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) }); // Simulate patches applied
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
         {
             var attempt = _next();

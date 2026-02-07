@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        [McpServerTool(Name = InitTypeSpecProjectToolName), Description("Use this tool to initialize a new TypeSpec project. Returns the path to the created project.")]
+        [McpServerTool(Name = InitTypeSpecProjectToolName), Description("Initialize and bootstrap new TypeSpec projects for Azure services. USE FOR: onboard service to TypeSpec, create TypeSpec project, start ARM resource provider, set up data plane API, bootstrap TypeSpec for Azure SDK, initialize azure-core or azure-arm project.")]
         public async Task<TspToolResponse> InitTypeSpecProjectAsync(
             [Description("Pass in the output directory where the project should be created. Must be an existing empty directory.")]
             string outputDirectory,

@@ -36,6 +36,7 @@ namespace APIViewWeb.Managers
         private readonly IEmailTemplateService _emailTemplateService;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<NotificationManager> _logger;
+        private readonly IEnumerable<LanguageService> _languageServices;
 
         private const string ENDPOINT_SETTING = "APIVIew-Host-Url";
 
@@ -46,7 +47,8 @@ namespace APIViewWeb.Managers
             TelemetryClient telemetryClient,
             IEmailTemplateService emailTemplateService,
             IHttpClientFactory httpClientFactory,
-            ILogger<NotificationManager> logger)
+            ILogger<NotificationManager> logger,
+            IEnumerable<LanguageService> languageServices)
         {
             _configuration = configuration;
             _apiviewEndpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
@@ -60,6 +62,7 @@ namespace APIViewWeb.Managers
             _emailTemplateService = emailTemplateService;
             _httpClientFactory = httpClientFactory;
             _logger = logger;
+            _languageServices = languageServices;
         }
 
         public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)
@@ -182,13 +185,19 @@ namespace APIViewWeb.Managers
         private string GetCommentTagHtmlContent(CommentItemModel comment, ReviewListItemModel review)
         {
             var reviewName = review.PackageName;
-            var reviewLink = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}#{Uri.EscapeDataString(comment.ElementId)}");
+            var reviewLink = ManagerHelpers.ResolveReviewUrl(
+                reviewId: review.Id,
+                apiRevisionId: comment.APIRevisionId,
+                language: review.Language,
+                configuration: _configuration,
+                languageServices: _languageServices,
+                elementId: comment.ElementId);
             var commentText = comment.CommentText;
             var poster = comment.CreatedBy;
             var userLink = new Uri($"{_apiviewEndpoint}/Assemblies/Profile/{poster}");
             var sb = new StringBuilder();
             sb.Append($"<a href='{userLink.ToString()}'>{poster}</a>");
-            sb.Append($" mentioned you in <a href='{reviewLink.ToString()}'><b>{reviewName}</b></a>");
+            sb.Append($" mentioned you in <a href='{reviewLink}'><b>{reviewName}</b></a>");
             sb.Append("<br>");
             sb.Append("Their comment was the following:");
             sb.Append("<br><br><i>");
@@ -205,8 +214,14 @@ namespace APIViewWeb.Managers
 
             if (comment.ElementId != null)
             {
-                var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}#{Uri.EscapeDataString(comment.ElementId)}");
-                sb.Append($"In <a href='{uri.ToString()}'>{WebUtility.HtmlEncode(comment.ElementId)}</a>:");
+                var uri = ManagerHelpers.ResolveReviewUrl(
+                    reviewId: review.Id,
+                    apiRevisionId: comment.APIRevisionId,
+                    language: review.Language,
+                    configuration: _configuration,
+                    languageServices: _languageServices,
+                    elementId: comment.ElementId);
+                sb.Append($"In <a href='{uri}'>{WebUtility.HtmlEncode(comment.ElementId)}</a>:");
                 sb.Append("<br><br>");
             }
 

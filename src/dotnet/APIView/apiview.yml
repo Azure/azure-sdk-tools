@@ -42,6 +42,7 @@ pr:
     include:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
+      - src/dotnet/Azure.ClientSdk.Analyzers
       - src/java/apiview-java-processor
       - src/go
       - src/swift

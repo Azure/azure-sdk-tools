@@ -232,7 +232,16 @@ type Index struct {
 	ContextID       Source  `json:"context_id"`
 	Scope           string  `json:"scope,omitempty"`
 	ServiceType     string  `json:"service_type,omitempty"`
+
+	SearchType SearchType `json:"search_type,omitempty"`
 }
+
+type SearchType string
+
+const (
+	SearchType_Vector  SearchType = "Vector Search"
+	SearchType_Agentic SearchType = "Agentic Search"
+)
 
 type Knowledge struct {
 	Source   Source `json:"document_source"`

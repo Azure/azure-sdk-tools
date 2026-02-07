@@ -82,15 +82,17 @@ type AdditionalInfo struct {
 }
 
 type CompletionReq struct {
-	TenantID        TenantID         `json:"tenant_id" jsonschema:"required,description=The tenant ID of the agent"`
-	TopK            *int             `json:"top_k" jsonschema:"description=omitempty,The number of top K documents to search for the answer. Default is 10"`
-	Sources         []Source         `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
-	Message         Message          `json:"message" jsonschema:"required,description=The message to send to the agent"`
-	History         []Message        `json:"history" jsonschema:"description=omitempty,The history of messages exchanged with the agent"`
-	WithFullContext *bool            `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
-	WithPreprocess  *bool            `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
-	AdditionalInfos []AdditionalInfo `json:"additional_infos,omitempty" jsonschema:"omitempty,description=Additional information to provide to the agent, such as links or images"`
-	Intention       *Intention       `json:"intention,omitempty" jsonschema:"omitempty,description=Optional intention fields that override LLM intention recognition results"`
+	TenantID          TenantID         `json:"tenant_id" jsonschema:"required,description=The tenant ID of the agent"`
+	TopK              *int             `json:"top_k" jsonschema:"description=omitempty,The number of top K documents to search for the answer. Default is 10"`
+	Sources           []Source         `json:"sources" jsonschema:"description=omitempty,The sources to search for the answer. Default is all"`
+	Message           Message          `json:"message" jsonschema:"required,description=The message to send to the agent"`
+	History           []Message        `json:"history" jsonschema:"description=omitempty,The history of messages exchanged with the agent"`
+	WithFullContext   *bool            `json:"with_full_context" jsonschema:"description=omitempty,Whether to use the full context for the agent. Default is false"`
+	WithPreprocess    *bool            `json:"with_preprocess" jsonschema:"description=omitempty,Whether to preprocess the message before sending it to the agent. Default is false"`
+	AdditionalInfos   []AdditionalInfo `json:"additional_infos,omitempty" jsonschema:"omitempty,description=Additional information to provide to the agent, such as links or images"`
+	Intention         *Intention       `json:"intention,omitempty" jsonschema:"omitempty,description=Optional intention fields that override LLM intention recognition results"`
+	ModelConfig       *ModelConfig     `json:"model_config,omitempty" jsonschema:"omitempty,description=Optional model configuration to override default models for this request"`
+	WithAgenticSearch *bool            `json:"with_agentic_search" jsonschema:"description=omitempty,Whether to run agentic search to search context. Default is true"`
 }
 
 type CompletionResp struct {
@@ -131,4 +133,11 @@ type Intention struct {
 
 type TenantRoutingResult struct {
 	RouteTenant TenantID `json:"route_tenant" jsonschema:"required,description=The tenant ID to route the question to"`
+}
+
+type ModelConfig struct {
+	CompletionModel            *string  `json:"completion_model" jsonschema:"omitempty,description=The model name for completion tasks"`
+	CompletionModelTemperature *float32 `json:"completion_model_temperature" jsonschema:"omitempty,description=The temperature for the completion model"`
+	ReasoningModel             *string  `json:"reasoning_model" jsonschema:"omitempty,description=The model name for reasoning tasks"`
+	ReasoningModelTemperature  *float32 `json:"reasoning_model_temperature" jsonschema:"omitempty,description=The temperature for the reasoning model"`
 }

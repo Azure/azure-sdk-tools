@@ -74,7 +74,7 @@ func TestRoutingTenant_General(t *testing.T) {
 				Content: tc.content,
 			}}
 			llmMessages := convertToLLMMessages(messages)
-			routedTenantID, _ := service.RouteTenant(model.TenantID_GeneralQaBot, llmMessages)
+			routedTenantID, _ := service.RouteTenant(model.TenantID_GeneralQaBot, nil, llmMessages)
 			require.NotNil(t, routedTenantID)
 			require.Equal(t, tc.tenant, routedTenantID)
 		})

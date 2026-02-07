@@ -251,7 +251,7 @@ export class CommentThreadComponent {
   getCommentActionMenuContent(commentId: string) {
     const comment = this.codePanelRowData!.comments?.find(comment => comment.id === commentId);
     const menu : MenuItem[] = [];
-    if (comment && this.userProfile?.userName === comment.createdBy) {
+    if (comment && this.userProfile?.userName === comment.createdBy && !this.isSystemGenerated(comment)) {
       menu.push(...this.menuItemsLoggedInUsers);
     } else if (comment && comment.createdBy == "azure-sdk" && this.preferredApprovers.includes(this.userProfile?.userName!)) {
       menu.push(...this.menuItemsLoggedInArchitects);
@@ -884,6 +884,14 @@ export class CommentThreadComponent {
 
   isAIGenerated(comment: CommentItemModel): boolean {
     return comment.commentSource === CommentSource.AIGenerated;
+  }
+
+  isDiagnostic(comment: CommentItemModel): boolean {
+    return comment.commentSource === CommentSource.Diagnostic;
+  }
+
+  isSystemGenerated(comment: CommentItemModel): boolean {
+    return this.isAIGenerated(comment) || this.isDiagnostic(comment);
   }
 
   hasAIInfo(comment: CommentItemModel): boolean {

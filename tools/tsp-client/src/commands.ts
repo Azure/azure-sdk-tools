@@ -14,7 +14,7 @@ import {
   removeDirectory,
 } from "./fs.js";
 import { cp, mkdir, readFile, stat, unlink, writeFile } from "fs/promises";
-import { npmCommand, nodeCommand } from "./npm.js";
+import { npmCommand, npxCommand } from "./npm.js";
 import {
   compileTsp,
   discoverEntrypointFile,
@@ -26,7 +26,6 @@ import {
   getAdditionalDirectoryName,
   getServiceDir,
   makeSparseSpecDir,
-  getPathToDependency,
   updateExistingTspLocation,
   parseTspClientRepoConfig,
   TspClientConfig,
@@ -610,51 +609,43 @@ export async function convertCommand(argv: any): Promise<void> {
   if (await doesFileExist(readme)) {
     readme = normalizePath(resolve(readme));
   }
+  try {
+    // Build the command to convert to typespec
+    const args = [
+      "autorest",
+      "--openapi-to-typespec",
+      "--csharp=false",
+      "--use=@autorest/openapi-to-typespec",
+      `--output-folder="${outputDir}"`,
+      `"${readme}"`,
+    ];
 
-  // Resolve autorest dependency
-  const autorestPath = await getPathToDependency("autorest");
-  const autorestPackageJson = JSON.parse(
-    await readFile(joinPaths(autorestPath, "package.json"), "utf8"),
-  );
-  const autorestBinPath = joinPaths(autorestPath, autorestPackageJson["bin"]["autorest"]);
-
-  // Resolve core dependency
-  const autorestCorePath = await getPathToDependency("@autorest/core");
-
-  // Resolve extension dependencies
-  const autorestOpenApiToTypeSpecPath = await getPathToDependency("@autorest/openapi-to-typespec");
-
-  // Build the command to convert swagger to typespec
-  const args = [
-    autorestBinPath,
-    `--version="${autorestCorePath}"`,
-    "--openapi-to-typespec",
-    "--csharp=false",
-    `--output-folder="${outputDir}"`,
-    `--use="${autorestOpenApiToTypeSpecPath}"`,
-    `"${readme}"`,
-  ];
-
-  if (arm) {
-    args.push("--isArm");
-  }
-
-  if (fullyCompatible) {
-    args.push("--isFullCompatible");
-  }
-
-  if (debug) {
-    args.push("--debug");
-  }
-  await nodeCommand(outputDir, args);
-
-  if (arm) {
-    try {
-      await unlink(joinPaths(rootUrl, "resources.json"));
-    } catch (err) {
-      Logger.error(`Error occurred while attempting to delete resources.json: ${err}`);
-      process.exit(1);
+    if (arm) {
+      args.push("--isArm");
     }
+
+    if (fullyCompatible) {
+      args.push("--isFullCompatible");
+    }
+
+    if (debug) {
+      args.push("--debug");
+    }
+    await npxCommand(outputDir, args);
+
+    if (arm) {
+      try {
+        await unlink(joinPaths(rootUrl, "resources.json"));
+      } catch (err) {
+        Logger.error(`Error occurred while attempting to delete resources.json: ${err}`);
+        process.exit(1);
+      }
+    }
+  } catch (err) {
+    Logger.error(
+      `An error occurred during convert command. Verify that autorest is accessible via npx (or installed globally) and try again. Error: ${err}`,
+    );
+    process.exit(1);
   }
 }
 

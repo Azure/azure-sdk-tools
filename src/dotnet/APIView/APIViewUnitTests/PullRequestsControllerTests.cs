@@ -50,7 +50,7 @@ namespace APIViewUnitTests
             _mockPullRequestManager.Setup(m => m.CreateAPIRevisionIfAPIHasChanges(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CreateAPIRevisionAPIResponse>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null))
                 .ReturnsAsync("https://test.com/review/test-id");
 
             // Setup HTTP context for Request.Host
@@ -90,7 +90,8 @@ namespace APIViewUnitTests
                 null, // baselineCodeFile
                 null, // language - actual value from controller
                 "internal", // default project
-                packageTypeValue), // packageType should be passed exactly as received
+                packageTypeValue,
+                null), // packageType should be passed exactly as received
                 Times.Once);
         }
 
@@ -106,7 +107,7 @@ namespace APIViewUnitTests
             _mockPullRequestManager.Setup(m => m.CreateAPIRevisionIfAPIHasChanges(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CreateAPIRevisionAPIResponse>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null))
                 .ReturnsAsync("https://test.com/review/test-id");
 
             // Setup HTTP context for Request.Host
@@ -146,7 +147,8 @@ namespace APIViewUnitTests
                 null, // baselineCodeFile
                 null, // language - actual value from controller
                 "internal", // default project
-                packageTypeValue), // packageType should be passed exactly as received (even invalid values)
+                packageTypeValue, // packageType should be passed exactly as received (even invalid values)
+                null), 
                 Times.Once);
         }
 
@@ -157,7 +159,7 @@ namespace APIViewUnitTests
             _mockPullRequestManager.Setup(m => m.CreateAPIRevisionIfAPIHasChanges(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CreateAPIRevisionAPIResponse>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null))
                 .ReturnsAsync("https://test.com/review/test-id");
 
             // Setup HTTP context for Request.Host
@@ -197,7 +199,8 @@ namespace APIViewUnitTests
                 null, // baselineCodeFile
                 null, // language - actual value from controller
                 "internal", // default project
-                null), // packageType should be null when omitted
+                null, // packageType should be null when omitted
+                null), 
                 Times.Once);
         }
 
@@ -208,7 +211,7 @@ namespace APIViewUnitTests
             _mockPullRequestManager.Setup(m => m.CreateAPIRevisionIfAPIHasChanges(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CreateAPIRevisionAPIResponse>(),
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null))
                 .ReturnsAsync((string)null); // No API revision URL returned
 
             // Setup HTTP context for Request.Host

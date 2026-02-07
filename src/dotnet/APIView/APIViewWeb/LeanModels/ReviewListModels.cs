@@ -121,6 +121,8 @@ namespace APIViewWeb.LeanModels
         public string ReviewGroupId { get; set; }
         public string NamespaceApprovalRequestedBy { get; set; }
         public DateTime? NamespaceApprovalRequestedOn { get; set; }
+        public string ProjectId { get; set; }
+        public string CrossLanguagePackageId { get; set; }
     }
 
     public class APIRevisionListItemModel : BaseListitemModel

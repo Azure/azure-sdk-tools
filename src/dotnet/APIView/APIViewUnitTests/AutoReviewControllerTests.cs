@@ -720,8 +720,8 @@ namespace APIViewUnitTests
             _mockCodeFileManager.Setup(m => m.GetCodeFileAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<MemoryStream>(), It.IsAny<string>(), null, It.IsAny<string>(), null))
-                .ReturnsAsync(newCodeFile);
+                    It.IsAny<MemoryStream>(), It.IsAny<string>(), null, It.IsAny<string>(), null, null))
+                .ReturnsAsync(new CodeFileResult() { CodeFile = newCodeFile});
 
             _mockReviewManager.Setup(m => m.GetReviewAsync(language, packageName, null))
                 .ReturnsAsync(existingReview);

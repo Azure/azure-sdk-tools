@@ -1,5 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+#if DEBUG
 using Moq;
 using NUnit.Framework.Internal;
 using Azure.Core;
@@ -254,3 +256,5 @@ internal class ExampleToolTests
         Assert.That(response.Result as string, Does.Contain("Fibonacci(7) = 13"));
     }
 }
+
+#endif

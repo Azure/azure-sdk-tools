@@ -25,6 +25,7 @@ export interface ImplProcessResult {
 function getFilteredImpls<T extends ImplItem>(
   impls: number[],
   filterFn: (item: ImplItem) => boolean,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   currentItem: Item,
 ): T[] {
   const apiJson = getAPIJson();
@@ -39,7 +40,7 @@ export function processAutoTraitImpls(impls: number[], currentItem: Item): Revie
   // Get all traits that have been derived
   const traits = traitItems.map<ReviewToken>((item) => ({
     Kind: TokenKind.MemberName,
-    Value: item.inner.impl.trait!.name,
+    Value: item.inner.impl.trait.path,
     HasSuffixSpace: false,
   }));
   if (!traits.length) return [];
@@ -101,7 +102,7 @@ function processOtherTraitImpls(impls: number[], lineIdPrefix: string, currentIt
     );
     const implGenerics = processGenerics(implItem.inner.impl.generics);
     const implTraitName =
-      (implItem.inner.impl.is_negative ? "!" : "") + implItem.inner.impl.trait.name;
+      (implItem.inner.impl.is_negative ? "!" : "") + implItem.inner.impl.trait.path;
 
     // Build tokens first to generate the LineId
     const tokens = [

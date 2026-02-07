@@ -66,6 +66,9 @@ public class ProjectsManager : IProjectsManager
             return null;
         }
 
+        project.ReviewIds ??= new HashSet<string>();
+        project.ChangeHistory ??= new List<ProjectChangeHistory>();
+
         if (project.ReviewIds.Add(review.Id))
         {
             project.ChangeHistory.Add(new ProjectChangeHistory

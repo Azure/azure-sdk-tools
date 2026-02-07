@@ -40,11 +40,13 @@ public class TypeSpecMetadataIntegrationTests
 
         List<LanguageService> languageServices = new();
 
+        var mockCodeFileManagerLogger = new Mock<ILogger<CodeFileManager>>();
         _codeFileManager = new CodeFileManager(
             languageServices,
             _mockCodeFileRepository.Object,
             _mockOriginalsRepository.Object,
-            _mockDevopsArtifactRepository.Object);
+            _mockDevopsArtifactRepository.Object,
+            mockCodeFileManagerLogger.Object);
 
         _projectsManager = new ProjectsManager(
             _mockProjectsRepository.Object,

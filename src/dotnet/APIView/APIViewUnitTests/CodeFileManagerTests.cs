@@ -10,6 +10,7 @@ using APIViewWeb;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -29,6 +30,7 @@ public class CodeFileManagerTests
         _mockCodeFileRepository = new Mock<IBlobCodeFileRepository>();
         _mockOriginalsRepository = new Mock<IBlobOriginalsRepository>();
         _mockDevopsArtifactRepository = new Mock<IDevopsArtifactRepository>();
+        var mockLogger = new Mock<ILogger<CodeFileManager>>();
 
         // Setup empty language services list
         _mockLanguageServices.Setup(x => x.GetEnumerator())
@@ -38,7 +40,8 @@ public class CodeFileManagerTests
             _mockLanguageServices.Object,
             _mockCodeFileRepository.Object,
             _mockOriginalsRepository.Object,
-            _mockDevopsArtifactRepository.Object);
+            _mockDevopsArtifactRepository.Object,
+            mockLogger.Object);
     }
 
     #region Metadata Extraction Tests

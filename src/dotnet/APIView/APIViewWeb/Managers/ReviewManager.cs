@@ -249,7 +249,7 @@ namespace APIViewWeb.Managers
                 review = await GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language);
                 if (review == null)
                 {
-                    review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
+                    review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
                 }
             }
             return review;

@@ -275,7 +275,7 @@ namespace APIViewWeb.Managers
             var review = await _reviewManager.GetReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName);
             if (review == null)
             {
-                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: validPackageType);
+                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: validPackageType, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
                 responseContent.ActionsTaken.Add($"No existing review with packageName: '{codeFile.PackageName}' and language: '{codeFile.Language}'.");
                 responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
                 responseContent.ActionsTaken.Add($"Review created with packageType: '{validPackageType}'.");

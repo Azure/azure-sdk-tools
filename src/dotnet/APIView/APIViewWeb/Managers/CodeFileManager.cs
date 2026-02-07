@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -9,6 +10,7 @@ using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers
 {
@@ -18,15 +20,18 @@ namespace APIViewWeb.Managers
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
+        private readonly ILogger<CodeFileManager> _logger;
 
         public CodeFileManager(
             IEnumerable<LanguageService> languageServices, IBlobCodeFileRepository codeFileRepository,
-            IBlobOriginalsRepository originalsRepository, IDevopsArtifactRepository devopsArtifactRepository)
+            IBlobOriginalsRepository originalsRepository, IDevopsArtifactRepository devopsArtifactRepository,
+            ILogger<CodeFileManager> logger)
         {
             _originalsRepository = originalsRepository;
             _codeFileRepository = codeFileRepository;
             _languageServices = languageServices;
             _devopsArtifactRepository = devopsArtifactRepository;
+            _logger = logger;
         }
 
         /// <summary>
@@ -108,11 +113,18 @@ namespace APIViewWeb.Managers
                     var metadataEntry = archive.Entries.FirstOrDefault(e => Path.GetFileName(e.Name) == metadataFileName);
                     if (metadataEntry != null)
                     {
-                        await using var metadataStream = metadataEntry.Open();
-                        metadata = await JsonSerializer.DeserializeAsync<TypeSpecMetadata>(metadataStream, new JsonSerializerOptions
+                        try
                         {
-                            PropertyNameCaseInsensitive = true
-                        });
+                            await using var metadataStream = metadataEntry.Open();
+                            metadata = await JsonSerializer.DeserializeAsync<TypeSpecMetadata>(metadataStream, new JsonSerializerOptions
+                            {
+                                PropertyNameCaseInsensitive = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to deserialize TypeSpec metadata file '{MetadataFileName}'. Continuing without metadata.", metadataFileName);
+                        }
                     }
                 }
             }

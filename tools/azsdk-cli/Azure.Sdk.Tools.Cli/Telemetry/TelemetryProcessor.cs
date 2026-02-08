@@ -51,6 +51,10 @@ public sealed class TelemetryProcessor : BaseProcessor<Activity>
         {
             activity.SetTag(TelemetryConstants.TagName.ModelsUsed, modelsUsed);
         }
+        if (activity.GetCustomProperty(TelemetryConstants.TagName.SamplesCount) is string samplesCount)
+        {
+            activity.SetTag(TelemetryConstants.TagName.SamplesCount, samplesCount);
+        }
 
         SanitizeTags(activity);
     }

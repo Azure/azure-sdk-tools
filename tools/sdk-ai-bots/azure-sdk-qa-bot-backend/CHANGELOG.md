@@ -1,6 +1,13 @@
 # Release History
 
-## 0.9.0 (unreleased)
+## 0.9.1 (2026-02-09)
+
+### Other Changes
+
+* Set fixed seed to reduce randomness of LLM
+* Adjust prompt to adopt GPT-5.2 models
+
+## 0.9.0 (2026-02-02)
 
 ### Features Added
 

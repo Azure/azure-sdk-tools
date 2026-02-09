@@ -26,8 +26,7 @@ For API specification review questions, follow this structured approach:
 - Check if the user's question contains links/images you can't access or can't get detailed error logs
 
 ## Step 2: Knowledge Evaluation
-- Find question-related knowledge from the provided KNOWLEDGE CONTEXT
-- If KNOWLEDGE CONTEXT does not include needed information, start with "Sorry, I can't answer this question based on the provided knowledge" and ask what's needed
+- Find question related knowledge from the provided KNOWLEDGE CONTEXT, if no related knowledge found, you could answer like 'Sorry, I can't answer this question, but based on my knowledge ...'
 - Cross-reference multiple knowledge sources (Azure API guidelines, validation tool docs, ARM RPC)
 - Check if user's description violates or misunderstands the KNOWLEDGE CONTEXT; if so, correct the description
 

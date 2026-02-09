@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             MockProcessHelper = new Mock<IProcessHelper>();
             MockMavenHelper = new Mock<IMavenHelper>();
             var gitHelperMock = new Mock<IGitHelper>();
-            gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+            gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
             LangService = new JavaLanguageService(
                 MockProcessHelper.Object,
                 gitHelperMock.Object,
@@ -36,7 +36,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 NullLogger<JavaLanguageService>.Instance,
                 new Mock<ICommonValidationHelpers>().Object,
                 Mock.Of<IFileHelper>(),
-                Mock.Of<ISpecGenSdkConfigHelper>());
+                Mock.Of<ISpecGenSdkConfigHelper>(),
+                Mock.Of<IChangelogHelper>());
         }
 
         #region Setup Helpers
@@ -964,8 +965,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 await File.WriteAllTextAsync(pomPath, pomContent);
 
                 var gitHelperMock = new Mock<IGitHelper>();
-                gitHelperMock.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(tempDir);
-                gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+                gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(tempDir);
+                gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
 
                 var langService = new JavaLanguageService(
                     new Mock<IProcessHelper>().Object,
@@ -975,7 +976,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
-                    Mock.Of<ISpecGenSdkConfigHelper>());
+                    Mock.Of<ISpecGenSdkConfigHelper>(),
+                    Mock.Of<IChangelogHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1019,8 +1021,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 await File.WriteAllTextAsync(pomPath, pomContent);
 
                 var gitHelperMock = new Mock<IGitHelper>();
-                gitHelperMock.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(tempDir);
-                gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+                gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(tempDir);
+                gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
 
                 var langService = new JavaLanguageService(
                     new Mock<IProcessHelper>().Object,
@@ -1030,7 +1032,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
-                    Mock.Of<ISpecGenSdkConfigHelper>());
+                    Mock.Of<ISpecGenSdkConfigHelper>(),
+                    Mock.Of<IChangelogHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1074,8 +1077,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 await File.WriteAllTextAsync(pomPath, pomContent);
 
                 var gitHelperMock = new Mock<IGitHelper>();
-                gitHelperMock.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(tempDir);
-                gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+                gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(tempDir);
+                gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
 
                 var langService = new JavaLanguageService(
                     new Mock<IProcessHelper>().Object,
@@ -1085,7 +1088,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
-                    Mock.Of<ISpecGenSdkConfigHelper>());
+                    Mock.Of<ISpecGenSdkConfigHelper>(),
+                    Mock.Of<IChangelogHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);
@@ -1129,8 +1133,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 await File.WriteAllTextAsync(pomPath, pomContent);
 
                 var gitHelperMock = new Mock<IGitHelper>();
-                gitHelperMock.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>())).Returns(tempDir);
-                gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-java");
+                gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(tempDir);
+                gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
 
                 var langService = new JavaLanguageService(
                     new Mock<IProcessHelper>().Object,
@@ -1140,7 +1144,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
-                    Mock.Of<ISpecGenSdkConfigHelper>());
+                    Mock.Of<ISpecGenSdkConfigHelper>(),
+                    Mock.Of<IChangelogHelper>());
 
                 // Act
                 var packageInfo = await langService.GetPackageInfo(packageDir);

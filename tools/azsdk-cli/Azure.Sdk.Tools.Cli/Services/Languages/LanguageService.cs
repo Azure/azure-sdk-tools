@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected readonly ICommonValidationHelpers commonValidationHelpers;
         protected readonly IFileHelper fileHelper;
         protected readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
+        protected readonly IChangelogHelper changelogHelper;
 
         /// <summary>
         /// Protected parameterless constructor for test mocking purposes.
@@ -27,6 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             commonValidationHelpers = null!;
             fileHelper = null!;
             specGenSdkConfigHelper = null!;
+            changelogHelper = null!;
         }
 
         protected LanguageService(
@@ -35,7 +37,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             ILogger<LanguageService> logger,
             ICommonValidationHelpers commonValidationHelpers,
             IFileHelper fileHelper,
-            ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+            ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+            IChangelogHelper changelogHelper)
         {
             this.processHelper = processHelper;
             this.gitHelper = gitHelper;
@@ -43,6 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             this.commonValidationHelpers = commonValidationHelpers;
             this.fileHelper = fileHelper;
             this.specGenSdkConfigHelper = specGenSdkConfigHelper;
+            this.changelogHelper = changelogHelper;
         }
 
         public abstract SdkLanguage Language { get; }
@@ -255,11 +259,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             }
         }               
 
-        public virtual List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-        {
-            throw new NotImplementedException("Environment requirements are not implemented for this language.");
-        }
-
         /// <summary>
         /// Updates the package metadata content for a specified package.
         /// </summary>
@@ -293,6 +292,9 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
         /// <summary>
         /// Updates the version for a specified package.
+        /// This method performs two steps:
+        /// 1. Updates the release date in the changelog (common across all languages)
+        /// 2. Calls language-specific version update logic via <see cref="UpdatePackageVersionInFilesAsync"/>
         /// </summary>
         /// <param name="packagePath">The absolute path to the package directory.</param>
         /// <param name="releaseType">Specifies whether the next version is 'beta' or 'stable'.</param>
@@ -300,16 +302,102 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="releaseDate">The date (YYYY-MM-DD) to write into the changelog.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns>A response indicating the result of the version update operation.</returns>
-        public virtual Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, string? releaseType, string? version, string? releaseDate, CancellationToken ct)
+        public virtual async Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, string? releaseType, string? version, string? releaseDate, CancellationToken ct)
         {
-            this.logger.LogInformation("No language-specific package version update implementation found for package path: {packagePath}.", packagePath);
+            logger.LogInformation("Updating version for package at: {PackagePath}", packagePath);
+            var packageInfo = await GetPackageInfo(packagePath, ct);
+
+            // Use provided version or get current version from package
+            var targetVersion = version;
+            if (string.IsNullOrWhiteSpace(targetVersion))
+            {   
+                targetVersion = packageInfo?.PackageVersion;
+                if (string.IsNullOrWhiteSpace(targetVersion))
+                {
+                    return PackageOperationResponse.CreateFailure(
+                        "Version is required. Unable to determine the current package version.",
+                        packageInfo: packageInfo,
+                        nextSteps: ["Provide the version parameter explicitly"]);
+                }
+            }
+
+            // Step 1: Update the changelog release date (common across all languages)
+            var changelogPath = changelogHelper.GetChangelogPath(packagePath);
+            if (changelogPath == null)
+            {
+                logger.LogWarning("No CHANGELOG.md found in package directory: {PackagePath}", packagePath);
+                return PackageOperationResponse.CreateFailure(
+                    "No CHANGELOG.md found in package directory.",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Ensure CHANGELOG.md exists in the package root directory",
+                        "Run another tool to update the changelog content"
+                    ]);
+            }
+
+            // releaseDate is already validated and defaulted by VersionUpdateTool
+            // Update the changelog with the release date
+            // This will also validate that an entry exists for the version
+            var changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            if (!changelogResult.Success)
+            {
+                logger.LogWarning("Failed to update changelog: {Message}", changelogResult.Message);
+                return PackageOperationResponse.CreateFailure(
+                    changelogResult.Message ?? "Failed to update changelog.",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Run another tool to update the changelog content for this version first",
+                        "Then run this tool again to set the release date"
+                    ]);
+            }
+
+            logger.LogInformation("Changelog updated successfully: {Message}", changelogResult.Message);
+
+            // Step 2: Call language-specific version update logic
+            var versionUpdateResult = await UpdatePackageVersionInFilesAsync(packagePath, targetVersion, releaseType, ct);
+            if (versionUpdateResult.OperationStatus == Status.Failed)
+            {
+                // Changelog was updated but version files failed - report partial success
+                return PackageOperationResponse.CreateSuccess(
+                    $"Changelog release date updated to {releaseDate}, but version file update requires additional steps.",
+                    nextSteps: versionUpdateResult.NextSteps?.ToArray() ?? ["Manually update the package version in project files"],
+                    result: "partial",
+                    packageInfo: packageInfo);
+            }
+
+            // If version update returned partial success (e.g., not implemented by specific language),
+            // wrap the result to include packageInfo while preserving message and next steps
+            if (versionUpdateResult.Result is "partial")
+            {
+                return PackageOperationResponse.CreateSuccess(
+                    versionUpdateResult.Message,
+                    nextSteps: versionUpdateResult.NextSteps?.ToArray(),
+                    result: versionUpdateResult.Result as string,
+                    packageInfo: packageInfo);
+            }
+
+            return PackageOperationResponse.CreateSuccess(
+                $"Version {targetVersion} updated with release date {releaseDate}.",
+                nextSteps: ["Review the changes", "Run validation checks"],
+                packageInfo: packageInfo);
+        }
+
+        /// <summary>
+        /// Updates the package version in language-specific files (e.g., .csproj, pom.xml, package.json).
+        /// Override this method in derived classes to implement language-specific version update logic.
+        /// </summary>
+        /// <param name="packagePath">The absolute path to the package directory.</param>
+        /// <param name="version">The version to set.</param>
+        /// <param name="releaseType">Specifies whether the version is 'beta' or 'stable'.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
+        /// <returns>A response indicating the result of the version file update operation.</returns>
+        protected virtual Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(string packagePath, string version, string? releaseType, CancellationToken ct)
+        {
+            logger.LogInformation("No language-specific version file update implementation for {Language}. Only changelog was updated.", Language);
             return Task.FromResult(PackageOperationResponse.CreateSuccess(
-                "No version update performed.",
-                nextSteps: [
-                    "Manually update the version and release date in the changelog and metadata as needed when preparing a release",
-                    "Run validation checks"
-                    ],
-                result: "noop"));
+                "Changelog updated. Language-specific version file update not implemented.",
+                nextSteps: ["Manually update the package version in project files if needed"],
+                result: "partial"));
         }
 
         /// <summary>
@@ -370,7 +458,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
                 // Get repository root path from project path
-                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+                string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
                     return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.", null);

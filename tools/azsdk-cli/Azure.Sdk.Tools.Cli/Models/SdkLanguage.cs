@@ -35,9 +35,9 @@ public static class SdkLanguageHelpers
         { "azure-sdk-for-rust", SdkLanguage.Rust}
     }.ToImmutableDictionary();
 
-    public static SdkLanguage GetLanguageForRepoPath(IGitHelper gitHelper, string pathInRepo)
+    public static async Task<SdkLanguage> GetLanguageForRepoPathAsync(IGitHelper gitHelper, string pathInRepo, CancellationToken ct = default)
     {
-        string repoName = gitHelper.GetRepoName(pathInRepo);
+        string repoName = await gitHelper.GetRepoNameAsync(pathInRepo, ct);
         return GetLanguageForRepo(repoName);
     }
 

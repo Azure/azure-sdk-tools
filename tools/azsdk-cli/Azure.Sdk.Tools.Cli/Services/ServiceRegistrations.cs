@@ -33,6 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
@@ -47,6 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Helper classes
             services.AddSingleton<IFileHelper, FileHelper>();
+            services.AddSingleton<IChangelogHelper, ChangelogHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
             services.AddSingleton<ITestHelper, TestHelper>();
@@ -70,10 +72,12 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
+            services.AddSingleton<INpmHelper, NpmHelper>();
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
             services.AddSingleton<IMavenHelper, MavenHelper>();
             services.AddSingleton<IPythonHelper, PythonHelper>();
+            services.AddSingleton<IGitCommandHelper, GitCommandHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();

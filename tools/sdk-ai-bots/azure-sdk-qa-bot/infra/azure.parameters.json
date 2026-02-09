@@ -5,11 +5,17 @@
     "resourceBaseName": {
       "value": "${{RESOURCE_SUFFIX}}"
     },
-    "azureStorageUrl": {
-      "value": "${{AZURE_STORAGE_URL}}"
-    },
     "azureTableNameForConversation": {
       "value": "${{AZURE_TABLE_NAME_FOR_CONVERSATION}}"
+    },
+    "blobContainerName": {
+      "value": "${{BLOB_CONTAINER_NAME}}"
+    },
+    "channelConfigBlobName": {
+      "value": "${{CHANNEL_CONFIG_BLOB_NAME}}"
+    },
+    "tenantConfigBlobName": {
+      "value": "${{TENANT_CONFIG_BLOB_NAME}}"
     },
     "ragScope": {
       "value": "${{RAG_SERVICE_SCOPE}}"

@@ -3,8 +3,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { BlobService } from './services/StorageService';
 import { SpectorCaseProcessor } from './services/SpectorCaseProcessor';
-import { ConfigurationLoader, RepositoryConfig } from './services/ConfigurationLoader';
+import { ConfigurationLoader, RepositoryConfig, DocumentationSource, Metadata } from './services/ConfigurationLoader';
 import { SearchService } from './services/SearchService';
+import { MetadataResolver } from './services/MetadataResolver';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -20,16 +21,6 @@ import { SearchService } from './services/SearchService';
  * Triggered daily via timer or manually via HTTP request
  */
 
-// Configuration for documentation sources
-interface DocumentationSource {
-    path: string;
-    folder: string;
-    name?: string;
-    fileNameLowerCase?: boolean;
-    ignoredPaths?: string[];
-    isSpectorTest?: boolean;
-}
-
 
 // Model for processed markdown file result
 interface ProcessedMarkdownFile {
@@ -37,6 +28,7 @@ interface ProcessedMarkdownFile {
     content: string;
     blobPath: string;
     isValid: boolean; // Indicates if the file should be processed further
+    metadata?: Metadata;
 }
 
 // Result interface for source directory processing
@@ -45,6 +37,7 @@ interface ProcessSourceDirectoryResult {
     changedDocuments: number;
     unchangedDocuments: number;
     changedFiles: ProcessedMarkdownFile[];  // Files that changed and need to be uploaded/updated
+    metadataChangedFiles: ProcessedMarkdownFile[]; // Files with metadata-only changes - upload only, no index deletion
     unchangedFiles: ProcessedMarkdownFile[]; // Files that didn't change
 }
 
@@ -92,6 +85,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         let changedDocuments = 0;
         let unchangedDocuments = 0;
         const allChangedFiles: ProcessedMarkdownFile[] = [];
+        const allMetadataChangedFiles: ProcessedMarkdownFile[] = [];
         const allUnchangedFiles: ProcessedMarkdownFile[] = [];
         
         // Process each documentation source
@@ -128,6 +122,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
                 totalProcessed += result.totalProcessed;
                 changedDocuments += result.changedDocuments;
                 unchangedDocuments += result.unchangedDocuments;
+                allMetadataChangedFiles.push(...result.metadataChangedFiles);
                 allChangedFiles.push(...result.changedFiles);
                 allUnchangedFiles.push(...result.unchangedFiles);
             } catch (error) {
@@ -143,10 +138,10 @@ export async function processDailySyncKnowledge(): Promise<void> {
         await deleteAISearchIndex(searchService, allChangedFiles);
 
         // Upload files to blob storage (only for changed documents)
-        await uploadFilesToBlobStorage(allChangedFiles);
+        await uploadFilesToBlobStorage(allChangedFiles.concat(allMetadataChangedFiles));
         
         // Clean up expired blobs
-        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles));
+        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles).concat(allMetadataChangedFiles));
         console.log('Daily sync knowledge processing completed');
 
     } finally {
@@ -368,6 +363,7 @@ async function processSourceDirectory(
     let changedDocuments = 0;
     let unchangedDocuments = 0;
     const changedFiles: ProcessedMarkdownFile[] = [];
+    const metadataChangedFiles: ProcessedMarkdownFile[] = [];
     const unchangedFiles: ProcessedMarkdownFile[] = [];
     
     // Helper function to process a single file
@@ -380,16 +376,35 @@ async function processSourceDirectory(
             if (!processed.isValid) {
                 return;
             }
+            // Prepare blob metadata for comparison
+            let blobMetadata: Record<string, string> | undefined;
+            if (processed.metadata) {
+                blobMetadata = {
+                    scope: processed.metadata.scope
+                };
+                if (processed.metadata.service_type) {
+                    blobMetadata.service_type = processed.metadata.service_type;
+                }
+            }
 
-            if (blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs)) {
-                console.log(`Content changed for: ${processed.blobPath}`);
-                changedDocuments++;
-                changedFiles.push(processed);
-                
-                const targetFilePath = path.join(targetDir, processed.filename);
-                fs.writeFileSync(targetFilePath, processed.content);
+            // Check if content or metadata has changed
+            const contentChanged = blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs);
+            const metadataChanged = blobService.hasMetadataChanged(processed.blobPath, blobMetadata, existingBlobs);
+
+            if (contentChanged || metadataChanged) {
+                if (contentChanged) {
+                    console.log(`Content changed for: ${processed.blobPath}`);
+                    changedDocuments++;
+                    changedFiles.push(processed);
+                    
+                    const targetFilePath = path.join(targetDir, processed.filename);
+                    fs.writeFileSync(targetFilePath, processed.content);
+                } else {
+                    console.log(`Metadata changed for: ${processed.blobPath}`);
+                    metadataChangedFiles.push(processed);
+                }
             } else {
-                console.log(`Content unchanged for: ${processed.blobPath}`);
+                console.log(`File unchanged for: ${processed.blobPath}`);
                 unchangedDocuments++;
                 unchangedFiles.push(processed);
             }
@@ -405,7 +420,7 @@ async function processSourceDirectory(
     if (isFile) {
         processSingleFile(sourceDir, path.dirname(sourceDir));
         
-        return { totalProcessed, changedDocuments, unchangedDocuments, changedFiles, unchangedFiles };
+        return { totalProcessed, changedDocuments, unchangedDocuments, changedFiles, metadataChangedFiles, unchangedFiles };
     }
     
     async function walkDirectory(dir: string): Promise<void> {
@@ -436,11 +451,12 @@ async function processSourceDirectory(
     
     await walkDirectory(sourceDir);
     
-    return { 
+    return {
         totalProcessed, 
         changedDocuments, 
         unchangedDocuments, 
         changedFiles, 
+        metadataChangedFiles,
         unchangedFiles 
     };
 }
@@ -633,12 +649,47 @@ export function processMarkdownFile(
     }
     const blobPath = path.join(source.folder, fileName).replace(/\\/g, '/');
     
+    // Resolve metadata if source has metadata configuration
+    let metadata: Metadata;
+    if (source.metadata) {
+        const relativePath = path.relative(sourceDir, filePath);
+        metadata = MetadataResolver.resolveMetadata(
+            relativePath,
+            source.metadata,
+            source.overrides
+        );
+    }
+    
     return {
         filename: processed.filename,
         content: processed.content,
         blobPath: blobPath,
-        isValid: true
+        isValid: true,
+        metadata: metadata
     };
+}
+
+/**
+ * Preprocess content to fix Azure AI Search markdown parser issues
+ */
+export function preprocessContent(content: string): string {
+    let processed = content;
+    
+    // Fix 1: Replace all # at start of lines with // within code blocks
+    // This prevents Azure AI Search from treating comments as markdown headers  
+    // Use \w+ to require language identifier (avoids matching empty ``` closing delimiters)
+    processed = processed.replace(/```(\w+)\s*\n([\s\S]*?)```/g, (match, lang, codeContent) => {
+        // Replace # at line start, preserving any following whitespace
+        // This handles both "# comment" and "#comment" cases
+        const transformedContent = codeContent.replace(/^#(\s*)/gm, '//$1');
+        return `\`\`\`${lang}\n${transformedContent}\`\`\``;
+    });
+    
+    // Fix 2: Escape code block delimiters ``` to prevent Azure AI Search parser issues
+    // Replace ``` with \`\`\` to display code blocks as literal text
+    processed = processed.replace(/```(\w*)/g, '\\`\\`\\`$1');
+    
+    return processed;
 }
 
 /**
@@ -651,6 +702,8 @@ export function convertMarkdown(content: string): { filename: string; content: s
     let inFrontmatter = false;
     let firstContentLine = true;
     
+    // Preprocess content to fix Azure AI Search parser issues
+    content = preprocessContent(content);
     const lines = content.split('\n');
     const contentLines: string[] = [];
     
@@ -725,7 +778,23 @@ async function uploadFilesToBlobStorage(
         // Upload only changed files
         for (const file of changedFiles) {
             if (file.isValid) {
-                await blobService.putBlob(file.blobPath, file.content);
+                // Prepare blob metadata if it exists
+                let blobMetadata: Record<string, string> | undefined;
+                
+                if (file.metadata) {
+                    // Convert metadata to string key-value pairs for blob metadata
+                    // Only store scope and service_type as blob metadata
+                    blobMetadata = {
+                        scope: file.metadata.scope
+                    };
+                    
+                    // Only add service_type if it exists
+                    if (file.metadata.service_type) {
+                        blobMetadata.service_type = file.metadata.service_type;
+                    }
+                }
+                
+                await blobService.putBlob(file.blobPath, file.content, blobMetadata);
                 uploadedCount++;
             }
         }

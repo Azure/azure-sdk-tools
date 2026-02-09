@@ -13,6 +13,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public byte[] Body { get; set; }
 
+        /// <summary>
+        /// Cached metadata about this body. Built once during precache phase,
+        /// then reused by sanitizers to avoid reparsing multipart or other complex bodies.
+        /// </summary>
+        public PreCachedBodyMetadata CachedBodyMetadata { get; set; }
+
         public bool TryGetContentType(out string contentType)
         {
             contentType = null;

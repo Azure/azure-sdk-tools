@@ -24,7 +24,7 @@ internal class PythonLanguageSpecificChecksTests
         _npxHelperMock = new Mock<INpxHelper>();
         _pythonHelperMock = new Mock<IPythonHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
-        _gitHelperMock.Setup(g => g.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-python");
+        _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-python");
         _commonValidationHelpersMock = new Mock<ICommonValidationHelpers>();
 
         _languageService = new PythonLanguageService(
@@ -35,7 +35,8 @@ internal class PythonLanguageSpecificChecksTests
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
             Mock.Of<IFileHelper>(),
-            Mock.Of<ISpecGenSdkConfigHelper>());
+            Mock.Of<ISpecGenSdkConfigHelper>(),
+            Mock.Of<IChangelogHelper>());
     }
 
     #region HasCustomizations Tests

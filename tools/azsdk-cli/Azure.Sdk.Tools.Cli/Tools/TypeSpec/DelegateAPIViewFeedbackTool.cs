@@ -80,9 +80,9 @@ public class DelegateAPIViewFeedbackTool : MCPTool
     {
         try
         {
-            if (string.IsNullOrEmpty(apiViewUrl))
+            if (string.IsNullOrWhiteSpace(apiViewUrl))
             {
-                return new DefaultCommandResponse { Message = "APIView URL is required" };
+                return new DefaultCommandResponse { ResponseError = "APIView URL is required" };
             }
             _logger.LogInformation("Fetching APIView feedback from {Url}", apiViewUrl);
 

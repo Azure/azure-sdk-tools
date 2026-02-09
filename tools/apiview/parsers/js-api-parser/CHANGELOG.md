@@ -5,7 +5,7 @@
 # 2.0.7
 
 - Add support for cross-language IDs to correlate APIs across different languages
-- Code refactoring of token generators for enums, classes, functions, interface and methods
+- Code refactoring of token generators for enums, classes, functions, interfaces and methods
 
 # 2.0.6
 

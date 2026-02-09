@@ -129,12 +129,15 @@ public abstract class Requirement
 
     /// <summary>
     /// Returns context-aware installation instructions as human-readable strings.
-    /// Default implementation derives instructions from <see cref="GetInstallCommands"/>.
-    /// Override for non-auto-installable requirements or when instructions need
-    /// additional prose beyond the install commands.
+    /// When <see cref="IsAutoInstallable"/> is true, the default implementation derives
+    /// instructions from <see cref="GetInstallCommands"/>.
+    /// Non-auto-installable requirements must override this to provide manual instructions.
     /// </summary>
     /// <param name="ctx">The current environment context.</param>
     /// <returns>List of installation instructions.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the requirement is not auto-installable and this method is not overridden.
+    /// </exception>
     public virtual IReadOnlyList<string> GetInstructions(RequirementContext ctx)
     {
         var commands = GetInstallCommands(ctx);
@@ -142,7 +145,9 @@ public abstract class Requirement
         {
             return commands.Select(cmd => string.Join(" ", cmd)).ToList();
         }
-        return [];
+
+        throw new InvalidOperationException(
+            $"Requirement '{Name}' is not auto-installable and must override GetInstructions to provide manual install instructions.");
     }
 
     /// <summary>

@@ -263,7 +263,8 @@ public class ExampleTool(
             };
 
             var response = await chatClient.CompleteChatAsync(messages, cancellationToken: ct);
-            tokenUsageHelper.Add(model, response.Value.Usage.InputTokenCount, response.Value.Usage.OutputTokenCount);
+            var tokenSession = tokenUsageHelper.NewSession($"example:{model}");
+            tokenSession.Add(model, response.Value.Usage.InputTokenCount, response.Value.Usage.OutputTokenCount);
             tokenUsageHelper.LogUsage();
 
             return new ExampleServiceResponse

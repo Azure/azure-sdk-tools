@@ -166,7 +166,8 @@ Again, the entire response **MUST BE VALID JSON**";
             }
         }
 
-        tokenUsageHelper.Add(model, run.Usage.PromptTokens, run.Usage.CompletionTokens);
+        var tokenSession = tokenUsageHelper.NewSession($"azure-agent:{model}");
+        tokenSession.Add(model, run.Usage.PromptTokens, run.Usage.CompletionTokens);
 
         // NOTE: in the future we will want to keep these around if the user wants to keep querying the file in a session
         logger.LogInformation("Deleting temporary resources: agent {AgentId}, vector store {VectorStoreId}, {fileCount} files", agent.Id, vectorStore.Id, uploaded.Count);

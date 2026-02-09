@@ -88,8 +88,8 @@ namespace APIViewIntegrationTests
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("PullRe", "/id").Wait();
-            ReviewRepository = new CosmosReviewRepository(_config, _cosmosClient);
-            APIRevisionRepository = new CosmosAPIRevisionsRepository(_config, _cosmosClient);
+            ReviewRepository = new CosmosReviewRepository(_config, _cosmosClient, Mock.Of<ILogger<CosmosReviewRepository>>());
+            APIRevisionRepository = new CosmosAPIRevisionsRepository(_config, _cosmosClient, ReviewRepository);
             CommentRepository = new CosmosCommentsRepository(_config, _cosmosClient);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(_config, _cosmosClient);
 
@@ -128,6 +128,7 @@ namespace APIViewIntegrationTests
 
             var backgroundTaskQueueMoq = new Mock<IBackgroundTaskQueue>();
             var commentsLoggerMoq = new Mock<ILogger<CommentsManager>>();
+            var copilotAuthServiceMoq = new Mock<ICopilotAuthenticationService>();
             
             CommentsManager = new CommentsManager(
                 apiRevisionsManager: APIRevisionManager,
@@ -142,6 +143,7 @@ namespace APIViewIntegrationTests
                 configuration: _config,
                 options: options.Object,
                 backgroundTaskQueue: backgroundTaskQueueMoq.Object,
+                copilotAuthService: copilotAuthServiceMoq.Object,
                 logger: commentsLoggerMoq.Object);
 
             CodeFileManager = new CodeFileManager(
@@ -157,7 +159,6 @@ namespace APIViewIntegrationTests
 
             var pollingJobQueueManagerMoq = new Mock<IPollingJobQueueManager>();
             var pullRequestsRepositoryMoq = new Mock<ICosmosPullRequestsRepository>();
-            var copilotAuthServiceMoq = new Mock<ICopilotAuthenticationService>();
             var reviewManagerLoggerMoq = new Mock<ILogger<ReviewManager>>();
             ReviewManager = new ReviewManager(
                 authorizationService: authorizationServiceMoq.Object,

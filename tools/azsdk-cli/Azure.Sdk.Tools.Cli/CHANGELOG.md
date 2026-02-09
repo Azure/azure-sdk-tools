@@ -1,5 +1,17 @@
 # Release History
 
+## 0.5.16 (Unreleased)
+
+### Features Added
+
+- Added support for version number and release date update in the CHANGELOG.md for data plane package.
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.5.15 (2026-01-30)
 
 ### Features Added

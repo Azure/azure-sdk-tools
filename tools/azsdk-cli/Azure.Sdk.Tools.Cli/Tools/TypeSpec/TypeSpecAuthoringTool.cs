@@ -143,7 +143,8 @@ Returns an answer with supporting references and documentation links
                     {
                         Role = Role.User,
                         Content = request,
-                    }
+                    },
+                    WithAgenticSearch = false, // For authoring, disable agentic search
                 };
 
                 if (!string.IsNullOrWhiteSpace(additionalInformation))

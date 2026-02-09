@@ -250,9 +250,9 @@
     --link-active: #{bootstrap.tint-color($primary-color, 10%)};
     --link-visited: #{bootstrap.tint-color($primary-color, 20%)};
     /*----Diagnostic Details Link------------------------------------*/
-    --details-link-color: #0d1dfc;
-    --details-link-active-hover: #00CBEB;
-    --details-link-visited: #3d4afd;
+    --details-link-color: #ffbd00;
+    --details-link-active-hover: #ffd54f;
+    --details-link-visited: #e6a800;
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{bootstrap.tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{bootstrap.$gray-100}, .15);
@@ -274,10 +274,10 @@
     --class-color: #ffc66d;
     --name-color: #{$base-text-color};
     --code-color: #db3984;
-    --literal-color: #008509;
+    --code-comment: #8a9898;
+    --literal-color: #a5d6a7;
     --enum-color: #BB86FC;
     --hidden-api-filter: brightness(60%) saturate(60%);
-    --code-comment: #8a9898;
     --java-doc-color: #629755;
     --java-comment-color: #808080;
     --java-field-name-color: #9876AA;

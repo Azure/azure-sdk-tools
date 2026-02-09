@@ -57,7 +57,7 @@
     --java-field-name-color: #871094;
     --java-method-name-color: #00627A;
     --java-keyword-color: #0033B3;
-    --java-anotation-name-color: #9E880D;
+    --java-annotation-name-color: #9E880D;
     --java-string-literal-color: #067D17;
     --java-number-color: #1750EB;
     --rust-icon: url(/icons/rust-original.svg) center center no-repeat;
@@ -105,116 +105,120 @@
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23000' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    --svg-switch-off: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%236c757d'/%3e%3c/svg%3e");
+    --svg-close-btn: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%236c757d'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
 }
 
 .dark-theme {
     /*----Base Colors-------------------------------------------------*/
-    $base-bg-color: #010409;
+    $base-bg-color: #0d1117;
     --base-bg-color: #{$base-bg-color};
-    --base-fg-color: #{bootstrap.tint-color($base-bg-color, 5%)};
-    --editor-bg-color: #1e1e1e;
-    $base-text-color: #c9d1d9;
+    --base-fg-color: #161b22;
+    --editor-bg-color: #161b22;
+    $base-text-color: #e6edf3;
     --base-text-color: #{$base-text-color};
-    --text-muted-color: #{bootstrap.shade-color($base-text-color, 30%)};
-    $primary-color: #0084ff;
+    --text-muted-color: #8b949e;
+    $primary-color: #58a6ff;
     --primary-color: #{$primary-color};
-    $secondary-color: #6F8594;
+    $secondary-color: #8b949e;
     --secondary-color: #{$secondary-color};
-    --success-color: #{bootstrap.$success};
-    $info-color: #05DBF2;
+    --success-color: #3fb950;
+    $info-color: #58a6ff;
     --info-color: #{$info-color};
-    --warning-color: #{bootstrap.$orange};
-    --danger-color: #{bootstrap.$danger};
-    --border-color: #{bootstrap.tint-color($base-bg-color, 20%)};
-    --border-color-transparent: #{bootstrap.tint-color($base-bg-color, 7%)};
+    --warning-color: #d29922;
+    --danger-color: #f85149;
+    --border-color: #30363d;
+    --border-color-transparent: #21262d;
     --primary-btn-color: #fff;
     --checkbox-icon-color: #fff;
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};
-    --link-active: #{bootstrap.tint-color($primary-color, 20%)};
-    --link-visited: #{bootstrap.tint-color($primary-color, 40%)};
+    --link-active: #79c0ff;
+    --link-visited: #a5d6ff;
     /*----Diagnostic Details Link------------------------------------*/
-    --details-link-color: #0d1dfc;
-    --details-link-active-hover: #00CBEB;
-    --details-link-visited: #3d4afd;
+    --details-link-color: #58a6ff;
+    --details-link-active-hover: #79c0ff;
+    --details-link-visited: #a5d6ff;
     /*----Shadows and Glows------------------------------------------*/
-    --outer-glow: #{bootstrap.tint-color($primary-color, 80%)};
-    --shadow-color: rgba(#{bootstrap.$white}, .15);
-    --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary-color, 0.5)};
-    --box-shadow: 0 .5rem 1rem #{rgba(bootstrap.$white, .15)};
-    --box-shadow-sm: 0 .125rem .25rem #{rgba(bootstrap.$white, .075)};
-    --box-shadow-lg: 0 1rem 3rem #{rgba(bootstrap.$white, .175)};
-    --box-shadow-inset: inset 0 1px 2px #{rgba(bootstrap.$white, .075)};
-    --box-shadow-success: 0 0 0 0.1rem #{rgba(bootstrap.$success, 10%)};
-    --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
-    --box-shadow-left: -5px 0px 0px 0rem #{rgba($primary-color, 100%)};
+    --outer-glow: rgba(88, 166, 255, 0.4);
+    --shadow-color: rgba(0, 0, 0, .3);
+    --shadow-color-primary: 0 0 0 0.15rem rgba(88, 166, 255, 0.4);
+    --box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+    --box-shadow-sm: 0 1px 3px rgba(0, 0, 0, .3);
+    --box-shadow-lg: 0 12px 28px rgba(0, 0, 0, .6);
+    --box-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, .2);
+    --box-shadow-success: 0 0 0 0.1rem rgba(63, 185, 80, 0.3);
+    --box-shadow-link: 0 0 0 0.2rem rgba(88, 166, 255, 0.4);
+    --box-shadow-left: -5px 0px 0px 0rem rgba(88, 166, 255, 1);
     /*----Nav--------------------------------------------------------*/
-    --navbar-bg: #{bootstrap.tint-color($base-bg-color, 20%)};
-    --navbar-text: #{bootstrap.tint-color($base-text-color, 40%)};
-    --navbar-link-active: #{bootstrap.shade-color($base-text-color, 20%)};
-    --icon-color-filter: invert(0.5);
+    --navbar-bg: #161b22;
+    --navbar-text: #e6edf3;
+    --navbar-link-active: #58a6ff;
+    --icon-color-filter: invert(0.7);
     /*----Code Lines-------------------------------------------------*/
     --keyword-color: #ff7b72;
     --class-color: #d2a8ff;
     --name-color: #{$base-text-color};
-    --code-color: #db3984;
-    --code-comment: green;
-    --literal-color: #008509;
-    --enum-color: #BB86FC;
+    --code-color: #ffa657;
+    --code-comment: #8b949e;
+    --literal-color: #a5d6ff;
+    --enum-color: #d2a8ff;
     --hidden-api-filter: brightness(60%) saturate(60%);
-    --java-doc-color: #629755;
-    --java-comment-color: #808080;
-    --java-field-name-color: #9876AA;
-    --java-method-name-color: #FFC66D;
-    --java-keyword-color: #CC7832;
-    --java-anotation-name-color: #BBB529;
-    --java-string-literal-color: #6A8759;
-    --java-number-color: #6897BB;
+    --java-doc-color: #8b949e;
+    --java-comment-color: #8b949e;
+    --java-field-name-color: #d2a8ff;
+    --java-method-name-color: #d2a8ff;
+    --java-keyword-color: #ff7b72;
+    --java-annotation-name-color: #ffa657;
+    --java-string-literal-color: #a5d6ff;
+    --java-number-color: #79c0ff;
     --rust-icon: url(/icons/rust-light-original.svg) center center no-repeat;
-    --alert-success-color: #75b798;
-    --alert-success-bg: #051b11;
-    --alert-success-border-color: #0f5132;
-    --alert-success-link-color: #75b798;
-    --alert-secondary-color: #a7acb1;
-    --alert-secondary-bg: #161719;
-    --alert-secondary-border-color: #41464b;
-    --alert-secondary-link-color: #a7acb1;
-    --alert-error-color: #ea868f;
-    --alert-error-bg: #2c0b0e;
-    --alert-error-border-color: #842029;
-    --alert-error-link-color: #ea868f;
-    --alert-warn-color: #ffda6a;
-    --alert-warn-bg: #332701;
-    --alert-warn-border-color: #997404;
-    --alert-warn-link-color: #ffda6a;
-    --alert-info-color: #6edff6;
-    --alert-info-bg: #032830;
-    --alert-info-border-color: #087990;
-    --alert-info-link-color: #6edff6;
-    --code-added: #14432d;
-    --code-removed: #491d24;
-    --code-delta: #4c401a;
-    --dark-overlay: rgba(0, 0, 0, 0.3);
-    --client-type-bg: rgba(0, 132, 255, 0.25);
+    --alert-success-color: #3fb950;
+    --alert-success-bg: #0f2d1c;
+    --alert-success-border-color: #238636;
+    --alert-success-link-color: #3fb950;
+    --alert-secondary-color: #8b949e;
+    --alert-secondary-bg: #21262d;
+    --alert-secondary-border-color: #30363d;
+    --alert-secondary-link-color: #8b949e;
+    --alert-error-color: #f85149;
+    --alert-error-bg: #2d1418;
+    --alert-error-border-color: #da3633;
+    --alert-error-link-color: #f85149;
+    --alert-warn-color: #d29922;
+    --alert-warn-bg: #2d2510;
+    --alert-warn-border-color: #9e6a03;
+    --alert-warn-link-color: #d29922;
+    --alert-info-color: #58a6ff;
+    --alert-info-bg: #121d2f;
+    --alert-info-border-color: #1f6feb;
+    --alert-info-link-color: #58a6ff;
+    --code-added: #1a4f2e;
+    --code-removed: #6e2d2d;
+    --code-delta: #5a4a1f;
+    --dark-overlay: rgba(0, 0, 0, 0.5);
+    --client-type-bg: rgba(88, 166, 255, 0.15);
     /*----Severity Badges----------------------------------------*/
-    --severity-question-bg: #1E3A8A;
-    --severity-question-text: #BFDBFE;
-    --severity-question-border: #3B82F6;
-    --severity-suggestion-bg: #374151;
-    --severity-suggestion-text: #D1D5DB;
-    --severity-suggestion-border: #6B7280;
-    --severity-should-fix-bg: #92400E;
-    --severity-should-fix-text: #FED7AA;
-    --severity-should-fix-border: #F59E0B;
-    --severity-must-fix-bg: #991B1B;
-    --severity-must-fix-text: #FECACA;
-    --severity-must-fix-border: #EF4444;
+    --severity-question-bg: #1f6feb;
+    --severity-question-text: #e6edf3;
+    --severity-question-border: #58a6ff;
+    --severity-suggestion-bg: #30363d;
+    --severity-suggestion-text: #e6edf3;
+    --severity-suggestion-border: #8b949e;
+    --severity-should-fix-bg: #9e6a03;
+    --severity-should-fix-text: #e6edf3;
+    --severity-should-fix-border: #d29922;
+    --severity-must-fix-bg: #da3633;
+    --severity-must-fix-text: #e6edf3;
+    --severity-must-fix-border: #f85149;
     /*----Toggle Switch------------------------------------------*/
-    --toggle-switch-off: #6c757d;
+    --toggle-switch-off: #484f58;
     --toggle-switch-on: #ffffff;
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    --svg-switch-off: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%238b949e'/%3e%3c/svg%3e");
+    --svg-close-btn: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238b949e'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
 }
 
 .dark-solarized-theme {
@@ -279,7 +283,7 @@
     --java-field-name-color: #9876AA;
     --java-method-name-color: #FFC66D;
     --java-keyword-color: #CC7832;
-    --java-anotation-name-color: #BBB529;
+    --java-annotation-name-color: #BBB529;
     --java-string-literal-color: #6A8759;
     --java-number-color: #6897BB;
     --rust-icon: url(/icons/rust-light-original.svg) center center no-repeat;
@@ -327,4 +331,6 @@
     /*----SVG-------------------------------------------------*/
     --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    --svg-switch-off: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%238b949e'/%3e%3c/svg%3e");
+    --svg-close-btn: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238b949e'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e");
 }

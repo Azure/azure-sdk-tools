@@ -177,7 +177,7 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        
+
         // Reserve space for the button even when it doesn't exist (e.g., on removed lines)
         &::after {
             content: '';
@@ -186,7 +186,7 @@
             height: 26px; // matches button height
             margin-left: 6px; // matches button margin-left
         }
-        
+
         // When the button exists, hide the spacer
         &.has-comment-btn::after {
             display: none;
@@ -198,7 +198,7 @@
                 display: none;
             }
         }
-        
+
         .add-comment-btn {
             opacity: 0;
             visibility: hidden;
@@ -362,7 +362,7 @@
         }
 
         .annotationName {
-            color: var(--java-anotation-name-color);
+            color: var(--java-annotation-name-color);
         }
 
         .stringLiteral {

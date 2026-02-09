@@ -133,7 +133,7 @@ public class VerifySetupTool : LanguageMcpTool
                     AddFailedResult(response, req, result, ctx);
                 }
 
-                // Run installs sequentially (order may matter for dependencies)
+                // Run installs sequentially
                 foreach (var (req, result) in installable)
                 {
                     logger.LogInformation("Auto-installing requirement: {Requirement}", req.Name);

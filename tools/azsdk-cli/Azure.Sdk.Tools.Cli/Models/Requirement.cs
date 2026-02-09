@@ -55,13 +55,13 @@ public abstract class Requirement
     public virtual string[]? CheckCommand => null;
 
     /// <summary>
-    /// Default timeout for check commands (30 seconds).
+    /// Default timeout for check commands.
     /// Override in subclasses for commands that need more or less time.
     /// </summary>
     protected virtual TimeSpan CheckTimeout => TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// Default timeout for install commands (5 minutes).
+    /// Default timeout for install commands.
     /// Override in subclasses for installs that need more or less time.
     /// </summary>
     protected virtual TimeSpan InstallTimeout => TimeSpan.FromMinutes(5);

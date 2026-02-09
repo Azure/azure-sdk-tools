@@ -328,4 +328,111 @@ internal class VerifySetupToolTests
             Assert.That(parseResult.Errors, Is.Empty);
         }
     }
+
+    [Test]
+    public async Task VerifySetup_AutoInstall_SucceedsAndVerifies()
+    {
+        // Arrange - tsp check fails initially, install succeeds, re-check succeeds
+        var tspCheckCount = 0;
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Command.Contains("tsp") || opt.Args.Any(a => a == "tsp")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                tspCheckCount++;
+                if (tspCheckCount <= 1)
+                {
+                    // First call: check fails
+                    return new ProcessResult
+                    {
+                        ExitCode = 1,
+                        OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, "tsp: command not found") }
+                    };
+                }
+                // Subsequent calls (install + re-check): succeed
+                return new ProcessResult
+                {
+                    ExitCode = 0,
+                    OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardOutput, "1.0.1") }
+                };
+            });
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+
+        // Assert
+        Assert.That(result.ResponseError, Is.Null);
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult, Is.Not.Null);
+        Assert.That(tspResult!.AutoInstallAttempted, Is.True);
+        Assert.That(tspResult.AutoInstallSucceeded, Is.True);
+        Assert.That(tspResult.AutoInstallError, Is.Null);
+    }
+
+    [Test]
+    public async Task VerifySetup_AutoInstall_InstallCommandFails()
+    {
+        // Arrange - tsp check fails, and the install command also fails
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Args.Any(a => a == "tsp") || opt.Command.Contains("tsp")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 1,
+                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, "npm ERR! install failed") }
+            });
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+
+        // Assert - AutoInstallError should be reported
+        Assert.That(result.ResponseError, Is.Null);
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult, Is.Not.Null);
+        Assert.That(tspResult!.AutoInstallAttempted, Is.True);
+        Assert.That(tspResult.AutoInstallSucceeded, Is.False);
+        Assert.That(tspResult.AutoInstallError, Is.Not.Null);
+    }
+
+    [Test]
+    public async Task VerifySetup_AutoInstall_NonInstallableRequirementReportsInstructions()
+    {
+        // Arrange - Node.js fails (not auto-installable)
+        SetupFailedProcessMock("node", 1, "node: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act - auto-install enabled, but Node.js can't be auto-installed
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+
+        // Assert - should report failure with instructions, not attempt install
+        Assert.That(result.ResponseError, Is.Null);
+        var nodeResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("Node"));
+        Assert.That(nodeResult, Is.Not.Null);
+        Assert.That(nodeResult!.AutoInstallAttempted, Is.False);
+        Assert.That(nodeResult.IsAutoInstallable, Is.False);
+        Assert.That(nodeResult.NotAutoInstallableReason, Is.Not.Null.And.Not.Empty);
+        Assert.That(nodeResult.Instructions, Is.Not.Empty);
+    }
 }

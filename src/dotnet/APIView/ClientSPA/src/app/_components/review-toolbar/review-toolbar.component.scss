@@ -193,10 +193,26 @@
     }
   }
 
-  .diff-style-toggle-wrapper {
-    display: flex;
-    align-items: center;
+  .diff-style-dropdown {
+    min-width: 120px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--base-fg-color);
+
+    ::ng-deep {
+      .p-select-label {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        color: var(--base-text-color);
+      }
+
+      .p-select-dropdown {
+        width: 1.5rem;
+        color: var(--base-text-color);
+      }
+    }
   }
+
   .emphasis-badge {
     border-radius: 5px;
     padding: 0px 5px 2px 5px;

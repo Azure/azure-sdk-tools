@@ -97,6 +97,18 @@
                 </ol>
             </p>
         </div>
+        <div class="d-none" id="rust-help">
+            <p class="card-text">
+                <ol>
+                    <li>
+                        In the root of your azure-sdk-for-rust clone, run: <code>cargo run --manifest-path eng/tools/generate_api_report/Cargo.toml -- --package {package-name}</code>
+                    </li>
+                    <li>
+                        Upload <code>sdk/{service-name}/{package-name}/review/{package-name}.rust.json</code> using the `Create Review` link.
+                    </li>
+                </ol>
+            </p>
+        </div>
         <div class="d-none" id="swift-help">
             <p class="card-text">
                 <ol>

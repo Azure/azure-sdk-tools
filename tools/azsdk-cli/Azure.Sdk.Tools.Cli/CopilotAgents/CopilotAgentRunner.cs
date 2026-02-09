@@ -97,9 +97,6 @@ public class CopilotAgentRunner(
 
         await using var session = await client.CreateSessionAsync(sessionConfig, ct);
 
-        // Create a token usage session for this agent run
-        var tokenSession = tokenUsageHelper.NewSession($"copilot:{agent.Model}");
-
         // TaskCompletionSource to signal when session is idle
         TaskCompletionSource? sessionIdleTcs = null;
         // Track session errors that occur during processing
@@ -113,7 +110,7 @@ public class CopilotAgentRunner(
             switch (evt)
             {
                 case AssistantUsageEvent usage:
-                    tokenSession.Set(
+                    tokenUsageHelper.AddCumulative(
                         usage.Data.Model ?? agent.Model,
                         usage.Data.InputTokens ?? 0,
                         usage.Data.OutputTokens ?? 0);

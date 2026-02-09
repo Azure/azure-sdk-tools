@@ -51,10 +51,6 @@ public sealed class TelemetryProcessor : BaseProcessor<Activity>
         {
             activity.SetTag(TelemetryConstants.TagName.ModelsUsed, modelsUsed);
         }
-        if (activity.GetCustomProperty(TelemetryConstants.TagName.TokenUsageSessions) is string tokenUsageSessions)
-        {
-            activity.SetTag(TelemetryConstants.TagName.TokenUsageSessions, tokenUsageSessions);
-        }
 
         SanitizeTags(activity);
     }

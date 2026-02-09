@@ -23,7 +23,6 @@ public class MicroagentHostService(OpenAIClient openAI, ILogger<MicroagentHostSe
         }
 
         logger.LogInformation("Starting agent with model '{Model}'", agentDefinition.Model);
-        var tokenSession = tokenUsageHelper.NewSession($"microagent:{agentDefinition.Model}");
         var chatClient = openAI.GetChatClient(agentDefinition.Model);
 
         // Initialize conversation logging
@@ -73,7 +72,7 @@ public class MicroagentHostService(OpenAIClient openAI, ILogger<MicroagentHostSe
             var response = await chatClient.CompleteChatAsync(conversationHistory, chatCompletionOptions, ct);
             if (null != response.Value.Usage)
             {
-                tokenSession.Add(agentDefinition.Model, response.Value.Usage.InputTokenCount, response.Value.Usage.OutputTokenCount);
+                tokenUsageHelper.Add(agentDefinition.Model, response.Value.Usage.InputTokenCount, response.Value.Usage.OutputTokenCount);
             }
 
             var toolCall = response.Value.ToolCalls.Single();

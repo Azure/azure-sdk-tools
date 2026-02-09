@@ -121,7 +121,7 @@ export class TypeSpecProcessor {
                     braceCount = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
 
                     // If not using braces and does not end with semicolon, it may be a multi-line single statement
-                    if (!trimmedLine.endsWith(';') && braceCount === 0) {
+                    if (currentType !== "interface" && !trimmedLine.endsWith(';') && braceCount === 0) {
                         multiLineSemicolon = true;
                     } else {
                         multiLineSemicolon = false;

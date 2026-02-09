@@ -1,6 +1,11 @@
+# 2.0.8
+
+- Code refactoring of token generators for properties and property signatures
+
 # 2.0.7
 
 - Add support for cross-language IDs to correlate APIs across different languages
+- Code refactoring of token generators for enums, classes, functions, interfaces and methods
 
 # 2.0.6
 

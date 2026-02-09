@@ -9,9 +9,11 @@ using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
+[McpServerToolType]
 [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
 public class DelegateAPIViewFeedbackTool : MCPTool
 {
@@ -68,6 +70,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
         return await DelegateAPIViewFeedbackAsync(apiViewUrl, repoOverride, dryRun, ct);
     }
 
+    [McpServerTool(Name = ToolName)]
     [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
     public async Task<DefaultCommandResponse> DelegateAPIViewFeedbackAsync(
         string apiViewUrl,

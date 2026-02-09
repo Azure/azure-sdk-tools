@@ -146,6 +146,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		},
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
+		EnableRouting:           true,
 	},
 	model.TenantID_AzureSDKOnboarding: {
 		PromptTemplate:          "azure_sdk_onboarding/qa.md",

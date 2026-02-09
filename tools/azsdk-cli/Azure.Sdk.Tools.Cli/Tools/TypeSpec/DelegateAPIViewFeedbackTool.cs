@@ -78,13 +78,12 @@ public class DelegateAPIViewFeedbackTool : MCPTool
         bool dryRun = false,
         CancellationToken ct = default)
     {
-        if (string.IsNullOrEmpty(apiViewUrl))
-        {
-            return new DefaultCommandResponse { Message = "APIView URL is required" };
-        }
-
         try
         {
+            if (string.IsNullOrEmpty(apiViewUrl))
+            {
+                return new DefaultCommandResponse { Message = "APIView URL is required" };
+            }
             _logger.LogInformation("Fetching APIView feedback from {Url}", apiViewUrl);
 
             // Extract revision ID from URL

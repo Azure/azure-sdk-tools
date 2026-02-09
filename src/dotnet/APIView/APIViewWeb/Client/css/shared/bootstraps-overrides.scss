@@ -2,6 +2,10 @@
     color: var(--success-color) !important;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    color: var(--base-text-color);
+}
+
 .btn-primary {
     background-color: var(--link-color);
     border-color: var(--link-color);

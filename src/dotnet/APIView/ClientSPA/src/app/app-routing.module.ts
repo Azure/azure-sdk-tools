@@ -9,7 +9,7 @@ import { AdminPermissionsPageComponent } from './_components/admin-permissions-p
 import { ThemeTestComponent } from './_components/theme-test/theme-test.component';
 
 const routes: Routes = [
-  { path: 'theme-test', component: ThemeTestComponent }, // Dev-only: theme comparison page
+  { path: 'theme-test', component: ThemeTestComponent, canActivate: [AuthGuard] }, // Dev-only: theme comparison page
   { path: '', component: IndexPageComponent, canActivate: [AuthGuard], data: { pageName: INDEX_PAGE_NAME } },
   { path: '',
      runGuardsAndResolvers: 'always',

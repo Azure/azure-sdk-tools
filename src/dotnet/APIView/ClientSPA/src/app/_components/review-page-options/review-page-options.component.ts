@@ -76,6 +76,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   canToggleApproveAPIRevision: boolean = false;
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
   isAPIRevisionApprovalDisabled: boolean = false;
+  isMissingPackageVersion: boolean = false;
   apiRevisionApprovalMessage: string = '';
   apiRevisionApprovalBtnClass: string = '';
   apiRevisionApprovalBtnLabel: string = '';
@@ -292,6 +293,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   setAPIRevisionApprovalStates() {
     const language = this.review?.language;
     const packageVersion = this.activeAPIRevision?.packageVersion;
+    this.isMissingPackageVersion = !packageVersion || packageVersion.trim() === '';
 
     if (language) {
       const isRequired$ = this.reviewsService.getIsReviewByCopilotRequired(language);
@@ -326,12 +328,22 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       }
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
       this.apiRevisionApprovalMessage = this.activeAPIRevisionIsApprovedByCurrentUser ? "" :
-        this.isAPIRevisionApprovalDisabled ? "To approve the current API revision, it must first be reviewed by Copilot" :
+        this.isAPIRevisionApprovalDisabled ? this.getApprovalDisabledMessage(isReviewByCopilotRequired, isVersionReviewedByCopilot) :
         "Approves the Current API Revision";
     } else {
       this.apiRevisionApprovalBtnClass = "btn btn-outline-secondary";
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
     }
+  }
+
+  private getApprovalDisabledMessage(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): string {
+    if (this.isMissingPackageVersion) {
+      return "This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.";
+    }
+    if (isReviewByCopilotRequired && !isVersionReviewedByCopilot) {
+      return "To approve the current API revision, it must first be reviewed by Copilot";
+    }
+    return "";
   }
   setReviewApprovalStatus() {
     this.reviewIsApproved = !!this.review?.isApproved;
@@ -607,6 +619,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   private shouldDisableApproval(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): boolean {
+    if (this.isMissingPackageVersion) return true;
     if (!this.isCopilotReviewSupported) return false;
     if (this.isPreviewVersion()) return false;
     if (this.activeAPIRevisionIsApprovedByCurrentUser) return false;

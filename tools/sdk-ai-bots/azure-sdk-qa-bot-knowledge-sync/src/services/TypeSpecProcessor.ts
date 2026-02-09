@@ -25,6 +25,34 @@ export class TypeSpecProcessor {
     /**
      * Parse TypeSpec content and extract all definitions.
      */
+    /**
+     * Parses raw TypeSpec file content into an array of structured `TypeSpecDefinition` objects.
+     *
+     * This method performs a line-by-line scan of the input string, identifying and extracting
+     * TypeSpec constructs such as models, enums, unions, interfaces, operations, scalars, aliases,
+     * and namespaces. For each definition found, it captures:
+     *
+     * - **Comments**: Both single-line (`//`) and block (`/** ... *​/`) comments that precede a definition.
+     * - **Decorators**: Lines starting with `@` that annotate the subsequent definition.
+     * - **Definition body**: The full code of the definition, including multi-line brace-delimited
+     *   blocks (e.g., `model Foo { ... }`) and single/multi-line semicolon-terminated statements
+     *   (e.g., `alias Foo = string;`).
+     *
+     * The parser uses a simple state machine that tracks:
+     * 1. Whether it is currently inside a block comment, collecting comment lines.
+     * 2. Whether it is inside a definition body, using brace counting (`{` / `}`) to determine
+     *    when a brace-delimited definition is complete, or watching for a terminating semicolon
+     *    for single-statement definitions that span multiple lines.
+     *
+     * Accumulated decorators and comments are associated with the next definition encountered.
+     * If a non-relevant line is found (not a comment, decorator, `import`, or `using`), the
+     * accumulated decorators and comments are reset.
+     *
+     * @param content - The raw string content of a TypeSpec (`.tsp`) file to parse.
+     * @returns An array of {@link TypeSpecDefinition} objects representing each parsed definition,
+     *          including its type, name, full code (with preceding comments), decorators,
+     *          extracted description, and associated comments.
+     */
     private parseTypeSpecDefinitions(content: string): TypeSpecDefinition[] {
         const definitions: TypeSpecDefinition[] = [];
         const lines = content.split('\n');
@@ -39,6 +67,8 @@ export class TypeSpecProcessor {
         let currentType: TypeSpecDefinition['type'] | null = null;
         let currentName = '';
 
+
+        let multiLineSemicolon = false;
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const trimmedLine = line.trim();
@@ -89,7 +119,14 @@ export class TypeSpecProcessor {
                     inDefinition = true;
                     definitionLines = [...currentDecorators, line];
                     braceCount = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
-                    
+
+                    // If not using braces and does not end with semicolon, it may be a multi-line single statement
+                    if (!trimmedLine.endsWith(';') && braceCount === 0) {
+                        multiLineSemicolon = true;
+                    } else {
+                        multiLineSemicolon = false;
+                    }
+
                     // Handle single-line definitions (like aliases or simple scalars)
                     if (trimmedLine.endsWith(';') && braceCount === 0) {
                         const description = this.extractDescription(currentDecorators, currentComments);
@@ -109,6 +146,7 @@ export class TypeSpecProcessor {
                         definitionLines = [];
                         currentType = null;
                         currentName = '';
+                        multiLineSemicolon = false;
                     }
                     continue;
                 } else {
@@ -126,8 +164,8 @@ export class TypeSpecProcessor {
                 braceCount += (line.match(/{/g) || []).length;
                 braceCount -= (line.match(/}/g) || []).length;
 
-                // Definition complete
-                if (braceCount === 0) {
+                // If in multi-line semicolon mode, check for ending semicolon
+                if (multiLineSemicolon && trimmedLine.endsWith(';') && braceCount === 0) {
                     const description = this.extractDescription(currentDecorators, currentComments);
                     const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
                     definitions.push({
@@ -144,6 +182,29 @@ export class TypeSpecProcessor {
                     definitionLines = [];
                     currentType = null;
                     currentName = '';
+                    multiLineSemicolon = false;
+                    continue;
+                }
+
+                // Definition complete (brace-based)
+                if (!multiLineSemicolon && braceCount === 0) {
+                    const description = this.extractDescription(currentDecorators, currentComments);
+                    const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
+                    definitions.push({
+                        type: currentType!,
+                        name: currentName,
+                        code: codeWithComments,
+                        decorators: currentDecorators,
+                        description,
+                        comments: currentComments
+                    });
+                    currentDecorators = [];
+                    currentComments = [];
+                    inDefinition = false;
+                    definitionLines = [];
+                    currentType = null;
+                    currentName = '';
+                    multiLineSemicolon = false;
                 }
             }
         }

@@ -9,9 +9,11 @@ using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
+[McpServerToolType]
 [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
 public class DelegateAPIViewFeedbackTool : MCPTool
 {
@@ -68,6 +70,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
         return await DelegateAPIViewFeedbackAsync(apiViewUrl, repoOverride, dryRun, ct);
     }
 
+    [McpServerTool(Name = ToolName)]
     [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
     public async Task<DefaultCommandResponse> DelegateAPIViewFeedbackAsync(
         string apiViewUrl,
@@ -75,13 +78,12 @@ public class DelegateAPIViewFeedbackTool : MCPTool
         bool dryRun = false,
         CancellationToken ct = default)
     {
-        if (string.IsNullOrEmpty(apiViewUrl))
-        {
-            return new DefaultCommandResponse { Message = "APIView URL is required" };
-        }
-
         try
         {
+            if (string.IsNullOrWhiteSpace(apiViewUrl))
+            {
+                return new DefaultCommandResponse { ResponseError = "APIView URL is required" };
+            }
             _logger.LogInformation("Fetching APIView feedback from {Url}", apiViewUrl);
 
             // Extract revision ID from URL

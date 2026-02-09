@@ -167,7 +167,7 @@ public class CopilotAgentRunner(
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
             {
                 throw new TimeoutException(
-                    $"Agent session idle timeout of {agent.IdleTimeout} was exceeded while waiting for the agent to complete.");
+                    $"Agent session idle timeout of {agent.IdleTimeout.Minutes}m was exceeded while waiting for the agent to complete.");
             }
 
             logger.LogDebug("Message completed, capturedResult is {HasResult}", capturedResult != null ? "set" : "null");

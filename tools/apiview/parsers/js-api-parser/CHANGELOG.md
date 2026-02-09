@@ -1,6 +1,6 @@
 # 2.0.8
 
-- Code refactoring of token generator for property and property signature
+- Code refactoring of token generators for properties and property signatures
 
 # 2.0.7
 

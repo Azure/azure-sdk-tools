@@ -24,7 +24,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly IList<string> scopes = new List<string>();
         private const string authUrl = "https://login.microsoftonline.com/organizations/";
 
-        private bool initialized = false;
+        private readonly object _initializeLock = new();
+        private bool _initialized = false;
 
         private static readonly ServiceInfo DefaultAzureSdkKnowledgeService = new()
         {
@@ -53,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// Initializes the service, including setting up authentication if necessary.
         /// This is separate from the constructor to allow for lazy initialization.
         /// </summary>
-        private void Initialize()
+        private void _initialize()
         {
             if (string.IsNullOrEmpty(_options.Endpoint))
             {
@@ -86,27 +87,32 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             ConfigureHttpClient();
 
-            initialized = true;
+            _initialized = true;
+        }
+
+        private void Initialize()
+        {
+            lock (_initializeLock)
+            {
+                if (!_initialized)
+                {
+                    _initialize();
+                }
+            }
         }
 
         public async Task<CompletionResponse> SendCompletionRequestAsync(
             CompletionRequest request,
             CancellationToken cancellationToken = default)
         {
-            if (!initialized)
-            {
-                Initialize();
-            }
-
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
+            ArgumentNullException.ThrowIfNull(request);
 
             if (!ValidateRequest(request))
             {
                 throw new ArgumentException("Request validation failed", nameof(request));
             }
+
+            Initialize();
 
             try
             {

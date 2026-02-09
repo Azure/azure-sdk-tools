@@ -3,7 +3,12 @@
   border-color: var(--border-color) !important;
   min-height: 36px;
   overflow: hidden;
-  flex-wrap: nowrap;
+  flex-wrap: nowrap !important;
+  white-space: nowrap;
+
+  .toolbar-label {
+    color: var(--base-text-color);
+  }
 
   .compact-dropdown {
     min-width: 200px;
@@ -273,6 +278,17 @@
     label {
       font-size: 0.875rem;
     }
+  }
+}
+
+// Ensure popover doesn't affect layout when closed
+.review-toolbar {
+  > p-popover,
+  > p-dialog {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: visible;
   }
 }
 

@@ -1,7 +1,7 @@
-<div class="review-toolbar d-flex align-items-center gap-3 ps-2 py-1 pe-2">
+<div class="review-toolbar d-flex align-items-center gap-3 ps-2 py-1 pe-0">
     <!-- Diff Revision Dropdown -->
     <span *ngIf="diffApiRevisionsMenu.length > 0" class="d-flex align-items-center">
-        <label class="small fw-semibold me-2" for="diff-api-revision-select">Diff :</label>
+        <label class="small fw-semibold me-2 toolbar-label" for="diff-api-revision-select">Diff :</label>
         <p-select
             [options]="diffApiRevisionsMenu"
             [(ngModel)]="selectedDiffAPIRevision"
@@ -99,12 +99,12 @@
         </p-buttongroup>
     </div>
 
-    <!-- Spacer to push Comment Nav to center -->
+    <!-- Spacer to push Comment Nav and Search to right -->
     <div class="flex-grow-1"></div>
 
     <!-- Comment Navigation Buttons -->
-    <div *ngIf="showCommentsSwitch" class="d-flex align-items-center">
-        <span class="small fw-semibold me-1">Comment Nav</span>
+    <div *ngIf="showCommentsSwitch" class="d-flex align-items-center me-2">
+        <span class="small fw-semibold me-1 toolbar-label">Comment Nav</span>
         <p-buttongroup>
             <p-button (onClick)="commentNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" [text]="true" size="small" ariaLabel="Previous comment" title="Previous comment">
                 <i class="bi bi-chevron-up"></i>
@@ -114,9 +114,6 @@
             </p-button>
         </p-buttongroup>
     </div>
-
-    <!-- Spacer to push search to right -->
-    <div class="flex-grow-1"></div>
 
     <!-- Search Bar and Controls -->
     <div class="d-flex align-items-center gap-2">

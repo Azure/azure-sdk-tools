@@ -199,13 +199,13 @@ public static class CoreRequirements
 
         public override string? NotAutoInstallableReason => NotInstallableReasons.BundledWithLanguage;
 
-        public override string[][]? GetInstallCommands(RequirementContext ctx)
+        public override IReadOnlyList<string> GetInstructions(RequirementContext ctx)
         {
             if (ctx.IsLinux)
             {
-                return [["sudo", "apt", "install", "python3-pip"]];
+                return ["sudo apt install python3-pip"];
             }
-            return [["python", "-m", "ensurepip", "--upgrade"]];
+            return ["python -m ensurepip --upgrade"];
         }
     }
 }

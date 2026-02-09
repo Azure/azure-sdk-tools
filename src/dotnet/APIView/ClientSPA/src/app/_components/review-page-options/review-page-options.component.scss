@@ -67,4 +67,17 @@
     .review-search-info {
         padding-top: 0.55rem;
     }
+
+    .reviewer-item {
+        &:hover {
+            background-color: var(--surface-hover);
+        }
+        &.selected {
+            font-weight: 500;
+        }
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
 }

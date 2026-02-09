@@ -3,7 +3,12 @@
   border-color: var(--border-color) !important;
   min-height: 36px;
   overflow: hidden;
-  flex-wrap: nowrap;
+  flex-wrap: nowrap !important;
+  white-space: nowrap;
+
+  .toolbar-label {
+    color: var(--base-text-color);
+  }
 
   .compact-dropdown {
     min-width: 200px;
@@ -188,10 +193,26 @@
     }
   }
 
-  .diff-style-toggle-wrapper {
-    display: flex;
-    align-items: center;
+  .diff-style-dropdown {
+    min-width: 120px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--base-fg-color);
+
+    ::ng-deep {
+      .p-select-label {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        color: var(--base-text-color);
+      }
+
+      .p-select-dropdown {
+        width: 1.5rem;
+        color: var(--base-text-color);
+      }
+    }
   }
+
   .emphasis-badge {
     border-radius: 5px;
     padding: 0px 5px 2px 5px;
@@ -273,6 +294,17 @@
     label {
       font-size: 0.875rem;
     }
+  }
+}
+
+// Ensure popover doesn't affect layout when closed
+.review-toolbar {
+  > p-popover,
+  > p-dialog {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: visible;
   }
 }
 

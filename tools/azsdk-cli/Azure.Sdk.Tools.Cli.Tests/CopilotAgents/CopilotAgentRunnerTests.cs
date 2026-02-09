@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CopilotAgents;
 internal class CopilotAgentRunnerTests
 {
     private Mock<ILogger<CopilotAgentRunner>> loggerMock;
-    private CopilotTokenUsageHelper tokenUsageHelper;
+    private TokenUsageHelper tokenUsageHelper;
     private Mock<ICopilotClientWrapper> clientMock;
     private Mock<ICopilotSessionWrapper> sessionMock;
     private List<SessionEventHandler> eventHandlers;
@@ -22,7 +22,7 @@ internal class CopilotAgentRunnerTests
     public void Setup()
     {
         loggerMock = new Mock<ILogger<CopilotAgentRunner>>();
-        tokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        tokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
 
         eventHandlers = [];
         capturedTools = null;
@@ -320,7 +320,7 @@ internal class CopilotAgentRunnerTests
     public async Task RunAsync_TokenUsageTracking_AddsTokens()
     {
         var outputHelper = new Mock<IRawOutputHelper>();
-        var tokenUsageHelper = new CopilotTokenUsageHelper(outputHelper.Object);
+        var tokenUsageHelper = new TokenUsageHelper(outputHelper.Object);
 
         sessionMock.Setup(s => s.SendAsync(It.IsAny<MessageOptions>(), It.IsAny<CancellationToken>()))
             .Callback(() =>
@@ -575,7 +575,7 @@ internal class CopilotAgentRunnerTests
             CliPath = "/nonexistent/path/to/copilot-cli"
         });
         var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
-        var localTokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var localTokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var runner = new CopilotAgentRunner(
             copilotClientWrapper,
             localTokenUsageHelper,
@@ -611,7 +611,7 @@ internal class CopilotAgentRunnerTests
             GithubToken = "invalid_token_that_will_not_work"
         });
         var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
-        var localTokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var localTokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var runner = new CopilotAgentRunner(
             copilotClientWrapper,
             localTokenUsageHelper,
@@ -639,7 +639,7 @@ internal class CopilotAgentRunnerTests
             .Setup(c => c.GetAuthStatusAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("CLI process failed to start"));
 
-        var localTokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var localTokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var runner = new CopilotAgentRunner(
             mockClientWrapper.Object,
             localTokenUsageHelper,
@@ -673,7 +673,7 @@ internal class CopilotAgentRunnerTests
             .Setup(c => c.GetAuthStatusAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CopilotAuthStatus(IsAuthenticated: false));
 
-        var localTokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var localTokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var runner = new CopilotAgentRunner(
             mockClientWrapper.Object,
             localTokenUsageHelper,

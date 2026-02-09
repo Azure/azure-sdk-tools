@@ -40,7 +40,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
     private readonly ILogger<TypeSpecCustomizationService> logger;
     private readonly ICopilotAgentRunner copilotAgentRunner;
     private readonly INpxHelper npxHelper;
-    private readonly CopilotTokenUsageHelper tokenUsageHelper;
+    private readonly TokenUsageHelper tokenUsageHelper;
     private readonly ITypeSpecHelper typeSpecHelper;
     private readonly IGitHelper gitHelper;
 
@@ -48,7 +48,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
         ILogger<TypeSpecCustomizationService> logger,
         ICopilotAgentRunner copilotAgentRunner,
         INpxHelper npxHelper,
-        CopilotTokenUsageHelper tokenUsageHelper,
+        TokenUsageHelper tokenUsageHelper,
         ITypeSpecHelper typeSpecHelper,
         IGitHelper gitHelper)
     {

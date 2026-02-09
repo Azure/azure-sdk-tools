@@ -76,7 +76,7 @@ internal class TypeSpecCustomizationServiceTests
         var npxHelper = new NpxHelper(
             new TestLogger<NpxHelper>(),
             rawOutputHelper);
-        var tokenUsageHelper = new CopilotTokenUsageHelper(rawOutputHelper);
+        var tokenUsageHelper = new TokenUsageHelper(rawOutputHelper);
         var gitHelper = CreateRealGitHelper();
         var typeSpecHelper = new TypeSpecHelper(gitHelper);
 
@@ -135,7 +135,7 @@ internal class TypeSpecCustomizationServiceTests
         var logger = new TestLogger<TypeSpecCustomizationService>();
         var copilotAgentRunner = Mock.Of<ICopilotAgentRunner>();
         var npxHelper = Mock.Of<INpxHelper>();
-        var tokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var tokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var typeSpecHelper = new TypeSpecHelper(Mock.Of<IGitHelper>());
         var gitHelper = Mock.Of<IGitHelper>();
 
@@ -161,7 +161,7 @@ internal class TypeSpecCustomizationServiceTests
         var logger = new TestLogger<TypeSpecCustomizationService>();
         var copilotAgentRunner = Mock.Of<ICopilotAgentRunner>();
         var npxHelper = Mock.Of<INpxHelper>();
-        var tokenUsageHelper = new CopilotTokenUsageHelper(Mock.Of<IRawOutputHelper>());
+        var tokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());
         var gitHelper = CreateRealGitHelper();
         var typeSpecHelper = new TypeSpecHelper(gitHelper);
 

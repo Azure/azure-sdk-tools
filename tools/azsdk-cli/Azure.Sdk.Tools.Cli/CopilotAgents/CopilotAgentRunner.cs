@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Helpers;
 using GitHub.Copilot.SDK;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.CopilotAgents;
 
 public class CopilotAgentRunner(
     ICopilotClientWrapper client,
-    CopilotTokenUsageHelper tokenUsageHelper,
+    TokenUsageHelper tokenUsageHelper,
     ILogger<CopilotAgentRunner> logger) : ICopilotAgentRunner
 {
     /// <summary>
@@ -109,7 +110,7 @@ public class CopilotAgentRunner(
             switch (evt)
             {
                 case AssistantUsageEvent usage:
-                    tokenUsageHelper.Add(
+                    tokenUsageHelper.AddCumulative(
                         usage.Data.Model ?? agent.Model,
                         usage.Data.InputTokens ?? 0,
                         usage.Data.OutputTokens ?? 0);

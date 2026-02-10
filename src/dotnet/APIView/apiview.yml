@@ -7,7 +7,7 @@ parameters:
     default: '1.0.0-dev.20251117.2'
   - name: JavaScriptAPIParser
     type: string
-    default: '@azure-tools/ts-genapi@2.0.5'
+    default: '@azure-tools/ts-genapi@2.0.9'
   - name: RustAPIParser
     type: string
     default: '@azure-tools/rust-genapi@1.2.0'

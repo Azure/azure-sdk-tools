@@ -146,9 +146,18 @@ public abstract class Requirement
             return commands.Select(cmd => string.Join(" ", cmd)).ToList();
         }
 
-        throw new InvalidOperationException(
+        if (!IsAutoInstallable)
+        {
+             throw new InvalidOperationException(
             $"Requirement '{Name}' is not auto-installable and must override GetInstructions to provide manual install instructions.");
+        }
+        else
+        {
+            throw new InvalidOperationException(
+            $"Requirement '{Name}' is auto-installable but GetInstallCommands did not return any commands to execute.");
+        }
     }
+       
 
     /// <summary>
     /// Optional reason why the requirement is needed.

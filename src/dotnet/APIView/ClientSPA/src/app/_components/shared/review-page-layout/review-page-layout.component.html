@@ -9,8 +9,10 @@
         [diffApiRevisionId]="diffApiRevisionId"
         [userProfile]="userProfile"
         [showPageoptionsButton]="showPageoptionsButton"
-        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"></app-review-info>
-    <div class="mt-1" style="display: flex;">
+        [showLeftNavigation]="showLeftNavigation"
+        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
+        (showLeftNavigationEmitter)="handleLeftNavigationEmitter($event)"></app-review-info>
+    <div class="mt-1" style="display: flex; align-items: flex-start;">
         <div>
             <p-menu [model]="sideMenu" styleClass="side-menu">
                 <ng-template pTemplate="item" let-item>

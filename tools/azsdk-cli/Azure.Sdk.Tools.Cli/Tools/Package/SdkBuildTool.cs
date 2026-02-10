@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 // Resolves relative paths to absolute
                 string fullPath = Path.GetFullPath(packagePath);
-                var languageService = GetLanguageService(fullPath);
+                var languageService = await GetLanguageServiceAsync(fullPath, ct);
                 if (languageService == null)
                 {
                     return PackageOperationResponse.CreateFailure($"Failed to find the language from package path {packagePath}");

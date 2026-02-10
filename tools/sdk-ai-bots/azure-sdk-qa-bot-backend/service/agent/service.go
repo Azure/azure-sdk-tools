@@ -49,6 +49,9 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		topK := config.AppConfig.AI_SEARCH_TOPK
 		req.TopK = &topK
 	}
+	if req.WithAgenticSearch == nil {
+		req.WithAgenticSearch = to.Ptr(true)
+	}
 	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
 	if hasConfig {
 		if req.Sources == nil {
@@ -83,11 +86,11 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
 
 	// 1. Build messages from the openai request
-	llmMessages, reasoningModelMessages := s.buildMessages(req)
+	llmMessages := s.buildMessages(req)
 
 	// 2. Handle tenant routing if enabled
 	if tenantConfig.EnableRouting {
-		routedTenantID, routed = s.RouteTenant(req.TenantID, reasoningModelMessages)
+		routedTenantID, routed = s.RouteTenant(req.TenantID, req.ModelConfig, llmMessages)
 		if routed {
 			tenantConfig, _ = config.GetTenantConfig(routedTenantID)
 			req.Sources = tenantConfig.Sources
@@ -95,8 +98,32 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		}
 	}
 
-	// 3. Build query for search
-	query, intention := s.buildQueryForSearch(req, reasoningModelMessages)
+	// 3. Recognize intention
+	query := req.Message.Content
+
+	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, req.ModelConfig, llmMessages)
+	if err != nil {
+		log.Printf("Intention recognize failed with error: %s", err)
+		return nil, err
+	}
+	if intention.QuestionScope == nil {
+		intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
+	}
+	if len(intention.Question) > 0 {
+		query = fmt.Sprintf("category:%s question:%s", intention.Category, intention.Question)
+	}
+	// Apply intention override if provided
+	if req.Intention != nil {
+		if req.Intention.QuestionScope != nil {
+			intention.QuestionScope = req.Intention.QuestionScope
+		}
+		if req.Intention.ServiceType != nil {
+			intention.ServiceType = req.Intention.ServiceType
+		}
+	}
+	jsonReq, _ = json.Marshal(intention)
+	log.Printf("Intent Result: %s", utils.SanitizeForLog(string(jsonReq)))
+	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 
 	var knowledges []model.Knowledge
 	var prompt string
@@ -109,7 +136,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		promptTemplate = "common/non_technical_question.md"
 	} else {
 		// Run agentic search and vector search in parallel, then merge results
-		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query)
+		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query, intention, *req.WithAgenticSearch)
 		if err != nil {
 			log.Printf("Parallel search failed: %v", err)
 			return nil, model.NewSearchFailureError(err)
@@ -117,7 +144,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 4. Build prompt
-	prompt, err = s.buildPrompt(intention, knowledges, promptTemplate)
+	prompt, err = s.buildPrompt(req.TenantID, intention, knowledges, promptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -127,7 +154,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	llmMessages = append([]azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
 	}, llmMessages...)
-	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
+	result, err := s.getLLMResult(req.ModelConfig, llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
@@ -148,11 +175,14 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecognizeIntention(promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.IntentionResult, error) {
+func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
+	start := time.Now()
 	promptParser := prompt.IntentionPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	promptStr, err := promptParser.ParsePrompt(nil, promptTemplate)
+	promptStr, err := promptParser.ParsePrompt(map[string]string{
+		"tenant_id": string(tenantID),
+	}, promptTemplate)
 	if err != nil {
 		log.Printf("Failed to parse intention prompt: %v", err)
 		return nil, err
@@ -162,12 +192,24 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
 	}, messages...)
 
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+	options := azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
-		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE)),
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-	}, nil)
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
+		Temperature:    to.Ptr(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE),
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.ReasoningModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.ReasoningModel))
+	}
+
+	if modelConfig != nil && modelConfig.ReasoningModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.ReasoningModelTemperature))
+	}
+
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 
 	if err != nil {
 		log.Printf("LLM intention recognition failed: %v", err)
@@ -183,28 +225,24 @@ func (s *CompletionService) RecognizeIntention(promptTemplate string, messages [
 		}
 		return result, nil
 	}
-
+	log.Printf("RecognizeIntention took %f s", time.Since(start).Seconds())
 	return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 }
 
 func processChunk(result model.Index) model.Knowledge {
 	chunk := ""
-	title := ""
+	var titles []string
 	if len(result.Header1) > 0 {
 		chunk += "# " + result.Header1 + "\n"
-		title = result.Header1
+		titles = append(titles, result.Header1)
 	}
 	if len(result.Header2) > 0 {
 		chunk += "## " + result.Header2 + "\n"
-		if title == "" {
-			title = result.Header2
-		}
+		titles = append(titles, result.Header2)
 	}
 	if len(result.Header3) > 0 {
 		chunk += "### " + result.Header3 + "\n"
-		if title == "" {
-			title = result.Header3
-		}
+		titles = append(titles, result.Header3)
 	}
 	chunk += result.Chunk
 	return model.Knowledge{
@@ -212,7 +250,7 @@ func processChunk(result model.Index) model.Knowledge {
 		FileName: result.Title,
 		Link:     model.GetIndexLink(result),
 		Content:  chunk,
-		Title:    title,
+		Title:    strings.Join(titles, " | "),
 	}
 }
 
@@ -302,7 +340,7 @@ func getImageDataURI(url string) (string, error) {
 	}
 }
 
-func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, []azopenai.ChatRequestMessageClassification) {
+func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.ChatRequestMessageClassification {
 	// avoid token limit error, we need to limit the number of messages in the history
 	if len(req.Message.Content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 		log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
@@ -316,7 +354,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 	// This is a conversation in progress.
 	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
 	llmMessages := []azopenai.ChatRequestMessageClassification{}
-	reasoningModelMessages := []azopenai.ChatRequestMessageClassification{}
 
 	// process history messages
 	for _, message := range req.History {
@@ -326,12 +363,10 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		if message.Role == model.Role_Assistant {
 			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(content)}
 			llmMessages = append(llmMessages, msg)
-			reasoningModelMessages = append(reasoningModelMessages, msg)
 		}
 		if message.Role == model.Role_User {
 			msg := &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(content), Name: processName(message.Name)}
 			llmMessages = append(llmMessages, msg)
-			reasoningModelMessages = append(reasoningModelMessages, msg)
 		}
 	}
 
@@ -371,7 +406,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 					}
 				}
 				llmMessages = append(llmMessages, msg)
-				reasoningModelMessages = append(reasoningModelMessages, msg)
 			} else if info.Type == model.AdditionalInfoType_Image {
 				link, err := getImageDataURI(info.Link)
 				if err != nil {
@@ -390,6 +424,16 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 						},
 					),
 				})
+			} else if info.Type == model.AdditionalInfoType_Text {
+				content := info.Content
+				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
+				}
+				msg := &azopenai.ChatRequestUserMessage{
+					Content: azopenai.NewChatRequestUserMessageContent(content),
+				}
+				llmMessages = append(llmMessages, msg)
 			}
 		}
 	}
@@ -401,33 +445,10 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		Name:    processName(req.Message.Name),
 	}
 	llmMessages = append(llmMessages, msg)
-	reasoningModelMessages = append(reasoningModelMessages, msg)
-	return llmMessages, reasoningModelMessages
+	return llmMessages
 }
 
-func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messages []azopenai.ChatRequestMessageClassification) (string, *model.IntentionResult) {
-	query := req.Message.Content
-	if req.Message.RawContent != nil && len(*req.Message.RawContent) > 0 {
-		query = *req.Message.RawContent
-	}
-	intentStart := time.Now()
-	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
-	intentResult, err := s.RecognizeIntention(tenantConfig.IntentionPromptTemplate, messages)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-	} else if intentResult != nil {
-		if len(intentResult.Question) > 0 {
-			query = fmt.Sprintf("category:%s question:%s", intentResult.Category, intentResult.Question)
-		}
-		log.Printf("Intent Result: %+v", intentResult)
-	}
-	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
-	log.Printf("Intent recognition took: %v", time.Since(intentStart))
-	log.Printf("Searching query: %s", utils.SanitizeForLog(query))
-	return query, intentResult
-}
-
-func (s *CompletionService) buildPrompt(intention *model.IntentionResult, knowledges []model.Knowledge, promptTemplate string) (string, error) {
+func (s *CompletionService) buildPrompt(tenantID model.TenantID, intention *model.Intention, knowledges []model.Knowledge, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, knowledge := range knowledges {
@@ -450,6 +471,7 @@ func (s *CompletionService) buildPrompt(intention *model.IntentionResult, knowle
 	promptStr, err := promptParser.ParsePrompt(map[string]string{
 		"context":   string(knowledgeStr),
 		"intention": string(intentionStr),
+		"tenant_id": string(tenantID),
 	}, promptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -458,16 +480,27 @@ func (s *CompletionService) buildPrompt(intention *model.IntentionResult, knowle
 	return promptStr, nil
 }
 
-func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
+func (s *CompletionService) getLLMResult(modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
 	completionStart := time.Now()
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		// This is a conversation in progress.
-		// NOTE: all messages count against token usage for this API.
+
+	options := azopenai.ChatCompletionsOptions{
 		Messages:       messages,
 		DeploymentName: &s.model,
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
 		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TEMPERATURE)),
-	}, nil)
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.CompletionModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.CompletionModel))
+	}
+
+	if modelConfig != nil && modelConfig.CompletionModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.CompletionModelTemperature))
+	}
+
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 	if err != nil {
 		// Check if this is a rate limit error (429)
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {
@@ -493,7 +526,7 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 
 }
 
-func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq) ([]model.Index, error) {
+func (s *CompletionService) agenticSearch(ctx context.Context, query string, req *model.CompletionReq, intention *model.Intention) ([]model.Index, error) {
 	agenticSearchStart := time.Now()
 
 	// Get the tenant-specific agentic search prompt
@@ -505,7 +538,9 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	promptParser := prompt.AgenticSearchPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	agenticSearchPrompt, err := promptParser.ParsePrompt(nil, agenticSearchPromptTemplate)
+	agenticSearchPrompt, err := promptParser.ParsePrompt(map[string]string{
+		"tenant_id": string(req.TenantID),
+	}, agenticSearchPromptTemplate)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -515,7 +550,15 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 		sourceFilter = tenantConfig.SourceFilter
 	}
 
-	resp, err := s.searchClient.AgenticSearch(ctx, query, req.Sources, sourceFilter, agenticSearchPrompt)
+	resp, err := s.searchClient.AgenticSearch(ctx, query, search.AgenticSearchOptions{
+		SearchOptions: search.SearchOptions{
+			Sources:       req.Sources,
+			SourceFilter:  sourceFilter,
+			QuestionScope: intention.QuestionScope,
+			ServiceType:   intention.ServiceType,
+		},
+		Prompt: agenticSearchPrompt,
+	})
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 		return nil, err
@@ -528,14 +571,13 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	if resp.Response == nil {
 		return nil, nil
 	}
-	var docKeys []string
+	var chunks []model.Index
 	for _, reference := range resp.References {
-		docKeys = append(docKeys, reference.DocKey)
-	}
-	chunks, err := s.searchClient.BatchGetChunks(ctx, docKeys)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
+		if reference.SourceData == nil {
+			continue
+		}
+		reference.SourceData.RerankScore = reference.RerankerScore
+		chunks = append(chunks, *reference.SourceData)
 	}
 	log.Printf("Agentic search took: %v", time.Since(agenticSearchStart))
 	return chunks, nil
@@ -543,7 +585,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 // runParallelSearchAndMergeResults runs agentic search and knowledge search in parallel where possible,
 // then merges and processes their results
-func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string) ([]model.Knowledge, error) {
+func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string, intention *model.Intention, withAgenticSearch bool) ([]model.Knowledge, error) {
 	parallelSearchStart := time.Now()
 
 	// Use channels to collect results from parallel operations
@@ -558,57 +600,65 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	}
 
 	agenticCh := make(chan agenticResult, 1)
-	knowledgeCh := make(chan knowledgeResult, 1)
+	vectorCh := make(chan knowledgeResult, 1)
 
 	// Start agentic search in a goroutine
-	go func() {
-		defer close(agenticCh)
-		chunks, err := s.agenticSearch(ctx, req.Message.Content, req)
-		agenticCh <- agenticResult{chunks: chunks, err: err}
-	}()
+	if withAgenticSearch {
+		go func() {
+			defer close(agenticCh)
+			chunks, err := s.agenticSearch(ctx, query, req, intention)
+			agenticCh <- agenticResult{chunks: chunks, err: err}
+		}()
+	}
 
-	// Start knowledge search in parallel (without agentic chunks for now)
+	// Start vector search in a goroutine
 	go func() {
-		defer close(knowledgeCh)
-		rawResults, err := s.searchKnowledgeBase(req, query)
-		knowledgeCh <- knowledgeResult{rawResults: rawResults, err: err}
+		defer close(vectorCh)
+		rawResults, err := s.vectorSearch(req, query, intention)
+		vectorCh <- knowledgeResult{rawResults: rawResults, err: err}
 	}()
 
 	// Wait for both searches to complete
-	agenticRes := <-agenticCh
-	knowledgeRes := <-knowledgeCh
-
-	if agenticRes.err != nil && knowledgeRes.err != nil {
-		return nil, fmt.Errorf("both agentic and knowledge searches failed: agentic error: %v, knowledge error: %v", agenticRes.err, knowledgeRes.err)
-	}
-
 	var agenticChunks []model.Index
-	if agenticRes.err != nil {
-		log.Printf("Agentic search failed: %v", agenticRes.err)
-		agenticChunks = []model.Index{}
-	} else {
-		agenticChunks = agenticRes.chunks
-	}
+	if withAgenticSearch {
+		agenticRes := <-agenticCh
 
-	if knowledgeRes.err != nil {
-		return nil, knowledgeRes.err
+		if agenticRes.err != nil {
+			log.Printf("Agentic search failed: %v", agenticRes.err)
+			agenticChunks = []model.Index{}
+		} else {
+			agenticChunks = agenticRes.chunks
+		}
+	} else {
+		log.Println("Agentic search is disabled.")
+	}
+	vectorRes := <-vectorCh
+
+	if vectorRes.err != nil {
+		return nil, vectorRes.err
 	}
 
 	// Merge and process the results
-	knowledges := s.mergeAndProcessSearchResults(agenticChunks, knowledgeRes.rawResults)
+	knowledges := s.mergeAndProcessSearchResults(agenticChunks, vectorRes.rawResults)
 
 	log.Printf("Parallel search and merge took: %v", time.Since(parallelSearchStart))
 	return knowledges, nil
 }
 
-// searchKnowledgeBase performs the core knowledge search without dependency on agentic results
-func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query string) ([]model.Index, error) {
+// vectorSearch performs the core knowledge search without dependency on agentic results
+func (s *CompletionService) vectorSearch(req *model.CompletionReq, query string, intention *model.Intention) ([]model.Index, error) {
 	searchStart := time.Now()
 	sourceFilter := map[model.Source]string{}
 	if tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID); hasConfig && tenantConfig.SourceFilter != nil {
 		sourceFilter = tenantConfig.SourceFilter
 	}
-	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter)
+
+	results, err := s.searchClient.SearchTopKRelatedDocuments(query, *req.TopK, search.SearchOptions{
+		Sources:       req.Sources,
+		SourceFilter:  sourceFilter,
+		QuestionScope: intention.QuestionScope,
+		ServiceType:   intention.ServiceType,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}
@@ -645,92 +695,32 @@ func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query 
 //   - Converts all expanded chunks into Knowledge objects
 //
 // Returns: slice of Knowledge objects with merged and expanded search results
-func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.Index, knowledgeResults []model.Index) []model.Knowledge {
+func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults []model.Index, vectorSearchedResults []model.Index) []model.Knowledge {
 	mergeStart := time.Now()
 
 	allChunks := make([]model.ChunkWithExpansion, 0)
 
-	//  Add knowledge search results with scoring based on relevance
-	for _, result := range knowledgeResults {
+	// Add knowledge search results with scoring based on relevance
+	for _, chunk := range vectorSearchedResults {
 		// Skip low relevance results
-		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
-			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
+		if chunk.RerankScore < model.RerankScoreLowRelevanceThreshold {
+			log.Printf("Skipping result with low score: %s/%s, score: %f", chunk.ContextID, chunk.Title, chunk.RerankScore)
 			continue
 		}
-
-		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
-
-		// Static chunks specific expansion rules
-		if result.ContextID == model.Source_TypeSpecQA || result.ContextID == model.Source_TypeSpecMigration {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     result,
-				Expansion: model.ExpansionQA,
-			})
-			continue
-		}
-		if result.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     result,
-				Expansion: model.ExpansionMapping,
-			})
-			continue
-		}
-
-		// Other chunks: check if needs hierarchical expansion
-		hierarchy := s.searchClient.DetectChunkHierarchy(result)
-		if hierarchy == model.HierarchyHeader1 || hierarchy == model.HierarchyHeader2 {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     result,
-				Expansion: model.ExpansionHierarchical,
-			})
-			log.Printf("Vector chunk needs hierarchical expansion: %s/%s#%s#%s", result.ContextID, result.Title, result.Header1, result.Header2)
-			continue
-		}
-
-		// No expansion needed
-		allChunks = append(allChunks, model.ChunkWithExpansion{
-			Chunk:     result,
-			Expansion: model.ExpansionNone,
-		})
+		log.Printf("Vector searched chunk: %+v, rerankScore: %f", chunk, chunk.RerankScore)
+		chunk.SearchType = model.SearchType_Vector
+		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
 	// Then, add agentic search results after vector search results
 	topK := config.AppConfig.AI_SEARCH_TOPK / 2
-	if len(agenticChunks) > topK {
-		agenticChunks = agenticChunks[:topK] // Limit to TopK results
+	if len(agenticSearchedResults) > topK {
+		agenticSearchedResults = agenticSearchedResults[:topK] // Limit to TopK results
 	}
-	for _, chunk := range agenticChunks {
-		// Static chunks specific expansion rules
-		if chunk.ContextID == model.Source_TypeSpecQA || chunk.ContextID == model.Source_TypeSpecMigration {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionQA,
-			})
-			continue
-		}
-		if chunk.ContextID == model.Source_StaticTypeSpecToSwaggerMapping {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionMapping,
-			})
-			continue
-		}
-
-		// Check if needs hierarchical expansion
-		hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
-		if hierarchy == model.HierarchyHeader1 || hierarchy == model.HierarchyHeader2 {
-			allChunks = append(allChunks, model.ChunkWithExpansion{
-				Chunk:     chunk,
-				Expansion: model.ExpansionHierarchical,
-			})
-			log.Printf("Agentic chunk needs hierarchical expansion: %s/%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
-			continue
-		}
+	for _, chunk := range agenticSearchedResults {
 		log.Printf("Agentic searched chunk: %+v", chunk)
-		allChunks = append(allChunks, model.ChunkWithExpansion{
-			Chunk:     chunk,
-			Expansion: model.ExpansionNone,
-		})
+		chunk.SearchType = model.SearchType_Agentic
+		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
 	allChunks = s.searchClient.DeduplicateExpansions(allChunks)
@@ -749,21 +739,36 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 			switch cwe.Expansion {
 			case model.ExpansionQA:
 				// Expand complete QA chunk
-				subChunks, _ := s.searchClient.GetHeader1CompleteContext(chunk)
+				subChunks, err := s.searchClient.CompleteChunkByHierarchy(chunk, model.HierarchyHeader1)
+				if err != nil {
+					log.Printf("Failed to expand QA chunk: %s/%s/%s, error: %v", chunk.ContextID, chunk.Title, chunk.Header1, err)
+					finalChunks[i] = chunk // Fallback to original chunk
+					return
+				}
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 				log.Printf("✓ Expanded complete QA chunk: %s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1)
 			case model.ExpansionMapping:
 				// Expand complete Mapping chunk
-				subChunks, _ := s.searchClient.GetHeader2CompleteContext(chunk)
+				subChunks, err := s.searchClient.CompleteChunkByHierarchy(chunk, model.HierarchyHeader2)
+				if err != nil {
+					log.Printf("Failed to expand Mapping chunk: %s/%s/%s/%s, error: %v", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, err)
+					finalChunks[i] = chunk // Fallback to original chunk
+					return
+				}
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
 				log.Printf("✓ Expanded complete code mapping chunk: %s/%s/%s/%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2)
 			case model.ExpansionHierarchical:
 				// Process by hierarchy level
-				Hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
+				hierarchy := s.searchClient.DetectChunkHierarchy(chunk)
 				// Expand all chunks under header1
-				subChunks := s.searchClient.FetchHierarchicalSubChunks(chunk, Hierarchy)
+				subChunks, err := s.searchClient.CompleteChunkByHierarchy(chunk, hierarchy)
+				if err != nil {
+					log.Printf("Failed to expand hierarchical chunk: %s/%s/%s/%s/%s, error: %v", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3, err)
+					finalChunks[i] = chunk // Fallback to original chunk
+					return
+				}
+				log.Printf("Expanded hierarchy %s '%s/%s/%s/%s/%s' → %d sub-chunks", hierarchy.String(), chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3, len(subChunks))
 				finalChunks[i] = s.searchClient.MergeChunksWithHeaders(chunk, subChunks)
-
 			default:
 				// Unknown expansion type - keep original
 				finalChunks[i] = chunk
@@ -774,20 +779,24 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticChunks []model.I
 	wg.Wait()
 
 	// Build final result
+	log.Println("=========Final Search Result=========")
 	results := make([]model.Knowledge, 0)
-	for _, chunk := range finalChunks {
-		results = append(results, processChunk(chunk))
+	for i, chunk := range finalChunks {
+		knowledge := processChunk(chunk)
+		results = append(results, knowledge)
+		log.Printf("[%d] SearchType: %s, Score: %f, Source: %s, Title: %s, Link:%s, Scope:%s, ServiceType:%s", i+1, chunk.SearchType, chunk.RerankScore, knowledge.Source, knowledge.Title, knowledge.Link, chunk.Scope, chunk.ServiceType)
 	}
+	log.Println("=====================================")
 
 	log.Printf("Search merge summary: %d agentic + %d knowledge → %d total chunks",
-		len(agenticChunks), len(knowledgeResults), len(finalChunks))
+		len(agenticSearchedResults), len(vectorSearchedResults), len(finalChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
 	return results
 }
 
 // RouteTenant attempts to route the request to a specialized tenant based on the question content.
 // Returns the routed tenant config and true if routing occurred, otherwise returns empty config and false.
-func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, messages []azopenai.ChatRequestMessageClassification) (model.TenantID, bool) {
+func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelConfig *model.ModelConfig, messages []azopenai.ChatRequestMessageClassification) (model.TenantID, bool) {
 	routingStart := time.Now()
 	log.Printf("Starting tenant routing for tenant: %s", originalTenantID)
 
@@ -806,12 +815,25 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, message
 		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
 	}, messages...)
 
-	// Call LLM for tenant routing
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
+	options := azopenai.ChatCompletionsOptions{
 		Messages:       routingMessages,
 		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
 		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-	}, nil)
+		Seed:           to.Ptr(int64(1)), // Fixed seed for deterministic output
+		Temperature:    to.Ptr(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE),
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.ReasoningModel != nil {
+		options.DeploymentName = to.Ptr(string(*modelConfig.ReasoningModel))
+	}
+
+	if modelConfig != nil && modelConfig.ReasoningModelTemperature != nil {
+		options.Temperature = to.Ptr(float32(*modelConfig.ReasoningModelTemperature))
+	}
+
+	// Call LLM for tenant routing
+	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), options, nil)
 
 	if err != nil {
 		log.Printf("LLM tenant routing failed: %v", err)

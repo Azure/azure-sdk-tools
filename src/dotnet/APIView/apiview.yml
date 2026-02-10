@@ -7,10 +7,10 @@ parameters:
     default: '1.0.0-dev.20251117.2'
   - name: JavaScriptAPIParser
     type: string
-    default: '@azure-tools/ts-genapi@2.0.5'
+    default: '@azure-tools/ts-genapi@2.0.9'
   - name: RustAPIParser
     type: string
-    default: '@azure-tools/rust-genapi@1.1.0'
+    default: '@azure-tools/rust-genapi@1.2.0'
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
@@ -42,6 +42,7 @@ pr:
     include:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
+      - src/dotnet/Azure.ClientSdk.Analyzers
       - src/java/apiview-java-processor
       - src/go
       - src/swift
@@ -205,7 +206,7 @@ extends:
                 displayName: "Install Client SPA Packages"
 
               - script: |
-                  ng test --no-watch --no-progress --browsers=ChromeHeadless
+                  npm run test:unit
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Run SPA Tests"
 

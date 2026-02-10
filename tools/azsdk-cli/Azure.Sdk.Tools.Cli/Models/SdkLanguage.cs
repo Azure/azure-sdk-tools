@@ -4,21 +4,21 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SdkLanguage
 {
-    [JsonPropertyName("")]
     Unknown,
-    [JsonPropertyName(".NET")]
+    [JsonStringEnumMemberName(".NET")]
     DotNet,
-    [JsonPropertyName("Java")]
+    [JsonStringEnumMemberName("Java")]
     Java,
-    [JsonPropertyName("JavaScript")]
+    [JsonStringEnumMemberName("JavaScript")]
     JavaScript,
-    [JsonPropertyName("Python")]
+    [JsonStringEnumMemberName("Python")]
     Python,
-    [JsonPropertyName("Go")]
+    [JsonStringEnumMemberName("Go")]
     Go,
-    [JsonPropertyName("Rust")]
+    [JsonStringEnumMemberName("Rust")]
     Rust
 }
 
@@ -35,9 +35,9 @@ public static class SdkLanguageHelpers
         { "azure-sdk-for-rust", SdkLanguage.Rust}
     }.ToImmutableDictionary();
 
-    public static SdkLanguage GetLanguageForRepoPath(IGitHelper gitHelper, string pathInRepo)
+    public static async Task<SdkLanguage> GetLanguageForRepoPathAsync(IGitHelper gitHelper, string pathInRepo, CancellationToken ct = default)
     {
-        string repoName = gitHelper.GetRepoName(pathInRepo);
+        string repoName = await gitHelper.GetRepoNameAsync(pathInRepo, ct);
         return GetLanguageForRepo(repoName);
     }
 

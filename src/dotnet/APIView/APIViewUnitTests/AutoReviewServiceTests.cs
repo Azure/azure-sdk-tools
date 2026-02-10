@@ -73,7 +73,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(new APIRevisionListItemModel { Id = "revision-id", ReviewId = "new-review-id" });
 
              await _service.CreateAutomaticRevisionAsync(
@@ -115,7 +115,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(new APIRevisionListItemModel { Id = "revision-id", ReviewId = "new-review-id" });
 
             await _service.CreateAutomaticRevisionAsync(
@@ -161,7 +161,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(new APIRevisionListItemModel { Id = "revision-id", ReviewId = "existing-review-id" });
 
             await _service.CreateAutomaticRevisionAsync(
@@ -197,7 +197,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(new APIRevisionListItemModel { Id = "revision-id", ReviewId = "existing-review-id" });
 
             await _service.CreateAutomaticRevisionAsync(
@@ -246,7 +246,7 @@ namespace APIViewUnitTests
                     It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(true); // Same content
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
@@ -255,7 +255,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                 It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()), Times.Never);
 
             apiRevision.Should().NotBeNull();
             apiRevision.Id.Should().Be("existing-revision-id");
@@ -303,13 +303,13 @@ namespace APIViewUnitTests
                     It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(false); // Different content
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(newRevision);
 
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
@@ -317,7 +317,7 @@ namespace APIViewUnitTests
 
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
                 "testuser", "review-id", APIRevisionType.Automatic,
-                "test-label", memoryStream, codeFile, "test.json", null), Times.Once);
+                "test-label", memoryStream, codeFile, "test.json", null, null), Times.Once);
 
             apiRevision.Should().NotBeNull();
             apiRevision.Id.Should().Be("new-revision-id");
@@ -380,7 +380,7 @@ namespace APIViewUnitTests
                     It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(false);
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
@@ -390,7 +390,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                 It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                It.IsAny<string>(), It.IsAny<int?>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()), Times.Never);
 
             apiRevision.Should().NotBeNull();
             apiRevision.Id.Should().Be("approved-revision-id");
@@ -452,13 +452,13 @@ namespace APIViewUnitTests
                     It.IsAny<RenderedCodeFile>(), false))
                 .ReturnsAsync(true);
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(newRevision);
 
             _mockApiRevisionsManager.Setup(m => m.CopyApprovalFromAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()))
@@ -517,13 +517,13 @@ namespace APIViewUnitTests
                     It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(false);
 
-            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType>()))
+            _mockCommentsManager.Setup(m => m.GetCommentsAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CommentType?>(), It.IsAny<bool>()))
                 .ReturnsAsync(new List<CommentItemModel>());
 
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(newRevision);
 
             await _service.CreateAutomaticRevisionAsync(
@@ -568,7 +568,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(new APIRevisionListItemModel { Id = "revision-id", ReviewId = "new-review-id" });
 
             var (review, _) = await _service.CreateAutomaticRevisionAsync(
@@ -609,7 +609,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                     It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),
-                    It.IsAny<string>(), It.IsAny<int?>()))
+                    It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(newRevision);
 
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
@@ -617,7 +617,7 @@ namespace APIViewUnitTests
 
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
                 "testuser", "existing-review-id", APIRevisionType.Automatic,
-                "test-label", memoryStream, codeFile, "test.json", null), Times.Once);
+                "test-label", memoryStream, codeFile, "test.json", null, null), Times.Once);
 
             apiRevision.Should().NotBeNull();
             apiRevision.Id.Should().Be("new-revision-id");

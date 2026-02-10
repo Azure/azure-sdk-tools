@@ -28,8 +28,9 @@ public sealed partial class DotnetLanguageService: LanguageService
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
         IFileHelper fileHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+        IChangelogHelper changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.powershellHelper = powershellHelper;
     }
@@ -49,7 +50,7 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving .NET package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         var (packageName, packageVersion, sdkType) = await TryGetPackageInfoAsync(fullPath, ct);
         
         if (packageName == null)
@@ -228,11 +229,6 @@ public sealed partial class DotnetLanguageService: LanguageService
         );
 
         return new TestRunResponse(result);
-    }
-
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-    {
-        return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 
     public override bool HasCustomizations(string packagePath, CancellationToken ct)

@@ -52,6 +52,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Description: "Test operations for SDK packages"
         );
 
+        public static readonly CommandGroup ReleasePlan = new(
+           Verb: "release-plan",
+           Description: "Manage release plans in Azure DevOps"
+       );
+
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
             Description: "Commands for setting up or working with TypeSpec projects",

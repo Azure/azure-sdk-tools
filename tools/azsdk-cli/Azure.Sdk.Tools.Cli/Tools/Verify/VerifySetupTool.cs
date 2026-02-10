@@ -4,10 +4,10 @@ using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
-using System.Text.Json;
-using System.Reflection;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -27,7 +27,6 @@ public class VerifySetupTool : LanguageMcpTool
     }
 
     private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
-    private const string REQ_VERSION_PATTERN = @"(>=|<=|>|<|=)\s*([\d\.]+)";
     private const string OUTPUT_VERSION_PATTERN = @"[\d\.]+";
     private const string VerifySetupToolName = "azsdk_verify_setup";
 
@@ -77,7 +76,13 @@ public class VerifySetupTool : LanguageMcpTool
     {
         try
         {
-            List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(langs, packagePath ?? Environment.CurrentDirectory, ct);
+            // Create context for filtering requirements
+            var ctx = await CreateRequirementContext(packagePath ?? Environment.CurrentDirectory, langs, ct);
+            
+            // Get all requirements that should be checked in this context
+            var reqsToCheck = AllRequirements.All
+                .Where(r => r.ShouldCheck(ctx))
+                .ToList();
 
             VerifySetupResponse response = new VerifySetupResponse
             {
@@ -85,14 +90,13 @@ public class VerifySetupTool : LanguageMcpTool
             };
 
             // Start all checks concurrently
-            var checkTasks = new List<Task<(SetupRequirements.Requirement req, DefaultCommandResponse result)>>();
-
+            var checkTasks = new List<Task<(Requirement req, DefaultCommandResponse result)>>();
+            
             foreach (var req in reqsToCheck)
             {
-                logger.LogInformation("Checking requirement: {Requirement}",
-                    req.requirement);
+                logger.LogInformation("Checking requirement: {Requirement}", req.Name);
 
-                var task = RunCheck(req, packagePath, ct).ContinueWith(t => (req, t.Result), TaskScheduler.Default);
+                var task = RunCheck(req, ctx, ct).ContinueWith(t => (req, t.Result), TaskScheduler.Default);
                 checkTasks.Add(task);
             }
 
@@ -100,25 +104,24 @@ public class VerifySetupTool : LanguageMcpTool
 
             foreach (var (req, result) in results)
             {
-                if (result.ExitCode != 0)
+                var instructions = req.GetInstructions(ctx).ToList();
+                
+                var displayName = req.Name;
+                
+                // Display version constraints if applicable
+                if (req.MinVersion != null)
                 {
-                    response.ResponseErrors ??= new List<string>();
-                    response.ResponseErrors.Add($"Requirement failed: {req.requirement}. Error: {result.ResponseError}");
-
-                    response.Results.Add(new RequirementCheckResult
-                    {
-                        Requirement = req.requirement,
-                        Instructions = req.instructions,
-                    });
+                    displayName = $"{req.Name} (>= {req.MinVersion})";
                 }
-                else if (result.Message != null)
+
+                if (result.Message != null)
                 {
                     response.Results.Add(new RequirementCheckResult
                     {
-                        Requirement = req.requirement,
-                        Instructions = req.instructions,
+                        Requirement = displayName,
+                        Instructions = instructions,
                         RequirementStatusDetails = result.Message,
-                        Reason = req.reason
+                        Reason = req.Reason
                     });
                 }
             }
@@ -134,170 +137,126 @@ public class VerifySetupTool : LanguageMcpTool
         }
     }
 
-    private async Task<DefaultCommandResponse> RunCheck(SetupRequirements.Requirement req, string packagePath, CancellationToken ct)
+    private async Task<DefaultCommandResponse> RunCheck(Requirement req, RequirementContext ctx, CancellationToken ct)
     {
-        var command = req.check;
-        var options = new ProcessOptions(
-            command[0],
-            args: command.Skip(1).ToArray(),
-            timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
-            logOutputStream: false,
-            workingDirectory: packagePath
-        );
+        // Create a delegate that captures execution details
+        async Task<ProcessResult> runCommand(string[] command)
+        {
+            var options = new ProcessOptions(
+                command[0],
+                args: command.Skip(1).ToArray(),
+                timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
+                logOutputStream: false,
+                workingDirectory: ctx.PackagePath
+            );
+            return await processHelper.Run(options, ct);
+        }
 
-        var trimmed = string.Empty;
         try
         {
-            var result = await processHelper.Run(options, ct);
-            trimmed = (result.Output ?? string.Empty).Trim();
+            var checkResult = await req.RunCheckAsync(runCommand, ctx, ct);
 
-            if (result.ExitCode != 0)
+            if (!checkResult.Success)
             {
-                logger.LogError("Command {Command} failed with exit code {ExitCode}.\n\nInstructions: {Instructions}", string.Join(' ', command), result.ExitCode, req.instructions);
+                var instructions = req.GetInstructions(ctx);
+                logger.LogError("Requirement {Requirement} check failed.\n\nInstructions: {Instructions}", 
+                    req.Name, string.Join(", ", instructions));
                 return new DefaultCommandResponse
                 {
-                    Message = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}: {trimmed}."
+                    Message = $"Requirement {req.Name} check failed: {checkResult.Error ?? checkResult.Output}."
                 };
             }
 
-            var versionCheckResult = CheckVersion(trimmed, req);
+            var versionCheckResult = CheckVersion(checkResult.Output ?? string.Empty, req);
 
             if (!versionCheckResult.Equals(string.Empty))
             {
-                logger.LogError("Command {Command} failed, requires upgrade to version {Version}.", string.Join(' ', command), versionCheckResult);
+                logger.LogError("Requirement {Requirement} failed, requires upgrade to version {Version}.", 
+                    req.Name, versionCheckResult);
                 return new DefaultCommandResponse
                 {
-                    Message = $"Command {string.Join(' ', command)} failed, requires upgrade to version {versionCheckResult}"
+                    Message = $"Requirement {req.Name} failed, requires upgrade to version {versionCheckResult}"
                 };
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Command {Command} failed to execute.\n\nInstructions: {Instructions}", string.Join(' ', command), req.instructions);
+            var instructions = req.GetInstructions(ctx);
+            logger.LogError(ex, "Requirement {Requirement} check failed to execute.\n\nInstructions: {Instructions}", 
+                req.Name, string.Join(", ", instructions));
             return new DefaultCommandResponse
             {
-                Message = $"Command {string.Join(' ', command)} failed to execute.\n\tException: {ex.Message}"
+                Message = $"Requirement {req.Name} check failed to execute.\n\tException: {ex.Message}"
             };
         }
 
         return new DefaultCommandResponse();
     }
 
-    private List<SetupRequirements.Requirement> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, CancellationToken ct)
+    private async Task<RequirementContext> CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null, CancellationToken ct = default)
     {
-        // Check core requirements before language-specific requirements
-        var parsedReqs = ParseRequirements(ct);
-        var reqsToCheck = GetCoreRequirements(parsedReqs, ct);
+        var (repoRoot, _, _) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var repoName = await gitHelper.GetRepoNameAsync(repoRoot, ct);
 
-        // Per-language requirements
-        List<LanguageService> languageSvs = [];
+        // If no languages specified, try to detect from the repo
         if (languages == null || languages.Count == 0)
         {
-            // Detect language if none given
-            if (string.IsNullOrEmpty(packagePath))
+            var languageService = await GetLanguageServiceAsync(packagePath, ct);
+            if (languageService != null)
             {
-                logger.LogWarning("Could not resolve requirements checker for the specified languages from path {PackagePath}. Checking only core requirements. Please provide languages explicitly to check language requirements.", packagePath);
-                return reqsToCheck;
+                languages = [languageService.Language];
             }
-
-            languageSvs.Add(GetLanguageService(packagePath));
-        }
-        else
-        {
-            foreach (var lang in languages)
+            else
             {
-                languageSvs.Add(GetLanguageService(lang));
+                languages = [];
             }
         }
 
-        if (languageSvs.Count == 0)
-        {
-            throw new Exception("Could not resolve requirements checker for the specified languages.");
-        }
-
-        foreach (var getter in languageSvs)
-        {
-            if (getter == null)
-            {
-                logger.LogError("Could not resolve requirements checker for one of the specified languages.");
-                continue;
-            }
-
-            reqsToCheck.AddRange(getter.GetRequirements(packagePath, parsedReqs, ct));
-        }
-
-        return reqsToCheck ?? new List<SetupRequirements.Requirement>();
+        return RequirementContext.Create(
+            repoRoot: repoRoot,
+            repoName: repoName,
+            packagePath: packagePath,
+            languages: languages
+        );
     }
 
-    private List<SetupRequirements.Requirement> GetCoreRequirements(Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct)
+    private string CheckVersion(string output, Requirement req)
     {
-        if (categories.TryGetValue("core", out var reqs))
+        // Return empty string if version requirement is satisfied, else return version to upgrade to
+        if (req.MinVersion == null)
         {
-            return reqs;
+            // No version constraints
+            return string.Empty;
         }
-        logger.LogWarning("No core requirements found in the requirements JSON.");
-        return new List<SetupRequirements.Requirement>();
-    }
-
-    private Dictionary<string, List<SetupRequirements.Requirement>> ParseRequirements(CancellationToken ct = default)
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        var names = assembly.GetManifestResourceNames();
-        using var stream = assembly.GetManifestResourceStream("Azure.Sdk.Tools.Cli.Configuration.RequirementsV1.json");
-        var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(stream);
-
-        if (setupRequirements == null)
-        {
-            throw new Exception("Failed to parse requirements JSON.");
-        }
-
-        return setupRequirements.categories;
-    }
-
-    private string CheckVersion(string output, SetupRequirements.Requirement req)
-    {
-        // Return empty string if version requirement is satisfied, else return version to upgrade to        
-        var match = System.Text.RegularExpressions.Regex.Match(req.requirement, REQ_VERSION_PATTERN);
-
-        if (!match.Success)
-        {
-            // No version specified in the requirement
-            return String.Empty;
-        }
-
-        string operatorSymbol = match.Groups[1].Value;
-        string requiredVersion = match.Groups[2].Value.Trim();
-
-        logger.LogDebug("Requires version: {requiredVersion}", requiredVersion);
 
         // Parse the output version
         var outputVersionMatch = System.Text.RegularExpressions.Regex.Match(output, OUTPUT_VERSION_PATTERN);
         if (!outputVersionMatch.Success)
         {
             // Unable to parse the version from the output
-            return requiredVersion;
+            return req.MinVersion;
         }
 
         string installedVersion = outputVersionMatch.Value.Trim();
-
         logger.LogDebug("Installed version: {installedVersion}", installedVersion);
 
-
-        if (Version.TryParse(requiredVersion, out var requiredVer) && Version.TryParse(installedVersion, out var installedVer))
+        if (!Version.TryParse(installedVersion, out var installedVer))
         {
-            return operatorSymbol switch
-            {
-                ">=" => installedVer >= requiredVer ? string.Empty : requiredVersion,
-                "<=" => installedVer <= requiredVer ? string.Empty : requiredVersion,
-                ">" => installedVer > requiredVer ? string.Empty : requiredVersion,
-                "<" => installedVer < requiredVer ? string.Empty : requiredVersion,
-                "=" => installedVer == requiredVer ? string.Empty : requiredVersion,
-                _ => requiredVersion,
-            };
+            logger.LogWarning("Failed to parse installed version as System.Version.");
+            return req.MinVersion;
         }
 
-        logger.LogWarning("Failed to parse requirement versions as System.Version.");
-        return requiredVersion;
+
+        if (Version.TryParse(req.MinVersion, out var minVer))
+        {
+            logger.LogDebug("Requires minimum version: {minVersion}", req.MinVersion);
+            if (installedVer < minVer)
+            {
+                return req.MinVersion;
+            }
+        }
+
+        return string.Empty;
     }
 
     private HashSet<SdkLanguage> GetLanguagesFromOption(ParseResult parseResult)

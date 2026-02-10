@@ -35,6 +35,10 @@ The question must be classified into one of these categories:
     - SDK test
     - Schedule an SDK review
 
+- **sdk-review**: Questions about SDK review processes and guidelines, including:
+    - SDK review requirements
+    - SDK review process
+
 - **sdk-release**: Questions about SDK release lifecycle and processes, including:
     - SDK Release plannner
     - GA (General Availability) criteria and readiness
@@ -49,15 +53,19 @@ The question must be classified into one of these categories:
     - Are unclear or ambiguous about the Azure SDK context
     - Don't relate directly to Azure SDK onboarding processes
 
+## Intent Service Type
+{{include "../templates/intention/intent_service_type.md"}}
+
 ## Need RAG Processing
 {{include "../templates/intention/need_rag_processing.md"}}
 
 # Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
-  "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the categories: sdk-onboard, api-design, sdk-develop, and sdk-release
-  "spec_type": string,   // user's service specification language: TypeSpec or OpenAPI or unknown
+  "question": string,     // The rewritten standalone question
+  "category": string,     // Must be one of the categories: sdk-onboard, api-design, sdk-develop, sdk-review, and sdk-release
+  "service_type": string, // Must be one of the intent service types or unknown
+  "spec_type": string,    // user's service specification language: TypeSpec or OpenAPI or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }
 
@@ -67,7 +75,8 @@ Original: "How do I get my service ready for SDK onboarding?"
 Response:
 {
   "question": "What are the requirements and prerequisites to get my Azure service ready for SDK onboarding?",
-  "category": "service-onboarding",
+  "category": "sdk-onboard",
+  "service_type": "unknown",
   "spec_type": "unknown",
   "needs_rag_processing": true
 }

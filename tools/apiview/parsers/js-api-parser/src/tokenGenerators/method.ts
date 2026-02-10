@@ -5,7 +5,7 @@ import {
   ApiMethodSignature,
 } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
-import { TokenGenerator } from "./index";
+import { TokenGenerator, GeneratorResult } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
 
 type MethodLike = ApiMethod | ApiMethodSignature;
@@ -14,7 +14,7 @@ function isValid(item: ApiItem): item is MethodLike {
   return item.kind === ApiItemKind.Method || item.kind === ApiItemKind.MethodSignature;
 }
 
-function generate(item: MethodLike, deprecated?: boolean): ReviewToken[] {
+function generate(item: MethodLike, deprecated?: boolean): GeneratorResult {
   const tokens: ReviewToken[] = [];
 
   if (item.kind !== ApiItemKind.Method && item.kind !== ApiItemKind.MethodSignature) {
@@ -38,7 +38,9 @@ function generate(item: MethodLike, deprecated?: boolean): ReviewToken[] {
 
     // Add protected modifier if applicable
     if (method.isProtected) {
-      tokens.push(createToken(TokenKind.Keyword, "protected", { hasSuffixSpace: true, deprecated }));
+      tokens.push(
+        createToken(TokenKind.Keyword, "protected", { hasSuffixSpace: true, deprecated }),
+      );
     }
 
     // Add abstract modifier if applicable
@@ -118,7 +120,10 @@ function generate(item: MethodLike, deprecated?: boolean): ReviewToken[] {
   tokens.push(createToken(TokenKind.Text, "):", { hasSuffixSpace: true, deprecated }));
   processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
 
-  return tokens;
+  // Add semicolon at the end
+  tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+
+  return { tokens };
 }
 
 export const methodTokenGenerator: TokenGenerator<MethodLike> = {

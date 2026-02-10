@@ -4,7 +4,6 @@
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
@@ -18,7 +17,6 @@ public class SampleTranslatorToolTests
     private TestLogger<SampleTranslatorTool> _logger;
     private Mock<IGitHelper> _mockGitHelper;
     private Mock<IMicroagentHostService> _mockMicroagentHostService;
-    private Mock<IFileHelper> _mockFileHelper;
     private SampleTranslatorTool _sampleTranslatorTool;
 
     [SetUp]
@@ -27,7 +25,6 @@ public class SampleTranslatorToolTests
         _logger = new TestLogger<SampleTranslatorTool>();
         _mockGitHelper = new Mock<IGitHelper>();
         _mockMicroagentHostService = new Mock<IMicroagentHostService>();
-        _mockFileHelper = new Mock<IFileHelper>();
 
         // Create empty language services list - this will cause the tool to fail language detection
         // which is actually what we want to test since we're focusing on error paths
@@ -37,8 +34,7 @@ public class SampleTranslatorToolTests
             _mockMicroagentHostService.Object,
             _logger,
             _mockGitHelper.Object,
-            languageServices,
-            _mockFileHelper.Object);
+            languageServices);
     }
 
     [Test]
@@ -86,7 +82,7 @@ public class SampleTranslatorToolTests
     [Test]
     public async Task HandleCommand_WithInvalidPaths_ReturnsErrorResponse()
     {
-        // Arrange
+        // Arrange - With no language services, the tool should fail during language detection
         var command = _sampleTranslatorTool.GetCommandInstances().First();
         var parseResult = command.Parse("--from /nonexistent/path --to /another/nonexistent/path");
 

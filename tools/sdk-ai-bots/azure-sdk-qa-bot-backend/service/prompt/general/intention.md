@@ -28,10 +28,8 @@ The question can fall into various categories depending on its technical focus:
 - **Multi-domain**: Questions spanning multiple technical areas
 - **Unknown**: Questions that don't clearly fit other categories
 
-## Question Scopes
-- **branded**: Questions from internal Azure users mentioning Azure-specific concepts (ARM, data plane, management plane, Azure services)
-- **unbranded**: Questions from external users about general TypeSpec or SDK usage
-- **unknown**: Cannot determine the scope
+## Intent Service Type
+{{include "../templates/intention/intent_service_type.md"}}
 
 ## Need RAG Processing
 {{include "../templates/intention/need_rag_processing.md"}}
@@ -41,7 +39,7 @@ Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,              // The rewritten standalone question
   "category": string,              // Must be one of the intent categories
-  "scope": string,                 // Must be one of: branded, unbranded, or unknown
+  "service_type": string,          // Must be one of the intent service types or unknown
   "spec_type": string,             // Optional: typespec, swagger, openapi, etc.
   "needs_rag_processing": boolean  // Whether to invoke RAG workflow, default is true
 }
@@ -54,7 +52,7 @@ Response:
 {
   "question": "How do I use the @route decorator in TypeSpec to define API endpoints?",
   "category": "Decorators",
-  "scope": "unbranded",
+  "service_type": "unknown",
   "spec_type": "typespec",
   "needs_rag_processing": true
 }
@@ -65,7 +63,7 @@ Response:
 {
   "question": "What steps should I follow to generate a Python SDK from a TypeSpec definition?",
   "category": "code-generation",
-  "scope": "branded",
+  "service_type": "unknown",
   "spec_type": "typespec",
   "needs_rag_processing": true
 }

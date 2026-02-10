@@ -58,11 +58,11 @@ public class SdkBuildToolTests
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
-            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
-            new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object),
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object)
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>())
         ];
 
         // Create the tool instance
@@ -118,11 +118,11 @@ public class SdkBuildToolTests
 
             // Mock GitHelper for the resolved path
             _mockGitHelper
-                .Setup(x => x.GetRepoName(It.IsAny<string>()))
-                .Returns("azure-sdk-for-python");
+                .Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync("azure-sdk-for-python");
             _mockGitHelper
-                .Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
-                .Returns(_tempDirectory.DirectoryPath);
+                .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(_tempDirectory.DirectoryPath);
 
             // Act - use relative path
             var result = await _tool.BuildSdkAsync("./sdk/project");
@@ -147,11 +147,11 @@ public class SdkBuildToolTests
 
         // Mock GitHelper to return a Python SDK repo name
         _mockGitHelper
-            .Setup(x => x.GetRepoName(It.IsAny<string>()))
-            .Returns("azure-sdk-for-python");
+            .Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("azure-sdk-for-python");
         _mockGitHelper
-            .Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
-            .Returns(_tempDirectory.DirectoryPath);
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
 
         // Act
         var result = await _tool.BuildSdkAsync(pythonProjectPath);
@@ -167,11 +167,11 @@ public class SdkBuildToolTests
     {
         // Arrange
         _mockGitHelper
-            .Setup(x => x.GetRepoName(It.IsAny<string>()))
-            .Returns("azure-sdk-for-net");
+            .Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("azure-sdk-for-net");
         _mockGitHelper
-            .Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
-            .Throws(new Exception(FailedToDiscoverRepoError));
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception(FailedToDiscoverRepoError));
 
         // Act
         var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
@@ -184,8 +184,8 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_ConfigFileNotFound_ReturnsError()
     {
         // Arrange
-        _mockGitHelper.Setup(x => x.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>())).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
 
         // Mock the SpecGenSdkConfigHelper to throw an exception for missing config
         _mockSpecGenSdkConfigHelper
@@ -203,8 +203,8 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_InvalidJsonConfig_ReturnsError()
     {
         // Arrange
-        _mockGitHelper.Setup(x => x.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>())).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
 
         // Mock the SpecGenSdkConfigHelper to throw a JSON parsing exception
         _mockSpecGenSdkConfigHelper
@@ -226,8 +226,8 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_ConfigurationFileNotFound_ReturnsError()
     {
         // Arrange
-        _mockGitHelper.Setup(x => x.GetRepoName(It.IsAny<string>())).Returns("azure-sdk-for-net");
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>())).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
 
         // Mock the SpecGenSdkConfigHelper to throw when config file is not found
         _mockSpecGenSdkConfigHelper
@@ -239,8 +239,8 @@ public class SdkBuildToolTests
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Configuration file not found"));
-        _mockGitHelper.Verify(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath), Times.AtMost(2));
-        _mockGitHelper.Verify(x => x.GetRepoName(_tempDirectory.DirectoryPath), Times.AtMost(2));
+        _mockGitHelper.Verify(x => x.DiscoverRepoRootAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>()), Times.AtMost(2));
+        _mockGitHelper.Verify(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>()), Times.AtMost(2));
         _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build), Times.Once);
     }
 

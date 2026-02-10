@@ -190,6 +190,23 @@
         </div>
     </ng-container>
 
+    <ng-container *ngIf="isAdmin">
+        <hr class="my-2">
+        <div class="px-1 py-2">
+            <h6 class="mb-2 fw-semibold">Admin Actions</h6>
+            <div class="d-grid gap-2">
+                <button type="button"
+                    class="btn btn-outline-danger"
+                    (click)="deleteReview()"
+                    pTooltip="Permanently delete this review and all its revisions"
+                    tooltipPosition="top"
+                    data-clarity-region="delete-review-button">
+                    <i class="bi bi-trash"></i> Delete Review
+                </button>
+            </div>
+        </div>
+    </ng-container>
+
 
 
     <p-dialog header="Approve APIRevision"

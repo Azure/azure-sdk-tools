@@ -16,7 +16,7 @@ import { FormControl } from '@angular/forms';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { environment } from 'src/environments/environment';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
@@ -130,7 +130,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
     private signalRService: SignalRService, private notificationsService: NotificationsService,
-    private permissionsService: PermissionsService) { }
+    private permissionsService: PermissionsService, private confirmationService: ConfirmationService) { }
 
   async ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
@@ -633,6 +633,60 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   updateRoute() {
     let newQueryParams = getQueryParams(this.route); // this automatically excludes the nId query parameter
     this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+  }
+
+  deleteReview() {
+    if (!this.review?.id) {
+      return;
+    }
+
+    // First, get the revision count
+    this.reviewsService.getReviewRevisionCount(this.review.id).pipe(take(1)).subscribe({
+      next: (revisionCount: number) => {
+        const message = revisionCount > 0
+          ? `Are you sure you want to delete this review? It has ${revisionCount} revision(s) that will also be deleted. This action cannot be undone.`
+          : 'Are you sure you want to delete this review? This action cannot be undone.';
+
+        this.confirmationService.confirm({
+          message: message,
+          header: 'Delete Review',
+          icon: 'pi pi-exclamation-triangle',
+          acceptButtonStyleClass: 'p-button-danger',
+          rejectButtonStyleClass: 'p-button-text',
+          accept: () => {
+            this.reviewsService.deleteReview(this.review!.id).pipe(take(1)).subscribe({
+              next: () => {
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Review Deleted',
+                  detail: 'The review has been successfully deleted.',
+                  life: 3000
+                });
+                // Navigate to reviews list after successful deletion
+                this.router.navigate(['/']);
+              },
+              error: (error) => {
+                const errorMessage = error.error || 'Failed to delete the review. Please try again.';
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Delete Failed',
+                  detail: errorMessage,
+                  life: 5000
+                });
+              }
+            });
+          }
+        });
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to get revision count. Please try again.',
+          life: 3000
+        });
+      }
+    });
   }
 
   ngOnDestroy(): void {

@@ -13,6 +13,7 @@ import { UserProfile } from 'src/app/_models/userProfile';
 import { PullRequestsService } from 'src/app/_services/pull-requests/pull-requests.service';
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
 import { FormControl } from '@angular/forms';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { environment } from 'src/environments/environment';
 import { MessageService } from 'primeng/api';
@@ -23,6 +24,13 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteNotificationDto';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
+
+// Constants for AI review button text
+const AI_REVIEW_BUTTON_TEXT = {
+  GENERATE: 'Request Copilot review',
+  GENERATING: 'Generating...',
+  FAILED: 'Failed to generate Copilot review'
+} as const;
 
 @Component({
     selector: 'app-review-page-options',
@@ -57,7 +65,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() namespaceApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() commentThreadNavigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() diffNavigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-  @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
@@ -72,10 +79,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   subscribeSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
   isCopilotReviewSupported: boolean = true;
+  isAdmin: boolean = false;
 
   canToggleApproveAPIRevision: boolean = false;
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
   isAPIRevisionApprovalDisabled: boolean = false;
+  isMissingPackageVersion: boolean = false;
   apiRevisionApprovalMessage: string = '';
   apiRevisionApprovalBtnClass: string = '';
   apiRevisionApprovalBtnLabel: string = '';
@@ -86,8 +95,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
-  copyReviewTextButtonText : string = 'Copy review text';
-  generateAIReviewButtonText : string = 'Generate copilot review';
+  generateAIReviewButtonText : string = AI_REVIEW_BUTTON_TEXT.GENERATE;
+  readonly AI_REVIEW_BUTTON_TEXT = AI_REVIEW_BUTTON_TEXT;
   aiReviewGenerationState : 'NotStarted' | 'InProgress' | 'Completed' | 'Failed' = 'NotStarted';
 
   // Namespace review properties
@@ -107,6 +116,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   //Approvers Options
   selectedApprovers: string[] = [];
+  filteredApprovers: string[] = [];
+  reviewerSearchText: string = '';
 
   diffStyleOptions : any[] = [
     { label: 'Changed types only', value: TREE_DIFF_STYLE },
@@ -118,7 +129,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     private configService: ConfigService, private reviewsService: ReviewsService, private route: ActivatedRoute,
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
-    private signalRService: SignalRService, private notificationsService: NotificationsService) { }
+    private signalRService: SignalRService, private notificationsService: NotificationsService,
+    private permissionsService: PermissionsService) { }
 
   async ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
@@ -155,6 +167,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     if (changes['userProfile'] && changes['userProfile'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setPageOptionValues();
+      this.isAdmin = this.permissionsService.isAdmin(this.userProfile?.permissions);
+    }
+
+    if (changes['preferredApprovers']) {
+      this.filteredApprovers = [...this.preferredApprovers];
+      this.reviewerSearchText = '';
     }
 
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
@@ -165,10 +183,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.setNamespaceReviewStates();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
-        this.generateAIReviewButtonText = 'Generating review...';
+        this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.GENERATING;
       } else if (this.activeAPIRevision?.hasAutoGeneratedComments) {
         this.aiReviewGenerationState = 'Completed';
-        this.generateAIReviewButtonText = 'Generate copilot review';
+        this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.GENERATE;
       }
     }
 
@@ -242,6 +260,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   /**
+   * Callback for Subscribe button click
+   */
+  onSubscribeButtonClick() {
+    this.subscribeSwitch = !this.subscribeSwitch;
+    this.subscribeEmitter.emit(this.subscribeSwitch);
+  }
+
+  /**
    * Callback for showLineNumbersSwitch Change
    * @param event the Filter event
    */
@@ -262,6 +288,32 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
           }
       });
     }
+  }
+
+  filterReviewers() {
+    if (!this.reviewerSearchText) {
+      this.filteredApprovers = [...this.preferredApprovers];
+    } else {
+      const searchLower = this.reviewerSearchText.toLowerCase();
+      this.filteredApprovers = this.preferredApprovers.filter(approver =>
+        approver.toLowerCase().includes(searchLower)
+      );
+    }
+  }
+
+  resetReviewerSearch() {
+    this.reviewerSearchText = '';
+    this.filteredApprovers = [...this.preferredApprovers];
+  }
+
+  toggleReviewer(approver: string) {
+    const index = this.selectedApprovers.indexOf(approver);
+    if (index === -1) {
+      this.selectedApprovers = [...this.selectedApprovers, approver];
+    } else {
+      this.selectedApprovers = this.selectedApprovers.filter(a => a !== approver);
+    }
+    this.handleAssignedReviewersChange();
   }
 
   formatSelectedApprovers(approvers: string[]): string {
@@ -292,6 +344,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   setAPIRevisionApprovalStates() {
     const language = this.review?.language;
     const packageVersion = this.activeAPIRevision?.packageVersion;
+    this.isMissingPackageVersion = !packageVersion || packageVersion.trim() === '';
 
     if (language) {
       const isRequired$ = this.reviewsService.getIsReviewByCopilotRequired(language);
@@ -326,12 +379,22 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       }
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
       this.apiRevisionApprovalMessage = this.activeAPIRevisionIsApprovedByCurrentUser ? "" :
-        this.isAPIRevisionApprovalDisabled ? "To approve the current API revision, it must first be reviewed by Copilot" :
+        this.isAPIRevisionApprovalDisabled ? this.getApprovalDisabledMessage(isReviewByCopilotRequired, isVersionReviewedByCopilot) :
         "Approves the Current API Revision";
     } else {
       this.apiRevisionApprovalBtnClass = "btn btn-outline-secondary";
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
     }
+  }
+
+  private getApprovalDisabledMessage(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): string {
+    if (this.isMissingPackageVersion) {
+      return "This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.";
+    }
+    if (isReviewByCopilotRequired && !isVersionReviewedByCopilot) {
+      return "To approve the current API revision, it must first be reviewed by Copilot";
+    }
+    return "";
   }
   setReviewApprovalStatus() {
     this.reviewIsApproved = !!this.review?.isApproved;
@@ -386,32 +449,16 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
   }
 
-  copyReviewText(event: Event) {
-    const icon = (event?.target as Element).firstChild as HTMLElement;
-
-    icon.classList.remove('bi-clipboard');
-    icon.classList.add('bi-clipboard-check');
-    this.copyReviewTextButtonText = 'Review text copied!';
-
-    setTimeout(() => {
-      this.copyReviewTextButtonText = 'Copy review text';
-      icon.classList.remove('bi-clipboard-check');
-      icon.classList.add('bi-clipboard');
-    }, 1500);
-
-    this.copyReviewTextEmitter.emit(this.isDiffView);
-  }
-
   generateAIReview() {
     this.aiReviewGenerationState = 'InProgress';
-    this.generateAIReviewButtonText = 'Generating review...';
+    this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.GENERATING;
     const diffApiRevisionId = this.diffAPIRevision ? this.diffAPIRevision.id : undefined;
 
     this.apiRevisionsService.generateAIReview(this.activeAPIRevision!.reviewId, this.activeAPIRevision!.id, diffApiRevisionId).pipe(take(1)).subscribe({
       error: (error: any) => {
         this.aiReviewGenerationState = 'Failed';
-        this.generateAIReviewButtonText = 'Failed to generate copilot review';
-        const message = 'Failed to generate copilot review';
+        this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.FAILED;
+        const message = AI_REVIEW_BUTTON_TEXT.FAILED;
         const severity = 'error';
         const summary = 'AI Comments';
         this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'AI Comments', detail: message, key: 'bc', life: 5000, closable: true });
@@ -507,7 +554,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
             this.generateAIReviewButtonText = `Generated ${aiReviewUpdate.noOfGeneratedComments} comments!`;
           } else if (aiReviewUpdate.status === 'Error') {
             this.aiReviewGenerationState = 'Failed';
-            this.generateAIReviewButtonText = 'Failed to generate copilot review';
+            this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.FAILED;
           }
           const notificationInfo = getAIReviewNotificationInfo(aiReviewUpdate, window.location.origin);
           if (notificationInfo) {
@@ -518,7 +565,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
           setTimeout(() => {
             this.aiReviewGenerationState = 'Completed';
-            this.generateAIReviewButtonText = 'Generate copilot review';
+            this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.GENERATE;
           }, 3000);
 
         }
@@ -607,6 +654,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   private shouldDisableApproval(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): boolean {
+    if (this.isMissingPackageVersion) return true;
     if (!this.isCopilotReviewSupported) return false;
     if (this.isPreviewVersion()) return false;
     if (this.activeAPIRevisionIsApprovedByCurrentUser) return false;

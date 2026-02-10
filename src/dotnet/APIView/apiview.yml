@@ -10,7 +10,7 @@ parameters:
     default: '@azure-tools/ts-genapi@2.0.5'
   - name: RustAPIParser
     type: string
-    default: '@azure-tools/rust-genapi@1.1.0'
+    default: '@azure-tools/rust-genapi@1.2.0'
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'

@@ -2,6 +2,7 @@ import { ApiModel } from "@microsoft/api-extractor-model";
 import { readFile, writeFile } from "node:fs/promises";
 import { generateApiView } from "./generate";
 import { CrossLanguageMetadata } from "./models";
+import { version as parserVersion } from "../package.json";
 
 function getPackageVersion(fileName: string) {
   const match = fileName.match(/.*_(?<version>.*)\.api\.json/);
@@ -60,7 +61,7 @@ async function main() {
         Name,
         PackageName,
         PackageVersion,
-        ParserVersion: "2.0.7",
+        ParserVersion: parserVersion,
         Language: "JavaScript",
       },
       dependencies,

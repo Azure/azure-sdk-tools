@@ -408,7 +408,7 @@ namespace APIViewWeb.LeanControllers
                     return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can delete reviews.");
                 }
 
-                await _reviewManager.SoftDeleteReviewAsync(User, reviewId, skipOwnerCheck: isAdmin);
+                await _reviewManager.SoftDeleteReviewAsync(User, reviewId, skipOwnerCheck: true);
                 return Ok();
             }
             catch (AuthorizationFailedException)

@@ -326,14 +326,17 @@ namespace APIViewWeb.Managers
                 await ManagerHelpers.AssertReviewOwnerAsync(user, review, _authorizationService);
             }
 
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(review.ChangeHistory, ReviewChangeAction.Deleted, user.GetGitHubLogin());
+            var userName = user.GetGitHubLogin();
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(review.ChangeHistory, ReviewChangeAction.Deleted, userName);
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsDeleted = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
 
+            // Use the no-guard overload for cascade deletion — the review-level permission
+            // check is sufficient; child revisions may be non-Manual or owned by other users.
             foreach (var revision in revisions)
             {
-                await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user, revision);
+                await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(revision, userName: userName, notes: "Cascade deleted with review");
             }
             await _commentManager.SoftDeleteCommentsAsync(user, review.Id);
         }

@@ -54,7 +54,7 @@ export class TypeSpecProcessor {
         for (const tspFile of tspFiles) {
             const relativepath = path.relative(this.srcDir, tspFile);
             // Replace all / or \ with -
-            const safeName = relativepath.replace(/[\\/]/g, "-");
+            const safeName = relativepath.replace(/[\\/]/g, "#");
             const mdFile = path.join(this.destDir, safeName.replace(".tsp", ".md"));
             this.convertTypeSpecToMarkdown(tspFile, mdFile);
         }

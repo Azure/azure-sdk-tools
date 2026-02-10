@@ -373,7 +373,9 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Delete Comment
+        /// Soft-delete all comments for a review (cascade delete).
+        /// Skips per-comment owner checks — the caller is responsible for
+        /// verifying that the user has permission to delete the parent review.
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>
@@ -636,12 +638,14 @@ namespace APIViewWeb.Managers
                 string feedbackText = $"@azure-sdk user '{user.GetGitHubLogin()}' has provided the following feedback on your previous comment:\n\n" +
                     string.Join("\n", feedbackMessages.Select(m => $"- {m}"));
 
+                string codeLine = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId);
+
                 // Create a synthetic comment representing the feedback
                 var feedbackComment = new ApiViewAgentComment
                 {
                     LineNumber = 0,
                     LineId = comment.ElementId,
-                    LineText = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
+                    LineText = codeLine,
                     CreatedOn = DateTimeOffset.UtcNow,
                     Upvotes = 0,
                     Downvotes = 0,
@@ -656,7 +660,7 @@ namespace APIViewWeb.Managers
                 {
                     LineNumber = 0,
                     LineId = comment.ElementId,
-                    LineText = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
+                    LineText = codeLine,
                     CreatedOn = comment.CreatedOn,
                     Upvotes = comment.Upvotes?.Count ?? 0,
                     Downvotes = comment.Downvotes?.Count ?? 0,
@@ -670,7 +674,7 @@ namespace APIViewWeb.Managers
                 {
                     Language = review.Language,
                     PackageName = activeApiRevision.PackageName,
-                    Code = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
+                    Code = codeLine,
                     Comments = new List<ApiViewAgentComment> { originalAIComment, feedbackComment }
                 };
 

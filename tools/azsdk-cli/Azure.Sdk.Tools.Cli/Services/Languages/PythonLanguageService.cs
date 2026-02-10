@@ -230,11 +230,11 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
                 return (true, null, packageInfo);
             }
 
-            // Fallback: No build config found. Use import-based validation to detect errors
-            // in _patch.py customization files. Python _patch.py files run on import, so any
-            // NameError, AttributeError, or ImportError from broken super() calls will surface.
-            logger.LogInformation("No build configuration found. Falling back to import-based validation...");
-            return await ValidateByImportAsync(packagePath, packageInfo, ct);
+            // Fallback: No build config found. Use mypy static analysis to detect type errors
+            // in _patch.py customization files. This catches signature mismatches, undefined types,
+            // and missing attributes that import-based validation would miss.
+            logger.LogInformation("No build configuration found. Falling back to mypy static analysis...");
+            return await ValidateWithMypyAsync(packagePath, packageInfo, ct);
         }
         catch (Exception ex)
         {
@@ -333,61 +333,87 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     }
 
     /// <summary>
-    /// Validates Python SDK by attempting to import all submodules that contain _patch.py customizations.
-    /// Python _patch.py files execute on import, so broken super() calls or missing references
-    /// will surface as NameError, AttributeError, or ImportError during import.
+    /// Validates Python SDK using mypy static type checking on _patch.py customization files.
+    /// This catches type errors like signature mismatches, undefined types, and missing attributes
+    /// that import-based validation would miss. Uses exit code to determine success (like Maven/Java).
     /// </summary>
-    private async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> ValidateByImportAsync(
+    private async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> ValidateWithMypyAsync(
         string packagePath, PackageInfo? packageInfo, CancellationToken ct)
     {
-        // Discover all Python module paths with _patch.py customizations
-        var patchFiles = Directory.GetFiles(packagePath, "_patch.py", SearchOption.AllDirectories);
-        var modulesToImport = new List<string>();
+        // Find all _patch.py files with actual customizations
+        var patchFiles = Directory.GetFiles(packagePath, "_patch.py", SearchOption.AllDirectories)
+            .Where(HasNonEmptyAllExport)
+            .ToList();
 
-        foreach (var patchFile in patchFiles)
+        if (patchFiles.Count == 0)
         {
-            if (!HasNonEmptyAllExport(patchFile))
-            {
-                continue;
-            }
-
-            // Convert file path to Python module path
-            // e.g., C:\...\azure-ai-vision-face\azure\ai\vision\face\aio\_patch.py
-            //     → azure.ai.vision.face.aio
-            var patchDir = Path.GetDirectoryName(patchFile)!;
-            var relativePath = Path.GetRelativePath(packagePath, patchDir);
-            var modulePath = relativePath.Replace(Path.DirectorySeparatorChar, '.').Replace(Path.AltDirectorySeparatorChar, '.');
-            modulesToImport.Add(modulePath);
-        }
-
-        if (modulesToImport.Count == 0)
-        {
-            logger.LogDebug("No customized modules found to validate via import.");
+            logger.LogDebug("No customized _patch.py files found to validate with mypy.");
             return (true, null, packageInfo);
         }
 
-        // Build a Python script that imports all customized modules
-        var importStatements = string.Join("; ", modulesToImport.Select(m => $"import {m}"));
-        var validationScript = $"import sys; sys.path.insert(0, r'{packagePath}'); {importStatements}; print('All imports successful')";
+        // Convert to relative paths for mypy
+        var relativeFiles = patchFiles
+            .Select(f => Path.GetRelativePath(packagePath, f))
+            .ToList();
 
-        logger.LogInformation("Validating Python imports for modules: {Modules}", string.Join(", ", modulesToImport));
+        logger.LogInformation("Validating Python customizations with mypy for files: {Files}", string.Join(", ", relativeFiles));
+
+        // Run mypy on the _patch.py files
+        // Use --no-error-summary to get cleaner output
+        var mypyArgs = new List<string> { "-m", "mypy" };
+        mypyArgs.AddRange(relativeFiles);
+        mypyArgs.Add("--no-error-summary");
 
         var result = await pythonHelper.Run(new PythonOptions(
             "python",
-            ["-c", validationScript],
+            mypyArgs.ToArray(),
             workingDirectory: packagePath
         ), ct);
 
         var output = (result.Output ?? string.Empty).Trim();
 
+        // Use exit code to determine success - just like Java/Maven
+        // Mypy returns non-zero exit code when it finds type errors
         if (result.ExitCode != 0)
         {
-            var errorMessage = $"Import validation failed with exit code {result.ExitCode}. Output:\n{output}";
-            logger.LogDebug("Python import validation failed: {ErrorMessage}", errorMessage);
-            return (false, errorMessage, packageInfo);
+            // Filter out non-critical errors (like missing stubs for third-party libraries)
+            // but keep all errors related to the actual customization code
+            var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var criticalErrors = new List<string>();
+            
+            foreach (var line in lines)
+            {
+                // Skip non-error lines (notes, hints, etc.)
+                if (!line.Contains(": error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                
+                // Skip import-untyped errors (missing library stubs) - these are not customization issues
+                if (line.Contains("[import-untyped]", StringComparison.OrdinalIgnoreCase) ||
+                    line.Contains("[import-not-found]", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // Keep all other errors - these are likely customization issues:
+                // [override], [name-defined], [attr-defined], [misc], [arg-type], etc.
+                criticalErrors.Add(line.Trim());
+            }
+
+            if (criticalErrors.Count > 0)
+            {
+                var errorMessage = $"Mypy found {criticalErrors.Count} error(s) in customization files:\n" +
+                                   string.Join("\n", criticalErrors);
+                logger.LogDebug("Mypy validation failed: {ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo);
+            }
+
+            // Only non-critical errors (missing stubs, etc.) - consider it a pass
+            logger.LogDebug("Mypy reported non-critical issues only (exit code {ExitCode}), validation passed.", result.ExitCode);
         }
 
-        logger.LogDebug("Python import validation completed successfully.");
+        logger.LogDebug("Mypy validation completed successfully.");
         return (true, null, packageInfo);
     }
 

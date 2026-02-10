@@ -372,4 +372,249 @@ public class APIRevisionsManagerTests
         CrossLanguageDefinitionId = new Dictionary<string, string> { { key, value } }
     };
     #endregion
+
+    #region AutoArchiveAPIRevisions Tests
+
+    [Fact]
+    public async Task AutoArchiveAPIRevisions_PreservesLastApprovedStableRelease()
+    {
+        // Arrange
+        var reviewId = "test-review-1";
+        var oldDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(150)); // Older than 4 months
+        
+        // Old approved stable release - should be preserved
+        var stableApprovedOld = CreateRevisionForArchiveTest(reviewId, "rev-stable-approved", "1.0.0", true, false, oldDate);
+        
+        // Old unapproved stable release - should be archived
+        var stableUnapprovedOld = CreateRevisionForArchiveTest(reviewId, "rev-stable-unapproved", "0.9.0", false, false, oldDate);
+        
+        // Setup mocks
+        var oldRevisions = new List<APIRevisionListItemModel> { stableApprovedOld, stableUnapprovedOld };
+        var allRevisionsForReview = new List<APIRevisionListItemModel> 
+        { 
+            stableApprovedOld, 
+            stableUnapprovedOld,
+            // Add a newer revision that's not in the archive list
+            CreateRevisionForArchiveTest(reviewId, "rev-new", "1.1.0", false, false, DateTime.UtcNow)
+        };
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(oldRevisions);
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(reviewId))
+            .ReturnsAsync(allRevisionsForReview);
+
+        // Act
+        await _manager.AutoArchiveAPIRevisions(4);
+
+        // Assert - stableApprovedOld should NOT be archived, stableUnapprovedOld should be archived
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == stableApprovedOld.Id && r.IsDeleted)),
+            Times.Never,
+            "Last approved stable release should be preserved");
+
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == stableUnapprovedOld.Id && r.IsDeleted)),
+            Times.Once,
+            "Unapproved stable release should be archived");
+    }
+
+    [Fact]
+    public async Task AutoArchiveAPIRevisions_PreservesLastPreviewRelease()
+    {
+        // Arrange
+        var reviewId = "test-review-2";
+        var oldDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(150)); // Older than 4 months
+        
+        // Old preview releases
+        var previewOld1 = CreateRevisionForArchiveTest(reviewId, "rev-preview-1", "1.0.0-beta.1", false, false, oldDate.AddDays(-10));
+        var previewOld2 = CreateRevisionForArchiveTest(reviewId, "rev-preview-2", "1.0.0-beta.2", false, false, oldDate); // Latest preview
+        
+        // Setup mocks
+        var oldRevisions = new List<APIRevisionListItemModel> { previewOld1, previewOld2 };
+        var allRevisionsForReview = new List<APIRevisionListItemModel> { previewOld1, previewOld2 };
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(oldRevisions);
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(reviewId))
+            .ReturnsAsync(allRevisionsForReview);
+
+        // Act
+        await _manager.AutoArchiveAPIRevisions(4);
+
+        // Assert - previewOld2 (latest) should NOT be archived, previewOld1 should be archived
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == previewOld2.Id && r.IsDeleted)),
+            Times.Never,
+            "Last preview release should be preserved");
+
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == previewOld1.Id && r.IsDeleted)),
+            Times.Once,
+            "Older preview release should be archived");
+    }
+
+    [Fact]
+    public async Task AutoArchiveAPIRevisions_PreservesBothStableAndPreview()
+    {
+        // Arrange
+        var reviewId = "test-review-3";
+        var oldDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(150));
+        
+        var stableApproved = CreateRevisionForArchiveTest(reviewId, "rev-stable", "1.0.0", true, false, oldDate.AddDays(-20));
+        var preview = CreateRevisionForArchiveTest(reviewId, "rev-preview", "2.0.0-beta.1", false, false, oldDate);
+        var oldUnapproved = CreateRevisionForArchiveTest(reviewId, "rev-old", "0.9.0", false, false, oldDate.AddDays(-30));
+        
+        // Setup mocks
+        var oldRevisions = new List<APIRevisionListItemModel> { stableApproved, preview, oldUnapproved };
+        var allRevisionsForReview = new List<APIRevisionListItemModel> { stableApproved, preview, oldUnapproved };
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(oldRevisions);
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(reviewId))
+            .ReturnsAsync(allRevisionsForReview);
+
+        // Act
+        await _manager.AutoArchiveAPIRevisions(4);
+
+        // Assert - both stable and preview should be preserved, oldUnapproved should be archived
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == stableApproved.Id && r.IsDeleted)),
+            Times.Never,
+            "Last approved stable should be preserved");
+
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == preview.Id && r.IsDeleted)),
+            Times.Never,
+            "Last preview should be preserved");
+
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == oldUnapproved.Id && r.IsDeleted)),
+            Times.Once,
+            "Old unapproved revision should be archived");
+    }
+
+    [Fact]
+    public async Task AutoArchiveAPIRevisions_HandlesMultipleReviews()
+    {
+        // Arrange
+        var reviewId1 = "test-review-1";
+        var reviewId2 = "test-review-2";
+        var oldDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(150));
+        
+        // Review 1 revisions
+        var review1Stable = CreateRevisionForArchiveTest(reviewId1, "rev1-stable", "1.0.0", true, false, oldDate);
+        var review1Preview = CreateRevisionForArchiveTest(reviewId1, "rev1-preview", "2.0.0-beta.1", false, false, oldDate.AddDays(-5));
+        
+        // Review 2 revisions
+        var review2Stable = CreateRevisionForArchiveTest(reviewId2, "rev2-stable", "1.5.0", true, false, oldDate);
+        var review2Old = CreateRevisionForArchiveTest(reviewId2, "rev2-old", "1.0.0", false, false, oldDate.AddDays(-10));
+        
+        // Setup mocks
+        var oldRevisions = new List<APIRevisionListItemModel> { review1Stable, review1Preview, review2Stable, review2Old };
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(oldRevisions);
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(reviewId1))
+            .ReturnsAsync(new List<APIRevisionListItemModel> { review1Stable, review1Preview });
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(reviewId2))
+            .ReturnsAsync(new List<APIRevisionListItemModel> { review2Stable, review2Old });
+
+        // Act
+        await _manager.AutoArchiveAPIRevisions(4);
+
+        // Assert - preserve last approved stable and preview for each review
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == review1Stable.Id && r.IsDeleted)),
+            Times.Never);
+
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == review1Preview.Id && r.IsDeleted)),
+            Times.Never);
+
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == review2Stable.Id && r.IsDeleted)),
+            Times.Never);
+
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == review2Old.Id && r.IsDeleted)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task AutoArchiveAPIRevisions_HandlesInvalidVersionGracefully()
+    {
+        // Arrange
+        var reviewId = "test-review-invalid";
+        var oldDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(150));
+        
+        var revisionWithInvalidVersion = CreateRevisionForArchiveTest(reviewId, "rev-invalid", "invalid-version", false, false, oldDate);
+        
+        // Setup mocks
+        var oldRevisions = new List<APIRevisionListItemModel> { revisionWithInvalidVersion };
+        var allRevisionsForReview = new List<APIRevisionListItemModel> { revisionWithInvalidVersion };
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(oldRevisions);
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionsAsync(reviewId))
+            .ReturnsAsync(allRevisionsForReview);
+
+        // Act & Assert - should not throw
+        await _manager.AutoArchiveAPIRevisions(4);
+
+        // Revision with invalid version should be archived (treated as non-prerelease)
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.Id == revisionWithInvalidVersion.Id && r.IsDeleted)),
+            Times.Once);
+    }
+
+    private APIRevisionListItemModel CreateRevisionForArchiveTest(
+        string reviewId, 
+        string revisionId, 
+        string packageVersion, 
+        bool isApproved, 
+        bool isDeleted, 
+        DateTime lastUpdatedOn)
+    {
+        return new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            ReviewId = reviewId,
+            Language = "Python",
+            PackageName = "test-package",
+            IsApproved = isApproved,
+            IsDeleted = isDeleted,
+            LastUpdatedOn = lastUpdatedOn,
+            APIRevisionType = APIRevisionType.Manual,
+            Files = new List<APICodeFileModel>
+            {
+                new APICodeFileModel
+                {
+                    FileId = $"{revisionId}-file",
+                    FileName = "test.whl",
+                    PackageName = "test-package",
+                    PackageVersion = packageVersion,
+                    VersionString = "1.0.0"
+                }
+            }
+        };
+    }
+
+    #endregion
 }

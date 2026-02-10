@@ -876,6 +876,7 @@ namespace APIViewWeb.Managers
 
         /// <summary>
         /// SoftDelete APIRevision if its not been updated after many months
+        /// Preserves the last approved stable release and last preview release for each review
         /// </summary>
         /// <param name="archiveAfterMonths"></param>
         /// <returns></returns>
@@ -884,9 +885,47 @@ namespace APIViewWeb.Managers
             var lastUpdatedDate = DateTime.Now.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
             var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
 
-            // Find all inactive reviews
+            // Group revisions by ReviewId to identify which revisions to preserve
+            var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId);
+            var revisionsToPreserve = new HashSet<string>();
+
+            foreach (var reviewGroup in revisionsByReview)
+            {
+                // Get all revisions for this review (not just old ones) to determine the latest releases
+                var allRevisionsForReview = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewGroup.Key);
+                
+                // Find the last approved stable release
+                var lastApprovedStable = allRevisionsForReview
+                    .Where(r => r.IsApproved && !IsPrerelease(r))
+                    .OrderByDescending(r => r.LastUpdatedOn)
+                    .FirstOrDefault();
+                
+                if (lastApprovedStable != null)
+                {
+                    revisionsToPreserve.Add(lastApprovedStable.Id);
+                }
+
+                // Find the last preview release (approved or not)
+                var lastPreview = allRevisionsForReview
+                    .Where(r => IsPrerelease(r))
+                    .OrderByDescending(r => r.LastUpdatedOn)
+                    .FirstOrDefault();
+                
+                if (lastPreview != null)
+                {
+                    revisionsToPreserve.Add(lastPreview.Id);
+                }
+            }
+
+            // Archive inactive revisions, excluding preserved ones
             foreach (var apiRevision in manualRevisions)
             {
+                if (revisionsToPreserve.Contains(apiRevision.Id))
+                {
+                    _telemetryClient.TrackTrace($"Skipping auto-archive for preserved revision {apiRevision.Id} ({apiRevision.PackageName})");
+                    continue;
+                }
+
                 var requestTelemetry = new RequestTelemetry { Name = "Archiving Revision " + apiRevision.Id };
                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
@@ -902,6 +941,36 @@ namespace APIViewWeb.Managers
                 {
                     _telemetryClient.StopOperation(operation);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Determines if a revision is a prerelease based on its package version
+        /// </summary>
+        /// <param name="revision">The API revision to check</param>
+        /// <returns>True if the revision is a prerelease, false otherwise</returns>
+        private bool IsPrerelease(APIRevisionListItemModel revision)
+        {
+            if (revision.Files == null || !revision.Files.Any())
+            {
+                return false;
+            }
+
+            var packageVersion = revision.Files.First().PackageVersion;
+            if (string.IsNullOrEmpty(packageVersion))
+            {
+                return false;
+            }
+
+            try
+            {
+                var semVer = new AzureEngSemanticVersion(packageVersion, revision.Language);
+                return semVer.IsSemVerFormat && semVer.IsPrerelease;
+            }
+            catch
+            {
+                // If version parsing fails, treat as non-prerelease to be conservative
+                return false;
             }
         }
 

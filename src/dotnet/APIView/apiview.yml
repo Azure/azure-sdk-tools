@@ -206,7 +206,7 @@ extends:
                 displayName: "Install Client SPA Packages"
 
               - script: |
-                  ng test --no-watch --no-progress --browsers=ChromeHeadless
+                  npm run test:unit
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Run SPA Tests"
 

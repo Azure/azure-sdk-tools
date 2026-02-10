@@ -5,13 +5,12 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
@@ -20,12 +19,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 public class CustomizedCodeUpdateTool: LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
-    private readonly FeedbackClassifierService feedbackClassifier;
+    private readonly ITypeSpecHelper typeSpecHelper;
     private readonly IAPIViewFeedbackCustomizationsHelpers feedbackHelper;
     private readonly ILoggerFactory loggerFactory;
-    private readonly IMicroagentHostService _microagentHost;
-    private readonly IConfiguration _configuration;
-    private readonly string _model;
+    private readonly ICopilotAgentRunner _agentRunner;
     
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
@@ -34,30 +31,26 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <param name="languageServices">The collection of available language services.</param>
     /// <param name="gitHelper">The Git helper for repository operations.</param>
     /// <param name="tspClientHelper">The TypeSpec client helper for regeneration operations.</param>
-    /// <param name="feedbackClassifier">The feedback classifier for analyzing build errors and APIView feedback.</param>
+    /// <param name="typeSpecHelper">The TypeSpec helper for spec repo path resolution.</param>
     /// <param name="feedbackHelper">The feedback helper for extracting feedback from various sources.</param>
     /// <param name="loggerFactory">The logger factory for creating loggers.</param>
-    /// <param name="microagentHost">The microagent host service for enhanced guidance generation.</param>
-    /// <param name="configuration">The configuration for model settings.</param>
+    /// <param name="agentRunner">The copilot agent runner for LLM-powered classification.</param>
     public CustomizedCodeUpdateTool(
         ILogger<CustomizedCodeUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
         IGitHelper gitHelper,
         ITspClientHelper tspClientHelper,
-        FeedbackClassifierService feedbackClassifier,
+        ITypeSpecHelper typeSpecHelper,
         IAPIViewFeedbackCustomizationsHelpers feedbackHelper,
         ILoggerFactory loggerFactory,
-        IMicroagentHostService microagentHost,
-        IConfiguration configuration
+        ICopilotAgentRunner agentRunner
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper;
-        this.feedbackClassifier = feedbackClassifier;
+        this.typeSpecHelper = typeSpecHelper;
         this.feedbackHelper = feedbackHelper;
         this.loggerFactory = loggerFactory;
-        _microagentHost = microagentHost;
-        _configuration = configuration;
-        _model = configuration["AZURE_OPENAI_MODEL"] ?? "gpt-4o";
+        _agentRunner = agentRunner;
     }
 
     // MCP Tool Names
@@ -223,9 +216,9 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             {
                 // Create a classifier instance with the correct paths for tool operations
                 var classifier = new FeedbackClassifierService(
-                    _microagentHost,
-                    _configuration,
+                    _agentRunner,
                     loggerFactory,
+                    typeSpecHelper,
                     tspProjectPath,
                     packagePath
                 );
@@ -537,8 +530,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         try
         {
             // TODO: Placeholder for real code
-            var tspLocationPath = Path.Combine(tspProjectPath, "tsp-location.yaml");
-            var result = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, tspProjectPath, null, isCli: false, ct);
+            var result = await tspClientHelper.UpdateGenerationAsync(tspProjectPath, ct: ct);
             
             if (result.IsSuccessful)
             {
@@ -672,8 +664,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             };
         }
 
-        var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
-        var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
+        var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha, ct: ct);
         if (!regenResult.IsSuccessful)
         {
             return new CustomizedCodeUpdateResponse
@@ -734,7 +725,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
         // Patches were applied, regenerate and build to validate
         logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
-        var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
+        var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(packagePath, commitSha, ct);
         if (!regenSuccess)
         {
             logger.LogWarning("Code regeneration failed: {Error}", regenError);
@@ -773,7 +764,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
-    private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string tspLocationPath, string packagePath, string commitSha, CancellationToken ct)
+    private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string packagePath, string commitSha, CancellationToken ct)
     {
         try
         {

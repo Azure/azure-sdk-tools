@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
@@ -77,10 +78,8 @@ public class APIViewReviewTool : MCPMultiCommandTool
         try
         {
             (string revisionId, _) = ApiViewUrlParser.ExtractIds(apiViewUrl);
-            string environment = IAPIViewHttpService.DetectEnvironmentFromUrl(apiViewUrl);
-            _logger.LogInformation("Detected APIView environment: {Environment} from URL: {Url}", environment, apiViewUrl);
 
-            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, environment);
+            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Failed to retrieve comments for API View: {apiViewUrl}" };
@@ -116,10 +115,9 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
 
         (string revisionId, string reviewId) = ApiViewUrlParser.ExtractIds(apiViewUrl!);
-        string environment = IAPIViewHttpService.DetectEnvironmentFromUrl(apiViewUrl!);
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType, environment);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Content not found" };

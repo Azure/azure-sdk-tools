@@ -4,10 +4,10 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Services.APIView;
+using GitHub.Copilot.SDK;
 using Microsoft.Extensions.Logging;
-using OpenAI;
-using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 
@@ -93,18 +93,18 @@ public class APIViewFeedbackCustomizationsHelpers : IAPIViewFeedbackCustomizatio
 {
     private readonly IAPIViewService _apiViewService;
     private readonly IAPIViewHttpService _apiViewHttpService;
-    private readonly OpenAIClient _openAIClient;
+    private readonly ICopilotClientWrapper _copilotClient;
     private readonly ILogger<APIViewFeedbackCustomizationsHelpers> _logger;
 
     public APIViewFeedbackCustomizationsHelpers(
         IAPIViewService apiViewService,
         IAPIViewHttpService apiViewHttpService,
-        OpenAIClient openAIClient,
+        ICopilotClientWrapper copilotClient,
         ILogger<APIViewFeedbackCustomizationsHelpers> logger)
     {
         _apiViewService = apiViewService;
         _apiViewHttpService = apiViewHttpService;
-        _openAIClient = openAIClient;
+        _copilotClient = copilotClient;
         _logger = logger;
     }
 
@@ -115,12 +115,11 @@ public class APIViewFeedbackCustomizationsHelpers : IAPIViewFeedbackCustomizatio
     {
         // Parse the URL to get revisionId
         var (revisionId, reviewId) = ApiViewUrlParser.ExtractIds(apiViewUrl);
-        var environment = IAPIViewHttpService.DetectEnvironmentFromUrl(apiViewUrl);
         
         _logger.LogInformation("Getting comments for revision {RevisionId} in review {ReviewId}", revisionId, reviewId);
         
         // Get comments from APIViewService - returns JSON string
-        var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId, environment);
+        var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
         
         if (string.IsNullOrWhiteSpace(commentsJson))
         {
@@ -219,10 +218,7 @@ public class APIViewFeedbackCustomizationsHelpers : IAPIViewFeedbackCustomizatio
         var discussion = string.Join("\n\n", groupedComments.Select((c, idx) => 
             $"Comment {idx + 1} (by {c.CreatedBy} at {c.CreatedOn}):\n{c.CommentText}"));
 
-        var prompt = $@"Read the following API review discussion thread and extract the final decision or action in a clear, direct statement.
-
-Discussion:
-{discussion}
+        var systemPrompt = @"You are an expert at summarizing API review discussions. Read the discussion thread provided and extract the final decision or action in a clear, direct statement.
 
 Requirements:
 - Use imperative/active voice (e.g., ""Remove X"", ""Keep Y as is"", ""Change Z to..."")
@@ -240,18 +236,13 @@ Examples:
 - Bad: ""After discussion, it was determined that the current behavior aligns with the REST API which returns an object, so no action is required.""
 
 Respond in JSON format:
-{{
+{
   ""comment"": ""direct actionable statement""
-}}";
+}";
 
-        var modelName = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT") 
-            ?? Environment.GetEnvironmentVariable("OPENAI_MODEL") 
-            ?? "gpt-4o";
+        var userPrompt = $"Discussion:\n{discussion}";
 
-        var chatClient = _openAIClient.GetChatClient(modelName);
-        var messages = new[] { new UserChatMessage(prompt) };
-        var response = await chatClient.CompleteChatAsync(messages);
-        var result = response.Value.Content[0].Text;
+        var result = await SendCopilotPromptAsync(systemPrompt, userPrompt);
 
         // Strip markdown code blocks if present (OpenAI sometimes wraps JSON in ```json ... ```)
         var jsonText = result.Trim();
@@ -273,6 +264,59 @@ Respond in JSON format:
             LineText = lineText,
             Comment = jsonResponse?["comment"]?.ToString() ?? string.Empty
         };
+    }
+
+    /// <summary>
+    /// Sends a prompt to the Copilot SDK and returns the assistant's text response
+    /// </summary>
+    private async Task<string> SendCopilotPromptAsync(string systemPrompt, string userPrompt)
+    {
+        var sessionConfig = new SessionConfig
+        {
+            SystemMessage = new SystemMessageConfig
+            {
+                Mode = SystemMessageMode.Append,
+                Content = systemPrompt
+            },
+            AvailableTools = []
+        };
+
+        await using var session = await _copilotClient.CreateSessionAsync(sessionConfig);
+
+        string? assistantResponse = null;
+        TaskCompletionSource sessionIdleTcs = new();
+        SessionErrorEvent? sessionError = null;
+
+        using var eventSubscription = session.On(evt =>
+        {
+            switch (evt)
+            {
+                case AssistantMessageEvent msg:
+                    assistantResponse = msg.Data.Content;
+                    break;
+                case SessionErrorEvent error:
+                    _logger.LogError("Copilot session error: {ErrorType} - {Message}", error.Data.ErrorType, error.Data.Message);
+                    sessionError = error;
+                    sessionIdleTcs.TrySetResult();
+                    break;
+                case SessionIdleEvent:
+                    sessionIdleTcs.TrySetResult();
+                    break;
+            }
+        });
+
+        await session.SendAsync(new MessageOptions { Prompt = userPrompt });
+
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+        await sessionIdleTcs.Task.WaitAsync(timeoutCts.Token);
+
+        if (sessionError != null)
+        {
+            throw new InvalidOperationException(
+                $"Copilot session error: [{sessionError.Data.ErrorType}] {sessionError.Data.Message}");
+        }
+
+        return assistantResponse ?? throw new InvalidOperationException("Copilot returned no response");
     }
 
     /// <summary>

@@ -1,68 +1,67 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Text;
+using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 /// <summary>
 /// Template for classifying SDK feedback and routing them to the appropriate phase.
-/// Analyzes build failures, API review feedback, or user prompts to determine if TypeSpec 
-/// customizations can help, if the task is complete, or if manual guidance is needed.
+/// Supports batch classification of multiple feedback items in a single LLM call,
+/// with strictly formatted ID-keyed output for robust parsing.
 /// </summary>
 public class FeedbackClassificationTemplate : BasePromptTemplate
 {
     public override string TemplateId => "feedback-classification";
-    public override string Version => "1.0.0";
-    public override string Description => "Classify SDK feedback and route to appropriate phase";
+    public override string Version => "2.0.0";
+    public override string Description => "Classify SDK feedback items in batch and route to appropriate phase";
 
     private readonly string? _serviceName;
     private readonly string? _language;
-    private readonly string _request;
-    private readonly string? _packagePath;
-    private readonly string? _codeCustomizationDocUrl;
+    private readonly string _referenceDocContent;
+    private readonly List<FeedbackItem> _items;
+    private readonly string _globalContext;
 
     /// <summary>
-    /// Initializes a new classification template with the specified parameters.
+    /// Initializes a new batch classification template.
     /// </summary>
     /// <param name="serviceName">The name of the service being customized (optional)</param>
     /// <param name="language">Target SDK language (e.g., python, csharp, java) (optional)</param>
-    /// <param name="request">The full request context including history</param>
-    /// <param name="packagePath">The absolute path to the SDK package directory (optional)</param>
-    /// <param name="codeCustomizationDocUrl">URL to code customization documentation (optional)</param>
-    /// <param name="iteration">Current iteration number (1-based)</param>
-    /// <param name="isStalled">Whether the same error appeared twice consecutively</param>
+    /// <param name="referenceDocContent">Content of the customizing-client-tsp.md reference document</param>
+    /// <param name="items">The feedback items to classify</param>
+    /// <param name="globalContext">Global context containing all changes and history</param>
     public FeedbackClassificationTemplate(
         string? serviceName,
         string? language,
-        string request,
-        string? packagePath = null,
-        string? codeCustomizationDocUrl = null)
+        string referenceDocContent,
+        List<FeedbackItem> items,
+        string globalContext)
     {
         _serviceName = serviceName;
         _language = language;
-        _request = request;
-        _packagePath = packagePath;
-        _codeCustomizationDocUrl = codeCustomizationDocUrl;
+        _referenceDocContent = referenceDocContent;
+        _items = items;
+        _globalContext = globalContext;
     }
 
-    /// <summary>
-    /// Builds the complete classification prompt.
-    /// </summary>
     public override string BuildPrompt()
     {
         var taskInstructions = BuildTaskInstructions();
-        var classificationConditions = BuildClassificationConditions();
+        var constraints = BuildClassificationConditions();
         var examples = BuildExamples();
         var outputRequirements = BuildOutputRequirements();
         
-        return BuildStructuredPrompt(taskInstructions, classificationConditions, examples, outputRequirements);
+        return BuildStructuredPrompt(taskInstructions, constraints, examples, outputRequirements);
     }
 
     protected override string BuildSystemRole()
     {
         return $"""
         ## SYSTEM ROLE
-        You are a classifier for the SDK customization workflow analyzing feedback items (build errors, API review comments, user requests).
-        Your task: {Description} and determine the appropriate action path.
+        You are a batch classifier for the SDK customization workflow. You analyze multiple feedback items 
+        (build errors, API review comments, user requests) and classify each one.
+        Your task: {Description} and determine the appropriate action path for each item.
         
         ## SAFETY GUIDELINES
         - Follow Azure SDK standards and Microsoft policies
@@ -74,145 +73,138 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
     private string BuildTaskInstructions()
     {
-        return $"""
+        var sb = new StringBuilder();
+        sb.AppendLine($"""
         **Current Context:**
         - Service: {_serviceName ?? "N/A"}
         - Language: {_language ?? "N/A"}
-        - Package Path: {_packagePath ?? "N/A"}
-        - Code Customization Guide: {_codeCustomizationDocUrl ?? "N/A"}
-
-        **Feedback to Classify:**
-        {_request}
 
         **Task:**
-        Analyze the feedback above and determine the appropriate classification: **PHASE_A**, **SUCCESS**, or **FAILURE**.
+        Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **PHASE_A**, **SUCCESS**, or **FAILURE**.
+        - If the feedback is non-actionable (discussion, informational, "keep as is", or about build/generation succeeding), classify as **SUCCESS**.
+        - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **PHASE_A** (CUSTOMIZABLE).
+        - If the feedback is actionable but NO TypeSpec decorators can address it (requires code-level changes), classify as **FAILURE**.
 
-        {BuildClassificationConditions()}
+        Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.
 
-        **Reference Documentation:**
-        - TypeSpec Client Customizations: https://github.com/Azure/azure-rest-api-specs/blob/main/eng/common/knowledge/customizing-client-tsp.md
-        {BuildCodeCustomizationDocSection()}
+        **Global Context:**
+        {_globalContext}
 
-        **Available Tools:**
-        - `read_file`: Read contents of specific files in the package directory
-        - `list_dir`: List files and directories in the package path
-        - `grep_search`: Search for patterns within files (use to find error locations, symbol definitions)
-        - `fetch_webpage`: Fetch and read documentation from URLs
-        """;
-    }
+        ---
 
-    private string BuildCodeCustomizationDocSection()
-    {
-        if (string.IsNullOrEmpty(_codeCustomizationDocUrl))
+        **Feedback Items to Classify ({_items.Count} items):**
+        """);
+
+        for (var i = 0; i < _items.Count; i++)
         {
-            return string.Empty;
+            var item = _items[i];
+            sb.AppendLine($"""
+
+            --- ITEM {i + 1} ---
+            ID: {item.Id}
+            {item.FormattedPrompt}
+            """);
         }
 
-        return $"\n        - Language-specific customization guide: {_codeCustomizationDocUrl} (use fetch_webpage to access)";
+        sb.AppendLine($"""
+
+        ---
+
+        **TypeSpec Client Customizations Reference:**
+        <reference_doc>
+        {_referenceDocContent}
+        </reference_doc>
+
+        **Available Tools:**
+        - `read_file`: Read contents of specific files in the spec repo
+        - `list_dir`: List files and directories
+        - `grep_search`: Search for patterns within files
+        """);
+
+        return sb.ToString();
     }
-
-
 
     private string BuildClassificationConditions()
     {
         return """
-        **Decision Logic:**
+        **Decision Logic (apply to EACH item independently):**
 
         **If Context is NON-EMPTY** (check first):
         - Contains error indicators ("Failed", "error", "COMPILATION ERROR", "cannot find", "did not address") → **FAILURE**
-          - Use grep_search to locate error sites and relevant code
-          - Use read_file to examine specific files in the package
-          - Use fetch_webpage to read documentation for guidance
-          - Provide concrete step-by-step guidance with actual file paths and line numbers
         - Contains success ("Successfully applied", "Build succeeded") → **SUCCESS**
         - Otherwise (unclear or no clear indicator) → **FAILURE**
-          - Assume something went wrong if context exists but no success indicator
 
         **If Context is EMPTY** (first attempt):
-        - Actionable (directive, error, request) → **PHASE_A**
-        - Non-actionable (informational, "keep as is", past tense, build success) → **SUCCESS**
+        - Non-actionable (informational, "keep as is", past tense, build success, discussion, question) → **SUCCESS**
+        - Actionable AND a TypeSpec decorator from the reference doc can address it → **PHASE_A**
+        - Actionable BUT no TypeSpec decorator can address it (requires code changes) → **FAILURE**
 
-        **What counts as "Non-actionable" (SUCCESS when context empty):**
+        **What counts as "Non-actionable" (SUCCESS):**
         - Explicit acceptance: "Keep as is", "No changes needed", "This is fine"
         - Past tense (already done): "Method was made private", "Client was renamed"
         - Informational: Explanations, questions, acknowledgments
-        - Build success with no errors
+        - Build/generation success with no errors
+        - Discussion or questions without a clear directive
 
+        **TypeSpec Decorator Applicability (PHASE_A):**
+        Consult the reference documentation provided to determine if any supported
+        TypeSpec client customization decorator can address the feedback.
+
+        **Code Changes Required (FAILURE):**
+        If the feedback requires changes that TypeSpec decorators cannot handle (e.g., custom
+        serialization logic, complex method implementations, test changes, documentation edits
+        outside TypeSpec), classify as FAILURE.
         """;
     }
 
     private string BuildExamples()
     {
         return """
-        **Example 1: Empty Context - Actionable**
-        Text: "Rename FooClient to BarClient for .NET"
-        Context: ""
-        
-        Classification: PHASE_A
-        Reason: Empty context, actionable request
-        Next Action: Apply @@clientName(FooClient, "BarClient", "csharp") to client.tsp
-
-        ---
-
-        **Example 2: Non-Empty Context - TypeSpec Failed**
-        Text: "Rename FooClient to BarClient for .NET"
-        Context: "TypeSpec Customizations Failed: client.tsp not found"
-        
-        Classification: FAILURE
-        Reason: Context shows TypeSpec failure
-        Next Action: [Use read_file/list_dir to inspect structure. Provide steps to create partial class.]
-
-        ---
-
-        **Example 3: Non-Empty Context - Build Error**
-        Text: "Build log"
-        Context: "COMPILATION ERROR: cannot find symbol urlSource"
-        
-        Classification: FAILURE
-        Reason: Context contains compilation error
-        Next Action: [Use tools to inspect files. Fetch docs. Provide fix with actual paths.]
-
-        ---
-
-        **Example 4: Non-Empty Context - Success**
-        Text: "Rename FooClient to BarClient"
-        Context: "Added @@clientName(...). Build succeeded."
-        
-        Classification: SUCCESS
-        Reason: Context shows successful customization and build
-        Next Action: Return context for review
-
-        ---
-
-        **Example 5: Empty Context - Non-Actionable**
-        Text: "Keep this as is since both spellings are valid."
-        Context: ""
-        
+        **Example batch output (for 3 items):**
+        ```
+        [abc-123]
         Classification: SUCCESS
         Reason: Explicitly states to keep as is
-        Next Action: Mark as resolved
 
+        [def-456]
+        Classification: PHASE_A
+        Reason: @@clientName decorator can rename the client in client.tsp
+
+        [ghi-789]
+        Classification: FAILURE
+        Reason: Custom retry logic requires code changes; no TypeSpec decorator applies
+        ```
         """;
     }
 
     private string BuildOutputRequirements()
     {
         return """
-        **Required Output Format:**
+        **CRITICAL: Required Output Format**
+        
+        You MUST output one block per feedback item, using the exact item ID in square brackets as a header.
+        Every item MUST appear in the output. Do NOT skip any items.
+
         ```
+        [<item-id>]
         Classification: [PHASE_A | SUCCESS | FAILURE]
-        Reason: <one-line explanation of why this classification was chosen>
-        Next Action: <what should happen next - be specific and actionable>
+        Reason: <one-line explanation>
+
+        [<next-item-id>]
+        Classification: [PHASE_A | SUCCESS | FAILURE]
+        Reason: <one-line explanation>
         ```
 
-        **Response Guidelines:**
+        **Rules:**
+        - The `[<item-id>]` header MUST match the exact ID from each feedback item
         - Classification must be exactly one of: PHASE_A, SUCCESS, or FAILURE
         - Reason must clearly state which condition triggered the classification
-        - Next Action must be concrete and actionable with step-by-step instructions
-        - For FAILURE: Use grep_search, read_file, and fetch_webpage to provide specific file paths, line numbers, and code changes needed
-        - Use proper formatting and structure
-        - Ensure response follows Azure SDK guidelines
+        - For PHASE_A: mention which TypeSpec decorator(s) can address the feedback
+        - For FAILURE: explain why no TypeSpec decorator applies
+        - For SUCCESS: explain why the feedback is non-actionable or already resolved
+        - Do NOT include Next Action or step-by-step guidance (that is handled separately)
+        - Output ALL items — every single item ID must appear in your response
+        - Do NOT add any text before or after the classification blocks
         """;
     }
-
 }

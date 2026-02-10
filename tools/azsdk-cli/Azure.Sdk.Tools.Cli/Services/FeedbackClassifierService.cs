@@ -1,53 +1,51 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
-using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
 /// Helper class for classifying feedback items using LLM-powered classification.
-/// Determines if feedback is actionable and provides next steps.
+/// Uses a single batch LLM call to classify all items at once, then generates
+/// manual update guidance for FAILURE items.
 /// </summary>
 public class FeedbackClassifierService
 {
-    private readonly IMicroagentHostService _microagentHost;
+    private readonly ICopilotAgentRunner _agentRunner;
     private readonly ILogger<FeedbackClassifierService> _logger;
-    private readonly string _model;
-    private readonly string? _tspProjectPath;
+    private readonly string _tspProjectPath;
+    private readonly string _specRepoBasePath;
     private readonly string? _packagePath;
+    private readonly ITypeSpecHelper _typeSpecHelper;
 
     public const int MaxIterations = 4;
 
     public FeedbackClassifierService(
-        IMicroagentHostService microagentHost,
-        IConfiguration configuration,
+        ICopilotAgentRunner agentRunner,
         ILoggerFactory loggerFactory,
-        string? tspProjectPath = null,
+        ITypeSpecHelper typeSpecHelper,
+        string tspProjectPath,
         string? packagePath = null)
     {
-        _microagentHost = microagentHost;
-        _model = configuration["AZURE_OPENAI_MODEL"] ?? "gpt-4o";
+        _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
+        _typeSpecHelper = typeSpecHelper;
         _tspProjectPath = tspProjectPath;
+        _specRepoBasePath = GetSpecRepoBasePath(tspProjectPath);
         _packagePath = packagePath;
     }
 
     /// <summary>
-    /// Classifies multiple feedback items based on global context, updating their Status properties.
+    /// Classifies multiple feedback items in a single batch LLM call, then generates
+    /// manual update guidance for FAILURE items individually.
     /// </summary>
-    /// <param name="customizableItems">List of feedback items to classify</param>
-    /// <param name="globalContext">Global context containing all changes and history</param>
-    /// <param name="language">Target SDK language (e.g., python, java, csharp)</param>
-    /// <param name="serviceName">Service name for context (optional)</param>
-    /// <param name="codeCustomizationDocUrl">URL to code customization documentation (optional)</param>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>True if all items have been classified (moved to SUCCESS or FAILURE), false otherwise</returns>
     public async Task<bool> ClassifyAsync(
         List<FeedbackItem> customizableItems, 
         string globalContext, 
@@ -58,140 +56,121 @@ public class FeedbackClassifierService
     {
         if (customizableItems.Count == 0)
         {
-            return true; // No items to classify
+            return true;
         }
 
-        // Classify each item individually
-        foreach (var item in customizableItems.ToList())
+        // Stage 1: Batch classify all items in a single LLM call
+        _logger.LogInformation("Stage 1: Batch classifying {Count} items in a single LLM call", customizableItems.Count);
+        await BatchClassifyAsync(customizableItems, globalContext, language, serviceName, ct);
+
+        // Stage 2: Generate manual update guidance for FAILURE items (no file tools for speed)
+        var failureItems = customizableItems.Where(i => i.Status == FeedbackStatus.FAILURE).ToList();
+        if (failureItems.Count > 0)
         {
-            await ClassifySingleItemAsync(item, globalContext, language, serviceName, codeCustomizationDocUrl, ct);
+            _logger.LogInformation("Stage 2: Generating manual update guidance for {Count} FAILURE items", failureItems.Count);
+            foreach (var item in failureItems)
+            {
+                await GenerateManualUpdateGuidanceAsync(item, language, codeCustomizationDocUrl, ct);
+            }
         }
 
-        // Check if all items are SUCCESS or FAILURE (none CUSTOMIZABLE)
         var allDone = customizableItems.All(i => i.Status != FeedbackStatus.CUSTOMIZABLE);
         return allDone;
     }
 
     /// <summary>
-    /// Classifies a single feedback item
+    /// Sends all feedback items to the LLM in a single batch call and parses the
+    /// ID-keyed response to assign classifications.
     /// </summary>
-    private async Task ClassifySingleItemAsync(
-        FeedbackItem item,
+    private async Task BatchClassifyAsync(
+        List<FeedbackItem> items,
         string globalContext,
         string? language,
         string? serviceName,
-        string? codeCustomizationDocUrl,
         CancellationToken ct)
     {
-        // Build the classification request for single item
-        var requestText = $@"**Item to Classify:**
-{item.FormattedPrompt}
+        var referenceDocContent = await LoadTspCustomizationGuideAsync(ct);
 
-{globalContext}";
-
-        // Create classification template
         var template = new FeedbackClassificationTemplate(
             serviceName: serviceName,
             language: language,
-            request: requestText,
-            packagePath: _packagePath,
-            codeCustomizationDocUrl: codeCustomizationDocUrl
+            referenceDocContent: referenceDocContent,
+            items: items,
+            globalContext: globalContext
         );
 
         var prompt = template.BuildPrompt();
 
-        try
+        // Tools scoped to spec repo for TypeSpec project inspection
+        var specTools = new List<AIFunction>
         {
-            // Use package path as base directory (assumes TypeSpec project is in same repo)
-            var baseDir = _packagePath ?? Directory.GetCurrentDirectory();
+            FileTools.CreateReadFileTool(_specRepoBasePath),
+            FileTools.CreateListFilesTool(_specRepoBasePath),
+            FileTools.CreateGrepSearchTool(_specRepoBasePath)
+        };
 
-            // Create tools for the microagent
-            var tools = new List<IAgentTool>
+        var result = await _agentRunner.RunAsync(new CopilotAgent<string>
+        {
+            Instructions = prompt,
+            MaxIterations = 50,
+            Tools = specTools
+        }, ct);
+
+        _logger.LogInformation("=== Batch Classification Result ===");
+        _logger.LogInformation("{Result}", result);
+        _logger.LogInformation("=== End Batch Result ===");
+
+        // Parse the batch result and apply classifications to each item
+        ParseBatchResult(items, result);
+    }
+
+    /// <summary>
+    /// Parses the batch LLM result with ID-keyed blocks and applies classifications to items.
+    /// Expected format:
+    /// [item-id]
+    /// Classification: PHASE_A | SUCCESS | FAILURE
+    /// Reason: explanation
+    /// </summary>
+    private void ParseBatchResult(List<FeedbackItem> items, string result)
+    {
+        var itemLookup = items.ToDictionary(i => i.Id, i => i);
+        var matchedIds = new HashSet<string>();
+
+        // Match blocks like: [some-guid-id]\nClassification: ...\nReason: ...
+        var blockPattern = new Regex(
+            @"\[(?<id>[^\]]+)\]\s*\n\s*Classification:\s*(?<classification>\S+)\s*\n\s*Reason:\s*(?<reason>.+)",
+            RegexOptions.Multiline | RegexOptions.IgnoreCase);
+
+        foreach (Match match in blockPattern.Matches(result))
+        {
+            var id = match.Groups["id"].Value.Trim();
+            var classification = match.Groups["classification"].Value.Trim();
+            var reason = match.Groups["reason"].Value.Trim();
+
+            if (!itemLookup.TryGetValue(id, out var item))
             {
-                new ReadFileTool(baseDir),
-                new ListFilesTool(baseDir),
-                new GrepSearchTool(baseDir),
-                new FetchWebpageTool()
-            };
+                _logger.LogWarning("Batch result contains unknown item ID: {Id}", id);
+                continue;
+            }
 
-            var result = await _microagentHost.RunAgentToCompletion(new Microagent<string>
-            {
-                Instructions = prompt,
-                Model = _model,
-                MaxToolCalls = 50,
-                Tools = tools
-            }, ct);
-
-            // Log the LLM result for inspection
-            _logger.LogInformation("=== LLM Classification Result (Item {ItemId}) ===", item.Id);
-            _logger.LogInformation("{Result}", result);
-            _logger.LogInformation("=== End LLM Result ===");
-
-            // Parse the result and update the single item
-            ParseAndApplyClassification(item, result);
+            matchedIds.Add(id);
+            ApplyClassification(item, classification, reason);
         }
-        catch (Exception ex)
+
+        // Handle any items that weren't in the response
+        foreach (var item in items.Where(i => !matchedIds.Contains(i.Id)))
         {
-            _logger.LogError(ex, "Failed to classify item {ItemId}", item.Id);
-            // Mark item as FAILURE on exception
+            _logger.LogWarning("Item {Id} was not found in batch classification result. Defaulting to FAILURE.", item.Id);
             item.Status = FeedbackStatus.FAILURE;
-            item.Context += $"\nClassification failed: {ex.Message}";
+            item.Context += "\nClassification failed: item missing from batch LLM response";
         }
     }
 
     /// <summary>
-    /// Parses the LLM classification result and updates a single feedback item.
-    /// Expected format:
-    /// Classification: [PHASE_A | SUCCESS | FAILURE]
-    /// Reason: <explanation>
-    /// Next Action: <guidance>
+    /// Applies a classification string and reason to a single feedback item.
     /// </summary>
-    private void ParseAndApplyClassification(FeedbackItem item, string result)
+    private void ApplyClassification(FeedbackItem item, string classification, string reason)
     {
-        // For now, assume single item classification (common case)
-        // TODO: Handle multiple items in result by splitting on "---" or detecting multiple Classification: headers
-        
-        var lines = result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        string? classification = null;
-        string? reason = null;
-        var nextActionLines = new List<string>();
-        bool inNextAction = false;
-
-        foreach (var line in lines)
-        {
-            var trimmed = line.Trim();
-            
-            if (trimmed.StartsWith("Classification:", StringComparison.OrdinalIgnoreCase))
-            {
-                classification = trimmed.Substring("Classification:".Length).Trim();
-            }
-            else if (trimmed.StartsWith("Reason:", StringComparison.OrdinalIgnoreCase))
-            {
-                reason = trimmed.Substring("Reason:".Length).Trim();
-            }
-            else if (trimmed.StartsWith("Next Action:", StringComparison.OrdinalIgnoreCase))
-            {
-                inNextAction = true;
-                var actionText = trimmed.Substring("Next Action:".Length).Trim();
-                if (!string.IsNullOrEmpty(actionText))
-                {
-                    nextActionLines.Add(actionText);
-                }
-            }
-            else if (inNextAction && !string.IsNullOrWhiteSpace(trimmed))
-            {
-                // Continue collecting Next Action lines
-                nextActionLines.Add(trimmed);
-            }
-        }
-
-        if (string.IsNullOrEmpty(classification))
-        {
-            _logger.LogWarning("Failed to parse classification from LLM result. Defaulting to CUSTOMIZABLE.");
-            return;
-        }
-
-        // Map classification to status
         FeedbackStatus status;
         if (classification.Contains("SUCCESS", StringComparison.OrdinalIgnoreCase))
         {
@@ -208,26 +187,95 @@ public class FeedbackClassifierService
         }
         else
         {
-            _logger.LogWarning("Unknown classification: {Classification}. Defaulting to CUSTOMIZABLE.", classification);
+            _logger.LogWarning("Unknown classification '{Classification}' for item {Id}. Defaulting to CUSTOMIZABLE.", classification, item.Id);
             status = FeedbackStatus.CUSTOMIZABLE;
         }
 
-        // Apply classification to the single item
         item.Status = status;
-        
-        // Store reason in property
         if (!string.IsNullOrEmpty(reason))
         {
             item.Reason = reason;
             item.Context += $"\n\nClassification: {classification}\nReason: {reason}";
         }
         
-        // Set next action
-        if (nextActionLines.Count > 0)
+        _logger.LogInformation("Item {Id} classified as {Status}: {Reason}", item.Id, status, reason);
+    }
+
+    /// <summary>
+    /// Stage 2: Generates manual update guidance for FAILURE items.
+    /// Runs without file tools (no package path) for speed.
+    /// </summary>
+    private async Task GenerateManualUpdateGuidanceAsync(
+        FeedbackItem item,
+        string? language,
+        string? codeCustomizationDocUrl,
+        CancellationToken ct)
+    {
+        try
         {
-            item.NextAction = string.Join("\n", nextActionLines);
+            var guidanceTemplate = new ManualUpdateGuidanceTemplate(
+                feedbackText: item.Text,
+                reason: item.Reason,
+                language: language,
+                codeCustomizationDocUrl: codeCustomizationDocUrl,
+                packagePath: null // No package path — skip file tools for speed
+            );
+
+            var guidancePrompt = guidanceTemplate.BuildPrompt();
+
+            var guidanceResult = await _agentRunner.RunAsync(new CopilotAgent<string>
+            {
+                Instructions = guidancePrompt,
+                MaxIterations = 5, // No tools, so this should resolve in 1-2 iterations
+                Tools = [] // No file tools for speed
+            }, ct);
+
+            _logger.LogInformation("=== Manual Update Guidance (Item {ItemId}) ===", item.Id);
+            _logger.LogInformation("{Result}", guidanceResult);
+            _logger.LogInformation("=== End Guidance ===");
+
+            if (!string.IsNullOrWhiteSpace(guidanceResult))
+            {
+                item.NextAction = guidanceResult.Trim();
+            }
         }
-        
-        _logger.LogInformation("Item {Id} classified as {Status}", item.Id, status);
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to generate manual update guidance for item {ItemId}", item.Id);
+            item.NextAction = !string.IsNullOrEmpty(codeCustomizationDocUrl)
+                ? $"Manual code customization required. See: {codeCustomizationDocUrl}"
+                : "Manual code customization required. TypeSpec decorators cannot address this feedback.";
+        }
+    }
+
+    /// <summary>
+    /// Resolves the spec repo base path by walking up from tspProjectPath.
+    /// </summary>
+    private string GetSpecRepoBasePath(string tspProjectPath)
+    {
+        var repoRoot = _typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
+        if (string.IsNullOrEmpty(repoRoot))
+        {
+            throw new ArgumentException(
+                $"Could not determine spec repo root from TypeSpec project path: {tspProjectPath}",
+                nameof(tspProjectPath));
+        }
+        return repoRoot;
+    }
+
+    /// <summary>
+    /// Loads the TypeSpec client customization guide from eng/common/knowledge/customizing-client-tsp.md.
+    /// </summary>
+    private async Task<string> LoadTspCustomizationGuideAsync(CancellationToken ct)
+    {
+        var guidePath = Path.Combine(_specRepoBasePath, "eng", "common", "knowledge", "customizing-client-tsp.md");
+        if (!File.Exists(guidePath))
+        {
+            throw new FileNotFoundException(
+                $"TypeSpec client customization guide not found at: {guidePath}. " +
+                "Ensure the azure-rest-api-specs repository is up to date.",
+                guidePath);
+        }
+        return await File.ReadAllTextAsync(guidePath, ct);
     }
 }

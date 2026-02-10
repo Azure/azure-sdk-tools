@@ -4,12 +4,12 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
-using OpenAI;
-using OpenAI.Chat;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
+using GitHub.Copilot.SDK;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -29,18 +29,18 @@ public interface IAPIViewFeedbackService
 public class APIViewFeedbackService : IAPIViewFeedbackService
 {
     private readonly IAPIViewService _apiViewService;
-    private readonly OpenAIClient _openAIClient;
+    private readonly ICopilotClientWrapper _copilotClient;
     private readonly IGitHubService _gitHubService;
     private readonly ILogger<APIViewFeedbackService> _logger;
 
     public APIViewFeedbackService(
         IAPIViewService apiViewService,
-        OpenAIClient openAIClient,
+        ICopilotClientWrapper copilotClient,
         IGitHubService gitHubService,
         ILogger<APIViewFeedbackService> logger)
     {
         _apiViewService = apiViewService;
-        _openAIClient = openAIClient;
+        _copilotClient = copilotClient;
         _gitHubService = gitHubService;
         _logger = logger;
     }
@@ -146,10 +146,7 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
         var discussion = string.Join("\n\n", groupedComments.Select((c, idx) =>
             $"Comment {idx + 1} (by {c.CreatedBy} at {c.CreatedOn}):\n{c.CommentText}"));
 
-        var prompt = $@"Read the following API review discussion thread and extract the final decision or action in a clear, direct statement.
-
-Discussion:
-{discussion}
+        var systemPrompt = @"You are an expert at summarizing API review discussions. Read the discussion thread provided and extract the final decision or action in a clear, direct statement.
 
 Requirements:
 - Use imperative/active voice (e.g., ""Remove X"", ""Keep Y as is"", ""Change Z to..."")
@@ -167,35 +164,23 @@ Examples:
 - Bad: ""After discussion, it was determined that the current behavior aligns with the REST API which returns an object, so no action is required.""
 
 Respond in JSON format:
-{{
+{
   ""comment"": ""direct actionable statement""
-}}";
+}";
 
-        var modelName = Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT")
-            ?? Environment.GetEnvironmentVariable("OPENAI_MODEL")
-            ?? "gpt-4o";
+        var userPrompt = $"Discussion:\n{discussion}";
 
         try
         {
-            var chatClient = _openAIClient.GetChatClient(modelName);
-            var messages = new[] { new UserChatMessage(prompt) };
-            var response = await chatClient.CompleteChatAsync(messages);
+            var result = await SendCopilotPromptAsync(systemPrompt, userPrompt);
 
-            // Validate response structure
-            if (response?.Value?.Content == null || response.Value.Content.Count == 0)
-            {
-                _logger.LogWarning("OpenAI returned empty or null response for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
-                return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
-            }
-
-            var result = response.Value.Content[0].Text;
             if (string.IsNullOrWhiteSpace(result))
             {
-                _logger.LogWarning("OpenAI returned empty text for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
+                _logger.LogWarning("Copilot returned empty text for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
                 return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
             }
 
-            // Strip markdown code blocks if present (OpenAI sometimes wraps JSON in ```json ... ```)
+            // Strip markdown code blocks if present
             var jsonText = result.Trim();
             var match = Regex.Match(jsonText, @"```(?:json)?\s*(.*?)\s*```", RegexOptions.Singleline);
             if (match.Success)
@@ -203,7 +188,7 @@ Respond in JSON format:
                 jsonText = match.Groups[1].Value.Trim();
             }
 
-            // Parse OpenAI response
+            // Parse response
             Dictionary<string, object>? jsonResponse;
             try
             {
@@ -211,7 +196,7 @@ Respond in JSON format:
             }
             catch (JsonException ex)
             {
-                _logger.LogWarning(ex, "Failed to parse OpenAI JSON response for ThreadId {ThreadId}, LineNo {LineNo}. Raw response: {Response}. Using fallback.", threadId, lineNo, result);
+                _logger.LogWarning(ex, "Failed to parse Copilot JSON response for ThreadId {ThreadId}, LineNo {LineNo}. Raw response: {Response}. Using fallback.", threadId, lineNo, result);
                 return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
             }
 
@@ -222,7 +207,7 @@ Respond in JSON format:
 
             if (string.IsNullOrWhiteSpace(comment))
             {
-                _logger.LogWarning("OpenAI response missing or empty 'comment' field for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
+                _logger.LogWarning("Copilot response missing or empty 'comment' field for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
                 return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
             }
 
@@ -237,9 +222,62 @@ Respond in JSON format:
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "OpenAI consolidation failed for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
+            _logger.LogWarning(ex, "Copilot consolidation failed for ThreadId {ThreadId}, LineNo {LineNo}. Using fallback.", threadId, lineNo);
             return CreateFallbackComment(groupedComments, threadId, lineNo, lineId, lineText);
         }
+    }
+
+    /// <summary>
+    /// Sends a prompt to the Copilot SDK and returns the assistant's text response
+    /// </summary>
+    private async Task<string> SendCopilotPromptAsync(string systemPrompt, string userPrompt)
+    {
+        var sessionConfig = new SessionConfig
+        {
+            SystemMessage = new SystemMessageConfig
+            {
+                Mode = SystemMessageMode.Append,
+                Content = systemPrompt
+            },
+            AvailableTools = []
+        };
+
+        await using var session = await _copilotClient.CreateSessionAsync(sessionConfig);
+
+        string? assistantResponse = null;
+        TaskCompletionSource sessionIdleTcs = new();
+        SessionErrorEvent? sessionError = null;
+
+        using var eventSubscription = session.On(evt =>
+        {
+            switch (evt)
+            {
+                case AssistantMessageEvent msg:
+                    assistantResponse = msg.Data.Content;
+                    break;
+                case SessionErrorEvent error:
+                    _logger.LogError("Copilot session error: {ErrorType} - {Message}", error.Data.ErrorType, error.Data.Message);
+                    sessionError = error;
+                    sessionIdleTcs.TrySetResult();
+                    break;
+                case SessionIdleEvent:
+                    sessionIdleTcs.TrySetResult();
+                    break;
+            }
+        });
+
+        await session.SendAsync(new MessageOptions { Prompt = userPrompt });
+
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+        await sessionIdleTcs.Task.WaitAsync(timeoutCts.Token);
+
+        if (sessionError != null)
+        {
+            throw new InvalidOperationException(
+                $"Copilot session error: [{sessionError.Data.ErrorType}] {sessionError.Data.Message}");
+        }
+
+        return assistantResponse ?? throw new InvalidOperationException("Copilot returned no response");
     }
 
     /// <summary>

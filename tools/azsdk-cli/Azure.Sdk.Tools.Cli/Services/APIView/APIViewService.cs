@@ -21,10 +21,10 @@ public class APIViewService : IAPIViewService
         _logger = logger;
     }
 
-    public async Task<string?> GetCommentsByRevisionAsync(string revisionId, string? environment = null)
+    public async Task<string?> GetCommentsByRevisionAsync(string revisionId)
     {
         string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint, environment);
+        string? result = await _httpService.GetAsync(endpoint);
 
         if (result == null)
         {
@@ -34,10 +34,10 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, string? environment = null)
+    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType)
     {
         string revisionContentEndpoint = $"/api/apirevisions/getRevisionContent?apiRevisionId={apiRevisionId}&reviewId={reviewId}&contentReturnType={contentReturnType}";
-        string? result = await _httpService.GetAsync(revisionContentEndpoint, environment);
+        string? result = await _httpService.GetAsync(revisionContentEndpoint);
         if (string.IsNullOrWhiteSpace(result))
         {
             _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", apiRevisionId);

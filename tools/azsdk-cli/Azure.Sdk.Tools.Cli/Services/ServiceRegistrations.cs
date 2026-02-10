@@ -93,7 +93,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
-            services.AddScoped<FeedbackClassifierService>();
 
             // Copilot SDK services for new agents (CopilotAgent<T> pattern)
             // CopilotClient is a singleton because it manages the CLI process connection.

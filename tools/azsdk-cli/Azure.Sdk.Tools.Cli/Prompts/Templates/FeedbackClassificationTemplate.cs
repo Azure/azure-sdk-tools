@@ -82,7 +82,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         **Task:**
         Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **PHASE_A**, **SUCCESS**, or **FAILURE**.
         - If the feedback is non-actionable (discussion, informational, "keep as is", or about build/generation succeeding), classify as **SUCCESS**.
-        - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **PHASE_A** (CUSTOMIZABLE).
+        - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **PHASE_A** (TSP_APPLICABLE).
         - If the feedback is actionable but NO TypeSpec decorators can address it (requires code-level changes), classify as **FAILURE**.
 
         Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.

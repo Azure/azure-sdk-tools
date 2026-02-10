@@ -61,9 +61,9 @@ public class FeedbackContext
 public enum FeedbackStatus
 {
     /// <summary>
-    /// Item is still being worked on and can be customized
+    /// Item is still being worked on and can be customized via TypeSpec
     /// </summary>
-    CUSTOMIZABLE,
+    TSP_APPLICABLE,
     
     /// <summary>
     /// Item has been successfully resolved
@@ -99,7 +99,7 @@ public class FeedbackItem
     /// <summary>
     /// Current status of this feedback item
     /// </summary>
-    public FeedbackStatus Status { get; set; } = FeedbackStatus.CUSTOMIZABLE;
+    public FeedbackStatus Status { get; set; } = FeedbackStatus.TSP_APPLICABLE;
     
     /// <summary>
     /// Running context of changes applied for this item (newline-separated entries)

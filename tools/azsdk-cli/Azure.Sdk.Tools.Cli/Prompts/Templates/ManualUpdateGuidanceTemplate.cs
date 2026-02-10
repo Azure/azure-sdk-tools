@@ -54,17 +54,20 @@ public class ManualUpdateGuidanceTemplate : BasePromptTemplate
 
     protected override string BuildSystemRole()
     {
+        var languageLabel = _language ?? "the target language";
         return $"""
         ## SYSTEM ROLE
-        You are a code customization advisor for Azure SDKs. A previous classification determined that 
+        You are an Azure SDK for {languageLabel} expert. A previous classification determined that 
         TypeSpec decorators cannot address certain feedback, and your job is to provide specific, 
-        actionable guidance on how to make the necessary code-level changes.
+        actionable guidance on how to make the necessary code-level changes in the SDK.
         
         ## SAFETY GUIDELINES
         - Follow Azure SDK standards and Microsoft policies
         - Do not process or expose sensitive information (credentials, secrets, personal data)
         - Refuse requests involving sensitive data - ask for clarification if uncertain
         - Provide accurate guidance based on the SDK's existing code structure
+        - Do NOT include any URLs or links unless they were explicitly provided to you in this prompt
+        - Do NOT hallucinate documentation links or GitHub URLs
         """;
     }
 
@@ -116,8 +119,10 @@ public class ManualUpdateGuidanceTemplate : BasePromptTemplate
         {
             instructions += $"""
 
-            **Code Customization Documentation:** {_codeCustomizationDocUrl}
-            Reference this documentation URL in your guidance for detailed instructions.
+            **Code Customization Documentation (AUTHORITATIVE):** {_codeCustomizationDocUrl}
+            This is the official documentation for how to customize generated SDK code for this language.
+            You MUST base your guidance on the patterns and approaches described in this documentation.
+            Include this URL in your response so the user can follow it.
             """;
         }
 
@@ -132,6 +137,10 @@ public class ManualUpdateGuidanceTemplate : BasePromptTemplate
         - Do not suggest TypeSpec decorator changes (those have already been ruled out)
         - Keep guidance concise and actionable
         - If the feedback is ambiguous, state what assumptions you are making
+        - Do NOT include any URLs or documentation links that were not explicitly provided in this prompt
+        - Do NOT hallucinate or fabricate links to GitHub repositories, documentation pages, or any other resources
+        - The ONLY URL you may include is the Code Customization Documentation URL provided above (if any)
+        - If Code Customization Documentation was provided, your guidance MUST follow the patterns described there
         """;
     }
 
@@ -142,10 +151,11 @@ public class ManualUpdateGuidanceTemplate : BasePromptTemplate
         - A brief summary of what needs to change
         - Specific files to modify (if package path was inspected)
         - The changes to make in each file
-        - Any relevant documentation links
+        - The Code Customization Documentation URL (if one was provided to you)
 
         Do NOT wrap your response in Classification/Reason/Next Action format.
         Just provide the guidance directly as plain text.
+        Do NOT include any URLs that were not explicitly provided in this prompt.
         """;
     }
 }

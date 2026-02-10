@@ -74,7 +74,7 @@ public class FeedbackClassifierService
             }
         }
 
-        var allDone = customizableItems.All(i => i.Status != FeedbackStatus.CUSTOMIZABLE);
+        var allDone = customizableItems.All(i => i.Status != FeedbackStatus.TSP_APPLICABLE);
         return allDone;
     }
 
@@ -181,14 +181,14 @@ public class FeedbackClassifierService
             status = FeedbackStatus.FAILURE;
         }
         else if (classification.Contains("PHASE_A", StringComparison.OrdinalIgnoreCase) || 
-                 classification.Contains("CUSTOMIZABLE", StringComparison.OrdinalIgnoreCase))
+                 classification.Contains("TSP_APPLICABLE", StringComparison.OrdinalIgnoreCase))
         {
-            status = FeedbackStatus.CUSTOMIZABLE;
+            status = FeedbackStatus.TSP_APPLICABLE;
         }
         else
         {
-            _logger.LogWarning("Unknown classification '{Classification}' for item {Id}. Defaulting to CUSTOMIZABLE.", classification, item.Id);
-            status = FeedbackStatus.CUSTOMIZABLE;
+            _logger.LogWarning("Unknown classification '{Classification}' for item {Id}. Defaulting to TSP_APPLICABLE.", classification, item.Id);
+            status = FeedbackStatus.TSP_APPLICABLE;
         }
 
         item.Status = status;

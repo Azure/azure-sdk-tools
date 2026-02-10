@@ -238,9 +238,11 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
                 var language = feedbackContext.Language ?? ExtractLanguageFromPackagePath(packagePath);
 
+                var codeCustomizationDocUrl = GetCodeCustomizationDocUrl(language ?? "unknown");
+
                 // Step 2: First classification (empty context - determines what needs TypeSpec work)
                 logger.LogInformation("=== First Classification ===");
-                await classifier.ClassifyAsync(customizable, globalContext.ToString(), language, null, null, ct);
+                await classifier.ClassifyAsync(customizable, globalContext.ToString(), language, null, codeCustomizationDocUrl, ct);
                 MoveItemsByStatus(customizable, success, failure);
 
                 // TODO: TESTING - Output results and return early
@@ -424,8 +426,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             classifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
             {
                 ItemId = item.Id,
-                Classification = "CUSTOMIZABLE",
-                Reason = !string.IsNullOrEmpty(item.Reason) ? item.Reason : "Item still in progress",
+                Classification = "TSP_APPLICABLE",
+                Reason = !string.IsNullOrEmpty(item.Reason) ? item.Reason : "Item applicable for TypeSpec customization",
                 NextAction = item.NextAction,
                 Text = item.Text
             });
@@ -433,7 +435,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
         return new CustomizedCodeUpdateResponse
         {
-            Message = $"Processing complete: {success.Count} succeeded, {failure.Count} failed, {customizable.Count} customizable",
+            Message = $"Processing complete: {success.Count} succeeded, {failure.Count} failed, {customizable.Count} tsp-applicable",
             Classifications = classifications
         };
     }
@@ -627,7 +629,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         if (customizable.Count > 0)
         {
             logger.LogInformation("========================================");
-            logger.LogInformation("⧗ CUSTOMIZABLE ({Count} items)", customizable.Count);
+            logger.LogInformation("⧗ TSP_APPLICABLE ({Count} items)", customizable.Count);
             logger.LogInformation("========================================");
             foreach (var item in customizable)
             {
@@ -640,7 +642,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
 
         logger.LogInformation("========================================");
-        logger.LogInformation("SUMMARY: {Success} succeeded, {Failure} failed, {Customizable} in progress",
+        logger.LogInformation("SUMMARY: {Success} succeeded, {Failure} failed, {Customizable} tsp-applicable",
             success.Count, failure.Count, customizable.Count);
         logger.LogInformation("========================================");
     }

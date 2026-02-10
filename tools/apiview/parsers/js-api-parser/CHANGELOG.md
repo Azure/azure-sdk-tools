@@ -1,3 +1,8 @@
+# 2.0.10
+
+- Fix the path in bin/ts-genapi.cjs
+- add `typescript` to runtime dependency
+
 # 2.0.9
 
 - Fix version in the code to point to the current parser version

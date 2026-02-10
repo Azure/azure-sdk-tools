@@ -889,10 +889,21 @@ namespace APIViewWeb.Managers
             var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId);
             var revisionsToPreserve = new HashSet<string>();
 
+            // Collect all review IDs that need to be checked
+            var reviewIds = revisionsByReview.Select(g => g.Key).ToHashSet();
+            
+            // Fetch all revisions for affected reviews to avoid N+1 queries
+            // Note: This trades memory for fewer round trips. For large numbers of reviews,
+            // consider batching or parallel fetching if this becomes a bottleneck.
+            var allRevisionsDict = new Dictionary<string, IEnumerable<APIRevisionListItemModel>>();
+            foreach (var reviewId in reviewIds)
+            {
+                allRevisionsDict[reviewId] = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            }
+
             foreach (var reviewGroup in revisionsByReview)
             {
-                // Get all revisions for this review (not just old ones) to determine the latest releases
-                var allRevisionsForReview = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewGroup.Key);
+                var allRevisionsForReview = allRevisionsDict[reviewGroup.Key];
                 
                 // Find the last approved stable release
                 var lastApprovedStable = allRevisionsForReview
@@ -956,6 +967,8 @@ namespace APIViewWeb.Managers
                 return false;
             }
 
+            // Assume all files in a revision have the same package version
+            // (revisions are typically for a single package version)
             var packageVersion = revision.Files.First().PackageVersion;
             if (string.IsNullOrEmpty(packageVersion))
             {

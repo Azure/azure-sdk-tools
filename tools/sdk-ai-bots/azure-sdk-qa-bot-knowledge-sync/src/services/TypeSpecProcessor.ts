@@ -56,15 +56,12 @@ export class TypeSpecProcessor {
     private parseTypeSpecDefinitions(content: string): TypeSpecDefinition[] {
         const definitions: TypeSpecDefinition[] = [];
         const lines = content.split('\n');
-        let currentDefinition = undefined;
         let currentDefinitionStart = -1;
         let currentDefinitionEnd = -1;
         let currentDefinitionBodyStart = -1;
-        let nextDefinitionStart = -1;
         let definitionLines: string[] = [];
         let currentType: TypeSpecDefinition['type'] | null = null;
         let currentName = '';
-        let currentDecorators: string[] = [];
         let currentComments: string[] = [];
 
         for (let i = 0; i < lines.length; i++) {
@@ -72,7 +69,6 @@ export class TypeSpecProcessor {
             const trimmedLine = line.trim();
             const definitionMatch = this.matchDefinitionStart(trimmedLine);
             if (definitionMatch) {
-                // currentDefinitionBodyStart = i;
                 if (currentDefinitionStart == -1) {
                     currentDefinitionStart = 0;
                     currentDefinitionBodyStart = i;
@@ -80,7 +76,6 @@ export class TypeSpecProcessor {
                     currentName = definitionMatch.name;
                 }
                 else {
-                    const len = definitionLines.length;
                     let l = i;
                     for (; l > currentDefinitionStart; l--) {
                         let trim = lines[l].trim();
@@ -92,41 +87,44 @@ export class TypeSpecProcessor {
 
                     let blockCommentLines: string[] = [];
                     let currentDecorators: string[] = [];
+                    let inBlockComment = false;
                     for (let n = currentDefinitionStart; n < currentDefinitionBodyStart; n++) {
-                        const line = lines[n];
-                        const trimmed = line.trim();
+                        const definitionLine = lines[n];
+                        const trimmed = definitionLine.trim();
                         // Handle block comments /** ... */
-                        if (trimmedLine.startsWith('/**')) {
-                            blockCommentLines = [line];
+                        if (trimmed.startsWith('/**') && !inBlockComment) {
                             // Check if block comment ends on same line
-                            if (trimmedLine.endsWith('*/') && trimmedLine !== '/**') {
-                                blockCommentLines = [];
+                            if (!trimmed.endsWith('*/')) {
+                                blockCommentLines.push(trimmed);
+                                inBlockComment = true;
                             }
                             continue;
                         }
-                        if (trimmedLine.endsWith('*/')) {
-                            blockCommentLines.push(line);
+                        if (inBlockComment) {
+                            blockCommentLines.push(trimmed);
+                            if (trimmed.endsWith('*/')) {
+                                inBlockComment = false;
+                            }
                         }
 
                         // Handle single-line comments //
-                        if (trimmedLine.startsWith('//')) {
-                            blockCommentLines.push(line);
+                        if (trimmed.startsWith('//')) {
+                            blockCommentLines.push(trimmed);
                             continue;
                         }
-                        if (trimmedLine.startsWith('@')) {
-                            currentDecorators.push(line);
+                        if (trimmed.startsWith('@')) {
+                            currentDecorators.push(trimmed);
                             continue;
                         }
                     }
-                    const description = this.extractDescription(currentDecorators, currentComments);
-                    // const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
+                    const description = this.extractDescription(currentDecorators, blockCommentLines);
                     definitions.push({
                         type: currentType,
                         name: currentName,
                         code: lines.slice(currentDefinitionStart, currentDefinitionEnd + 1).join('\n'),
                         decorators: currentDecorators,
                         description,
-                        comments: currentComments
+                        comments: blockCommentLines
                     });
                     currentDefinitionStart = l + 1;
                     currentDefinitionBodyStart = i;
@@ -139,202 +137,6 @@ export class TypeSpecProcessor {
         return definitions;
     }
 
-    private parseTypeSpecDefinitions2(content: string): TypeSpecDefinition[] {
-        const definitions: TypeSpecDefinition[] = [];
-        const lines = content.split('\n');
-        
-        let currentDecorators: string[] = [];
-        let currentComments: string[] = [];
-        let braceCount = 0;
-        let inDefinition = false;
-        let inBlockComment = false;
-        let blockCommentLines: string[] = [];
-        let definitionLines: string[] = [];
-        let currentType: TypeSpecDefinition['type'] | null = null;
-        let currentName = '';
-
-
-        let multiLineSemicolon = false;
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const trimmedLine = line.trim();
-
-            // Handle block comments /** ... */
-            if (!inDefinition) {
-                if (trimmedLine.startsWith('/**') && !inBlockComment) {
-                    inBlockComment = true;
-                    blockCommentLines = [trimmedLine];
-                    // Check if block comment ends on same line
-                    if (trimmedLine.endsWith('*/') && trimmedLine !== '/**') {
-                        inBlockComment = false;
-                        currentComments = blockCommentLines;
-                        blockCommentLines = [];
-                    }
-                    continue;
-                }
-                
-                if (inBlockComment) {
-                    blockCommentLines.push(trimmedLine);
-                    if (trimmedLine.endsWith('*/')) {
-                        inBlockComment = false;
-                        currentComments = blockCommentLines;
-                        blockCommentLines = [];
-                    }
-                    continue;
-                }
-
-                // Handle single-line comments //
-                if (trimmedLine.startsWith('//')) {
-                    currentComments.push(trimmedLine);
-                    continue;
-                }
-            }
-
-            // Collect decorators
-            if (trimmedLine.startsWith('@') && !inDefinition) {
-                currentDecorators.push(trimmedLine);
-                continue;
-            }
-
-            // Detect definition start
-            if (!inDefinition) {
-                const definitionMatch = this.matchDefinitionStart(trimmedLine);
-                if (definitionMatch) {
-                    currentType = definitionMatch.type;
-                    currentName = definitionMatch.name;
-                    inDefinition = true;
-                    definitionLines = [...currentDecorators, line];
-                    braceCount = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
-
-                    // If not using braces and does not end with semicolon, it may be a multi-line single statement
-                    if (!trimmedLine.endsWith(';') && braceCount === 0) {
-                        multiLineSemicolon = true;
-                    } else {
-                        multiLineSemicolon = false;
-                    }
-
-                    // Handle single-line definitions (like aliases or simple scalars)
-                    if ((trimmedLine.endsWith(';') || trimmedLine.endsWith('}')) && braceCount === 0) {
-                        const description = this.extractDescription(currentDecorators, currentComments);
-                        const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
-                        definitions.push({
-                            type: currentType,
-                            name: currentName,
-                            code: codeWithComments,
-                            decorators: currentDecorators,
-                            description,
-                            comments: currentComments
-                        });
-                        this.resetState();
-                        currentDecorators = [];
-                        currentComments = [];
-                        inDefinition = false;
-                        definitionLines = [];
-                        currentType = null;
-                        currentName = '';
-                        multiLineSemicolon = false;
-                    }
-                    continue;
-                } else {
-                    // Non-decorator, non-definition line - reset decorators and comments
-                    if (trimmedLine !== '' && !trimmedLine.startsWith('//') && !trimmedLine.startsWith('import') && !trimmedLine.startsWith('using')) {
-                        currentDecorators = [];
-                        currentComments = [];
-                    }
-                }
-            }
-
-            // Inside a definition - track braces
-            if (inDefinition) {
-                definitionLines.push(line);
-                braceCount += (line.match(/{/g) || []).length;
-                braceCount -= (line.match(/}/g) || []).length;
-
-                if ((trimmedLine.endsWith(';') || trimmedLine.endsWith('}')) && braceCount === 0) {
-                    const description = this.extractDescription(currentDecorators, currentComments);
-                    const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
-                    definitions.push({
-                        type: currentType!,
-                        name: currentName,
-                        code: codeWithComments,
-                        decorators: currentDecorators,
-                        description,
-                        comments: currentComments
-                    });
-                    currentDecorators = [];
-                    currentComments = [];
-                    inDefinition = false;
-                    definitionLines = [];
-                    currentType = null;
-                    currentName = '';
-                    multiLineSemicolon = false;
-                }
-                // If in multi-line semicolon mode, check for ending semicolon
-                // if (multiLineSemicolon && trimmedLine.endsWith(';') && braceCount === 0) {
-                //     const description = this.extractDescription(currentDecorators, currentComments);
-                //     const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
-                //     definitions.push({
-                //         type: currentType!,
-                //         name: currentName,
-                //         code: codeWithComments,
-                //         decorators: currentDecorators,
-                //         description,
-                //         comments: currentComments
-                //     });
-                //     currentDecorators = [];
-                //     currentComments = [];
-                //     inDefinition = false;
-                //     definitionLines = [];
-                //     currentType = null;
-                //     currentName = '';
-                //     multiLineSemicolon = false;
-                //     continue;
-                // }
-
-                // // Definition complete (brace-based)
-                // if (!multiLineSemicolon && braceCount === 0) {
-                //     const description = this.extractDescription(currentDecorators, currentComments);
-                //     const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
-                //     definitions.push({
-                //         type: currentType!,
-                //         name: currentName,
-                //         code: codeWithComments,
-                //         decorators: currentDecorators,
-                //         description,
-                //         comments: currentComments
-                //     });
-                //     currentDecorators = [];
-                //     currentComments = [];
-                //     inDefinition = false;
-                //     definitionLines = [];
-                //     currentType = null;
-                //     currentName = '';
-                //     multiLineSemicolon = false;
-                // }
-            }
-        }
-
-        return definitions;
-    }
-
-    /**
-     * Build the complete code block including comments and decorators.
-     */
-    private buildCodeWithComments(comments: string[], definitionLines: string[]): string {
-        const codeLines: string[] = [];
-        
-        // Add comments first (JSDoc or single-line)
-        if (comments.length > 0) {
-            for (const comment of comments) {
-                codeLines.push(comment);
-            }
-        }
-        
-        // Add the definition lines (which already include decorators)
-        codeLines.push(...definitionLines);
-        
-        return codeLines.join('\n');
-    }
 
     /**
      * Extract description from @doc decorator or JSDoc-style comments.

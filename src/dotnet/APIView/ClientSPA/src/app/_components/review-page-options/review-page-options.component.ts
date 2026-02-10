@@ -640,12 +640,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       return;
     }
 
-    // First, get the revision count
+    // Get the revision count and show confirmation dialog
     this.reviewsService.getReviewRevisionCount(this.review.id).pipe(take(1)).subscribe({
       next: (revisionCount: number) => {
-        const message = revisionCount > 0
-          ? `Are you sure you want to delete this review? It has ${revisionCount} revision(s) that will also be deleted. This action cannot be undone.`
-          : 'Are you sure you want to delete this review? This action cannot be undone.';
+        const message = `Are you sure you want to delete this review? It has ${revisionCount} revision(s) that will also be deleted. This action cannot be undone.`;
 
         this.confirmationService.confirm({
           message: message,

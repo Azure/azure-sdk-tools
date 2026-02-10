@@ -385,7 +385,7 @@ namespace APIViewWeb.LeanControllers
         [HttpGet("{reviewId}/revisionCount")]
         public async Task<ActionResult<int>> GetReviewRevisionCount(string reviewId)
         {
-            IEnumerable<APIRevisionListItemModel> apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            IEnumerable<APIRevisionListItemModel> apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId, "", APIRevisionType.All);
             int count = apiRevisions.Count();
             return Ok(count);
         }

@@ -456,20 +456,13 @@ def get_ai_comment_feedback(
     environment: str = "production",
 ) -> list[dict]:
     """
-    Retrieves AI-generated comments that received feedback within the specified date range.
-
-    The date range filters by when feedback was submitted:
-    - For detailed feedback: checks Feedback[].SubmittedOn
-    - For deletions: checks ChangeHistory[].ChangedOn where ChangeAction='Deleted'
-
-    Note: Upvotes/Downvotes lists don't have timestamps, so comments with only
-    upvotes/downvotes (and no Feedback entries or deletion events in the date range)
-    will not be returned.
+    Retrieves AI-generated comments that have feedback (upvotes, downvotes, or deleted)
+    within the specified date range.
 
     Args:
         language: Language to filter by (e.g., 'python', 'java')
-        start_date: Start date in YYYY-MM-DD format (filters by feedback submission time)
-        end_date: End date in YYYY-MM-DD format (filters by feedback submission time)
+        start_date: Start date in YYYY-MM-DD format
+        end_date: End date in YYYY-MM-DD format
         exclude: List of feedback types to exclude. Can include 'good', 'bad', 'delete'.
         environment: The APIView environment ('production' or 'staging')
 
@@ -480,8 +473,8 @@ def get_ai_comment_feedback(
     start_iso = to_iso8601(start_date)
     end_iso = to_iso8601(end_date, end_of_day=True)
 
-    # Query for AI-generated comments that have feedback submitted in the date range
-    # Uses EXISTS to check Feedback[].SubmittedOn or ChangeHistory[].ChangedOn
+    # Query for AI-generated comments in the date range
+    # Include all relevant fields, excluding Cosmos DB metadata (_rid, _self, _etag, _attachments, _ts)
     comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
 
     query = """
@@ -493,13 +486,8 @@ def get_ai_comment_feedback(
                c.ConfidenceScore, c.Feedback
         FROM c 
         WHERE c.CommentSource = 'AIGenerated'
-        AND (
-            EXISTS(SELECT VALUE f FROM f IN c.Feedback 
-                   WHERE f.SubmittedOn >= @start_date AND f.SubmittedOn <= @end_date)
-            OR EXISTS(SELECT VALUE ch FROM ch IN c.ChangeHistory 
-                      WHERE ch.ChangedOn >= @start_date AND ch.ChangedOn <= @end_date
-                      AND ch.ChangeAction = 'Deleted')
-        )
+        AND c.CreatedOn >= @start_date 
+        AND c.CreatedOn <= @end_date
     """
 
     comments = list(

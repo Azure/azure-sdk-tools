@@ -1132,8 +1132,8 @@ def get_ai_comment_feedback(
     output_format: str = "json",
 ):
     """
-    Retrieves AI-generated comments that received feedback within the date range.
-    Filters by Feedback[].SubmittedOn and ChangeHistory[].ChangedOn timestamps.
+    Retrieves AI-generated comments with feedback (upvotes, downvotes, or deleted)
+    within the specified date range.
     """
     results = _get_ai_comment_feedback(
         language=language,

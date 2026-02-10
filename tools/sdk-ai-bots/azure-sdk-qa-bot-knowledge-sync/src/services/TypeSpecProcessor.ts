@@ -56,6 +56,92 @@ export class TypeSpecProcessor {
     private parseTypeSpecDefinitions(content: string): TypeSpecDefinition[] {
         const definitions: TypeSpecDefinition[] = [];
         const lines = content.split('\n');
+        let currentDefinition = undefined;
+        let currentDefinitionStart = -1;
+        let currentDefinitionEnd = -1;
+        let currentDefinitionBodyStart = -1;
+        let nextDefinitionStart = -1;
+        let definitionLines: string[] = [];
+        let currentType: TypeSpecDefinition['type'] | null = null;
+        let currentName = '';
+        let currentDecorators: string[] = [];
+        let currentComments: string[] = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmedLine = line.trim();
+            const definitionMatch = this.matchDefinitionStart(trimmedLine);
+            if (definitionMatch) {
+                // currentDefinitionBodyStart = i;
+                if (currentDefinitionStart == -1) {
+                    currentDefinitionStart = 0;
+                    currentDefinitionBodyStart = i;
+                    currentType = definitionMatch.type;
+                    currentName = definitionMatch.name;
+                }
+                else {
+                    const len = definitionLines.length;
+                    let l = i;
+                    for (; l > currentDefinitionStart; l--) {
+                        let trim = lines[l].trim();
+                        if (trim.endsWith(';') || trim.endsWith('}')) {
+                            currentDefinitionEnd = l;
+                            break;
+                        }
+                    }
+
+                    let blockCommentLines: string[] = [];
+                    let currentDecorators: string[] = [];
+                    for (let n = currentDefinitionStart; n < currentDefinitionBodyStart; n++) {
+                        const line = lines[n];
+                        const trimmed = line.trim();
+                        // Handle block comments /** ... */
+                        if (trimmedLine.startsWith('/**')) {
+                            blockCommentLines = [line];
+                            // Check if block comment ends on same line
+                            if (trimmedLine.endsWith('*/') && trimmedLine !== '/**') {
+                                blockCommentLines = [];
+                            }
+                            continue;
+                        }
+                        if (trimmedLine.endsWith('*/')) {
+                            blockCommentLines.push(line);
+                        }
+
+                        // Handle single-line comments //
+                        if (trimmedLine.startsWith('//')) {
+                            blockCommentLines.push(line);
+                            continue;
+                        }
+                        if (trimmedLine.startsWith('@')) {
+                            currentDecorators.push(line);
+                            continue;
+                        }
+                    }
+                    const description = this.extractDescription(currentDecorators, currentComments);
+                    // const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
+                    definitions.push({
+                        type: currentType,
+                        name: currentName,
+                        code: lines.slice(currentDefinitionStart, currentDefinitionEnd + 1).join('\n'),
+                        decorators: currentDecorators,
+                        description,
+                        comments: currentComments
+                    });
+                    currentDefinitionStart = l + 1;
+                    currentDefinitionBodyStart = i;
+                    currentType = definitionMatch.type;
+                    currentName = definitionMatch.name;
+                }
+            }
+        }
+
+        return definitions;
+    }
+
+    private parseTypeSpecDefinitions2(content: string): TypeSpecDefinition[] {
+        const definitions: TypeSpecDefinition[] = [];
+        const lines = content.split('\n');
         
         let currentDecorators: string[] = [];
         let currentComments: string[] = [];
@@ -121,14 +207,14 @@ export class TypeSpecProcessor {
                     braceCount = (line.match(/{/g) || []).length - (line.match(/}/g) || []).length;
 
                     // If not using braces and does not end with semicolon, it may be a multi-line single statement
-                    if (currentType !== "interface" && !trimmedLine.endsWith(';') && braceCount === 0) {
+                    if (!trimmedLine.endsWith(';') && braceCount === 0) {
                         multiLineSemicolon = true;
                     } else {
                         multiLineSemicolon = false;
                     }
 
                     // Handle single-line definitions (like aliases or simple scalars)
-                    if (trimmedLine.endsWith(';') && braceCount === 0) {
+                    if ((trimmedLine.endsWith(';') || trimmedLine.endsWith('}')) && braceCount === 0) {
                         const description = this.extractDescription(currentDecorators, currentComments);
                         const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
                         definitions.push({
@@ -164,48 +250,67 @@ export class TypeSpecProcessor {
                 braceCount += (line.match(/{/g) || []).length;
                 braceCount -= (line.match(/}/g) || []).length;
 
+                if ((trimmedLine.endsWith(';') || trimmedLine.endsWith('}')) && braceCount === 0) {
+                    const description = this.extractDescription(currentDecorators, currentComments);
+                    const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
+                    definitions.push({
+                        type: currentType!,
+                        name: currentName,
+                        code: codeWithComments,
+                        decorators: currentDecorators,
+                        description,
+                        comments: currentComments
+                    });
+                    currentDecorators = [];
+                    currentComments = [];
+                    inDefinition = false;
+                    definitionLines = [];
+                    currentType = null;
+                    currentName = '';
+                    multiLineSemicolon = false;
+                }
                 // If in multi-line semicolon mode, check for ending semicolon
-                if (multiLineSemicolon && trimmedLine.endsWith(';') && braceCount === 0) {
-                    const description = this.extractDescription(currentDecorators, currentComments);
-                    const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
-                    definitions.push({
-                        type: currentType!,
-                        name: currentName,
-                        code: codeWithComments,
-                        decorators: currentDecorators,
-                        description,
-                        comments: currentComments
-                    });
-                    currentDecorators = [];
-                    currentComments = [];
-                    inDefinition = false;
-                    definitionLines = [];
-                    currentType = null;
-                    currentName = '';
-                    multiLineSemicolon = false;
-                    continue;
-                }
+                // if (multiLineSemicolon && trimmedLine.endsWith(';') && braceCount === 0) {
+                //     const description = this.extractDescription(currentDecorators, currentComments);
+                //     const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
+                //     definitions.push({
+                //         type: currentType!,
+                //         name: currentName,
+                //         code: codeWithComments,
+                //         decorators: currentDecorators,
+                //         description,
+                //         comments: currentComments
+                //     });
+                //     currentDecorators = [];
+                //     currentComments = [];
+                //     inDefinition = false;
+                //     definitionLines = [];
+                //     currentType = null;
+                //     currentName = '';
+                //     multiLineSemicolon = false;
+                //     continue;
+                // }
 
-                // Definition complete (brace-based)
-                if (!multiLineSemicolon && braceCount === 0) {
-                    const description = this.extractDescription(currentDecorators, currentComments);
-                    const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
-                    definitions.push({
-                        type: currentType!,
-                        name: currentName,
-                        code: codeWithComments,
-                        decorators: currentDecorators,
-                        description,
-                        comments: currentComments
-                    });
-                    currentDecorators = [];
-                    currentComments = [];
-                    inDefinition = false;
-                    definitionLines = [];
-                    currentType = null;
-                    currentName = '';
-                    multiLineSemicolon = false;
-                }
+                // // Definition complete (brace-based)
+                // if (!multiLineSemicolon && braceCount === 0) {
+                //     const description = this.extractDescription(currentDecorators, currentComments);
+                //     const codeWithComments = this.buildCodeWithComments(currentComments, definitionLines);
+                //     definitions.push({
+                //         type: currentType!,
+                //         name: currentName,
+                //         code: codeWithComments,
+                //         decorators: currentDecorators,
+                //         description,
+                //         comments: currentComments
+                //     });
+                //     currentDecorators = [];
+                //     currentComments = [];
+                //     inDefinition = false;
+                //     definitionLines = [];
+                //     currentType = null;
+                //     currentName = '';
+                //     multiLineSemicolon = false;
+                // }
             }
         }
 
@@ -402,22 +507,6 @@ export class TypeSpecProcessor {
 
         // Group definitions by type
         const groupedDefs = this.groupByType(definitions);
-
-        // Generate table of contents
-        lines.push('## Table of Contents');
-        lines.push('');
-        for (const [type, defs] of Object.entries(groupedDefs)) {
-            if (defs.length > 0) {
-                lines.push(`### ${this.capitalizeType(type)}s`);
-                for (const def of defs) {
-                    const anchor = this.toAnchor(def.name);
-                    lines.push(`- [${def.name}](#${anchor})`);
-                }
-                lines.push('');
-            }
-        }
-        lines.push('---');
-        lines.push('');
 
         // Generate chapters for each definition
         for (const def of definitions) {

@@ -15,18 +15,13 @@ The question must be classified into one of these categories:
     - How to fix LintDiff errors?
     - How to resolve Avocado validation errors?
 
-- **spec-guidelines**: Questions about Azure REST API design guidelines and best practices, such as:
-    - What are the Azure API design guidelines?
-    - How to design ARM-compliant resources?
-    - How to organize my spec files?
-    - What's the correct folder structure for specs?
-
-- **spec-migration**: Questions about migrating from OpenAPI/Swagger to TypeSpec or between versions, such as:
-    - Should I migrate to TypeSpec?
-    - How to convert OpenAPI to TypeSpec?
+- **spec-pr-review**: Questions about PR review request, such as:
+    - How to get my spec PR reviewed quickly?
+    - Who can review my spec PR?
 
 - **breaking-changes**: Questions about handling breaking changes in APIs, such as:
     - Breaking change suppression
+    - How can I get approval for breaking changes?
 
 - **unknown**: Questions that:
     - Lack sufficient context to determine the specific category
@@ -56,14 +51,5 @@ Response:
   "question": "Why is my spec PR validation failing with LintDiff errors for a data-plane spec and how do I fix them?",
   "category": "spec-validation",
   "service_type": "data-plane",
-  "needs_rag_processing": true
-}
-
-Original: "How should I structure my REST API spec files?"
-Response:
-{
-  "question": "What is the correct folder and file structure for organizing Azure REST API specification files?",
-  "category": "spec-guidelines",
-  "service_type": "unknown",
   "needs_rag_processing": true
 }

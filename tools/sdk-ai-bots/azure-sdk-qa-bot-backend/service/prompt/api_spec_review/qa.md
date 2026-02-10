@@ -46,6 +46,7 @@ For API specification review questions, follow this structured approach:
 # ANSWER GUIDELINES
 
 {{include "../templates/qa/answer_guidelines.md"}}
+- For `spec-pr-review` questions, guide user to follow the "next steps to merge" comment in the PR
 
 ## Code and Specification Examples
 - Provide complete, valid OpenAPI/Swagger examples when demonstrating solutions

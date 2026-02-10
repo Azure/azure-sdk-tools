@@ -6,6 +6,7 @@ import { NavBarComponent } from './nav-bar.component';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
+import { vi, Mock } from 'vitest';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { AuthService } from 'src/app/_services/auth/auth.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
@@ -18,14 +19,39 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 
 import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
 
+interface MockPermissionsService {
+  getMyPermissions: Mock;
+  isAdmin: Mock;
+}
+
+interface MockAuthService {
+  isLoggedIn: Mock;
+}
+
+interface MockUserProfileService {
+  getUserProfile: Mock;
+  updateUserProfile: Mock;
+}
+
+interface MockNotificationsServiceType {
+  clearNotification: Mock;
+  clearAll: Mock;
+  notifications$: ReturnType<typeof of>;
+}
+
+interface MockConfigService {
+  webAppUrl: string;
+  apiUrl: string;
+}
+
 describe('NavBarComponent', () => {
   let component: NavBarComponent;
   let fixture: ComponentFixture<NavBarComponent>;
-  let mockPermissionsService: jasmine.SpyObj<PermissionsService>;
-  let mockAuthService: jasmine.SpyObj<AuthService>;
-  let mockUserProfileService: jasmine.SpyObj<UserProfileService>;
-  let mockNotificationsService: jasmine.SpyObj<NotificationsService>;
-  let mockConfigService: jasmine.SpyObj<ConfigService>;
+  let mockPermissionsService: MockPermissionsService;
+  let mockAuthService: MockAuthService;
+  let mockUserProfileService: MockUserProfileService;
+  let mockNotificationsService: MockNotificationsServiceType;
+  let mockConfigService: MockConfigService;
 
   const mockUserProfile: UserProfile = {
     userName: 'testuser',
@@ -45,22 +71,38 @@ describe('NavBarComponent', () => {
     roles: [{ kind: 'global', role: GlobalRole.Admin } as GlobalRoleAssignment]
   };
 
+  const mockSignalRService = createMockSignalRService();
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
-    mockPermissionsService = jasmine.createSpyObj('PermissionsService', ['getMyPermissions', 'isAdmin']);
-    mockAuthService = jasmine.createSpyObj('AuthService', ['isLoggedIn']);
-    mockUserProfileService = jasmine.createSpyObj('UserProfileService', ['getUserProfile', 'updateUserProfile']);
-    mockNotificationsService = jasmine.createSpyObj('NotificationsService', ['clearNotification', 'clearAll'], {
+    mockPermissionsService = {
+      getMyPermissions: vi.fn(),
+      isAdmin: vi.fn()
+    };
+    mockAuthService = {
+      isLoggedIn: vi.fn()
+    };
+    mockUserProfileService = {
+      getUserProfile: vi.fn(),
+      updateUserProfile: vi.fn()
+    };
+    mockNotificationsService = {
+      clearNotification: vi.fn(),
+      clearAll: vi.fn(),
       notifications$: of([])
-    });
-    mockConfigService = jasmine.createSpyObj('ConfigService', [], {
+    };
+    mockConfigService = {
       webAppUrl: 'http://localhost/',
       apiUrl: '/api'
-    });
+    };
 
-    mockAuthService.isLoggedIn.and.returnValue(of(true));
-    mockUserProfileService.getUserProfile.and.returnValue(of(mockUserProfile));
-    mockPermissionsService.getMyPermissions.and.returnValue(of(mockPermissions));
-    mockPermissionsService.isAdmin.and.returnValue(false);
+    mockAuthService.isLoggedIn.mockReturnValue(of(true));
+    mockUserProfileService.getUserProfile.mockReturnValue(of(mockUserProfile));
+    mockPermissionsService.getMyPermissions.mockReturnValue(of(mockPermissions));
+    mockPermissionsService.isAdmin.mockReturnValue(false);
 
     TestBed.configureTestingModule({
       imports: [
@@ -99,36 +141,36 @@ describe('NavBarComponent', () => {
 
   describe('isAdmin', () => {
     it('should set isAdmin to false when user has no admin role', () => {
-      mockPermissionsService.isAdmin.and.returnValue(false);
-      expect(component.isAdmin).toBeFalse();
+      mockPermissionsService.isAdmin.mockReturnValue(false);
+      expect(component.isAdmin).toBe(false);
     });
 
     it('should set isAdmin to true when user has admin role', () => {
-      mockPermissionsService.isAdmin.and.returnValue(true);
+      mockPermissionsService.isAdmin.mockReturnValue(true);
 
       const profileWithPermissions: UserProfile = {
         ...mockUserProfile,
         permissions: mockAdminPermissions
       };
-      mockUserProfileService.getUserProfile.and.returnValue(of(profileWithPermissions));
+      mockUserProfileService.getUserProfile.mockReturnValue(of(profileWithPermissions));
 
       // Recreate component to pick up new mock values
       fixture = TestBed.createComponent(NavBarComponent);
       component = fixture.componentInstance;
       fixture.detectChanges();
 
-      expect(component.isAdmin).toBeTrue();
+      expect(component.isAdmin).toBe(true);
     });
 
     it('should fetch permissions from service when not on userProfile', () => {
-      mockPermissionsService.isAdmin.and.returnValue(false);
-      mockPermissionsService.getMyPermissions.and.returnValue(of(mockPermissions));
+      mockPermissionsService.isAdmin.mockReturnValue(false);
+      mockPermissionsService.getMyPermissions.mockReturnValue(of(mockPermissions));
 
       const profileWithoutPermissions: UserProfile = {
         ...mockUserProfile,
         permissions: null
       };
-      mockUserProfileService.getUserProfile.and.returnValue(of(profileWithoutPermissions));
+      mockUserProfileService.getUserProfile.mockReturnValue(of(profileWithoutPermissions));
 
       fixture = TestBed.createComponent(NavBarComponent);
       component = fixture.componentInstance;

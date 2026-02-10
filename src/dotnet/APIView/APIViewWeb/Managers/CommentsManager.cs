@@ -599,7 +599,7 @@ namespace APIViewWeb.Managers
             await _commentsRepository.UpsertCommentAsync(comment);
 
             // Send feedback to Copilot if this is an AI-generated comment
-            if (comment.CommentSource == CommentSource.AIGenerated && feedback.Reasons?.Count > 0)
+            if (comment.CommentSource == CommentSource.AIGenerated && (feedback.Reasons?.Count > 0 || feedback.IsDelete))
             {
                 _backgroundTaskQueue.QueueBackgroundWorkItem(async cancellationToken =>
                 {
@@ -617,9 +617,16 @@ namespace APIViewWeb.Managers
                 var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
 
                 // Build feedback message from reasons
-                var feedbackMessages = feedback.Reasons
-                    .Select(r => r.ToFeedbackMessage())
-                    .ToList();
+                var feedbackMessages = new List<string>();
+                if (feedback.Reasons != null)
+                {
+                    feedbackMessages.AddRange(feedback.Reasons.Select(r => r.ToFeedbackMessage()));
+                }
+
+                if (feedback.IsDelete)
+                {
+                    feedbackMessages.Insert(0, "This comment was flagged for deletion by the user, which means it was so egregiously bad that they didn't even want the service team to see it.");
+                }
 
                 if (!string.IsNullOrEmpty(feedback.Comment))
                 {

@@ -152,7 +152,7 @@ public class VerifySetupTool : LanguageMcpTool
                             response.Results.Add(new RequirementCheckResult
                             {
                                 Requirement = displayName,
-                                Instructions = instructions,
+                                Instructions = [],
                                 RequirementStatusDetails = $"{req.Name} was auto-installed successfully.",
                                 Reason = req.Reason,
                                 AutoInstallAttempted = true,

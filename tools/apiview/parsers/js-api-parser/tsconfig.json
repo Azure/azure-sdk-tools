@@ -4,7 +4,10 @@
     "moduleResolution": "NodeNext",
     "target": "ES2022",
     "sourceMap": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "resolveJsonModule": true
   },
-  "include": ["./src/**/*.ts"]
+  "include": [
+    "./src/**/*.ts"
+  ]
 }

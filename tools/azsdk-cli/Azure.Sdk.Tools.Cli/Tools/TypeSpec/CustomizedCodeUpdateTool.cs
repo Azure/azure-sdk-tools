@@ -777,7 +777,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     {
         try
         {
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha, isCli: false, ct);
 
             if (!regenResult.IsSuccessful)
             {

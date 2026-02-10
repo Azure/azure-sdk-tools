@@ -1,6 +1,8 @@
 package config
 
-import "github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+import (
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+)
 
 type TenantConfig struct {
 	Sources                 []model.Source
@@ -26,6 +28,19 @@ var typespecSources = []model.Source{
 	model.Source_StaticTypeSpecToSwaggerMapping,
 }
 
+var azureTypespecAuthoringSources = []model.Source{
+	model.Source_AzureAPIGuidelines,
+	model.Source_AzureResourceManagerRPC,
+	model.Source_TypeSpecAzure,
+	model.Source_TypeSpecQA,
+	model.Source_TypeSpecAzureHttpSpecs,
+	model.Source_TypeSpec,
+	model.Source_AzureRestAPISpec,
+	model.Source_TypeSpecMigration,
+	model.Source_TypeSpecHttpSpecs,
+	model.Source_StaticAzureDocs,
+}
+
 var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
 	model.Source_TypeSpecQA:                     3,
@@ -34,45 +49,90 @@ var SourceTopK = map[model.Source]int{
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{
 	model.TenantID_PythonChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng, model.Source_AzureSDKInternalWiki}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForPython,
+			model.Source_AzureSDKForPythonWiki,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AzureSDKDocsEng,
+			model.Source_AzureSDKInternalWiki,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('python_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-python*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_python/qa.md",
 		IntentionPromptTemplate: "language_python/intention.md",
 		AgenticSearchPrompt:     "language_python/agentic_search.md",
 	},
 	model.TenantID_DotnetChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForNetDocs, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForNetDocs,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AzureSDKDocsEng,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('dotnet_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-csharp*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_GolangChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForGo, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForGo,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AzureSDKDocsEng,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('golang_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-go*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_JavaChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForJava, model.Source_AzureSDKForJavaWiki, model.Source_AzureSDKGuidelines, model.Source_AutorestJava, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForJava,
+			model.Source_AzureSDKForJavaWiki,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AutorestJava,
+			model.Source_AzureSDKDocsEng,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('java_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-java*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_JavaScriptChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKForJavaScriptWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForJavaScript,
+			model.Source_AzureSDKForJavaScriptWiki,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AzureSDKDocsEng,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('typescript_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-ts*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
@@ -93,6 +153,12 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		AgenticSearchPrompt:     "azure_sdk_onboarding/agentic_search.md",
 		IntentionPromptTemplate: "azure_sdk_onboarding/intention.md",
 	},
+	model.TenantID_AzureTypespecAuthoring: {
+		PromptTemplate:          "azure_typespec_authoring/qa.md",
+		Sources:                 azureTypespecAuthoringSources,
+		IntentionPromptTemplate: "azure_typespec_authoring/intention.md",
+		AgenticSearchPrompt:     "azure_typespec_authoring/agentic_search.md",
+	},
 	model.TenantID_GeneralQaBot: {
 		PromptTemplate:          "general/qa.md",
 		IntentionPromptTemplate: "general/intention.md",
@@ -101,7 +167,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 	},
 	model.TenantID_APISpecReviewBot: {
 		PromptTemplate: "api_spec_review/qa.md",
-		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureRestAPISpec, model.Source_AzureSDKDocsEng},
+		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
 		},

@@ -68,6 +68,12 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 return;
             }
 
+            // "all" category means test runs on all repositories
+            if (categories.Contains("all"))
+            {
+                return;
+            }
+
             // Skip if repository doesn't match any category
             if (!categories.Contains(repoName))
             {

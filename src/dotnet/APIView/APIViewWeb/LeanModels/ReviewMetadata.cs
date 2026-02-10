@@ -20,6 +20,7 @@ public class RevisionMetadata
     public string RevisionId { get; set; }
     public string PackageVersion { get; set; }
     public bool IsApproved { get; set; }
+    public string SourceBranch { get; set; }
     public int? PullRequestNo { get; set; }
     public string PullRequestRepository { get; set; }
     public string RevisionLink { get; set; }

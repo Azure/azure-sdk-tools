@@ -37,7 +37,8 @@
                     <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
                         @count
                         <span class="visually-hidden">unread messages</span>
-                    </span>                }
+                    </span>
+                }
             </a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>
@@ -486,90 +487,10 @@
             }
         }
         <ul class="list-group collapse mb-3@(apiRevisionOptionsCollapseState)" id="apiRevisionOptionsCollapse">
-            <li class="list-group-item">
-                <div>
-                    <p class="small revision-title">Change History:</p>
-                        @foreach (var change in Model.ReviewContent.ActiveAPIRevision.ChangeHistory)
-                        {
-                            <li class="list-group-item approval-list-group-item">
-                                <div class="d-flex align-items-start">
-                                    <div class="me-3">
-                                    @{
-                                        var changeAction = change.ChangeAction.ToString();
-                                        string iconClass = "";
-                                        switch (changeAction)
-                                        {
-                                            case "Created":
-                                                iconClass = "bi bi-plus-circle-fill created status-icon";
-                                                break;
-                                            case "Approved":
-                                                iconClass = "bi bi-check-circle-fill approved status-icon";
-                                                break;
-                                            case "ApprovalReverted":
-                                                iconClass = "bi bi-arrow-left-circle-fill approval-reverted status-icon";
-                                                break;
-                                            case "Deleted":
-                                                iconClass = "bi bi-backspace-fill deleted status-icon";
-                                                break;
-                                            case "UnDeleted":
-                                                iconClass = "bi bi-plus-circle-fill undeleted status-icon";
-                                                break;
-                                        }
-                                    }
-                                                                     
-                                    <div class="revision-events">          
-                                        @if (!string.IsNullOrEmpty(iconClass))
-                                        {
-                                            <i class="@iconClass"></i>
-                                        } 
-                                        @if (change.ChangeAction.ToString() == "Created")
-                                        {
-                                            <span class="small revision-info">Created:</span>
-                                        }
-                                        else if (change.ChangeAction.ToString() == "Approved")
-                                        {
-                                            <span class="small revision-info">Approved:</span>                                                                                           
-                                        }
-                                        else if (change.ChangeAction.ToString() == "ApprovalReverted")
-                                        {
-                                            <span class="small revision-info">Reverted:</span>                                         
-                                        }
-                                        else if (change.ChangeAction.ToString() == "Deleted")
-                                        {
-                                            <span class="small revision-info">Deleted:</span>
-                                        }
-                                        else if (change.ChangeAction.ToString() == "UnDeleted")
-                                        {
-                                            <span class="small revision-info">UnDeleted:</span>
-                                        }
-                                        <span class="small revision-info">@change.ChangedBy</span><br />
-                                        <span data-bs-toggle="tooltip" title="@change.ChangedOn" date="@(change.ChangedOn.GetValueOrDefault())" class="small revision-info"></span>
-                                    </div>                                   
-                                </div>
-                            </li>
-                        }    
-                </div>
-            </li>
         </ul>
     </div>
 </div>
-<div class="container-fluid mx-0 px-0 sub-header-content">
-    <div class="row px-3 py-2 border-bottom">
-        @{
-            var reviewBadgeModel = new ReviewBadgeModel();
-            reviewBadgeModel.Review = Model.ReviewContent.Review;
-            reviewBadgeModel.APIRevisions = Model.ReviewContent.APIRevisions;
-            reviewBadgeModel.ActiveAPIRevision = Model.ReviewContent.ActiveAPIRevision;
-            reviewBadgeModel.DiffAPIRevision = Model.ReviewContent.DiffAPIRevision;
-            reviewBadgeModel.UserPreference = Model.UserPreference;
-            reviewBadgeModel.ShowDocumentation = Model.ShowDocumentation;
-            reviewBadgeModel.ShowDiffOnly = Model.ShowDiffOnly;
-        }
-        <partial name="Shared/_ReviewBadge" model="reviewBadgeModel" />
-    </div>
-</div>
-
-<div class="container-fluid pt-2@(mainContainerClass)" id="review-main-container">
+<div class="container-fluid pt-2 @(mainContainerClass)" id="review-main-container">
     <div class="row g-2" data-review-id="@Model.ReviewContent.Review.Id" data-revision-id="@Model.ReviewContent.ActiveAPIRevision.Id" data-language="@Model.ReviewContent.Review.Language">
         @{
             var reviewLeftDisplay = String.Empty;
@@ -594,22 +515,39 @@
         </div>
 
         <div id="review-right" class="col-@reviewRightSize @reviewApprovedClass">
-            @if (!string.IsNullOrEmpty(Model.NotificationMessage))
-            {
-                <div class="alert alert-warning alert-dismissible fade show m-1" role="alert">
-                    @Model.NotificationMessage
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            }
-            <table class="code-window">
-                <tbody>
-                    @foreach (var line in Model.ReviewContent.codeLines)
-                    {
-                        <partial name="_CodeLine" model="@line" />
+            <div class="container-fluid mx-0 px-0 sub-header-content">
+                <div class="row px-3 py-2" style="border-bottom: 1px solid var(--border-color);">
+                    @{
+                        var reviewBadgeModel = new ReviewBadgeModel();
+                        reviewBadgeModel.Review = Model.ReviewContent.Review;
+                        reviewBadgeModel.APIRevisions = Model.ReviewContent.APIRevisions;
+                        reviewBadgeModel.ActiveAPIRevision = Model.ReviewContent.ActiveAPIRevision;
+                        reviewBadgeModel.DiffAPIRevision = Model.ReviewContent.DiffAPIRevision;
+                        reviewBadgeModel.UserPreference = Model.UserPreference;
+                        reviewBadgeModel.ShowDocumentation = Model.ShowDocumentation;
+                        reviewBadgeModel.ShowDiffOnly = Model.ShowDiffOnly;
                     }
-                </tbody>
-            </table>
-            <partial name="_CrossLanguageViewPartial" model="@Model.ReviewContent.CrossLanguageViewContent" />
+                    <partial name="Shared/_ReviewBadge" model="reviewBadgeModel" />
+                </div>
+            </div>
+            <div id="review-content">
+                @if (!string.IsNullOrEmpty(Model.NotificationMessage))
+                {
+                    <div class="alert alert-warning alert-dismissible fade show m-1" role="alert">
+                        @Model.NotificationMessage
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                <table class="code-window">
+                    <tbody>
+                        @foreach (var line in Model.ReviewContent.codeLines)
+                        {
+                            <partial name="_CodeLine" model="@line" />
+                        }
+                    </tbody>
+                </table>
+                <partial name="_CrossLanguageViewPartial" model="@Model.ReviewContent.CrossLanguageViewContent" />
+            </div>
         </div>
     </div>
     @if (Model.ReviewContent.CrossLanguageViewContent.Any())

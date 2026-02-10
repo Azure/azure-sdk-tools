@@ -146,7 +146,8 @@ public class SampleGeneratorToolTests
                 _ => "unknown-sdk"
             };
         });
-        tool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, mockGitHelper.Object, _languageServices);
+        var testServiceLogger = new TestLogger<SampleGeneratorTool>();
+        tool = new SampleGeneratorTool(microagentHostServiceMock.Object, testServiceLogger, mockGitHelper.Object, _languageServices);
         tool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = tool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Do thing", "--package-path", packagePath]);
@@ -291,7 +292,8 @@ public class SampleGeneratorToolTests
         var pkgPath = Path.Combine(tempDir.DirectoryPath, "sdk", "group", "service", "pkg");
         Directory.CreateDirectory(pkgPath);
 
-        var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, _mockGitHelper.Object, []);
+        var emptyToolLogger = new TestLogger<SampleGeneratorTool>();
+        var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, emptyToolLogger, _mockGitHelper.Object, []);
         errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = errorTool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Anything", "--package-path", pkgPath]);
@@ -361,11 +363,11 @@ public class SampleGeneratorToolTests
         // Use a real FileHelper instance instead of mock
         var fileHelper = new FileHelper(new TestLogger<FileHelper>());
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>()),
-            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>()),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>()),
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
             _mockGoLanguageService.Object,
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>())
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>())
         ];
 
         _mockGoLanguageService.Setup(ls => ls.Language).Returns(SdkLanguage.Go);

@@ -330,5 +330,37 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 stateReason: null
             );
         }
+
+        public Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body, List<string>? assignees = null)
+        {
+            // Create a mock issue
+            var issue = CreateMockIssue(repoOwner, repoName, 1);
+            return Task.FromResult(issue);
+        }
+
+        public Task<string?> GetPullRequestHeadSha(string repoOwner, string repoName, int pullRequestNumber)
+        {
+            // Return a mock SHA
+            return Task.FromResult<string?>("abc123def456");
+        }
+
+        public Task<string?> GetFileFromPullRequest(string repoOwner, string repoName, int pullRequestNumber, string filePath)
+        {
+            // Return null to indicate file not found (default mock behavior)
+            return Task.FromResult<string?>(null);
+        }
+
+        public Task<string?> GetFileFromBranch(string repoOwner, string repoName, string branch, string filePath)
+        {
+            // Return null to indicate file not found (default mock behavior)
+            return Task.FromResult<string?>(null);
+        }
+
+        public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery)
+        {
+            // Return empty search results (default mock behavior)
+            var emptyResult = new SearchCodeResult(0, false, new List<SearchCode>());
+            return Task.FromResult(emptyResult);
+        }
     }
 }

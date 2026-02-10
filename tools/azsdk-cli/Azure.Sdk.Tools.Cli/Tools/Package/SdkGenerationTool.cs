@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await GenerateSdkAsync(localSdkRepoPath, tspConfigPath, tspLocationPath, emitterOptions, ct);
         }
 
-        [McpServerTool(Name = GenerateSdkToolName), Description("Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally.")]
+        [McpServerTool(Name = GenerateSdkToolName), Description("Generate SDK code locally or run code generation for a package from TypeSpec. Creates client library code for Azure services. Runs locally, not via pipeline.")]
         public async Task<PackageOperationResponse> GenerateSdkAsync(
             [Description("Absolute path to the local Azure SDK repository. REQUIRED. Example: 'path/to/azure-sdk-for-net'. If not provided, the tool attempts to discover the repo from the current working directory.")]
             string localSdkRepoPath,
@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     logger.LogInformation("TypeSpec Project Path from tsp-location.yaml: {TypeSpecProjectPath}", typeSpecProjectPath);
 
                     // Run tsp-client update using the existing tsp-location.yaml
-                    var tspResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, tspLocationDirectory, ct: ct);
+                    var tspResult = await tspClientHelper.UpdateGenerationAsync(tspLocationDirectory, ct: ct);
                     
                     if (!tspResult.IsSuccessful)
                     {

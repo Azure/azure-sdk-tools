@@ -34,9 +34,11 @@ export class ReviewInfoComponent {
   @Input() diffApiRevisionId: string | null = '';
   @Input() userProfile: UserProfile | undefined;
   @Input() showPageoptionsButton: boolean = false;
+  @Input() showLeftNavigation: boolean = true;
 
   @Input() review : Review | undefined = undefined;
   @Output() pageOptionsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 
   showPageOptions: boolean = true;
 
@@ -70,5 +72,10 @@ export class ReviewInfoComponent {
   onRightPanelCheckChange(event: any) {
     this.showPageOptions = event.target.checked;
     this.pageOptionsEmitter.emit(event.target.checked);
+  }
+
+  onLeftPanelCheckChange(event: any) {
+    this.showLeftNavigation = event.target.checked;
+    this.showLeftNavigationEmitter.emit(event.target.checked);
   }
 }

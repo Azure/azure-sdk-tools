@@ -71,7 +71,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         return result;
     }
 
-    [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get all the comments of an APIView API using the APIView URL")]
+    [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review.")]
     public async Task<APIViewResponse> GetComments(string apiViewUrl)
     {
         try
@@ -148,6 +148,39 @@ public class APIViewReviewTool : MCPMultiCommandTool
         catch (Exception ex)
         {
             return new APIViewResponse { ResponseError = $"Failed to get content: {ex.Message}" };
+        }
+    }
+
+    public static (string revisionId, string reviewId) ExtractIdsFromUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            throw new ArgumentException("Input cannot be null or empty", nameof(url));
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
+        {
+            throw new ArgumentException("Input needs to be a valid APIView URL (e.g., https://apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})", nameof(url));
+        }
+
+        try
+        {
+            // Pattern: /review/{reviewId} in path and activeApiRevisionId={revisionId} in query string
+            var match = Regex.Match(url, @"/review/([^/?]+).*[?&]activeApiRevisionId=([^&#]+)", RegexOptions.IgnoreCase);
+            
+            if (!match.Success)
+            {
+                throw new ArgumentException("APIView URL must contain both 'activeApiRevisionId' query parameter AND '/review/{reviewId}' path segment");
+            }
+
+            string reviewId = match.Groups[1].Value;
+            string revisionId = match.Groups[2].Value;
+
+            return (revisionId, reviewId);
+        }
+        catch (Exception ex) when (ex is not ArgumentException)
+        {
+            throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url), ex);
         }
     }
 }

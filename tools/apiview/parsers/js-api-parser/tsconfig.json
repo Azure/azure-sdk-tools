@@ -7,7 +7,5 @@
     "outDir": "./dist",
     "resolveJsonModule": true
   },
-  "include": [
-    "./src/**/*.ts"
-  ]
+  "include": ["./src/**/*.ts"]
 }

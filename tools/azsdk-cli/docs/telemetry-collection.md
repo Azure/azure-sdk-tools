@@ -27,7 +27,7 @@ The design introduces a **mandatory local activity log** written by Copilot and 
 - Ensure:
   - Deterministic logging
   - Synchronous append
-  - Logging is never ignored or de-prioritized
+  - Logging is never ignored or deprioritized
 - Enable downstream analysis:
   - Identify frequently used and unused skills
   - Detect failures and fallback behavior
@@ -36,7 +36,7 @@ The design introduces a **mandatory local activity log** written by Copilot and 
 ### 2.2 Non‑Goals
 
 - No real‑time telemetry emission from Copilot runtime
-- No PII redaction of raw user input at log time
+
 - No guarantee of reliable log delivery
 - No changes to Copilot execution or decision‑making policies
 
@@ -52,7 +52,7 @@ The design introduces a **mandatory local activity log** written by Copilot and 
 - **Write Mode:** Append‑only
 - **Write Timing:** Synchronous
 
-This file path will be added in .gitignore so it will not be pushed to remote repo branch.
+This file path will be added to .gitignore so it will not be pushed to a remote repo branch.
 
 ### 3.2 Mandatory Logging Triggers
 
@@ -165,7 +165,7 @@ If writing to the activity log fails:
 
 ### 8.1 Activity Ingestion using CLI
 
-Copilot writes to `.azsdk-agent-activity.log`. Copilot instruction contains the instruction to push activity logs to telemetry periodically. Copilot will run below azsdk cli command to push activity log entries and CLI parses new log entries and emits telemetry to Application Insights. This will also clear entires in the activity log to make sure activity log size is not taking up a lot of space.
+Copilot writes to `.azsdk-agent-activity.log`. Copilot instruction contains the instruction to push activity logs to telemetry periodically. Copilot will run below azsdk cli command to push activity log entries and CLI parses new log entries and emits telemetry to Application Insights. This will also clear entries in the activity log to make sure activity log size is not taking up a lot of space.
 
 Example Command
 
@@ -213,11 +213,11 @@ A dedicated VS Code extension is responsible for monitoring this file and ingest
 - Requires explicit extension installation
 - Telemetry limited to VS Code users
 
-## 9. Telemetry report
+## 9. Telemetry Report
 
 Telemetry db will have additional details like client type( vscode, visual studio, github coding agent, copilot CLI etc), device details (non PII) along with activity status. Power bi dashboard will show:
 
 - summary of overall user activity using agent tools
-- Usage of different component types( skill, mcp tool cli command)
+- Usage of different component types (Skill, MCP Tool, CLI Command)
 - List of Azure SDK steps and usage and what type of component is used.
 - Identify the time it takes from planning a release --> TypeSpec completion --> sdk generation --> sdk release. Each activity is tagged using a release plan so we can identify the overall end to end time.

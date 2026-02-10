@@ -1,55 +1,67 @@
-# Azure SDK Q&A Bot Backend Troubleshooting Guide
+# Azure SDK Q&A Bot Troubleshooting Guide
 
 This guide provides step-by-step instructions for troubleshooting issues with the Azure SDK Q&A Bot across different environments.
 
-## Table of Contents
-- [Environment Overview](#environment-overview)
-- [Log Analysis Workflow](#log-analysis-workflow)
-- [Common Issues and Solutions](#common-issues-and-solutions)
-
-## Environment Overview
+## Deployments Overview
 
 The Azure SDK Q&A Bot operates in three environments, each with dedicated resources:
 
 ### Development Environment
-- **Backend Service**: [azuresdkbot-dev](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/slots/azuresdkbot-dev/appServices)
-- **Frontend Bot**: Azure SDK Q&A Bot dev-internal
-- **Logic APP(For Auto Reply)**: [AzureSDKQABot-Dev-Internal](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Logic/workflows/AzureSDKQABot-Dev-Internal/logicApp)
-- **Channel**: [Azure SDK QA Bot - Demo](https://teams.microsoft.com/l/channel/19%3A3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1%40thread.tacv2/Azure%20SDK%20QA%20Bot%20-%20Demo?groupId=7ccc31f0-b371-450b-a73c-48f5a31a9b96&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
+- **Backend Service**: [azuresdkqabot-dev-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-server/appServices)
+- **Frontend Service**: [azsdkqabotdev](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azsdkqabotdev/appServices)
+- **Logic APP(For Auto Reply)**: [azuresdkqabot-dev-logicapp](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Logic/workflows/azuresdkqabot-dev-logicapp/logicApp)
+- **Team**: [Azure SDK QA Bot](https://teams.microsoft.com/l/team/19%3A3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1%40thread.tacv2/conversations?groupId=7ccc31f0-b371-450b-a73c-48f5a31a9b96&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
 
 ### Preview Environment
-- **Backend Service**: [azuresdkbot-preview](https://ms.portal.azure.com/#resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/slots/preview)
-- **Frontend Bot**: Azure SDK Q&A Bot Dev
-- **Logic APP(For Auto Reply)**: [AzureSDKQABot-Dev](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Logic/workflows/AzureSDKQABot-Dev/logicApp)
-- **Channel**: [Azure SDK QA bot for TypeSpec Testing](https://teams.microsoft.com/l/channel/19%3ArMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1%40thread.tacv2/Azure%20SDK%20QA%20bot%20for%20TypeSpec%20Testing?groupId=39910aef-85da-4e30-b5e3-35f04ef38648&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
-
-### Preview Environment(Onboarding Channel)
-- **Backend Service**: [azuresdkbot-preview](https://ms.portal.azure.com/#resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/slots/preview)
-- **Frontend Bot**: Azure SDK Q&A Bot Dev
-- **Logic APP(For Auto Reply)**: [AzureSDKQABot-Dev-Onboarding](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Logic/workflows/AzureSDKQABot-Dev-Onboarding/logicApp)
-- **Channel**: [Azure SDK QA bot for SDK Onboarding](https://teams.microsoft.com/l/channel/19%3A603d15bc0fd248ff82a8326da7322a4d%40thread.tacv2/Azure%20SDK%20QA%20bot%20for%20SDK%20Onboarding?groupId=39910aef-85da-4e30-b5e3-35f04ef38648&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
+- **Backend Service**: [azure-sdk-qa-bot-test](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azuresdkqabot-test-server/appServices)
+- **Frontend Service**: [azsdkqabottest](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azsdkqabottest/appServices)
+- **Logic APP(For Auto Reply)**: [azuresdkqabot-test-logicapp](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Logic/workflows/azuresdkqabot-test-logicapp/logicApp)
+- **Team**: [Azure SDK Q&A Bot Testing](https://teams.microsoft.com/l/team/19%3ArMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1%40thread.tacv2/conversations?groupId=39910aef-85da-4e30-b5e3-35f04ef38648&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
 
 ### Production Environment
-- **Backend Service**: [azuresdkbot-prod](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Web/sites/azuresdkbot/appServices)
-- **Frontend Bot**: Azure SDK Q&A Bot
-- **Logic App(For Auto Reply)**: [AzureSDKQABot-Prod](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Logic/workflows/AzureSDKQABot-Prod/logicApp)
-- **Channel**: [TypeSpec Disussion](https://teams.microsoft.com/l/channel/19%3A906c1efbbec54dc8949ac736633e6bdf%40thread.skype/TypeSpec%20Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
+- **Backend Service**: [azuresdkqabot-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-server/appServices)
+- **Frontend Service**: [azsdkqabot](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azsdkqabot/appServices)
+- **Logic App(For Auto Reply)**: [azuresdkqabot-logicapp](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Logic/workflows/azuresdkqabot-logicapp/logicApp)
+- **Team**: [Azure SDK](https://teams.microsoft.com/l/team/19%3Af6d52ac6465c40ea80dc86b8be3825aa%40thread.skype/conversations?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
 
-## Service Recovery Workflow
+## Frequently Issues
 
-When you received an alert from Azure related to production app service like this:
-![alt text](images/azure_alert.png)
+### 1. Bot Not Responding
 
-Or you found bot's answer contains 'AI service is not available', you need to follow this guide to recover the bot's service.
+When the bot is not responding to messages in Teams, follow these steps to diagnose and resolve the issue.
 
-### Step 1: Disable Auto Reply
+#### Step 1: Check Logic App Run History
 
+1. Open the appropriate environment's Logic App link in Azure Portal.
+2. Click **Development Tools** > **Run history**.
+3. Find the run history entry that matches the exact time the message was posted.
+![alt text](images/run_history_of_logic_app.png)
+
+#### Step 2: No Run History Found — Teams Connection Issue
+
+If no matching run history entry is found, the Logic App has failed to detect new messages. This is most likely due to an issue with the **non-people account Teams connection** — the account may be expired or otherwise unavailable.
+
+**Solution:** Change the Teams connection from the non-people account to your personal account. (As long as this account is present in the channel where the bot requires automated replies, message monitoring can be achieved.)
+
+1. Open **Development Tools** > **Logic App Designer**.
+![alt text](images/app_designer_of_logic_app.png)
+1. Click the first node: **"When a new message is added to a chat or channel"**, and check if the configuration can be loaded.
+![alt text](images/channels_of_logic_app.png)
+2. If the configuration fails to load, click **Connections** at the top, then click **Reassign** > **Add new**, and follow the sign-in steps.
+![alt text](images/reassign_of_logic_app.png)
+![alt text](images/add_new_connection_of_logic_app.png)
+3. Confirm that the connection has changed to your own account, and recheck if the configuration loads successfully.
+4. Waiting for new posts in Teams to see if the bot can respond.
+
+### 2. You got a backend alert or bot answered like 'Unable to establish a connection to the AI service at this time. Please try again later.'
+
+#### Step 1: Disable Auto Reply
+You could stop more failure by disabling the auto reply feature temporarily.
 1. Navigate to the appropriate environment's Logic App in Azure Portal.
 2. Click `Disable` button to avoid more failures. 
 ![alt text](images/disable_logic_app.png)
 
-
-### Step 2: Check Logic App Run History
+#### Step 2: Check Logic App Run History
 
 1. Navigate to the appropriate environment's Logic App in Azure Portal.
 2. Click Development Tools/Run history
@@ -57,20 +69,49 @@ Or you found bot's answer contains 'AI service is not available', you need to fo
 ![alt text](images/logic_app_run_history.png)
 4. Click into failed record, find the error log
 ![alt text](images/logic_app_failed.png)
-5. If the error log related to timeout, move to Step3 to check if app service is available, else it may caused by authentication issue or frondend issue, just disable the Logic App and wait for the developer to solve this issue.
 
-### Step 3: Check App Service
+#### Step 3: Analyze Error Logs
+
+##### 3.1 Timeout Error in "Invoke QA Bot" Node
+
+The error log usually appears in the **"Invoke QA Bot"** node. If the error message is:
+```
+BadRequest
+HTTP request failed: the server did not respond within the timeout limit.
+Please see logic app limits at https://aka.ms/logic-apps-limits-and-config#http-limits.
+```
+This typically happens when the bot response takes too much time. However, the bot should still can reply, you could check it in the Teams channel.
+
+##### 3.2 Other Error Logs — Check Frontend Service
+
+For other error logs:
+1. Navigate to the appropriate environment's **Frontend Service** in Azure Portal.
+2. Search the logs using keywords from the failed post/request, copy the conversation ID
+```kql
+AppServiceConsoleLogs 
+| where ResultDescription contains "Our service was recently assigned"
+```
+![alt text](images/search_post_logs_from_frontend.png)
+
+3. Use the conversation ID to filter logs related to this request, analyze the error details.
+```kql
+AppServiceConsoleLogs 
+| where ResultDescription contains "19:906c1efbbec54dc8949ac736633e6bdf@thread.skype;messageid=1770672641211"
+```
+![alt text](images/search_logs_by_conversation_id.png)
+
+4. If you the logs mention **"Failed to fetch data from RAG backend"**:
+   - Navigate to the appropriate environment's **Backend Service** in Azure Portal.
+   - Search the logs using keywords from the post/request. (Refer to the [Log Analysis Workflow](#log-analysis-workflow) section for detailed steps.)
+
+### Step 4: Check App Service
 
 1. Navigate to the appropriate environment's backend Service in Azure Portal.
 2. Click `Log stream` to check if there has realtime logs(eg. /ping)
-3. If there has no logs, which means backend service is breaking down. You need to navigate to `Deployment/Deployment Center`, and make sure the container config is correct.(Image and Image tag)
-![alt text](images/container_image_config.png)
-   - Restart app, and check log stream to make sure backend service is running.
-   - Retry bad case by mentioning the bot to ask same question.
-![alt text](images/restart_app.png)
-4. If service is working well. It may caused by some internal issue, you could investigate error by following in this document or just disable the Logic App and wait for the developer to solve this issue.
+3. If there has no logs, which means backend service is breaking down. You could use deploy pipeline to redeploy the backend service. After redeploying, you could test the endpoint reference README.md file or send a test message in Teams channel.
+1. If service is working well. It may caused by some internal issue, you could investigate error following Log Analysis Workflow part in this document or just disable the Logic App and wait for the developer to solve this issue.
 
-### Step 4: Enable Auto Reply
+### Step 5: Enable Auto Reply
 
 If you have retryed the bad case and the bot is available, you could enable the auto reply feature.
 

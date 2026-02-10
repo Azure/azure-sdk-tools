@@ -597,6 +597,97 @@ namespace APIViewWeb.Managers
             });
 
             await _commentsRepository.UpsertCommentAsync(comment);
+
+            // Send feedback to Copilot if this is an AI-generated comment
+            if (comment.CommentSource == CommentSource.AIGenerated && feedback.Reasons?.Count > 0)
+            {
+                _backgroundTaskQueue.QueueBackgroundWorkItem(async cancellationToken =>
+                {
+                    await SendFeedbackToCopilotAsync(user, comment, feedback, cancellationToken);
+                });
+            }
+        }
+
+        private async Task SendFeedbackToCopilotAsync(ClaimsPrincipal user, CommentItemModel comment, CommentFeedbackRequest feedback, CancellationToken cancellationToken)
+        {
+            try
+            {
+                ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+                var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: comment.APIRevisionId);
+                var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+
+                // Build feedback message from reasons
+                var feedbackMessages = feedback.Reasons
+                    .Select(r => r.ToFeedbackMessage())
+                    .ToList();
+
+                if (!string.IsNullOrEmpty(feedback.Comment))
+                {
+                    feedbackMessages.Add($"Additional feedback: {feedback.Comment}");
+                }
+
+                string feedbackText = $"@azure-sdk user '{user.GetGitHubLogin()}' has provided the following feedback on your previous comment:\n\n" +
+                    string.Join("\n", feedbackMessages.Select(m => $"- {m}"));
+
+                // Create a synthetic comment representing the feedback
+                var feedbackComment = new ApiViewAgentComment
+                {
+                    LineNumber = 0,
+                    LineId = comment.ElementId,
+                    LineText = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
+                    CreatedOn = DateTimeOffset.UtcNow,
+                    Upvotes = 0,
+                    Downvotes = 0,
+                    CreatedBy = user.GetGitHubLogin(),
+                    CommentText = feedbackText,
+                    IsResolved = false,
+                    ThreadId = comment.ThreadId
+                };
+
+                // Include the original AI comment for context
+                var originalAIComment = new ApiViewAgentComment
+                {
+                    LineNumber = 0,
+                    LineId = comment.ElementId,
+                    LineText = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
+                    CreatedOn = comment.CreatedOn,
+                    Upvotes = comment.Upvotes?.Count ?? 0,
+                    Downvotes = comment.Downvotes?.Count ?? 0,
+                    CreatedBy = comment.CreatedBy,
+                    CommentText = comment.CommentText,
+                    IsResolved = comment.IsResolved,
+                    ThreadId = comment.ThreadId
+                };
+
+                MentionRequest mentionRequest = new()
+                {
+                    Language = review.Language,
+                    PackageName = activeApiRevision.PackageName,
+                    Code = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
+                    Comments = new List<ApiViewAgentComment> { originalAIComment, feedbackComment }
+                };
+
+                string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
+                var request = new HttpRequestMessage(HttpMethod.Post, agentMentionEndPoint)
+                {
+                    Content = new StringContent(
+                        JsonSerializer.Serialize(mentionRequest),
+                        Encoding.UTF8,
+                        "application/json")
+                };
+
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync(cancellationToken));
+
+                var client = _httpClientFactory.CreateClient();
+                var clientResponse = await client.SendAsync(request, cancellationToken);
+                clientResponse.EnsureSuccessStatusCode();
+
+                _logger.LogInformation("Feedback sent to Copilot for AI comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending feedback to Copilot for AI comment {CommentId} in review {ReviewId}", comment.Id, comment.ReviewId);
+            }
         }
 
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;

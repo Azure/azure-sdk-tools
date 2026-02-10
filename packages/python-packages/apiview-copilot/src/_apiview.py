@@ -497,7 +497,8 @@ def get_ai_comment_feedback(
             EXISTS(SELECT VALUE f FROM f IN c.Feedback 
                    WHERE f.SubmittedOn >= @start_date AND f.SubmittedOn <= @end_date)
             OR EXISTS(SELECT VALUE ch FROM ch IN c.ChangeHistory 
-                      WHERE ch.ChangedOn >= @start_date AND ch.ChangedOn <= @end_date)
+                      WHERE ch.ChangedOn >= @start_date AND ch.ChangedOn <= @end_date
+                      AND ch.ChangeAction = 'Deleted')
         )
     """
 

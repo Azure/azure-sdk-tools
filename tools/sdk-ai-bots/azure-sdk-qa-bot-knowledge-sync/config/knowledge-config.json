@@ -88,6 +88,16 @@
           "metadata": {
             "scope": "branded"
           }
+        },
+        {
+          "description": "TypeSpec Azure Resource Manager library",
+          "path": "packages/typespec-azure-resource-manager/lib",
+          "relativeByRepoPath": true,
+          "folder": "typespec-azure-resource-manager-lib",
+          "metadata": {
+            "scope": "branded",
+            "service_type": "management-plane"
+          }
         }
       ]
     },

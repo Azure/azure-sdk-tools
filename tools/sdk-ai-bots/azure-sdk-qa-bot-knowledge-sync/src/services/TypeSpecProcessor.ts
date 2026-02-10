@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import path from 'path';
 
 interface TypeSpecDefinition {
     type: 'model' | 'operation' | 'interface' | 'enum' | 'union' | 'alias' | 'namespace' | 'scalar';
@@ -10,16 +11,66 @@ interface TypeSpecDefinition {
 }
 
 export class TypeSpecProcessor {
+    private workDir: string;
+    private relativeLibDir: string;
+    private srcDir: string;
+    private destDir: string;
+    constructor(workDir: string, relativeLibDir: string) {
+        this.workDir = workDir;
+        this.relativeLibDir = relativeLibDir;
+        this.srcDir = path.join(this.workDir, this.relativeLibDir);
+        this.destDir = path.join(this.workDir, this.relativeLibDir, "generated");
+    }
+    public processTypeSpecLibraries(): void {
+        if (!fs.existsSync(this.srcDir) || !fs.statSync(this.srcDir).isDirectory()) {
+            console.error(`Typespec library directory not found or is not a directory: ${this.srcDir}`);
+            throw new Error(`Typespec library directory not found or is not a directory: ${this.srcDir}`);
+        }
+
+        if (!fs.existsSync(this.destDir)) {
+            try {
+                fs.mkdirSync(this.destDir);
+            } catch(error) {
+                console.error(`Failed to create destination directory ${this.destDir}.`, error)
+                throw error;
+            }
+        }
+        // Recursively list all .tsp files in srcDir
+        const tspFiles: string[] = [];
+        function walk(dir: string) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    walk(fullPath);
+                } else if (entry.isFile() && entry.name.endsWith('.tsp')) {
+                    tspFiles.push(fullPath);
+                }
+            }
+        }
+        walk(this.srcDir);
+        console.log('Found .tsp files:', tspFiles);
+        
+        for (const tspFile of tspFiles) {
+            const relativepath = path.relative(this.srcDir, tspFile);
+            // Replace all / or \ with -
+            const safeName = relativepath.replace(/[\\/]/g, "-");
+            const mdFile = path.join(this.destDir, safeName.replace(".tsp", ".md"));
+            this.convertTypeSpecToMarkdown(tspFile, mdFile);
+        }
+    }
+
     /**
      * Convert a TypeSpec file to a Markdown file.
      * Each definition (model, operation, interface, enum, etc.) becomes a chapter
      * with the name as title and the TypeSpec code as content.
      */
-    public convertTypeSpecToMarkdown(tspFile: string, mkFile: string): void {
+    private convertTypeSpecToMarkdown(tspFile: string, mdFile: string): void {
         const content = fs.readFileSync(tspFile, 'utf-8');
         const definitions = this.parseTypeSpecDefinitions(content);
-        const markdown = this.generateMarkdown(definitions, tspFile);
-        fs.writeFileSync(mkFile, markdown, 'utf-8');
+        const relativepath = path.relative(this.workDir, tspFile);
+        const markdown = this.generateMarkdown(definitions, relativepath);
+        fs.writeFileSync(mdFile, markdown, 'utf-8');
     }
 
     /**
@@ -37,16 +88,6 @@ export class TypeSpecProcessor {
      * - **Definition body**: The full code of the definition, including multi-line brace-delimited
      *   blocks (e.g., `model Foo { ... }`) and single/multi-line semicolon-terminated statements
      *   (e.g., `alias Foo = string;`).
-     *
-     * The parser uses a simple state machine that tracks:
-     * 1. Whether it is currently inside a block comment, collecting comment lines.
-     * 2. Whether it is inside a definition body, using brace counting (`{` / `}`) to determine
-     *    when a brace-delimited definition is complete, or watching for a terminating semicolon
-     *    for single-statement definitions that span multiple lines.
-     *
-     * Accumulated decorators and comments are associated with the next definition encountered.
-     * If a non-relevant line is found (not a comment, decorator, `import`, or `using`), the
-     * accumulated decorators and comments are reset.
      *
      * @param content - The raw string content of a TypeSpec (`.tsp`) file to parse.
      * @returns An array of {@link TypeSpecDefinition} objects representing each parsed definition,

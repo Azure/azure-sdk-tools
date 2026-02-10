@@ -6,6 +6,7 @@ import { SpectorCaseProcessor } from './services/SpectorCaseProcessor';
 import { ConfigurationLoader, RepositoryConfig, DocumentationSource, Metadata } from './services/ConfigurationLoader';
 import { SearchService } from './services/SearchService';
 import { MetadataResolver } from './services/MetadataResolver';
+import { TypeSpecProcessor } from './services/TypeSpecProcessor';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -74,6 +75,9 @@ export async function processDailySyncKnowledge(): Promise<void> {
         
         // Preprocess spector cases
         await preprocessSpectorCases(docsDir);
+
+        console.log(`processing typespec-azure-resource-manager library`);
+        new TypeSpecProcessor(workingDir, "typespec-azure/packages/typespec-azure-resource-manager").processTypeSpecLibraries();
 
         console.log('Processing documentation sources...');
         

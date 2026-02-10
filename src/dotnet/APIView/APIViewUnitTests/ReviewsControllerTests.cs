@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using APIView.Identity;
 using APIViewWeb;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanControllers;
@@ -9,6 +11,7 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Repositories;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
@@ -30,6 +33,7 @@ namespace APIViewUnitTests
         private readonly UserProfileCache _userProfileCache;
         private readonly Mock<IHubContext<SignalRHub>> _mockSignalRHubContext;
         private readonly Mock<INotificationManager> _mockNotificationManager;
+        private readonly Mock<IPermissionsManager> _mockPermissionsManager;
         private readonly ReviewsController _controller;
 
         public ReviewsControllerTests()
@@ -42,6 +46,7 @@ namespace APIViewUnitTests
             _mockConfiguration = new Mock<IConfiguration>();
             _mockSignalRHubContext = new Mock<IHubContext<SignalRHub>>();
             _mockNotificationManager = new Mock<INotificationManager>();
+            _mockPermissionsManager = new Mock<IPermissionsManager>();
 
             var mockMemoryCache = new Mock<IMemoryCache>();
             var mockUserProfileManager = new Mock<IUserProfileManager>();
@@ -63,7 +68,8 @@ namespace APIViewUnitTests
                 _userProfileCache,
                 mockLanguageServices,
                 _mockSignalRHubContext.Object,
-                _mockNotificationManager.Object);
+                _mockNotificationManager.Object,
+                _mockPermissionsManager.Object);
         }
 
         [Theory]
@@ -238,6 +244,121 @@ namespace APIViewUnitTests
                 .ReturnsAsync(apiRevisions);
 
             return await _controller.GetIsReviewVersionReviewedByCopilot(reviewId, packageVersion);
+        }
+
+        [Fact]
+        public async Task GetReviewRevisionCount_ReturnsCorrectCount()
+        {
+            // Arrange
+            string reviewId = "test-review-id";
+            var apiRevisions = new List<APIRevisionListItemModel>
+            {
+                new() { Id = "rev1", Files = [new APICodeFileModel { PackageVersion = "1.0.0" }] },
+                new() { Id = "rev2", Files = [new APICodeFileModel { PackageVersion = "2.0.0" }] },
+                new() { Id = "rev3", Files = [new APICodeFileModel { PackageVersion = "3.0.0" }] }
+            };
+
+            _mockApiRevisionsManager
+                .Setup(m => m.GetAPIRevisionsAsync(reviewId, "", APIRevisionType.All))
+                .ReturnsAsync(apiRevisions);
+
+            // Act
+            var result = await _controller.GetReviewRevisionCount(reviewId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Result.Should().BeOfType<OkObjectResult>();
+            var okResult = result.Result as OkObjectResult;
+            okResult!.Value.Should().Be(3);
+        }
+
+        [Fact]
+        public async Task GetReviewRevisionCount_WhenNoRevisions_ReturnsZero()
+        {
+            // Arrange
+            string reviewId = "test-review-id";
+            var apiRevisions = new List<APIRevisionListItemModel>();
+
+            _mockApiRevisionsManager
+                .Setup(m => m.GetAPIRevisionsAsync(reviewId, "", APIRevisionType.All))
+                .ReturnsAsync(apiRevisions);
+
+            // Act
+            var result = await _controller.GetReviewRevisionCount(reviewId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Result.Should().BeOfType<OkObjectResult>();
+            var okResult = result.Result as OkObjectResult;
+            okResult!.Value.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task DeleteReviewAsync_WhenUserIsNotAdmin_ReturnsForbidden()
+        {
+            // Arrange
+            string reviewId = "test-review-id";
+            string userName = "testuser";
+
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new(ClaimConstants.Login, userName),
+                new(System.Security.Claims.ClaimTypes.Name, "Test User")
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            _mockPermissionsManager
+                .Setup(m => m.IsAdminAsync(userName))
+                .ReturnsAsync(false);
+
+            // Act
+            var result = await _controller.DeleteReviewAsync(reviewId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeOfType<ObjectResult>();
+            var objectResult = result as ObjectResult;
+            objectResult!.StatusCode.Should().Be(403);
+            objectResult.Value.Should().Be("Only administrators can delete reviews.");
+        }
+
+        [Fact]
+        public async Task DeleteReviewAsync_WhenUserIsAdmin_CallsSoftDeleteAndReturnsOk()
+        {
+            // Arrange
+            string reviewId = "test-review-id";
+            string userName = "adminuser";
+
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new(ClaimConstants.Login, userName),
+                new(System.Security.Claims.ClaimTypes.Name, "Admin User")
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            _mockPermissionsManager
+                .Setup(m => m.IsAdminAsync(userName))
+                .ReturnsAsync(true);
+
+            _mockReviewManager
+                .Setup(m => m.SoftDeleteReviewAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>(), reviewId))
+                .Returns(Task.CompletedTask);
+
+            // Act
+            var result = await _controller.DeleteReviewAsync(reviewId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeOfType<OkResult>();
+            _mockReviewManager.Verify(m => m.SoftDeleteReviewAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>(), reviewId), Times.Once);
         }
     }
 }

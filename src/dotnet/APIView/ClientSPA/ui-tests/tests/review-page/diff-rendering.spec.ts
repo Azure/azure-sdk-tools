@@ -43,12 +43,12 @@ test.describe('Review Page - Diff Rendering', () => {
     
     if (await treeStyleButton.count() > 0) {
       await treeStyleButton.click();
-      await page.waitForTimeout(1000); 
       await page.waitForSelector('app-code-panel .code-line', { timeout: 10000 });
+      await expect(page.locator('app-code-panel .code-line').first()).toBeVisible();
       
       await fullStyleButton.click();
-      await page.waitForTimeout(1000);
       await page.waitForSelector('app-code-panel .code-line', { timeout: 10000 });
+      await expect(page.locator('app-code-panel .code-line').first()).toBeVisible();
     }
     
     await page.waitForSelector('app-code-panel');
@@ -73,7 +73,7 @@ test.describe('Review Page - Diff Rendering', () => {
       const isChecked = await docToggle.first().isChecked();
       if (!isChecked) {
         await docToggle.first().check();
-        await page.waitForTimeout(500);
+        await expect(docToggle.first()).toBeChecked();
       }
     }
     
@@ -89,8 +89,8 @@ test.describe('Review Page - Diff Rendering', () => {
     const treeStyleButton = page.locator('input[type="radio"][value="trees"]');
     if (await treeStyleButton.count() > 0) {
       await treeStyleButton.click();
-      await page.waitForTimeout(1000);
       await page.waitForSelector('app-code-panel .code-line', { timeout: 10000 });
+      await expect(page.locator('app-code-panel .code-line').first()).toBeVisible();
     }
     
     const codeLines = page.locator('app-code-panel .code-line');

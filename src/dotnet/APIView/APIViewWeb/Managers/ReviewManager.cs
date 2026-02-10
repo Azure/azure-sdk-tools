@@ -315,12 +315,16 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="id"></param>
+        /// <param name="skipOwnerCheck">When true, skips the review owner authorization check (e.g. for admin deletions).</param>
         /// <returns></returns>
-        public async Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id)
+        public async Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id, bool skipOwnerCheck = false)
         {
             var review = await _reviewsRepository.GetReviewAsync(id);
             var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(id);
-            await ManagerHelpers.AssertReviewOwnerAsync(user, review, _authorizationService);
+            if (!skipOwnerCheck)
+            {
+                await ManagerHelpers.AssertReviewOwnerAsync(user, review, _authorizationService);
+            }
 
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(review.ChangeHistory, ReviewChangeAction.Deleted, user.GetGitHubLogin());
             review.ChangeHistory = changeUpdate.ChangeHistory;

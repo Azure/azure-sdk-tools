@@ -349,7 +349,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(true);
 
             _mockReviewManager
-                .Setup(m => m.SoftDeleteReviewAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>(), reviewId))
+                .Setup(m => m.SoftDeleteReviewAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>(), reviewId, true))
                 .Returns(Task.CompletedTask);
 
             // Act
@@ -358,7 +358,44 @@ namespace APIViewUnitTests
             // Assert
             result.Should().NotBeNull();
             result.Should().BeOfType<OkResult>();
-            _mockReviewManager.Verify(m => m.SoftDeleteReviewAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>(), reviewId), Times.Once);
+            _mockReviewManager.Verify(m => m.SoftDeleteReviewAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>(), reviewId, true), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteReviewAsync_WhenAuthorizationFails_ReturnsForbidden()
+        {
+            // Arrange
+            string reviewId = "test-review-id";
+            string userName = "adminuser";
+
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new(ClaimConstants.Login, userName),
+                new(System.Security.Claims.ClaimTypes.Name, "Admin User")
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            _mockPermissionsManager
+                .Setup(m => m.IsAdminAsync(userName))
+                .ReturnsAsync(true);
+
+            _mockReviewManager
+                .Setup(m => m.SoftDeleteReviewAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>(), reviewId, true))
+                .ThrowsAsync(new AuthorizationFailedException());
+
+            // Act
+            var result = await _controller.DeleteReviewAsync(reviewId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Should().BeOfType<ObjectResult>();
+            var objectResult = result as ObjectResult;
+            objectResult!.StatusCode.Should().Be(403);
+            objectResult.Value.Should().Be("You are not authorized to delete this review.");
         }
     }
 }

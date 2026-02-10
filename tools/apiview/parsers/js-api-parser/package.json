@@ -33,7 +33,7 @@
     "build": "npm run clean && tsc -p .",
     "watch": "tsc -p . -watch",
     "clean": "rimraf dist/",
-    "format": "prettier --write ./src ./*.{js,mjs,json} ./bin/*.*js",
+    "format": "prettier --write ./src ./*.{js,mjs,json} ./bin/*.*js ./test/",
     "lint": "eslint src",
     "test": "vitest"
   },

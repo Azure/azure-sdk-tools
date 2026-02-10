@@ -59,20 +59,12 @@ public static class CoreRequirements
             RequirementContext ctx,
             CancellationToken ct = default)
         {
-            string[] command;
+            // Use npm exec with --prefix to run the locally installed tsp-client
+            var tspClientPath = ctx.IsSpecsRepo()
+                ? ctx.RepoRoot
+                : Path.Combine(ctx.RepoRoot, "eng", "common", "tsp-client");
 
-            // specs repo uses a different check
-            if (ctx.IsSpecsRepo())
-            {
-                command = ["tsp-client", "--version"];
-            }
-            else
-            {
-                // Use absolute path to eng/common/tsp-client
-                var tspClientPath = Path.Combine(ctx.RepoRoot, "eng", "common", "tsp-client");
-
-                command = ["npm", "exec", "--prefix", tspClientPath, "--no", "--", "tsp-client", "--version"];
-            }
+            var command = new[] { "npm", "exec", "--prefix", tspClientPath, "--no", "--", "tsp-client", "--version" };
 
             var result = await RunCommandAsync(processHelper, command, ctx, ct);
             return new RequirementCheckOutput
@@ -98,6 +90,33 @@ public static class CoreRequirements
                 return [["npm", "ci", "--prefix", ctx.RepoRoot]];
             }
             return [["npm", "install", "-g", "@typespec/compiler@latest"]];
+        }
+
+        public override async Task<RequirementCheckOutput> RunCheckAsync(
+            IProcessHelper processHelper,
+            RequirementContext ctx,
+            CancellationToken ct = default)
+        {
+            string[] command;
+
+            if (ctx.IsSpecsRepo())
+            {
+                // Use npm exec with --prefix to run the locally installed tsp
+                command = ["npm", "exec", "--prefix", ctx.RepoRoot, "--no", "--", "tsp", "--version"];
+            }
+            else
+            {
+                // Non-specs repos install globally, so use tsp directly
+                command = CheckCommand;
+            }
+
+            var result = await RunCommandAsync(processHelper, command, ctx, ct);
+            return new RequirementCheckOutput
+            {
+                Success = result.ExitCode == 0,
+                Output = result.Output?.Trim(),
+                Error = result.ExitCode != 0 ? result.Output?.Trim() : null
+            };
         }
     }
 

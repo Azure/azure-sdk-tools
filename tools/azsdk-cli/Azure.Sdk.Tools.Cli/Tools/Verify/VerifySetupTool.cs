@@ -241,7 +241,6 @@ public class VerifySetupTool : LanguageMcpTool
 
             if (!checkResult.Success)
             {
-                var instructions = req.GetInstructions(ctx);
                 logger.LogError("Requirement {Requirement} check failed", 
                     req.Name);
                 return new DefaultCommandResponse

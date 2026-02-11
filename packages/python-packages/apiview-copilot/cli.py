@@ -592,7 +592,11 @@ def handle_agent_chat(
 
 
 def handle_agent_mention(
-    comments_path: str = None, comment_id: str = None, environment: str = "production", remote: bool = False
+    comments_path: str = None,
+    comment_id: str = None,
+    environment: str = "production",
+    remote: bool = False,
+    dry_run: bool = False,
 ):
     """
     Handles @mention requests from the agent.
@@ -637,7 +641,7 @@ def handle_agent_mention(
         # Manufacture a conversation: the original AI comment followed by the feedback
         comments = [
             f"[APIView Copilot]: {original_text}",
-            f"[Reviewer feedback]: {feedback_text} Please address this feedback by updating the knowledge base.",
+            f"[Reviewer feedback]: {feedback_text}",
         ]
 
         print(f"Processing feedback for comment '{comment_id}':")
@@ -660,10 +664,25 @@ def handle_agent_mention(
         package_name = data.get("package_name", None)
         code = data.get("code", None)
 
-    if language not in SUPPORTED_LANGUAGES:
+    # Normalize language to the lowercase APIView format expected by SUPPORTED_LANGUAGES
+    # (get_comment_with_context returns pretty names like "Java" but SUPPORTED_LANGUAGES uses "java")
+    normalized_language = normalize_language(language).lower() if language else language
+    apiview_language = next((l for l in SUPPORTED_LANGUAGES if l.lower() == normalized_language), None)
+    if not apiview_language:
         print(f"Unsupported language `{language}`")
         return
-    pretty_language = get_language_pretty_name(language)
+    pretty_language = get_language_pretty_name(apiview_language)
+
+    if dry_run:
+        payload = {
+            "comments": comments,
+            "language": pretty_language,
+            "packageName": package_name,
+            "code": code,
+        }
+        print(f"{BOLD_BLUE}=== DRY RUN: Mention Agent Payload ==={RESET}")
+        print(json.dumps(payload, indent=2))
+        return
 
     if remote:
         settings = SettingsManager()
@@ -708,10 +727,13 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
     language = data.get("language", None)
     package_name = data.get("package_name", None)
     code = data.get("code", None)
-    if language not in SUPPORTED_LANGUAGES:
+    # Normalize language to the lowercase APIView format expected by SUPPORTED_LANGUAGES
+    normalized_language = normalize_language(language).lower() if language else language
+    apiview_language = next((l for l in SUPPORTED_LANGUAGES if l.lower() == normalized_language), None)
+    if not apiview_language:
         print(f"Unsupported language `{language}`")
         return
-    pretty_language = get_language_pretty_name(language)
+    pretty_language = get_language_pretty_name(apiview_language)
 
     if remote:
         settings = SettingsManager()
@@ -1633,6 +1655,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment", "-e"],
                 default="production",
                 choices=["production", "staging"],
+            )
+            ac.argument(
+                "dry_run",
+                help="Print the payload that would be sent to the mention agent without executing it.",
+                options_list=["--dry-run"],
+                action="store_true",
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(

@@ -745,6 +745,70 @@ def resolve_package(
         return None
 
 
+def _extract_code_for_element(full_text: str, element_id: Optional[str], context_lines: int = 5) -> Optional[str]:
+    """
+    Extract the code line matching the ElementId from the full APIView revision text,
+    plus surrounding context lines.
+
+    The APIView text has lines of the form "123: <code>" where 123 is a line number.
+    The ElementId is a semantic identifier (e.g.,
+    "com.azure.cosmos.models.QuantizerType.public-String-toString()") that encodes part
+    of the code on the line it's attached to.
+
+    If no match is found, falls back to the ElementId itself.
+
+    Args:
+        full_text: The full APIView revision text
+        element_id: The ElementId from the comment
+        context_lines: Number of lines of context to include before and after the matched line
+
+    Returns:
+        The extracted code snippet, or None if no text is available
+    """
+    if not full_text:
+        return None
+
+    if not element_id:
+        return None
+
+    lines = full_text.splitlines()
+
+    # Build search terms from the ElementId by extracting the meaningful parts.
+    # ElementIds look like:
+    #   "com.azure.cosmos.models.QuantizerType.public-String-toString()"
+    #   "maven-lineid-properties-com.azure:azure-json:1.5.1"
+    # We convert hyphens to spaces to approximate how the code line reads.
+    # Then search for the line that best matches.
+    # Take the last segment after the last dot that contains hyphens (the method/member signature)
+    search_parts = element_id.replace("-", " ").replace("(", "(").replace(")", ")")
+
+    best_idx = None
+    best_score = 0
+
+    for i, line in enumerate(lines):
+        # Strip the line number prefix if present (e.g., "123: ")
+        stripped = re.sub(r"^\d+:\s*", "", line).strip()
+        if not stripped:
+            continue
+
+        # Score: count how many words from the search_parts appear in the line
+        search_words = [w.lower() for w in search_parts.split() if len(w) > 1]
+        line_lower = stripped.lower()
+        score = sum(1 for w in search_words if w in line_lower)
+
+        if score > best_score:
+            best_score = score
+            best_idx = i
+
+    if best_idx is not None and best_score > 0:
+        start = max(0, best_idx - context_lines)
+        end = min(len(lines), best_idx + context_lines + 1)
+        return "\n".join(lines[start:end])
+
+    # Fallback: return the ElementId as-is for context
+    return element_id
+
+
 def get_comment_with_context(comment_id: str, environment: str = "production") -> Optional[dict]:
     """
     Retrieves a comment by its ID from the APIView database along with its related context
@@ -812,56 +876,67 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
                 language = get_language_pretty_name(review_results[0].get("Language", ""))
                 package_name = review_results[0].get("PackageName", "")
 
-        # Get code from the revision
+        # Get code from the revision - extract only the line matching the ElementId
         code = None
+        element_id = comment.get("ElementId")
         if revision_id:
             try:
                 client = ApiViewClient(environment=environment)
-                code = asyncio.run(client.get_revision_text(revision_id=revision_id))
+                full_text = asyncio.run(client.get_revision_text(revision_id=revision_id))
+                code = _extract_code_for_element(full_text, element_id)
             except Exception as e:
                 print(f"Warning: Could not fetch revision content: {e}")
                 code = None
 
-        # Build feedback text from the Feedback entries
+        # Build feedback text mirroring the C# ApiView structure (CommentFeedbackRequest.cs)
+        # Maps AICommentFeedbackReason enum values to human-readable messages
+        FEEDBACK_REASON_MESSAGES = {
+            "FactuallyIncorrect": "This comment is factually incorrect.",
+            "RenderingBug": "This is a rendering bug in the associated language parser. Please open an issue to correct.",
+            "AcceptedRenderingChoice": (
+                "This is how things are deliberately rendered in APIView. It is not a valid comment."
+            ),
+            "AcceptedSDKPattern": ("This is a pattern we accept and encourage in our SDKs. DO NOT suggest otherwise."),
+            "OutdatedGuideline": (
+                "This is a valid comment for the guideline listed, but this guideline itself is out-of-date."
+                " Please open an issue."
+            ),
+        }
+
         feedback_entries = comment.get("Feedback") or []
-        change_history = comment.get("ChangeHistory") or []
-        upvotes = comment.get("Upvotes") or []
-        downvotes = comment.get("Downvotes") or []
-        is_deleted = comment.get("IsDeleted", False)
+        feedback_messages = []
 
-        feedback_parts = []
-
-        # Add feedback from Feedback array entries
         for fb in feedback_entries:
-            fb_text = fb.get("FeedbackText", "").strip()
-            fb_type = fb.get("FeedbackType", "")
             fb_user = fb.get("SubmittedBy", "unknown")
-            if fb_text:
-                feedback_parts.append(f"[{fb_type} by {fb_user}]: {fb_text}")
-            elif fb_type:
-                feedback_parts.append(f"[{fb_type} by {fb_user}]")
+            reasons = fb.get("Reasons") or []
+            is_delete = fb.get("IsDelete", False)
+            fb_comment = (fb.get("Comment") or "").strip()
 
-        # Add info about upvotes/downvotes
-        if len(downvotes) > 0:
-            feedback_parts.append(f"This comment received {len(downvotes)} downvote(s).")
-        if len(upvotes) > 0:
-            feedback_parts.append(f"This comment received {len(upvotes)} upvote(s).")
+            parts = []
+            # Map each reason to its human-readable message
+            for reason in reasons:
+                msg = FEEDBACK_REASON_MESSAGES.get(reason, reason)
+                parts.append(msg)
 
-        # Add info about deletion
-        if is_deleted:
-            # Try to find who deleted it from change history
-            deletion_info = None
-            for change in change_history:
-                if change.get("ChangeAction") == "Deleted":
-                    deletion_info = change
-                    break
-            if deletion_info:
-                deleted_by = deletion_info.get("ChangedBy", "unknown")
-                feedback_parts.append(f"This comment was deleted by {deleted_by}.")
-            else:
-                feedback_parts.append("This comment was deleted.")
+            # Flag deletion
+            if is_delete:
+                parts.append(
+                    "This comment was flagged for deletion by the user, which means it was so egregiously bad"
+                    " that they didn't even want the service team to see it."
+                )
 
-        feedback_text = " ".join(feedback_parts) if feedback_parts else "Feedback was provided but no details."
+            # Append additional comment text
+            if fb_comment:
+                parts.append(f"Additional feedback: {fb_comment}")
+
+            if parts:
+                feedback_text_block = (
+                    f"@azure-sdk user '{fb_user}' has provided the following feedback"
+                    f" on your previous comment:\n\n" + "\n".join(f"- {p}" for p in parts)
+                )
+                feedback_messages.append(feedback_text_block)
+
+        feedback_text = "\n\n".join(feedback_messages) if feedback_messages else "Feedback was provided but no details."
 
         return {
             "comment": comment,

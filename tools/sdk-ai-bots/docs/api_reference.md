@@ -27,9 +27,9 @@ The Azure SDK Knowledge Base API provides AI-powered Q&A capabilities for Azure 
 
 ### API Endpoint
 
-| Environment | Endpoint |
-|-------------|----------|
-| Production | `https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net` |
+| Environment | Endpoint | Auth Scope |
+|-------------|----------|------------|
+| Production | `https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net` | `api://azure-sdk-qa-bot` |
 
 ### Authentication
 
@@ -38,6 +38,8 @@ The API uses Azure AD Bearer token authentication.
 #### For Programmatic Integration (Recommended)
 
 Use the **Azure Identity SDK** with `DefaultAzureCredential`, which automatically handles various authentication scenarios including managed identity, Visual Studio credentials, Azure CLI, and interactive browser login.
+
+> **Note**: The authentication scope varies by environment. Use `api://azure-sdk-qa-bot` for production.
 
 **C# Example:**
 

@@ -94,13 +94,6 @@ namespace APIViewWeb.Managers
             }
         }
 
-        public async Task NotifySubscribersOnNewRevisionAsync(ReviewListItemModel review, APIRevisionListItemModel revision, ClaimsPrincipal user)
-        {
-            var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}");
-            var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{PageModelHelpers.ResolveRevisionLabel(revision)}</a>," +
-                $" was uploaded by <b>{revision.CreatedBy}</b>.";
-            await SendEmailsAsync(review, user, htmlContent, null);
-        }
         /// <summary>
         /// Toggle Subscription to a Review
         /// </summary>

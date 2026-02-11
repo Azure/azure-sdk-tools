@@ -603,7 +603,6 @@ namespace APIViewWeb.Managers
             await _notificationManager.SubscribeAsync(review, user);
             await _reviewsRepository.UpsertReviewAsync(review);
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
-            await _notificationManager.NotifySubscribersOnNewRevisionAsync(review, apiRevision, user);
 
             if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
             {

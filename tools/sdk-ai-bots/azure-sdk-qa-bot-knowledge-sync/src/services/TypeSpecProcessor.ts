@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import path from 'path';
 
+type TypeSpecDefinitionType = 'model' | 'operation' | 'interface' | 'enum' | 'union' | 'alias' | 'namespace' | 'scalar';
 interface TypeSpecDefinition {
-    type: 'model' | 'operation' | 'interface' | 'enum' | 'union' | 'alias' | 'namespace' | 'scalar';
+    type: TypeSpecDefinitionType;
     name: string;
     code: string;
     decorators: string[];
@@ -123,48 +124,9 @@ export class TypeSpecProcessor {
                             break;
                         }
                     }
-
-                    let blockCommentLines: string[] = [];
-                    let currentDecorators: string[] = [];
-                    let inBlockComment = false;
-                    for (let n = currentDefinitionStart; n < currentDefinitionBodyStart; n++) {
-                        const definitionLine = lines[n];
-                        const trimmed = definitionLine.trim();
-                        // Handle block comments /** ... */
-                        if (trimmed.startsWith('/**') && !inBlockComment) {
-                            // Check if block comment ends on same line
-                            if (!trimmed.endsWith('*/')) {
-                                blockCommentLines.push(trimmed);
-                                inBlockComment = true;
-                            }
-                            continue;
-                        }
-                        if (inBlockComment) {
-                            blockCommentLines.push(trimmed);
-                            if (trimmed.endsWith('*/')) {
-                                inBlockComment = false;
-                            }
-                        }
-
-                        // Handle single-line comments //
-                        if (trimmed.startsWith('//')) {
-                            blockCommentLines.push(trimmed);
-                            continue;
-                        }
-                        if (trimmed.startsWith('@')) {
-                            currentDecorators.push(trimmed);
-                            continue;
-                        }
-                    }
-                    const description = this.extractDescription(currentDecorators, blockCommentLines);
-                    definitions.push({
-                        type: currentType,
-                        name: currentName,
-                        code: lines.slice(currentDefinitionStart, currentDefinitionEnd + 1).join('\n'),
-                        decorators: currentDecorators,
-                        description,
-                        comments: blockCommentLines
-                    });
+                    const definition = this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, i);
+                    definitions.push(definition);
+                    
                     currentDefinitionStart = l + 1;
                     currentDefinitionBodyStart = i;
                     currentType = definitionMatch.type;
@@ -173,10 +135,79 @@ export class TypeSpecProcessor {
             }
         }
 
+        //handle the last definition
+        definitions.push(this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length -1));
         return definitions;
     }
 
 
+    private parseDefinition(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionBodyStart: number, nextDefinitionStart: number): TypeSpecDefinition {
+        let definitionEnd = -1;
+        for (let l = nextDefinitionStart; l > definitionStart; l--) {
+            let trim = lines[l].trim();
+            if (trim.endsWith(';') || trim.endsWith('}')) {
+                definitionEnd = l;
+                break;
+            }
+        }
+
+        let blockCommentLines: string[] = [];
+        let currentDecorators: string[] = [];
+        let inBlockComment = false;
+        let inDecoratorBlock = false;
+        let parenthesisCount = 0;
+        for (let n = definitionStart; n < definitionBodyStart; n++) {
+            const definitionLine = lines[n];
+            const trimmed = definitionLine.trim();
+            // Handle block comments /** ... */
+            if (trimmed.startsWith('/**') && !inBlockComment) {
+                // Check if block comment ends on same line
+                if (!trimmed.endsWith('*/')) {
+                    blockCommentLines.push(trimmed);
+                    inBlockComment = true;
+                }
+                continue;
+            }
+            if (inBlockComment) {
+                blockCommentLines.push(trimmed);
+                if (trimmed.endsWith('*/')) {
+                    inBlockComment = false;
+                }
+            }
+
+            // Handle single-line comments //
+            if (trimmed.startsWith('//')) {
+                blockCommentLines.push(trimmed);
+                continue;
+            }
+            if (trimmed.startsWith('@') && !inDecoratorBlock) {
+                parenthesisCount = parenthesisCount + (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+                currentDecorators.push(trimmed);
+                inDecoratorBlock = true;
+                if ((trimmed.match(/\(/g) || []).length === 0 || (trimmed.endsWith(')') && parenthesisCount === 0)) {
+                    inDecoratorBlock = false;
+                }
+                continue;
+            }
+            if (inDecoratorBlock) {
+                // currentDecorators.push(trimmed);
+                currentDecorators[currentDecorators.length - 1] = currentDecorators[currentDecorators.length - 1].concat("\n", trimmed);
+                parenthesisCount = parenthesisCount + (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+                if (trimmed.endsWith(')') && parenthesisCount === 0) {
+                    inDecoratorBlock = false;
+                }
+            }
+        }
+        const description = this.extractDescription(currentDecorators, blockCommentLines);
+        return {
+            type: definitionType,
+            name: definitionName,
+            code: lines.slice(definitionStart, definitionEnd + 1).join('\n'),
+            decorators: currentDecorators,
+            description,
+            comments: blockCommentLines
+        };
+    }
     /**
      * Extract description from @doc decorator or JSDoc-style comments.
      */

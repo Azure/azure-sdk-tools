@@ -594,7 +594,6 @@ def handle_agent_chat(
 def handle_agent_mention(
     comments_path: str = None,
     comment_id: str = None,
-    environment: str = "production",
     remote: bool = False,
     dry_run: bool = False,
 ):
@@ -607,6 +606,10 @@ def handle_agent_mention(
 
     At least one of --comments-path or --comment-id must be provided.
     """
+    environment = os.getenv("ENVIRONMENT_NAME")
+    if not environment:
+        print("Error: ENVIRONMENT_NAME environment variable is not set. Please set it in your .env file.")
+        return
     if not comments_path and not comment_id:
         print("Error: Either --comments-path or --comment-id must be provided.")
         return
@@ -1648,14 +1651,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--readonly", "-r"],
             )
         with ArgumentsContext(self, "agent mention") as ac:
-            ac.argument(
-                "environment",
-                type=str,
-                help="The APIView environment. Defaults to 'production'.",
-                options_list=["--environment", "-e"],
-                default="production",
-                choices=["production", "staging"],
-            )
             ac.argument(
                 "dry_run",
                 help="Print the payload that would be sent to the mention agent without executing it.",

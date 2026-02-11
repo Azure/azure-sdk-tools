@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -122,9 +124,10 @@ public class AutoReviewController : ControllerBase
         try
         {
             using var memoryStream = new MemoryStream();
-            var codeFile = await _codeFileManager.GetCodeFileAsync(repoName: repoName, buildId: buildId, artifactName: artifactName,
+            CodeFileResult codeFileResult = await _codeFileManager.GetCodeFileAsync(repoName: repoName, buildId: buildId, artifactName: artifactName,
                 packageName: packageName, originalFileName: originalFilePath, codeFileName: reviewFilePath, originalFileStream: memoryStream,
                 project: project);
+            CodeFile codeFile = codeFileResult?.CodeFile;
 
             if (codeFile == null)
             {

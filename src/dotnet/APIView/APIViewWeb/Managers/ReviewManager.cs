@@ -249,12 +249,11 @@ namespace APIViewWeb.Managers
                 review = await GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language);
                 if (review == null)
                 {
-                    review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
+                    review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
                 }
             }
             return review;
         }
-
 
         /// <summary>
         /// Create Reviews
@@ -263,15 +262,16 @@ namespace APIViewWeb.Managers
         /// <param name="language"></param>
         /// <param name="isClosed"></param>
         /// <param name="packageType">Optional package type. If not provided, will be automatically classified.</param>
+        /// <param name="crossLanguagePackageId"></param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null)
+        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null, string crossLanguagePackageId = null)
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(language)) 
             {
                 throw new ArgumentException("Package Name and Language are required");
             }
 
-            ReviewListItemModel review = new ReviewListItemModel()
+            ReviewListItemModel review = new()
             {
                 PackageName = packageName,
                 Language = language,
@@ -279,15 +279,16 @@ namespace APIViewWeb.Managers
                 CreatedOn = DateTime.UtcNow,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,
                 IsClosed = isClosed,
-                ChangeHistory = new List<ReviewChangeHistoryModel>()
-                {
+                CrossLanguagePackageId = crossLanguagePackageId,
+                ChangeHistory =
+                [
                     new ReviewChangeHistoryModel()
                     {
                         ChangeAction = ReviewChangeAction.Created,
                         ChangedBy = ApiViewConstants.AzureSdkBotName,
                         ChangedOn = DateTime.UtcNow
                     }
-                }
+                ]
             };
 
             await _reviewsRepository.UpsertReviewAsync(review);

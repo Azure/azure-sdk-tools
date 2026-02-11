@@ -70,7 +70,7 @@ The review pipeline in `ApiViewReview.run()` follows these stages:
 ### Data Models
 
 - All models use **Pydantic v2** with `BaseModel`.
-- Cosmos DB models use camelCase aliases (`Field(alias="camelCase")`) with `populate_by_name = True`.
+- Cosmos DB models use field aliases that match their respective sources (for example, `ExistingComment` uses camelCase aliases with `populate_by_name = True`, while `APIViewComment` uses PascalCase aliases like `ReviewId` and `APIRevisionId` to mirror APIView payload fields).
 - The knowledge base consists of three entity types: `Guideline`, `Example`, and `Memory`, stored in separate Cosmos DB containers and indexed in Azure AI Search.
 
 ## Coding Conventions

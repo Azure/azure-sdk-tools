@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
 public class DelegateAPIViewFeedbackTool : MCPTool
 {
-    private const string ToolName = "azsdk_tsp_delegate_apiview_feedback";
+    private const string ToolName = "azsdk_typespec_delegate_apiview_feedback";
 
     private readonly IAPIViewFeedbackService _service;
     private readonly IGitHubService _gitHubService;

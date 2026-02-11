@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
 using Moq.Protected;
 using System.Net;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
@@ -19,6 +21,15 @@ public class UpgradeServiceTests
     private string testConfigDir;
     private UpgradeService upgradeService;
 
+    private sealed class FakeTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        private DateTimeOffset now = now;
+        public override DateTimeOffset GetUtcNow() => now;
+        public void SetUtcNow(DateTimeOffset utcNow) => now = utcNow;
+    }
+
+    private FakeTimeProvider timeProvider;
+
     [SetUp]
     public void Setup()
     {
@@ -29,12 +40,15 @@ public class UpgradeServiceTests
 
         // Use a unique temp directory for each test to avoid cache interference
         testConfigDir = Path.Combine(Path.GetTempPath(), $"azsdk-test-{Guid.NewGuid():N}");
+
+        timeProvider = new FakeTimeProvider(DateTimeOffset.Parse("2026-02-10T00:00:00Z"));
         upgradeService = new UpgradeService(
             logger,
             mockHttpClientFactory.Object,
             mockProcessHelper.Object,
             mockOutputHelper.Object,
-            testConfigDir);
+            testConfigDir,
+            timeProvider);
     }
 
     [TearDown]
@@ -54,6 +68,40 @@ public class UpgradeServiceTests
         }
     }
 
+    private void SetupMockHttpClient(string responseContent)
+    {
+        var mockHandler = new Mock<HttpMessageHandler>();
+        mockHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(responseContent)
+            });
+
+        var client = new HttpClient(mockHandler.Object);
+        mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
+    }
+
+    private static string GetCachePath(string configDir) => Path.Combine(configDir, "upgrade-cache.json");
+
+    private async Task WriteCache(CliUpgradeCache cache)
+    {
+        Directory.CreateDirectory(testConfigDir);
+        var json = JsonSerializer.Serialize(cache) + Environment.NewLine;
+        await File.WriteAllTextAsync(GetCachePath(testConfigDir), json);
+    }
+
+    private async Task<CliUpgradeCache> ReadCache()
+    {
+        var json = await File.ReadAllTextAsync(GetCachePath(testConfigDir));
+        return JsonSerializer.Deserialize<CliUpgradeCache>(json) ?? new CliUpgradeCache();
+    }
+
+
     [Test]
     public void GetCurrentVersion_ReturnsVersion()
     {
@@ -64,9 +112,7 @@ public class UpgradeServiceTests
     [Test]
     public void IsCurrentVersionPrerelease_ReturnsFalse_ForStableVersion()
     {
-        // The actual version is from the assembly, which is typically stable in tests
         var isPrerelease = upgradeService.IsCurrentVersionPrerelease();
-        // Just verify it returns a boolean without throwing
         Assert.That(isPrerelease, Is.TypeOf<bool>());
     }
 
@@ -181,21 +227,188 @@ public class UpgradeServiceTests
         Assert.That(version, Is.Null);
     }
 
-    private void SetupMockHttpClient(string responseContent)
+    [Test]
+    public async Task CheckLatestVersion_UsesCache_WhenFreshAndHasRemoteVersion()
     {
-        var mockHandler = new Mock<HttpMessageHandler>();
-        mockHandler
+        // Arrange
+        var now = timeProvider.GetUtcNow();
+        await WriteCache(new CliUpgradeCache
+        {
+            RemoteVersion = "1.2.3",
+            LastRemoteRefreshUtc = now - TimeSpan.FromHours(1),
+        });
+
+        // If the service unnecessarily refreshes, it would pick 9.9.9 and this test would fail.
+        SetupMockHttpClient("[{\"tag_name\":\"azsdk_9.9.9\",\"prerelease\":false}]");
+
+        // Act
+        var version = await upgradeService.CheckLatestVersion(includePrerelease: false, failSilently: false, ignoreCacheTtl: false, CancellationToken.None);
+
+        // Assert
+        Assert.That(version, Is.EqualTo("1.2.3"));
+    }
+
+    [Test]
+    public async Task CheckLatestVersion_Refreshes_WhenStale()
+    {
+        // Arrange
+        var now = timeProvider.GetUtcNow();
+        await WriteCache(new CliUpgradeCache
+        {
+            RemoteVersion = "1.0.0",
+            LastRemoteRefreshUtc = now - TimeSpan.FromDays(2),
+        });
+
+        SetupMockHttpClient("[{\"tag_name\":\"azsdk_1.2.3\",\"prerelease\":false}]");
+
+        // Act
+        var version = await upgradeService.CheckLatestVersion(includePrerelease: false, failSilently: false, ignoreCacheTtl: false, CancellationToken.None);
+
+        // Assert
+        Assert.That(version, Is.EqualTo("1.2.3"));
+
+        var cache = await ReadCache();
+        Assert.That(cache.RemoteVersion, Is.EqualTo("1.2.3"));
+        Assert.That(cache.LastRemoteRefreshUtc, Is.EqualTo(now));
+    }
+
+    [Test]
+    public async Task CheckLatestVersion_IgnoreCacheTtl_ForcesRefresh()
+    {
+        // Arrange
+        var now = timeProvider.GetUtcNow();
+        await WriteCache(new CliUpgradeCache
+        {
+            RemoteVersion = "1.2.2",
+            LastRemoteRefreshUtc = now - TimeSpan.FromHours(1),
+        });
+
+        SetupMockHttpClient("[{\"tag_name\":\"azsdk_1.2.3\",\"prerelease\":false}]");
+
+        // Act
+        var version = await upgradeService.CheckLatestVersion(includePrerelease: false, failSilently: false, ignoreCacheTtl: true, CancellationToken.None);
+
+        // Assert
+        Assert.That(version, Is.EqualTo("1.2.3"));
+    }
+
+    [Test]
+    public async Task CheckLatestVersion_FreshCacheButEmptyRemoteVersion_Refreshes()
+    {
+        // Arrange
+        var now = timeProvider.GetUtcNow();
+        await WriteCache(new CliUpgradeCache
+        {
+            RemoteVersion = null,
+            LastRemoteRefreshUtc = now - TimeSpan.FromHours(1),
+        });
+
+        SetupMockHttpClient("[{\"tag_name\":\"azsdk_9.9.9\",\"prerelease\":false}]");
+
+        // Act
+        var version = await upgradeService.CheckLatestVersion(includePrerelease: false, failSilently: false, ignoreCacheTtl: false, CancellationToken.None);
+
+        // Assert
+        Assert.That(version, Is.EqualTo("9.9.9"));
+    }
+
+    [Test]
+    public async Task TryShowUpgradeNotification_Throttled_DoesNotCallHttpOrOutput()
+    {
+        // Arrange
+        var now = timeProvider.GetUtcNow();
+        await WriteCache(new CliUpgradeCache
+        {
+            LastNotifyUtc = now - TimeSpan.FromDays(1),
+            RemoteVersion = "1.2.3",
+            LastRemoteRefreshUtc = now - TimeSpan.FromDays(1),
+        });
+
+        SetupMockHttpClient("[{\"tag_name\":\"azsdk_9.9.9\",\"prerelease\":false}]");
+
+        // Act
+        var shown = await upgradeService.TryShowUpgradeNotification(CancellationToken.None);
+
+        // Assert
+        Assert.That(shown, Is.False);
+        mockOutputHelper.Verify(o => o.OutputConsoleWarning(It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task TryShowUpgradeNotification_ShowsWarning_WhenUpgradeAvailable_UpdatesNotifyTimestamp()
+    {
+        // Arrange
+        var now = timeProvider.GetUtcNow();
+        await WriteCache(new CliUpgradeCache
+        {
+            LastNotifyUtc = now - TimeSpan.FromDays(10),
+            LastRemoteRefreshUtc = now - TimeSpan.FromDays(10),
+        });
+
+        SetupMockHttpClient("[{\"tag_name\":\"azsdk_9.9.9\",\"prerelease\":false}]");
+
+        // Act
+        var shown = await upgradeService.TryShowUpgradeNotification(CancellationToken.None);
+
+        // Assert
+        Assert.That(shown, Is.True);
+        mockOutputHelper.Verify(o => o.OutputConsoleWarning(It.Is<string>(s => s.Contains("Release notes:"))), Times.Once);
+        mockOutputHelper.Verify(o => o.OutputConsoleWarning(It.Is<string>(s => s.Contains("azsdk upgrade"))), Times.Once);
+
+        var cache = await ReadCache();
+        Assert.That(cache.LastNotifyUtc, Is.EqualTo(now));
+        Assert.That(cache.RemoteVersion, Is.EqualTo("9.9.9"));
+    }
+
+    [Test]
+    public async Task Upgrade_UsesDownloadAndExtractSeams_AndStartsTwoStepUpgrade()
+    {
+        // Arrange
+        var releasesJson = "[{\"tag_name\":\"azsdk_9.9.9\",\"prerelease\":false,\"assets\":[{\"name\":\"Azure.Sdk.Tools.Cli-standalone-linux-x64.tar.gz\",\"browser_download_url\":\"https://example.test/download\"}]}]";
+        SetupMockHttpClient(releasesJson);
+
+        var serviceMock = new Mock<UpgradeService>(
+            logger,
+            mockHttpClientFactory.Object,
+            mockProcessHelper.Object,
+            mockOutputHelper.Object,
+            testConfigDir,
+            timeProvider)
+        {
+            CallBase = true
+        };
+
+        serviceMock
             .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            .Setup<Task<string>>("DownloadFile", ItExpr.IsAny<string>(), ItExpr.IsAny<string>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync("/tmp/fake-archive.tar.gz");
+
+        serviceMock
+            .Protected()
+            .Setup<Task<string?>>("ExtractAndFindExecutable", ItExpr.IsAny<string>(), ItExpr.IsAny<string>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
             {
-                Content = new StringContent(responseContent)
+                var path = Path.Combine(testConfigDir, "fake-azsdk");
+                Directory.CreateDirectory(testConfigDir);
+                File.WriteAllText(path, "placeholder");
+                return path;
             });
 
-        var client = new HttpClient(mockHandler.Object);
-        mockHttpClientFactory.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(client);
+        mockProcessHelper
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
+
+        // Act
+        var result = await serviceMock.Object.Upgrade(targetVersion: "9.9.9", includePrerelease: false, CancellationToken.None);
+
+        // Assert
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.NewVersion, Is.EqualTo("9.9.9"));
+        Assert.That(result.DownloadUrl, Is.EqualTo("https://example.test/download"));
+
+        mockProcessHelper.Verify(p => p.Run(It.Is<ProcessOptions>(o =>
+            o.Args.Count >= 3 &&
+            o.Args[0] == "upgrade" &&
+            o.Args[1] == "--complete-upgrade"), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

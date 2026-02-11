@@ -65,7 +65,6 @@ internal class TypeSpecCustomizationServiceTests
     [Test]
     public async Task ApplyCustomization_WithRealCopilotSdk_CompletesSuccessfully()
     {
-
         if (!await CopilotTestHelper.IsCopilotAvailableAsync())
         {
             Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
@@ -112,7 +111,7 @@ internal class TypeSpecCustomizationServiceTests
         // The test verifies the service can run end-to-end with real LLM calls
         // The actual success may depend on the LLM's ability to complete the task
         Assert.That(result, Is.Not.Null);
-        
+
         // Log the result for manual inspection
         TestContext.WriteLine($"Success: {result.Success}");
         if (result.ChangesSummary?.Length > 0)

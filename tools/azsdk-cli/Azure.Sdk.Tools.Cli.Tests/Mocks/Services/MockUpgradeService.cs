@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 
@@ -17,35 +17,20 @@ public class MockUpgradeService : IUpgradeService
 
     public bool IsCurrentVersionPrerelease() => IsPrerelease;
 
-    public Task<string?> CheckLatestVersion(bool includePrerelease, bool failSilently, bool ignoreCache, CancellationToken ct)
-    {
-        return Task.FromResult(LatestVersion);
-    }
+    public Task<string?> CheckLatestVersion(
+        bool includePrerelease,
+        bool failSilently,
+        bool ignoreCache,
+        CancellationToken ct) => Task.FromResult(LatestVersion);
 
-    public Task<bool> TryShowUpgradeNotification(CancellationToken ct)
-    {
-        return Task.FromResult(false);
-    }
+    public Task<bool> TryShowUpgradeNotification(CancellationToken ct) => Task.FromResult(false);
 
-    public Task<UpgradeResponse> Upgrade(string? targetVersion, bool includePrerelease, CancellationToken ct)
-    {
-        return Task.FromResult(new UpgradeResponse
-        {
-            Succeeded = true,
-            OldVersion = CurrentVersion,
-            NewVersion = targetVersion ?? LatestVersion ?? CurrentVersion,
-            Message = "Mock upgrade succeeded"
-        });
-    }
+    public Task<UpgradeResponse> Upgrade(
+        string? targetVersion,
+        bool includePrerelease,
+        CancellationToken ct) => Task.FromResult(new UpgradeResponse());
 
-    public Task<UpgradeResponse> CompleteUpgrade(string targetPath, CancellationToken ct)
-    {
-        return Task.FromResult(new UpgradeResponse
-        {
-            Succeeded = true,
-            OldVersion = CurrentVersion,
-            NewVersion = CurrentVersion,
-            Message = "Mock upgrade completed"
-        });
-    }
+    public Task<UpgradeResponse> CompleteUpgrade(
+        string targetPath,
+        CancellationToken ct) => Task.FromResult(new UpgradeResponse());
 }

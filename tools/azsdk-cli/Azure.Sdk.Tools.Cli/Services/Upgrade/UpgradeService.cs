@@ -16,8 +16,11 @@ public class UpgradeService(
     IHttpClientFactory httpClientFactory,
     IProcessHelper processHelper,
     IRawOutputHelper outputHelper,
-    string? configDirectoryOverride = null) : IUpgradeService
+    string? configDirectoryOverride = null,
+    TimeProvider? timeProvider = null) : IUpgradeService
 {
+    private readonly TimeProvider timeProvider = timeProvider ?? TimeProvider.System;
+
     private const string UpgradeFullCommandName = SharedCommandNames.BaseExecutableName + " " + SharedCommandNames.UpgradeCommandName;
     private const string ConfigDirectoryName = "." + SharedCommandNames.BaseExecutableName;
     private const string CacheFileName = "upgrade-cache.json";
@@ -35,7 +38,9 @@ public class UpgradeService(
 
     private HttpClient createGitHubClient()
     {
-        var client = httpClientFactory.CreateClient();
+        // Use the named overload to avoid reliance on the CreateClient() extension method.
+        // This makes the dependency mockable in unit tests.
+        var client = httpClientFactory.CreateClient(nameof(UpgradeService));
         client.DefaultRequestHeaders.Add("User-Agent", SharedCommandNames.BaseExecutableName);
         client.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
         return client;
@@ -90,7 +95,7 @@ public class UpgradeService(
             }
 
             var cache = await LoadCache(configDir, ct);
-            var now = DateTimeOffset.UtcNow;
+            var now = timeProvider.GetUtcNow();
 
             if (cache.LastNotifyUtc.HasValue && now - cache.LastNotifyUtc.Value < notifyThrottleTtl)
             {
@@ -155,7 +160,7 @@ public class UpgradeService(
         CancellationToken ct
     )
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = timeProvider.GetUtcNow();
 
         // Check if cache is fresh enough
         if (!ignoreCacheTtl
@@ -337,31 +342,6 @@ public class UpgradeService(
         }
     }
 
-    private static bool TryReplaceExecutable(string sourceExePath, string targetPath)
-    {
-        try
-        {
-            File.Copy(sourceExePath, targetPath, overwrite: true);
-            return true;
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
     private async Task<(string? version, bool isPrerelease)> TryFetchLatestVersionFromGitHub(
         bool includePrerelease,
         bool failSilently,
@@ -495,47 +475,6 @@ public class UpgradeService(
                         RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "zip" : "tar.gz";
 
         return $"{AssetFileNamePrefix}{os}-{arch}.{extension}";
-    }
-
-    private async Task<string> DownloadFile(string url, string targetDir, CancellationToken ct)
-    {
-        var fileName = Path.GetFileName(new Uri(url).LocalPath);
-        var filePath = Path.Combine(targetDir, fileName);
-
-        using var response = await gitHubHttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
-        response.EnsureSuccessStatusCode();
-
-        await using var fileStream = File.Create(filePath);
-        await response.Content.CopyToAsync(fileStream, ct);
-
-        return filePath;
-    }
-
-    private async Task<string?> ExtractAndFindExecutable(string archivePath, string extractDir, CancellationToken ct)
-    {
-        var extractTarget = Path.Combine(extractDir, "extracted");
-        Directory.CreateDirectory(extractTarget);
-
-        if (archivePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-        {
-            ZipFile.ExtractToDirectory(archivePath, extractTarget);
-        }
-        else if (archivePath.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase))
-        {
-            await ExtractTarGz(archivePath, extractTarget, ct);
-        }
-        else
-        {
-            return null;
-        }
-
-        // Find the executable
-        var executableName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-                                ? $"{SharedCommandNames.BaseExecutableName}.exe"
-                                : SharedCommandNames.BaseExecutableName;
-        var executablePath = Directory.GetFiles(extractTarget, executableName, SearchOption.AllDirectories).FirstOrDefault();
-
-        return executablePath;
     }
 
     private async Task ExtractTarGz(string archivePath, string targetDir, CancellationToken ct)
@@ -691,7 +630,7 @@ public class UpgradeService(
             }
 
             var cache = await LoadCache(configDir, ct);
-            var now = DateTimeOffset.UtcNow;
+            var now = timeProvider.GetUtcNow();
 
             cache.RemoteSource = GitHubReleasesUrl;
             cache.LocalVersion = newVersion;
@@ -708,6 +647,71 @@ public class UpgradeService(
         {
             // Don't fail the upgrade if cache update fails
             logger.LogDebug(ex, "Failed to update version cache after upgrade");
+        }
+    }
+
+    protected virtual async Task<string> DownloadFile(string url, string targetDir, CancellationToken ct)
+    {
+        var fileName = Path.GetFileName(new Uri(url).LocalPath);
+        var filePath = Path.Combine(targetDir, fileName);
+
+        using var response = await gitHubHttpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+        response.EnsureSuccessStatusCode();
+
+        await using var fileStream = File.Create(filePath);
+        await response.Content.CopyToAsync(fileStream, ct);
+
+        return filePath;
+    }
+
+    protected virtual async Task<string?> ExtractAndFindExecutable(string archivePath, string extractDir, CancellationToken ct)
+    {
+        var extractTarget = Path.Combine(extractDir, "extracted");
+        Directory.CreateDirectory(extractTarget);
+
+        if (archivePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        {
+            ZipFile.ExtractToDirectory(archivePath, extractTarget);
+        }
+        else if (archivePath.EndsWith(".tar.gz", StringComparison.OrdinalIgnoreCase))
+        {
+            await ExtractTarGz(archivePath, extractTarget, ct);
+        }
+        else
+        {
+            return null;
+        }
+
+        var executableName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                                ? $"{SharedCommandNames.BaseExecutableName}.exe"
+                                : SharedCommandNames.BaseExecutableName;
+        var executablePath = Directory.GetFiles(extractTarget, executableName, SearchOption.AllDirectories).FirstOrDefault();
+
+        return executablePath;
+    }
+
+    protected virtual bool TryReplaceExecutable(string sourceExePath, string targetPath)
+    {
+        try
+        {
+            File.Copy(sourceExePath, targetPath, overwrite: true);
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+            return false;
         }
     }
 }

@@ -22,7 +22,7 @@ public sealed class UpgradeNotificationHostedService(
             await upgradeService.TryShowUpgradeNotification(cancellationToken);
 #else
             // No point saying "there's a new version" when people are developing via dotnet run!
-            return;
+            await Task.CompletedTask;
 #endif
         }
         catch

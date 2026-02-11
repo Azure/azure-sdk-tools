@@ -1660,7 +1660,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
                 "container_name",
-                type=str,
+                type=str.lower,
                 help="The name of the Cosmos DB container",
                 choices=ContainerNames.values(),
                 options_list=["--container-name", "-c"],

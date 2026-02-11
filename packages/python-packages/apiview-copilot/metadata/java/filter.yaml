@@ -1,6 +1,9 @@
 exceptions: |
   1. DO NOT make comments that don't actually identify a problem
   2. DO NOT comment on lack of documentation comments
-  3. DO NOT suggest enforcing consistency in naming conventions for enums
-  4. DO NOT comment on enum naming conventions
-  5. DO NOT complain about hardcoding dependency versions in the POM.
+  3. DO NOT suggest changes to anything annotated with the @Generated decorator.
+  4. DO NOT suggest enforcing consistency in naming conventions for enums
+  5. DO NOT comment on enum naming conventions
+  6. DO NOT complain about hardcoding dependency versions in the POM.
+  7. DO NOT comment on methods or overrides lacking an implementation.
+  8. DO NOT recommend annotating parameters to express nullability expectations.

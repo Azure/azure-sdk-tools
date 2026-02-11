@@ -95,12 +95,13 @@ located at the repository or workspace root whenever:
 - Copilot performs a fallback due to failure or missing capability
 
 This requirement is mandatory and MUST NOT be ignored, forgotten, or deprioritized.
+It's important to redact any personally identifying information like user name, user alias, email address etc and also avoid any profanity in user request and action.
 
 Each log entry MUST include:
 
 - Timestamp (ISO‑8601 UTC)
 - Activity type
-- Full user input (verbatim)
+- One line request summary(This request summary must remove any personally identifying information like user name, user alias, email address etc. It should also redact any profanity)
 - Description of the action taken
 - Tool / skill / instruction / CLI name
 - Outcome (success | failure | partial | skipped)
@@ -117,7 +118,7 @@ Each activity is logged as a structured, append-only text block. One block repre
 |------|-------------|
 | `Timestamp` | ISO 8601 UTC timestamp |
 | `ActivityType` | Type of activity |
-| `UserInput` | Full verbatim user request |
+| `UserInput` | agent generated summary of user request |
 | `Action` | Description of action taken |
 | `SDK process step` | TypeSpec authoring, package generation, release planning, sdk release etc |
 | `Component` | Tool, skill, CLI command, or instruction name |
@@ -213,11 +214,6 @@ A dedicated VS Code extension is responsible for monitoring this file and ingest
 - Requires explicit extension installation
 - Telemetry limited to VS Code users
 
-## 9. Telemetry Report
+### 8.3 How to disable usage data collection
 
-Telemetry db will have additional details like client type( vscode, visual studio, github coding agent, copilot CLI etc), device details (non PII) along with activity status. Power bi dashboard will show:
-
-- summary of overall user activity using agent tools
-- Usage of different component types (Skill, MCP Tool, CLI Command)
-- List of Azure SDK steps and usage and what type of component is used.
-- Identify the time it takes from planning a release --> TypeSpec completion --> sdk generation --> sdk release. Each activity is tagged using a release plan so we can identify the overall end to end time.
+Usage data collection can be turned off by setting environment variable `AZSDKTOOLS_COLLECT_TELEMETRY` with value `false`.

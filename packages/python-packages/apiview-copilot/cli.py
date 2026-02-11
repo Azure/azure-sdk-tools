@@ -38,6 +38,7 @@ from src._apiview import get_ai_comment_feedback as _get_ai_comment_feedback
 from src._apiview import (
     get_apiview_cosmos_client,
     get_approvers,
+    get_comment_with_context,
     get_comments_in_date_range,
     resolve_package,
 )
@@ -590,22 +591,75 @@ def handle_agent_chat(
     asyncio.run(chat())
 
 
-def handle_agent_mention(comments_path: str, remote: bool = False):
+def handle_agent_mention(
+    comments_path: str = None, comment_id: str = None, environment: str = "production", remote: bool = False
+):
     """
     Handles @mention requests from the agent.
+
+    Can be invoked in two ways:
+    1. With --comments-path: Load comments from a JSON file
+    2. With --comment-id: Fetch a comment from the database and manufacture a feedback conversation
+
+    At least one of --comments-path or --comment-id must be provided.
     """
-    # load comments from the comments_path
-    comments = []
-    if os.path.exists(comments_path):
-        with open(comments_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    else:
-        print(f"Comments file {comments_path} does not exist.")
+    if not comments_path and not comment_id:
+        print("Error: Either --comments-path or --comment-id must be provided.")
         return
-    comments = data.get("comments", [])
-    language = data.get("language", None)
-    package_name = data.get("package_name", None)
-    code = data.get("code", None)
+
+    if comments_path and comment_id:
+        print("Error: Only one of --comments-path or --comment-id can be provided, not both.")
+        return
+
+    comments = []
+    language = None
+    package_name = None
+    code = None
+
+    if comment_id:
+        # Fetch the comment from the database and manufacture a conversation
+        result = get_comment_with_context(comment_id, environment=environment)
+        if not result:
+            print(f"Comment with ID '{comment_id}' not found in {environment} environment.")
+            return
+
+        language = result.get("language")
+        package_name = result.get("package_name")
+        code = result.get("code")
+        feedback_text = result.get("feedback_text")
+        original_comment = result.get("comment", {})
+        original_text = original_comment.get("CommentText", "")
+
+        if not language:
+            print(f"Could not determine language for comment '{comment_id}'.")
+            return
+
+        # Manufacture a conversation: the original AI comment followed by the feedback
+        comments = [
+            f"[APIView Copilot]: {original_text}",
+            f"[Reviewer feedback]: {feedback_text} Please address this feedback by updating the knowledge base.",
+        ]
+
+        print(f"Processing feedback for comment '{comment_id}':")
+        print(f"  Language: {language}")
+        print(f"  Package: {package_name}")
+        print(f"  Original comment: {original_text[:100]}...")
+        print(f"  Feedback: {feedback_text}")
+        print()
+
+    else:
+        # Load comments from the comments_path
+        if os.path.exists(comments_path):
+            with open(comments_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        else:
+            print(f"Comments file {comments_path} does not exist.")
+            return
+        comments = data.get("comments", [])
+        language = data.get("language", None)
+        package_name = data.get("package_name", None)
+        code = data.get("code", None)
+
     if language not in SUPPORTED_LANGUAGES:
         print(f"Unsupported language `{language}`")
         return
@@ -1331,6 +1385,14 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="Path to a JSON file containing comments.",
                 options_list=["--comments-path", "-c"],
+                default=None,
+            )
+            ac.argument(
+                "comment_id",
+                type=str,
+                help="ID of a comment to fetch from the APIView database to process feedback.",
+                options_list=["--comment-id", "-i"],
+                default=None,
             )
             ac.argument(
                 "include_auth",
@@ -1562,6 +1624,15 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Force readonly mode, even if you have write permissions.",
                 options_list=["--readonly", "-r"],
+            )
+        with ArgumentsContext(self, "agent mention") as ac:
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment", "-e"],
+                default="production",
+                choices=["production", "staging"],
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(

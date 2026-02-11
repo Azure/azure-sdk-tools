@@ -743,3 +743,134 @@ def resolve_package(
     except Exception as e:
         print(f"Error resolving package: {e}")
         return None
+
+
+def get_comment_with_context(comment_id: str, environment: str = "production") -> Optional[dict]:
+    """
+    Retrieves a comment by its ID from the APIView database along with its related context
+    (language, package_name, code, feedback).
+
+    This is useful for processing feedback on AI-generated comments that were recorded
+    in the database but not acted upon.
+
+    Args:
+        comment_id: The unique identifier of the comment
+        environment: The APIView environment ('production' or 'staging')
+
+    Returns:
+        A dict containing:
+        - comment: The full comment object from the database
+        - language: The pretty language name (e.g., "Python")
+        - package_name: The package name from the review
+        - code: The API code from the revision (if available)
+        - feedback_text: A manufactured feedback message based on the Feedback entries
+
+        Returns None if the comment is not found.
+    """
+    try:
+        # Fetch the comment from the Comments container
+        comments_container = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+
+        query = """
+            SELECT c.id, c.ReviewId, c.APIRevisionId, c.ElementId, c.ThreadId,
+                   c.CommentText, c.CorrelationId, c.ChangeHistory, c.IsResolved,
+                   c.Upvotes, c.Downvotes, c.TaggedUsers, c.CommentType, c.Severity,
+                   c.CommentSource, c.ResolutionLocked, c.CreatedBy, c.CreatedOn,
+                   c.IsDeleted, c.IsGeneric, c.GuidelineIds, c.MemoryIds,
+                   c.ConfidenceScore, c.Feedback
+            FROM c WHERE c.id = @comment_id
+        """
+        results = list(
+            comments_container.query_items(
+                query=query,
+                parameters=[{"name": "@comment_id", "value": comment_id}],
+                enable_cross_partition_query=True,
+            )
+        )
+
+        if not results:
+            return None
+
+        comment = results[0]
+        review_id = comment.get("ReviewId")
+        revision_id = comment.get("APIRevisionId")
+
+        # Get language and package name from Reviews container
+        language = None
+        package_name = None
+        if review_id:
+            reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+            review_query = "SELECT c.Language, c.PackageName FROM c WHERE c.id = @review_id"
+            review_results = list(
+                reviews_container.query_items(
+                    query=review_query,
+                    parameters=[{"name": "@review_id", "value": review_id}],
+                    enable_cross_partition_query=True,
+                )
+            )
+            if review_results:
+                language = get_language_pretty_name(review_results[0].get("Language", ""))
+                package_name = review_results[0].get("PackageName", "")
+
+        # Get code from the revision
+        code = None
+        if revision_id:
+            try:
+                client = ApiViewClient(environment=environment)
+                code = asyncio.run(client.get_revision_text(revision_id=revision_id))
+            except Exception as e:
+                print(f"Warning: Could not fetch revision content: {e}")
+                code = None
+
+        # Build feedback text from the Feedback entries
+        feedback_entries = comment.get("Feedback") or []
+        change_history = comment.get("ChangeHistory") or []
+        upvotes = comment.get("Upvotes") or []
+        downvotes = comment.get("Downvotes") or []
+        is_deleted = comment.get("IsDeleted", False)
+
+        feedback_parts = []
+
+        # Add feedback from Feedback array entries
+        for fb in feedback_entries:
+            fb_text = fb.get("FeedbackText", "").strip()
+            fb_type = fb.get("FeedbackType", "")
+            fb_user = fb.get("SubmittedBy", "unknown")
+            if fb_text:
+                feedback_parts.append(f"[{fb_type} by {fb_user}]: {fb_text}")
+            elif fb_type:
+                feedback_parts.append(f"[{fb_type} by {fb_user}]")
+
+        # Add info about upvotes/downvotes
+        if len(downvotes) > 0:
+            feedback_parts.append(f"This comment received {len(downvotes)} downvote(s).")
+        if len(upvotes) > 0:
+            feedback_parts.append(f"This comment received {len(upvotes)} upvote(s).")
+
+        # Add info about deletion
+        if is_deleted:
+            # Try to find who deleted it from change history
+            deletion_info = None
+            for change in change_history:
+                if change.get("ChangeAction") == "Deleted":
+                    deletion_info = change
+                    break
+            if deletion_info:
+                deleted_by = deletion_info.get("ChangedBy", "unknown")
+                feedback_parts.append(f"This comment was deleted by {deleted_by}.")
+            else:
+                feedback_parts.append("This comment was deleted.")
+
+        feedback_text = " ".join(feedback_parts) if feedback_parts else "Feedback was provided but no details."
+
+        return {
+            "comment": comment,
+            "language": language,
+            "package_name": package_name,
+            "code": code,
+            "feedback_text": feedback_text,
+        }
+
+    except Exception as e:
+        print(f"Error fetching comment with context: {e}")
+        return None

@@ -91,8 +91,7 @@
         },
         {
           "description": "TypeSpec Azure Resource Manager library",
-          "path": "packages/typespec-azure-resource-manager/lib",
-          "relativeByRepoPath": true,
+          "path": "/packages/typespec-azure-resource-manager/lib",
           "folder": "typespec-azure-resource-manager-lib",
           "metadata": {
             "scope": "branded",

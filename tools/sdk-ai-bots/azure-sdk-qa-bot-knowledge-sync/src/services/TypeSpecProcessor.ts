@@ -100,10 +100,8 @@ export class TypeSpecProcessor {
         let currentDefinitionStart = -1;
         let currentDefinitionEnd = -1;
         let currentDefinitionBodyStart = -1;
-        let definitionLines: string[] = [];
         let currentType: TypeSpecDefinition['type'] | null = null;
         let currentName = '';
-        let currentComments: string[] = [];
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -347,9 +345,6 @@ export class TypeSpecProcessor {
         lines.push('');
         lines.push('---');
         lines.push('');
-
-        // Group definitions by type
-        const groupedDefs = this.groupByType(definitions);
 
         // Generate chapters for each definition
         for (const def of definitions) {

@@ -77,7 +77,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         await preprocessSpectorCases(docsDir);
 
         console.log(`processing typespec-azure-resource-manager library`);
-        new TypeSpecProcessor(workingDir, "typespec-azure/packages/typespec-azure-resource-manager/lib").processTypeSpecLibraries();
+        new TypeSpecProcessor(docsDir, "typespec-azure/packages/typespec-azure-resource-manager/lib").processTypeSpecLibraries();
 
         console.log('Processing documentation sources...');
         

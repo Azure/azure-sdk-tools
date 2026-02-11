@@ -328,7 +328,7 @@ func GetIndexLink(chunk Index) string {
 		return "https://github.com/Azure/openapi-diff/blob/main/" + path
 	case Source_TypeSpecAzureResourceManagerLib:
 		path = TrimFileFormat(path)
-		return "https://github.com/microsoft/typespec/tree/main/packages/typespec-azure-resource-manager/lib/" + path + ".tsp"
+		return "https://github.com/Azure/typespec-azure/blob/main/packages/typespec-azure-resource-manager/lib/" + path + ".tsp"
 	default:
 		return ""
 	}

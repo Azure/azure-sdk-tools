@@ -29,7 +29,7 @@ The Azure SDK Knowledge Base API provides AI-powered Q&A capabilities for Azure 
 
 | Environment | Endpoint | Auth Scope |
 |-------------|----------|------------|
-| Production | `https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net` | `api://azure-sdk-qa-bot` |
+| Production | `https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net` | `api://azure-sdk-qa-bot/.default` |
 
 ### Authentication
 
@@ -39,16 +39,24 @@ The API uses Azure AD Bearer token authentication.
 
 Use the **Azure Identity SDK** with `DefaultAzureCredential`, which automatically handles various authentication scenarios including managed identity, Visual Studio credentials, Azure CLI, and interactive browser login.
 
-> **Note**: The authentication scope varies by environment. Use `api://azure-sdk-qa-bot` for production.
+> **Note**: The authentication scope varies by environment:
+>
+> - Production: `api://azure-sdk-qa-bot/.default`
+> - Preview: `api://azure-sdk-qa-bot-test/.default`
+> - Dev: `api://azure-sdk-qa-bot-dev/.default`
+>
+> The `/.default` suffix requests all statically configured permissions for the application.
 
 **C# Example:**
 
 ```csharp
 using Azure.Identity;
 
+const string scope = "api://azure-sdk-qa-bot/.default"; // Use api://azure-sdk-qa-bot-dev/.default for dev
+
 var credential = new DefaultAzureCredential();
 var token = await credential.GetTokenAsync(
-    new TokenRequestContext(new[] { "api://azure-sdk-qa-bot/.default" })
+    new TokenRequestContext(new[] { scope })
 );
 
 // Use token.Token in Authorization header
@@ -61,8 +69,10 @@ httpClient.DefaultRequestHeaders.Authorization =
 ```python
 from azure.identity import DefaultAzureCredential
 
+scope = "api://azure-sdk-qa-bot/.default"  # Use api://azure-sdk-qa-bot-dev/.default for dev
+
 credential = DefaultAzureCredential()
-token = credential.get_token("api://azure-sdk-qa-bot/.default")
+token = credential.get_token(scope)
 
 headers = {"Authorization": f"Bearer {token.token}"}
 ```
@@ -72,8 +82,10 @@ headers = {"Authorization": f"Bearer {token.token}"}
 ```typescript
 import { DefaultAzureCredential } from "@azure/identity";
 
+const scope = "api://azure-sdk-qa-bot/.default"; // Use api://azure-sdk-qa-bot-dev/.default for dev
+
 const credential = new DefaultAzureCredential();
-const token = await credential.getToken("api://azure-sdk-qa-bot/.default");
+const token = await credential.getToken(scope);
 
 const headers = { Authorization: `Bearer ${token.token}` };
 ```
@@ -172,10 +184,10 @@ azure-sdk-qa-bot-backend/tsp/
 
 | Emitter Package | Language | Status |
 |-----------------|----------|--------|
-| `@typespec/http-client-js` | JavaScript/TypeScript | Preview |
-| `@typespec/http-client-python` | Python | Preview |
-| `@typespec/http-client-java` | Java | Preview |
-| `@typespec/http-client-csharp` | C# | Preview |
+| `@azure-tools/typespec-ts` | JavaScript/TypeScript | Preview |
+| `@azure-tools/typespec-python` | Python | Preview |
+| `@azure-tools/typespec-java` | Java | Preview |
+| `@azure-tools/typespec-csharp` | C# | Preview |
 
 ### Generating a Client SDK
 
@@ -190,7 +202,7 @@ azure-sdk-qa-bot-backend/tsp/
    ```json
    {
      "dependencies": {
-       "@typespec/http-client-python": "^0.6.6"
+       "@azure-tools/typespec-python": "latest"
      }
    }
    ```
@@ -199,9 +211,9 @@ azure-sdk-qa-bot-backend/tsp/
 
    ```yaml
    emit:
-     - "@typespec/http-client-python"
+     - "@azure-tools/typespec-python"
    options:
-     "@typespec/http-client-python":
+     "@azure-tools/typespec-python":
        emitter-output-dir: "{project-root}/clients/python"
    ```
 

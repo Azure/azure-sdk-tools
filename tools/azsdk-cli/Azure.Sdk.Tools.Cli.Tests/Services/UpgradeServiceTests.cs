@@ -363,8 +363,21 @@ public class UpgradeServiceTests
     [Test]
     public async Task Upgrade_UsesDownloadAndExtractSeams_AndStartsTwoStepUpgrade()
     {
-        // Arrange
-        var releasesJson = "[{\"tag_name\":\"azsdk_9.9.9\",\"prerelease\":false,\"assets\":[{\"name\":\"Azure.Sdk.Tools.Cli-standalone-linux-x64.tar.gz\",\"browser_download_url\":\"https://example.test/download\"}]}]";
+        // Arrange - include all platform variants so test passes on Windows/Mac/Linux
+        var releasesJson = """
+            [{
+                "tag_name":"azsdk_9.9.9",
+                "prerelease":false,
+                "assets":[
+                    {"name":"Azure.Sdk.Tools.Cli-standalone-linux-x64.tar.gz","browser_download_url":"https://example.test/download"},
+                    {"name":"Azure.Sdk.Tools.Cli-standalone-linux-arm64.tar.gz","browser_download_url":"https://example.test/download"},
+                    {"name":"Azure.Sdk.Tools.Cli-standalone-win-x64.zip","browser_download_url":"https://example.test/download"},
+                    {"name":"Azure.Sdk.Tools.Cli-standalone-win-arm64.zip","browser_download_url":"https://example.test/download"},
+                    {"name":"Azure.Sdk.Tools.Cli-standalone-osx-x64.zip","browser_download_url":"https://example.test/download"},
+                    {"name":"Azure.Sdk.Tools.Cli-standalone-osx-arm64.zip","browser_download_url":"https://example.test/download"}
+                ]
+            }]
+            """;
         SetupMockHttpClient(releasesJson);
 
         var serviceMock = new Mock<UpgradeService>(

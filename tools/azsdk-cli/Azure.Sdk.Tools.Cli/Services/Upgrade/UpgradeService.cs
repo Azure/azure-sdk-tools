@@ -273,7 +273,7 @@ public class UpgradeService(
         1. The original azsdk executable downloads the new version to a temp directory
         2. The original azsdk executable spawns the NEW exe with --complete-upgrade <original-path>
         3. The original azsdk executable exits immediately (releasing the file lock)
-        4. The new exe waits for the original file to be unlocked (up to 10 seconds, polling)
+        4. The new exe waits for the original file to be unlocked (up to 30 seconds, polling)
         5. Once unlocked, the new exe copies itself over the original path
 
       This allows the upgrade to complete even though the OS locks running executables.
@@ -351,7 +351,7 @@ public class UpgradeService(
     {
         try
         {
-            // Use provided timeout or default to NetworkTimeout (500ms for background checks)
+            // Use provided timeout or default to the configured network timeout for background checks
             var effectiveTimeout = timeout ?? networkTimeout;
             using var timeoutCts = new CancellationTokenSource(effectiveTimeout);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
@@ -497,6 +497,11 @@ public class UpgradeService(
 
     private void StartTwoStepUpgrade(string newExePath, string currentExePath, CancellationToken ct)
     {
+        // NOTE: cold start times on first run of the new executable,
+        // especially on windows, can be take several seconds. In cases
+        // where the complete upgrade command takes a long time to start,
+        // there could be failures if the user also starts a new long-running
+        // command right after upgrade.
         var options = new ProcessOptions(
             newExePath,
             ["upgrade", "--complete-upgrade", currentExePath],
@@ -504,8 +509,21 @@ public class UpgradeService(
         );
 
         // Spawn the upgrade completion polling process in the
-        // background so it will outlive the current process
-        var _ = processHelper.Run(options, ct);
+        // background so it will outlive the current process. Use
+        // CancellationToken.None so it is not tied to the caller's
+        // cancellation, and attach a continuation to observe/log
+        // any failures to avoid unobserved exceptions.
+        var upgradeTask = processHelper.Run(options, CancellationToken.None);
+        _ = upgradeTask.ContinueWith(
+            t =>
+            {
+                if (t.Exception != null)
+                {
+                    logger.LogError(t.Exception, "Two-step upgrade process failed.");
+                }
+            },
+            TaskContinuationOptions.OnlyOnFaulted);
+
         logger.LogDebug("Two-step upgrade initiated");
     }
 

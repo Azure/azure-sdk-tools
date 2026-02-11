@@ -61,9 +61,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
 #endif
         ];
 
-        public const string UpgradeCommandName = "upgrade";
-        public const string UpgradeToolName = "azsdk_upgrade";
-
         public static Option<string> Format = new("--output", "-o")
         {
             Description = "The format of the output. Supported formats are: plain, json",

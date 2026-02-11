@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using System.CommandLine;
 using System.Diagnostics;
 using System.Reflection;
@@ -66,7 +68,7 @@ public abstract class MCPToolBase
 
 #if !DEBUG
             // Show update notification after command output (skip for upgrade command itself)
-            if (command.Name != SharedOptions.UpgradeCommandName)
+            if (command.Name != SharedCommandNames.UpgradeCommandName)
             {
                 try
                 {

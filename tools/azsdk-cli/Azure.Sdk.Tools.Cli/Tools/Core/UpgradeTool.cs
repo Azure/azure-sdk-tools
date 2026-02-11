@@ -23,6 +23,7 @@ public class UpgradeTool(
 
     // Copy here so the mcp name analyzer can pass
     private const string UpgradeToolName = SharedCommandNames.UpgradeToolName;
+    private const string UpgradeCommandName = SharedCommandNames.UpgradeCommandName;
 
     private readonly Option<string?> versionOption = new("--version-override")
     {
@@ -54,7 +55,7 @@ public class UpgradeTool(
     };
 
     protected override Command GetCommand() =>
-        new McpCommand(SharedOptions.UpgradeCommandName, "Check for and install azsdk CLI updates", UpgradeToolName)
+        new McpCommand(UpgradeCommandName, "Check for and install azsdk CLI updates", UpgradeToolName)
         {
             versionOption,
             prereleaseOption,
@@ -75,7 +76,7 @@ public class UpgradeTool(
         // 1. The original azsdk binary downloads the new version to a temp directory
         // 2. The original azsdk binary spawns the NEW exe with --complete-upgrade <original-path>
         // 3. The original azsdk binary exits immediately (releasing the file lock)
-        // 4. The new exe waits for the original file to be unlocked (up to 10 seconds, polling)
+        // 4. The new exe waits for the original file to be unlocked (up to 30 seconds, polling)
         // 5. Once unlocked, the new exe copies itself over the original path
         // This allows the upgrade to complete even though the OS locks running executables.
         if (!string.IsNullOrEmpty(completeUpgradePath))

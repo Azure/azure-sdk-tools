@@ -47,8 +47,8 @@ public static class VersionHelper
             }
             if (!string.IsNullOrEmpty(localParts.prerelease) && !string.IsNullOrEmpty(remoteParts.prerelease))
             {
-                // Both have prerelease, compare lexicographically
-                return string.Compare(remoteParts.prerelease, localParts.prerelease, StringComparison.Ordinal) > 0;
+                // Both have prerelease, compare using SemVer-compatible comparison
+                return ComparePrereleaseVersions(remoteParts.prerelease, localParts.prerelease) > 0;
             }
 
             // Both are stable with same version
@@ -94,5 +94,50 @@ public static class VersionHelper
     public static bool IsPrerelease(string version)
     {
         return version.Contains("-dev", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Compares two prerelease version strings using SemVer-compatible comparison.
+    /// Splits on '.' and compares numeric parts numerically, others lexicographically.
+    /// </summary>
+    private static int ComparePrereleaseVersions(string a, string b)
+    {
+        var aParts = a.Split('.');
+        var bParts = b.Split('.');
+
+        var maxLen = Math.Max(aParts.Length, bParts.Length);
+        for (int i = 0; i < maxLen; i++)
+        {
+            var aPart = i < aParts.Length ? aParts[i] : "";
+            var bPart = i < bParts.Length ? bParts[i] : "";
+
+            // Try to parse both as integers
+            var aIsNum = int.TryParse(aPart, out var aNum);
+            var bIsNum = int.TryParse(bPart, out var bNum);
+
+            int cmp;
+            if (aIsNum && bIsNum)
+            {
+                // Both numeric - compare numerically
+                cmp = aNum.CompareTo(bNum);
+            }
+            else if (aIsNum != bIsNum)
+            {
+                // Numeric identifiers have lower precedence than alphanumeric per SemVer
+                cmp = aIsNum ? -1 : 1;
+            }
+            else
+            {
+                // Both alphanumeric - compare lexicographically
+                cmp = string.Compare(aPart, bPart, StringComparison.Ordinal);
+            }
+
+            if (cmp != 0)
+            {
+                return cmp;
+            }
+        }
+
+        return 0;
     }
 }

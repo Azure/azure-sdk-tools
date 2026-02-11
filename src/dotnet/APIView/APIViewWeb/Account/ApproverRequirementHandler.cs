@@ -1,42 +1,39 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Managers.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
     public class ApproverRequirementHandler : IAuthorizationHandler
     {
-        protected HashSet<string> approvers = new HashSet<string>();
+        protected readonly IPermissionsManager _permissionsManager;
 
-        public ApproverRequirementHandler(IConfiguration configuration)
+        public ApproverRequirementHandler(IPermissionsManager permissionsManager)
         {
-            var approverConfig = configuration["approvers"];
-            if (!string.IsNullOrEmpty(approverConfig))
-            {
-                foreach (var id in approverConfig.Split(","))
-                {
-                    approvers.Add(id);
-                }
-            }
+            _permissionsManager = permissionsManager;
         }
 
-        public Task HandleAsync(AuthorizationHandlerContext context)
+        public async Task HandleAsync(AuthorizationHandlerContext context)
         {
             foreach (var requirement in context.Requirements)
             {
                 if (requirement is ApproverRequirement)
                 {
-                    if (approvers != null && approvers.Contains(context.User.GetGitHubLogin()))
+                    string userId = context.User.GetGitHubLogin();
+                    if (!string.IsNullOrEmpty(userId))
                     {
-                        context.Succeed(requirement);
+                        EffectivePermissions permissions = await _permissionsManager.GetEffectivePermissionsAsync(userId);
+                        if (permissions.IsLanguageApprover)
+                        {
+                            context.Succeed(requirement);
+                        }
                     }
                 }
             }
-            return Task.CompletedTask;
         }
     }
 }

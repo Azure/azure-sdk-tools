@@ -5,8 +5,8 @@ import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
 import { USER_NAME_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { SelectItemModel } from 'src/app/_models/review';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -20,7 +20,7 @@ export class ProfilePageComponent {
   userName : string | null = null;
   userEmail : string | undefined = undefined;
   userProfile : UserProfile | undefined;
-  allowedApprovers : string[] = [];
+  isApprover : boolean = false;
 
   notificationEmail: string | null = null;
   languages: SelectItemModel[] = [];
@@ -35,7 +35,7 @@ export class ProfilePageComponent {
   isLoaded: boolean | undefined = undefined;
 
   constructor(private route: ActivatedRoute, private userProfileService: UserProfileService,
-    private reviewsService: ReviewsService) {}
+    private permissionsService: PermissionsService) {}
 
   ngOnInit() {
     this.languages = getSupportedLanguages();
@@ -49,6 +49,9 @@ export class ProfilePageComponent {
           console.log(userProfile);
           console.log(this.selectedLanguages);
           this.selectedTheme = this.themes.filter(t => t.data === userProfile.preferences.theme)[0];
+          
+          // Check if user is an approver for at least one language using permissions
+          this.isApprover = this.permissionsService.isLanguageApprover(userProfile.permissions);
 
           if (this.userName !== userProfile.userName) {
             this.userProfileService.getUserProfile(this.userName!).subscribe({
@@ -66,11 +69,6 @@ export class ProfilePageComponent {
         },
         error: (error: any) => {
           this.isLoaded = false;
-        }
-      });
-      this.reviewsService.getAllowedApprovers().subscribe({
-        next: (allowedApprovers: string[]) => {
-          this.allowedApprovers = allowedApprovers;
         }
       });
     }

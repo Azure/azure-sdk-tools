@@ -13,6 +13,7 @@ namespace APIViewWeb.Managers;
 public class PermissionsManager : IPermissionsManager
 {
     private const string EffectivePermissionsCacheKeyPrefix = "EffectivePermissions_";
+    private const string ApproversForLanguageCacheKeyPrefix = "ApproversForLanguage_";
 
     private static readonly TimeSpan CacheExpiration = TimeSpan.FromMinutes(15);
     private readonly IMemoryCache _cache;
@@ -156,7 +157,7 @@ public class PermissionsManager : IPermissionsManager
     public async Task<bool> CanApproveAsync(string userId, string language)
     {
         EffectivePermissions permissions = await GetEffectivePermissionsAsync(userId);
-        return permissions.CanApprove(language);
+        return permissions.IsApproverFor(language);
     }
 
     public async Task<bool> IsAdminAsync(string userId)
@@ -165,15 +166,33 @@ public class PermissionsManager : IPermissionsManager
         return permissions.IsAdmin;
     }
 
-    public async Task<bool> HasElevatedAccessAsync(string userId)
-    {
-        EffectivePermissions permissions = await GetEffectivePermissionsAsync(userId);
-        return permissions.HasElevatedAccess;
-    }
 
     public async Task<IEnumerable<string>> GetAllUsernamesAsync()
     {
         return await _userProfileRepository.GetAllUsernamesAsync();
+    }
+
+    public async Task<HashSet<string>> GetApproversForLanguageAsync(string language)
+    {
+        if (string.IsNullOrWhiteSpace(language))
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var cacheKey = $"{ApproversForLanguageCacheKeyPrefix}{language.ToLowerInvariant()}";
+        if (_cache.TryGetValue(cacheKey, out HashSet<string> cachedApprovers))
+        {
+            return cachedApprovers;
+        }
+
+        IEnumerable<GroupPermissionsModel> groups = await _permissionsRepository.GetAllGroupsAsync();
+        HashSet<string> approvers = groups
+            .Where(g => g.Roles.GrantsApprovalFor(language))
+            .SelectMany(g => g.Members)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        _cache.Set(cacheKey, approvers, CacheExpiration);
+        return approvers;
     }
 
     private EffectivePermissions MergePermissions(string userId, IEnumerable<GroupPermissionsModel> groups)

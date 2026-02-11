@@ -16,7 +16,7 @@
                             <div id="emaiInputlHelp" class="form-text">Enter your email to get notifications. Leave blank to stop emails.</div>
                         </div>
                     </li>
-                    <li *ngIf="allowedApprovers.includes(userName)" class="list-group-item" id="reviewLanguagesListItem">
+                    <li *ngIf="isApprover" class="list-group-item" id="reviewLanguagesListItem">
                         <div class="mb-1">
                             <label for="reviewLanguagesMultiSelect" class="form-label fw-semibold">Review languages</label>
                             <div class="card flex justify-content-center">

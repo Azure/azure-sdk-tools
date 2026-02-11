@@ -242,4 +242,16 @@ public class PermissionsController : BaseApiController
             return NotFound(ex.Message);
         }
     }
+
+    /// <summary>
+    ///     Get the list of approvers for a specific language
+    /// </summary>
+    /// <param name="language">The programming language</param>
+    /// <returns>List of usernames who can approve reviews for the specified language</returns>
+    [HttpGet("approvers/{language}")]
+    public async Task<ActionResult<IEnumerable<string>>> GetApproversForLanguage(string language)
+    {
+        var approvers = await _permissionsManager.GetApproversForLanguageAsync(language);
+        return new LeanJsonResult(approvers, StatusCodes.Status200OK);
+    }
 }

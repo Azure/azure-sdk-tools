@@ -43,6 +43,7 @@ namespace APIViewWeb.Managers
         private readonly ILogger<CommentsManager> _logger;
         private readonly IBackgroundTaskQueue _backgroundTaskQueue;
         private readonly ICopilotAuthenticationService _copilotAuthService;
+        private readonly IPermissionsManager _permissionsManager;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -61,6 +62,7 @@ namespace APIViewWeb.Managers
             IConfiguration configuration,
             IOptions<OrganizationOptions> options,
             IBackgroundTaskQueue backgroundTaskQueue,
+            IPermissionsManager permissionsManager,
             ICopilotAuthenticationService copilotAuthService,
             ILogger<CommentsManager> logger)
         {
@@ -77,6 +79,7 @@ namespace APIViewWeb.Managers
             _Options = options.Value;
             _backgroundTaskQueue = backgroundTaskQueue;
             _copilotAuthService = copilotAuthService;
+            _permissionsManager = permissionsManager;
             _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -359,17 +362,9 @@ namespace APIViewWeb.Managers
 
         private async Task<bool> IsUserAllowedToChatWithAgentAsync(ClaimsPrincipal user, ReviewListItemModel review)
         {
-            return await IsUserLanguageArchitectAsync(user, review);
-        }
-
-        private async Task<bool> IsUserLanguageArchitectAsync(ClaimsPrincipal user, ReviewListItemModel review)
-        {
-            if (user == null || review == null)
-                return false;
-
-            string githubUser = user.GetGitHubLogin();
-            HashSet<string> approvers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, user, review);
-            return approvers != null && approvers.Contains(githubUser);
+            string userId = user.GetGitHubLogin();
+            EffectivePermissions permissions = await _permissionsManager.GetEffectivePermissionsAsync(userId);
+            return permissions != null && permissions.IsApproverFor(review.Language);
         }
 
         /// <summary>

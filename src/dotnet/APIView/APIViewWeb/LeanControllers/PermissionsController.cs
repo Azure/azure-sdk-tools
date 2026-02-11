@@ -253,7 +253,8 @@ public class PermissionsController : BaseApiController
     public async Task<ActionResult<IEnumerable<string>>> GetApproversForLanguage(string language)
     {
         HashSet<string> approvers = await _permissionsManager.GetApproversForLanguageAsync(language);
-        List<string> sortedApprovers = approvers.OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList();
+        List<string> sortedApprovers = approvers.Where(a => !string.IsNullOrWhiteSpace(a))
+            .OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList();
         return new LeanJsonResult(sortedApprovers, StatusCodes.Status200OK);
     }
 }

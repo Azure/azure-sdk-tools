@@ -1,14 +1,10 @@
 {
   "name": "@azure-tools/ts-genapi",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "description": "",
   "main": "index.js",
   "publishConfig": {
     "registry": "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/"
-  },
-  "dependencies": {
-    "@microsoft/api-extractor-model": "^7.29.8",
-    "js-tokens": "^9.0.0"
   },
   "files": [
     "dist",
@@ -16,23 +12,28 @@
     "readme.md"
   ],
   "bin": "bin/ts-genapi.cjs",
+  "dependencies": {
+    "@microsoft/api-extractor-model": "^7.29.8",
+    "js-tokens": "^9.0.0",
+    "typescript": "~5.9.3"
+  },
   "devDependencies": {
     "@eslint/js": "^9.10.0",
     "@types/eslint__js": "^8.42.3",
-    "@types/node": "^18.0.0",
+    "@types/node": "^20.0.0",
     "eslint": "^9.10.0",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
     "ts-node": "^10.0.0",
-    "typescript": "~5.6.2",
+    "typescript": "~5.9.3",
     "typescript-eslint": "^8.11.0",
-    "vitest": "3.0.5"
+    "vitest": "^4.0.0"
   },
   "scripts": {
     "build": "npm run clean && tsc -p .",
     "watch": "tsc -p . -watch",
     "clean": "rimraf dist/",
-    "format": "prettier --write ./src ./*.{js,mjs,json}",
+    "format": "prettier --write ./src ./*.{js,mjs,json} ./bin/*.*js ./test/",
     "lint": "eslint src",
     "test": "vitest"
   },

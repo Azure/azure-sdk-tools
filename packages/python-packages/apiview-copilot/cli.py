@@ -24,6 +24,7 @@ import colorama
 import prompty
 import prompty.azure
 import requests
+import yaml
 from azure.core.exceptions import ClientAuthenticationError
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
@@ -33,6 +34,7 @@ from src._apiview import (
     ApiViewClient,
 )
 from src._apiview import get_active_reviews as _get_active_reviews
+from src._apiview import get_ai_comment_feedback as _get_ai_comment_feedback
 from src._apiview import (
     get_apiview_cosmos_client,
     get_approvers,
@@ -1121,6 +1123,31 @@ ANALYZE_COMMENT_LANGUAGES = [
 ]
 
 
+def get_ai_comment_feedback(
+    language: str,
+    start_date: str,
+    end_date: str,
+    exclude: Optional[list[str]] = None,
+    environment: str = "production",
+    output_format: str = "json",
+):
+    """
+    Retrieves AI-generated comments that received feedback within the date range.
+    Filters by Feedback[].SubmittedOn and ChangeHistory[].ChangedOn timestamps.
+    """
+    results = _get_ai_comment_feedback(
+        language=language,
+        start_date=start_date,
+        end_date=end_date,
+        exclude=exclude,
+        environment=environment,
+    )
+    if output_format == "yaml":
+        print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    else:
+        print(json.dumps(results, indent=2))
+
+
 def analyze_comments(language: str, start_date: str, end_date: str, environment: str = "production"):
     """
     Analyze APIView comments by language and date window, output count, unique authors, and theme analysis via Prompty.
@@ -1229,6 +1256,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
+            g.command("get-comment-feedback", "get_ai_comment_feedback")
             g.command("analyze-comments", "analyze_comments")
             g.command("resolve-package", "resolve_package_info")
         with CommandGroup(self, "review", "__main__#{}") as g:
@@ -1585,6 +1613,50 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Language to filter comments (case-insensitive, e.g., python, Python, PYTHON)",
                 choices=ANALYZE_COMMENT_LANGUAGES,
                 options_list=("--language", "-l"),
+            )
+        with ArgumentsContext(self, "apiview get-comment-feedback") as ac:
+            ac.argument(
+                "language",
+                type=str,
+                help="The language to filter by.",
+                options_list=["--language", "-l"],
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "start_date",
+                type=str,
+                help="The start date (YYYY-MM-DD).",
+                options_list=["--start-date", "-s"],
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                help="The end date (YYYY-MM-DD).",
+                options_list=["--end-date", "-e"],
+            )
+            ac.argument(
+                "exclude",
+                type=str,
+                nargs="*",
+                help="Feedback types to exclude. Can be 'good', 'bad', or 'delete'.",
+                options_list=["--exclude", "-x"],
+                choices=["good", "bad", "delete"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "output_format",
+                type=str,
+                help="Output format. Defaults to 'json'.",
+                options_list=["--format", "-f"],
+                default="json",
+                choices=["json", "yaml"],
             )
         with ArgumentsContext(self, "apiview resolve-package") as ac:
             ac.argument(

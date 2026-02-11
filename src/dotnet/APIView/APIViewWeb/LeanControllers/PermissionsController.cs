@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
@@ -247,11 +248,12 @@ public class PermissionsController : BaseApiController
     ///     Get the list of approvers for a specific language
     /// </summary>
     /// <param name="language">The programming language</param>
-    /// <returns>List of usernames who can approve reviews for the specified language</returns>
+    /// <returns>List of usernames who can approve reviews for the specified language, sorted alphabetically</returns>
     [HttpGet("approvers/{language}")]
     public async Task<ActionResult<IEnumerable<string>>> GetApproversForLanguage(string language)
     {
-        var approvers = await _permissionsManager.GetApproversForLanguageAsync(language);
-        return new LeanJsonResult(approvers, StatusCodes.Status200OK);
+        HashSet<string> approvers = await _permissionsManager.GetApproversForLanguageAsync(language);
+        List<string> sortedApprovers = approvers.OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList();
+        return new LeanJsonResult(sortedApprovers, StatusCodes.Status200OK);
     }
 }

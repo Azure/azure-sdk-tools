@@ -33,7 +33,7 @@
                 <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
             <ng-template #reviewIsNotApproved>
-                <div *ngIf="canApproveForReviewLanguage; else userIsNotAPreferedApprover">
+                <div *ngIf="canApproveForReviewLanguage; else userIsNotAPreferredApprover">
                     <span class="small text-muted">Approves first release of the package</span>
                     <div class="d-grid gap-2">
                         <button class="btn btn-success" type="button" id="first-release-approval-button"
@@ -47,7 +47,7 @@
                     <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
                 </div>
             </ng-template>
-            <ng-template #userIsNotAPreferedApprover>
+            <ng-template #userIsNotAPreferredApprover>
                 <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
         </div>

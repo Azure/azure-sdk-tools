@@ -20,6 +20,8 @@ public class PermissionsManager : IPermissionsManager
     private readonly ILogger<PermissionsManager> _logger;
     private readonly ICosmosPermissionsRepository _permissionsRepository;
     private readonly ICosmosUserProfileRepository _userProfileRepository;
+    private readonly HashSet<string> _cachedLanguageApproverKeys = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _languageCacheLock = new();
 
     public PermissionsManager(
         ICosmosPermissionsRepository permissionsRepository,
@@ -99,6 +101,7 @@ public class PermissionsManager : IPermissionsManager
         await _permissionsRepository.UpsertGroupAsync(existingGroup);
 
         InvalidateMembersCaches(existingGroup.Members);
+        InvalidateAllLanguageApproverCaches();
 
         _logger.LogInformation("Permission group '{GroupId}' updated by {User}", groupId, updatedBy);
 
@@ -111,6 +114,7 @@ public class PermissionsManager : IPermissionsManager
         if (group != null)
         {
             InvalidateMembersCaches(group.Members);
+            InvalidateAllLanguageApproverCaches();
         }
 
         await _permissionsRepository.DeleteGroupAsync(groupId);
@@ -140,6 +144,7 @@ public class PermissionsManager : IPermissionsManager
         {
             await _permissionsRepository.AddMembersToGroupAsync(groupId, result.AddedUsers);
             InvalidateMembersCaches(result.AddedUsers);
+            InvalidateAllLanguageApproverCaches();
         }
 
         return result;
@@ -149,6 +154,7 @@ public class PermissionsManager : IPermissionsManager
     {
         await _permissionsRepository.RemoveMemberFromGroupAsync(groupId, userId);
         InvalidateMembersCaches(new[] { userId });
+        InvalidateAllLanguageApproverCaches();
 
         _logger.LogInformation("Member '{UserId}' removed from group '{GroupId}' by {User}",
             userId, groupId, removedBy);
@@ -182,7 +188,7 @@ public class PermissionsManager : IPermissionsManager
         var cacheKey = $"{ApproversForLanguageCacheKeyPrefix}{language.ToLowerInvariant()}";
         if (_cache.TryGetValue(cacheKey, out HashSet<string> cachedApprovers))
         {
-            return cachedApprovers;
+            return new HashSet<string>(cachedApprovers, StringComparer.OrdinalIgnoreCase);
         }
 
         IEnumerable<GroupPermissionsModel> groups = await _permissionsRepository.GetAllGroupsAsync();
@@ -192,7 +198,13 @@ public class PermissionsManager : IPermissionsManager
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         _cache.Set(cacheKey, approvers, CacheExpiration);
-        return approvers;
+
+        lock (_languageCacheLock)
+        {
+            _cachedLanguageApproverKeys.Add(cacheKey);
+        }
+
+        return new HashSet<string>(approvers, StringComparer.OrdinalIgnoreCase);
     }
 
     private EffectivePermissions MergePermissions(string userId, IEnumerable<GroupPermissionsModel> groups)
@@ -244,6 +256,18 @@ public class PermissionsManager : IPermissionsManager
         {
             var cacheKey = $"{EffectivePermissionsCacheKeyPrefix}{userId.ToLowerInvariant()}";
             _cache.Remove(cacheKey);
+        }
+    }
+
+    private void InvalidateAllLanguageApproverCaches()
+    {
+        lock (_languageCacheLock)
+        {
+            foreach (var cacheKey in _cachedLanguageApproverKeys)
+            {
+                _cache.Remove(cacheKey);
+            }
+            _cachedLanguageApproverKeys.Clear();
         }
     }
 }

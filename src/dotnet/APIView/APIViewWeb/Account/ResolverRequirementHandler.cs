@@ -21,7 +21,7 @@ namespace APIViewWeb
                     Models.CommentThreadModel comments = (Models.CommentThreadModel)context.Resource;
                     var loggedInUserName = context.User.GetGitHubLogin();
                     
-                    if (loggedInUserName.Equals(comments.Comments.First().CreatedBy))
+                    if (string.Equals(loggedInUserName, comments.Comments.First().CreatedBy, System.StringComparison.OrdinalIgnoreCase))
                     {
                         context.Succeed(requirement);
                         continue;

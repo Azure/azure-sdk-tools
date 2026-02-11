@@ -302,11 +302,11 @@ namespace APIViewWeb.Managers
             var emailAddresses = new List<string>();
             
             // Get all approvers for the review's language using the permissions system
-            HashSet<string> preferredApprovers = await _permissionsManager.GetApproversForLanguageAsync(review.Language);
+            HashSet<string> approversForLanguage = await _permissionsManager.GetApproversForLanguageAsync(review.Language);
 
-            // Add preferred approvers' emails
+            // Add language approvers' emails
             // Create all tasks first (starts them concurrently)
-            var emailTasks = (preferredApprovers ?? Enumerable.Empty<string>())
+            var emailTasks = (approversForLanguage ?? Enumerable.Empty<string>())
                 .Select(GetEmailAddress)
                 .ToArray();
                 

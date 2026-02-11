@@ -143,7 +143,9 @@ public class ProjectsManager : IProjectsManager
         if (!string.Equals(project.Namespace, metadata.TypeSpec.Namespace, StringComparison.OrdinalIgnoreCase))
         {
             project.Namespace = metadata.TypeSpec.Namespace;
+            project.DisplayName = metadata.TypeSpec.Namespace;
             changes.Add("Namespace");
+            changes.Add("DisplayName");
         }
 
         if (!string.Equals(project.CrossLanguagePackageId, typeSpecReview.CrossLanguagePackageId,

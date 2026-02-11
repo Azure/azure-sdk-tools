@@ -110,7 +110,7 @@ namespace APIViewWeb.Managers
 
                 if (!string.IsNullOrEmpty(metadataFileName))
                 {
-                    var metadataEntry = archive.Entries.FirstOrDefault(e => Path.GetFileName(e.Name) == metadataFileName);
+                    var metadataEntry = archive.Entries.FirstOrDefault(e => Path.GetFileName(e.Name).Equals(metadataFileName, StringComparison.OrdinalIgnoreCase));
                     if (metadataEntry != null)
                     {
                         try

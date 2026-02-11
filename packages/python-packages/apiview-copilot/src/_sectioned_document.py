@@ -12,6 +12,12 @@ import re
 from typing import List, Optional
 
 
+def _is_decorator_line(line: str) -> bool:
+    """Check if a line is a decorator (starts with @ after stripping whitespace)."""
+    stripped = line.lstrip()
+    return stripped.startswith("@")
+
+
 class LineData:
     """Data class representing a line in the document with its metadata."""
 
@@ -88,7 +94,10 @@ class SectionedDocument:
         top_level_lines = [
             x
             for x in line_data
-            if x.indent == base_indent and x.line[base_indent:] != "" and x.line[base_indent:] != "}"
+            if x.indent == base_indent
+            and x.line[base_indent:] != ""
+            and x.line[base_indent:] != "}"
+            and not _is_decorator_line(x.line)  # Skip decorators - they'll be grouped with next non-decorator
         ]
 
         # Handle case with no top-level lines
@@ -97,17 +106,37 @@ class SectionedDocument:
             return
 
         # Create initial sections based on top-level lines
+        # Each section includes any preceding decorator lines at the same indent level
         initial_sections = []
         for i, line1 in enumerate(top_level_lines):
+            line1_idx = line_data.index(line1)
+
+            # Look backward to find any preceding decorator lines that belong to this section
+            section_start_idx = line1_idx
+            while section_start_idx > 0:
+                prev_line = line_data[section_start_idx - 1]
+                # Include preceding decorators at the same indent level
+                if prev_line.indent == base_indent and _is_decorator_line(prev_line.line):
+                    section_start_idx -= 1
+                else:
+                    break
+
             try:
                 line2 = top_level_lines[i + 1]
-                line1_idx = line_data.index(line1)
                 line2_idx = line_data.index(line2)
-                lines_between = line_data[line1_idx:line2_idx]
+                # Look backward from line2 to find where its decorators start
+                # (so we don't include them in this section)
+                section_end_idx = line2_idx
+                while section_end_idx > line1_idx:
+                    prev_line = line_data[section_end_idx - 1]
+                    if prev_line.indent == base_indent and _is_decorator_line(prev_line.line):
+                        section_end_idx -= 1
+                    else:
+                        break
+                lines_between = line_data[section_start_idx:section_end_idx]
             except IndexError:
                 # Last section, take all remaining lines
-                line1_idx = line_data.index(line1)
-                lines_between = line_data[line1_idx:]
+                lines_between = line_data[section_start_idx:]
             initial_sections.append(Section(lines_between))
 
         # Step 2: Combine small sections into larger ones up to max_chunk_size
@@ -126,11 +155,34 @@ class SectionedDocument:
                     current_size = 0
 
                 # Subdivide the oversized section
-                top_line = section.lines[0]  # The root line to include in all subsections
-                for i in range(1, section_size, max_chunk_size - 1):
-                    chunk = section.lines[i : i + (max_chunk_size - 1)]
-                    chunk.insert(0, top_line)  # Include the root line in all chunks
-                    self.sections.append(Section(chunk))
+                # Find all header lines (leading decorators + first non-decorator declaration)
+                # These should be included in all subsections
+                header_lines = []
+                body_start_idx = 0
+                for idx, ld in enumerate(section.lines):
+                    if _is_decorator_line(ld.line):
+                        header_lines.append(ld)
+                    else:
+                        # First non-decorator line is the declaration - include it in header
+                        header_lines.append(ld)
+                        body_start_idx = idx + 1
+                        break
+
+                header_size = len(header_lines)
+                body_lines = section.lines[body_start_idx:]
+
+                if not body_lines:
+                    # No body lines, just add the header as a single section
+                    self.sections.append(Section(header_lines.copy()))
+                else:
+                    # Calculate how many body lines can fit per chunk
+                    body_per_chunk = max_chunk_size - header_size
+                    if body_per_chunk < 1:
+                        body_per_chunk = 1  # Ensure at least one body line per chunk
+
+                    for i in range(0, len(body_lines), body_per_chunk):
+                        chunk = header_lines.copy() + body_lines[i : i + body_per_chunk]
+                        self.sections.append(Section(chunk))
                 continue
 
             # If adding this section would exceed max_chunk_size, finalize current chunk

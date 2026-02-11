@@ -6,7 +6,7 @@
 - [Background / Problem Statement](#background--problem-statement)
 - [Goals](#goals)
 - [Design Proposal](#design-proposal)
-  - [Goal 1: Publish API Spec and Release SDK](#goal-1-publish-api-spec-and-release-sdk)
+  - [Goal 1: Define API Spec and Release SDK](#goal-1-define-api-spec-and-release-sdk)
   - [Goal 2: Experiment TypeSpec and Test SDK Generation](#goal-2-experiment-typespec-and-test-sdk-generation)
 - [Resumable Workflow Scenarios](#resumable-workflow-scenarios)
 - [Sub-Skills Overview](#sub-skills-overview)
@@ -44,7 +44,7 @@ _Terms used throughout this spec with precise meanings:_
 
 - **<a id="service-tree"></a>Service Tree**: Microsoft's service metadata repository that tracks service ownership, compliance, and KPIs. When an SDK is released, the corresponding service KPI is automatically marked as completed.
 
-- **<a id="service-kpi"></a>Service KPI**: Key Performance Indicator in Service Tree that tracks whether a service has released SDKs for all required languages.
+- **<a id="service-kpi"></a>Service KPI**: Key Performance Indicator in Service Tree for cloud life cycle and these KPIs are marked as completed when a release plan is completed according to service life cycle.
 
 ### Pull Requests and Reviews
 
@@ -117,7 +117,7 @@ An intelligent, guided workflow that orchestrates the entire TypeSpec-to-SDK rel
 ## Goals
 
 1. Provide an end-to-end guided workflow from TypeSpec authoring to SDK release
-2. Support two primary user goals: publishing SDKs for release AND experimenting with TypeSpec/SDK generation
+2. Support two primary user goals: publishing API Specs & SDKs for release AND experimenting with TypeSpec/SDK generation
 3. Enable users to resume the workflow from any intermediate state
 4. Automatically track and update release plan status throughout the workflow
 5. Provide intelligent decision points (local vs. pipeline generation, troubleshooting guidance)
@@ -132,7 +132,7 @@ An intelligent, guided workflow that orchestrates the entire TypeSpec-to-SDK rel
 
 The TypeSpec to SDK Release Workflow is an intelligent orchestration skill that guides users through the complete process of defining APIs in TypeSpec and releasing SDKs. The workflow:
 
-1. **Identifies user intent**: Determines whether the user wants to release SDKs or experiment with TypeSpec
+1. **Identifies user intent**: Determines whether the user wants to release SDKs or experiment with TypeSpec. This will also create a temporary release plan if a release plan does not exist for the TypeSpec project.
 2. **Assesses current state**: Detects existing release plans, PRs, and completed steps
 3. **Orchestrates sub-skills**: Invokes specialized skills for TypeSpec authoring, SDK generation, validation, etc.
 4. **Tracks progress**: Updates release plan status and local state after each step
@@ -254,10 +254,10 @@ This is the primary workflow for service teams preparing production SDK releases
 └─────────────────────┘      └─────────┬───────────┘
                                        │
                                        ▼
-                          ┌───────────────────────┐
-                          │ Update release plan   │
-                          │ with TypeSpec details │
-                          └───────────┬───────────┘
+       ┌────────────────────────────────────┐
+       │ Update release plan with API version, package details       │
+       │ and TypeSpec details. Changes release plan to in progress│
+       └───────────┬────────────────────────┘
                                       │
                                       ▼
                           ┌───────────────────────┐
@@ -471,8 +471,7 @@ This is the primary workflow for service teams preparing production SDK releases
 **Actions**:
 
 1. Present options to user with pros/cons
-2. Record user's choice
-3. Proceed to Step 5 (API spec PR) then Step 6 (SDK generation)
+2. Proceed to Step 5 (API spec PR) then Step 6 (SDK generation)
 
 ---
 
@@ -509,14 +508,15 @@ This is the primary workflow for service teams preparing production SDK releases
 3. Build generated code
 4. Run tests in playback mode
 5. Validate samples
-6. If any step fails:
+6. Run package validation checks
+7. If any step fails:
    - Report errors with troubleshooting guidance
    - Allow user to fix and retry
-7. Prepare package for release:
+8. Prepare package for release:
    - Update changelog
    - Update metadata
    - Update version
-8. Run package validation checks
+
 9. Create SDK pull requests for each language
 10. Update release plan with SDK PR links
 
@@ -528,11 +528,11 @@ This is the primary workflow for service teams preparing production SDK releases
 
 ###### Step 6.2: Pipeline SDK Generation
 
-**Skill Used**: [Pipeline SDK Generation](#skill-4-generate-sdk-locally) (via `azsdk_run_generate_sdk`)
+
 
 **Actions**:
 
-1. Trigger SDK generation pipeline with release plan details
+1. Trigger SDK generation pipeline with release plan details using mcp tool `azsdk_run_generate_sdk`
 2. Monitor pipeline status for each language
 3. If pipeline succeeds:
    - PRs are automatically created
@@ -555,7 +555,7 @@ This is the primary workflow for service teams preparing production SDK releases
 
 **Actions**:
 
-1. Check APIView for comments on SDK packages
+1. Check APIView for comments on SDK packages using the API view revision created for the PR.
 2. If no action items: Proceed to Step 8
 3. If action items exist:
    - Display suggestions grouped by priority
@@ -581,6 +581,7 @@ This is the primary workflow for service teams preparing production SDK releases
    - Guide user through merge process
 3. After merge:
    - Release pipeline automatically triggers
+   - Guide user to go to release pipeline run and approve the release of required package.
    - Packages published to registries
 4. When all languages released:
    - Release plan auto-completes

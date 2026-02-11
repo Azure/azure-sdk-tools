@@ -1,10 +1,4 @@
-import {
-  ApiFunction,
-  ApiItem,
-  ApiItemKind,
-  Parameter,
-  TypeParameter,
-} from "@microsoft/api-extractor-model";
+import { ApiFunction, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";

@@ -1,28 +1,102 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { CommentThreadComponent } from './comment-thread.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { ReviewPageModule } from 'src/app/_modules/review-page.module';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { MessageService } from 'primeng/api';
+import { vi } from 'vitest';
+import { initializeTestBed } from '../../../../test-setup';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
-import { MessageService } from 'primeng/api';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { WorkerService } from 'src/app/_services/worker/worker.service';
+import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
+import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
+
+// Mock ngx-simplemde before any component imports
+vi.mock('ngx-simplemde', () => {
+  const SimplemdeModuleMock = class SimplemdeModule {
+    static ɵmod = { 
+      id: 'SimplemdeModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+    static forRoot() {
+      return {
+        ngModule: SimplemdeModuleMock,
+        providers: []
+      };
+    }
+  };
+  class SimplemdeOptions {
+    constructor() {}
+  }
+  class SimplemdeComponent {
+    value = '';
+    options = {};
+    delay = 0;
+    valueChange = { emit: vi.fn() };
+  }
+  return {
+    SimplemdeModule: SimplemdeModuleMock,
+    SimplemdeOptions,
+    SimplemdeComponent
+  };
+});
+
+// Mock ngx-ui-scroll to avoid vscroll package dependency
+vi.mock('ngx-ui-scroll', () => {
+  const UiScrollModuleMock = class UiScrollModule {
+    static ɵmod = { 
+      id: 'UiScrollModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+  };
+  return {
+    UiScrollModule: UiScrollModuleMock
+  };
+});
+
+import { CommentThreadComponent } from './comment-thread.component';
 
 describe('CommentThreadComponent', () => {
   let component: CommentThreadComponent;
   let fixture: ComponentFixture<CommentThreadComponent>;
 
+  const mockNotificationsService = createMockNotificationsService();
+  const mockSignalRService = createMockSignalRService();
+  const mockWorkerService = createMockWorkerService();
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
+      schemas: [NO_ERRORS_SCHEMA],
       imports: [
         CommentThreadComponent,
-        HttpClientTestingModule,
-        ReviewPageModule,
-        SharedAppModule,
-        NoopAnimationsModule
+        SharedAppModule
       ],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: WorkerService, useValue: mockWorkerService },
         MessageService
       ]
     });
@@ -146,7 +220,7 @@ describe('CommentThreadComponent', () => {
       component.threadResolvedStateToggleText = 'Hide';
       component.threadResolvedStateToggleIcon = 'bi-arrows-collapse';
 
-      spyOn(component.commentResolutionActionEmitter, 'emit');
+      vi.spyOn(component.commentResolutionActionEmitter, 'emit');
 
       component.handleThreadResolutionButtonClick('Resolve');
 
@@ -156,7 +230,7 @@ describe('CommentThreadComponent', () => {
     });
 
     it('should collapse thread on second resolve after unresolve cycle', () => {
-      spyOn(component.commentResolutionActionEmitter, 'emit');
+      vi.spyOn(component.commentResolutionActionEmitter, 'emit');
 
       // First resolve
       component.handleThreadResolutionButtonClick('Resolve');
@@ -198,7 +272,7 @@ describe('CommentThreadComponent', () => {
     });
 
     it('should emit resolution events for batch resolution', () => {
-      spyOn(component.batchResolutionActionEmitter, 'emit');
+      vi.spyOn(component.batchResolutionActionEmitter, 'emit');
       component.allCodePanelRowData = [
         { nodeId: 'element1', nodeIdHashed: 'hash1', associatedRowPositionInGroup: 0 } as CodePanelRowData
       ];
@@ -207,7 +281,7 @@ describe('CommentThreadComponent', () => {
       component['emitResolutionEvents'](commentIds);
 
       expect(component.batchResolutionActionEmitter.emit).toHaveBeenCalledWith(
-        jasmine.objectContaining({
+        expect.objectContaining({
           commentId: 'comment1',
           resolvedBy: 'test-user'
         })
@@ -277,7 +351,7 @@ describe('CommentThreadComponent', () => {
       component.codePanelRowData!.showReplyTextBox = true;
       component.codePanelRowData!.draftCommentText = 'Draft to be cancelled';
 
-      spyOn(component.cancelCommentActionEmitter, 'emit');
+      vi.spyOn(component.cancelCommentActionEmitter, 'emit');
 
       const mockEvent = {
         target: document.createElement('button')

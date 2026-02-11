@@ -108,3 +108,4 @@ For TypeSpec-related operations:
 - `tsp validate --project-path ./typespec`
 - `tsp client customized-update --package-path ./sdk/storage --update-commit-sha <sha>`
 - `tsp project modified-projects --repo-root ./azure-rest-api-specs`
+- `tsp delegate-apiview-feedback <apiview-url> [--repo owner/repo] [--dry-run]`

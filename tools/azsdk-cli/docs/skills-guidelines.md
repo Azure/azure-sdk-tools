@@ -104,18 +104,22 @@ Skills that are specific to a particular language or repository should be stored
 
 ### Multi-Repository Skills
 
-Skills that apply to multiple repositories with the same instructions should be placed in the `eng/common/.github/skills` directory within the azure-sdk-tools repository. This enables sharing of common automation patterns across all Azure SDK repositories.
+Skills that apply to multiple repositories with the same instructions should be placed in the `.github/skills/common` directory within the azure-sdk-tools repository. This enables sharing of common automation patterns across all Azure SDK repositories.
 
 ### How to sync skills across the repos
 
-Engineering system has a pipeline to sync all changes in the `eng/common` in azure-sdk-tools repo to `eng/common` in all repos. This can be enhanced to support the sync of skills to `github/skills`.
+Engineering system has a pipeline to sync all changes in the `eng/common` in azure-sdk-tools repo to `eng/common` in all repos. This can be enhanced to support the sync of skills to `.github/skills`.
 
 To distribute Skills from azure-sdk-tools to individual Azure SDK repositories:
 
 - submit a PR to create or edit a skill in `Azure/azure-sdk-tools`.
-- Skills in `eng/common/.github/skills` are synced to `.github/skills` in individual SDK repositories using engsys pipeline.
+- Skills in `.github/skills/common` are synced to `.github/skills` in individual SDK repositories using engsys pipeline.
 - Changes to the engineering systems common sync framework are required to enable this synchronization.
 - The sync process ensures that all repositories benefit from centralized Skill updates.
+
+## Service specific instruction
+
+If a service has additional service specific guidelines for a particular workflow then it can be included as a markdown in the service folder and reference it from the skill. For e.g. if a team wants to have specific instructions as part of preparing package for a release.
 
 ## How to Test
 

@@ -315,21 +315,28 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="id"></param>
+        /// <param name="skipOwnerCheck">When true, skips the review owner authorization check (e.g. for admin deletions).</param>
         /// <returns></returns>
-        public async Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id)
+        public async Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id, bool skipOwnerCheck = false)
         {
             var review = await _reviewsRepository.GetReviewAsync(id);
             var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(id);
-            await ManagerHelpers.AssertReviewOwnerAsync(user, review, _authorizationService);
+            if (!skipOwnerCheck)
+            {
+                await ManagerHelpers.AssertReviewOwnerAsync(user, review, _authorizationService);
+            }
 
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(review.ChangeHistory, ReviewChangeAction.Deleted, user.GetGitHubLogin());
+            var userName = user.GetGitHubLogin();
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(review.ChangeHistory, ReviewChangeAction.Deleted, userName);
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsDeleted = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
 
+            // Use the no-guard overload for cascade deletion — the review-level permission
+            // check is sufficient; child revisions may be non-Manual or owned by other users.
             foreach (var revision in revisions)
             {
-                await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user, revision);
+                await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(revision, userName: userName, notes: "Cascade deleted with review");
             }
             await _commentManager.SoftDeleteCommentsAsync(user, review.Id);
         }

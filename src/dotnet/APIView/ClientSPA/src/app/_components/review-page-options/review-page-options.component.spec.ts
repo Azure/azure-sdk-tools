@@ -22,7 +22,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
@@ -97,7 +97,8 @@ describe('ReviewPageOptionsComponent', () => {
           useClass: HttpErrorInterceptorService,
           multi: true
         },
-        MessageService
+        MessageService,
+        ConfirmationService
       ]
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);

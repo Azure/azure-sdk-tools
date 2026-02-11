@@ -173,4 +173,12 @@ export class ReviewsService {
     }
     return this.http.get<boolean>(url, { withCredentials: true });
   }
+
+  getReviewRevisionCount(reviewId: string): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/${reviewId}/revisionCount`, { withCredentials: true });
+  }
+
+  deleteReview(reviewId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${reviewId}`, { withCredentials: true });
+  }
 }

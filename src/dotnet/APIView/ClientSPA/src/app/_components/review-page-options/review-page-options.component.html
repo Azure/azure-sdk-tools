@@ -133,7 +133,7 @@
         </ng-template>
     </p-popover>
 
-    <ng-container *ngIf="review && userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName) && isCopilotReviewSupported">
+    <ng-container *ngIf="review && userProfile && userProfile.userName && isCopilotReviewSupported">
         <hr class="my-2">
         <div class="px-1 py-2">
             <h6 class="mb-2 fw-semibold">Copilot</h6>

@@ -120,9 +120,11 @@ An intelligent, guided workflow that orchestrates the entire TypeSpec-to-SDK rel
 2. Support two primary user goals: publishing API Specs & SDKs for release AND experimenting with TypeSpec/SDK generation
 3. Enable users to resume the workflow from any intermediate state
 4. Automatically track and update release plan status throughout the workflow
-5. Provide intelligent decision points (local vs. pipeline generation, troubleshooting guidance)
-6. Integrate sub-skills seamlessly for specialized tasks (TypeSpec authoring, APIView resolution, etc.)
-7. Support all five SDK languages: .NET, Java, JavaScript, Python, Go
+5. Show a visual representation of steps completed in the workflow and what's pending.
+6. Provide intelligent decision points (local vs. pipeline generation, troubleshooting guidance)
+7. Integrate sub-skills seamlessly for specialized tasks (TypeSpec authoring, APIView resolution, etc.)
+8. Support all five SDK languages: .NET, Java, JavaScript, Python, Go
+9. Create a fully automated agentic workflow to query all required details from the user and run the steps in the workflow and until generating spec and SDK pull requests
 
 ---
 
@@ -146,18 +148,21 @@ This is the primary workflow for service teams preparing production SDK releases
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   User      │    │  Prepare    │    │  TypeSpec   │    │    SDK      │    │   Release   │
-│   Intent    │───▶│  Release    │───▶│  Readiness  │───▶│  Readiness  │───▶│    SDK      │
-│             │    │   Plan      │    │             │    │             │    │             │
+│   User      │    │  TypeSpec   │    │ Plan Spec   │    │    SDK      │    │   Release   │
+│   Intent    │───▶│  Readiness  │───▶│ and SDK     │───▶│  Readiness  │───▶│    SDK      │
+│             │    │             │    │   release   │    │             │    │             │
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-                         │                  │                  │                  │
-                         ▼                  ▼                  ▼                  ▼
-                   ┌───────────┐      ┌───────────┐      ┌───────────┐      ┌───────────┐
-                   │ Create or │      │ Author &  │      │ Generate, │      │ Merge PRs │
-                   │ identify  │      │ validate  │      │ test &    │      │ & publish │
-                   │ release   │      │ TypeSpec  │      │ create    │      │ packages  │
-                   │ plan      │      │           │      │ SDK PRs   │      │           │
-                   └───────────┘      └───────────┘      └───────────┘      └───────────┘
+      │                  │                  │                  │                  │
+      ▼                  ▼                  ▼                  ▼                  ▼
+┌───────────┐      ┌───────────┐      ┌───────────┐      ┌───────────┐      ┌───────────┐
+│ Create or │      │ Author &  │      │ Update    │      │ Generate, │      │ Merge PRs │
+│ find temp │      │ validate  │      │ release   │      │ test &    │      │ & publish │
+│ release   │      │ TypeSpec  │      │ plan from │      │ create    │      │ packages  │
+│ plan      │      │           │      │ temp to   │      │ SDK PRs   │      │           │
+└───────────┘      └───────────┘      │ actual &  │      └───────────┘      └───────────┘
+                                      │ update    │
+                                      │ details   │
+                                      └───────────┘
 ```
 
 #### Detailed Step-wise Instructions
@@ -180,13 +185,13 @@ This is the primary workflow for service teams preparing production SDK releases
               ┌───────────────────────┐             ┌───────────────────────┐
               │   GOAL 1: Release     │             │ GOAL 2: Experiment    │
               │   (This section)      │             │ (See Goal 2)          │
-              └───────────┬───────────┘             └───────────────────────┘
-                          │
-                          ▼
-              ┌───────────────────────┐
-              │ Check existing state: │
-              │ • Release plan?       │
-              │ • API spec PR?        │
+              └───────────┬───────────┘             └───────────┬───────────┘
+                          │                                     │
+                          ▼                                     ▼                                                    
+              ┌───────────────────────┐             ┌───────────────────────┐
+              │ Check existing state: │             │ Create a temporary    │
+              │ • Release plan?       │             │ release plan          │
+              │ • API spec PR?        │             └───────────────────────┘
               │ • SDK PRs?            │
               └───────────┬───────────┘
                           │
@@ -254,14 +259,20 @@ This is the primary workflow for service teams preparing production SDK releases
 └─────────────────────┘      └─────────┬───────────┘
                                        │
                                        ▼
-       ┌────────────────────────────────────┐
-       │ Update release plan with API version, package details       │
-       │ and TypeSpec details. Changes release plan to in progress│
-       └───────────┬────────────────────────┘
+                          ┌───────────────────────┐
+                          │ STEP 4: Update        │
+                          │ Release Plan          │
+                          └───────────┬───────────┘
+                                      │
+                                      ▼
+         ┌─────────────────────────────────────────────────────────────┐
+         │ Update release plan with API version, package details       │
+         │ and TypeSpec details. Changes release plan to in progress   │
+         └─────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
                           ┌───────────────────────┐
-                          │ STEP 4: Choose SDK    │
+                          │ STEP 5: Choose SDK    │
                           │ generation method     │
                           └───────────┬───────────┘
                                       │
@@ -276,7 +287,7 @@ This is the primary workflow for service teams preparing production SDK releases
                   │                                    │
                   ▼                                    │
         ┌─────────────────────┐                        │
-        │ STEP 5: Create API  │                        │
+        │ STEP 6: Create API  │                        │
         │ spec pull request   │◄───────────────────────┘
         └─────────┬───────────┘
                   │
@@ -288,7 +299,7 @@ This is the primary workflow for service teams preparing production SDK releases
                   │
                   ▼
         ┌─────────────────────┐
-        │ STEP 6: Generate    │
+        │ STEP 7: Generate    │
         │ SDK                 │
         └─────────┬───────────┘
                   │
@@ -296,7 +307,7 @@ This is the primary workflow for service teams preparing production SDK releases
      │                         │
      ▼                         ▼
 ┌──────────┐            ┌──────────────┐
-│ STEP 6.1 │            │  STEP 6.2    │
+│ STEP 7.1 │            │  STEP 7.2    │
 │ LOCAL    │            │  PIPELINE    │
 └────┬─────┘            └──────┬───────┘
      │                         │
@@ -337,11 +348,42 @@ This is the primary workflow for service teams preparing production SDK releases
          │
          ▼
 ┌─────────────────────────────────────────┐
-│ STEP 7: Check APIView feedback          │
+│ STEP 7.3: Verify PR pipeline status     │
 └─────────────────────┬───────────────────┘
                       │
          ┌────────────┴────────────┐
-         │ Has action items?       │
+         │ Pipeline failures?      │
+         ▼                         ▼
+┌─────────────────┐        ┌─────────────────┐
+│ YES: Analyze    │        │ NO: Proceed     │
+│ pipeline        │        │ to Step 7       │
+│ failures        │        │                 │
+└────────┬────────┘        └────────┬────────┘
+         │                          │
+         ▼                          │
+┌─────────────────┐                 │
+│ Switch to local │                 │
+│ SDK generation  │                 │
+│ to resolve      │                 │
+│ validation &    │                 │
+│ test errors     │                 │
+└────────┬────────┘                 │
+         │                          │
+         ▼                          │
+┌─────────────────┐                 │
+│ Update SDK PRs  │                 │
+│ with fixes      │                 │
+└────────┬────────┘                 │
+         │                          │
+         └──────────────┬───────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│ STEP 8: Check APIView feedback for the SDK pull requests │
+└─────────────────────┬────────────────────────────────────┘
+                      │
+         ┌────────────┴────────────┐
+         │ Has any API suggestions?│
          ▼                         ▼
 ┌─────────────────┐        ┌─────────────────┐
 │ YES: Resolve    │        │ NO: Proceed     │
@@ -352,7 +394,7 @@ This is the primary workflow for service teams preparing production SDK releases
          │                          │
          ▼                          │
 ┌─────────────────┐                 │
-│ Re-run Step 6   │                 │
+│ Re-run Step 7   │                 │
 │ SDK generation  │                 │
 └────────┬────────┘                 │
          │                          │
@@ -360,7 +402,7 @@ This is the primary workflow for service teams preparing production SDK releases
                         │
                         ▼
          ┌─────────────────────────────────┐
-         │ STEP 8: Release SDKs            │
+         │ STEP 9: Release SDKs            │
          └─────────────────┬───────────────┘
                            │
                            ▼
@@ -387,7 +429,7 @@ This is the primary workflow for service teams preparing production SDK releases
                     └──────────────┘
 ```
 
-##### Step 1: Plan API Spec and SDK Release
+##### Step 1: Create a temporary release plan
 
 **Skill Used**: [Prepare Release Plan Skill](#skill-6-prepare-release-plan)
 
@@ -445,19 +487,43 @@ This is the primary workflow for service teams preparing production SDK releases
 3. If compilation succeeds:
    - Extract API version from TypeSpec
    - Extract package names for each language
-4. Update release plan with TypeSpec details:
-   - TypeSpec project path
-   - API version
-   - Package names per language
 
 **Status Updates**:
 
 - TypeSpec validation: Completed
-- Release plan: Updated with API version and package names
 
 ---
 
-##### Step 4: Choose SDK Generation Method
+##### Step 4: Update Release Plan
+
+**Skill Used**: [Prepare Release Plan Skill](#skill-6-prepare-release-plan)
+
+**Actions**:
+
+1. Validate package names:
+   - Look for any existing completed release plans for the TypeSpec project
+   - Retrieve package names from those completed release plans
+   - Compare new package names with existing package names
+   - If package names conflict (different from previously released packages):
+     - **Warn user** about conflicting package names
+     - Inform user they will need to get approval for the new package names
+     - Inform user they will need to deprecate the old packages
+     - **Note**: This is not recommended if the older package was already released as GA without approvals
+2. Update release plan with TypeSpec details:
+   - TypeSpec project path
+   - API version
+   - Package names per language
+3. Change release plan status to "In Progress"
+
+**Status Updates**:
+
+- Package name validation: Completed (with warnings if conflicts detected)
+- Release plan: Updated with API version, package details, and TypeSpec details
+- Release plan status: In Progress
+
+---
+
+##### Step 5: Choose SDK Generation Method
 
 **Decision Point**:
 
@@ -471,11 +537,11 @@ This is the primary workflow for service teams preparing production SDK releases
 **Actions**:
 
 1. Present options to user with pros/cons
-2. Proceed to Step 5 (API spec PR) then Step 6 (SDK generation)
+2. Proceed to Step 6 (API spec PR) then Step 7 (SDK generation)
 
 ---
 
-##### Step 5: Create API Spec Pull Request
+##### Step 6: Create API Spec Pull Request
 
 **Actions**:
 
@@ -495,9 +561,9 @@ This is the primary workflow for service teams preparing production SDK releases
 
 ---
 
-##### Step 6: SDK Generation
+##### Step 7: SDK Generation
 
-###### Step 6.1: Local SDK Generation
+###### Step 7.1: Local SDK Generation
 
 **Skill Used**: [Generate SDK Locally Skill](#skill-4-generate-sdk-locally)
 
@@ -526,7 +592,7 @@ This is the primary workflow for service teams preparing production SDK releases
 - Package preparation: Completed per language
 - SDK PRs: Created and linked to release plan
 
-###### Step 6.2: Pipeline SDK Generation
+###### Step 7.2: Pipeline SDK Generation
 
 
 
@@ -549,21 +615,20 @@ This is the primary workflow for service teams preparing production SDK releases
 
 ---
 
-##### Step 7: Resolve APIView Suggestions
+##### Step 8: Resolve APIView Suggestions
 
 **Skill Used**: [APIView Feedback Resolution Skill](#skill-8-apiview-feedback-resolution)
 
 **Actions**:
 
 1. Check APIView for comments on SDK packages using the API view revision created for the PR.
-2. If no action items: Proceed to Step 8
+2. If no action items: Proceed to Step 9
 3. If action items exist:
    - Display suggestions grouped by priority
    - Guide user through resolving each item
    - Apply TypeSpec customizations if needed
    - Regenerate SDK if changes were made
    - Update SDK PRs
-4. Return to Step 6 if significant changes required
 
 **Status Updates**:
 
@@ -572,7 +637,7 @@ This is the primary workflow for service teams preparing production SDK releases
 
 ---
 
-##### Step 8: Release SDK
+##### Step 9: Release SDK
 
 **Actions**:
 
@@ -603,19 +668,19 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
 #### Process Flow to experiment TypeSpec and SDK from TypeSpec
 
 ```
-┌─────────────┐    ┌─────────────┐     ┌─────────────┐            ┌─────────────────────────────────────────────────────────────────┐
-│   User      │    │  TypeSpec   │     │    SDK      │            │                    OPTIONAL                                     │
-│   Intent    │───▶│  Changes    │───▶│ Generation  │───▶ ? ───▶│  Prepare Release Plan ──▶ API & SDK Readiness ──▶ Release SDK  │
-│             │    │             │     │  (Local)    │            │                                                                 │
-└─────────────┘    └─────────────┘     └─────────────┘            └─────────────────────────────────────────────────────────────────┘
-                         │                  │                                              │
-                         ▼                  ▼                                              ▼
-                   ┌───────────┐      ┌───────────┐                                  ┌───────────┐
-                   │ Create or │      │ Generate  │                                  │ Transition│
-                   │ update    │      │ & test    │                                  │ to Goal 1 │
-                   │ TypeSpec  │      │ SDK       │                                  │ workflow  │
-                   │ locally   │      │ locally   │                                  │           │
-                   └───────────┘      └───────────┘                                  └───────────┘
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐     ┌─────────────┐            ┌─────────────────────────────────────────────────────────────────┐
+│   User      │    │ Create or   │    │  TypeSpec   │     │    SDK      │            │                    OPTIONAL                                     │
+│   Intent    │───▶│ find temp   │───▶│  Changes    │───▶│ Generation  │───▶ ? ───▶│  Update Release Plan ──▶ API & SDK Readiness ──▶ Release SDK  │
+│             │    │ release plan│    │             │     │  (Local)    │            │                                                                 │
+└─────────────┘    └─────────────┘    └─────────────┘     └─────────────┘            └─────────────────────────────────────────────────────────────────┘
+                                            │                   │                                              │
+                                            ▼                   ▼                                              ▼
+                                      ┌───────────┐       ┌───────────┐                                  ┌───────────┐
+                                      │ Create or │       │ Generate  │                                  │ Transition│
+                                      │ update    │       │ & test    │                                  │ to Goal 1 │
+                                      │ TypeSpec  │       │ SDK       │                                  │ workflow  │
+                                      │ locally   │       │ locally   │                                  │           │
+                                      └───────────┘       └───────────┘                                  └───────────┘
 ```
 
 #### Detailed Step-wise Instructions
@@ -629,7 +694,23 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
                                      │
                                      ▼
                         ┌─────────────────────────┐
-                        │ STEP 1: Author TypeSpec │
+                        │ STEP 1: Create or find  │
+                        │ temporary release plan  │
+                        └────────────┬────────────┘
+                                     │
+           ┌─────────────────────────┴─────────────────────────┐
+           │                                                   │
+           ▼                                                   ▼
+┌──────────────────────────┐               ┌──────────────────────────┐
+│ Create new temporary     │               │ Find existing temporary │
+│ release plan             │               │ release plan for project│
+└────────────┬─────────────┘               └────────────┬─────────────┘
+             │                                          │
+             └────────────────────┬─────────────────────┘
+                                     │
+                                     ▼
+                        ┌─────────────────────────┐
+                        │ STEP 2: Author TypeSpec │
                         │ [TypeSpec Authoring]    │
                         └────────────┬────────────┘
                                      │
@@ -645,7 +726,7 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
                                   │
                                   ▼
                      ┌─────────────────────────┐
-                     │ STEP 2: Validate &      │
+                     │ STEP 3: Validate &      │
                      │ Compile TypeSpec        │
                      └────────────┬────────────┘
                                   │
@@ -674,7 +755,7 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
               │ NO                                │ YES
               ▼                                   ▼
    ┌───────────────────────┐         ┌───────────────────────┐
-   │ Continue iterating    │         │ STEP 3.1: Verify      │
+   │ Continue iterating    │         │ STEP 4.1: Verify      │
    │ or end experiment     │         │ Environment Setup     │
    └───────────────────────┘         └───────────┬───────────┘
                                                  │
@@ -687,7 +768,7 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
                                │ NO                              │ YES
                                ▼                                 ▼
                     ┌─────────────────────┐         ┌─────────────────────┐
-                    │ Install missing     │         │ STEP 3.2: Generate  │
+                    │ Install missing     │         │ STEP 4.2: Generate  │
                     │ tools/dependencies  │         │ SDK Locally         │
                     └──────────┬──────────┘         └──────────┬──────────┘
                                │                               │
@@ -701,7 +782,7 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
                                               │
                                               ▼
                                   ┌─────────────────────────┐
-                                  │ STEP 3.3: Run Package   │
+                                  │ STEP 4.3: Run Package   │
                                   │ Checks & Validation     │
                                   └───────────┬─────────────┘
                                               │
@@ -736,26 +817,26 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
                                  │ NO                                                  │ YES
                                  ▼                                                     ▼
                       ┌───────────────────────┐                          ┌───────────────────────┐
-                      │ Experiment complete   │                          │ STEP 4: Transition    │
+                      │ Experiment complete   │                          │ STEP 5: Transition    │
                       │ (local SDK only)      │                          │ to Release Workflow   │
                       └───────────────────────┘                          └───────────┬───────────┘
                                                                                      │
                                                                                      ▼
                                                                         ┌───────────────────────┐
-                                                                        │ 4.1: Create Release   │
+                                                                        │ 5.1: Update Release   │
                                                                         │ Plan Work Item        │
                                                                         └───────────┬───────────┘
                                                                                     │
                                                                                     ▼
                                                                         ┌───────────────────────┐
-                                                                        │ 4.2: Update Package   │
+                                                                        │ 5.2: Update Package   │
                                                                         │ Metadata & Changelog  │
                                                                         │ [Package Skill]       │
                                                                         └───────────┬───────────┘
                                                                                     │
                                                                                     ▼
                                                                         ┌───────────────────────┐
-                                                                        │ 4.3: Create API Spec  │
+                                                                        │ 5.3: Create API Spec  │
                                                                         │ Pull Request          │
                                                                         └───────────┬───────────┘
                                                                                     │
@@ -767,15 +848,15 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
                                                                                     │
                                                                                     ▼
                                                                         ┌───────────────────────┐
-                                                                        │ 4.4: Create SDK PRs   │
+                                                                        │ 5.4: Create SDK PRs   │
                                                                         │ & Link to Release     │
                                                                         │ Plan                  │
                                                                         └───────────┬───────────┘
                                                                                     │
                                                                                     ▼
                                                                         ┌───────────────────────┐
-                                                                        │ 4.5: Follow Goal 1    │
-                                                                        │ Steps 7-8 to release  │
+                                                                        │ 5.5: Follow Goal 1    │
+                                                                        │ Steps 8-9 to release  │
                                                                         └───────────┬───────────┘
                                                                                     │
                                                                                     ▼
@@ -784,7 +865,28 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
                                                                              └──────────────┘
 ```
 
-##### Step 1: Create or update TypeSpec
+##### Step 1: Create or Find Temporary Release Plan
+
+**Skill Used**: [Prepare Release Plan Skill](#skill-6-prepare-release-plan)
+
+**Actions**:
+
+1. Check if a temporary release plan already exists for the TypeSpec project
+2. If no temporary release plan exists:
+   - Create a new temporary release plan work item
+   - Store release plan ID in local workflow state
+3. If temporary release plan exists:
+   - Retrieve and display release plan details
+   - Continue with existing temporary plan
+
+**Status Updates**:
+
+- Temporary release plan: Created/Found
+- Local state: Release plan ID stored
+
+---
+
+##### Step 2: Create or update TypeSpec
 
 **Skill Used**: [TypeSpec Authoring Skill](#skill-2-typespec-authoring-and-validation)
 
@@ -796,7 +898,7 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
 
 ---
 
-##### Step 2: Validate and Compile TypeSpec
+##### Step 3: Validate and Compile TypeSpec
 
 **Actions**:
 
@@ -807,25 +909,25 @@ This workflow is for users who want to explore TypeSpec or validate SDK generati
 
 ---
 
-##### Step 3: Generate SDK (Optional)
+##### Step 4: Generate SDK (Optional)
 
 If user wants to see generated SDK:
 
-###### Step 3.1: Verify Environment Setup
+###### Step 4.1: Verify Environment Setup
 
 **Actions**:
 
 1. Check if required tools are installed for target language(s)
 2. Install missing tools/dependencies if needed
 
-###### Step 3.2: Generate SDK Locally
+###### Step 4.2: Generate SDK Locally
 
 **Actions**:
 
 1. Run local SDK generation
 2. Build generated code
 
-###### Step 3.3: Run Package Checks & Validation
+###### Step 4.3: Run Package Checks & Validation
 
 **Actions**:
 
@@ -837,18 +939,18 @@ If user wants to see generated SDK:
 
 ---
 
-##### Step 4: Publish (Optional - Transition to Release Workflow)
+##### Step 5: Publish (Optional - Transition to Release Workflow)
 
 If user decides to publish the spec and release SDK:
 
-###### Step 4.1: Create Release Plan
+###### Step 5.1: Update Release Plan
 
 **Actions**:
 
-1. Create release plan work item
-2. Update with TypeSpec project details
+1. Update temporary release plan to actual release plan
+2. Update with TypeSpec project details, API version, and package names
 
-###### Step 4.2: Update SDK Package Metadata
+###### Step 5.2: Update SDK Package Metadata
 
 **Skill Used**: [Package Release Readiness Skill](#skill-5-package-release-readiness)
 
@@ -857,25 +959,25 @@ If user decides to publish the spec and release SDK:
 1. Update changelog
 2. Update package metadata
 
-###### Step 4.3: Create API Spec Pull Request
+###### Step 5.3: Create API Spec Pull Request
 
 **Actions**:
 
 1. Create PR in azure-rest-api-specs
 2. Update release plan with PR link
 
-###### Step 4.4: Create SDK PRs & Link to Release Plan
+###### Step 5.4: Create SDK PRs & Link to Release Plan
 
 **Actions**:
 
 1. Create SDK pull requests
 2. Link PRs to release plan
 
-###### Step 4.5: Release SDKs
+###### Step 5.5: Release SDKs
 
 **Actions**:
 
-1. Follow Goal 1 Steps 7-8 (APIView resolution and release)
+1. Follow Goal 1 Steps 8-9 (APIView resolution and release)
 
 ---
 
@@ -890,14 +992,14 @@ The workflow is designed to support users who have already completed some steps 
 - User mentions existing release plan work item ID or PR link
 - Agent queries release plan to find linked API spec PR
 
-**Resume Point**: Continue from Step 6 (SDK Generation)
+**Resume Point**: Continue from Step 7 (SDK Generation)
 
 **Actions**:
 
 1. Retrieve release plan details
 2. Verify API spec PR is approved/merged
 3. Proceed with SDK generation (local or pipeline)
-4. Continue through Steps 7-8
+4. Continue through Steps 8-9
 
 ```
 ┌───────────────────────────┐
@@ -913,7 +1015,7 @@ The workflow is designed to support users who have already completed some steps 
               │
               ▼
 ┌───────────────────────────┐
-│ Resume at Step 6:         │
+│ Resume at Step 7:         │
 │ SDK Generation            │
 └───────────────────────────┘
 ```
@@ -927,11 +1029,11 @@ The workflow is designed to support users who have already completed some steps 
 - User provides API spec PR link
 - No release plan found for this PR
 
-**Resume Point**: Create release plan, then continue from Step 6
+**Resume Point**: Create release plan, then continue from Step 7
 
 **Actions**:
 
-1. Create release plan work item
+1. Create release plan work item and mark TypeSpec authoring was already completed.
 2. Link existing API spec PR to release plan
 3. Extract TypeSpec details from PR
 4. Proceed with SDK generation
@@ -944,13 +1046,15 @@ The workflow is designed to support users who have already completed some steps 
               │
               ▼
 ┌───────────────────────────┐
-│ Create release plan and   │
-│ link API spec PR          │
+│ Create release plan,      │
+│ link API spec PR and      │
+| mark TypeSpec authoring   |
+| was already completed.    |
 └─────────────┬─────────────┘
               │
               ▼
 ┌───────────────────────────┐
-│ Resume at Step 6:         │
+│ Resume at Step 7:         │
 │ SDK Generation            │
 └───────────────────────────┘
 ```
@@ -1096,7 +1200,7 @@ The end-to-end workflow orchestrates these specialized sub-skills:
 **Related Tools**:
 
 - `azsdk_typespec_generate_authoring_plan`
-- TypeSpec compiler commands
+- `azsdk_run_typespec_validation`
 
 **Spec Reference**: [typespec-authoring.spec.md](typespec-authoring.spec.md)
 
@@ -1118,7 +1222,7 @@ The end-to-end workflow orchestrates these specialized sub-skills:
 - `azsdk_package_customize_code`
 
 **Spec Reference**: [3-customizing-client-tsp.spec.md](3-customizing-client-tsp.spec.md)
-
+**Skill reference**: TypeSpec customization should refer `TypeSpec Authoring and Validation` skill to validate the TypeSpec
 ---
 
 ### Skill 4: Generate SDK Locally
@@ -1131,12 +1235,18 @@ The end-to-end workflow orchestrates these specialized sub-skills:
 - Generate SDK code from TypeSpec
 - Build generated code
 - Troubleshoot generation failures
-- Compare local generation with pipeline results
+- Run package tests
+- Run package validation
+- Generate readme and samples
 
 **Related Tools**:
 
 - `azsdk_package_generate_code`
 - `azsdk_verify_setup`
+- `azsdk_package_build_code`
+- `azsdk_package_run_check`
+- `azsdk_package_run_tests`
+- `azsdk_package_generate_samples`
 
 ---
 
@@ -1178,8 +1288,9 @@ The end-to-end workflow orchestrates these specialized sub-skills:
 - `azsdk_create_release_plan`
 - `azsdk_get_release_plan_for_spec_pr`
 - `azsdk_update_sdk_details_in_release_plan`
-- `azsdk_update_api_spec_pull_request_in_release_`
+- `azsdk_update_api_spec_pull_request_in_release_plan`
 - `azsdk_link_sdk_pull_request_to_release_plan`
+- `azsdk_get_release_plan`
 
 ---
 
@@ -1189,7 +1300,8 @@ The end-to-end workflow orchestrates these specialized sub-skills:
 
 **Capabilities**:
 
-- Create temporary TypeSpec projects
+- Create a temporary release plan
+- Create or update TypeSpec projects
 - Iterate quickly on TypeSpec changes
 - Generate SDKs locally for testing
 - Transition to full release workflow when ready
@@ -1205,14 +1317,13 @@ The end-to-end workflow orchestrates these specialized sub-skills:
 **Capabilities**:
 
 - Retrieve APIView comments for SDK packages
-- Categorize feedback by priority
-- Guide user through resolving suggestions
-- Apply necessary TypeSpec or code changes
-- Trigger SDK regeneration after changes
+- Use APIView feedback resolver mcp tool
+- Trigger SDK regeneration after TypeSpec changes
 
 **Related Tools**:
 
 - `azsdk_apiview_get_comments`
+- `azsdk_typespec_delegate_apiview_feedback`
 
 ---
 
@@ -1230,7 +1341,8 @@ The end-to-end workflow orchestrates these specialized sub-skills:
 
 **Related Tools**:
 
-- Pipeline analysis tools (activate via `activate_pipeline_analysis_tools`)
+- `azsdk_analyze_pipeline`
+
 
 ---
 
@@ -1284,7 +1396,8 @@ I need to update my API and release SDK for Python, .NET, and Java.
 2. Guide through TypeSpec modifications
 3. Create release plan for specified languages only
 4. Generate SDKs for Python, .NET, and Java
-5. Create and link SDK PRs
+5. Inform users that SDK must be generated and released for JS and Go (for management plane) and also for JS (for data plane). Management plane must release .NET, JS, Java, Python and Go packages and Dataplane must release .NET, JS, Java and Python.
+6. Create and link SDK PRs
 
 ---
 
@@ -1365,11 +1478,12 @@ I want to experiment with changing my TypeSpec and checking the generated SDK.
 
 **Expected Agent Activity:**
 
-1. Load existing TypeSpec project
-2. Guide through modifications
-3. Compile and show differences
-4. Generate SDK locally to verify changes
-5. Ask if user wants to proceed to release
+1. Create a temporary release plan
+2. Load existing TypeSpec project
+3. Guide through modifications
+4. Compile and show differences
+5. Generate SDK locally to verify changes
+6. Ask if user wants to proceed to release. Convert to actual release plan and proceed if user wants to proceed to release spec and SDK.
 
 ---
 
@@ -1382,7 +1496,7 @@ I've been experimenting with TypeSpec and now I'm ready to publish and release.
 **Expected Agent Activity:**
 
 1. Transition to Goal 1 workflow
-2. Create release plan
+2. Update a temporary release plan to actual release plan or create a new release plan if temporary one is missing.
 3. Update package metadata and changelog
 4. Create API spec PR
 5. Continue with full release workflow
@@ -1403,7 +1517,7 @@ The APIView has comments I need to address before my SDK PR can be approved.
 2. Categorize by priority
 3. Guide through resolving each comment
 4. Apply TypeSpec customizations if needed
-5. Regenerate SDK and update PR
+5. Regenerate SDK, re-validate SDK, and update PR
 
 ---
 
@@ -1445,19 +1559,24 @@ This workflow is complete when:
 - **How should the workflow handle architect review requirements for first preview/GA?**
   - Context: These require human approval outside the workflow
   - Options: Block workflow, parallel track, manual override
-
-- **Should experiment workflow results be persisted for later release conversion?**
-  - Context: Users may want to convert experiments to releases later
-  - Options: Auto-save state, manual save, ephemeral only
+  - Check if API View are approved. If so, move to release. If not move to below step.
+  - Check if API View's have feedback from architects, if so help user resolve feedback.
+  - Check if API View's have actively requested reviews from architects, if not tell user to request reviews on their API View. If they do have active requests to review, reach out to the architects or something.
 
 ---
 
+## Further enhancements(Out of scope in the initial workflow)
+
+### Breaking change validation and guidance
+
+Agent will have a breaking change detection validation and warn users about the breaking changes. It will guide users to get breaking change approval. 
+
 ## Exceptions and Limitations
 
-### Exception 1: First GA Releases Requiring Architect Review
+### Exception 1: Releases Requiring Architect Review
 
 **Description:**
-First GA releases require architect board review, which involves human decision-making outside the automated workflow.
+First GA releases require architect board review, which involves human decision-making outside the automated workflow. Preview releases do not require architect approval but a service team can still request a review.
 
 **Impact:**
 The workflow cannot fully automate the architect review process.

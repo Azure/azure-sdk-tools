@@ -77,14 +77,12 @@ The review pipeline in `ApiViewReview.run()` follows these stages:
 
 ### Python Style
 
-- **Line length**: 120 characters (configured in `pyproject.toml` via Black).
-- **Target Python version**: 3.8+ (Black target).
-- **Formatting**: Use Black. Run `black .` before committing.
+- **Formatting**: Use [Black](https://black.readthedocs.io/) for all code formatting. Configuration is in `pyproject.toml`. Run `python scripts/format.py` to format, or `python scripts/format.py --check` to verify.
 - **Linting**: Use Pylint. Run `pylint src scripts tests`.
 - **Type hints**: Use throughout. Use `Optional[T]` for nullable fields. Use `List`, `Dict`, `Set` from `typing` for compatibility.
 - **Docstrings**: Use triple-double-quote docstrings for all public classes and methods.
-- **Imports**: Group as stdlib → third-party → local, separated by blank lines. Local imports use relative paths within `src/` (e.g., `from ._models import Comment`).
-- **File headers**: Every source file should have the Microsoft copyright header.
+- **Imports**: Group as stdlib → third-party → local, separated by blank lines. Local imports use absolute paths (e.g., `from src._models import Comment`). `__init__.py` files and subpackage sibling imports may use relative paths (e.g., `from ._base import MentionWorkflow`). Be consistent within a module.
+- **File headers**: Every source file should have the Microsoft copyright header. Run `python scripts/check_copyright_headers.py` to verify, or `--fix` to add missing headers automatically.
 - **Private modules**: All source modules in `src/` use underscore prefix (e.g., `_models.py`).
 - **Logging**: Use Python's `logging` module. Module-level logger via `logger = logging.getLogger(__name__)`. The `ApiViewReview` class uses a `JobLogger` wrapper that prepends the job ID to all log messages.
 
@@ -140,6 +138,21 @@ The CLI is invoked via `avc` (or `python cli.py`). Key command groups:
 
 ## Environment Setup
 
+A Python virtual environment is used for development. **Always activate the virtualenv before running any commands** (tests, linting, formatting, scripts, etc.):
+
+```bash
+# Windows
+.venv\Scripts\activate
+
+# Linux/macOS
+source .venv/bin/activate
+```
+
+Install dependencies after activation:
+```bash
+pip install -r dev_requirements.txt
+```
+
 Required environment variables (typically in `.env`):
 - `AZURE_APP_CONFIG_ENDPOINT` — Azure App Configuration endpoint URL.
 - `ENVIRONMENT_NAME` — Configuration label (e.g., `production`, `staging`).
@@ -153,7 +166,7 @@ All other settings (Cosmos DB endpoint, Search endpoint, OpenAI keys, etc.) are 
 - **Search/RAG**: Changes to `SearchManager` or the knowledge base schema may require reindexing (`avc search reindex`).
 - **Settings**: New configuration keys must be added to Azure App Configuration for both `production` and `staging` labels.
 - **Endpoints**: The FastAPI app uses role-based auth. Test changes with `avc app check --include-auth`.
-- **CI**: The CI pipeline (`ci.yml`) runs packaging, unit tests (`pytest tests`), and linting (`pylint src scripts tests`).
+- **CI**: The CI pipeline (`ci.yml`) runs packaging, unit tests (`pytest tests`), linting (`pylint src scripts tests`), and copyright header checks (`python scripts/check_copyright_headers.py`).
 - **Dependencies**: Runtime deps go in `requirements.txt`; dev/test deps go in `dev_requirements.txt`.
 
 ## Supported Languages

@@ -168,6 +168,11 @@ class SectionedDocument:
                         body_start_idx = idx + 1
                         break
 
+                # Defensive handling: if the section contains only decorator lines,
+                # treat them as header-only with no body to avoid duplication.
+                if body_start_idx == 0 and header_lines and all(_is_decorator_line(ld.line) for ld in header_lines):
+                    body_start_idx = len(section.lines)
+
                 header_size = len(header_lines)
                 body_lines = section.lines[body_start_idx:]
 
@@ -175,10 +180,13 @@ class SectionedDocument:
                     # No body lines, just add the header as a single section
                     self.sections.append(Section(header_lines.copy()))
                 else:
-                    # Calculate how many body lines can fit per chunk
+                    # Calculate how many body lines can fit per chunk.
+                    # Note: if header_size >= max_chunk_size (e.g. many decorators), body_per_chunk
+                    # is clamped to 1 so each chunk will exceed max_chunk_size. This is intentional
+                    # since headers must always be included for context.
                     body_per_chunk = max_chunk_size - header_size
                     if body_per_chunk < 1:
-                        body_per_chunk = 1  # Ensure at least one body line per chunk
+                        body_per_chunk = 1
 
                     for i in range(0, len(body_lines), body_per_chunk):
                         chunk = header_lines.copy() + body_lines[i : i + body_per_chunk]

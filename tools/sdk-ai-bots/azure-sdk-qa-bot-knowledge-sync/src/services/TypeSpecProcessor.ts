@@ -31,7 +31,7 @@ export class TypeSpecProcessor {
             try {
                 fs.mkdirSync(this.destDir);
             } catch(error) {
-                console.error(`Failed to create destination directory ${this.destDir}.`, error)
+                console.error(`Failed to create destination directory ${this.destDir}.`, error);
                 throw error;
             }
         }

@@ -9,7 +9,8 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <ToolCommandName>azsdk</ToolCommandName>
     <!-- CS8002: GitHub.Copilot.SDK is not strong-named (preview package) -->
-    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604;CS8002</NoWarn>
+    <!-- NU5111: Scripts in tools folder are runtime dependencies, not install scripts -->
+    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604;CS8002;NU5111</NoWarn>
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>

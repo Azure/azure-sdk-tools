@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { vi, Mock } from 'vitest';
 
 import { AdminPermissionsPageComponent } from './admin-permissions-page.component';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
@@ -21,13 +24,36 @@ import {
 } from 'src/app/_models/permissions';
 import { UserProfile } from 'src/app/_models/userProfile';
 
+interface MockPermissionsService {
+    isAdmin: Mock;
+    getAllGroups: Mock;
+    createGroup: Mock;
+    updateGroup: Mock;
+    deleteGroup: Mock;
+    addMembersToGroup: Mock;
+    removeMemberFromGroup: Mock;
+    getAllUsernames: Mock;
+}
+
+interface MockUserProfileService {
+    getUserProfile: Mock;
+}
+
+interface MockMessageService {
+    add: Mock;
+}
+
+interface MockConfirmationService {
+    confirm: Mock;
+}
+
 describe('AdminPermissionsPageComponent', () => {
     let component: AdminPermissionsPageComponent;
     let fixture: ComponentFixture<AdminPermissionsPageComponent>;
-    let permissionsServiceSpy: jasmine.SpyObj<PermissionsService>;
-    let userProfileServiceSpy: jasmine.SpyObj<UserProfileService>;
-    let messageServiceSpy: jasmine.SpyObj<MessageService>;
-    let confirmationServiceSpy: jasmine.SpyObj<ConfirmationService>;
+    let permissionsServiceSpy: MockPermissionsService;
+    let userProfileServiceSpy: MockUserProfileService;
+    let messageServiceSpy: MockMessageService;
+    let confirmationServiceSpy: MockConfirmationService;
 
     const mockAdminPermissions: EffectivePermissions = {
         userId: 'adminUser',
@@ -86,25 +112,34 @@ describe('AdminPermissionsPageComponent', () => {
         }
     ];
 
+    beforeAll(() => {
+        initializeTestBed();
+    });
+
     beforeEach(async () => {
-        const permissionsSpy = jasmine.createSpyObj('PermissionsService', [
-            'isAdmin', 
-            'getAllGroups', 
-            'createGroup', 
-            'updateGroup', 
-            'deleteGroup',
-            'addMembersToGroup',
-            'removeMemberFromGroup',
-            'getAllUsernames'
-        ]);
-        const userProfileSpy = jasmine.createSpyObj('UserProfileService', ['getUserProfile']);
-        const messageSpy = jasmine.createSpyObj('MessageService', ['add']);
-        const confirmationSpy = jasmine.createSpyObj('ConfirmationService', ['confirm']);
+        const permissionsSpy: MockPermissionsService = {
+            isAdmin: vi.fn(),
+            getAllGroups: vi.fn(),
+            createGroup: vi.fn(),
+            updateGroup: vi.fn(),
+            deleteGroup: vi.fn(),
+            addMembersToGroup: vi.fn(),
+            removeMemberFromGroup: vi.fn(),
+            getAllUsernames: vi.fn()
+        };
+        const userProfileSpy: MockUserProfileService = {
+            getUserProfile: vi.fn()
+        };
+        const messageSpy: MockMessageService = {
+            add: vi.fn()
+        };
+        const confirmationSpy: MockConfirmationService = {
+            confirm: vi.fn()
+        };
 
         await TestBed.configureTestingModule({
             declarations: [AdminPermissionsPageComponent],
             imports: [
-                HttpClientTestingModule, 
                 FormsModule,
                 BrowserAnimationsModule,
                 SelectModule,
@@ -112,6 +147,8 @@ describe('AdminPermissionsPageComponent', () => {
                 AutoCompleteModule
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: PermissionsService, useValue: permissionsSpy },
                 { provide: UserProfileService, useValue: userProfileSpy },
                 { provide: MessageService, useValue: messageSpy },
@@ -122,20 +159,20 @@ describe('AdminPermissionsPageComponent', () => {
 
         fixture = TestBed.createComponent(AdminPermissionsPageComponent);
         component = fixture.componentInstance;
-        permissionsServiceSpy = TestBed.inject(PermissionsService) as jasmine.SpyObj<PermissionsService>;
-        userProfileServiceSpy = TestBed.inject(UserProfileService) as jasmine.SpyObj<UserProfileService>;
-        messageServiceSpy = TestBed.inject(MessageService) as jasmine.SpyObj<MessageService>;
-        confirmationServiceSpy = TestBed.inject(ConfirmationService) as jasmine.SpyObj<ConfirmationService>;
+        permissionsServiceSpy = TestBed.inject(PermissionsService) as unknown as MockPermissionsService;
+        userProfileServiceSpy = TestBed.inject(UserProfileService) as unknown as MockUserProfileService;
+        messageServiceSpy = TestBed.inject(MessageService) as unknown as MockMessageService;
+        confirmationServiceSpy = TestBed.inject(ConfirmationService) as unknown as MockConfirmationService;
 
         // Default mock for getAllUsernames - called during component initialization
-        permissionsServiceSpy.getAllUsernames.and.returnValue(of(['user1', 'user2', 'pythonDev1', 'newUser']));
+        permissionsServiceSpy.getAllUsernames.mockReturnValue(of(['user1', 'user2', 'pythonDev1', 'newUser']));
     });
 
     describe('Initialization', () => {
         it('should create', () => {
-            userProfileServiceSpy.getUserProfile.and.returnValue(of(mockUserProfile));
-            permissionsServiceSpy.isAdmin.and.returnValue(true);
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            userProfileServiceSpy.getUserProfile.mockReturnValue(of(mockUserProfile));
+            permissionsServiceSpy.isAdmin.mockReturnValue(true);
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
             
             fixture.detectChanges();
             
@@ -143,39 +180,39 @@ describe('AdminPermissionsPageComponent', () => {
         });
 
         it('should load groups when user is admin', fakeAsync(() => {
-            userProfileServiceSpy.getUserProfile.and.returnValue(of(mockUserProfile));
-            permissionsServiceSpy.isAdmin.and.returnValue(true);
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            userProfileServiceSpy.getUserProfile.mockReturnValue(of(mockUserProfile));
+            permissionsServiceSpy.isAdmin.mockReturnValue(true);
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
 
             fixture.detectChanges();
             tick();
 
-            expect(component.isAdmin).toBeTrue();
+            expect(component.isAdmin).toBe(true);
             expect(component.groups.length).toBe(2);
-            expect(component.isLoading).toBeFalse();
+            expect(component.isLoading).toBe(false);
         }));
 
         it('should not load groups when user is not admin', fakeAsync(() => {
             const nonAdminProfile = { ...mockUserProfile, permissions: mockNonAdminPermissions };
-            userProfileServiceSpy.getUserProfile.and.returnValue(of(nonAdminProfile));
-            permissionsServiceSpy.isAdmin.and.returnValue(false);
+            userProfileServiceSpy.getUserProfile.mockReturnValue(of(nonAdminProfile));
+            permissionsServiceSpy.isAdmin.mockReturnValue(false);
 
             fixture.detectChanges();
             tick();
 
-            expect(component.isAdmin).toBeFalse();
+            expect(component.isAdmin).toBe(false);
             expect(component.groups.length).toBe(0);
             expect(permissionsServiceSpy.getAllGroups).not.toHaveBeenCalled();
         }));
 
         it('should handle error when loading user profile', fakeAsync(() => {
-            userProfileServiceSpy.getUserProfile.and.returnValue(throwError(() => new Error('Failed')));
+            userProfileServiceSpy.getUserProfile.mockReturnValue(throwError(() => new Error('Failed')));
 
             fixture.detectChanges();
             tick();
 
-            expect(component.isLoading).toBeFalse();
-            expect(messageServiceSpy.add).toHaveBeenCalledWith(jasmine.objectContaining({
+            expect(component.isLoading).toBe(false);
+            expect(messageServiceSpy.add).toHaveBeenCalledWith(expect.objectContaining({
                 severity: 'error',
                 summary: 'Error'
             }));
@@ -184,9 +221,9 @@ describe('AdminPermissionsPageComponent', () => {
 
     describe('Group Selection', () => {
         beforeEach(() => {
-            userProfileServiceSpy.getUserProfile.and.returnValue(of(mockUserProfile));
-            permissionsServiceSpy.isAdmin.and.returnValue(true);
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            userProfileServiceSpy.getUserProfile.mockReturnValue(of(mockUserProfile));
+            permissionsServiceSpy.isAdmin.mockReturnValue(true);
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
             fixture.detectChanges();
         });
 
@@ -206,9 +243,9 @@ describe('AdminPermissionsPageComponent', () => {
 
     describe('Role Management', () => {
         beforeEach(() => {
-            userProfileServiceSpy.getUserProfile.and.returnValue(of(mockUserProfile));
-            permissionsServiceSpy.isAdmin.and.returnValue(true);
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            userProfileServiceSpy.getUserProfile.mockReturnValue(of(mockUserProfile));
+            permissionsServiceSpy.isAdmin.mockReturnValue(true);
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
             fixture.detectChanges();
             component.openCreateGroupDialog();
         });
@@ -242,7 +279,7 @@ describe('AdminPermissionsPageComponent', () => {
             component.addRoleToForm();
             
             expect(component.groupForm.roles.length).toBe(1);
-            expect(messageServiceSpy.add).toHaveBeenCalledWith(jasmine.objectContaining({
+            expect(messageServiceSpy.add).toHaveBeenCalledWith(expect.objectContaining({
                 severity: 'warn'
             }));
         });
@@ -271,17 +308,17 @@ describe('AdminPermissionsPageComponent', () => {
 
     describe('Group CRUD Operations', () => {
         beforeEach(() => {
-            userProfileServiceSpy.getUserProfile.and.returnValue(of(mockUserProfile));
-            permissionsServiceSpy.isAdmin.and.returnValue(true);
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            userProfileServiceSpy.getUserProfile.mockReturnValue(of(mockUserProfile));
+            permissionsServiceSpy.isAdmin.mockReturnValue(true);
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
             fixture.detectChanges();
         });
 
         it('should open create group dialog with empty form', () => {
             component.openCreateGroupDialog();
             
-            expect(component.showGroupDialog).toBeTrue();
-            expect(component.isEditMode).toBeFalse();
+            expect(component.showGroupDialog).toBe(true);
+            expect(component.isEditMode).toBe(false);
             expect(component.groupForm.groupId).toBe('');
             expect(component.groupForm.groupName).toBe('');
         });
@@ -289,8 +326,8 @@ describe('AdminPermissionsPageComponent', () => {
         it('should open edit group dialog with group data', () => {
             component.openEditGroupDialog(mockGroups[0]);
             
-            expect(component.showGroupDialog).toBeTrue();
-            expect(component.isEditMode).toBeTrue();
+            expect(component.showGroupDialog).toBe(true);
+            expect(component.isEditMode).toBe(true);
             expect(component.groupForm.groupId).toBe('admins');
             expect(component.groupForm.groupName).toBe('Administrators');
         });
@@ -307,7 +344,7 @@ describe('AdminPermissionsPageComponent', () => {
                 lastUpdatedBy: 'adminUser',
                 serviceNames: []
             };
-            permissionsServiceSpy.createGroup.and.returnValue(of(newGroup));
+            permissionsServiceSpy.createGroup.mockReturnValue(of(newGroup));
             
             component.openCreateGroupDialog();
             component.groupForm.groupId = 'new-group';
@@ -317,13 +354,13 @@ describe('AdminPermissionsPageComponent', () => {
             tick();
             
             expect(permissionsServiceSpy.createGroup).toHaveBeenCalled();
-            expect(messageServiceSpy.add).toHaveBeenCalledWith(jasmine.objectContaining({
+            expect(messageServiceSpy.add).toHaveBeenCalledWith(expect.objectContaining({
                 severity: 'success'
             }));
         }));
 
         it('should update group successfully', fakeAsync(() => {
-            permissionsServiceSpy.updateGroup.and.returnValue(of(mockGroups[0]));
+            permissionsServiceSpy.updateGroup.mockReturnValue(of(mockGroups[0]));
             
             component.openEditGroupDialog(mockGroups[0]);
             component.groupForm.groupName = 'Updated Name';
@@ -333,16 +370,16 @@ describe('AdminPermissionsPageComponent', () => {
             
             expect(permissionsServiceSpy.updateGroup).toHaveBeenCalledWith(
                 'admins',
-                jasmine.objectContaining({ groupName: 'Updated Name' })
+                expect.objectContaining({ groupName: 'Updated Name' })
             );
         }));
 
         it('should delete group after confirmation', fakeAsync(() => {
-            confirmationServiceSpy.confirm.and.callFake((config: any) => {
+            confirmationServiceSpy.confirm.mockImplementation((config: any) => {
                 config.accept();
                 return confirmationServiceSpy;
             });
-            permissionsServiceSpy.deleteGroup.and.returnValue(of(void 0));
+            permissionsServiceSpy.deleteGroup.mockReturnValue(of(void 0));
             
             component.deleteGroup(mockGroups[0]);
             tick();
@@ -351,7 +388,7 @@ describe('AdminPermissionsPageComponent', () => {
         }));
 
         it('should not delete group when confirmation is cancelled', () => {
-            confirmationServiceSpy.confirm.and.callFake((config: any) => {
+            confirmationServiceSpy.confirm.mockImplementation((config: any) => {
                 // Do nothing - simulates user clicking cancel
                 return confirmationServiceSpy;
             });
@@ -364,9 +401,9 @@ describe('AdminPermissionsPageComponent', () => {
 
     describe('Member Management', () => {
         beforeEach(() => {
-            userProfileServiceSpy.getUserProfile.and.returnValue(of(mockUserProfile));
-            permissionsServiceSpy.isAdmin.and.returnValue(true);
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            userProfileServiceSpy.getUserProfile.mockReturnValue(of(mockUserProfile));
+            permissionsServiceSpy.isAdmin.mockReturnValue(true);
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
             fixture.detectChanges();
             component.selectGroup(mockGroups[0]);
         });
@@ -374,14 +411,14 @@ describe('AdminPermissionsPageComponent', () => {
         it('should open add member dialog', () => {
             component.openAddMemberDialog();
             
-            expect(component.showAddMemberDialog).toBeTrue();
+            expect(component.showAddMemberDialog).toBe(true);
             expect(component.newMemberUsernames).toEqual([]);
         });
 
         it('should add member successfully', fakeAsync(() => {
             const mockResult: AddMembersResult = { addedUsers: ['newUser'], invalidUsers: [], allUsersValid: true };
-            permissionsServiceSpy.addMembersToGroup.and.returnValue(of(mockResult));
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            permissionsServiceSpy.addMembersToGroup.mockReturnValue(of(mockResult));
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
             
             component.openAddMemberDialog();
             component.newMemberUsernames = ['newUser'];
@@ -389,7 +426,7 @@ describe('AdminPermissionsPageComponent', () => {
             tick();
             
             expect(permissionsServiceSpy.addMembersToGroup).toHaveBeenCalledWith('admins', ['newUser']);
-            expect(messageServiceSpy.add).toHaveBeenCalledWith(jasmine.objectContaining({
+            expect(messageServiceSpy.add).toHaveBeenCalledWith(expect.objectContaining({
                 severity: 'success'
             }));
         }));
@@ -403,12 +440,12 @@ describe('AdminPermissionsPageComponent', () => {
         });
 
         it('should remove member after confirmation', fakeAsync(() => {
-            confirmationServiceSpy.confirm.and.callFake((config: any) => {
+            confirmationServiceSpy.confirm.mockImplementation((config: any) => {
                 config.accept();
                 return confirmationServiceSpy;
             });
-            permissionsServiceSpy.removeMemberFromGroup.and.returnValue(of(void 0));
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            permissionsServiceSpy.removeMemberFromGroup.mockReturnValue(of(void 0));
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
             
             component.removeMember('user1');
             tick();
@@ -419,9 +456,9 @@ describe('AdminPermissionsPageComponent', () => {
 
     describe('Helper Methods', () => {
         beforeEach(() => {
-            userProfileServiceSpy.getUserProfile.and.returnValue(of(mockUserProfile));
-            permissionsServiceSpy.isAdmin.and.returnValue(true);
-            permissionsServiceSpy.getAllGroups.and.returnValue(of(mockGroups));
+            userProfileServiceSpy.getUserProfile.mockReturnValue(of(mockUserProfile));
+            permissionsServiceSpy.isAdmin.mockReturnValue(true);
+            permissionsServiceSpy.getAllGroups.mockReturnValue(of(mockGroups));
             fixture.detectChanges();
         });
 

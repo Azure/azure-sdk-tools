@@ -1,8 +1,20 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
+vi.mock('ngx-simplemde', () => ({
+  SimplemdeModule: class {
+    static ɵmod = { id: 'SimplemdeModule', type: this, declarations: [], imports: [], exports: [] };
+    static ɵinj = { imports: [], providers: [] };
+    static forRoot() { return { ngModule: this, providers: [] }; }
+  },
+  SimplemdeOptions: class {},
+  SimplemdeComponent: class { value = ''; options = {}; valueChange = { emit: vi.fn() }; }
+}));
 
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReviewPageOptionsComponent } from './review-page-options.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpErrorInterceptorService } from 'src/app/_services/http-error-interceptor/http-error-interceptor.service';
 import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
@@ -10,13 +22,25 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+
+import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
 
 describe('ReviewPageOptionsComponent', () => {
   let component: ReviewPageOptionsComponent;
   let fixture: ComponentFixture<ReviewPageOptionsComponent>;
+
+  const mockSignalRService = createMockSignalRService();
+
+  const mockNotificationsService = createMockNotificationsService();
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -25,13 +49,16 @@ describe('ReviewPageOptionsComponent', () => {
       ],
       imports: [
         PageOptionsSectionComponent,
-        HttpClientTestingModule,
         HttpClientModule,
         BrowserAnimationsModule,
         SharedAppModule,
         ReviewPageModule
       ],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -46,7 +73,8 @@ describe('ReviewPageOptionsComponent', () => {
           useClass: HttpErrorInterceptorService,
           multi: true
         },
-        MessageService
+        MessageService,
+        ConfirmationService
       ]
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);
@@ -361,7 +389,7 @@ describe('ReviewPageOptionsComponent', () => {
       it('should not disable approval for preview versions', () => {
         component.activeAPIRevision!.packageVersion = '1.0.0-beta.1';
         component.activeAPIRevision!.approvers = [];
-        spyOn(component as any, 'isPreviewVersion').and.returnValue(true);
+        vi.spyOn(component as any, 'isPreviewVersion').mockReturnValue(true);
 
         component['updateApprovalStates'](true, false);
 
@@ -412,7 +440,7 @@ describe('ReviewPageOptionsComponent', () => {
       it('should handle preview version overriding copilot requirement', () => {
         component.activeAPIRevision!.packageVersion = '2.0.0-alpha.3';
         component.activeAPIRevision!.approvers = [];
-        spyOn(component as any, 'isPreviewVersion').and.returnValue(true);
+        vi.spyOn(component as any, 'isPreviewVersion').mockReturnValue(true);
 
         component['updateApprovalStates'](true, false);
 
@@ -462,3 +490,6 @@ describe('ReviewPageOptionsComponent', () => {
     });
   });
 });
+
+
+

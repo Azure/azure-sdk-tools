@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 import asyncio
 import re
 import sys
@@ -440,6 +446,138 @@ def get_approvers(*, language: str = None, environment: str = "production") -> s
             approver_ids.add(item.get("id"))
 
     return approver_ids
+
+
+def get_ai_comment_feedback(
+    language: str,
+    start_date: str,
+    end_date: str,
+    exclude: Optional[list[str]] = None,
+    environment: str = "production",
+) -> list[dict]:
+    """
+    Retrieves AI-generated comments that received feedback within the specified date range.
+
+    The date range filters by when feedback was submitted:
+    - For detailed feedback: checks Feedback[].SubmittedOn
+    - For deletions: checks ChangeHistory[].ChangedOn where ChangeAction='Deleted'
+
+    Note: Upvotes/Downvotes lists don't have timestamps, so comments with only
+    upvotes/downvotes (and no Feedback entries or deletion events in the date range)
+    will not be returned.
+
+    Args:
+        language: Language to filter by (e.g., 'python', 'java')
+        start_date: Start date in YYYY-MM-DD format (filters by feedback submission time)
+        end_date: End date in YYYY-MM-DD format (filters by feedback submission time)
+        exclude: List of feedback types to exclude. Can include 'good', 'bad', 'delete'.
+        environment: The APIView environment ('production' or 'staging')
+
+    Returns:
+        List of dicts containing comment info and feedback, preserving database field names
+    """
+    exclude = exclude or []
+    start_iso = to_iso8601(start_date)
+    end_iso = to_iso8601(end_date, end_of_day=True)
+
+    # Query for AI-generated comments that have feedback submitted in the date range
+    # Uses EXISTS to check Feedback[].SubmittedOn or ChangeHistory[].ChangedOn
+    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+
+    query = """
+        SELECT c.id, c.ReviewId, c.APIRevisionId, c.ElementId, c.ThreadId,
+               c.CommentText, c.CorrelationId, c.ChangeHistory, c.IsResolved,
+               c.Upvotes, c.Downvotes, c.TaggedUsers, c.CommentType, c.Severity,
+               c.CommentSource, c.ResolutionLocked, c.CreatedBy, c.CreatedOn,
+               c.IsDeleted, c.IsGeneric, c.GuidelineIds, c.MemoryIds,
+               c.ConfidenceScore, c.Feedback
+        FROM c 
+        WHERE c.CommentSource = 'AIGenerated'
+        AND (
+            EXISTS(SELECT VALUE f FROM f IN c.Feedback 
+                   WHERE f.SubmittedOn >= @start_date AND f.SubmittedOn <= @end_date)
+            OR EXISTS(SELECT VALUE ch FROM ch IN c.ChangeHistory 
+                      WHERE ch.ChangedOn >= @start_date AND ch.ChangedOn <= @end_date
+                      AND ch.ChangeAction = 'Deleted')
+        )
+    """
+
+    comments = list(
+        comments_client.query_items(
+            query=query,
+            parameters=[
+                {"name": "@start_date", "value": start_iso},
+                {"name": "@end_date", "value": end_iso},
+            ],
+            enable_cross_partition_query=True,
+        )
+    )
+
+    # Get review IDs to look up languages
+    review_ids = set(c.get("ReviewId") for c in comments if c.get("ReviewId"))
+
+    # Query Reviews container for language info
+    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+    review_lang_map = {}
+
+    if review_ids:
+        params = []
+        clauses = []
+        for i, rid in enumerate(review_ids):
+            param_name = f"@id_{i}"
+            clauses.append(f"c.id = {param_name}")
+            params.append({"name": param_name, "value": rid})
+
+        review_query = f"SELECT c.id, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+        review_results = list(
+            reviews_container.query_items(query=review_query, parameters=params, enable_cross_partition_query=True)
+        )
+        review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")) for r in review_results}
+
+    # Normalize target language
+    target_language = get_language_pretty_name(language).lower()
+
+    # Filter comments by language and feedback presence
+    result = []
+    for comment in comments:
+        # Check language
+        review_id = comment.get("ReviewId", "")
+        comment_language = review_lang_map.get(review_id, "").lower()
+        if comment_language != target_language:
+            continue
+
+        # Determine feedback type based on Upvotes, Downvotes, and IsDeleted
+        upvotes = comment.get("Upvotes") or []
+        downvotes = comment.get("Downvotes") or []
+        is_deleted = comment.get("IsDeleted", False)
+
+        has_good = len(upvotes) > 0
+        has_bad = len(downvotes) > 0
+        has_delete = is_deleted is True
+
+        # Skip if no feedback at all
+        if not (has_good or has_bad or has_delete):
+            continue
+
+        # Determine feedback categories for this comment
+        feedback_types = []
+        if has_good:
+            feedback_types.append("good")
+        if has_bad:
+            feedback_types.append("bad")
+        if has_delete:
+            feedback_types.append("delete")
+
+        # Apply exclude filters - skip if ALL feedback types are excluded
+        remaining_feedback = [ft for ft in feedback_types if ft not in exclude]
+        if not remaining_feedback:
+            continue
+
+        # Return the comment with original field names, adding feedback_types for filtering convenience
+        comment["FeedbackTypes"] = feedback_types
+        result.append(comment)
+
+    return result
 
 
 def resolve_package(

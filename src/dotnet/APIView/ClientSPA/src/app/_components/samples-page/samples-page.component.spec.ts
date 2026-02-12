@@ -1,51 +1,59 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { of } from 'rxjs';
+import { vi } from 'vitest';
+import { initializeTestBed } from '../../../test-setup';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { createMockSignalRService, createMockNotificationsService } from 'src/test-helpers/mock-services';
+
+// Mock ngx-simplemde before any component imports
+vi.mock('ngx-simplemde', () => ({
+  SimplemdeModule: class {
+    static forRoot() {
+      return {
+        ngModule: this,
+        providers: []
+      };
+    }
+  },
+  SimplemdeOptions: class {},
+  SimplemdeComponent: class {
+    value = '';
+    options = {};
+    delay = 0;
+    valueChange = { emit: vi.fn() };
+  }
+}));
 
 import { SamplesPageComponent } from './samples-page.component';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ReviewPageLayoutComponent } from '../shared/review-page-layout/review-page-layout.component';
-import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
-import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
-import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
-import { MenuModule } from 'primeng/menu';
-import { MenubarModule } from 'primeng/menubar';
-import { SplitterModule } from 'primeng/splitter';
-import { DrawerModule } from 'primeng/drawer';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
-import { PanelModule } from 'primeng/panel';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MessageService } from 'primeng/api';
-import { Dialog, DialogModule } from 'primeng/dialog';
 
 describe('SamplesPageComponent', () => {
   let component: SamplesPageComponent;
   let fixture: ComponentFixture<SamplesPageComponent>;
 
+  const mockNotificationsService = createMockNotificationsService();
+  const mockSignalRService = createMockSignalRService();
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        SamplesPageComponent
-      ],
-      imports: [
-        NavBarComponent,
-        ReviewInfoComponent,
-        ReviewPageLayoutComponent,
-        PageOptionsSectionComponent,
-        LanguageNamesPipe,
-        BrowserAnimationsModule,
-        HttpClientTestingModule,
-        SplitterModule,
-        DrawerModule,
-        PanelModule,
-        MenuModule,
-        MenubarModule,
-        ReactiveFormsModule,
-        FormsModule,
-        DialogModule
-      ],
+      schemas: [NO_ERRORS_SCHEMA],
+      declarations: [SamplesPageComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: SignalRService, useValue: mockSignalRService },
         {
           provide: ActivatedRoute,
           useValue: {

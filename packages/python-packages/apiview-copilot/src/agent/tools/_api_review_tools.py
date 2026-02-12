@@ -40,7 +40,9 @@ class ApiReviewTools(Tool):
 
         return result
 
-    def _resolve_revision_id(self, revision_id: Optional[str], url: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+    def _resolve_revision_id(
+        self, revision_id: Optional[str], url: Optional[str]
+    ) -> tuple[Optional[str], Optional[str]]:
         """
         Helper to resolve revision_id from either the ID itself or a URL.
         Returns: (revision_id, error_json)

@@ -355,6 +355,49 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 **API Endpoint**: `https://<knowledge-base-service-endpoint>/completion`
 
+**Request Structure**:
+
+```json
+{
+  "tenant_id": "azure_typespec_authoring",
+  "message": {
+    "role": "user",
+    "content": "<user-request>"
+  },
+  "additional_infos": [
+    {
+      "type": "text",
+      "content": "<additional-context>"
+    }
+  ]
+}
+```
+
+**Response Structure**:
+
+```json
+{
+  "id": "<completion-id>",
+  "answer": "<generated-solution>",
+  "has_result": true,
+  "references": [
+    {
+      "title": "<document-title>",
+      "source": "<document-source>",
+      "link": "<document-url>",
+      "content": "<relevant-content>"
+    }
+  ],
+  "full_context": "<context-used>",
+  "reasoning": "<llm-reasoning>",
+  "intention": {
+    "category": "<detected-category>",
+    "question_scope": "<branded|unbranded|unknown>",
+    "service_type": "<management-plane|data-plane|unknown>"
+  }
+}
+```
+
 **Capabilities**:
 - Indexes Azure SDK documentation, guidelines, and best practices
 - Retrieves relevant context based on user request

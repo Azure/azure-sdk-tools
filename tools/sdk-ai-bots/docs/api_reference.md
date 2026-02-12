@@ -114,6 +114,8 @@ POST /completion
   "sources": [],
   "top_k": 10,
   "with_full_context": false,
+  "with_preprocess": false,
+  "additional_infos": [],
   "intention": null
 }
 ```
@@ -128,6 +130,8 @@ POST /completion
 | `sources` | array | No | Limit search to specific knowledge sources. Default: all sources. |
 | `top_k` | integer | No | Number of documents to retrieve. Default: 10. |
 | `with_full_context` | boolean | No | Return the full RAG context in response. Default: false. |
+| `with_preprocess` | boolean | No | Preprocess the message before sending to the agent. Default: false. |
+| `additional_infos` | array | No | Additional information (links, images) to provide context. Each item has `type`, `content`, and `link`. |
 | `intention` | object | No | Override automatic intent detection with explicit intention fields. |
 
 ### Response Schema

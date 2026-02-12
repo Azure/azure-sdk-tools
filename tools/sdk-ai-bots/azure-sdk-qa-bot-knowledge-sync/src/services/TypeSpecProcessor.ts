@@ -120,7 +120,6 @@ export class TypeSpecProcessor {
                     for (; l > currentDefinitionStart; l--) {
                         let trim = lines[l].trim();
                         if (trim.endsWith(';') || trim.endsWith('}')) {
-                            currentDefinitionEnd = l;
                             break;
                         }
                     }
@@ -402,47 +401,9 @@ export class TypeSpecProcessor {
     }
 
     /**
-     * Group definitions by their type.
-     */
-    private groupByType(definitions: TypeSpecDefinition[]): Record<string, TypeSpecDefinition[]> {
-        const grouped: Record<string, TypeSpecDefinition[]> = {
-            namespace: [],
-            interface: [],
-            model: [],
-            operation: [],
-            enum: [],
-            union: [],
-            alias: [],
-            scalar: []
-        };
-
-        for (const def of definitions) {
-            if (grouped[def.type]) {
-                grouped[def.type].push(def);
-            }
-        }
-
-        return grouped;
-    }
-
-    /**
      * Capitalize the type name for display.
      */
     private capitalizeType(type: string): string {
         return type.charAt(0).toUpperCase() + type.slice(1);
-    }
-
-    /**
-     * Convert a name to a markdown anchor.
-     */
-    private toAnchor(name: string): string {
-        return name.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    }
-
-    /**
-     * Reset parsing state (helper for clarity).
-     */
-    private resetState(): void {
-        // This is a no-op helper method for code clarity
     }
 }

@@ -408,7 +408,7 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 - The TypeSpec authoring tool authenticates with the Knowledge Base using Microsoft Authentication Library (MSAL) public client authentication
 - Uses device code flow for interactive authentication
 - Access tokens are cached persistently to minimize re-authentication
-- Default configuration uses a dev environment endpoint and client ID, but can be overridden via environment variables:
+- The tool uses the Azure Knowledge Base service and is configured with a default service by default. If you want to use a different Azure Knowledge Base service instead of the default one, set following environment variables to override:
   - `AZURE_SDK_KB_ENDPOINT`: Custom service endpoint
   - `AZURE_SDK_KB_CLIENT_ID`: Custom client ID
   - `AZURE_SDK_KB_SCOPE`: Custom authentication scope

@@ -15,7 +15,6 @@ The Azure SDK Knowledge Base API provides AI-powered Q&A capabilities for Azure 
 
 - MCP (Model Context Protocol) tools for IDE integration
 - Custom chatbots and assistants
-- CLI tools for developer productivity
 - Automated documentation assistants
 
 ## Getting Started
@@ -29,7 +28,9 @@ The Azure SDK Knowledge Base API provides AI-powered Q&A capabilities for Azure 
 
 | Environment | Endpoint | Auth Scope |
 |-------------|----------|------------|
-| Production | `https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net` | `api://azure-sdk-qa-bot/.default` |
+| Production | `https://azuresdkqabot-server-c8czabhzhweadwgu.westus2-01.azurewebsites.net` | `api://azure-sdk-qa-bot/.default` |
+| Preview | `https://azuresdkqabot-test-server-cbdbh2gva6h7hrfr.westus2-01.azurewebsites.net` | `api://azure-sdk-qa-bot-test/.default` |
+| Development | `https://azuresdkqabot-dev-server-hrcrckaad5gcedcv.westus2-01.azurewebsites.net` | `api://azure-sdk-qa-bot-dev/.default` |
 
 ### Authentication
 
@@ -198,6 +199,7 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-backend/tsp/
 | `@azure-tools/typespec-python` | Python | Preview |
 | `@azure-tools/typespec-java` | Java | Preview |
 | `@azure-tools/typespec-csharp` | C# | Preview |
+| `@azure-tools/typespec-go` | Go | Preview |
 
 ### Generating a Client SDK
 

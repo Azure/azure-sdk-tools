@@ -114,13 +114,14 @@ namespace APIViewWeb.LeanControllers
         /// <param name="language"></param>
         /// <param name="project"></param>
         /// <param name="packageType"></param>
+        /// <param name="metadataFile">Optional TypeSpec metadata file name within the artifact (e.g., "typespec-metadata.json").</param>
         /// <returns></returns>
         [AllowAnonymous]
         [HttpGet("CreateAPIRevisionIfAPIHasChanges", Name = "CreateAPIRevisionIfAPIHasChanges")]
         public async Task<ActionResult<IEnumerable<CreateAPIRevisionAPIResponse>>> CreateAPIRevisionIfAPIHasChanges(
             string buildId, string artifactName, string filePath, string commitSha,string repoName, string packageName,
             int pullRequestNumber = 0, string codeFile = null, string baselineCodeFile = null, string language = null,
-            string project = "internal", string packageType = null)
+            string project = "internal", string packageType = null, string metadataFile = null)
         {
             var responseContent = new CreateAPIRevisionAPIResponse();
             if (!ValidateInputParams())
@@ -136,7 +137,7 @@ namespace APIViewWeb.LeanControllers
                     artifactName: artifactName, originalFileName: filePath, commitSha: commitSha, repoName: repoName,
                     packageName: packageName, prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
                     responseContent: responseContent, codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
-                    language: language, project: project, packageType: packageType);
+                    language: language, project: project, packageType: packageType, metadataFileName: metadataFile);
 
                 responseContent.APIRevisionUrl = apiRevisionUrl;
 

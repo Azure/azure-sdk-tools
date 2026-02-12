@@ -150,9 +150,11 @@ namespace APIViewIntegrationTests
                 copilotAuthService: copilotAuthServiceMoq.Object,
                 logger: commentsLoggerMoq.Object);
 
+            var codeFileManagerLoggerMoq = new Mock<ILogger<CodeFileManager>>();
             CodeFileManager = new CodeFileManager(
                 languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
-                originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
+                originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
+                logger: codeFileManagerLoggerMoq.Object);
 
             APIRevisionManager = new APIRevisionsManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,

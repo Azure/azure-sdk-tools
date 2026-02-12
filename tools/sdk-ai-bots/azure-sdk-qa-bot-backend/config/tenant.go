@@ -45,6 +45,7 @@ var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
 	model.Source_TypeSpecQA:                     3,
 	model.Source_StaticTypeSpecToSwaggerMapping: 3,
+	model.Source_AzureOpenapiDiffDocs:           3,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{
@@ -146,6 +147,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		},
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
+		EnableRouting:           true,
 	},
 	model.TenantID_AzureSDKOnboarding: {
 		PromptTemplate:          "azure_sdk_onboarding/qa.md",

@@ -371,6 +371,12 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         }
     }
 
+    /// <summary>
+    /// Builds a CODEOWNERS path expression for a given directory path
+    /// </summary>
+    /// <param name="dirPath">The directory path to convert (absolute or relative)</param>
+    /// <param name="repoRoot">The repository root path (used to calculate relative paths)</param>
+    /// <returns>A CODEOWNERS path expression based on the repo root</returns>
     public static string BuildPathExpression(string dirPath, string repoRoot)
     {
         string normalized = dirPath.Replace('\\', '/').TrimEnd('/');

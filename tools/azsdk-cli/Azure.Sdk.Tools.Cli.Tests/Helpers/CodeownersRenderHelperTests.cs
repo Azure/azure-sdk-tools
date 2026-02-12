@@ -97,6 +97,8 @@ public class CodeownersRenderHelperTests
     [TestCase(@"C:\repos\sdk\storage\Azure.Storage.Blobs", @"C:\repos", "/sdk/storage/Azure.Storage.Blobs/")]
     [TestCase(@"C:\repos\sdk\core", @"C:\repos", "/sdk/core/")]
     [TestCase("sdk/storage", "", "/sdk/storage/")]
+    [TestCase("/sdk/storage/", "/src/repo", "/sdk/storage/")]
+    [TestCase("/src/repo/sdk/storage/", "/src/repo", "/sdk/storage/")]
     public void BuildPathExpression_ReturnsExpectedPath(string dirPath, string repoRoot, string expected)
     {
         var result = CodeownersRenderHelper.BuildPathExpression(dirPath, repoRoot);

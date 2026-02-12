@@ -381,7 +381,7 @@ export class TypeSpecProcessor {
         for (const def of definitions) {
             lines.push(`## ${def.name}`);
             lines.push('');
-            lines.push(`**Type:** ${this.capitalizeType(def.type)}`);
+            if (def.type) lines.push(`**Type:** ${this.capitalizeType(def.type)}`);
             lines.push('');
             
             // Add description as chapter body if available

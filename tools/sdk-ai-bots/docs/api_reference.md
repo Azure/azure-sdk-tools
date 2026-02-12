@@ -149,11 +149,13 @@ POST /completion
       "content": "Relevant excerpt..."
     }
   ],
+  "full_context": null,
   "intention": {
     "question": "How do I define a REST API using TypeSpec?",
     "category": "typespec_authoring",
     "needs_rag_processing": true
   },
+  "reasoning": null,
   "route_tenant": "azure_sdk_qa_bot"
 }
 ```
@@ -165,10 +167,11 @@ POST /completion
 | `id` | string | Unique identifier for this completion. |
 | `answer` | string | The AI-generated answer. |
 | `has_result` | boolean | Whether the agent found relevant information. |
-| `references` | array | Documents used to generate the answer (title, source, link, content). |
-| `intention` | object | Analyzed intent of the question. |
-| `route_tenant` | string | The tenant that processed the request (may differ if routing occurred). |
-| `full_context` | string | Full RAG context (only if `with_full_context: true`). |
+| `references` | array | Documents used to generate the answer. Each item has `title`, `source`, `link`, and `content`. |
+| `full_context` | string | Full RAG context (only returned if request had `with_full_context: true`). |
+| `intention` | object | Analyzed intent of the question with `question`, `category`, `needs_rag_processing`, etc. |
+| `reasoning` | string | The reasoning progress of generating the answer (for debugging/transparency). |
+| `route_tenant` | string | The tenant that processed the request (may differ from request if routing occurred). |
 
 ## Generating Client SDKs with TypeSpec
 

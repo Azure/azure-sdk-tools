@@ -363,4 +363,97 @@ public sealed partial class JavaLanguageService : LanguageService
             return false;
         }
     }
+
+    /// <summary>
+    /// Updates the package version in Java-specific files (pom.xml).
+    /// Implements the logic from SetPackageVersion in azure-sdk-for-java/eng/scripts/Language-Settings.ps1.
+    /// </summary>
+    protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
+        string packagePath,
+        string version,
+        string? releaseType,
+        CancellationToken ct)
+    {
+        logger.LogInformation("Updating Java package version to {Version} in {PackagePath}", version, packagePath);
+
+        try
+        {
+            var pomPath = Path.Combine(packagePath, "pom.xml");
+            if (!File.Exists(pomPath))
+            {
+                logger.LogWarning("No pom.xml found at {PomPath}", pomPath);
+                return PackageOperationResponse.CreateFailure(
+                    $"No pom.xml file found at {pomPath}",
+                    nextSteps: ["Ensure the package path contains a valid Maven project with pom.xml"]);
+            }
+
+            // Load and parse the pom.xml
+            logger.LogDebug("Loading pom.xml from {PomPath}", pomPath);
+            XDocument doc;
+            using (var stream = File.OpenRead(pomPath))
+            {
+                doc = await XDocument.LoadAsync(stream, LoadOptions.PreserveWhitespace, ct);
+            }
+
+            var root = doc.Root;
+            if (root == null)
+            {
+                logger.LogError("pom.xml has no root element");
+                return PackageOperationResponse.CreateFailure(
+                    "Invalid pom.xml file - no root element",
+                    nextSteps: ["Check the pom.xml file format"]);
+            }
+
+            // Maven POM uses a default namespace
+            var ns = root.Name.Namespace;
+
+            // Find the version element
+            var versionElement = root.Element(ns + "version");
+            if (versionElement == null)
+            {
+                // Check if version is in parent
+                var parentElement = root.Element(ns + "parent");
+                if (parentElement != null)
+                {
+                    logger.LogWarning("Version is defined in parent POM, cannot update directly");
+                    return PackageOperationResponse.CreateSuccess(
+                        "Version is defined in parent POM. Direct update not supported.",
+                        nextSteps: [
+                            "Update the version in the parent POM instead",
+                            "Or add an explicit <version> element to this pom.xml"
+                        ],
+                        result: "partial");
+                }
+
+                logger.LogError("No version element found in pom.xml");
+                return PackageOperationResponse.CreateFailure(
+                    "No version element found in pom.xml",
+                    nextSteps: ["Add a <version> element to the pom.xml file"]);
+            }
+
+            var oldVersion = versionElement.Value;
+            logger.LogInformation("Updating version from {OldVersion} to {NewVersion}", oldVersion, version);
+
+            // Update the version
+            versionElement.Value = version;
+
+            // Save the updated pom.xml
+            logger.LogDebug("Saving updated pom.xml to {PomPath}", pomPath);
+            using (var stream = File.Create(pomPath))
+            {
+                await doc.SaveAsync(stream, SaveOptions.None, ct);
+            }
+
+            logger.LogInformation("Successfully updated version in pom.xml from {OldVersion} to {NewVersion}", oldVersion, version);
+            return PackageOperationResponse.CreateSuccess(
+                $"Version updated from {oldVersion} to {version} in pom.xml");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to update Java package version");
+            return PackageOperationResponse.CreateFailure(
+                $"Failed to update version: {ex.Message}",
+                nextSteps: ["Check the pom.xml file format", "Ensure the file is not locked by another process"]);
+        }
+    }
 }

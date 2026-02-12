@@ -167,7 +167,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 	},
 	model.TenantID_APISpecReviewBot: {
 		PromptTemplate: "api_spec_review/qa.md",
-		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
+		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_APISpecViewQA, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
 		},

@@ -4,7 +4,6 @@ type TenantID string
 
 const (
 	TenantID_AzureSDKQaBot          TenantID = "azure_sdk_qa_bot" // default as TypeSpec QA bot
-	TenantID_TypeSpecExtension      TenantID = "typespec_extension"
 	TenantID_PythonChannelQaBot     TenantID = "python_channel_qa_bot"
 	TenantID_DotnetChannelQaBot     TenantID = "dotnet_channel_qa_bot"
 	TenantID_AzureSDKOnboarding     TenantID = "azure_sdk_onboarding"
@@ -44,6 +43,7 @@ const (
 	Source_AzureSDKForNetDocs             Source = "azure_sdk_for_net_docs"
 	Source_AzureRestAPISpecDocs           Source = "azure_rest_api_specs_docs"
 	Source_AzureOpenapiDiffDocs           Source = "azure_openapi_diff_docs"
+	Source_APISpecViewQA                  Source = "static_api_spec_view_qa"
 )
 
 type Role string

@@ -77,9 +77,40 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
+        // Render command options
+        private readonly Argument<string> repoRootArgument = new("repo-root")
+        {
+            Description = "Path to the repository root",
+        };
+
+        private readonly Option<string> orgOption = new("--org")
+        {
+            Description = "Azure DevOps organization",
+            Required = false,
+        };
+
+        private readonly Option<string> projectOption = new("--project")
+        {
+            Description = "Azure DevOps project",
+            Required = false,
+        };
+
+        private readonly Option<string[]> packageTypesOption = new("--package-types")
+        {
+            Description = "Package types to include (default: client)",
+            Required = false,
+        };
+
+        private readonly Option<string> sectionOption = new("--section")
+        {
+            Description = "Section name in CODEOWNERS file to update (default: Client Libraries)",
+            Required = false,
+        };
+
         private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersValidatorHelper codeownersValidator;
+        private readonly ICodeownersRenderHelper codeownersRenderHelper;
 
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
@@ -87,6 +118,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         // Command names
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
+        private const string renderCodeownersCommandName = "render";
 
         // MCP Tool Names
         private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
@@ -96,12 +128,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             IGitHubService githubService,
             ILogger<CodeownersTool> logger,
             ILoggerFactory? loggerFactory,
-            ICodeownersValidatorHelper codeownersValidator
+            ICodeownersValidatorHelper codeownersValidator,
+            ICodeownersRenderHelper codeownersRenderHelper
         )
         {
             this.githubService = githubService;
             this.logger = logger;
             this.codeownersValidator = codeownersValidator;
+            this.codeownersRenderHelper = codeownersRenderHelper;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
         }
@@ -122,6 +156,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
             {
                 repoOption, serviceLabelOption, pathOptionOptional,
+            },
+            new(renderCodeownersCommandName, "Render CODEOWNERS file from Azure DevOps work items")
+            {
+                repoRootArgument, repoOption, orgOption, projectOption, packageTypesOption, sectionOption,
             }
         ];
 
@@ -165,6 +203,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     validateRepoPath);
 
                 return validateResult;
+            }
+
+            if (command == renderCodeownersCommandName)
+            {
+                var repoRoot = parseResult.GetValue(repoRootArgument);
+                var repo = parseResult.GetValue(repoOption);
+                var org = parseResult.GetValue(orgOption) ?? "azure-sdk";
+                var project = parseResult.GetValue(projectOption) ?? "Release";
+                var packageTypesValue = parseResult.GetValue(packageTypesOption);
+                var packageTypes = (packageTypesValue != null && packageTypesValue.Length > 0) ? packageTypesValue.ToList() : ["client"];
+                var section = parseResult.GetValue(sectionOption) ?? "Client Libraries";
+
+                var renderResult = await RenderCodeowners(repoRoot ?? "", repo ?? "", org, project, packageTypes, section, ct);
+                return renderResult;
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -484,6 +536,70 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             normalizedIdentifier = Regex.Replace(normalizedIdentifier, @"[^a-zA-Z0-9\-]", "");
 
             return $"{prefix}-{normalizedIdentifier}";
+        }
+
+        /// <summary>
+        /// Renders CODEOWNERS file from Azure DevOps work items.
+        /// </summary>
+        public async Task<DefaultCommandResponse> RenderCodeowners(
+            string repoRoot,
+            string repo,
+            string org,
+            string project,
+            List<string> packageTypes,
+            string section,
+            CancellationToken ct)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(repoRoot))
+                {
+                    return new DefaultCommandResponse
+                    {
+                        ResponseError = "Repository root path is required"
+                    };
+                }
+
+                if (!Directory.Exists(repoRoot))
+                {
+                    return new DefaultCommandResponse
+                    {
+                        ResponseError = $"Repository root not found: {repoRoot}"
+                    };
+                }
+
+                if (string.IsNullOrWhiteSpace(repo))
+                {
+                    return new DefaultCommandResponse
+                    {
+                        ResponseError = "Repository name (--repo) is required"
+                    };
+                }
+
+                var codeownersPath = Path.Combine(repoRoot, ".github", "CODEOWNERS");
+                if (!File.Exists(codeownersPath))
+                {
+                    return new DefaultCommandResponse
+                    {
+                        ResponseError = $"CODEOWNERS file not found: {codeownersPath}"
+                    };
+                }
+
+                var result = await codeownersRenderHelper.RenderCodeownersAsync(repoRoot, repo, org, project, packageTypes, section, ct);
+
+                return new DefaultCommandResponse
+                {
+                    Message = $"CODEOWNERS file rendered successfully to {codeownersPath}"
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to render CODEOWNERS file");
+                return new DefaultCommandResponse
+                {
+                    ResponseError = $"Failed to render CODEOWNERS file: {ex.Message}"
+                };
+            }
         }
     }
 }

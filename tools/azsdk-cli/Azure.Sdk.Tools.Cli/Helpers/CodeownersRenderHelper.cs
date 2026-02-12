@@ -20,7 +20,6 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
     private readonly IPowershellHelper _powershellHelper;
     private readonly IInputSanitizer _inputSanitizer;
     private readonly ILogger<CodeownersRenderHelper> _logger;
-    private readonly List<string> _errors = [];
 
     public CodeownersRenderHelper(
         IDevOpsService devOpsService,
@@ -43,7 +42,6 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         string sectionName = "Client Libraries",
         CancellationToken ct = default)
     {
-        _errors.Clear();
         packageTypes ??= ["client"];
         _logger.LogInformation("=== RenderCodeownersFile ===");
         _logger.LogInformation("Repository Root: {RepoRoot}", repoRoot);
@@ -219,7 +217,7 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         {
             if (!packageLookup.TryGetValue(pkg.PackageName, out var repoPkg))
             {
-                _errors.Add($"Package not found in repo: {pkg.PackageName}");
+                _logger.LogInformation("Package '{PackageName}' not found in repository, skipping...", pkg.PackageName);
                 continue;
             }
 

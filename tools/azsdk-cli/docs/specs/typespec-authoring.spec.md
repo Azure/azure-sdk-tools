@@ -289,8 +289,8 @@ The TypeSpec authoring workflow follows a streamlined process where the user int
 
 1. **User prompts GitHub Copilot** with a TypeSpec task (e.g., "Add new preview version 2025-12-09 to project widget")
 1. **Agent collect required information** for this task (e.g. the namespace, version, current project structure)
-1. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_consult`) with the user's request and any additional context
-1. The `azsdk_typespec_consult` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
+1. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_generate_authoring_plan`) with the user's request and any additional context
+1. The `azsdk_typespec_generate_authoring_plan` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
 1. The Knowledge Base returns a RAG-powered solution with step-by-step guidance and documentation references
 1. **Agent applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
 
@@ -298,9 +298,9 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 ##### Component 1: TypeSpec Solution Tool
 
-**Name (CLI)**: `azsdk typespec consult`
+**Name (CLI)**: `azsdk typespec generate-authoring-plan`
 
-**Name (MCP)**: `azsdk_typespec_consult`
+**Name (MCP)**: `azsdk_typespec_generate_authoring_plan`
 
 **Purpose**: Provide a solution to define or edit TypeSpec API specifications for TypeSpec-related tasks.
 
@@ -493,7 +493,7 @@ Instead of building a custom agent, leverage GitHub Copilot's Skills framework t
    - Project structure (presence of `tspconfig.yaml`, `package.json` with TypeSpec dependencies)
    - Active file content and imports
    - Workspace-indexed TypeSpec files
-1. **Skill automatically invokes the appropriate MCP tool** (`azsdk_typespec_consult`) without requiring custom agent routing logic
+1. **Skill automatically invokes the appropriate MCP tool** (`azsdk_typespec_generate_authoring_plan`) without requiring custom agent routing logic
 1. The MCP tool queries the Azure SDK Knowledge Base with the user's request and project context
 1. The Knowledge Base returns a RAG-powered solution with step-by-step guidance
 1. **Agent processes the solution** and applies appropriate file edits, presenting changes to the user with explanations
@@ -574,7 +574,7 @@ add a new ARM resource type named 'Asset' with CRUD operations
    - If child resource, identify the parent resource
    - What properties should the resource have?
    - Should operations be synchronous or asynchronous/LRO?
-1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 1. Apply changes according to the retrieved solution:
    - Create resource model extending appropriate base (`TrackedResource`/`ProxyResource`)
    - Add resource name parameter
@@ -596,7 +596,7 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 1. Apply version related changes according to the retrieved solution
    - Replace an existing preview with the new preview version if latest version is preview, otherwise, just add the new preview version.
    - Update examples according to API changes
@@ -621,7 +621,7 @@ add a new stable API version 2025-10-01 for service widget resource management
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 1. Apply changes according to the retrieved solution:
    - Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
    - Update examples according to API changes
@@ -654,12 +654,12 @@ update the TypeSpec code to follow Azure guidelines for service widget resource 
 
 ## CLI Commands
 
-### typespec retrieve solution
+### typespec generate authoring plan
 
 **Command:**
 
 ```bash
-azsdk typespec consult <typespec-request> --additional-information <additional context>
+azsdk typespec generate-authoring-plan <typespec-request> --additional-information <additional context>
 ```
 
 **Argument**
@@ -683,9 +683,9 @@ azsdk typespec consult <typespec-request> --additional-information <additional c
 
 ```text
 
-✗ Error: Required argument missing for command: 'authoring'
+✗ Error: Required argument missing for command: 'generate-authoring-plan'
   
-Usage: azsdk typespec consult
+Usage: azsdk typespec generate-authoring-plan
 ```
 
 ---

@@ -108,38 +108,6 @@ public class WorkItemDataBuilder
         => AddLabelOwner("PR Label", out id, repository, repoPath, relatedTo);
 
     /// <summary>
-    /// Links additional related IDs to an existing package.
-    /// </summary>
-    public WorkItemDataBuilder LinkToPackage(int packageId, params int[] relatedIds)
-    {
-        var pkg = _packages.FirstOrDefault(p => p.Id == packageId);
-        if (pkg != null)
-        {
-            foreach (var id in relatedIds)
-            {
-                pkg.RelatedIds.Add(id);
-            }
-        }
-        return this;
-    }
-
-    /// <summary>
-    /// Links additional related IDs to an existing label owner.
-    /// </summary>
-    public WorkItemDataBuilder LinkToLabelOwner(int labelOwnerId, params int[] relatedIds)
-    {
-        var lo = _labelOwners.FirstOrDefault(l => l.Id == labelOwnerId);
-        if (lo != null)
-        {
-            foreach (var id in relatedIds)
-            {
-                lo.RelatedIds.Add(id);
-            }
-        }
-        return this;
-    }
-
-    /// <summary>
     /// Builds the WorkItemData with all relationships hydrated.
     /// </summary>
     /// <returns>A fully hydrated WorkItemData instance</returns>
@@ -240,7 +208,7 @@ public class WorkItemDataBuilder
             WorkItemId = wi.Id!.Value,
             PackageName = GetFieldValue(wi, "Custom.Package"),
             PackageVersionMajorMinor = GetFieldValue(wi, "Custom.PackageVersionMajorMinor"),
-            RelatedIds = WorkItemData.ExtractRelatedIds(wi)
+            RelatedIds = wi.ExtractRelatedIds()
         };
     }
 
@@ -270,7 +238,7 @@ public class WorkItemDataBuilder
             LabelType = GetFieldValue(wi, "Custom.LabelType"),
             Repository = GetFieldValue(wi, "Custom.Repository"),
             RepoPath = GetFieldValue(wi, "Custom.RepoPath"),
-            RelatedIds = WorkItemData.ExtractRelatedIds(wi)
+            RelatedIds = wi.ExtractRelatedIds()
         };
     }
 
@@ -280,55 +248,4 @@ public class WorkItemDataBuilder
     }
 
     #endregion
-}
-
-/// <summary>
-/// Extension methods for WorkItemDataBuilder to simplify common test scenarios.
-/// </summary>
-public static class WorkItemDataBuilderExtensions
-{
-    /// <summary>
-    /// Creates a simple package with an owner and label.
-    /// </summary>
-    public static WorkItemDataBuilder AddSimplePackage(
-        this WorkItemDataBuilder builder,
-        string packageName,
-        string ownerAlias,
-        string labelName,
-        out int packageId)
-    {
-        builder
-            .AddOwner(ownerAlias, out var ownerId)
-            .AddLabel(labelName, out var labelId)
-            .AddPackage(packageName, out packageId, relatedTo: [ownerId, labelId]);
-        return builder;
-    }
-
-    /// <summary>
-    /// Creates a package with multiple owners and labels.
-    /// </summary>
-    public static WorkItemDataBuilder AddPackageWithOwners(
-        this WorkItemDataBuilder builder,
-        string packageName,
-        string[] ownerAliases,
-        string[] labelNames,
-        out int packageId)
-    {
-        var relatedIds = new List<int>();
-
-        foreach (var alias in ownerAliases)
-        {
-            builder.AddOwner(alias, out var id);
-            relatedIds.Add(id);
-        }
-
-        foreach (var label in labelNames)
-        {
-            builder.AddLabel(label, out var id);
-            relatedIds.Add(id);
-        }
-
-        builder.AddPackage(packageName, out packageId, relatedTo: [.. relatedIds]);
-        return builder;
-    }
 }

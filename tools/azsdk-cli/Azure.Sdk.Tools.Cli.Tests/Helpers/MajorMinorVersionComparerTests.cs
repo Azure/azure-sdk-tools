@@ -59,22 +59,4 @@ public class MajorMinorVersionComparerTests
     {
         Assert.Throws<FormatException>(() => MajorMinorVersionComparer.ParseVersion(version));
     }
-
-    // Helper method tests
-    [TestCase("2.0", "1.0", ExpectedResult = true)]
-    [TestCase("1.0", "2.0", ExpectedResult = false)]
-    [TestCase("1.0", "1.0", ExpectedResult = false)]
-    public bool IsGreaterThan_ReturnsExpectedResult(string x, string y)
-        => MajorMinorVersionComparer.IsGreaterThan(x, y);
-
-    [TestCase("1.0", "2.0", ExpectedResult = true)]
-    [TestCase("2.0", "1.0", ExpectedResult = false)]
-    [TestCase("1.0", "1.0", ExpectedResult = false)]
-    public bool IsLessThan_ReturnsExpectedResult(string x, string y)
-        => MajorMinorVersionComparer.IsLessThan(x, y);
-
-    [TestCase("1.0", "1.0", ExpectedResult = true)]
-    [TestCase("1.0", "2.0", ExpectedResult = false)]
-    public bool AreEqual_ReturnsExpectedResult(string x, string y)
-        => MajorMinorVersionComparer.AreEqual(x, y);
 }

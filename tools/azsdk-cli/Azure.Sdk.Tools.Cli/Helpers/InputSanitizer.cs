@@ -23,25 +23,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 "csharp" => ".NET",
                 "dotnet" => ".NET",
                 "net" => ".NET",
-
                 "android" => "Android",
-
                 "c" => "C",
-
                 "cpp" => "C++",
-
                 "go" => "Go",
-
                 "ios" => "iOS",
-
                 "java" => "Java",
-
                 "javascript" => "JavaScript",
                 "js" => "JavaScript",
                 "typescript" => "JavaScript",
-
                 "python" => "Python",
-
                 "rust" => "Rust",
                 _ => languageId
             };

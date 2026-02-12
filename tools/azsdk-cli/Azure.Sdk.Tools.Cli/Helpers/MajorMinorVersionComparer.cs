@@ -65,19 +65,4 @@ public class MajorMinorVersionComparer : IComparer<string>
 
         return (major, minor);
     }
-
-    /// <summary>
-    /// Returns true if x is greater than y using semantic versioning comparison.
-    /// </summary>
-    public static bool IsGreaterThan(string? x, string? y) => Default.Compare(x, y) > 0;
-
-    /// <summary>
-    /// Returns true if x is less than y using semantic versioning comparison.
-    /// </summary>
-    public static bool IsLessThan(string? x, string? y) => Default.Compare(x, y) < 0;
-
-    /// <summary>
-    /// Returns true if x equals y using semantic versioning comparison.
-    /// </summary>
-    public static bool AreEqual(string? x, string? y) => Default.Compare(x, y) == 0;
 }

@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Models.Codeowners;
 
@@ -60,16 +59,4 @@ public record WorkItemData(
             }
         }
     }
-
-    /// <summary>
-    /// Extracts related work item IDs from a work item's relations.
-    /// </summary>
-    /// <param name="wi">The work item to extract relations from.</param>
-    /// <returns>A set of related work item IDs.</returns>
-    public static HashSet<int> ExtractRelatedIds(WorkItem wi) =>
-        wi.Relations?
-            .Where(r => r.Rel == "System.LinkTypes.Related" && r.Url?.Contains("/workItems/") == true)
-            .Select(r => int.TryParse(r.Url![(r.Url.LastIndexOf('/') + 1)..], out int id) ? id : 0)
-            .Where(id => id > 0)
-            .ToHashSet() ?? [];
 }

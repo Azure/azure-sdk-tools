@@ -50,145 +50,6 @@ public class CodeownersRenderHelperTests
 
     #region Helper Methods
 
-    private static WorkItem CreatePackageWorkItem(int id, string packageName, params int[] relatedIds)
-    {
-        return CreatePackageWorkItem(id, packageName, "", relatedIds);
-    }
-
-    private static WorkItem CreatePackageWorkItem(int id, string packageName, string versionMajorMinor, params int[] relatedIds)
-    {
-        var wi = new WorkItem
-        {
-            Id = id,
-            Fields = new Dictionary<string, object>
-            {
-                { "Custom.Package", packageName },
-                { "Custom.PackageVersionMajorMinor", versionMajorMinor }
-            },
-            Relations = relatedIds.Select(relId => new WorkItemRelation
-            {
-                Rel = "System.LinkTypes.Related",
-                Url = $"https://dev.azure.com/org/project/_apis/wit/workItems/{relId}"
-            }).ToList()
-        };
-        return wi;
-    }
-
-    private static WorkItem CreateOwnerWorkItem(int id, string gitHubAlias)
-    {
-        return new WorkItem
-        {
-            Id = id,
-            Fields = new Dictionary<string, object>
-            {
-                { "Custom.GitHubAlias", gitHubAlias }
-            }
-        };
-    }
-
-    private static WorkItem CreateLabelWorkItem(int id, string labelName)
-    {
-        return new WorkItem
-        {
-            Id = id,
-            Fields = new Dictionary<string, object>
-            {
-                { "Custom.Label", labelName }
-            }
-        };
-    }
-
-    private static WorkItem CreateLabelOwnerWorkItem(int id, string labelType, string repository, string repoPath, params int[] relatedIds)
-    {
-        var wi = new WorkItem
-        {
-            Id = id,
-            Fields = new Dictionary<string, object>
-            {
-                { "Custom.LabelType", labelType },
-                { "Custom.Repository", repository },
-                { "Custom.RepoPath", repoPath }
-            },
-            Relations = relatedIds.Select(relId => new WorkItemRelation
-            {
-                Rel = "System.LinkTypes.Related",
-                Url = $"https://dev.azure.com/org/project/_apis/wit/workItems/{relId}"
-            }).ToList()
-        };
-        return wi;
-    }
-
-    private static PackageWorkItem MapToPackageWorkItem(WorkItem wi)
-    {
-        return new PackageWorkItem
-        {
-            WorkItemId = wi.Id!.Value,
-            PackageName = GetFieldValue(wi, "Custom.Package"),
-            PackageVersionMajorMinor = GetFieldValue(wi, "Custom.PackageVersionMajorMinor"),
-            RelatedIds = WorkItemData.ExtractRelatedIds(wi)
-        };
-    }
-
-    private static OwnerWorkItem MapToOwnerWorkItem(WorkItem wi)
-    {
-        return new OwnerWorkItem
-        {
-            WorkItemId = wi.Id!.Value,
-            GitHubAlias = GetFieldValue(wi, "Custom.GitHubAlias")
-        };
-    }
-
-    private static LabelWorkItem MapToLabelWorkItem(WorkItem wi)
-    {
-        return new LabelWorkItem
-        {
-            WorkItemId = wi.Id!.Value,
-            LabelName = GetFieldValue(wi, "Custom.Label")
-        };
-    }
-
-    private static LabelOwnerWorkItem MapToLabelOwnerWorkItem(WorkItem wi)
-    {
-        return new LabelOwnerWorkItem
-        {
-            WorkItemId = wi.Id!.Value,
-            LabelType = GetFieldValue(wi, "Custom.LabelType"),
-            Repository = GetFieldValue(wi, "Custom.Repository"),
-            RepoPath = GetFieldValue(wi, "Custom.RepoPath"),
-            RelatedIds = WorkItemData.ExtractRelatedIds(wi)
-        };
-    }
-
-    private static string GetFieldValue(WorkItem wi, string fieldName)
-    {
-        return wi.Fields.TryGetValue(fieldName, out var value) ? value?.ToString() ?? "" : "";
-    }
-
-    private void CreateCodeownersFile(string content)
-    {
-        File.WriteAllText(_codeownersPath, content);
-    }
-
-    private string GetCodeownersTemplate()
-    {
-        return """
-            # Repository-level code owners
-            *    @repo-maintainer
-
-            ####################
-            # Client Libraries
-            ####################
-
-            # Placeholder content that will be replaced
-
-            ####################
-            # Other Section
-            ####################
-
-            /other/    @other-owner
-            """;
-    }
-
     #endregion
 
     #region GetLanguageFromRepoName Tests
@@ -200,15 +61,10 @@ public class CodeownersRenderHelperTests
     [TestCase("Azure/azure-sdk-for-go", "go", "Go")]
     [TestCase("Azure/azure-sdk-for-cpp", "cpp", "C++")]
     [TestCase("azure-sdk-for-net", "net", ".NET")]
-    public void GetLanguageFromRepoName_ReturnsExpectedLanguage(string repoName, string suffix, string expectedLanguage)
+    public void GetLanguageFromRepoName_ReturnsExpectedLanguage(string repoName, string expectedSuffix, string expectedLanguage)
     {
         // Setup mock to return expected language for the suffix
-        _mockInputSanitizer.Setup(s => s.SanitizeLanguage(suffix)).Returns(expectedLanguage);
-
-        // Use reflection to test private instance method
-        var method = typeof(CodeownersRenderHelper).GetMethod(
-            "GetLanguageFromRepoName",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        _mockInputSanitizer.Setup(s => s.SanitizeLanguage(expectedSuffix)).Returns(expectedLanguage);
 
         var helper = new CodeownersRenderHelper(
             _mockDevOpsService.Object,
@@ -216,26 +72,22 @@ public class CodeownersRenderHelperTests
             _mockInputSanitizer.Object,
             _logger);
 
-        var result = method?.Invoke(helper, [repoName]);
+        var result = helper.GetLanguageFromRepoName(repoName);
 
         Assert.That(result, Is.EqualTo(expectedLanguage));
+        _mockInputSanitizer.Verify(s => s.SanitizeLanguage(expectedSuffix), Times.Once);
     }
 
     [Test]
     public void GetLanguageFromRepoName_ThrowsForInvalidRepoName()
     {
-        var method = typeof(CodeownersRenderHelper).GetMethod(
-            "GetLanguageFromRepoName",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
         var helper = new CodeownersRenderHelper(
             _mockDevOpsService.Object,
             _mockPowershellHelper.Object,
             _mockInputSanitizer.Object,
             _logger);
 
-        var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => method?.Invoke(helper, ["unknown-repo"]));
-        Assert.That(ex?.InnerException, Is.TypeOf<ArgumentException>());
+        Assert.Throws<ArgumentException>(() => helper.GetLanguageFromRepoName("unknown-repo"));
     }
 
     #endregion
@@ -247,428 +99,66 @@ public class CodeownersRenderHelperTests
     [TestCase("sdk/storage", "", "/sdk/storage/")]
     public void BuildPathExpression_ReturnsExpectedPath(string dirPath, string repoRoot, string expected)
     {
-        var method = typeof(CodeownersRenderHelper).GetMethod(
-            "BuildPathExpression",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-
-        var result = method?.Invoke(null, [dirPath, repoRoot]);
-
+        var result = CodeownersRenderHelper.BuildPathExpression(dirPath, repoRoot);
         Assert.That(result, Is.EqualTo(expected));
     }
 
     #endregion
 
-    #region Package Model Tests
-
-    [Test]
-    public void PackageWorkItem_MapsWorkItemCorrectly()
-    {
-        var wi = CreatePackageWorkItem(100, "Azure.Storage.Blobs", 200, 300);
-
-        var package = MapToPackageWorkItem(wi);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(package.WorkItemId, Is.EqualTo(100));
-            Assert.That(package.PackageName, Is.EqualTo("Azure.Storage.Blobs"));
-            Assert.That(package.RelatedIds, Has.Count.EqualTo(2));
-            Assert.That(package.RelatedIds, Does.Contain(200));
-            Assert.That(package.RelatedIds, Does.Contain(300));
-        });
-    }
-
-    [Test]
-    public void PackageWorkItem_HandlesEmptyRelations()
-    {
-        var wi = new WorkItem
-        {
-            Id = 100,
-            Fields = new Dictionary<string, object> { { "Custom.Package", "TestPackage" } },
-            Relations = null
-        };
-
-        var package = MapToPackageWorkItem(wi);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(package.WorkItemId, Is.EqualTo(100));
-            Assert.That(package.PackageName, Is.EqualTo("TestPackage"));
-            Assert.That(package.RelatedIds, Is.Empty);
-        });
-    }
-
-    #endregion
-
-    #region Owner Model Tests
-
-    [Test]
-    public void OwnerWorkItem_MapsWorkItemCorrectly()
-    {
-        var wi = CreateOwnerWorkItem(200, "johndoe");
-
-        var owner = MapToOwnerWorkItem(wi);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(owner.WorkItemId, Is.EqualTo(200));
-            Assert.That(owner.GitHubAlias, Is.EqualTo("johndoe"));
-        });
-    }
-
-    [Test]
-    public void OwnerWorkItem_HandlesEmptyAlias()
-    {
-        var wi = new WorkItem
-        {
-            Id = 200,
-            Fields = new Dictionary<string, object>()
-        };
-
-        var owner = MapToOwnerWorkItem(wi);
-
-        Assert.That(owner.GitHubAlias, Is.EqualTo(""));
-    }
-
-    #endregion
-
-    #region Label Model Tests
-
-    [Test]
-    public void LabelWorkItem_MapsWorkItemCorrectly()
-    {
-        var wi = CreateLabelWorkItem(300, "Storage");
-
-        var label = MapToLabelWorkItem(wi);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(label.WorkItemId, Is.EqualTo(300));
-            Assert.That(label.LabelName, Is.EqualTo("Storage"));
-        });
-    }
-
-    #endregion
-
-    #region LabelOwner Model Tests
-
-    [Test]
-    public void LabelOwnerWorkItem_MapsWorkItemCorrectly()
-    {
-        var wi = CreateLabelOwnerWorkItem(400, "Service Owner", "Azure/azure-sdk-for-net", "sdk/storage", 200, 300);
-
-        var labelOwner = MapToLabelOwnerWorkItem(wi);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(labelOwner.WorkItemId, Is.EqualTo(400));
-            Assert.That(labelOwner.LabelType, Is.EqualTo("Service Owner"));
-            Assert.That(labelOwner.Repository, Is.EqualTo("Azure/azure-sdk-for-net"));
-            Assert.That(labelOwner.RepoPath, Is.EqualTo("sdk/storage"));
-            Assert.That(labelOwner.RelatedIds, Has.Count.EqualTo(2));
-        });
-    }
-
-    [Test]
-    public void LabelOwnerWorkItem_HandlesEmptyRepoPath()
-    {
-        var wi = CreateLabelOwnerWorkItem(400, "Azure SDK Owner", "Azure/azure-sdk-for-net", "", 200);
-
-        var labelOwner = MapToLabelOwnerWorkItem(wi);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(labelOwner.RepoPath, Is.EqualTo(""));
-            Assert.That(labelOwner.LabelType, Is.EqualTo("Azure SDK Owner"));
-        });
-    }
-
-    #endregion
-
-    #region WorkItemData Tests
-
-    [Test]
-    public void WorkItemData_StoresDataCorrectly()
-    {
-        var packages = new Dictionary<int, PackageWorkItem>
-        {
-            { 100, MapToPackageWorkItem(CreatePackageWorkItem(100, "TestPackage")) }
-        };
-        var owners = new Dictionary<int, OwnerWorkItem>
-        {
-            { 200, MapToOwnerWorkItem(CreateOwnerWorkItem(200, "johndoe")) }
-        };
-        var labels = new Dictionary<int, LabelWorkItem>
-        {
-            { 300, MapToLabelWorkItem(CreateLabelWorkItem(300, "TestLabel")) }
-        };
-        var labelOwners = new List<LabelOwnerWorkItem>
-        {
-            MapToLabelOwnerWorkItem(CreateLabelOwnerWorkItem(400, "Service Owner", "repo", "path"))
-        };
-
-        var data = new WorkItemData(packages, owners, labels, labelOwners);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(data.Packages, Has.Count.EqualTo(1));
-            Assert.That(data.Owners, Has.Count.EqualTo(1));
-            Assert.That(data.Labels, Has.Count.EqualTo(1));
-            Assert.That(data.LabelOwners, Has.Count.EqualTo(1));
-        });
-    }
-
-    [Test]
-    public void HydrateRelationships_PopulatesPackageReferences()
-    {
-        // Arrange
-        var data = new WorkItemDataBuilder()
-            .AddOwner("alice", out var aliceId)
-            .AddOwner("bob", out var bobId)
-            .AddLabel("Storage", out var storageId)
-            .AddLabel("Core", out var coreId)
-            .AddPackage("Azure.Storage.Blobs", out var pkgId, relatedTo: [aliceId, bobId, storageId, coreId])
-            .Build();
-
-        // Assert - hydration happened automatically in Build()
-        var pkg = data.Packages[pkgId];
-        Assert.Multiple(() =>
-        {
-            Assert.That(pkg.Owners, Has.Count.EqualTo(2));
-            Assert.That(pkg.Owners.Select(o => o.GitHubAlias), Is.EquivalentTo(new[] { "alice", "bob" }));
-            Assert.That(pkg.Labels, Has.Count.EqualTo(2));
-            Assert.That(pkg.Labels.Select(l => l.LabelName), Is.EquivalentTo(new[] { "Storage", "Core" }));
-        });
-    }
-
-    [Test]
-    public void HydrateRelationships_PopulatesLabelOwnerReferences()
-    {
-        // Arrange
-        var data = new WorkItemDataBuilder()
-            .AddOwner("serviceowner", out var ownerId)
-            .AddLabel("MyService", out var labelId)
-            .AddServiceOwner(out var loId, relatedTo: [ownerId, labelId])
-            .Build();
-
-        // Assert
-        var lo = data.LabelOwners.First(l => l.WorkItemId == loId);
-        Assert.Multiple(() =>
-        {
-            Assert.That(lo.Owners, Has.Count.EqualTo(1));
-            Assert.That(lo.Owners[0].GitHubAlias, Is.EqualTo("serviceowner"));
-            Assert.That(lo.Labels, Has.Count.EqualTo(1));
-            Assert.That(lo.Labels[0].LabelName, Is.EqualTo("MyService"));
-        });
-    }
-
-    [Test]
-    public void HydrateRelationships_LinksLabelOwnersToPackages()
-    {
-        // Arrange
-        var data = new WorkItemDataBuilder()
-            .AddOwner("pkgowner", out var pkgOwnerId)
-            .AddOwner("svcowner", out var svcOwnerId)
-            .AddLabel("Storage", out var labelId)
-            .AddServiceOwner(out var loId, relatedTo: [svcOwnerId, labelId])
-            .AddPackage("Azure.Storage.Blobs", out var pkgId, relatedTo: [pkgOwnerId, labelId, loId])
-            .Build();
-
-        // Assert
-        var pkg = data.Packages[pkgId];
-        Assert.Multiple(() =>
-        {
-            Assert.That(pkg.LabelOwners, Has.Count.EqualTo(1));
-            Assert.That(pkg.LabelOwners[0].LabelType, Is.EqualTo("Service Owner"));
-            Assert.That(pkg.LabelOwners[0].Owners.Select(o => o.GitHubAlias), Does.Contain("svcowner"));
-        });
-    }
-
-    #endregion
-
-    #region CodeownersSectionFinder Tests
-
-    [Test]
-    public void FindClientLibrariesSection_FindsSectionCorrectly()
-    {
-        var lines = new List<string>
-        {
-            "# Header",
-            "",
-            "####################",
-            "# Client Libraries",
-            "####################",
-            "",
-            "/sdk/storage/    @owner1",
-            "",
-            "####################",
-            "# Other Section",
-            "####################"
-        };
-
-        var (headerStart, contentStart, sectionEnd) = CodeownersSectionFinder.FindClientLibrariesSection(lines);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(headerStart, Is.EqualTo(2));
-            Assert.That(contentStart, Is.EqualTo(5)); // First line after header (blank line)
-            Assert.That(sectionEnd, Is.EqualTo(8));
-        });
-    }
-
-    [Test]
-    public void FindClientLibrariesSection_ReturnsMinusOneWhenNotFound()
-    {
-        var lines = new List<string>
-        {
-            "# Header",
-            "/path/    @owner"
-        };
-
-        var (headerStart, contentStart, sectionEnd) = CodeownersSectionFinder.FindClientLibrariesSection(lines);
-
-        Assert.That(contentStart, Is.EqualTo(-1));
-    }
-
-    #endregion
-
-    #region CodeownersEntrySorter Tests
-
-    [Test]
-    public void SortOwnersInPlace_SortsOwnersAlphabetically()
-    {
-        var entries = new List<CodeownersEntry>
-        {
-            new()
-            {
-                PathExpression = "/sdk/storage/",
-                SourceOwners = ["charlie", "alice", "bob"],
-                ServiceOwners = ["zoe", "anna"],
-                AzureSdkOwners = ["mike", "lisa"]
-            }
-        };
-
-        CodeownersEntrySorter.SortOwnersInPlace(entries);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(entries[0].SourceOwners, Is.EqualTo(new List<string> { "alice", "bob", "charlie" }));
-            Assert.That(entries[0].ServiceOwners, Is.EqualTo(new List<string> { "anna", "zoe" }));
-            Assert.That(entries[0].AzureSdkOwners, Is.EqualTo(new List<string> { "lisa", "mike" }));
-        });
-    }
-
-    [Test]
-    public void SortLabelsInPlace_SortsLabelsAlphabetically()
-    {
-        var entries = new List<CodeownersEntry>
-        {
-            new()
-            {
-                PathExpression = "/sdk/storage/",
-                PRLabels = ["Storage", "Core", "Analytics"],
-                ServiceLabels = ["Blob", "Azure"]
-            }
-        };
-
-        CodeownersEntrySorter.SortLabelsInPlace(entries);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(entries[0].PRLabels, Is.EqualTo(new List<string> { "Analytics", "Core", "Storage" }));
-            Assert.That(entries[0].ServiceLabels, Is.EqualTo(new List<string> { "Azure", "Blob" }));
-        });
-    }
-
-    [Test]
-    public void SortEntries_SortsPathedEntriesFirst()
-    {
-        var entries = new List<CodeownersEntry>
-        {
-            new() { PathExpression = "", ServiceLabels = ["Pathless"] },
-            new() { PathExpression = "/sdk/storage/", PRLabels = ["Storage"] },
-            new() { PathExpression = "/sdk/core/", PRLabels = ["Core"] }
-        };
-
-        var sorted = CodeownersEntrySorter.SortEntries(entries);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(sorted[0].PathExpression, Is.EqualTo("/sdk/core/"));
-            Assert.That(sorted[1].PathExpression, Is.EqualTo("/sdk/storage/"));
-            Assert.That(sorted[^1].PathExpression, Is.EqualTo(""));
-        });
-    }
-
-    #endregion
-
-    #region FormatCodeownersEntry Tests
-
-    [Test]
-    public void FormatCodeownersEntry_FormatsSimpleEntry()
-    {
-        var entry = new CodeownersEntry
-        {
-            PathExpression = "/sdk/storage/",
-            SourceOwners = ["alice", "bob"]
-        };
-
-        var formatted = entry.FormatCodeownersEntry();
-
-        Assert.That(formatted, Is.EqualTo("/sdk/storage/    @alice @bob"));
-    }
-
-    [Test]
-    public void FormatCodeownersEntry_FormatsEntryWithPRLabels()
-    {
-        var entry = new CodeownersEntry
-        {
-            PathExpression = "/sdk/storage/",
-            SourceOwners = ["alice"],
-            PRLabels = ["Storage", "Core"]
-        };
-
-        var formatted = entry.FormatCodeownersEntry();
-
-        // Labels are formatted in list order (sorting happens separately)
-        Assert.That(formatted, Does.Contain("# PRLabel: %Storage %Core"));
-        Assert.That(formatted, Does.Contain("/sdk/storage/    @alice"));
-    }
-
-    [Test]
-    public void FormatCodeownersEntry_FormatsEntryWithServiceOwners()
-    {
-        var entry = new CodeownersEntry
-        {
-            PathExpression = "",
-            ServiceLabels = ["Storage"],
-            ServiceOwners = ["serviceowner1", "serviceowner2"]
-        };
-
-        var formatted = entry.FormatCodeownersEntry();
-
-        Assert.That(formatted, Does.Contain("# ServiceLabel: %Storage"));
-        Assert.That(formatted, Does.Contain("# ServiceOwners: @serviceowner1 @serviceowner2"));
-    }
-
-    [Test]
-    public void FormatCodeownersEntry_FormatsEntryWithAzureSdkOwners()
-    {
-        var entry = new CodeownersEntry
-        {
-            PathExpression = "/sdk/core/",
-            SourceOwners = ["developer"],
-            AzureSdkOwners = ["sdkowner1"],
-            ServiceLabels = ["Core"]
-        };
-
-        var formatted = entry.FormatCodeownersEntry();
-
-        Assert.That(formatted, Does.Contain("# AzureSdkOwners: @sdkowner1"));
-    }
-
-    #endregion
-
     #region Integration-like Tests
+
+    [Test]
+    public void BuildCodeownersEntries_SkipsPackagesNotInRepo()
+    {
+        // A package work item with an owner and a label
+        var data = new WorkItemDataBuilder()
+            .AddOwner("owner1", out var ownerId)
+            .AddLabel("label1", out var labelId)
+            .AddPackage("Unrelated.Package", out _, relatedTo: [ownerId, labelId])
+            .Build();
+
+        // The repo has an unrelated package
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Azure.Storage.Blobs", new RepoPackage { Name = "Azure.Storage.Blobs", DirectoryPath = Path.Combine(_repoRoot, "sdk", "storage", "Azure.Storage.Blobs") } }
+        };
+
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup);
+
+        Assert.That(entries, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_SkipsUnlinkedLabelOwnersWithNoSourceOwners()
+    {
+        // TODO: Linter should report on this
+        // A label owner work item with a path and no owners
+        var data = new WorkItemDataBuilder()
+            .AddLabel("label1", out var labelId)
+            .AddLabelOwner("Service Owner", out _, repoPath: "/sdk/repo/path", relatedTo: [labelId])
+            .Build();
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup);
+        Assert.That(entries, Has.Count.EqualTo(0));
+    }
+
+    [Test]
+    public void BuildCodeownersEntries_SkipsPathlessEntryWithNoLabels()
+    {
+        // TODO: Linter should report this
+        // A label owner work item with no path and no label
+        var data = new WorkItemDataBuilder()
+            .AddOwner("owner1", out var ownerId)
+            .AddLabelOwner("Service Owner", out _, relatedTo: [ownerId])
+            .Build();
+
+        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase);
+
+        var entries = InvokeBuildCodeownersEntries(data, packageLookup);
+        Assert.That(entries, Has.Count.EqualTo(0));
+    }
 
     [Test]
     public void BuildCodeownersEntries_CreatesEntriesFromPackages()

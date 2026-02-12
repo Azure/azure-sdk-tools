@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Attributes;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
@@ -53,4 +54,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
         /// </summary>
         public List<LabelOwnerWorkItem> LabelOwners { get; } = [];
     }
+
+
 }

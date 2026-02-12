@@ -92,5 +92,5 @@
     }
 
     @include base-tags;
-    @include webkit-scrollbar(var(--scroll-bar-height), var(--scroll-bar-width));
+    @include webkit-scrollbar(10px, 10px);
 }

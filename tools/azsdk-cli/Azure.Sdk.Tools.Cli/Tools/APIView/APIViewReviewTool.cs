@@ -72,7 +72,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         return result;
     }
 
-    [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get all the comments of an APIView API using the APIView URL")]
+    [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review.")]
     public async Task<APIViewResponse> GetComments(string apiViewUrl)
     {
         try
@@ -149,7 +149,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
     }
 
-    private (string revisionId, string reviewId) ExtractIdsFromUrl(string url)
+    public static (string revisionId, string reviewId) ExtractIdsFromUrl(string url)
     {
         if (string.IsNullOrWhiteSpace(url))
         {
@@ -178,8 +178,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
         catch (Exception ex) when (ex is not ArgumentException)
         {
-            _logger.LogError(ex, "Failed to parse APIView URL {Url}", url);
-            throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url));
+            throw new ArgumentException($"Error parsing URL: {ex.Message}", nameof(url), ex);
         }
     }
 }

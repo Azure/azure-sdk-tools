@@ -8,7 +8,7 @@ import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, 
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
-import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { MenuItem, MenuItemCommandEvent, MessageService, ToastMessageOptions } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
@@ -223,7 +223,7 @@ export class CodePanelComponent implements OnChanges {
   canAddComment(item: CodePanelRowData): boolean {
     const hasNonWhitespaceContent = item.rowOfTokens &&
                                      item.rowOfTokens.some(token => token.value && token.value.trim().length > 0);
-    
+
     // Handle rowClasses being either a Set or an Array (can happen after JSON deserialization)
     let isRemoved = false;
     if (item.rowClasses) {
@@ -233,8 +233,8 @@ export class CodePanelComponent implements OnChanges {
         isRemoved = (item.rowClasses as unknown as string[]).includes('removed');
       }
     }
-    
-    return item.type === CodePanelRowDatatype.CodeLine && 
+
+    return item.type === CodePanelRowDatatype.CodeLine &&
            !isRemoved &&
            this.userProfile !== undefined &&
            hasNonWhitespaceContent;
@@ -405,6 +405,77 @@ export class CodePanelComponent implements OnChanges {
     await this.codePanelRowSource?.adapter?.remove({
       indexes: indexesToRemove
     });
+  }
+
+  /**
+   * Removes diagnostic comment threads from the scroller in real-time.
+   */
+  async removeDiagnosticCommentThreads() {
+    await this.codePanelRowSource?.adapter?.relax();
+
+    const indexesToRemove: number[] = [];
+    const filteredData: CodePanelRowData[] = [];
+
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      if (this.isDiagnosticCommentThread(this.codePanelRowData[i])) {
+        indexesToRemove.push(i);
+      } else {
+        filteredData.push(this.codePanelRowData[i]);
+      }
+    }
+
+    this.codePanelRowData = filteredData;
+    await this.codePanelRowSource?.adapter?.remove({ indexes: indexesToRemove });
+  }
+
+  /**
+   * Inserts diagnostic comment threads back into the scroller from codePanelData.
+   */
+  async insertDiagnosticCommentThreads() {
+    if (!this.codePanelData?.nodeMetaData) return;
+    await this.codePanelRowSource?.adapter?.relax();
+
+    for (const [nodeIdHashed, nodeMetaData] of Object.entries(this.codePanelData.nodeMetaData)) {
+      if (!nodeMetaData.commentThread) continue;
+
+      for (const [rowPosition, threads] of Object.entries(nodeMetaData.commentThread)) {
+        if (!Array.isArray(threads)) continue;
+
+        for (const thread of threads) {
+          if (!this.isDiagnosticCommentThread(thread)) continue;
+
+          thread.rowClasses = new Set<string>(thread.rowClasses as any);
+          const insertIndex = this.findInsertIndexForThread(nodeIdHashed, parseInt(rowPosition));
+
+          if (insertIndex >= 0) {
+            this.codePanelRowData.splice(insertIndex, 0, thread);
+            await this.codePanelRowSource?.adapter?.insert({ beforeIndex: insertIndex, items: [thread] });
+          }
+        }
+      }
+    }
+  }
+
+  private isDiagnosticCommentThread(row: CodePanelRowData): boolean {
+    return row.type === CodePanelRowDatatype.CommentThread &&
+      row.comments?.some(c => c.commentSource === CommentSource.Diagnostic) === true;
+  }
+
+  private findInsertIndexForThread(nodeIdHashed: string, rowPosition: number): number {
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      const row = this.codePanelRowData[i];
+      if (row.nodeIdHashed === nodeIdHashed && row.rowPositionInGroup === rowPosition) {
+        let insertIndex = i + 1;
+        // Skip existing comment threads at this position
+        while (insertIndex < this.codePanelRowData.length &&
+               this.codePanelRowData[insertIndex].type === CodePanelRowDatatype.CommentThread &&
+               this.codePanelRowData[insertIndex].nodeIdHashed === nodeIdHashed) {
+          insertIndex++;
+        }
+        return insertIndex;
+      }
+    }
+    return -1;
   }
 
   async removeItemsFromScroller(nodeIdHashed: string, codePanelRowDatatype:  CodePanelRowDatatype,
@@ -579,7 +650,7 @@ export class CodePanelComponent implements OnChanges {
   }
 
   /**
-   * Ensures rowClasses is a proper Set. This is needed because when data is 
+   * Ensures rowClasses is a proper Set. This is needed because when data is
    * deserialized from JSON, Sets become plain arrays.
    */
   private ensureRowClassesSet(row: CodePanelRowData): Set<string> {
@@ -747,6 +818,13 @@ export class CodePanelComponent implements OnChanges {
       next: (commentUpdates: CommentUpdatesDto) => {
         if ((commentUpdates.reviewId && commentUpdates.reviewId == this.reviewId) ||
           (commentUpdates.comment && commentUpdates.comment.reviewId == this.reviewId)) {
+
+          // Handle bulk auto-generated comments deletion before the per-comment guard checks
+          if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.AutoGeneratedCommentsDeleted) {
+            this.removeAllAutoGeneratedComments();
+            return;
+          }
+
           if (!commentUpdates.nodeIdHashed || commentUpdates.associatedRowPositionInGroup == undefined) {
             const codePanelRowData = this.findRowForCommentUpdates(commentUpdates.commentId!, commentUpdates.elementId!);
             commentUpdates.nodeIdHashed = codePanelRowData?.nodeIdHashed;
@@ -1274,7 +1352,7 @@ export class CodePanelComponent implements OnChanges {
 
   private deleteCommentFromCommentThread(commentUpdates: CommentUpdatesDto) {
     const { nodeIdHashed, associatedRowPositionInGroup: position, threadId, commentId } = commentUpdates;
-    
+
     const nodeMetaData = this.codePanelData?.nodeMetaData?.[nodeIdHashed!];
     if (!nodeMetaData?.commentThread?.[position!]) {
       this.updateHasActiveConversations();
@@ -1303,6 +1381,74 @@ export class CodePanelComponent implements OnChanges {
 
       this.updateItemInScroller(updated);
     }
+    this.updateHasActiveConversations();
+  }
+
+  /**
+   * Removes all auto-generated (azure-sdk) comments from the code panel in a single bulk operation.
+   * Handles both the virtual scroller rows and the underlying nodeMetaData.
+   */
+  private async removeAllAutoGeneratedComments() {
+    await this.codePanelRowSource?.adapter?.relax();
+
+    const indexesToRemove: number[] = [];
+    const filteredRows: CodePanelRowData[] = [];
+
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      const row = this.codePanelRowData[i];
+      if (row.type === CodePanelRowDatatype.CommentThread && row.comments) {
+        const remaining = row.comments.filter((c: CommentItemModel) => c.createdBy !== 'azure-sdk');
+        if (remaining.length === 0) {
+          // Entire thread was auto-generated — remove the row
+          indexesToRemove.push(i);
+          continue;
+        } else if (remaining.length < row.comments.length) {
+          // Mixed thread — keep only human comments
+          row.comments = remaining;
+        }
+      }
+      filteredRows.push(row);
+    }
+
+    // Update toggle-comment icons on code-line rows that lost their comment threads
+    for (const row of filteredRows) {
+      if (row.toggleCommentsClasses?.includes('show')) {
+        const hasRemainingThreads = filteredRows.some(
+          r => r.type === CodePanelRowDatatype.CommentThread &&
+               r.nodeIdHashed === row.nodeIdHashed &&
+               r.associatedRowPositionInGroup === row.associatedRowPositionInGroup
+        );
+        if (!hasRemainingThreads) {
+          row.toggleCommentsClasses = row.toggleCommentsClasses.replace('show', 'can-show');
+        }
+      }
+    }
+
+    this.codePanelRowData = filteredRows;
+    if (indexesToRemove.length > 0) {
+      await this.codePanelRowSource?.adapter?.remove({ indexes: indexesToRemove });
+    }
+
+    // Clean up nodeMetaData
+    if (this.codePanelData?.nodeMetaData) {
+      for (const nodeId of Object.keys(this.codePanelData.nodeMetaData)) {
+        const node = this.codePanelData.nodeMetaData[nodeId];
+        if (node.commentThread) {
+          for (const pos of Object.keys(node.commentThread)) {
+            const threads = node.commentThread[Number(pos)];
+            for (let t = threads.length - 1; t >= 0; t--) {
+              if (threads[t].comments) {
+                threads[t].comments = threads[t].comments.filter((c: CommentItemModel) => c.createdBy !== 'azure-sdk');
+                if (threads[t].comments.length === 0) {
+                  threads.splice(t, 1);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     this.updateHasActiveConversations();
   }
 

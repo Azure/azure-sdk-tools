@@ -1,36 +1,37 @@
 using System;
-using Octokit;
-using System.Threading.Tasks;
-using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
-using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
-using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
-using System.ComponentModel;
-using System.Diagnostics.Metrics;
-using static System.Net.Mime.MediaTypeNames;
-using System.Reflection.Emit;
-using System.Reflection.Metadata;
-using System.Xml.Linq;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security;
-using Azure.Sdk.Tools.CodeownersUtils.Verification;
-using System.Runtime.Intrinsics.X86;
+using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Microsoft.Extensions.Logging;
+using Octokit;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     public class IssueProcessing
     {
+        private readonly ILogger<IssueProcessing> Logger;
+
+        public IssueProcessing(ILogger<IssueProcessing> logger)
+        {
+            Logger = logger;
+        }
+
         /// <summary>
         /// Every rule will have it's own function that will be called here, the rule configuration will determine
         /// which rules will execute.
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task ProcessIssueEvent(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public async Task ProcessIssueEvent(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
+            Logger.LogInformation("Processing issue event. Action: {Action}, Issue: {IssueNumber}, Repository: {Repository}",
+                issueEventPayload.Action, issueEventPayload.Issue.Number, issueEventPayload.Repository.FullName);
+
             await InitialIssueTriage(gitHubEventClient, issueEventPayload);
-            ManualIssueTriage(gitHubEventClient, issueEventPayload);
             ServiceAttention(gitHubEventClient, issueEventPayload);
             ManualTriageAfterExternalAssignment(gitHubEventClient, issueEventPayload);
             RequireAttentionForNonMilestone(gitHubEventClient, issueEventPayload);
@@ -41,7 +42,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             // After all of the rules have been processed, call to process pending updates
             await gitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
         }
-
 
         /// <summary>
         /// Initial Issue Triage
@@ -94,12 +94,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task InitialIssueTriage(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public virtual async Task InitialIssueTriage(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.InitialIssueTriage))
             {
                 if (issueEventPayload.Action == ActionConstants.Opened)
                 {
+                    Logger.LogInformation("InitialIssueTriage: Processing newly opened issue #{IssueNumber} by {User}",
+                        issueEventPayload.Issue.Number, issueEventPayload.Issue.User.Login);
+
                     // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission.
                     // This piece is executed for every issue created that doesn't have labels or owners on it at the time of creation.
                     bool isCustomerReported = false;
@@ -109,6 +112,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueEventPayload.Repository.Id, issueEventPayload.Issue.User.Login);
                         if (!hasAdminOrWritePermission)
                         {
+                            Logger.LogInformation("InitialIssueTriage: User {User} is not an org member and lacks write permissions. Adding '{CustomerReported}' and '{Question}' labels.",
+                                issueEventPayload.Issue.User.Login, TriageLabelConstants.CustomerReported, TriageLabelConstants.Question);
                             gitHubEventClient.AddLabel(TriageLabelConstants.CustomerReported);
                             gitHubEventClient.AddLabel(TriageLabelConstants.Question);
                             isCustomerReported = true;
@@ -120,12 +125,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     {
                         // Query AI Triage and disable Answers if this is not a customer reported issue.
                         IssueTriageResponse triageOutput = await gitHubEventClient.QueryAIIssueTriageService(
-                            issueEventPayload, 
-                            true, 
+                            issueEventPayload,
+                            true,
                             !isCustomerReported);
 
                         if (triageOutput.Labels.Any())
                         {
+                            Logger.LogInformation("InitialIssueTriage: AI triage returned labels [{Labels}] for issue #{IssueNumber}",
+                                string.Join(", ", triageOutput.Labels), issueEventPayload.Issue.Number);
+
                             // If labels were predicted, add them to the issue
                             foreach (string label in triageOutput.Labels)
                             {
@@ -158,7 +166,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                     // be assigned to an issue
                                     else
                                     {
-                                        Console.WriteLine($"{codeownersEntry.AzureSdkOwners[0]} is the only owner in the AzureSdkOwners for service label(s), {string.Join(",", triageOutput.Labels)}, but cannot be assigned as an issue owner in this repository.");
+                                        Logger.LogWarning("InitialIssueTriage: {Owner} is the only owner in AzureSdkOwners for service label(s) [{Labels}], but cannot be assigned as an issue owner in this repository.",
+                                            codeownersEntry.AzureSdkOwners[0], string.Join(",", triageOutput.Labels));
                                     }
                                 }
                                 // else there are multiple owners and a random one needs to be assigned
@@ -179,6 +188,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                                         azureSdkOwner))
                                         {
                                             hasValidAssignee = true;
+                                            Logger.LogInformation("InitialIssueTriage: Assigning {Owner} to issue #{IssueNumber}",
+                                                azureSdkOwner, issueEventPayload.Issue.Number);
                                             gitHubEventClient.AssignOwnerToIssue(issueEventPayload.Repository.Owner.Login,
                                                                                  issueEventPayload.Repository.Name,
                                                                                  azureSdkOwner);
@@ -193,7 +204,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                         }
                                         else
                                         {
-                                            Console.WriteLine($"{azureSdkOwner} is an AzureSdkOwner for service labels {string.Join(",", triageOutput.Labels)} but cannot be assigned as an issue owner in this repository.");
+                                            Logger.LogWarning("InitialIssueTriage: {Owner} is an AzureSdkOwner for service labels [{Labels}] but cannot be assigned as an issue owner in this repository.",
+                                                azureSdkOwner, string.Join(",", triageOutput.Labels));
                                         }
                                     }
                                 }
@@ -210,7 +222,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                 {
                                     // Output a message indicating every owner in the AzureSdkOwners, for the AI label suggestions. The lines immediately
                                     // above this output will contain the messages for each user checked.
-                                    Console.WriteLine($"AzureSdkOwners for service labels {string.Join(",", triageOutput.Labels)} has no owners that can be assigned to issues in this repository.");
+                                    Logger.LogWarning("InitialIssueTriage: AzureSdkOwners for service labels [{Labels}] has no owners that can be assigned to issues in this repository.", string.Join(",", triageOutput.Labels));
                                 }
                             }
 
@@ -246,21 +258,21 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             {
                                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                             }
-                            
+
                             // Making sure the Answer is valid
-                            if(!string.IsNullOrEmpty(triageOutput.Answer))
+                            if (!string.IsNullOrEmpty(triageOutput.Answer))
                             {
                                 // If answer is a suggestions/solution add the comment.
-                                if(triageOutput.AnswerType == "suggestion")
+                                if (triageOutput.AnswerType == "suggestion")
                                 {
                                     gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
                                                                     issueEventPayload.Issue.Number,
                                                                     triageOutput.Answer);
                                 }
-                            
+
                                 // If answer is a solution add the issue-addressed label
                                 // to close out the issue.
-                                if(triageOutput.AnswerType == "solution")
+                                if (triageOutput.AnswerType == "solution")
                                 {
                                     gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
                                                                     issueEventPayload.Issue.Number,
@@ -272,6 +284,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         // If there are no labels predicted add NeedsTriage to the issue
                         else
                         {
+                            Logger.LogInformation("InitialIssueTriage: No labels predicted for issue #{IssueNumber}. Adding '{NeedsTriage}' label.",
+                                issueEventPayload.Issue.Number, TriageLabelConstants.NeedsTriage);
                             gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTriage);
                         }
                     }
@@ -338,7 +352,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void ManualIssueTriage(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void ManualIssueTriage(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ManualIssueTriage))
             {
@@ -350,6 +364,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, TriageLabelConstants.NeedsTriage) &&
                         !issueEventPayload.Label.Name.Equals(TriageLabelConstants.NeedsTriage))
                     {
+                        Logger.LogInformation("ManualIssueTriage: Removing '{NeedsTriage}' label from issue #{IssueNumber} after label '{AddedLabel}' was added.",
+                            TriageLabelConstants.NeedsTriage, issueEventPayload.Issue.Number, issueEventPayload.Label.Name);
                         gitHubEventClient.RemoveLabel(TriageLabelConstants.NeedsTriage);
                     }
                 }
@@ -365,7 +381,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void ServiceAttention(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void ServiceAttention(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ServiceAttention))
             {
@@ -386,7 +402,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             }
                             else
                             {
-                                Console.WriteLine($"{TriageLabelConstants.ServiceAttention} is the only label on the issue. Other labels are required in order to get parties to mention from the Codeowners file.");
+                                Logger.LogWarning("ServiceAttention: '{ServiceAttention}' is the only label on issue #{IssueNumber}. Other labels are required to get parties to mention from CODEOWNERS.",
+                                    TriageLabelConstants.ServiceAttention, issueEventPayload.Issue.Number);
                             }
                         }
                     }
@@ -405,7 +422,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void ManualTriageAfterExternalAssignment(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void ManualTriageAfterExternalAssignment(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ManualTriageAfterExternalAssignment))
             {
@@ -417,6 +434,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, TriageLabelConstants.CustomerReported) &&
                         !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, TriageLabelConstants.NeedsTeamTriage))
                     {
+                        Logger.LogInformation("ManualTriageAfterExternalAssignment: Adding '{NeedsTeamTriage}' to issue #{IssueNumber} after '{ServiceAttention}' was removed.",
+                            TriageLabelConstants.NeedsTeamTriage, issueEventPayload.Issue.Number, TriageLabelConstants.ServiceAttention);
                         gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamTriage);
                     }
                 }
@@ -430,7 +449,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void ResetIssueActivity(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void ResetIssueActivity(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (issueEventPayload.Action == ActionConstants.Edited || issueEventPayload.Action == ActionConstants.Reopened)
             {
@@ -451,7 +470,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="action">The action being performed, from the payload object</param>
         /// <param name="issue">Octokit.Issue object from the respective payload.</param>
         /// <param name="sender">Octokit.User from the payload's Sender.</param>
-        public static void Common_ResetIssueActivity(GitHubEventClient gitHubEventClient, string action, Issue issue, User sender)
+        public void Common_ResetIssueActivity(GitHubEventClient gitHubEventClient, string action, Issue issue, User sender)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetIssueActivity))
             {
@@ -460,6 +479,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     // If a user is a known GitHub bot, the user's AccountType will be Bot
                     sender.Type != AccountType.Bot)
                 {
+                    Logger.LogInformation("ResetIssueActivity: Removing '{NoRecentActivity}' label from issue #{IssueNumber} due to activity from {User}.",
+                        TriageLabelConstants.NoRecentActivity, issue.Number, sender.Login);
                     gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
                 }
             }
@@ -471,7 +492,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void Common_ProcessServiceAttentionForLabels(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void Common_ProcessServiceAttentionForLabels(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             List<string> labelOnlyList = issueEventPayload.Issue.Labels.Select(l => l.Name).ToList();
             Common_ProcessServiceAttentionForLabels(gitHubEventClient, issueEventPayload.Issue, issueEventPayload.Repository.Id, labelOnlyList);
@@ -490,7 +511,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// <param name="issue">Octokit.Issue object from the respective payload.</param>
         /// <param name="repositoryId">Long, the ID of the repository.</param>
         /// <param name="labels">The list of labels to look for service owners for.</param>
-        public static void Common_ProcessServiceAttentionForLabels(GitHubEventClient gitHubEventClient, Issue issue, long repositoryId, List<string> labels)
+        public void Common_ProcessServiceAttentionForLabels(GitHubEventClient gitHubEventClient, Issue issue, long repositoryId, List<string> labels)
         {
             if (labels.Count > 0)
             {
@@ -498,6 +519,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (codeownersEntry.ServiceOwners.Count > 0)
                 {
                     string partiesToMention = CodeOwnerUtils.CreateAtMentionForOwnerList(codeownersEntry.ServiceOwners);
+                    Logger.LogInformation("ServiceAttention: Mentioning service owners {Owners} for issue #{IssueNumber}",
+                        partiesToMention, issue.Number);
                     string issueComment = $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {partiesToMention}.";
                     gitHubEventClient.CreateComment(repositoryId, issue.Number, issueComment);
                 }
@@ -505,7 +528,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 {
                     // If there were no Service Owners found for the list of labels, output the URL and the list
                     // of labels
-                    Console.WriteLine($"There were no parties to mention found for the following labels ({string.Join(",", labels)}) for issue: {issue.Url}");
+                    Logger.LogWarning("ServiceAttention: No service owners found for labels [{Labels}] on issue {IssueUrl}", string.Join(",", labels), issue.Url);
                 }
             }
         }
@@ -525,7 +548,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void RequireAttentionForNonMilestone(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void RequireAttentionForNonMilestone(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.RequireAttentionForNonMilestone))
             {
@@ -562,7 +585,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void AuthorFeedbackNeeded(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void AuthorFeedbackNeeded(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.AuthorFeedbackNeeded))
             {
@@ -607,7 +630,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void IssueAddressed(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void IssueAddressed(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IssueAddressed))
             {
@@ -660,7 +683,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void IssueAddressedReset(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        public void IssueAddressedReset(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IssueAddressedReset))
             {

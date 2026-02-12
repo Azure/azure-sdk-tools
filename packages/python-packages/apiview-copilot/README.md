@@ -115,12 +115,46 @@ You must be logged in to the "Azure SDK Engineering System" subscription (`az lo
 Report is now available at [PowerBI](https://msit.powerbi.com/groups/3e17dcb0-4257-4a30-b843-77f47f1d4121/reports/d8fdff73-ac33-49dd-873a-3948d7cb3c48?ctid=72f988bf-86f1-41af-91ab-2d7cd011db47&pbi_source=linkShare)
 
 Underneath, we use a script to generate the metrics. You can use the following command:
-`avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "production"|"staging"]`
+```bash
+avc metrics report -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "production"|"staging"] [--charts] [--exclude <LANG1> <LANG2> ...]
+```
 
-Specify the start and end dates for the metrics you want to report. The `--markdown` option will pass the results through an LLM to summarize the results in markdown. The `--environment` option allows you to specify whether to report metrics from the production or staging environment, with production being the default.
+Options:
+- `-s/--start-date`: Start date for the metrics report (YYYY-MM-DD)
+- `-e/--end-date`: End date for the metrics report (YYYY-MM-DD)
+- `--markdown`: Pass the results through an LLM to summarize the results in markdown
+- `--environment`: Specify whether to report metrics from the production or staging environment (default: production)
+- `--charts`: Generate PNG charts from the metrics and save to `scratch/charts/`
+- `-x/--exclude`: Languages to exclude from the report (e.g., `--exclude Java Go`)
 
 To dump the markdown results to file:
-`avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> --markdown > metrics.md`
+```bash
+avc metrics report -s <YYYY-MM-DD> -e <YYYY-MM-DD> --markdown > metrics.md
+```
+
+To generate charts:
+```bash
+avc metrics report -s 2026-01-01 -e 2026-01-31 --charts
+```
+
+This generates four PNG charts in `scratch/charts/`:
+- **adoption.png**: Stacked bar chart showing Copilot vs non-Copilot reviews per language
+- **comment_quality.png**: Stacked percent bar chart showing AI comment quality categories per language
+- **human_copilot_split.png**: Human vs AI comments for reviews with Copilot
+- **human_comments_comparison.png**: Side-by-side comparison of human comments with vs without Copilot
+
+### Comment Quality Categories
+
+The `comment_quality` metrics track AI comment outcomes with the following mutually exclusive categories (which sum to `ai_comment_count`):
+
+| Category | Description |
+|----------|-------------|
+| `good` / `good_count` | AI comments that were upvoted |
+| `implicit_good` / `implicit_good_count` | AI comments marked resolved but not voted on |
+| `neutral` / `neutral_count` | AI comments in unapproved revisions with no action |
+| `implicit_bad` / `implicit_bad_count` | AI comments in approved revisions with no action (not resolved, not voted) |
+| `bad` / `bad_count` | AI comments that were downvoted (any downvote trumps upvotes) |
+| `deleted` / `deleted_count` | AI comments that were deleted |
 
 ## Notes
 

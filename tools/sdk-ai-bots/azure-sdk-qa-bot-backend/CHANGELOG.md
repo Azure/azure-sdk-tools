@@ -1,5 +1,28 @@
 # Release History
 
+## 0.9.1 (unreleased)
+
+### Features Added
+
+* Enable tenant routing for `azure_sdk_qa_bot` tenant.
+
+## 0.9.0 (2026-02-02)
+
+### Features Added
+
+* Add new tenant Authoring
+
+### Other Changes
+
+* Enhance prompt and knowledge source for language channel tenant
+* Add WithAgenticSearch parameter to the Completion API to enable or disable agentic search.
+
+## 0.8.0 (2026-01-29)
+
+### Features Added
+
+* Add metadata for knowledge and clarify management-plane and data-plane
+
 ## 0.7.1 (2026-01-20)
 
 ### Bugs Fixed

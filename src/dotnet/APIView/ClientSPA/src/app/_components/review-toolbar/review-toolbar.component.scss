@@ -1,0 +1,309 @@
+.review-toolbar {
+  background-color: var(--surface-section);
+  border-color: var(--border-color) !important;
+  min-height: 36px;
+  overflow: hidden;
+  flex-wrap: nowrap !important;
+  white-space: nowrap;
+
+  .toolbar-label {
+    color: var(--base-text-color);
+  }
+
+  .compact-dropdown {
+    min-width: 200px;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px;
+    background: var(--base-fg-color) !important;
+    padding: 0 !important;
+    position: relative !important;
+    margin-right: 20px !important;
+    z-index: 1000 !important;
+
+
+    &.p-focus {
+      border-color: var(--primary-color) !important;
+      box-shadow: var(--shadow-color-primary) !important;
+    }
+
+    ::ng-deep {
+        .p-select-label, .p-inputtext {
+            order: -1 !important;
+            flex: 1 1 auto !important;
+            width: auto !important;
+            padding: 0 0.5rem !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            background: transparent !important;
+            border: none !important;
+            color: var(--base-text-color) !important;
+        }
+
+        .p-select-dropdown {
+            order: 1 !important;
+            position: static !important;
+            width: 1.5rem !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: transparent !important;
+            flex: 0 0 auto !important;
+            color: var(--base-text-color) !important;
+
+            .p-select-dropdown-icon {
+                position: static !important;
+                margin: 0 !important;
+                color: var(--base-text-color) !important;
+            }
+        }
+
+        .p-select-clear-icon {
+            position: absolute !important;
+            right: -20px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 1rem !important;
+            height: 1rem !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: var(--base-text-color) !important;
+            z-index: 1;
+        }
+
+        .p-chip .p-chip-text {
+            margin-top: 0.1rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .p-chip {
+            background-color: var(--base-fg-color);
+            border: 1px solid var(--border-color);
+            margin: 1px;
+        }
+    }
+  }
+
+  .review-search-input {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem 0.25rem 2rem !important; // Increased left padding to accommodate the icon
+  }
+
+  .review-search-info {
+    font-size: 0.7rem;
+    color: var(--base-text-color);
+  }
+
+  .search-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--base-fg-color);
+    color: var(--base-text-color);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover:not(:disabled) {
+      background-color: var(--surface-hover);
+      color: var(--text-color);
+    }
+
+    &:active:not(:disabled) {
+      background-color: var(--surface-ground);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    i {
+      font-size: 0.875rem;
+    }
+  }
+
+  ::ng-deep p-buttongroup {
+    .p-buttongroup {
+      display: inline-flex;
+      gap: 0;
+
+      .p-button {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+        background-color: var(--base-fg-color);
+        color: var(--base-text-color);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border-radius: 0;
+
+        i {
+          font-size: 0.75rem;
+        }
+
+        &:hover:not(:disabled) {
+          background-color: var(--surface-hover);
+          color: var(--text-color);
+          z-index: 1;
+        }
+
+        &:active:not(:disabled) {
+          background-color: var(--surface-ground);
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+
+      // Target the p-button wrapper components
+      p-button {
+        &:first-of-type .p-button {
+          border-top-left-radius: 6px;
+          border-bottom-left-radius: 6px;
+        }
+
+        &:last-of-type .p-button {
+          border-top-right-radius: 6px;
+          border-bottom-right-radius: 6px;
+        }
+
+        &:not(:last-of-type) .p-button {
+          border-right: none;
+        }
+      }
+    }
+  }
+
+  .diff-style-dropdown {
+    min-width: 120px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--base-fg-color);
+
+    ::ng-deep {
+      .p-select-label {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        color: var(--base-text-color);
+      }
+
+      .p-select-dropdown {
+        width: 1.5rem;
+        color: var(--base-text-color);
+      }
+    }
+  }
+
+  .emphasis-badge {
+    border-radius: 5px;
+    padding: 0px 5px 2px 5px;
+    margin: 1px;
+    font-size: smaller;
+    font-weight: bold;
+
+    &.info {
+      background-color: var(--alert-info-bg);
+      color: var(--alert-info-color);
+      border: 1px solid var(--alert-info-border-color);
+    }
+
+    &.warn {
+      background-color: var(--alert-warn-bg);
+      color: var(--alert-warn-color);
+      border: 1px solid var(--alert-warn-border-color);
+    }
+
+    &.success {
+      background-color: var(--alert-success-bg);
+      color: var(--alert-success-color);
+      border: 1px solid var(--alert-success-border-color);
+    }
+
+    &.secondary {
+      background-color: var(--alert-secondary-bg);
+      color: var(--alert-secondary-color);
+      border: 1px solid var(--alert-secondary-border-color);
+    }
+  }
+
+  .selected-item-content {
+    gap: 0.25rem;
+  }
+
+  .revision-option-item {
+    padding: 0.5rem 0;
+    gap: 0.25rem;
+  }
+}
+
+::ng-deep .neutral-toggle-group {
+  --p-togglebutton-background: var(--border-color);
+  --p-togglebutton-color: var(--text-muted-color);
+  --p-togglebutton-border-color: var(--border-color);
+  --p-togglebutton-checked-background: var(--base-fg-color);
+  --p-togglebutton-checked-color: var(--base-text-color);
+  --p-togglebutton-checked-border-color: var(--border-color);
+  --p-togglebutton-hover-background: var(--border-color);
+  --p-togglebutton-hover-color: var(--text-color-secondary);
+  --p-togglebutton-hover-border-color: var(--text-color-secondary);
+  --p-togglebutton-padding: 0.2rem 0.5rem;
+  --p-selectbutton-border-radius: 6px;
+
+  border: 2px solid var(--border-color) !important;
+  overflow: hidden !important;
+}
+
+::ng-deep .settings-panel {
+  border: 1px solid var(--border-color) !important;
+  margin-top: 0px !important;
+  margin-left: 12px !important;
+
+  /* Hide the arrow */
+  &::before,
+  &::after {
+    display: none !important;
+  }
+
+  .settings-content {
+    min-width: 250px;
+
+    h6 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+// Ensure popover doesn't affect layout when closed
+.review-toolbar {
+  > p-popover,
+  > p-dialog {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: visible;
+  }
+}

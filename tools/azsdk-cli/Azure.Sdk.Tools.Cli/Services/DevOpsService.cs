@@ -93,6 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId);
         public Task<ReleasePlanWorkItem> GetReleasePlanAsync(string pullRequestUrl);
         public Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan = false);
+        public Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanWorkItem releasePlan);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "");
         public Task<Build> GetPipelineRunAsync(int buildId);
@@ -107,11 +108,14 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
+        public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync();
+        public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label);
+        public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
     {
-        private static readonly string RELEASE_PLANER_APP_TEST = "Release Planner App Test";
+        private static readonly string RELEASE_PLANNER_APP_TEST = "Release Planner App Test";
         private List<WorkItemRelationType>? _cachedRelationTypes;
 
         private static readonly string[] SUPPORTED_SDK_LANGUAGES = { "Dotnet", "JavaScript", "Python", "Java", "Go" };
@@ -127,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-                query += $" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'";
+                query += $" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] IN ('In Progress','Not Started','New')";
                 query += " AND [Custom.SDKReleasemonth] <> ''";
@@ -153,7 +157,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception("Failed to list overdue release plans. Error: {ex}", ex);
             }
         }
-        
+
         public async Task<ReleasePlanWorkItem> GetReleasePlanForWorkItemAsync(int workItemId)
         {
             logger.LogInformation("Fetching release plan work with id {workItemId}", workItemId);
@@ -185,7 +189,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANER_APP_TEST}'";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 query += $" AND [Custom.ProductServiceTreeID] = '{productTreeId}'";
                 query += $" AND [Custom.SDKtypetobereleased] = '{sdkReleaseType}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
@@ -217,6 +221,40 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForPackageAsync(string packageName, string language, bool isTestReleasePlan = false)
+        {
+            try
+            {
+                var languageId = MapLanguageToId(language);
+                var escapedPackageName = packageName?.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+                query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] = 'In Progress'";
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No in-progress release plans found for package {packageName} in {language}", packageName, language);
+                    return [];
+                }
+
+                var releasePlans = new List<ReleasePlanWorkItem>();
+                foreach (var workItem in releasePlanWorkItems)
+                {
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+                    releasePlans.Add(releasePlan);
+                }
+
+                return releasePlans;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get release plans for package {packageName} in {language}", packageName, language);
+                throw new Exception($"Failed to get release plans for package {packageName} in {language}. Error: {ex.Message}", ex);
+            }
+        }
+
         private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
             var releasePlan = new ReleasePlanWorkItem()
@@ -226,6 +264,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 WorkItemHtmlUrl = workItem.Url?.Replace("_apis/wit/workItems", "_workitems/edit") ?? string.Empty,
                 Title = workItem.Fields.TryGetValue("System.Title", out object? value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Status = workItem.Fields.TryGetValue("System.State", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                CreatedDate = workItem.Fields.TryGetValue("System.CreatedDate", out value) && value is DateTime createdDate ? createdDate : default,
+                ChangedDate = workItem.Fields.TryGetValue("System.ChangedDate", out value) && value is DateTime changedDate ? changedDate : default,
                 ServiceTreeId = workItem.Fields.TryGetValue("Custom.ServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ProductTreeId = workItem.Fields.TryGetValue("Custom.ProductServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SDKReleaseMonth = workItem.Fields.TryGetValue("Custom.SDKReleasemonth", out value) ? value?.ToString() ?? string.Empty : string.Empty,
@@ -446,16 +486,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Handle target ID
             if (targetId != null)
             {
-                var wiql = new Wiql { Query = $"SELECT [System.Id] FROM WorkItems WHERE ([System.Id] = {targetId})" };
-                var queryResult = await workItemClient.QueryByWiqlAsync(wiql);
-                var targetWorkItems = queryResult.WorkItems ?? [];
-                
-                // Query should only come up with one work item
-                if (!targetWorkItems.Any())
+                var targetWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(targetId.Value);
+
+                // Ensure the target work item exists before creating the relation
+                if (targetWorkItem == null)
                 {
                     throw new Exception($"Work item with ID {targetId} does not exist.");
                 }
-                var targetWorkItem = targetWorkItems.First();
 
                 // targetWorkItem contains only Id + Url; URL is enough to create relation
                 patchDocument.Add(new JsonPatchOperation
@@ -468,7 +505,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                         Url = targetWorkItem.Url
                     }
                 });
-                
             }
             // Handle target URLs (comma-separated)
             else if (!string.IsNullOrWhiteSpace(targetUrl))
@@ -488,17 +524,59 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await workItemClient.UpdateWorkItemAsync(patchDocument, id);
         }
 
+        private async Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId)
+        {
+            var workItemClient = connection.GetWorkItemClient();
+
+            var relationTypeSystemName = await ResolveRelationTypeSystemName(relationType);
+
+            var workItem = await workItemClient.GetWorkItemAsync(id, expand: WorkItemExpand.Relations);
+            var targetWorkItem = await workItemClient.GetWorkItemAsync(targetId);
+
+            if (workItem == null)
+            {
+                throw new Exception($"Work item {id} not found.");
+            }
+            if (targetWorkItem == null)
+            {
+                throw new Exception($"Target work item {targetId} not found.");
+            }
+            if (workItem.Relations == null || !workItem.Relations.Any())
+            {
+                throw new Exception($"Work item {id} has no relations.");
+            }
+
+            var targetRelation = workItem.Relations.FirstOrDefault(r =>
+                r.Rel.Equals(relationTypeSystemName, StringComparison.OrdinalIgnoreCase) &&
+                r.Url.Equals(targetWorkItem.Url, StringComparison.OrdinalIgnoreCase)
+            );
+
+            if (targetRelation == null)
+            {
+                throw new Exception($"Relation of type '{relationType}' to target work item ID {targetId} not found in work item {id}.");
+            }
+
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+            var relationIndex = workItem.Relations.IndexOf(targetRelation);
+            patchDocument.Add(new JsonPatchOperation
+            {
+                Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Remove,
+                Path = $"/relations/{relationIndex}"
+            });
+            await workItemClient.UpdateWorkItemAsync(patchDocument, id);
+        }
+
         private async Task<string> ResolveRelationTypeSystemName(string relationType)
         {
             var relationTypes = await GetCachedRelationTypes();
 
             // Match service-provided relation type by display name (case-insensitive)
             var match = relationTypes.FirstOrDefault(rt => string.Equals(rt.Name, relationType, StringComparison.OrdinalIgnoreCase));
-            if(match != null && match.ReferenceName != null)
+            if (match != null && match.ReferenceName != null)
             {
                 return match.ReferenceName;
             }
-            
+
             throw new Exception($"Relation Type '{relationType}' is not valid.");
         }
 
@@ -1091,7 +1169,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new ArgumentException("Invalid data in one of the parameters.");
             }
 
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.Package] = '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
             if (!string.IsNullOrEmpty(packageVersion))
             {
                 query += $" AND [Custom.PackageVersion] = '{packageVersion}'";
@@ -1118,7 +1196,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new ArgumentException("Invalid data in one of the parameters.");
             }
 
-            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.Package] CONTAINS '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANER_APP_TEST}'";
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.Package] CONTAINS '{packageName}' AND [Custom.Language] = '{language}' AND [System.WorkItemType] = 'Package' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
             query += "  ORDER BY [System.Id] DESC"; // Order by package work item to find the most recently created
 
             logger.LogInformation("Fetching package work item with package name {packageName} and language {language}.", packageName, language);
@@ -1336,6 +1414,258 @@ namespace Azure.Sdk.Tools.Cli.Services
             var workItem = await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
             logger.LogDebug("Updated work item {workItemId}", workItem.Id);
             return workItem;
+        }
+
+        private async Task<WorkItem> FindOrCreateServiceParent(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null)
+        {
+            var serviceParent = await FindServiceWorkItem(serviceName, ignoreReleasePlannerTests, tag);
+            if (serviceParent != null)
+            {
+                logger.LogDebug("Found existing service work item [{workItemId}]", serviceParent.Id);
+                return serviceParent;
+            }
+
+            var serviceWorkItem = new EpicWorkItem
+            {
+                ServiceName = serviceName,
+                EpicType = "Service"
+            };
+
+            if (!string.IsNullOrEmpty(tag))
+            {
+                serviceWorkItem.Tag = tag;
+            }
+
+            var workItem = await CreateWorkItemAsync(serviceWorkItem, "Epic", serviceName);
+
+            logger.LogInformation("[{workItemId}] - Created service work item for {serviceName}", workItem.Id, serviceName);
+            return workItem;
+        }
+
+        private async Task<WorkItem?> FindEpicWorkItem(string serviceName, string? packageDisplayName = null, bool ignoreReleasePlannerTests = true, string? tag = null)
+        {
+            var serviceCondition = new StringBuilder();
+
+            if (!string.IsNullOrEmpty(serviceName))
+            {
+                serviceCondition.Append($"[Custom.ServiceName] = '{serviceName}'");
+
+                if (!string.IsNullOrEmpty(packageDisplayName))
+                {
+                    serviceCondition.Append($" AND [Custom.PackageDisplayName] = '{packageDisplayName}'");
+                }
+                else
+                {
+                    serviceCondition.Append(" AND [Custom.PackageDisplayName] = ''");
+                }
+            }
+            else
+            {
+                serviceCondition.Append("[Custom.ServiceName] <> ''");
+            }
+
+            if (!string.IsNullOrEmpty(tag))
+            {
+                serviceCondition.Append($" AND [System.Tags] CONTAINS '{tag}'");
+            }
+
+            if (ignoreReleasePlannerTests)
+            {
+                serviceCondition.Append($" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'");
+            }
+
+            var query = $"SELECT [System.Id], [Custom.ServiceName], [Custom.PackageDisplayName], [System.Parent], [System.Tags] FROM WorkItems WHERE [System.State] <> 'Duplicate' AND [System.WorkItemType] = 'Epic' AND {serviceCondition}";
+
+            logger.LogDebug("Finding parent work item with query: {query}", query);
+
+            var workItems = await FetchWorkItemsAsync(query);
+
+            if (workItems.Count > 0)
+            {
+                if (workItems.Count > 1)
+                {
+                    logger.LogWarning("Found multiple parent work items matching criteria. Using first match with ID: {workItemId}", workItems[0].Id);
+                }
+                return workItems[0];
+            }
+
+            return null;
+        }
+
+        private async Task<WorkItem?> FindProductWorkItem(string serviceName, string packageDisplayName, bool ignoreReleasePlannerTests = true, string? tag = null)
+            => await FindEpicWorkItem(serviceName, packageDisplayName, ignoreReleasePlannerTests, tag);
+
+        private async Task<WorkItem?> FindServiceWorkItem(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null)
+            => await FindEpicWorkItem(serviceName, null, ignoreReleasePlannerTests, tag);
+
+        private async Task UpdateWorkItemParentAsync(WorkItemBase child, WorkItemBase parent)
+        {
+            if (child.ParentId == parent.WorkItemId)
+            {
+                return; // already the parent
+            }
+
+            // Remove existing parent link
+            // Child must have existing parent link
+            if (child.ParentId != 0)
+            {
+                await RemoveWorkItemRelationAsync(child.WorkItemId, "Parent", child.ParentId);
+            }
+            
+            await CreateWorkItemRelationAsync(child.WorkItemId, "Parent", parent.WorkItemId);
+        }
+
+        /// <summary>
+        /// Gets all Label work items from the Release project.
+        /// </summary>
+        /// <returns>List of GitHubLableWorkItem objects</returns>
+        public async Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync()
+        {
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+            var workItems = await FetchWorkItemsPagedAsync(query);
+
+            return workItems.Select(wi => new GitHubLableWorkItem
+            {
+                Label = wi.Fields.TryGetValue("Custom.Label", out object? labelValue) ? labelValue?.ToString() ?? string.Empty : string.Empty,
+                WorkItemId = wi.Id ?? 0,
+                WorkItemUrl = GetWorkItemHtmlUrl(wi.Id ?? 0)
+            }).ToList();
+        }
+
+        /// <summary>
+        /// Creates a new Label work item in the Release project.
+        /// </summary>
+        /// <param name="label">The label name to create</param>
+        /// <returns>The created GitHubLableWorkItem</returns>
+        public async Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label)
+        {
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            {
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.Title",
+                    Value = $"Label: {label}"
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.Label",
+                    Value = label
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.History",
+                    Value = "This work item was automatically created from the service labels CSV file (common-labels.csv) by the azsdk CLI tool."
+                }
+            };
+
+            logger.LogInformation("Creating Label work item for '{label}'", label);
+            var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(patchDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, "Label");
+            
+            if (workItem == null || workItem.Id == null)
+            {
+                throw new Exception($"Failed to create Label work item for '{label}'");
+            }
+
+            logger.LogInformation("Created Label work item {workItemId} for '{label}'", workItem.Id, label);
+
+            return new GitHubLableWorkItem
+            {
+                Label = label,
+                WorkItemId = workItem.Id ?? 0,
+                WorkItemUrl = GetWorkItemHtmlUrl(workItem.Id ?? 0)
+            };
+        }
+
+        private static string GetWorkItemHtmlUrl(int workItemId)
+        {
+            return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}/_workitems/edit/{workItemId}";
+        }
+
+        public async Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath)
+        {
+            try
+            {
+                logger.LogInformation("Searching for release plan with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+
+                // Query for release plans with the given TypeSpec project path
+                var escapedPath = typeSpecProjectPath?.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+                query += $" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
+
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                    return null;
+                }
+
+                if (releasePlanWorkItems.Count > 1)
+                {
+                    logger.LogWarning(
+                        "Multiple release plan work items ({count}) found for TypeSpec project path: {typeSpecProjectPath}. Using the first one.",
+                        releasePlanWorkItems.Count,
+                        typeSpecProjectPath);
+                }
+                // Get the first matching release plan
+                var releasePlanWorkItem = releasePlanWorkItems[0];
+                logger.LogInformation("Found release plan work item {workItemId}", releasePlanWorkItem.Id);
+
+                // Get parent work item (Product/Epic work item)
+                if (releasePlanWorkItem.Relations == null || !releasePlanWorkItem.Relations.Any())
+                {
+                    logger.LogWarning("Release plan {workItemId} has no relations", releasePlanWorkItem.Id);
+                    return null;
+                }
+
+                var parentRelation = releasePlanWorkItem.Relations.FirstOrDefault(r => r.Rel.Equals("System.LinkTypes.Hierarchy-Reverse"));
+                if (parentRelation == null)
+                {
+                    logger.LogWarning("Release plan {workItemId} has no parent work item", releasePlanWorkItem.Id);
+                    return null;
+                }
+
+                // Extract parent work item ID from the URL
+                var urlParts = parentRelation.Url.Split('/');
+                if (!int.TryParse(urlParts.Last(), out int parentWorkItemId))
+                {
+                    logger.LogError("Failed to parse parent work item ID from URL: {url}", parentRelation.Url);
+                    return null;
+                }
+                logger.LogInformation("Found parent work item {parentWorkItemId}", parentWorkItemId);
+
+                // Get parent work item details
+                var parentWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(parentWorkItemId, expand: WorkItemExpand.All);
+                if (parentWorkItem == null || parentWorkItem.Id == null)
+                {
+                    logger.LogError("Failed to retrieve parent work item {parentWorkItemId}", parentWorkItemId);
+                    return null;
+                }
+
+                // Extract product information from parent work item (Epic)
+                var productInfo = new ProductInfo
+                {
+                    WorkItemId = parentWorkItem.Id ?? 0,
+                    Title = parentWorkItem.Fields.TryGetValue("System.Title", out object? value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductServiceTreeId = parentWorkItem.Fields.TryGetValue("Custom.ProductServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ServiceId = parentWorkItem.Fields.TryGetValue("Custom.AssociatedServiceServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    PackageDisplayName = parentWorkItem.Fields.TryGetValue("Custom.PackageDisplayName", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductServiceTreeLink = parentWorkItem.Fields.TryGetValue("Custom.ProductServiceTreeLink", out value) ? value?.ToString() ?? string.Empty : string.Empty
+                };
+
+                logger.LogInformation("Successfully retrieved product info from work item {workItemId}", productInfo.WorkItemId);
+                return productInfo;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get product info for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                throw new Exception($"Failed to get product info for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
+            }
         }
     }
 }

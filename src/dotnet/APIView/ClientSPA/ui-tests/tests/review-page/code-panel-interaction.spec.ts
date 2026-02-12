@@ -88,12 +88,11 @@ test.describe('Code Panel - Line Click Actions', () => {
 
     await codeLine.scrollIntoViewIfNeeded();
 
-    // Hover over the line-number-container to trigger visibility of add-comment-btn
-    const lineNumberContainer = codeLine.locator('.line-number-container');
-    await lineNumberContainer.hover();
+    // Hover over the code line to trigger visibility of add-comment-btn
+    await codeLine.hover();
 
-    // Find the add comment button inside .line-actions (next to the line number)
-    const commentBtn = codeLine.locator('.line-actions .add-comment-btn');
+    // Find the add comment button inside .line-hover-actions
+    const commentBtn = codeLine.locator('.line-hover-actions .add-comment-btn');
 
     // Verify the comment button is visible on hover
     await expect(commentBtn).toBeVisible({ timeout: 5000 });
@@ -119,11 +118,17 @@ test.describe('Code Panel - Page Options Toggles', () => {
 
   test('should toggle line numbers visibility on and off', async ({ page }) => {
     // Line numbers should be visible by default
-    const lineNumbers = page.locator('.line-number');
+    const lineNumbers = page.locator('.line-number-text');
     await expect(lineNumbers.first()).toBeVisible();
+
+    const settingsButton = page.locator('button.settings-btn');
+    await settingsButton.click();
+    await page.waitForSelector('.settings-panel', { state: 'visible' });
+
     const lineNumbersToggle = page
-      .locator('li.list-group-item')
-      .filter({ hasText: 'Line numbers' })
+      .locator('.settings-panel')
+      .locator('label', { hasText: 'Line numbers' })
+      .locator('..')
       .locator('p-toggleswitch');
 
     // Click to hide
@@ -135,13 +140,56 @@ test.describe('Code Panel - Page Options Toggles', () => {
     await expect(lineNumbers.first()).toBeVisible();
   });
 
+  test('should allow adding comments when line numbers are hidden', async ({ page }) => {
+    const settingsButton = page.locator('button.settings-btn');
+    await settingsButton.click();
+    await page.waitForSelector('.settings-panel', { state: 'visible' });
+
+    const lineNumbersToggle = page
+      .locator('.settings-panel')
+      .locator('label', { hasText: 'Line numbers' })
+      .locator('..')
+      .locator('p-toggleswitch');
+
+    await lineNumbersToggle.click();
+
+    const lineNumbers = page.locator('.line-number-text');
+    await expect(lineNumbers.first()).not.toBeVisible();
+
+    await page.locator('app-code-panel').click({ position: { x: 300, y: 300 } });
+
+    const threadsBefore = await page.locator('app-comment-thread').count();
+    const codeLine = page.locator('.code-line').nth(4);
+    await codeLine.scrollIntoViewIfNeeded();
+
+    const lineActions = codeLine.locator('.line-actions');
+    await codeLine.hover();
+
+    const commentBtn = codeLine.locator('.line-hover-actions .add-comment-btn');
+    await expect(commentBtn).toBeVisible({ timeout: 5000 });
+
+    await commentBtn.click();
+
+    await page.waitForSelector('app-comment-thread', { timeout: 5000 });
+    const threadsAfter = await page.locator('app-comment-thread').count();
+
+    expect(threadsAfter).toBeGreaterThan(threadsBefore);
+  });
+
   test('should toggle comments visibility on and off', async ({ page }) => {
     // Comments should be visible by default
     const commentThreads = page.locator('app-comment-thread');
     await expect(commentThreads.first()).toBeVisible();
+
+    const settingsButton = page.locator('button.settings-btn');
+    await settingsButton.click();
+
+    await page.waitForSelector('.settings-panel', { state: 'visible' });
+
     const commentsToggle = page
-      .locator('li.list-group-item')
-      .filter({ hasText: /^Comments$/ })
+      .locator('.settings-panel')
+      .locator('label', { hasText: /^Comments$/ })
+      .locator('..')
       .locator('p-toggleswitch');
 
     // Click to hide
@@ -159,10 +207,9 @@ test.describe('Code Panel - Page Options Toggles', () => {
     const reviewPage = new ReviewPage(page);
     // Left navigation should be visible by default
     await expect(reviewPage.leftNavigation).toBeVisible();
-    const leftNavToggle = page
-      .locator('li.list-group-item')
-      .filter({ hasText: 'Left navigation' })
-      .locator('p-toggleswitch');
+
+    // The left navigation toggle is now in the review-info component (sidebar toggle button)
+    const leftNavToggle = page.locator('label[for="page-left-panel"]');
 
     // Click to hide
     await leftNavToggle.click();

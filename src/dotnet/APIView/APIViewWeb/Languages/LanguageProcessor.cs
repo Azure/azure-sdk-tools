@@ -87,6 +87,16 @@ namespace APIViewWeb
                         output + Environment.NewLine +
                         "stderr: " + Environment.NewLine +
                         error + Environment.NewLine;
+                    
+                    _telemetryClient.TrackEvent("RunProcess_Failed", new System.Collections.Generic.Dictionary<string, string>
+                    {
+                        { "language", Name },
+                        { "processName", Path.GetFileName(processName) },
+                        { "exitCode", process.ExitCode.ToString() },
+                        { "stderrSummary", error.Length > 500 ? error.ToString().Substring(0, 500) + "..." : error.ToString() },
+                        { "stdoutSummary", output.Length > 500 ? output.ToString().Substring(0, 500) + "..." : output.ToString() }
+                    });
+
                     throw new InvalidOperationException(processErrors);
                 }
             }
@@ -98,7 +108,6 @@ namespace APIViewWeb
             try
             {
                 var processErrors = RunProcess(tempDirectory, ProcessName, arguments);
-
                 _telemetryClient.TrackEvent($"Completed {Name} process run to parse " + originalName);
 
                 if (File.Exists(jsonPath))

@@ -308,6 +308,109 @@ public class SpecGenSdkConfigHelperTests
         Assert.That(result, Is.EqualTo(command));
     }
 
+    [Test]
+    public void SubstituteCommandVariables_PathWithSpaces_QuotesValue()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}/src";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "c:\\Users\\user\\Code\\AzSDK Tools Agent Demo\\azure-sdk-for-net\\sdk\\healthdataaiservices\\Azure.ResourceManager.HealthDataAIServices" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Users\\user\\Code\\AzSDK Tools Agent Demo\\azure-sdk-for-net\\sdk\\healthdataaiservices\\Azure.ResourceManager.HealthDataAIServices/src\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithoutSpaces_DoesNotQuote()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}/src";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "/path/to/package" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build /path/to/package/src"));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithSpacesNoContinuation_QuotesCorrectly()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "c:\\Program Files\\My Project" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_MultipleOccurrencesWithSpaces_QuotesAll()
+    {
+        // Arrange
+        var command = "dotnet build {PackagePath}/src && copy {PackagePath}/output /dest";
+        var variables = new Dictionary<string, string>
+        {
+            { "PackagePath", "c:\\Program Files\\My Project" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project/src\" && copy \"c:\\Program Files\\My Project/output\" /dest"));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_MultipleVariablesWithSpaces_QuotesAll()
+    {
+        // Arrange
+        var command = "dotnet build {projectPath} --output {outputDir}";
+        var variables = new Dictionary<string, string>
+        {
+            { "projectPath", "c:\\Program Files\\My Project" },
+            { "outputDir", "c:\\Build Output\\bin" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("dotnet build \"c:\\Program Files\\My Project\" --output \"c:\\Build Output\\bin\""));
+    }
+
+    [Test]
+    public void SubstituteCommandVariables_PathWithSpecialCharacters_QuotesValue()
+    {
+        // Arrange
+        var command = "echo {Message}";
+        var variables = new Dictionary<string, string>
+        {
+            { "Message", "Hello & goodbye | test" }
+        };
+
+        // Act
+        var result = _helper.SubstituteCommandVariables(command, variables);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("echo \"Hello & goodbye | test\""));
+    }
+
     #endregion
 
     #region Command Parsing Tests

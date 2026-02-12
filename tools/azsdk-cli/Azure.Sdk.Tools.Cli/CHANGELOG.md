@@ -1,6 +1,42 @@
 # Release History
 
-## 0.5.12 (2026-01-21)
+## 0.5.17 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
+## 0.5.16 (2026-02-09)
+
+### Features Added
+
+- Added support for version number and release date update in the CHANGELOG.md for data plane package.
+- Add an MCP tool to abandon release plans.
+- Make agentic search configurable and disable agentic search for TypeSpec authoring.
+- Add release-plan find-product command to retrieve product details from a TypeSpec project path.
+- Add a CLI command to address APIView feedback via coding agent (creates issues from APIView feedback).
+
+## 0.5.15 (2026-01-30)
+
+### Features Added
+
+- Added new MCP tools azsdk_package_generate_samples and azsdk_package_translate_samples for end-to-end sample workflows.
+
+### Bugs Fixed
+
+- Disabled response file handling for command line to avoid considering JavaScript package name with '@' as response file name.
+
+## 0.5.14 (2026-01-27)
+
+### Features Added
+
+- Added a new CLI command to update the package release status in release plan.
+
+## 0.5.13 (2026-01-23)
 
 ### Features Added
 

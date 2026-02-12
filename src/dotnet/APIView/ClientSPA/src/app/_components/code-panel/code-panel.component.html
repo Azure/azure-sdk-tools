@@ -3,16 +3,13 @@
     <span class="visually-hidden">Loading...</span>
 </div>
 <div *ngIf="codePanelRowSource;" id="viewport" tabindex="0" class="{{languageSafeName!}}" role="region" aria-label="Scrollable code panel" (click)="onCodePanelItemClick($event)" (keydown)="onKeyDown($event)">
-  <p-message class="sticky-top" *ngIf="showNoDiffInContentMessage()" severity="info" icon="bi bi-info-circle" text="There is no difference between the two API revisions."></p-message>
+  <p-message class="sticky-top" *ngIf="showNoDiffInContentMessage()" severity="info" icon="bi bi-info-circle" text="There are no differences between the two API revisions"></p-message>
   <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
     [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CodeLine || item.type === CodePanelRowDatatype.Documentation">
       <div class="line-actions">
-          <span *ngIf="showLineNumbers && item.lineNumber > 0" [ngClass]="getLineNumberClassObject(item)" class="line-number-container" [class.has-comment-btn]="canAddComment(item)">
-            <span class="text-decoration-none line-number-text" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
-            <button *ngIf="canAddComment(item)" type="button" class="btn btn-sm add-comment-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
-              <i class="bi bi-plus-lg"></i>
-            </button>
+          <span *ngIf="item.lineNumber > 0" [ngClass]="getLineNumberClassObject(item)" class="line-number-container" [class.hide-line-numbers]="!showLineNumbers">
+            <span *ngIf="showLineNumbers" class="text-decoration-none line-number-text" (click)="toggleLineActionMenu($event, index)">{{item.lineNumber}}</span>
             <p-menu appendTo="body" [attr.data-line-action-menu-id]="index" [model]="getLineMenu(item)" [popup]="true">
               <ng-template pTemplate="item" let-item>
                 <span pRipple [attr.data-item-id]="index" class="flex align-items-center p-menuitem-link">
@@ -22,9 +19,14 @@
               </ng-template>
             </p-menu>
           </span>
-          <span *ngIf="showDocumentation" class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
       </div>
-      <div class="code-line-content" [style.padding-left.px]="((item.indent-1) * 15)">
+      <div class="line-hover-actions" *ngIf="canAddComment(item) || item.toggleDocumentationClasses?.includes('can-show')">
+          <button *ngIf="canAddComment(item)" type="button" class="hover-action-btn add-comment-btn" (click)="addNewCommentThread($event)" aria-label="Add comment thread">
+            <i class="bi bi-chat"></i>
+          </button>
+          <span *ngIf="item.toggleDocumentationClasses?.includes('can-show')" class="hover-action-btn toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
+      </div>
+      <div class="code-line-content" [style.margin-left.px]="(item.indent-1) * 15">
           <span *ngFor="let token of item.rowOfTokens" [ngClass]="getTokenClassObject(token)"
           [attr.data-navigate-to-id]="getNavigationId(token)" [attr.data-navigate-to-url]="getNavigationUrl(token)">{{token.value}}</span>
       </div>

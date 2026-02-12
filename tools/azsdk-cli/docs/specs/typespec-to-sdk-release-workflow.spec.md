@@ -1561,7 +1561,7 @@ This workflow is complete when:
   - Options: Block workflow, parallel track, manual override
   - Check if API View are approved. If so, move to release. If not move to below step.
   - Check if API View's have feedback from architects, if so help user resolve feedback.
-  - Check if API View's have actively requested reviews from architects, if not tell user to request reviews on their API View. If they do have active requests to review, reach out to the architects or something.
+  - Check if API View's have actively requested reviews from architects, if not tell user to request reviews on their API View. If they do have active requests to review, reach out to the architects.
 
 ---
 

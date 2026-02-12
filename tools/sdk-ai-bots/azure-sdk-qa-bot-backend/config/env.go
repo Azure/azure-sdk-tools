@@ -147,6 +147,8 @@ func initCredential() error {
 }
 
 func InitConfiguration() {
+	// Try to load environment variables from .env file
+	LoadEnvFile()
 	// Initialize the global credential first
 	if err := initCredential(); err != nil {
 		log.Fatalf("Failed to create credential: %v", err)

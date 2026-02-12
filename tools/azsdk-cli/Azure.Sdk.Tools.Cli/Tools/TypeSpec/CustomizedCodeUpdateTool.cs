@@ -694,6 +694,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         string tspProjectPath,
         CancellationToken ct = default)
     {
+        try
+        {
         var languageService = await GetLanguageServiceAsync(packagePath, ct);
         if (!languageService.IsCustomizedCodeUpdateSupported)
         {
@@ -801,6 +803,17 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
                 ResponseError = buildError,
                 NextSteps = GetBuildAfterPatchesFailedNextSteps(buildError ?? "Unknown error").ToList()
+            };
+        }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception during UpdateAsync");
+            return new CustomizedCodeUpdateResponse
+            {
+                Message = $"An unexpected error occurred: {ex.Message}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
+                ResponseError = ex.Message
             };
         }
     }

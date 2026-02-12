@@ -788,6 +788,15 @@ def db_delete(container_name: str, id: str):
         print(f"Error deleting item: {e}")
 
 
+def _try_run_indexers(containers: list[tuple[str, object]]):
+    """Best-effort trigger of search indexers for the given (label, container) pairs."""
+    for label, container in containers:
+        try:
+            container.run_indexer()
+        except Exception as e:
+            print(f"Warning: Failed to trigger indexer for {label}: {e}. Run `avc search reindex` manually.")
+
+
 def db_link(guideline: str = None, memory: str = None, example: str = None, reindex: bool = False):
     """Link two knowledge base items by adding each other's ID to their related collections."""
     # Validate exactly two of the three are provided
@@ -872,15 +881,7 @@ def db_link(guideline: str = None, memory: str = None, example: str = None, rein
             print(f"CRITICAL: Rollback failed for {type_a} '{stored_id_a}': {rollback_err}")
         return
 
-    # Trigger search indexers
-    try:
-        container_a.run_indexer()
-    except Exception:
-        pass
-    try:
-        container_b.run_indexer()
-    except Exception:
-        pass
+    _try_run_indexers([(type_a, container_a), (type_b, container_b)])
 
     print(f"Linked {type_a} '{stored_id_a}' <-> {type_b} '{stored_id_b}'.")
     print(f"  {type_a}.{field_a} += '{stored_id_b}'")
@@ -968,14 +969,7 @@ def db_unlink(guideline: str = None, memory: str = None, example: str = None, re
             print(f"CRITICAL: Rollback failed for {type_a} '{stored_id_a}': {rollback_err}")
         return
 
-    try:
-        container_a.run_indexer()
-    except Exception:
-        pass
-    try:
-        container_b.run_indexer()
-    except Exception:
-        pass
+    _try_run_indexers([(type_a, container_a), (type_b, container_b)])
 
     print(f"Unlinked {type_a} '{stored_id_a}' <-> {type_b} '{stored_id_b}'.")
     if a_changed:

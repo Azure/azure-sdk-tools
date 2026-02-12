@@ -777,9 +777,9 @@ def _extract_code_for_element(full_text: str, element_id: Optional[str], context
     # ElementIds look like:
     #   "com.azure.cosmos.models.QuantizerType.public-String-toString()"
     #   "maven-lineid-properties-com.azure:azure-json:1.5.1"
-    # We convert hyphens to spaces to approximate how the code line reads.
-    # Then search for the line that best matches.
-    # Take the last segment after the last dot that contains hyphens (the method/member signature)
+    # We replace hyphens with spaces so that hyphen-separated tokens become
+    # individual search words, then score each APIView line by how many of
+    # those words it contains.  The line with the highest score wins.
     search_parts = element_id.replace("-", " ").replace("(", "(").replace(")", ")")
 
     best_idx = None

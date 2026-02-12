@@ -886,17 +886,12 @@ namespace APIViewWeb.Managers
             var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
 
             // Group revisions by ReviewId to identify which revisions to preserve
-            var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId);
+            var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId).ToList();
             var revisionsToPreserve = new HashSet<string>();
 
-            // Collect all review IDs that need to be checked
             var reviewIds = revisionsByReview.Select(g => g.Key).ToHashSet();
-            
-            // Fetch all revisions for affected reviews to avoid N+1 queries
-            // Note: This trades memory for fewer round trips. For large numbers of reviews,
-            // consider batching or parallel fetching if this becomes a bottleneck.
             var allRevisionsDict = new Dictionary<string, IEnumerable<APIRevisionListItemModel>>();
-            foreach (var reviewId in reviewIds)
+            foreach (string reviewId in reviewIds)
             {
                 allRevisionsDict[reviewId] = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
             }

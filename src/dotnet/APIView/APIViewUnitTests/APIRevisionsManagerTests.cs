@@ -381,13 +381,13 @@ public class APIRevisionsManagerTests
     {
         // Arrange
         var reviewId = "test-review-1";
-        var oldDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(150)); // Older than 4 months
+        var oldDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(160)); // Older than 4 months
         
         // Old approved stable release - should be preserved
         var stableApprovedOld = CreateRevisionForArchiveTest(reviewId, "rev-stable-approved", "1.0.0", true, false, oldDate);
         
         // Old unapproved stable release - should be archived
-        var stableUnapprovedOld = CreateRevisionForArchiveTest(reviewId, "rev-stable-unapproved", "0.9.0", false, false, oldDate);
+        var stableUnapprovedOld = CreateRevisionForArchiveTest(reviewId, "rev-stable-unapproved", "2.0.0", false, false, oldDate);
         
         // Setup mocks
         var oldRevisions = new List<APIRevisionListItemModel> { stableApprovedOld, stableUnapprovedOld };

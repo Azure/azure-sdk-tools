@@ -148,7 +148,9 @@ Graph.Microsoft,,e99695
 Graph.Windows,,e99695
 Guest Configuration,,e99695
 HDInsight,,e99695
+Health Deidentification,,e99695
 HPC Cache,,e99695
+Image Analysis,,e99695
 Import Export,,e99695
 Insights,,e99695
 Intune,,e99695
@@ -224,6 +226,7 @@ Recovery Services Data-Replication,,e99695
 Recovery Services Site-Recovery,,e99695
 Redis Cache,,e99695
 Relay,,e99695
+Remote Rendering,,e99695
 Reservations,,e99695
 Resource Authorization,,e99695
 Resource Graph,,e99695
@@ -262,6 +265,7 @@ Training,Work items that track the work to build training materials for building
 VideoAnalyzer,Azure Video Analyzer,e99695
 Virtual Enclaves,,e99695
 Visual Studio,,e99695
+vFXT,,e99695
 Voice Live,,e99695
 Web Apps,,e99695
 WebPubSub,,e99695

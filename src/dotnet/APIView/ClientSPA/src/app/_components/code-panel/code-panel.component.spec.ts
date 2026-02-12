@@ -1,24 +1,58 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { vi } from 'vitest';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+
+// Mock ngx-ui-scroll module to avoid vscroll dependency
+vi.mock('ngx-ui-scroll', () => ({
+  Datasource: class MockDatasource {
+    adapter = {
+      reload: vi.fn(),
+      reset: vi.fn(),
+      relax: vi.fn()
+    };
+    settings = {};
+  },
+  IDatasource: class MockIDatasource {},
+  SizeStrategy: {},
+  UiScrollModule: {
+    forRoot: () => ({})
+  }
+}));
 
 import { CodePanelComponent } from './code-panel.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { MessageService } from 'primeng/api';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CodeDiagnostic } from 'src/app/_models/codeDiagnostic';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { Subject } from 'rxjs';
 
 describe('CodePanelComponent', () => {
   let component: CodePanelComponent;
   let fixture: ComponentFixture<CodePanelComponent>;
 
+  beforeAll(() => initializeTestBed());
+
   beforeEach(() => {
+    // Mock navigator.clipboard in each test context
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: vi.fn().mockResolvedValue(undefined)
+      },
+      writable: true,
+      configurable: true
+    });
+
     TestBed.configureTestingModule({
       declarations: [CodePanelComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         CommentsService,
         {
           provide: ActivatedRoute,
@@ -29,12 +63,19 @@ describe('CodePanelComponent', () => {
             }
           }
         },
-        MessageService
+        MessageService,
+        // Mock SignalRService to avoid 'hubs/notification' URL resolution error
+        {
+          provide: SignalRService,
+          useValue: {
+            commentUpdate$: new Subject(),
+            onCommentUpdates: vi.fn().mockReturnValue(new Subject()),
+            startConnection: vi.fn(),
+            stopConnection: vi.fn()
+          }
+        }
       ],
-      imports: [HttpClientTestingModule,
-        SharedAppModule,
-        ReviewPageModule
-      ]
+      schemas: [NO_ERRORS_SCHEMA] // Ignore unknown elements and attributes
     });
     fixture = TestBed.createComponent(CodePanelComponent);
     component = fixture.componentInstance;
@@ -46,13 +87,7 @@ describe('CodePanelComponent', () => {
   });
 
   describe('copyReviewTextToClipBoard', () => {
-    let clipboardSpy: jasmine.Spy;
-
-    beforeEach(() => {
-      clipboardSpy = spyOn(navigator.clipboard, 'writeText').and.callFake(() => Promise.resolve());
-    });
-
-    it('should copy formatted review text to clipboard', () => {
+    it('should copy formatted review text to clipboard', async () => {
       const token1 = new StructuredToken();
       token1.value = 'token1';
       const token2 = new StructuredToken();
@@ -68,20 +103,20 @@ describe('CodePanelComponent', () => {
 
       component.codePanelRowData = [codePanelRowData1, codePanelRowData2];
 
-      component.copyReviewTextToClipBoard(false);
+      await component.copyReviewTextToClipBoard(false);
 
-      expect(clipboardSpy).toHaveBeenCalledWith('\ttoken1token2\ntoken3');
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('\ttoken1token2\ntoken3');
     });
 
-    it('should handle empty codePanelRowData', () => {
+    it('should handle empty codePanelRowData', async () => {
       component.codePanelRowData = [];
 
-      component.copyReviewTextToClipBoard(false);
+      await component.copyReviewTextToClipBoard(false);
 
-      expect(clipboardSpy).toHaveBeenCalledWith('');
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('');
     });
 
-    it('should handle rows without rowOfTokens', () => {
+    it('should handle rows without rowOfTokens', async () => {
       const token1 = new StructuredToken();
       token1.value = 'token1';
       const codePanelRowData1 = new CodePanelRowData();
@@ -90,12 +125,12 @@ describe('CodePanelComponent', () => {
       codePanelRowData2.rowOfTokens = [token1];
       component.codePanelRowData = [codePanelRowData1, codePanelRowData2];
 
-      component.copyReviewTextToClipBoard(false);
+      await component.copyReviewTextToClipBoard(false);
 
-      expect(clipboardSpy).toHaveBeenCalledWith('token1');
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('token1');
     });
 
-    it('should handle rows with indentation correctly', () => {
+    it('should handle rows with indentation correctly', async () => {
       const token1 = new StructuredToken();
       token1.value = 'token1';
       const token2 = new StructuredToken();
@@ -111,9 +146,9 @@ describe('CodePanelComponent', () => {
 
       component.codePanelRowData = [codePanelRowData1, codePanelRowData2];
 
-      component.copyReviewTextToClipBoard(false);
+      await component.copyReviewTextToClipBoard(false);
 
-      expect(clipboardSpy).toHaveBeenCalledWith('\ttoken1\ntoken2');
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith('\ttoken1\ntoken2');
     });
   });
 
@@ -203,7 +238,7 @@ describe('CodePanelComponent', () => {
     });
 
     it('should clear previous highlights', () => {
-      spyOn(component, 'clearSearchMatchHighlights');
+      vi.spyOn(component, 'clearSearchMatchHighlights');
       component.highlightSearchMatches();
       expect(component.clearSearchMatchHighlights).toHaveBeenCalled();
     });

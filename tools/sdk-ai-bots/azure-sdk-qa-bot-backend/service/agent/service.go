@@ -49,6 +49,9 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		topK := config.AppConfig.AI_SEARCH_TOPK
 		req.TopK = &topK
 	}
+	if req.WithAgenticSearch == nil {
+		req.WithAgenticSearch = to.Ptr(true)
+	}
 	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
 	if hasConfig {
 		if req.Sources == nil {
@@ -133,7 +136,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		promptTemplate = "common/non_technical_question.md"
 	} else {
 		// Run agentic search and vector search in parallel, then merge results
-		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query, intention)
+		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query, intention, *req.WithAgenticSearch)
 		if err != nil {
 			log.Printf("Parallel search failed: %v", err)
 			return nil, model.NewSearchFailureError(err)
@@ -582,7 +585,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 // runParallelSearchAndMergeResults runs agentic search and knowledge search in parallel where possible,
 // then merges and processes their results
-func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string, intention *model.Intention) ([]model.Knowledge, error) {
+func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string, intention *model.Intention, withAgenticSearch bool) ([]model.Knowledge, error) {
 	parallelSearchStart := time.Now()
 
 	// Use channels to collect results from parallel operations
@@ -600,11 +603,13 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	vectorCh := make(chan knowledgeResult, 1)
 
 	// Start agentic search in a goroutine
-	go func() {
-		defer close(agenticCh)
-		chunks, err := s.agenticSearch(ctx, query, req, intention)
-		agenticCh <- agenticResult{chunks: chunks, err: err}
-	}()
+	if withAgenticSearch {
+		go func() {
+			defer close(agenticCh)
+			chunks, err := s.agenticSearch(ctx, query, req, intention)
+			agenticCh <- agenticResult{chunks: chunks, err: err}
+		}()
+	}
 
 	// Start vector search in a goroutine
 	go func() {
@@ -614,20 +619,20 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	}()
 
 	// Wait for both searches to complete
-	agenticRes := <-agenticCh
-	vectorRes := <-vectorCh
-
-	if agenticRes.err != nil && vectorRes.err != nil {
-		return nil, fmt.Errorf("both agentic and knowledge searches failed: agentic error: %v, knowledge error: %v", agenticRes.err, vectorRes.err)
-	}
-
 	var agenticChunks []model.Index
-	if agenticRes.err != nil {
-		log.Printf("Agentic search failed: %v", agenticRes.err)
-		agenticChunks = []model.Index{}
+	if withAgenticSearch {
+		agenticRes := <-agenticCh
+
+		if agenticRes.err != nil {
+			log.Printf("Agentic search failed: %v", agenticRes.err)
+			agenticChunks = []model.Index{}
+		} else {
+			agenticChunks = agenticRes.chunks
+		}
 	} else {
-		agenticChunks = agenticRes.chunks
+		log.Println("Agentic search is disabled.")
 	}
+	vectorRes := <-vectorCh
 
 	if vectorRes.err != nil {
 		return nil, vectorRes.err

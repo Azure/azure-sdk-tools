@@ -311,9 +311,14 @@ function mayHaveChildren(item: ApiItem): boolean {
  * @param deprecated Whether the Api is deprecated or not
  */
 function buildMemberLineTokens(line: ReviewLine, item: ApiItem, deprecated: boolean) {
-   for (const generator of generators) {
+  for (const generator of generators) {
     if (generator.isValid(item)) {
-      line.Tokens.push(...generator.generate(item, deprecated));
+      const result = generator.generate(item, deprecated);
+      line.Tokens.push(...result.tokens);
+      if (result.children?.length) {
+        line.Children = line.Children ?? [];
+        line.Children.push(...result.children);
+      }
       return;
     }
   }

@@ -1,16 +1,24 @@
 # Release History
 
-## 0.5.16 (Unreleased)
+## 0.5.17 (Unreleased)
 
 ### Features Added
-
-- Added support for version number and release date update in the CHANGELOG.md for data plane package.
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.5.16 (2026-02-09)
+
+### Features Added
+
+- Added support for version number and release date update in the CHANGELOG.md for data plane package.
+- Add an MCP tool to abandon release plans.
+- Make agentic search configurable and disable agentic search for TypeSpec authoring.
+- Add release-plan find-product command to retrieve product details from a TypeSpec project path.
+- Add a CLI command to address APIView feedback via coding agent (creates issues from APIView feedback).
 
 ## 0.5.15 (2026-01-30)
 

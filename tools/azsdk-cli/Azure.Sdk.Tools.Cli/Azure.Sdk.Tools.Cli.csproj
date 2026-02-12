@@ -8,11 +8,12 @@
     <IsPackable>true</IsPackable>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <ToolCommandName>azsdk</ToolCommandName>
-    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604</NoWarn>
+    <!-- CS8002: GitHub.Copilot.SDK is not strong-named (preview package) -->
+    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604;CS8002</NoWarn>
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
-    <VersionPrefix>0.5.16</VersionPrefix>
+    <VersionPrefix>0.5.17</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Package metadata -->
@@ -24,6 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.2.0-beta.5" />
+    <PackageReference Include="GitHub.Copilot.SDK" Version="0.1.22" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.5.0" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.79.0" />

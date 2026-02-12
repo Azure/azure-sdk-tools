@@ -1,6 +1,17 @@
 # Release History
 
-## 0.9.0 (unreleased)
+## 0.9.1 (unreleased)
+
+### Features Added
+
+* Enable tenant routing for `azure_sdk_qa_bot` tenant.
+
+### Other Changes
+
+* Set fixed seed to reduce randomness of LLM
+* Adjust prompt to adopt GPT-5 series models
+
+## 0.9.0 (2026-02-02)
 
 ### Features Added
 
@@ -9,6 +20,7 @@
 ### Other Changes
 
 * Enhance prompt and knowledge source for language channel tenant
+* Add WithAgenticSearch parameter to the Completion API to enable or disable agentic search.
 
 ## 0.8.0 (2026-01-29)
 

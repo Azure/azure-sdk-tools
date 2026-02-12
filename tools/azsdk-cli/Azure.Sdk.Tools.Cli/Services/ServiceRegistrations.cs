@@ -7,13 +7,16 @@ using System.ClientModel;
 using Microsoft.Extensions.Azure;
 using ModelContextProtocol.Server;
 using OpenAI;
+using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Telemetry;
 
 
@@ -69,6 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
+            services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
@@ -87,6 +91,25 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
+
+            // Copilot SDK services for new agents (CopilotAgent<T> pattern)
+            // CopilotClient is a singleton because it manages the CLI process connection.
+            // Each request creates its own CopilotSession via CreateSessionAsync(), which isolates conversation state.
+            services.AddSingleton<CopilotClient>(sp =>
+            {
+                var logger = sp.GetService<ILogger<CopilotClient>>();
+                return new CopilotClient(new CopilotClientOptions
+                {
+                    UseStdio = true,
+                    AutoStart = true,
+                    Logger = logger
+                });
+            });
+            services.AddSingleton<ICopilotClientWrapper, CopilotClientWrapper>();
+            services.AddScoped<ICopilotAgentRunner, CopilotAgentRunner>();
+
+            // TypeSpec Customization Service (uses Copilot SDK)
+            services.AddScoped<ITypeSpecCustomizationService, TypeSpecCustomizationService>();
 
 
             services.AddHttpClient();

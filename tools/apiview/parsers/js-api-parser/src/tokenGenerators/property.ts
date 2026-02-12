@@ -1,4 +1,10 @@
-import { ApiItem, ApiItemKind, ApiProperty, ApiPropertyItem } from "@microsoft/api-extractor-model";
+import {
+  ApiDeclaredItem,
+  ApiItem,
+  ApiItemKind,
+  ApiProperty,
+  ApiPropertyItem,
+} from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
 import { createToken, parseTypeText } from "./helpers";
@@ -12,7 +18,7 @@ function isValid(item: ApiItem): item is ApiPropertyItem {
  */
 function isGetter(item: ApiPropertyItem): boolean {
   if ("excerptTokens" in item) {
-    const excerptTokens = (item as any).excerptTokens;
+    const excerptTokens = (item as ApiDeclaredItem).excerptTokens;
     if (excerptTokens?.length > 0) {
       const firstTokenText = excerptTokens[0]?.text;
       if (firstTokenText) {
@@ -32,7 +38,7 @@ function isGetter(item: ApiPropertyItem): boolean {
  */
 function isSetter(item: ApiPropertyItem): boolean {
   if ("excerptTokens" in item) {
-    const excerptTokens = (item as any).excerptTokens;
+    const excerptTokens = (item as ApiDeclaredItem).excerptTokens;
     if (excerptTokens?.length > 0) {
       const firstTokenText = excerptTokens[0]?.text;
       if (firstTokenText) {
@@ -53,9 +59,9 @@ function isSetter(item: ApiPropertyItem): boolean {
  */
 function getSetterParameterInfo(item: ApiPropertyItem): { paramName: string; paramType: string } {
   if ("excerptTokens" in item) {
-    const excerptTokens = (item as any).excerptTokens;
+    const excerptTokens = (item as ApiDeclaredItem).excerptTokens;
     // Join all excerpt token texts to get the full signature
-    const fullText = excerptTokens.map((t: any) => t.text).join("");
+    const fullText = excerptTokens.map((t) => t.text).join("");
     // Pattern: set name(paramName: ParamType)
     const match = fullText.match(/set\s+\w+\s*\(\s*(\w+)\s*:\s*(.+?)\s*\)/);
     if (match) {

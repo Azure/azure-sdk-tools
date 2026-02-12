@@ -24,6 +24,7 @@ import colorama
 import prompty
 import prompty.azure
 import requests
+import yaml
 from azure.core.exceptions import ClientAuthenticationError
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
@@ -33,6 +34,7 @@ from src._apiview import (
     ApiViewClient,
 )
 from src._apiview import get_active_reviews as _get_active_reviews
+from src._apiview import get_ai_comment_feedback as _get_ai_comment_feedback
 from src._apiview import (
     get_apiview_cosmos_client,
     get_approvers,
@@ -749,7 +751,9 @@ def get_apiview_comments(revision_id: str, environment: str = "production") -> d
     return conversations
 
 
-def get_active_reviews(start_date: str, end_date: str, language: str, environment: str = "production") -> list:
+def get_active_reviews(
+    start_date: str, end_date: str, language: str, environment: str = "production", summary: bool = False
+) -> list | None:
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
     """
@@ -757,14 +761,73 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     pretty_language = get_language_pretty_name(language).lower()
 
     filtered = [r for r in reviews if r.language.lower() == pretty_language]
-    filtered_dicts = []
-    for r in filtered:
-        # since we are filtering by language, we can remove it from the output
-        d = r.__dict__.copy()
-        d.pop("language", None)
-        filtered_dicts.append(d)
-    print(f"Found {len(filtered_dicts)} reviews in {pretty_language} between {start_date} and {end_date}.")
-    return filtered_dicts
+
+    if summary:
+        # Output summary format as a table: {package-name} {package-version} {APPROVED|unapproved}
+        summary_data = []
+        for r in filtered:
+            for rev in r.revisions:
+                status = "APPROVED" if rev.approval else "unapproved"
+                copilot_status = "YES" if rev.has_copilot_review else "no"
+                # Extract just the date from approval timestamp (YYYY-MM-DD)
+                approval_date = rev.approval[:10] if rev.approval else "n/a"
+                version_type = rev.version_type
+                summary_data.append(
+                    (
+                        r.name or "unknown",
+                        rev.package_version or "unknown",
+                        status,
+                        copilot_status,
+                        approval_date,
+                        version_type,
+                    )
+                )
+
+        # Calculate column widths for proper alignment
+        if summary_data:
+            max_name_len = max(len(item[0]) for item in summary_data)
+            max_version_len = max(len(item[1]) for item in summary_data)
+            max_status_len = max(len(item[2]) for item in summary_data)
+            max_copilot_len = max(len(item[3]) for item in summary_data)
+            max_type_len = max(len(item[5]) for item in summary_data)
+
+            # Print header
+            print(
+                f"{'PACKAGE':<{max_name_len}}\t{'VERSION':<{max_version_len}}\t{'STATUS':<{max_status_len}}\t{'COPILOT':<{max_copilot_len}}\t{'TYPE':<{max_type_len}}\tAPPROVED"
+            )
+            print("-" * (max_name_len + max_version_len + max_status_len + max_copilot_len + max_type_len + 50))
+
+            # Print each row
+            for name, version, status, copilot_status, approval_date, version_type in summary_data:
+                print(
+                    f"{name:<{max_name_len}}\t{version:<{max_version_len}}\t{status:<{max_status_len}}\t{copilot_status:<{max_copilot_len}}\t{version_type:<{max_type_len}}\t{approval_date}"
+                )
+
+        print(f"\nFound {len(summary_data)} package versions in {pretty_language} between {start_date} and {end_date}.")
+        # Don't return anything in summary mode to avoid duplicate output
+        return None
+    else:
+        # Output detailed JSON format
+        filtered_dicts = []
+        for r in filtered:
+            # since we are filtering by language, we can remove it from the output
+            d = {
+                "review_id": r.review_id,
+                "name": r.name,
+                "revisions": [
+                    {
+                        "revision_ids": rev.revision_ids,
+                        "package_version": rev.package_version,
+                        "approval": rev.approval,
+                        "has_copilot_review": rev.has_copilot_review,
+                        "version_type": rev.version_type,
+                    }
+                    for rev in r.revisions
+                ],
+            }
+            filtered_dicts.append(d)
+        print(f"Found {len(filtered_dicts)} reviews in {pretty_language} between {start_date} and {end_date}.")
+        return filtered_dicts
 
 
 def resolve_package_info(
@@ -807,12 +870,17 @@ def resolve_package_info(
             print(f"No package found matching '{package_query}' for language '{language}'")
 
 
-def report_metrics(start_date: str, end_date: str, markdown: bool = False, save: bool = False) -> dict:
+def report_metrics(
+    start_date: str,
+    end_date: str,
+    environment: str = "production",
+    markdown: bool = False,
+    save: bool = False,
+    charts: bool = False,
+    exclude: list = None,
+) -> dict:
     """Generate a report of APIView metrics between two dates."""
-    environment = os.getenv("ENVIRONMENT_NAME", None)
-    if environment not in ("production", "staging"):
-        raise ValueError(f"ENVIRONMENT_NAME must be 'production' or 'staging', got '{environment}'.")
-    return get_metrics_report(start_date, end_date, environment, markdown, save)
+    return get_metrics_report(start_date, end_date, environment, markdown, save, charts, exclude)
 
 
 def grant_permissions(assignee_id: str = None):
@@ -1004,6 +1072,39 @@ def check_health(include_auth: bool = False):
         print(f"❌ Service health check error: {e}")
 
 
+def normalize_language(lang: str) -> str:
+    """Normalize language input to expected format (pretty name)."""
+    if not lang:
+        return lang
+    # Mapping of lowercase to pretty names
+    lang_map = {
+        "c": "C",
+        "c#": "C#",
+        "csharp": "C#",
+        "c++": "C++",
+        "cpp": "C++",
+        "go": "Go",
+        "golang": "Go",
+        "java": "Java",
+        "javascript": "JavaScript",
+        "typescript": "JavaScript",
+        "json": "Json",
+        "kotlin": "Kotlin",
+        "python": "Python",
+        "rust": "Rust",
+        "swagger": "Swagger",
+        "swift": "Swift",
+        "ios": "Swift",
+        "typespec": "TypeSpec",
+        "xml": "Xml",
+        "android": "Android",
+        "dotnet": "C#",
+        "clang": "C",
+    }
+    normalized = lang_map.get(lang.lower(), lang)
+    return normalized
+
+
 ANALYZE_COMMENT_LANGUAGES = [
     "C",
     "C#",
@@ -1020,6 +1121,31 @@ ANALYZE_COMMENT_LANGUAGES = [
     "TypeSpec",
     "Xml",
 ]
+
+
+def get_ai_comment_feedback(
+    language: str,
+    start_date: str,
+    end_date: str,
+    exclude: Optional[list[str]] = None,
+    environment: str = "production",
+    output_format: str = "json",
+):
+    """
+    Retrieves AI-generated comments that received feedback within the date range.
+    Filters by Feedback[].SubmittedOn and ChangeHistory[].ChangedOn timestamps.
+    """
+    results = _get_ai_comment_feedback(
+        language=language,
+        start_date=start_date,
+        end_date=end_date,
+        exclude=exclude,
+        environment=environment,
+    )
+    if output_format == "yaml":
+        print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    else:
+        print(json.dumps(results, indent=2))
 
 
 def analyze_comments(language: str, start_date: str, end_date: str, environment: str = "production"):
@@ -1130,6 +1256,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
+            g.command("get-comment-feedback", "get_ai_comment_feedback")
             g.command("analyze-comments", "analyze_comments")
             g.command("resolve-package", "resolve_package_info")
         with CommandGroup(self, "review", "__main__#{}") as g:
@@ -1209,6 +1336,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 "include_auth",
                 action="store_true",
                 help="Include authentication in the health check.",
+            )
+            ac.argument(
+                "summary",
+                action="store_true",
+                help="Output summary format (package-name package-version APPROVED/UNAPPROVED) instead of detailed JSON.",
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
@@ -1477,10 +1609,54 @@ class CliCommandsLoader(CLICommandsLoader):
             )
             ac.argument(
                 "language",
-                type=str,
-                help="Language to filter comments (e.g., python)",
+                type=normalize_language,
+                help="Language to filter comments (case-insensitive, e.g., python, Python, PYTHON)",
                 choices=ANALYZE_COMMENT_LANGUAGES,
                 options_list=("--language", "-l"),
+            )
+        with ArgumentsContext(self, "apiview get-comment-feedback") as ac:
+            ac.argument(
+                "language",
+                type=str,
+                help="The language to filter by.",
+                options_list=["--language", "-l"],
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "start_date",
+                type=str,
+                help="The start date (YYYY-MM-DD).",
+                options_list=["--start-date", "-s"],
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                help="The end date (YYYY-MM-DD).",
+                options_list=["--end-date", "-e"],
+            )
+            ac.argument(
+                "exclude",
+                type=str,
+                nargs="*",
+                help="Feedback types to exclude. Can be 'good', 'bad', or 'delete'.",
+                options_list=["--exclude", "-x"],
+                choices=["good", "bad", "delete"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "output_format",
+                type=str,
+                help="Output format. Defaults to 'json'.",
+                options_list=["--format", "-f"],
+                default="json",
+                choices=["json", "yaml"],
             )
         with ArgumentsContext(self, "apiview resolve-package") as ac:
             ac.argument(
@@ -1521,7 +1697,24 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument("end_date", help="The end date for the metrics report (YYYY-MM-DD).")
             ac.argument(
                 "environment",
+                type=str,
                 help="The APIView environment from which to calculate the metrics report. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "charts",
+                action="store_true",
+                help="Generate PNG charts from the metrics and save to scratch/charts/.",
+            )
+            ac.argument(
+                "exclude",
+                type=str,
+                nargs="*",
+                help="Languages to exclude from the report (e.g., --exclude Java Go).",
+                options_list=["--exclude", "-x"],
+                default=None,
             )
         with ArgumentsContext(self, "permissions") as ac:
             ac.argument(

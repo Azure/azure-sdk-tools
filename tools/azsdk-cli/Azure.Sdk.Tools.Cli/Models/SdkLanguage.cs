@@ -4,21 +4,21 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SdkLanguage
 {
-    [JsonPropertyName("")]
     Unknown,
-    [JsonPropertyName(".NET")]
+    [JsonStringEnumMemberName(".NET")]
     DotNet,
-    [JsonPropertyName("Java")]
+    [JsonStringEnumMemberName("Java")]
     Java,
-    [JsonPropertyName("JavaScript")]
+    [JsonStringEnumMemberName("JavaScript")]
     JavaScript,
-    [JsonPropertyName("Python")]
+    [JsonStringEnumMemberName("Python")]
     Python,
-    [JsonPropertyName("Go")]
+    [JsonStringEnumMemberName("Go")]
     Go,
-    [JsonPropertyName("Rust")]
+    [JsonStringEnumMemberName("Rust")]
     Rust
 }
 

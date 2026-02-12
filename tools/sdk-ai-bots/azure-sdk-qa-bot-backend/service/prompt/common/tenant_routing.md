@@ -12,7 +12,7 @@ Your task is to analyze the core question from user and determine the best tenan
 ### Azure SDK Onboarding
 Questions about onboarding Azure API specification and Azure SDK, SDK develop lifecycle, Azure MCP and retirement processes:
 - Prerequisites and setup about onboarding Azure API or SDK
-- Permission issue about specification repo or SDK repo access
+- Any permission issue about specification repo or SDK repo access
 - General SDK development, generation, validation, release tooling and guidance
 - Service, API or SDK deprecation guidance
 - API documentation publishing
@@ -39,7 +39,7 @@ Questions about authoring API Specification based on TypeSpec, such as TypeSpec 
 
 ### Python SDK
 Questions about Python SDK development, usage, or processes:
-- Python SDK generation issues
+- Python SDK generation/validation issues
 - Python SDK custom code, testing, or validation
 - Python SDK release processes
 - Python SDK pipeline and CI/CD issues
@@ -47,7 +47,7 @@ Questions about Python SDK development, usage, or processes:
 
 ### Go SDK
 Questions about Go SDK development, usage, or processes:
-- Go SDK generation issues
+- Go SDK generation/validation issues
 - Go SDK custom code, testing, or validation
 - Go SDK release processes
 - Go SDK pipeline and CI/CD issues
@@ -55,7 +55,7 @@ Questions about Go SDK development, usage, or processes:
 
 ### Java SDK
 Questions about Java SDK development, usage, or processes:
-- Java SDK generation issues
+- Java SDK generation/validation issues
 - Java SDK custom code, testing, or validation
 - Java SDK release processes
 - Java SDK pipeline and CI/CD issues
@@ -63,7 +63,7 @@ Questions about Java SDK development, usage, or processes:
 
 ### JavaScript SDK
 Questions about JavaScript SDK development, usage, or processes:
-- JavaScript SDK generation issues
+- JavaScript SDK generation/validation issues
 - JavaScript SDK custom code, testing, or validation
 - JavaScript SDK release processes
 - JavaScript SDK pipeline and CI/CD issues
@@ -71,7 +71,7 @@ Questions about JavaScript SDK development, usage, or processes:
 
 ### .NET SDK
 Questions about .NET SDK development, usage, or processes:
-- .NET SDK generation issues
+- .NET SDK generation/validation issues
 - .NET SDK custom code, testing, or validation
 - .NET SDK release processes
 - .NET SDK pipeline and CI/CD issues

@@ -82,14 +82,10 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         _logger.LogInformation("Step 5: Updating CODEOWNERS file...");
         var codeownersPath = Path.Combine(repoRoot, ".github", "CODEOWNERS");
         var output = WriteCodeownersFile(codeownersPath, entries, sectionName);
-
-        // Print summary
-        PrintSummary(entries);
-
         return output;
     }
 
-    private string GetLanguageFromRepoName(string repoName)
+    public string GetLanguageFromRepoName(string repoName)
     {
         if (!repoName.Contains("azure-sdk-for-", StringComparison.OrdinalIgnoreCase))
         {
@@ -164,29 +160,29 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         // Fetch Packages by language and package type
         var allPackages = await FetchWorkItemsAsync<PackageWorkItem>(projectName,
             packageQuery,
-            MapToPackageWorkItem);
+            WorkItemMappers.MapToPackageWorkItem);
         _logger.LogInformation("Packages (all versions): {Count}", allPackages.Count);
 
         // Group packages by name then take the package with the latest "Custom.PackageVersionMajorMinor"
-        var packages = GetLatestPackageVersions(allPackages);
+        var packages = WorkItemMappers.GetLatestPackageVersions(allPackages);
         _logger.LogInformation("Packages (latest versions): {Count}", packages.Count);
 
         // Fetch all Owners (no filter needed)
         var owners = await FetchWorkItemsAsync<OwnerWorkItem>(projectName,
             "[System.WorkItemType] = 'Owner'",
-            MapToOwnerWorkItem);
+            WorkItemMappers.MapToOwnerWorkItem);
         _logger.LogInformation("Owners: {Count}", owners.Count);
 
         // Fetch all Labels (no filter needed)
         var labels = await FetchWorkItemsAsync<LabelWorkItem>(projectName,
             "[System.WorkItemType] = 'Label'",
-            MapToLabelWorkItem);
+            WorkItemMappers.MapToLabelWorkItem);
         _logger.LogInformation("Labels: {Count}", labels.Count);
 
         // Fetch Label Owners by repository
         var labelOwners = await FetchWorkItemsAsync<LabelOwnerWorkItem>(projectName,
             $"[System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{repoName}'",
-            MapToLabelOwnerWorkItem);
+            WorkItemMappers.MapToLabelOwnerWorkItem);
         _logger.LogInformation("Label Owners: {Count}", labelOwners.Count);
 
         var data = new WorkItemData(
@@ -206,78 +202,9 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         string whereClause,
         Func<WorkItem, T> factory)
     {
-        if (!System.Diagnostics.Debugger.IsAttached) {
-            System.Diagnostics.Debugger.Launch();
-        }
-
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{project}' AND {whereClause}";
         var workItems = await _devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
         return workItems.Select(factory).ToList();
-    }
-
-    private static PackageWorkItem MapToPackageWorkItem(WorkItem wi)
-    {
-        return new PackageWorkItem
-        {
-            WorkItemId = wi.Id!.Value,
-            PackageName = GetFieldValue(wi, "Custom.Package"),
-            PackageVersionMajorMinor = GetFieldValue(wi, "Custom.PackageVersionMajorMinor"),
-            Language = GetFieldValue(wi, "Custom.Language"),
-            PackageType = GetFieldValue(wi, "Custom.PackageType"),
-            ServiceName = GetFieldValue(wi, "Custom.ServiceName"),
-            PackageDisplayName = GetFieldValue(wi, "Custom.PackageDisplayName"),
-            GroupId = GetFieldValue(wi, "Custom.GroupId"),
-            PackageRepoPath = GetFieldValue(wi, "Custom.PackageRepoPath"),
-            RelatedIds = WorkItemData.ExtractRelatedIds(wi)
-        };
-    }
-
-    private static OwnerWorkItem MapToOwnerWorkItem(WorkItem wi)
-    {
-        return new OwnerWorkItem
-        {
-            WorkItemId = wi.Id!.Value,
-            GitHubAlias = GetFieldValue(wi, "Custom.GitHubAlias")
-        };
-    }
-
-    private static LabelWorkItem MapToLabelWorkItem(WorkItem wi)
-    {
-        return new LabelWorkItem
-        {
-            WorkItemId = wi.Id!.Value,
-            LabelName = GetFieldValue(wi, "Custom.Label")
-        };
-    }
-
-    private static LabelOwnerWorkItem MapToLabelOwnerWorkItem(WorkItem wi)
-    {
-        return new LabelOwnerWorkItem
-        {
-            WorkItemId = wi.Id!.Value,
-            LabelType = GetFieldValue(wi, "Custom.LabelType"),
-            Repository = GetFieldValue(wi, "Custom.Repository"),
-            RepoPath = GetFieldValue(wi, "Custom.RepoPath"),
-            RelatedIds = WorkItemData.ExtractRelatedIds(wi)
-        };
-    }
-
-    private static string GetFieldValue(WorkItem wi, string fieldName)
-    {
-        return wi.Fields.TryGetValue(fieldName, out var value) ? value?.ToString() ?? "" : "";
-    }
-
-    /// <summary>
-    /// Groups packages by name and returns only the package with the highest version for each name.
-    /// </summary>
-    /// <param name="packages">List of all packages</param>
-    /// <returns>List of packages with only the latest version for each package name</returns>
-    internal static List<PackageWorkItem> GetLatestPackageVersions(List<PackageWorkItem> packages)
-    {
-        return packages
-            .GroupBy(p => p.PackageName, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.OrderByDescending(p => p.PackageVersionMajorMinor, MajorMinorVersionComparer.Default).First())
-            .ToList();
     }
 
     private List<CodeownersEntry> BuildCodeownersEntries(
@@ -319,7 +246,7 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
             entries.Add(entry);
         }
 
-        // Identify Label Owners already linked to packages
+        // Label Owners already linked to packages
         var packageRelatedLabelOwnerIds = data.Packages.Values
             .SelectMany(p => p.LabelOwners)
             .Select(lo => lo.WorkItemId)
@@ -444,7 +371,7 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         }
     }
 
-    private static string BuildPathExpression(string dirPath, string repoRoot)
+    public static string BuildPathExpression(string dirPath, string repoRoot)
     {
         string normalized = dirPath.Replace('\\', '/').TrimEnd('/');
         string normalizedRoot = repoRoot.Replace('\\', '/').TrimEnd('/');
@@ -508,27 +435,5 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         _logger.LogInformation("Updated: {Path}", path);
 
         return string.Join(Environment.NewLine, output);
-    }
-
-    private void PrintSummary(List<CodeownersEntry> entries)
-    {
-        int pathed = entries.Count(e => !string.IsNullOrWhiteSpace(e.PathExpression));
-        int pathless = entries.Count - pathed;
-
-        _logger.LogInformation("=== SUMMARY ===");
-        _logger.LogInformation("Package entries: {Pathed}", pathed);
-        _logger.LogInformation("Pathless entries: {Pathless}", pathless);
-        _logger.LogInformation("Total: {Total}", entries.Count);
-
-        if (_errors.Count > 0)
-        {
-            _logger.LogWarning("=== {Count} ERRORS ===", _errors.Count);
-            foreach (var error in _errors)
-            {
-                _logger.LogWarning("  {Error}", error);
-            }
-        }
-
-        _logger.LogInformation("Completed!");
     }
 }

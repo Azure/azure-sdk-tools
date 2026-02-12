@@ -138,6 +138,7 @@ if ($instructionTools.Count -eq 0) {
 }
 
 $toolProjectPath = Resolve-Path (Join-Path $repoRoot 'tools/azsdk-cli/Azure.Sdk.Tools.Cli')
+Write-Host "dotnet run --project $toolProjectPath -- list -o json | ConvertFrom-Json -AsHashtable"
 $tools = dotnet run --project $toolProjectPath -- list -o json | ConvertFrom-Json -AsHashtable
 
 $declaredTools = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)

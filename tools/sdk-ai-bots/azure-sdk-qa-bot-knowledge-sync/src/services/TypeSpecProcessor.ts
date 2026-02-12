@@ -99,9 +99,8 @@ export class TypeSpecProcessor {
         const definitions: TypeSpecDefinition[] = [];
         const lines = content.split('\n');
         let currentDefinitionStart = -1;
-        let currentDefinitionEnd = -1;
         let currentDefinitionBodyStart = -1;
-        let currentType: TypeSpecDefinition['type'] | null = null;
+        let currentType: TypeSpecDefinitionType | undefined = undefined;
         let currentName = '';
 
         for (let i = 0; i < lines.length; i++) {
@@ -135,7 +134,9 @@ export class TypeSpecProcessor {
         }
 
         //handle the last definition
-        definitions.push(this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length -1));
+        if (currentDefinitionStart !== -1 && currentType && currentName) {
+            definitions.push(this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length -1));
+        }
         return definitions;
     }
 
@@ -148,6 +149,11 @@ export class TypeSpecProcessor {
                 definitionEnd = l;
                 break;
             }
+        }
+
+        if (definitionEnd === -1) {
+            const clampedNext = Math.min(nextDefinitionStart, lines.length - 1);
+            definitionEnd = Math.max(definitionStart, clampedNext);
         }
 
         let blockCommentLines: string[] = [];

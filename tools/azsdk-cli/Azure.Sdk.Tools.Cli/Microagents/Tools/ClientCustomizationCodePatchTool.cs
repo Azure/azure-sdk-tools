@@ -70,7 +70,7 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
             await File.WriteAllTextAsync(safeFilePath, updatedContent, ct);
 
             var description = GeneratePatchDescription(input.OldContent, input.NewContent);
-            AppliedPatches.Add(new AppliedPatch(input.FilePath, description, occurrences));
+            AppliedPatches.Add(new AppliedPatch(input.FilePath, description, occurrences, input.OldContent, input.NewContent));
 
             // Signal to the caller that a patch was applied - stop the agent to prevent wasted tokens
             OnPatchApplied?.Invoke();

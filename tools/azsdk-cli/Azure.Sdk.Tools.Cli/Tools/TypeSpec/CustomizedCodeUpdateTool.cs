@@ -67,30 +67,11 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         $"Documentation: {DefaultCustomizationDocUrl}"
     ];
 
-    private static string[] GetMaxIterationsReachedNextSteps(string buildError) =>
+    private static string[] GetFallbackNextSteps(string buildError) =>
     [
-        "## Status: Partial Success",
-        "",
         "Customization patches were applied, but build errors remain.",
-        "",
-        "## Remaining Error",
-        buildError,
-        "",
-        "## Analysis",
-        "The remaining errors are in **generated code** (not customization files).",
-        "This tool can only patch customization files - it cannot modify generated code.",
-        "",
-        "## Common Causes",
-        "- TypeSpec renamed a property, and the emitter's partial-update kept handwritten",
-        "  constructors/methods that reference the old name",
-        "- Generated code has internal inconsistencies the emitter should have resolved",
-        "",
-        "## Recommended Actions",
-        "- If error is in generated code: File an issue with the language emitter",
-        "- If error is in customization: Review the patch that was applied and adjust manually",
-        "",
-        "## Documentation",
-        "https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/knowledge/customizing-client-tsp.md"
+        "Review the remaining errors and applied patches to determine next steps.",
+        $"Documentation: {DefaultCustomizationDocUrl}"
     ];
 
     private static string GetCodeCustomizationDocUrl(string language) => language.ToLowerInvariant() switch
@@ -224,13 +205,29 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             if (patches.Count == 0)
             {
                 logger.LogInformation("[STAGE] No patches applied - automatic patching found nothing to fix.");
+                logger.LogInformation("[STAGE] Diagnosing build errors with LLM...");
+                string? patchFailDiagnosis = null;
+                try
+                {
+                    patchFailDiagnosis = await languageService.DiagnoseRemainingErrorsAsync(
+                        initialBuildError!, [], packagePath, ct);
+                }
+                catch (Exception diagEx)
+                {
+                    logger.LogWarning(diagEx, "Failed to generate LLM diagnosis for patch failure");
+                }
+
                 return new CustomizedCodeUpdateResponse
                 {
                     Message = "No patches applied - automatic patching found nothing to fix.",
                     ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
                     ResponseError = initialBuildError,
                     AppliedPatches = null,
-                    NextSteps = GetPatchesFailedNextSteps().ToList()
+                    Diagnosis = patchFailDiagnosis,
+                    // Diagnosis IS the next steps; static fallback only when LLM diagnosis failed
+                    NextSteps = patchFailDiagnosis != null
+                        ? [patchFailDiagnosis]
+                        : GetPatchesFailedNextSteps().ToList()
                 };
             }
 
@@ -264,15 +261,30 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 };
             }
 
-            // Build still failing after patches - remaining errors are likely in generated code
-            logger.LogInformation("[STAGE] Build still failing after patches. Remaining errors likely in generated code.");
+            // Build still failing after patches - diagnose remaining errors with LLM
+            logger.LogInformation("[STAGE] Build still failing after patches. Diagnosing remaining errors...");
+            string? diagnosis = null;
+            try
+            {
+                diagnosis = await languageService.DiagnoseRemainingErrorsAsync(
+                    postPatchBuildError ?? "Unknown error", patches, packagePath, ct);
+            }
+            catch (Exception diagEx)
+            {
+                logger.LogWarning(diagEx, "Failed to generate LLM diagnosis, falling back to default guidance");
+            }
+
             return new CustomizedCodeUpdateResponse
             {
                 Message = $"Patches applied but build still failing: {postPatchBuildError}",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
                 ResponseError = postPatchBuildError,
                 AppliedPatches = patches,
-                NextSteps = GetMaxIterationsReachedNextSteps(postPatchBuildError ?? "Unknown error").ToList()
+                Diagnosis = diagnosis,
+                // Diagnosis IS the next steps; static fallback only when LLM diagnosis failed
+                NextSteps = diagnosis != null
+                    ? [diagnosis]
+                    : GetFallbackNextSteps(postPatchBuildError ?? "Unknown error").ToList()
             };
         }
         catch (Exception ex)

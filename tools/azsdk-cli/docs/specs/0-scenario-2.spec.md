@@ -130,7 +130,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → `azsdk_typespec_authoring` **(Agent Mode only)**
+2. **TypeSpec Authoring** → `azsdk_typespec_consult` **(Agent Mode only)**
    - AI-powered assistance for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
@@ -217,7 +217,7 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
-**Tool:** `azsdk_typespec_authoring`
+**Tool:** `azsdk_typespec_consult`
 
 **Availability:** Agent Mode only - This tool requires conversational interaction with natural language prompts and is not suitable for CLI usage.
 
@@ -234,18 +234,19 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Input Parameters:**
 
-- `--request`: The TypeSpec-related request or task description (required)
+- `<request>`: The TypeSpec-related request or task description (required)
 - `--additional-information`: Additional context for the request (optional)
-- `--typespec-source-path`: Path to TypeSpec source file or folder (optional, defaults to current directory)
+- `--category`: Request category (e.g., "versioning", "resource-modeling", "routing") (optional, auto-detected)
 
 **Workflow:**
 
 1. User describes TypeSpec authoring task in natural language
-2. Tool analyzes existing TypeSpec project structure and current state
-3. Tool queries Azure SDK Knowledge Base with structured request
-4. Knowledge Base returns RAG-powered solution with step-by-step guidance
-5. Tool formats solution with documentation references
-6. Agent applies changes to TypeSpec files and presents results to user
+2. Agent analyzes existing TypeSpec project structure and collects required information
+3. Agent calls `azsdk_typespec_consult` tool with the user's request and collected context
+4. Tool queries Azure SDK Knowledge Base with structured request
+5. Knowledge Base returns RAG-powered solution with step-by-step guidance and documentation references
+6. Tool returns JSON response with `is_successful`, `solution`, and `references` array
+7. Agent applies solution to TypeSpec files and presents changes to user with explanations and reference links
 
 **Examples:**
 
@@ -656,7 +657,7 @@ Add a new preview API version 2025-10-01-preview for service widget resource man
 **Expected Agent Activity:**
 
 1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+2. **Agent calls** `azsdk_typespec_consult` with the request and collected information
 3. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
 4. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
 5. Ask for features to add to this version. e.g.
@@ -696,7 +697,7 @@ Add a new stable API version 2025-10-01 for service widget resource management.
 **Expected Agent Activity:**
 
 1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+2. **Agent calls** `azsdk_typespec_consult` with the request and collected information
 3. Add a enum option `v2025_10_01` in version enum for this new API version
 4. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
 5. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version

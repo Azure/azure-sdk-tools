@@ -172,7 +172,7 @@ The API is defined using TypeSpec, enabling automatic client SDK generation for 
 The TypeSpec definitions are located at:
 
 ```text
-azure-sdk-qa-bot-backend/tsp/
+tools/sdk-ai-bots/azure-sdk-qa-bot-backend/tsp/
 ├── main.tsp        # Service definition
 ├── model.tsp       # Data models
 ├── route.tsp       # API routes

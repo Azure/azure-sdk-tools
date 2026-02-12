@@ -220,6 +220,20 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
+        /// Uses LLM reasoning to diagnose remaining build errors after patch attempts.
+        /// Produces targeted, actionable guidance instead of generic boilerplate.
+        /// </summary>
+        /// <param name="buildError">The remaining build error output</param>
+        /// <param name="appliedPatches">Patches that were already applied</param>
+        /// <param name="packagePath">Path to the package directory</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>LLM-generated diagnosis string, or null if diagnosis is not supported</returns>
+        public virtual Task<string?> DiagnoseRemainingErrorsAsync(string buildError, List<AppliedPatch> appliedPatches, string packagePath, CancellationToken ct)
+        {
+            return Task.FromResult<string?>(null);
+        }
+
+        /// <summary>
         /// Performs language-specific validation (build, compile, tests, lint, type-check, etc.).
         /// </summary>
         /// <param name="packagePath">Path to the package directory containing generated code.</param>

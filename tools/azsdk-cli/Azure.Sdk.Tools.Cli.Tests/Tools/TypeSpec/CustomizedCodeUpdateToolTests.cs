@@ -163,7 +163,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var resp = await tool.UpdateAsync("abc123def456abc123def456abc123def456abc1", packagePath: pkg, ct: CancellationToken.None);
         // Should succeed after error-driven repair
         Assert.That(resp.ErrorCode, Is.Null, "Should complete successfully after repair");
-        Assert.That(resp.Message, Does.Contain("repair iteration"), "Should indicate repair was performed");
+        Assert.That(resp.Message, Does.Contain("Build passed after repairs"), "Should indicate repair was performed");
     }
 
     [Test]
@@ -183,7 +183,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var resp = await tool.UpdateAsync("abc123", packagePath: pkg, ct: CancellationToken.None);
         // Should exhaust max iterations and return guidance
         Assert.That(resp.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed), "Should have build failure error code");
-        Assert.That(resp.Message, Does.Contain("Max repair iterations"), "Should indicate max iterations reached");
+        Assert.That(resp.Message, Does.Contain("Patches applied but build still failing"), "Should indicate build still failing after patches");
         Assert.That(resp.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for manual fix");
     }
 

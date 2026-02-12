@@ -11,7 +11,9 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package;
 public record AppliedPatch(
     string FilePath,
     string Description,
-    int ReplacementCount);
+    int ReplacementCount,
+    [property: JsonIgnore] string? OldContent = null,
+    [property: JsonIgnore] string? NewContent = null);
 
 /// <summary>
 /// Response payload for CustomizedCodeUpdateTool MCP / CLI operations.
@@ -21,6 +23,14 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonPropertyName("appliedPatches")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<AppliedPatch>? AppliedPatches { get; set; }
+
+    /// <summary>
+    /// LLM-generated diagnosis of remaining build errors after patch attempts.
+    /// Provides targeted, actionable guidance based on the actual error analysis.
+    /// </summary>
+    [JsonPropertyName("diagnosis")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Diagnosis { get; set; }
     /// <summary>
     /// Error codes for classifier to parse programmatically.
     /// These define the contract between the tool and downstream processors.

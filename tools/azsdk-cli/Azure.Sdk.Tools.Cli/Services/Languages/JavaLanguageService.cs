@@ -348,4 +348,85 @@ public sealed partial class JavaLanguageService : LanguageService
             return [];
         }
     }
+
+    public override async Task<string?> DiagnoseRemainingErrorsAsync(
+        string buildError,
+        List<AppliedPatch> appliedPatches,
+        string packagePath,
+        CancellationToken ct)
+    {
+        logger.LogInformation("[STAGE] Generating LLM diagnosis for remaining build errors...");
+
+        var patchSummary = appliedPatches.Count > 0
+            ? string.Join("\n\n", appliedPatches.Select(p => 
+                p.OldContent != null && p.NewContent != null
+                    ? $"### {p.FilePath} ({p.ReplacementCount} replacement(s))\nOld:\n```java\n{p.OldContent}\n```\nNew:\n```java\n{p.NewContent}\n```"
+                    : $"- {p.FilePath}: {p.Description} ({p.ReplacementCount} replacement(s))"))
+            : "No patches were successfully applied.";
+
+        var prompt = $"""
+            You are an expert Java SDK developer analyzing a failed build after an automated code repair attempt.
+
+            ## Context
+            A TypeSpec-generated Azure SDK client library was regenerated after a spec change. The regenerated
+            code broke customization wrappers (hand-written code that extends/wraps the generated client).
+            An automated repair agent attempted to fix the customization code by patching it.
+
+            ## Patches Applied
+            {patchSummary}
+
+            ## Remaining Build Errors (after patches)
+            ```
+            {buildError}
+            ```
+
+            ## Package Location
+            {packagePath}
+
+            ## Your Task
+            Analyze the remaining build errors and provide a **targeted diagnosis** as a multi-line string.
+            Your output will be shown directly to the developer so make it actionable and specific.
+            You MUST provide ALL three sections below with substantial detail:
+
+            1. **Root Cause**: What specifically is wrong? Parse the error messages carefully.
+               Example: "The generated beginAnalyzeDocument method now takes 10 parameters (added 'priority' at the end) but the customization code still calls it with 9 arguments."
+
+            2. **Why Repair Failed**: Why couldn't the automated patches fix this?
+               Example: "The patch agent could not match the OldContent string against the actual file content due to encoding differences in the JavaParser string concatenation."
+
+            3. **Specific Fix**: What exactly should the developer do?
+
+               IMPORTANT PRINCIPLE: Follow this priority order and ONLY show ONE approach:
+               a) If the fix can be done in client.tsp (TypeSpec customization) — show ONLY the client.tsp change.
+                  This covers: adding/removing query params from convenience methods, renaming parameters,
+                  spreading model properties, changing method signatures via @override, etc.
+                  Example: Add `priority?: string` to the `@spread` model in client.tsp
+               b) If it CANNOT be fixed in client.tsp (e.g., adding JavaParser AST manipulation,
+                  custom polling strategies, static initializers) — then show the Java customization code.
+               c) If it's a generated code bug — say to file an issue with the Java emitter.
+
+               Do NOT show multiple approaches. Pick the one correct fix.
+
+            Be concise and specific. Do NOT give generic advice. Reference the actual types, methods, and error messages from the build output.
+            """;
+
+        var agent = new Microagent<string>
+        {
+            Instructions = prompt,
+            Tools = [],  // No tools needed - pure reasoning
+            MaxToolCalls = 3  // Just needs to call Exit with the diagnosis
+        };
+
+        try
+        {
+            var result = await microagentHost.RunAgentToCompletion(agent, ct);
+            logger.LogInformation("[STAGE] LLM diagnosis generated successfully");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "LLM diagnosis failed");
+            return null;
+        }
+    }
 }

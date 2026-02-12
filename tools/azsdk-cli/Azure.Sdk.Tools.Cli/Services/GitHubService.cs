@@ -500,24 +500,6 @@ public class GitConnection
         }
 
         /// <summary>
-        /// Creates a new issue in the specified repository.
-        /// </summary>
-        /// <param name="repoOwner">Repository owner</param>
-        /// <param name="repoName">Repository name</param>
-        /// <param name="title">Issue title</param>
-        /// <param name="body">Issue body</param>
-        /// <returns>The created issue</returns>
-        public async Task<Issue> CreateIssueAsync(string repoOwner, string repoName, string title, string body)
-        {
-            logger.LogInformation("Creating issue in {RepoOwner}/{RepoName}: {Title}", repoOwner, repoName, title);
-            var newIssue = new NewIssue(title)
-            {
-                Body = body
-            };
-            return await gitHubClient.Issue.Create(repoOwner, repoName, newIssue);
-        }
-
-        /// <summary>
         /// Helper method to get contents from a GitHub repository path.
         /// </summary>
         /// <param name="owner">Repository owner</param>

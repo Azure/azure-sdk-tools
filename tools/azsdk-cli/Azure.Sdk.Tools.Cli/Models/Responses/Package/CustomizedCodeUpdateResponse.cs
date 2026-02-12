@@ -6,8 +6,7 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 /// <summary>
-/// Response payload for the standard update flow in CustomizedCodeUpdateTool.
-/// Used when regenerating and applying code customizations (not feedback classification).
+/// Response payload for CustomizedCodeUpdateTool MCP / CLI operations.
 /// </summary>
 public class CustomizedCodeUpdateResponse : PackageResponseBase
 {
@@ -38,7 +37,6 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     protected override string Format()
     {
         var sb = new StringBuilder();
-
         if (!string.IsNullOrEmpty(Message))
         {
             sb.AppendLine(Message);
@@ -47,7 +45,6 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
         }
-
         return sb.ToString();
     }
 }

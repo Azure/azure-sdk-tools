@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;

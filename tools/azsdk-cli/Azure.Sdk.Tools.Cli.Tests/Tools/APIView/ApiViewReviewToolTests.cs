@@ -28,7 +28,7 @@ public class ApiViewReviewToolTests
         string apiViewUrl = $"https://apiview.dev/review/123?activeApiRevisionId={revisionId}";
         string expectedComments = "[{\"lineNo\":10,\"commentText\":\"Staging comment\",\"isResolved\":true}]";
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<string?>()))
+            .Setup(x => x.GetCommentsByRevisionAsync(revisionId))
             .ReturnsAsync(expectedComments);
 
         APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl);
@@ -43,7 +43,7 @@ public class ApiViewReviewToolTests
         string apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=test-revision-456";
         string expectedComments = "[{\"lineNo\":5,\"commentText\":\"URL comment\",\"isResolved\":false}]";
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync("test-revision-456", It.IsAny<string?>()))
+            .Setup(x => x.GetCommentsByRevisionAsync("test-revision-456"))
             .ReturnsAsync(expectedComments);
 
         APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl);
@@ -70,7 +70,7 @@ public class ApiViewReviewToolTests
         APIViewResponse result = await apiViewReviewTool.GetComments(malformedUrl);
 
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(malformedUrl, It.IsAny<string?>()))
+            .Setup(x => x.GetCommentsByRevisionAsync(malformedUrl))
             .ReturnsAsync((string?)null);
 
         result = await apiViewReviewTool.GetComments(malformedUrl);
@@ -83,7 +83,7 @@ public class ApiViewReviewToolTests
         string revisionId = "test-revision-123";
         string apiViewUrl = $"https://apiview.dev/review/123?activeApiRevisionId={revisionId}";
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<string?>()))
+            .Setup(x => x.GetCommentsByRevisionAsync(revisionId))
             .ReturnsAsync((string?)null);
 
         APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl);
@@ -97,7 +97,7 @@ public class ApiViewReviewToolTests
         string revisionId = "test-revision-123";
         string apiViewUrl = $"https://apiview.dev/review/123?activeApiRevisionId={revisionId}";
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<string?>()))
+            .Setup(x => x.GetCommentsByRevisionAsync(revisionId))
             .ThrowsAsync(new Exception("Service error"));
 
         APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl);
@@ -123,10 +123,10 @@ public class ApiViewReviewToolTests
         string expectedComments = "Test comments";
 
         _mockApiViewService
-            .Setup(x => x.GetCommentsByRevisionAsync(expectedRevisionId, "staging"))
+            .Setup(x => x.GetCommentsByRevisionAsync(expectedRevisionId))
             .ReturnsAsync(expectedComments);
 
         await apiViewReviewTool.GetComments(apiViewUrl);
-        _mockApiViewService.Verify(x => x.GetCommentsByRevisionAsync(expectedRevisionId, "staging"), Times.Once);
+        _mockApiViewService.Verify(x => x.GetCommentsByRevisionAsync(expectedRevisionId), Times.Once);
     }
 }

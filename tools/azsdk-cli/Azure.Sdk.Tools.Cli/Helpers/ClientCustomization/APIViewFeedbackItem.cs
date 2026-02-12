@@ -3,7 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Services.APIView;
+using Azure.Sdk.Tools.Cli.Tools.APIView;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
@@ -32,7 +32,7 @@ public class APIViewFeedbackItem : IFeedbackItem
         _logger.LogInformation("Preprocessing APIView feedback from: {Url}", _apiViewUrl);
 
         // Extract revisionId from URL
-        var (revisionId, _) = ApiViewUrlParser.ExtractIds(_apiViewUrl);
+        var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(_apiViewUrl);
         
         // Get metadata using the revisionId
         var metadata = await _feedbackService.ParseReviewMetadata(revisionId);

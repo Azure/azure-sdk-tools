@@ -3,6 +3,7 @@
 
 using System.Text;
 using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 

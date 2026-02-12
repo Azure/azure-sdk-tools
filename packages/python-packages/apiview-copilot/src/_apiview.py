@@ -16,6 +16,21 @@ from azure.cosmos.exceptions import CosmosHttpResponseError
 from src._credential import get_credential
 from src._utils import get_language_pretty_name, to_iso8601
 
+# Maps AICommentFeedbackReason enum values to human-readable messages.
+# Mirrors the C# ApiView structure (CommentFeedbackRequest.cs).
+FEEDBACK_REASON_MESSAGES = {
+    "FactuallyIncorrect": "This comment is factually incorrect.",
+    "RenderingBug": "This is a rendering bug in the associated language parser. Please open an issue to correct.",
+    "AcceptedRenderingChoice": (
+        "This is how things are deliberately rendered in APIView. It is not a valid comment."
+    ),
+    "AcceptedSDKPattern": "This is a pattern we accept and encourage in our SDKs. DO NOT suggest otherwise.",
+    "OutdatedGuideline": (
+        "This is a valid comment for the guideline listed, but this guideline itself is out-of-date."
+        " Please open an issue."
+    ),
+}
+
 
 def get_version_type(version: Optional[str]) -> str:
     """
@@ -780,7 +795,7 @@ def _extract_code_for_element(full_text: str, element_id: Optional[str], context
     # We replace hyphens with spaces so that hyphen-separated tokens become
     # individual search words, then score each APIView line by how many of
     # those words it contains.  The line with the highest score wins.
-    search_parts = element_id.replace("-", " ").replace("(", "(").replace(")", ")")
+    search_parts = element_id.replace("-", " ").replace("(", " ").replace(")", " ")
 
     best_idx = None
     best_score = 0
@@ -887,21 +902,6 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
             except Exception as e:
                 print(f"Warning: Could not fetch revision content: {e}")
                 code = None
-
-        # Build feedback text mirroring the C# ApiView structure (CommentFeedbackRequest.cs)
-        # Maps AICommentFeedbackReason enum values to human-readable messages
-        FEEDBACK_REASON_MESSAGES = {
-            "FactuallyIncorrect": "This comment is factually incorrect.",
-            "RenderingBug": "This is a rendering bug in the associated language parser. Please open an issue to correct.",
-            "AcceptedRenderingChoice": (
-                "This is how things are deliberately rendered in APIView. It is not a valid comment."
-            ),
-            "AcceptedSDKPattern": ("This is a pattern we accept and encourage in our SDKs. DO NOT suggest otherwise."),
-            "OutdatedGuideline": (
-                "This is a valid comment for the guideline listed, but this guideline itself is out-of-date."
-                " Please open an issue."
-            ),
-        }
 
         feedback_entries = comment.get("Feedback") or []
         feedback_messages = []

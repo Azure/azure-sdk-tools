@@ -79,6 +79,11 @@ func TestRoutingTenant_General(t *testing.T) {
 			"Hi TypeSpec Discussion,\nCI has been failing constantly for our PR ([Azure Load Testing\\] Add 2025-03-01-preview Data-Plane APIs by Harshan01 · Pull Request #32585 · Azure/azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs/pull/32585)) for Typespec Validation step. The logs show that we are missing the Go SDK configuration and I am able to produce this error locally as well. However, our service doesnt have a Go SDK and we are not planning to put it in scope right now. This check has suddenly started failing for our PRs, what should we do?\n```\nExecuting rule：SdkTspConfigVa1idation\n[SdkTspconfigVa1idation]：validation failed．\n- Failed to find \"options.@azure-tools/typespec-go.generate-fakes\"．Please add \"options.@azure-tools/typespec-go.generate-fakes\".\n- Failed to find \"options.@azure-tools/typespec-go.inject一spans“．Please add \"options.@azure-tools/typespec-go.inject一spans.\n- Failed to find \"options.@azure-tools/typespec-go.service-dir\"．Please add \"options.@azure-tools/typespec-go.service-dir\".\n- Failed to find \"options.@azure-tools/typespec-go.package-dir\"．Please add\"options.@azure-tools/typespec-go.package-dir\".\nPlease See https://aka.ms/azsdk/spec-gen-sdk-config for more info．\nFor additional information on TypeSpec validation, please refer to https://aka.ms/azsdk/specs/typespec-validation.\n```",
 			model.TenantID_AzureSDKQaBot,
 		},
+		{
+			"ArmResourcePatchAsync & discriminator",
+			"title: ArmResourcePatchAsync & discriminator\n\nquestion: I was trying to figure out the best way to allow an update for a Host resource. I tried ArmResourcePatchAsync, but the resource has a discriminator. oav fails with OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION .  [Windows Server AHB for VMware via PATCH by cataggar · Pull Request #25538 · Azure/azure-rest-api-sp…](https://github.com/Azure/azure-rest-api-specs-pr/pull/25538)",
+			model.TenantID_AzureSDKQaBot,
+		},
 	}
 
 	for _, tc := range testcases {

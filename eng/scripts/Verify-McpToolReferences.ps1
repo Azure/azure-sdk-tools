@@ -1,9 +1,11 @@
 [CmdletBinding()]
 param(
     [string]$InstructionsPath,
-    [string]$ToolSourcePath,
     [string]$ReferencePattern = 'azsdk_[A-Za-z0-9_]+'
 )
+
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $true
 
 function Get-LevenshteinDistance {
     param(
@@ -87,15 +89,10 @@ function Get-BestToolSuggestion {
     return $null
 }
 
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '../../..')
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '../..')
 
 if (-not (Test-Path -LiteralPath $InstructionsPath)) {
     Write-Error "Instructions path not found: $InstructionsPath"
-    exit 1
-}
-
-if (-not (Test-Path -LiteralPath $ToolSourcePath)) {
-    Write-Error "Tool source path not found: $ToolSourcePath"
     exit 1
 }
 
@@ -140,41 +137,13 @@ if ($instructionTools.Count -eq 0) {
     exit 0
 }
 
-$declarationConstantPattern = [regex]::new('\[McpServerTool\(Name\s*=\s*([A-Za-z]+)')
-$declarationString = '\[McpServerTool\(Name\s*=\s*\"(' + $ReferencePattern + ')\"'
-try {
-    $declarationPattern = [regex]::new($declarationString)
-}
-catch {
-    Write-Error "Invalid declaration pattern '$declarationString'. $_"
-    exit 1
-}
+$toolProjectPath = Resolve-Path (Join-Path $repoRoot 'tools/azsdk-cli/Azure.Sdk.Tools.Cli')
+$tools = dotnet run --project $toolProjectPath -- list -o json | ConvertFrom-Json -AsHashtable
+
 $declaredTools = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-
-foreach ($file in Get-ChildItem -Path $ToolSourcePath -Recurse -Include *.cs -File) {
-    $content = Get-Content -LiteralPath $file.FullName -Raw
-    $matches = $declarationPattern.Matches($content)
-
-    foreach ($match in $matches) {
-        $toolName = $match.Groups[1].Value
-        $declaredTools.Add($toolName) | Out-Null
-    }
-
-    # Find mcp tool names declared using string variable
-    $mcpConstantMatches = $declarationConstantPattern.Matches($content)
-    foreach ($constMatch in $mcpConstantMatches) {
-        $mcpConstantName = $constMatch.Groups[1].Value
-        $mcpToolNameConstantPattern = 'const string ' + $mcpConstantName + ' = "(' + $ReferencePattern + ')"'
-        $constantRegex = [regex]::new($mcpToolNameConstantPattern)
-        $constValueMatches = $constantRegex.Matches($content)
-        if ($constValueMatches.Count -eq 0) {
-            Write-Error "Could not find value for MCP tool name constant '$mcpConstantName' in file '$($file.FullName)'."
-            exit 1
-        }
-        foreach ($valueMatch in $constValueMatches) {
-            $toolName = $valueMatch.Groups[1].Value
-            $declaredTools.Add($toolName) | Out-Null
-        }
+foreach ($tool in $tools.Tools.McpToolName) {
+    if ($tool) {
+        $declaredTools.Add($tool) | Out-Null
     }
 }
 

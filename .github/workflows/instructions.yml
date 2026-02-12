@@ -22,9 +22,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0
+
       - name: azsdk-cli verify
         shell: pwsh
         run: |
           ./eng/scripts/Verify-McpToolReferences.ps1 `
-            -InstructionsPath ./eng/common/instructions/azsdk-tools `
-            -ToolSourcePath ./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools
+            -InstructionsPath ./eng/common/instructions/azsdk-tools

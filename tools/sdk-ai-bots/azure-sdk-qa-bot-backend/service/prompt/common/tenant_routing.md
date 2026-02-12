@@ -22,7 +22,7 @@ Questions about onboarding Azure API specification and Azure SDK, SDK develop li
 
 ### API Spec Review
 Questions about Azure REST API specifications repo pull request review process and failing check:
-- Specification PR review process in azure-rest-api-spec and azure-rest-api-spec-pr repositories
+- Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories
 - Specification PR pipeline errors, check failures or CI failures(excludes SDK generation/validation errors)
 - **Recommended Tenant**: `api_spec_review_bot`
 

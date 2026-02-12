@@ -19,21 +19,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var lang = languageId.ToLower();
             return lang switch
             {
-                ".net" => ".NET",
-                "csharp" => ".NET",
                 "dotnet" => ".NET",
-                "net" => ".NET",
-                "android" => "Android",
-                "c" => "C",
-                "cpp" => "C++",
-                "go" => "Go",
-                "ios" => "iOS",
-                "java" => "Java",
-                "javascript" => "JavaScript",
-                "js" => "JavaScript",
+                "csharp" => ".NET",
+                ".net" => ".NET",
                 "typescript" => "JavaScript",
                 "python" => "Python",
-                "rust" => "Rust",
+                "javascript" => "JavaScript",
+                "java" => "Java",
+                "go" => "Go",
                 _ => languageId
             };
         }

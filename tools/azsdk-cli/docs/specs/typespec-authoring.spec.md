@@ -316,7 +316,7 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 ```json
 {
-  "operation_status": "succeeded",
+  "operation_status": "Succeeded",
   "typespec_project": "./tsp",
   "solution": "<solution-for-the-typespec-task>",
   "references": [
@@ -406,8 +406,8 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 **Authentication**:
 - The TypeSpec authoring tool authenticates with the Knowledge Base using Microsoft Authentication Library (MSAL) public client authentication
-- Uses device code flow for interactive authentication
-- Access tokens are cached persistently to minimize re-authentication
+- Uses interactive browser flow for authentication (MSAL `AcquireTokenInteractive`)
+- Access tokens are cached in memory for the lifetime of the process and are not persisted to disk by default
 - The tool uses the Azure Knowledge Base service and is configured with a default service by default. If you want to use a different Azure Knowledge Base service instead of the default one, set following environment variables to override:
   - `AZURE_SDK_KB_ENDPOINT`: Service endpoint
   - `AZURE_SDK_KB_CLIENT_ID`: Application (client) ID of the service
@@ -754,10 +754,21 @@ TypeSpec project: ./tsp
 **Error Cases:**
 
 ```text
+Option '--request' is required.
 
-✗ Error: Required argument missing for command: 'generate-authoring-plan'
-  
-Usage: azsdk typespec generate-authoring-plan
+Description:
+  Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure 
+  service.
+
+Usage:
+  azsdk tsp generate-authoring-plan [options]
+
+Options:
+  --request (REQUIRED)      The TypeSpec‑related task or user request sent to an AI agent to produce a proposed 
+                            solution or execution plan with references.
+  --additional-information  The additional information to consider for the TypeSpec project.
+  --typespec-project        The root path of the TypeSpec project
+  -h, --help                Show help and usage information
 ```
 
 ---

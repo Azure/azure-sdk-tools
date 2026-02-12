@@ -1261,9 +1261,12 @@ namespace Azure.Sdk.Tools.TestProxy
                 var rawTarget = feat?.RawTarget ?? string.Empty;
 
                 // If client sent absolute-form to the proxy, we already have the full URL.
+                // Also handle ws:// and wss:// absolute-form for WebSocket proxy requests.
                 if (!string.IsNullOrEmpty(rawTarget) &&
                     (rawTarget.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                     rawTarget.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                     rawTarget.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                     rawTarget.StartsWith("ws://", StringComparison.OrdinalIgnoreCase) ||
+                     rawTarget.StartsWith("wss://", StringComparison.OrdinalIgnoreCase)))
                 {
                     return new Uri(rawTarget, UriKind.Absolute);
                 }
@@ -1346,7 +1349,9 @@ namespace Azure.Sdk.Tools.TestProxy
             var builder = new UriBuilder(requestUri)
             {
                 Scheme = targetScheme,
-                Port = requestUri.Port
+                // Use -1 for default ports so UriBuilder doesn't emit an explicit port
+                // (e.g., avoid "wss://host:443/path" when the original was "https://host/path")
+                Port = requestUri.IsDefaultPort ? -1 : requestUri.Port
             };
 
             return builder.Uri;

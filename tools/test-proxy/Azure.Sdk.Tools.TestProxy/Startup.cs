@@ -335,7 +335,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     if (!string.Equals(mode, "record", StringComparison.OrdinalIgnoreCase))
                     {
                         context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                        await context.Response.WriteAsync("WebSocket proxying requires x-recording-mode: record.");
+                        await context.Response.WriteAsync("WebSocket proxying in Azure mode requires x-recording-mode header set to 'record'.");
                         return;
                     }
 
@@ -356,7 +356,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     return;
                 }
 
-                await next();
+                // No recognized mode handled this WebSocket request — reject rather than
+                // silently forwarding to MVC routing which cannot handle WS upgrades.
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await context.Response.WriteAsync("Unsupported proxy mode for WebSocket requests.");
             });
 
             if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.Azure)

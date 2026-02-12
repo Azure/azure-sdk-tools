@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.TestProxy
             return s_restrictedHeaders.Contains(headerName, StringComparer.OrdinalIgnoreCase);
         }
 
-        private static async Task RelayWebSocketAsync(WebSocket source, WebSocket destination, CancellationToken cancellationToken)
+        private async Task RelayWebSocketAsync(WebSocket source, WebSocket destination, CancellationToken cancellationToken)
         {
             var buffer = new byte[16 * 1024];
 
@@ -132,15 +132,24 @@ namespace Azure.Sdk.Tools.TestProxy
             catch (OperationCanceledException)
             {
             }
-            catch (WebSocketException)
+            catch (WebSocketException ex)
             {
+                _logger.LogWarning(ex, "WebSocket relay terminated with exception.");
             }
         }
 
         private static async Task CloseSocketsAsync(WebSocket serverSocket, WebSocket clientSocket)
         {
-            await CloseSocketAsync(serverSocket);
-            await CloseSocketAsync(clientSocket);
+            try
+            {
+                await CloseSocketAsync(serverSocket);
+            }
+            catch (Exception) { }
+            try
+            {
+                await CloseSocketAsync(clientSocket);
+            }
+            catch (Exception) { }
         }
 
         private static async Task CloseSocketAsync(WebSocket socket)

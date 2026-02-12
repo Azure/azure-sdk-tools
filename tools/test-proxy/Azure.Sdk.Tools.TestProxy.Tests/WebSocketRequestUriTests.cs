@@ -55,5 +55,31 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Startup.ProxyConfiguration.Mode = originalMode;
             }
         }
+
+        [Fact]
+        public void GetWebSocketRequestUri_MapsHttpToWs()
+        {
+            var originalMode = Startup.ProxyConfiguration.Mode;
+            try
+            {
+                Startup.ProxyConfiguration.Mode = UniversalRecordingMode.StandardRecord;
+                var context = new DefaultHttpContext();
+                context.Request.Scheme = "http";
+                context.Request.Host = new HostString("example.com", 80);
+                context.Request.Path = "/socket";
+                context.Request.QueryString = new QueryString("?a=b");
+                context.Features.Get<IHttpRequestFeature>().RawTarget = "/socket?a=b";
+
+                var uri = RecordingHandler.GetWebSocketRequestUri(context.Request);
+
+                Assert.Equal("ws", uri.Scheme);
+                Assert.Equal("example.com", uri.Host);
+                Assert.Equal("/socket?a=b", uri.PathAndQuery);
+            }
+            finally
+            {
+                Startup.ProxyConfiguration.Mode = originalMode;
+            }
+        }
     }
 }

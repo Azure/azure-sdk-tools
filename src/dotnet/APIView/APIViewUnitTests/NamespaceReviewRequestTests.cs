@@ -123,7 +123,8 @@ namespace APIViewUnitTests
                 _userProfileCache,
                 mockLanguageServices,
                 _mockSignalRHubContext.Object,
-                _mockNotificationManager.Object);
+                _mockNotificationManager.Object,
+                new Mock<IPermissionsManager>().Object);
         }
 
         [Fact]

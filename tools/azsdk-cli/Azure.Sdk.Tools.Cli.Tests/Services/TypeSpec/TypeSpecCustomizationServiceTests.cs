@@ -63,6 +63,7 @@ internal class TypeSpecCustomizationServiceTests
     /// Will be skipped if Copilot is not available.
     /// </summary>
     [Test]
+    [Explicit]  // Mark as explicit/manual because this test takes 26 seconds
     public async Task ApplyCustomization_WithRealCopilotSdk_CompletesSuccessfully()
     {
 
@@ -112,7 +113,7 @@ internal class TypeSpecCustomizationServiceTests
         // The test verifies the service can run end-to-end with real LLM calls
         // The actual success may depend on the LLM's ability to complete the task
         Assert.That(result, Is.Not.Null);
-        
+
         // Log the result for manual inspection
         TestContext.WriteLine($"Success: {result.Success}");
         if (result.ChangesSummary?.Length > 0)

@@ -17,6 +17,7 @@ import {
     getUsedVersions,
     isBetaVersion,
     isStableSDKReleaseType,
+    isValidComparableVersion,
 } from "../../utils/version.js";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version.js";
@@ -64,14 +65,17 @@ export async function generateChangelogAndBumpVersion(
         return;
     }
     const skdReleaseDate = options.skdReleaseDate ?? getCurrentDate();
-    if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
-        logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
-        if (!npmViewResult) {
+    // Treat as first release if: no npm result, no stable version, version is not comparable (e.g., alpha), or beta to stable migration
+    const isFirstRelease = !npmViewResult || !stableVersion || !isValidComparableVersion(stableVersion) || (isBetaVersion(stableVersion) && isStableRelease);
+    if (isFirstRelease) {
+        const releaseType = !npmViewResult ? 'initial' : (!stableVersion || !isValidComparableVersion(stableVersion)) ? 'first comparable' : 'stable';
+        logger.info(`Package ${packageName} is first ${releaseType} release, start to generate changelogs and set version for first ${releaseType} release.`);
+        if (!npmViewResult || !stableVersion || !isValidComparableVersion(stableVersion)) {
             await makeChangesForFirstRelease(packageFolderPath, skdReleaseDate, false, updateMode);
         } else {
             await makeChangesForFirstRelease(packageFolderPath, skdReleaseDate, isStableRelease, updateMode);
         }
-        logger.info(`Generated changelogs and setting version for first${!npmViewResult ? ' ' : ' stable'} release successfully`);
+        logger.info(`Generated changelogs and setting version for first ${releaseType} release successfully`);
     } else {
         if (!stableVersion) {
             logger.error(`Invalid latest version ${stableVersion}`);

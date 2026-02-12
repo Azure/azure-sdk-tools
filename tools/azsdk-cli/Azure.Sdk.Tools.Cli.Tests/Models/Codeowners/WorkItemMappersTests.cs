@@ -1,5 +1,6 @@
 
 
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
@@ -27,6 +28,17 @@ public class WorkItemMappersTests
             }).ToList()
         };
         return wi;
+    }
+
+    private static int createTestPackageId = 0;
+    private static PackageWorkItem CreateTestPackage(string packageName, string version)
+    {
+        return new PackageWorkItem
+        {
+            WorkItemId = ++createTestPackageId,
+            PackageName = packageName,
+            PackageVersionMajorMinor = version,
+        };
     }
 
     private static WorkItem CreateOwnerWorkItem(int id, string gitHubAlias)
@@ -195,6 +207,36 @@ public class WorkItemMappersTests
             Assert.That(labelOwner.RepoPath, Is.EqualTo(""));
             Assert.That(labelOwner.LabelType, Is.EqualTo("Azure SDK Owner"));
         });
+    }
+
+    #endregion
+
+    #region GetLatestPackageVersions Tests
+
+    [Test]
+    public void GetLatestPackageVersions_ReturnsLatestVersionForEachPackage()
+    {
+        // Arrange
+        var packages = new List<PackageWorkItem>
+        {
+            CreateTestPackage("Package1", "0.1"),
+            CreateTestPackage("Package1", "0.2"),
+            CreateTestPackage("Package2", "1.0"),
+            CreateTestPackage("Package2", "1.1"),
+        };
+
+        // Act
+        var result = WorkItemMappers.GetLatestPackageVersions(packages);
+
+        // Assert
+        Assert.That(result.Single(
+            p => p.PackageName == "Package1").PackageVersionMajorMinor,
+            Is.EqualTo("0.2")
+        );
+        Assert.That(result.Single(
+            p => p.PackageName == "Package2").PackageVersionMajorMinor,
+            Is.EqualTo("1.1")
+        );
     }
 
     #endregion

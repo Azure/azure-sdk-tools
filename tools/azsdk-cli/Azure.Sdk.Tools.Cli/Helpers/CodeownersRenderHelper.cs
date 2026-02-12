@@ -83,15 +83,26 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         return output;
     }
 
-    public string GetLanguageFromRepoName(string repoName)
+    private static string GetLanguageFromRepoName(string repoName)
     {
         if (!repoName.Contains("azure-sdk-for-", StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException("Repository name must be in the format 'Azure/azure-sdk-for-{language}'", nameof(repoName));
+            return string.Empty;
         }
 
         string suffix = repoName[(repoName.LastIndexOf('-') + 1)..].ToLowerInvariant();
-        return _inputSanitizer.SanitizeLanguage(suffix);
+        return suffix switch
+        {
+            "c" => "C",
+            "cpp" => "C++",
+            "go" => "Go",
+            "java" => "Java",
+            "js" => "JavaScript",
+            "net" => ".NET",
+            "python" => "Python",
+            "rust" => "Rust",
+            _ => suffix
+        };
     }
 
     private async Task<List<RepoPackage>> GetPackagesFromRepoAsync(string repoRoot, CancellationToken ct)

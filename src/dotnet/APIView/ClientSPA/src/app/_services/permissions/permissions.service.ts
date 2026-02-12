@@ -92,6 +92,20 @@ export class PermissionsService {
         return this.http.get<string[]>(`${this.baseUrl}/approvers/${encodeURIComponent(language)}`, { withCredentials: true });
     }
 
+    /**
+     * Get the groups that the current user belongs to
+     */
+    getMyGroups(): Observable<GroupPermissions[]> {
+        return this.http.get<GroupPermissions[]>(`${this.baseUrl}/me/groups`, { withCredentials: true });
+    }
+
+    /**
+     * Get the list of admin usernames for contact information
+     */
+    getAdminUsernames(): Observable<string[]> {
+        return this.http.get<string[]>(`${this.baseUrl}/admins`, { withCredentials: true });
+    }
+
     hasGlobalRole(permissions: EffectivePermissions | null | undefined, roles: GlobalRole | GlobalRole[]): boolean {
         if (!permissions || !permissions.roles) {
             return false;
@@ -143,5 +157,31 @@ export class PermissionsService {
             r.kind === 'scoped' && 
             (r.role === LanguageScopedRole.Architect || r.role === LanguageScopedRole.DeputyArchitect)
         );
+    }
+
+    /**
+     * Get the list of languages the user can approve based on their permissions
+     */
+    getApprovableLanguages(permissions: EffectivePermissions | null | undefined): string[] {
+        if (!permissions || !permissions.roles) {
+            return [];
+        }
+
+        // Admins can approve all languages - return empty to indicate "all"
+        // The caller should handle this case specially
+        if (this.isAdmin(permissions)) {
+            return [];
+        }
+
+        const languages: string[] = [];
+        for (const role of permissions.roles) {
+            if (role.kind === 'scoped' && 
+                (role.role === LanguageScopedRole.Architect || role.role === LanguageScopedRole.DeputyArchitect)) {
+                if (role.language && !languages.includes(role.language)) {
+                    languages.push(role.language);
+                }
+            }
+        }
+        return languages.sort();
     }
 }

@@ -270,4 +270,26 @@ public class PermissionsManager : IPermissionsManager
             _cachedLanguageApproverKeys.Clear();
         }
     }
+
+    public async Task<IEnumerable<GroupPermissionsModel>> GetGroupsForUserAsync(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Enumerable.Empty<GroupPermissionsModel>();
+        }
+
+        return await _permissionsRepository.GetGroupsForUserAsync(userId);
+    }
+
+    public async Task<IEnumerable<string>> GetAdminUsernamesAsync()
+    {
+        IEnumerable<GroupPermissionsModel> groups = await _permissionsRepository.GetAllGroupsAsync();
+
+        return groups
+            .Where(g => g.Roles.HasGlobalRole(GlobalRole.Admin))
+            .SelectMany(g => g.Members)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(u => u, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
 }

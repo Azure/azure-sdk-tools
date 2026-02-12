@@ -18,4 +18,6 @@ public interface IPermissionsManager
     Task<bool> IsAdminAsync(string userId);
     Task<IEnumerable<string>> GetAllUsernamesAsync();
     Task<HashSet<string>> GetApproversForLanguageAsync(string language);
+    Task<IEnumerable<GroupPermissionsModel>> GetGroupsForUserAsync(string userId);
+    Task<IEnumerable<string>> GetAdminUsernamesAsync();
 }

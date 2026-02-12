@@ -199,8 +199,8 @@ func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTe
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
 		},
-		Seed:        openai.Int(1), // Fixed seed for deterministic output
-		Temperature: openai.Float(float64(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE)),
+		Seed:            openai.Int(1), // Fixed seed for deterministic output
+		ReasoningEffort: shared.ReasoningEffort(config.AppConfig.AOAI_CHAT_REASONING_MODEL_REASONING_EFFORT),
 	}
 
 	// Override model and temperature if specified in modelConfig
@@ -208,8 +208,8 @@ func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTe
 		options.Model = openai.ChatModel(*modelConfig.ReasoningModel)
 	}
 
-	if modelConfig != nil && modelConfig.ReasoningModelTemperature != nil {
-		options.Temperature = openai.Float(float64(*modelConfig.ReasoningModelTemperature))
+	if modelConfig != nil && modelConfig.ReasoningModelReasoningEffort != nil {
+		options.ReasoningEffort = shared.ReasoningEffort(*modelConfig.ReasoningModelReasoningEffort)
 	}
 
 	resp, err := config.OpenAIClient.Chat.Completions.New(context.TODO(), options)
@@ -499,8 +499,9 @@ func (s *CompletionService) getLLMResult(modelConfig *model.ModelConfig, message
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
 		},
-		Temperature: openai.Float(float64(config.AppConfig.AOAI_CHAT_COMPLETIONS_TEMPERATURE)),
-		Seed:        openai.Int(1), // Fixed seed for deterministic output
+		Seed:            openai.Int(1), // Fixed seed for deterministic output
+		ReasoningEffort: shared.ReasoningEffort(config.AppConfig.AOAI_CHAT_COMPLETIONS_REASONING_EFFORT),
+		Verbosity:       openai.ChatCompletionNewParamsVerbosityLow,
 	}
 
 	// Override model and temperature if specified in modelConfig
@@ -508,8 +509,8 @@ func (s *CompletionService) getLLMResult(modelConfig *model.ModelConfig, message
 		options.Model = openai.ChatModel(*modelConfig.CompletionModel)
 	}
 
-	if modelConfig != nil && modelConfig.CompletionModelTemperature != nil {
-		options.Temperature = openai.Float(float64(*modelConfig.CompletionModelTemperature))
+	if modelConfig != nil && modelConfig.CompletionModelReasoningEffort != nil {
+		options.ReasoningEffort = shared.ReasoningEffort(*modelConfig.CompletionModelReasoningEffort)
 	}
 
 	resp, err := config.OpenAIClient.Chat.Completions.New(context.TODO(), options)
@@ -833,8 +834,8 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelCo
 		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
 			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
 		},
-		Seed:        openai.Int(1), // Fixed seed for deterministic output
-		Temperature: openai.Float(float64(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE)),
+		Seed:            openai.Int(1), // Fixed seed for deterministic output
+		ReasoningEffort: shared.ReasoningEffort(config.AppConfig.AOAI_CHAT_REASONING_MODEL_REASONING_EFFORT),
 	}
 
 	// Override model and temperature if specified in modelConfig
@@ -842,8 +843,8 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelCo
 		options.Model = openai.ChatModel(*modelConfig.ReasoningModel)
 	}
 
-	if modelConfig != nil && modelConfig.ReasoningModelTemperature != nil {
-		options.Temperature = openai.Float(float64(*modelConfig.ReasoningModelTemperature))
+	if modelConfig != nil && modelConfig.ReasoningModelReasoningEffort != nil {
+		options.ReasoningEffort = shared.ReasoningEffort(*modelConfig.ReasoningModelReasoningEffort)
 	}
 
 	// Call LLM for tenant routing

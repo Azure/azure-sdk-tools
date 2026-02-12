@@ -136,8 +136,8 @@ type TenantRoutingResult struct {
 }
 
 type ModelConfig struct {
-	CompletionModel            *string  `json:"completion_model" jsonschema:"omitempty,description=The model name for completion tasks"`
-	CompletionModelTemperature *float32 `json:"completion_model_temperature" jsonschema:"omitempty,description=The temperature for the completion model"`
-	ReasoningModel             *string  `json:"reasoning_model" jsonschema:"omitempty,description=The model name for reasoning tasks"`
-	ReasoningModelTemperature  *float32 `json:"reasoning_model_temperature" jsonschema:"omitempty,description=The temperature for the reasoning model"`
+	CompletionModel                *string `json:"completion_model" jsonschema:"omitempty,description=The model name for completion tasks"`
+	CompletionModelReasoningEffort *string `json:"completion_model_reasoning_effort" jsonschema:"omitempty,description=The reasoning effort for the completion model"`
+	ReasoningModel                 *string `json:"reasoning_model" jsonschema:"omitempty,description=The model name for reasoning tasks"`
+	ReasoningModelReasoningEffort  *string `json:"reasoning_model_reasoning_effort" jsonschema:"omitempty,description=The reasoning effort for the reasoning model"`
 }

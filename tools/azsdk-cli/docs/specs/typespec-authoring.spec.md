@@ -308,32 +308,46 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `<request>` | string | Yes | N/A | The TypeSpec-related request or task description |
-| `--additional-information` | string | No | "" | Additional context for the request |
-| `--category` | string | No | Auto-detected | Request category (e.g., "versioning", "resource-modeling", "routing") |
+| `--request` | string | Yes | N/A | The TypeSpec-related task or user request sent to an AI agent to produce a proposed solution or execution plan with references |
+| `--additional-information` | string | No | "" | Additional information to consider for the TypeSpec project |
+| `--typespec-project` | string | No | Current directory | The root path of the TypeSpec project |
 
 **Output Format**:
 
 ```json
 {
-  "is_successful":true,
+  "operation_status": "succeeded",
+  "typespec_project": "./tsp",
   "solution": "<solution-for-the-typespec-task>",
   "references": [
     {
       "title": "How to define a preview version",
       "source": "typespec_azure_docs",
-      "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version"
+      "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version",
+      "snippet": "To define a preview version..."
     }
-  ]
+  ],
+  "full_context": "<full-context-used-to-generate-solution>",
+  "reasoning": "<llm-reasoning-process>",
+  "query_intention": {
+    "category": "versioning",
+    "question_scope": "branded",
+    "service_type": "management-plane"
+  }
 }
 ```
 
 **Workflow**:
 
-1. **Parse Input**: Extract request details and optional context from parameters
-1. **Query Knowledge Base**: Send request to Azure SDK Knowledge Base completion API
-1. **Process Response**: Format the solution and extract relevant documentation references
-1. **Return Result**: Provide solution with step-by-step guidance and links to official documentation
+1. **Validate Input**: Check that request parameter is not empty
+1. **Build Completion Request**: Create structured request with:
+   - Tenant ID set to `azure_typespec_authoring`
+   - User message containing the request
+   - Optional additional information as text attachment
+1. **Authenticate**: Retrieve access token using MSAL public client authentication with device code flow
+1. **Query Knowledge Base**: Send POST request to Azure SDK Knowledge Base `/completion` endpoint
+1. **Process Response**: Extract solution, references, reasoning, and query intention from response
+1. **Format Output**: Present solution with references and metadata to the user
 
 ##### Component 2: Azure SDK Knowledge Base
 
@@ -348,8 +362,13 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 - Provides authoritative documentation references
 
 **Authentication**:
-- The TypeSpec authoring tool authenticates with the Knowledge Base using Azure Active Directory (AAD) managed identity or service principal credentials
-- Authentication tokens are automatically refreshed to ensure uninterrupted service
+- The TypeSpec authoring tool authenticates with the Knowledge Base using Microsoft Authentication Library (MSAL) public client authentication
+- Uses device code flow for interactive authentication
+- Access tokens are cached persistently to minimize re-authentication
+- Default configuration uses a dev environment endpoint and client ID, but can be overridden via environment variables:
+  - `AZURE_SDK_KNOWLEDGE_BASE_ENDPOINT`: Custom service endpoint
+  - `AZURE_SDK_KNOWLEDGE_BASE_CLIENT_ID`: Custom client ID
+  - `AZURE_SDK_KNOWLEDGE_BASE_AUTH_SCOPE`: Custom authentication scope
 
 **Integration**:
 - TypeSpec authoring tool sends structured queries to the knowledge base
@@ -659,24 +678,34 @@ update the TypeSpec code to follow Azure guidelines for service widget resource 
 **Command:**
 
 ```bash
-azsdk typespec generate-authoring-plan <typespec-request> --additional-information <additional context>
+azsdk typespec generate-authoring-plan --request <typespec-request> [--additional-information <additional context>] [--typespec-project <project-path>]
 ```
-
-**Argument**
-
-- `<request>`: the typespec-related task or request to consult
 
 **Options:**
 
-- `--additional-information <value>`: Set the additional information, such as the context (optional)
+- `--request <value>`: (Required) The TypeSpec-related task or request to generate a solution for
+- `--additional-information <value>`: Additional information, such as context about the TypeSpec project (optional)
+- `--typespec-project <value>`: The root path of the TypeSpec project (optional, defaults to current directory)
 
 **Expected Output:**
 
 ```text
+TypeSpec project: ./tsp
 **Solution:** To add a new API version '2025-10-10' for your service 'widget' in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.
+
 **Step-by-step guidance:**
 1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format, and if it's a preview, use a '-preview' suffix and decorate @previewVersion on the enum.
-1. Add an example folder for this version and copy the relative examples.
+2. Add an example folder for this version and copy the relative examples.
+
+**References:**
+- **How to define a preview version** (typespec_azure_docs)
+  https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version
+  Snippet: To define a preview version...
+
+**Query Analysis:**
+- Category: versioning
+- Scope: branded
+- Service Type: management-plane
 ```
 
 **Error Cases:**

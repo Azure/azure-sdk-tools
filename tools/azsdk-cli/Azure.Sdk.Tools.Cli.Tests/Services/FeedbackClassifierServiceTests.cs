@@ -5,6 +5,8 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using GitHub.Copilot.SDK;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -13,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
 /// <summary>
 /// Tests for FeedbackClassifierService batch classification and parsing logic.
-/// Uses mocked ICopilotAgentRunner to control LLM responses and verify parsing behavior.
+/// Includes both mocked unit tests and live integration tests.
 /// </summary>
 [TestFixture]
 public class FeedbackClassifierServiceTests
@@ -23,6 +25,29 @@ public class FeedbackClassifierServiceTests
     private ILoggerFactory _loggerFactory = null!;
     private string _testTspPath = null!;
     private string _specRepoRoot = null!;
+    private string _typeSpecProjectPath = null!;
+
+    [OneTimeSetUp]
+    public void OneTimeSetUp()
+    {
+        // Path to the test TypeSpec project for live tests
+        _typeSpecProjectPath = Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "TypeSpecTestData",
+            "specification",
+            "testcontoso",
+            "Contoso.Management");
+
+        // Create the customization guide file that live tests require
+        // The TypeSpecHelper looks for this at <specRepoRoot>/eng/common/knowledge/customizing-client-tsp.md
+        var testDataRoot = Path.Combine(TestContext.CurrentContext.TestDirectory, "TypeSpecTestData");
+        var liveTestGuidePath = Path.Combine(testDataRoot, "eng", "common", "knowledge", "customizing-client-tsp.md");
+        Directory.CreateDirectory(Path.GetDirectoryName(liveTestGuidePath)!);
+        if (!File.Exists(liveTestGuidePath))
+        {
+            File.WriteAllText(liveTestGuidePath, "# TypeSpec Client Customizations\nTest reference content for live tests.");
+        }
+    }
 
     [SetUp]
     public void Setup()
@@ -31,7 +56,7 @@ public class FeedbackClassifierServiceTests
         _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
         _loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
         
-        // Set up a fake tsp project path
+        // Set up a fake tsp project path for mocked tests
         _specRepoRoot = Path.Combine(Path.GetTempPath(), "test-spec-repo-" + Guid.NewGuid().ToString("N")[..8]);
         _testTspPath = Path.Combine(_specRepoRoot, "specification", "widget", "Widget.Management");
         
@@ -56,7 +81,9 @@ public class FeedbackClassifierServiceTests
         }
     }
 
-    private FeedbackClassifierService CreateService(string? packagePath = null)
+    #region Mocked Test Helpers
+
+    private FeedbackClassifierService CreateMockedService(string? packagePath = null)
     {
         return new FeedbackClassifierService(
             _mockAgentRunner.Object,
@@ -74,13 +101,77 @@ public class FeedbackClassifierServiceTests
         return item;
     }
 
+    #endregion
+
+    #region Live Test Helpers
+
+    private static GitHelper CreateRealGitHelper()
+    {
+        var rawOutputHelper = Mock.Of<IRawOutputHelper>();
+        var gitCommandHelper = new GitCommandHelper(
+            new TestLogger<GitCommandHelper>(),
+            rawOutputHelper);
+        return new GitHelper(
+            Mock.Of<IGitHubService>(),
+            gitCommandHelper,
+            new TestLogger<GitHelper>());
+    }
+
+    private FeedbackClassifierService CreateRealService()
+    {
+        var rawOutputHelper = Mock.Of<IRawOutputHelper>();
+        var gitHelper = CreateRealGitHelper();
+        var typeSpecHelper = new TypeSpecHelper(gitHelper);
+
+        var copilotClient = new CopilotClient(new CopilotClientOptions
+        {
+            UseStdio = true,
+            AutoStart = true
+        });
+        var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
+        var tokenUsageHelper = new TokenUsageHelper(rawOutputHelper);
+        var copilotAgentRunner = new CopilotAgentRunner(
+            copilotClientWrapper,
+            tokenUsageHelper,
+            new TestLogger<CopilotAgentRunner>());
+
+        return new FeedbackClassifierService(
+            copilotAgentRunner,
+            LoggerFactory.Create(builder => builder.AddConsole()),
+            typeSpecHelper,
+            _typeSpecProjectPath,
+            packagePath: null);
+    }
+
+    private static FeedbackItem CreateLiveTestItem(string text, string context = "")
+    {
+        var id = Guid.NewGuid().ToString();
+        return new FeedbackItem
+        {
+            Id = id,
+            Text = text,
+            FormattedPrompt = $"Id: {id}\nText: {text}\nContext: {context}"
+        };
+    }
+
+    private static void LogClassificationResults(List<FeedbackItem> items)
+    {
+        TestContext.WriteLine("Classification results:");
+        foreach (var item in items)
+        {
+            TestContext.WriteLine($"  [{item.Id}] Status: {item.Status}, Reason: {item.Reason}");
+        }
+    }
+
+    #endregion
+
     #region ClassifyAsync Flow Tests
 
     [Test]
     public async Task ClassifyAsync_EmptyList_ReturnsTrue()
     {
         // Arrange
-        var service = CreateService();
+        var service = CreateMockedService();
         var items = new List<FeedbackItem>();
 
         // Act
@@ -95,20 +186,25 @@ public class FeedbackClassifierServiceTests
     public async Task ClassifyAsync_AllItemsResolved_ReturnsTrue()
     {
         // Arrange
-        var service = CreateService();
-        var item1 = CreateTestItem("Rename FooClient", "item-1");
-        var item2 = CreateTestItem("Keep as is", "item-2");
+        var service = CreateMockedService();
+        // Non-actionable API review comment -> SUCCESS
+        var item1 = CreateTestItem("LGTM, the API surface looks appropriate for this service", "item-1");
+        // Requires code-level implementation (no TypeSpec decorator exists for this) -> FAILURE
+        var item2 = CreateTestItem("Please add a convenience method that combines getDocument and analyzeDocument into a single call", "item-2");
         var items = new List<FeedbackItem> { item1, item2 };
 
         // Mock the batch classification response
+        // Per FeedbackClassificationTemplate:
+        // - SUCCESS: non-actionable (LGTM, keep as is, build succeeding)
+        // - FAILURE: actionable but requires code changes (no TypeSpec decorator applies)
         var batchResponse = """
             [item-1]
             Classification: SUCCESS
-            Reason: Rename completed successfully
+            Reason: Non-actionable feedback - approval comment with no requested changes
 
             [item-2]
             Classification: FAILURE
-            Reason: Requires code changes
+            Reason: Convenience methods combining multiple operations require code-level implementation; no TypeSpec decorator can create new composite operations
             """;
         _mockAgentRunner
             .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
@@ -127,15 +223,18 @@ public class FeedbackClassifierServiceTests
     public async Task ClassifyAsync_ItemsStillTspApplicable_ReturnsFalse()
     {
         // Arrange
-        var service = CreateService();
-        var item1 = CreateTestItem("Rename FooClient", "item-1");
+        var service = CreateMockedService();
+        // API review feedback requesting a rename - addressable via @clientName decorator -> TSP_APPLICABLE
+        var item1 = CreateTestItem("Rename 'DocumentIntelligenceClient' to 'DocumentAnalysisClient' for consistency with other Azure AI services", "item-1");
         var items = new List<FeedbackItem> { item1 };
 
         // Mock response with TSP_APPLICABLE classification
+        // Per FeedbackClassificationTemplate:
+        // - TSP_APPLICABLE: actionable AND TypeSpec decorators can address it
         var batchResponse = """
             [item-1]
             Classification: TSP_APPLICABLE
-            Reason: Can use @@clientName decorator
+            Reason: Can use @@clientName(DocumentIntelligenceClient, "DocumentAnalysisClient") to rename the client
             """;
         _mockAgentRunner
             .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
@@ -153,8 +252,9 @@ public class FeedbackClassifierServiceTests
     public async Task ClassifyAsync_FailureItems_GeneratesNextAction()
     {
         // Arrange
-        var service = CreateService();
-        var item1 = CreateTestItem("Need custom serialization", "item-1");
+        var service = CreateMockedService();
+        // API review feedback requesting streaming support - requires code-level changes -> FAILURE
+        var item1 = CreateTestItem("Add support for streaming responses with progress callbacks when uploading large documents", "item-1");
         var items = new List<FeedbackItem> { item1 };
 
         // First call returns batch classification
@@ -170,10 +270,10 @@ public class FeedbackClassifierServiceTests
                     return """
                         [item-1]
                         Classification: FAILURE
-                        Reason: Custom serialization requires code changes
+                        Reason: Streaming support with progress callbacks requires code-level implementation; no TypeSpec decorator can add streaming behavior
                         """;
                 }
-                return "Add custom serializer in _serialization.py following the pattern in the documentation.";
+                return "Implement streaming in the SDK by creating a custom operation wrapper that handles chunked uploads and emits progress events.";
             });
 
         // Act
@@ -182,52 +282,26 @@ public class FeedbackClassifierServiceTests
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.FAILURE));
         Assert.That(item1.NextAction, Is.Not.Null.And.Not.Empty);
-        Assert.That(item1.NextAction, Does.Contain("serializer").Or.Contains("serialization"));
+        Assert.That(item1.NextAction, Does.Contain("streaming").Or.Contains("upload").Or.Contains("progress"));
     }
 
     #endregion
 
-    #region Parsing and Classification Tests
-
-    [Test]
-    [TestCase("SUCCESS", FeedbackStatus.SUCCESS)]
-    [TestCase("FAILURE", FeedbackStatus.FAILURE)]
-    [TestCase("TSP_APPLICABLE", FeedbackStatus.TSP_APPLICABLE)]
-    public async Task ClassifyAsync_ClassificationMapping_MapsCorrectly(string classification, FeedbackStatus expectedStatus)
-    {
-        // Arrange
-        var service = CreateService();
-        var item = CreateTestItem("Test feedback", "test-id");
-        var items = new List<FeedbackItem> { item };
-
-        var batchResponse = $"""
-            [test-id]
-            Classification: {classification}
-            Reason: Test reason
-            """;
-        _mockAgentRunner
-            .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(batchResponse);
-
-        // Act
-        await service.ClassifyAsync(items, "global context");
-
-        // Assert
-        Assert.That(item.Status, Is.EqualTo(expectedStatus));
-    }
+    #region Parsing and Edge Case Tests
 
     [Test]
     public async Task ClassifyAsync_ValidFormat_UpdatesReasonAndContext()
     {
         // Arrange
-        var service = CreateService();
-        var item = CreateTestItem("Rename method", "item-abc");
+        var service = CreateMockedService();
+        // Non-actionable API review comment -> SUCCESS
+        var item = CreateTestItem("The error handling looks good, approved", "item-abc");
         var items = new List<FeedbackItem> { item };
 
         var batchResponse = """
             [item-abc]
             Classification: SUCCESS
-            Reason: Method was renamed using @@clientName decorator
+            Reason: Non-actionable feedback - approval comment with no requested changes
             """;
         _mockAgentRunner
             .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
@@ -237,25 +311,27 @@ public class FeedbackClassifierServiceTests
         await service.ClassifyAsync(items, "global context");
 
         // Assert
-        Assert.That(item.Reason, Is.EqualTo("Method was renamed using @@clientName decorator"));
+        Assert.That(item.Reason, Is.EqualTo("Non-actionable feedback - approval comment with no requested changes"));
         Assert.That(item.Context, Does.Contain("Classification: SUCCESS"));
-        Assert.That(item.Context, Does.Contain("Reason: Method was renamed using @@clientName decorator"));
+        Assert.That(item.Context, Does.Contain("Reason: Non-actionable feedback - approval comment with no requested changes"));
     }
 
     [Test]
     public async Task ClassifyAsync_MissingItemInResponse_DefaultsToFailure()
     {
         // Arrange
-        var service = CreateService();
-        var item1 = CreateTestItem("First item", "item-1");
-        var item2 = CreateTestItem("Second item", "item-2");
+        var service = CreateMockedService();
+        // Non-actionable -> SUCCESS
+        var item1 = CreateTestItem("Looks good to me", "item-1");
+        // Actionable -> would be TSP_APPLICABLE, but response is missing
+        var item2 = CreateTestItem("Make the 'InternalMetrics' operation internal so it's not exposed publicly", "item-2");
         var items = new List<FeedbackItem> { item1, item2 };
 
         // Response only contains item-1, missing item-2
         var batchResponse = """
             [item-1]
             Classification: SUCCESS
-            Reason: Completed
+            Reason: Non-actionable feedback - approval
             """;
         _mockAgentRunner
             .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
@@ -270,47 +346,146 @@ public class FeedbackClassifierServiceTests
         Assert.That(item2.Context, Does.Contain("missing from batch LLM response"));
     }
 
+    #endregion
+
+    #region Live Integration Tests
+
+    /// <summary>
+    /// Live integration test that classifies a comprehensive mix of API review feedback.
+    /// Tests all three classification categories:
+    /// - TSP_APPLICABLE: @clientName (renames), @access (visibility)
+    /// - SUCCESS: Non-actionable (LGTM, keep as is, approvals)
+    /// - FAILURE: Code-level changes (custom retry, serialization)
+    /// </summary>
     [Test]
-    public async Task ClassifyAsync_MultipleItems_AllParsedCorrectly()
+    public async Task Live_ClassifyAsync_AllFeedbackCategories_ClassifiesCorrectly()
     {
-        // Arrange
-        var service = CreateService();
+        if (!await CopilotTestHelper.IsCopilotAvailableAsync())
+        {
+            Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
+        }
+
+        var service = CreateRealService();
+
         var items = new List<FeedbackItem>
         {
-            CreateTestItem("Rename client", "id-1"),
-            CreateTestItem("Keep as is", "id-2"),
-            CreateTestItem("Needs code change", "id-3")
+            // TSP_APPLICABLE: @clientName for renames
+            CreateLiveTestItem("Rename 'EmployeeClient' to 'StaffClient' for consistency with the service branding"),
+            // TSP_APPLICABLE: @access for visibility
+            CreateLiveTestItem("Make the 'PurgeDocuments' operation internal - it should not be exposed in the public SDK"),
+            // SUCCESS: Non-actionable approval
+            CreateLiveTestItem("LGTM - the pagination follows Azure SDK guidelines"),
+            // SUCCESS: Keep as is
+            CreateLiveTestItem("No changes needed - the model hierarchy follows Azure best practices"),
+            // FAILURE: Requires code-level implementation
+            CreateLiveTestItem("Add support for custom retry policies with circuit breaker pattern for transient failures")
         };
 
-        var batchResponse = """
-            [id-1]
-            Classification: TSP_APPLICABLE
-            Reason: Use @@clientName
+        await service.ClassifyAsync(
+            items,
+            globalContext: "Testing comprehensive feedback classification",
+            language: "python",
+            serviceName: "TestService");
 
-            [id-2]
-            Classification: SUCCESS
-            Reason: No action needed
+        LogClassificationResults(items);
 
-            [id-3]
-            Classification: FAILURE
-            Reason: Requires custom implementation
-            """;
-        _mockAgentRunner
-            .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(batchResponse);
+        Assert.That(items, Has.All.Property("Reason").Not.Null.And.Not.Empty,
+            "All items should have a reason after classification");
 
-        // Act
-        await service.ClassifyAsync(items, "global context");
+        // TSP_APPLICABLE assertions - check status and that reason mentions the appropriate decorator
+        Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE),
+            "Client rename should be TSP_APPLICABLE");
+        Assert.That(items[0].Reason, Does.Contain("clientName").IgnoreCase,
+            "Rename reason should mention @clientName decorator");
 
-        // Assert
-        Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE));
-        Assert.That(items[0].Reason, Is.EqualTo("Use @@clientName"));
-        
-        Assert.That(items[1].Status, Is.EqualTo(FeedbackStatus.SUCCESS));
-        Assert.That(items[1].Reason, Is.EqualTo("No action needed"));
-        
-        Assert.That(items[2].Status, Is.EqualTo(FeedbackStatus.FAILURE));
-        Assert.That(items[2].Reason, Is.EqualTo("Requires custom implementation"));
+        Assert.That(items[1].Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE),
+            "Making operation internal should be TSP_APPLICABLE");
+        Assert.That(items[1].Reason, Does.Contain("access").IgnoreCase,
+            "Visibility change reason should mention @access decorator");
+
+        // SUCCESS assertions - just check status (reason existence already verified above)
+        Assert.That(items[2].Status, Is.EqualTo(FeedbackStatus.SUCCESS),
+            "LGTM approval should be SUCCESS - non-actionable");
+        Assert.That(items[3].Status, Is.EqualTo(FeedbackStatus.SUCCESS),
+            "'No changes needed' should be SUCCESS - non-actionable");
+
+        // FAILURE assertion
+        Assert.That(items[4].Status, Is.EqualTo(FeedbackStatus.FAILURE),
+            "Custom retry with circuit breaker requires code implementation -> FAILURE");
+    }
+
+    /// <summary>
+    /// Live test: Verifies items with prior compilation error context are classified as FAILURE.
+    /// This represents a retry scenario where previous TypeSpec customization attempt failed.
+    /// </summary>
+    [Test]
+    public async Task Live_ClassifyAsync_WithErrorContext_ClassifiedAsFailure()
+    {
+        if (!await CopilotTestHelper.IsCopilotAvailableAsync())
+        {
+            Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
+        }
+
+        var service = CreateRealService();
+
+        // Represents a retry scenario: originally TSP_APPLICABLE but failed compilation
+        var id = Guid.NewGuid().ToString();
+        var items = new List<FeedbackItem>
+        {
+            new FeedbackItem
+            {
+                Id = id,
+                Text = "Rename the 'Items' property to 'Documents' for consistency",
+                FormattedPrompt = $"Id: {id}\nText: Rename the 'Items' property to 'Documents'\nContext: COMPILATION ERROR: @@clientName target not found - property 'Items' does not exist in model 'ListResponse'"
+            }
+        };
+
+        await service.ClassifyAsync(
+            items,
+            globalContext: $"--- TYPESPEC CUSTOMIZATIONS ---\nId: {id}\nText: Rename the 'Items' property to 'Documents'\nContext: COMPILATION ERROR: @@clientName target not found - property 'Items' does not exist in model 'ListResponse'",
+            language: "python",
+            serviceName: "TestService");
+
+        LogClassificationResults(items);
+
+        Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.FAILURE),
+            "Items with prior compilation errors should be classified as FAILURE - indicates TypeSpec cannot address this");
+    }
+
+    /// <summary>
+    /// Live test: Verifies FAILURE items generate NextAction guidance for manual implementation.
+    /// </summary>
+    [Test]
+    public async Task Live_ClassifyAsync_FailureItems_GenerateNextActionGuidance()
+    {
+        if (!await CopilotTestHelper.IsCopilotAvailableAsync())
+        {
+            Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
+        }
+
+        var service = CreateRealService();
+
+        // Request that requires code-level SDK implementation - no TypeSpec decorator can address
+        var items = new List<FeedbackItem>
+        {
+            CreateLiveTestItem("Add support for streaming responses with progress callbacks when downloading large blobs")
+        };
+
+        await service.ClassifyAsync(
+            items,
+            globalContext: "Testing manual guidance generation for code-level changes",
+            language: "python",
+            serviceName: "StorageBlob",
+            codeCustomizationDocUrl: "https://aka.ms/azsdk/python/customization");
+
+        LogClassificationResults(items);
+
+        Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.FAILURE),
+            "Streaming with progress callbacks requires code implementation -> FAILURE");
+        Assert.That(items[0].NextAction, Is.Not.Null.And.Not.Empty,
+            "FAILURE items should have NextAction guidance for manual implementation");
+
+        TestContext.WriteLine($"NextAction guidance:\n{items[0].NextAction}");
     }
 
     #endregion

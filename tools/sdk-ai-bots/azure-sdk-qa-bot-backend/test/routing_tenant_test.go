@@ -70,6 +70,11 @@ func TestRoutingTenant_General(t *testing.T) {
 			"I am from a  service team and need to work on the SDKs. Here is the API spec. what should I do? ",
 			model.TenantID_AzureSDKOnboarding,
 		},
+		{
+			"LRO header return 200",
+			"title: LRO header return 200\n\nquestion: Hi, I'm from the servicefabric RP team working with [azure-rest-api-specs/specification/servicefabricmanagedclusters/resource-manager/Microsoft.ServiceF…](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/servicefabricmanagedclusters/resource-manager/Microsoft.ServiceFabric/ServiceFabricManagedClusters/preview/2025-06-01-preview/servicefabricmanagedclusters.json)\nOn our operations for ManagedClusters_CreateOrUpdate, NodeTypes_CreateOrUpdate, and ApplicationTypeVersions_CreateOrUpdate, we have both a 200 and 202 response defined.\nA 200 response is returned when the customer sends the initial request to create the resource. A 202 is returned on every subsequent PUT.\nI recently noticed that our service code returns an async operation URI in the 200 response for the above operations. https://msazure.visualstudio.com/One/_git/winfab-RP?path=/src/sfmc/SfmcBackendService/Service/Controllers/ClustersController.cs&version=GBdevelop&line=294&lineEnd=295&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents\n```\nHTTP/1.1 200 OK\nContent-length: 2131\nContent-Type: application/json; charset=utf-8\nServer: Microsoft-HTTPAPI/2.0\nAzure-AsyncOperation: http://localhost:8080/subscriptions/b36cdf46-b75d-4dc2-9fe1-1296ee8c623d/providers/Microsoft.ServiceFabric/locations/southcentralus/managedclusteroperations/c39cd8e1-18a0-41fc-a778-6a4ad6adbd653?api-version=2024-02-01\nDate: Thu, 23 Oct 2025 22:57:10 GMT\nConnection: close\n```\nShould I specify this in the spec? If so, what is the recommendation for doing so? I couldn't find an example for a 200 response with an async operation header.",
+			model.TenantID_AzureSDKQaBot,
+		},
 	}
 
 	for _, tc := range testcases {

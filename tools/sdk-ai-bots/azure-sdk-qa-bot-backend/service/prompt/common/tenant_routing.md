@@ -33,6 +33,8 @@ Questions about authoring API Specification based on TypeSpec, such as TypeSpec 
 - TypeSpec migration from OpenAPI
 - TypeSpec validation errors and troubleshooting
 - TypeSpec configurations(tspconfig.yaml)
+- TypeSpec generated OpenAPI/Swagger issues
+- API Design guidelines and best practices
 - **Recommended Tenant**: `azure_sdk_qa_bot`
 
 ### Python SDK

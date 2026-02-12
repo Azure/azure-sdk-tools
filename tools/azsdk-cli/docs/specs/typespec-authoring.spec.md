@@ -409,9 +409,9 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 - Uses device code flow for interactive authentication
 - Access tokens are cached persistently to minimize re-authentication
 - Default configuration uses a dev environment endpoint and client ID, but can be overridden via environment variables:
-  - `AZURE_SDK_KNOWLEDGE_BASE_ENDPOINT`: Custom service endpoint
-  - `AZURE_SDK_KNOWLEDGE_BASE_CLIENT_ID`: Custom client ID
-  - `AZURE_SDK_KNOWLEDGE_BASE_AUTH_SCOPE`: Custom authentication scope
+  - `AZURE_SDK_KB_ENDPOINT`: Custom service endpoint
+  - `AZURE_SDK_KB_CLIENT_ID`: Custom client ID
+  - `AZURE_SDK_KB_SCOPE`: Custom authentication scope
 
 **Integration**:
 - TypeSpec authoring tool sends structured queries to the knowledge base

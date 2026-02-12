@@ -83,11 +83,11 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         return output;
     }
 
-    private static string GetLanguageFromRepoName(string repoName)
+    public static string GetLanguageFromRepoName(string repoName)
     {
         if (!repoName.Contains("azure-sdk-for-", StringComparison.OrdinalIgnoreCase))
         {
-            return string.Empty;
+            throw new ArgumentException($"Repository name '{repoName}' does not match expected format 'azure-sdk-for-<language>'");
         }
 
         string suffix = repoName[(repoName.LastIndexOf('-') + 1)..].ToLowerInvariant();

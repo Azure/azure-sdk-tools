@@ -784,6 +784,7 @@ def _extract_code_for_element(full_text: str, element_id: Optional[str], context
 
     best_idx = None
     best_score = 0
+    search_words = [w.lower() for w in search_parts.split() if len(w) > 1]
 
     for i, line in enumerate(lines):
         # Strip the line number prefix if present (e.g., "123: ")
@@ -792,7 +793,6 @@ def _extract_code_for_element(full_text: str, element_id: Optional[str], context
             continue
 
         # Score: count how many words from the search_parts appear in the line
-        search_words = [w.lower() for w in search_parts.split() if len(w) > 1]
         line_lower = stripped.lower()
         score = sum(1 for w in search_words if w in line_lower)
 
@@ -936,7 +936,7 @@ def get_comment_with_context(comment_id: str, environment: str = "production") -
                 )
                 feedback_messages.append(feedback_text_block)
 
-        feedback_text = "\n\n".join(feedback_messages) if feedback_messages else "Feedback was provided but no details."
+        feedback_text = "\n\n".join(feedback_messages) if feedback_messages else "No feedback entries found."
 
         return {
             "comment": comment,

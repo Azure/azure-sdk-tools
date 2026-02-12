@@ -606,10 +606,6 @@ def handle_agent_mention(
 
     At least one of --comments-path or --comment-id must be provided.
     """
-    environment = os.getenv("ENVIRONMENT_NAME")
-    if not environment:
-        print("Error: ENVIRONMENT_NAME environment variable is not set. Please set it in your .env file.")
-        return
     if not comments_path and not comment_id:
         print("Error: Either --comments-path or --comment-id must be provided.")
         return
@@ -624,6 +620,10 @@ def handle_agent_mention(
     code = None
 
     if comment_id:
+        environment = os.getenv("ENVIRONMENT_NAME")
+        if not environment:
+            print("Error: ENVIRONMENT_NAME environment variable is not set. Please set it in your .env file.")
+            return
         # Fetch the comment from the database and manufacture a conversation
         result = get_comment_with_context(comment_id, environment=environment)
         if not result:
@@ -639,6 +639,10 @@ def handle_agent_mention(
 
         if not language:
             print(f"Could not determine language for comment '{comment_id}'.")
+            return
+
+        if not feedback_text or feedback_text == "No feedback entries found.":
+            print(f"No feedback associated with comment '{comment_id}'. Nothing to process.")
             return
 
         # Manufacture a conversation: the original AI comment followed by the feedback
@@ -667,14 +671,12 @@ def handle_agent_mention(
         package_name = data.get("package_name", None)
         code = data.get("code", None)
 
-    # Normalize language to the lowercase APIView format expected by SUPPORTED_LANGUAGES
-    # (get_comment_with_context returns pretty names like "Java" but SUPPORTED_LANGUAGES uses "java")
-    normalized_language = normalize_language(language).lower() if language else language
-    apiview_language = next((l for l in SUPPORTED_LANGUAGES if l.lower() == normalized_language), None)
-    if not apiview_language:
+    # Resolve language to canonical and pretty forms
+    try:
+        apiview_language, pretty_language = resolve_language(language)
+    except ValueError:
         print(f"Unsupported language `{language}`")
         return
-    pretty_language = get_language_pretty_name(apiview_language)
 
     if dry_run:
         payload = {
@@ -730,13 +732,12 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
     language = data.get("language", None)
     package_name = data.get("package_name", None)
     code = data.get("code", None)
-    # Normalize language to the lowercase APIView format expected by SUPPORTED_LANGUAGES
-    normalized_language = normalize_language(language).lower() if language else language
-    apiview_language = next((l for l in SUPPORTED_LANGUAGES if l.lower() == normalized_language), None)
-    if not apiview_language:
+    # Resolve language to canonical and pretty forms
+    try:
+        apiview_language, pretty_language = resolve_language(language)
+    except ValueError:
         print(f"Unsupported language `{language}`")
         return
-    pretty_language = get_language_pretty_name(apiview_language)
 
     if remote:
         settings = SettingsManager()
@@ -1037,7 +1038,8 @@ def get_active_reviews(
     Retrieves active APIView reviews in the specified environment during the specified period.
     """
     reviews = _get_active_reviews(start_date, end_date, environment=environment)
-    pretty_language = get_language_pretty_name(language).lower()
+    _, pretty_language = resolve_language(language)
+    pretty_language = pretty_language.lower()
 
     filtered = [r for r in reviews if r.language.lower() == pretty_language]
 
@@ -1351,55 +1353,66 @@ def check_health(include_auth: bool = False):
         print(f"❌ Service health check error: {e}")
 
 
-def normalize_language(lang: str) -> str:
-    """Normalize language input to expected format (pretty name)."""
-    if not lang:
-        return lang
-    # Mapping of lowercase to pretty names
-    lang_map = {
-        "c": "C",
-        "c#": "C#",
-        "csharp": "C#",
-        "c++": "C++",
-        "cpp": "C++",
-        "go": "Go",
-        "golang": "Go",
-        "java": "Java",
-        "javascript": "JavaScript",
-        "typescript": "JavaScript",
-        "json": "Json",
-        "kotlin": "Kotlin",
-        "python": "Python",
-        "rust": "Rust",
-        "swagger": "Swagger",
-        "swift": "Swift",
-        "ios": "Swift",
-        "typespec": "TypeSpec",
-        "xml": "Xml",
-        "android": "Android",
-        "dotnet": "C#",
-        "clang": "C",
+# ---------------------------------------------------------------------------
+# Unified language resolution
+# ---------------------------------------------------------------------------
+# Build a single case-insensitive lookup that maps every known alias, pretty
+# name, and canonical name to a (canonical, pretty) tuple.
+
+_LANGUAGE_ALIAS_TABLE: dict[str, tuple[str, str]] = {}
+
+
+def _build_language_alias_table():
+    """Populate ``_LANGUAGE_ALIAS_TABLE`` once."""
+    if _LANGUAGE_ALIAS_TABLE:
+        return
+    # Extra aliases beyond what SUPPORTED_LANGUAGES and get_language_pretty_name provide
+    extra_aliases: dict[str, str] = {
+        "csharp": "dotnet",
+        "c#": "dotnet",
+        "c++": "cpp",
+        "go": "golang",
+        "swift": "ios",
+        "c": "clang",
+        "javascript": "typescript",
     }
-    normalized = lang_map.get(lang.lower(), lang)
-    return normalized
+    for canonical in SUPPORTED_LANGUAGES:
+        pretty = get_language_pretty_name(canonical)
+        entry = (canonical, pretty)
+        _LANGUAGE_ALIAS_TABLE[canonical.lower()] = entry
+        _LANGUAGE_ALIAS_TABLE[pretty.lower()] = entry
+    for alias, canonical in extra_aliases.items():
+        pretty = get_language_pretty_name(canonical)
+        _LANGUAGE_ALIAS_TABLE[alias.lower()] = (canonical, pretty)
 
 
-ANALYZE_COMMENT_LANGUAGES = [
-    "C",
-    "C#",
-    "C++",
-    "Go",
-    "Java",
-    "JavaScript",
-    "Json",
-    "Kotlin",
-    "Python",
-    "Rust",
-    "Swagger",
-    "Swift",
-    "TypeSpec",
-    "Xml",
-]
+def resolve_language(lang: str) -> tuple[str, str]:
+    """Resolve any language string to ``(canonical, pretty)`` or raise ``ValueError``.
+
+    Accepts canonical names (``"golang"``), pretty names (``"Go"``), and common
+    aliases (``"csharp"``, ``"c#"``, ``"c++"``).  Case-insensitive.
+
+    Returns:
+        Tuple of ``(canonical, pretty)`` — e.g. ``("golang", "Go")``.
+
+    Raises:
+        ValueError: If the language string is not recognized.
+    """
+    _build_language_alias_table()
+    if not lang:
+        raise ValueError("Language must not be empty.")
+    entry = _LANGUAGE_ALIAS_TABLE.get(lang.lower())
+    if not entry:
+        raise ValueError(
+            f"Unsupported language `{lang}`. "
+            f"Accepted values: {', '.join(sorted({v[1] for v in _LANGUAGE_ALIAS_TABLE.values()}))}"
+        )
+    return entry
+
+
+def resolve_language_to_canonical(lang: str) -> str:
+    """Knack ``type=`` converter: returns the canonical language name."""
+    return resolve_language(lang)[0]
 
 
 def get_ai_comment_feedback(
@@ -1434,7 +1447,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
     filtered = [c for c in raw_comments if c.get("CommentSource") != "Diagnostic" and c.get("IsDeleted") != True]
 
-    allowed_commenters = get_approvers(language=language)
+    allowed_commenters = get_approvers(language=resolve_language(language)[1])
 
     reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
     review_ids = set(c.get("ReviewId") for c in filtered if c.get("ReviewId"))
@@ -1453,7 +1466,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
     else:
         review_lang_map = {}
 
-    language = language.lower()
+    language = resolve_language(language)[1].lower()
     comments = [APIViewComment(**c) for c in filtered if review_lang_map.get(c.get("ReviewId", ""), "") == language]
 
     if allowed_commenters:
@@ -1577,10 +1590,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "") as ac:
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the APIView file",
+                type=resolve_language_to_canonical,
+                help="The language (e.g., python, Go, C#, dotnet, typescript).",
                 options_list=("--language", "-l"),
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "remote",
@@ -1674,10 +1686,9 @@ class CliCommandsLoader(CLICommandsLoader):
             )
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the test case.",
+                type=resolve_language_to_canonical,
+                help="The language of the test case (e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "test_file",
@@ -1778,10 +1789,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "review start-job") as ac:
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the APIView file",
+                type=resolve_language_to_canonical,
+                help="The language of the APIView file (e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "target",
@@ -1819,10 +1829,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "review summarize") as ac:
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the APIView file",
+                type=resolve_language_to_canonical,
+                help="The language of the APIView file (e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "target", type=str, help="The path to the APIView file to summarize.", options_list=("--target", "-t")
@@ -1961,18 +1970,16 @@ class CliCommandsLoader(CLICommandsLoader):
             )
             ac.argument(
                 "language",
-                type=normalize_language,
-                help="Language to filter comments (case-insensitive, e.g., python, Python, PYTHON)",
-                choices=ANALYZE_COMMENT_LANGUAGES,
+                type=resolve_language_to_canonical,
+                help="Language to filter comments (case-insensitive, e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
             )
         with ArgumentsContext(self, "apiview get-comment-feedback") as ac:
             ac.argument(
                 "language",
-                type=str,
-                help="The language to filter by.",
+                type=resolve_language_to_canonical,
+                help="The language to filter by (e.g., python, Go, C#).",
                 options_list=["--language", "-l"],
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "start_date",
@@ -2019,10 +2026,9 @@ class CliCommandsLoader(CLICommandsLoader):
             )
             ac.argument(
                 "language",
-                type=str,
-                help="The language of the package.",
+                type=resolve_language_to_canonical,
+                help="The language of the package (e.g., python, Go, C#).",
                 options_list=["--language", "-l"],
-                choices=SUPPORTED_LANGUAGES,
             )
             ac.argument(
                 "version",

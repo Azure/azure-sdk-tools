@@ -81,9 +81,9 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         - Language: {_language ?? "N/A"}
 
         **Task:**
-        Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **PHASE_A**, **SUCCESS**, or **FAILURE**.
+        Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **SUCCESS**, or **FAILURE**.
         - If the feedback is non-actionable (discussion, informational, "keep as is", or about build/generation succeeding), classify as **SUCCESS**.
-        - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **PHASE_A** (TSP_APPLICABLE).
+        - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **TSP_APPLICABLE**.
         - If the feedback is actionable but NO TypeSpec decorators can address it (requires code-level changes), classify as **FAILURE**.
 
         Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.
@@ -137,7 +137,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
         **If Context is EMPTY** (first attempt):
         - Non-actionable (informational, "keep as is", past tense, build success, discussion, question) → **SUCCESS**
-        - Actionable AND a TypeSpec decorator from the reference doc can address it → **PHASE_A**
+        - Actionable AND a TypeSpec decorator from the reference doc can address it → **TSP_APPLICABLE**
         - Actionable BUT no TypeSpec decorator can address it (requires code changes) → **FAILURE**
 
         **What counts as "Non-actionable" (SUCCESS):**
@@ -147,7 +147,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         - Build/generation success with no errors
         - Discussion or questions without a clear directive
 
-        **TypeSpec Decorator Applicability (PHASE_A):**
+        **TypeSpec Decorator Applicability (TSP_APPLICABLE):**
         Consult the reference documentation provided to determine if any supported
         TypeSpec client customization decorator can address the feedback.
 
@@ -168,7 +168,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         Reason: Explicitly states to keep as is
 
         [def-456]
-        Classification: PHASE_A
+        Classification: TSP_APPLICABLE
         Reason: @@clientName decorator can rename the client in client.tsp
 
         [ghi-789]
@@ -188,19 +188,19 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
         ```
         [<item-id>]
-        Classification: [PHASE_A | SUCCESS | FAILURE]
+        Classification: [TSP_APPLICABLE | SUCCESS | FAILURE]
         Reason: <one-line explanation>
 
         [<next-item-id>]
-        Classification: [PHASE_A | SUCCESS | FAILURE]
+        Classification: [TSP_APPLICABLE | SUCCESS | FAILURE]
         Reason: <one-line explanation>
         ```
 
         **Rules:**
         - The `[<item-id>]` header MUST match the exact ID from each feedback item
-        - Classification must be exactly one of: PHASE_A, SUCCESS, or FAILURE
+        - Classification must be exactly one of: TSP_APPLICABLE, SUCCESS, or FAILURE
         - Reason must clearly state which condition triggered the classification
-        - For PHASE_A: mention which TypeSpec decorator(s) can address the feedback
+        - For TSP_APPLICABLE: mention which TypeSpec decorator(s) can address the feedback
         - For FAILURE: explain why no TypeSpec decorator applies
         - For SUCCESS: explain why the feedback is non-actionable or already resolved
         - Do NOT include Next Action or step-by-step guidance (that is handled separately)

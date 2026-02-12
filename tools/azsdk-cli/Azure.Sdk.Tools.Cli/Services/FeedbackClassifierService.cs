@@ -129,7 +129,7 @@ public class FeedbackClassifierService
     /// Parses the batch LLM result with ID-keyed blocks and applies classifications to items.
     /// Expected format:
     /// [item-id]
-    /// Classification: PHASE_A | SUCCESS | FAILURE
+    /// Classification: TSP_APPLICABLE | SUCCESS | FAILURE
     /// Reason: explanation
     /// </summary>
     private void ParseBatchResult(List<FeedbackItem> items, string result)
@@ -181,8 +181,7 @@ public class FeedbackClassifierService
         {
             status = FeedbackStatus.FAILURE;
         }
-        else if (classification.Contains("PHASE_A", StringComparison.OrdinalIgnoreCase) || 
-                 classification.Contains("TSP_APPLICABLE", StringComparison.OrdinalIgnoreCase))
+        else if (classification.Contains("TSP_APPLICABLE", StringComparison.OrdinalIgnoreCase))
         {
             status = FeedbackStatus.TSP_APPLICABLE;
         }
@@ -204,7 +203,7 @@ public class FeedbackClassifierService
 
     /// <summary>
     /// Stage 2: Generates manual update guidance for FAILURE items.
-    /// Runs without file tools (no package path) for speed.
+    /// When packagePath is available, provides file tools for inspecting SDK code.
     /// </summary>
     private async Task GenerateManualUpdateGuidanceAsync(
         FeedbackItem item,
@@ -219,16 +218,28 @@ public class FeedbackClassifierService
                 reason: item.Reason,
                 language: language,
                 codeCustomizationDocUrl: codeCustomizationDocUrl,
-                packagePath: null // No package path — skip file tools for speed
+                packagePath: _packagePath
             );
 
             var guidancePrompt = guidanceTemplate.BuildPrompt();
 
+            // Create file tools for SDK package inspection when path is available
+            var tools = new List<AIFunction>();
+            var maxIterations = 5;
+            
+            if (!string.IsNullOrEmpty(_packagePath))
+            {
+                tools.Add(FileTools.CreateReadFileTool(_packagePath));
+                tools.Add(FileTools.CreateListFilesTool(_packagePath));
+                tools.Add(FileTools.CreateGrepSearchTool(_packagePath));
+                maxIterations = 20; // More iterations needed for file inspection
+            }
+
             var guidanceResult = await _agentRunner.RunAsync(new CopilotAgent<string>
             {
                 Instructions = guidancePrompt,
-                MaxIterations = 5, // No tools, so this should resolve in 1-2 iterations
-                Tools = [] // No file tools for speed
+                MaxIterations = maxIterations,
+                Tools = tools
             }, ct);
 
             _logger.LogInformation("=== Manual Update Guidance (Item {ItemId}) ===", item.Id);

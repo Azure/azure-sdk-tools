@@ -2,13 +2,12 @@
 // Licensed under the MIT License.
 
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
-using OpenAI;
-using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
@@ -16,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services;
 public class APIViewFeedbackServiceTests
 {
     private Mock<IAPIViewService> _mockApiViewService = null!;
-    private Mock<OpenAIClient> _mockOpenAIClient = null!;
+    private Mock<ICopilotClientWrapper> _mockCopilotClient = null!;
     private Mock<IGitHubService> _mockGitHubService = null!;
     private TestLogger<APIViewFeedbackService> _logger = null!;
     private APIViewFeedbackService _service = null!;
@@ -25,12 +24,12 @@ public class APIViewFeedbackServiceTests
     public void Setup()
     {
         _mockApiViewService = new Mock<IAPIViewService>();
-        _mockOpenAIClient = new Mock<OpenAIClient>();
+        _mockCopilotClient = new Mock<ICopilotClientWrapper>();
         _mockGitHubService = new Mock<IGitHubService>();
         _logger = new TestLogger<APIViewFeedbackService>();
         _service = new APIViewFeedbackService(
             _mockApiViewService.Object,
-            _mockOpenAIClient.Object,
+            _mockCopilotClient.Object,
             _mockGitHubService.Object,
             _logger);
     }
@@ -100,9 +99,6 @@ public class APIViewFeedbackServiceTests
         Assert.That(result[0].LineId, Is.EqualTo("id1"));
         Assert.That(result[0].LineText, Is.EqualTo("line text"));
         Assert.That(result[0].Comment, Is.EqualTo("Single comment"));
-        
-        // Verify OpenAI was NOT called for single comment
-        _mockOpenAIClient.Verify(x => x.GetChatClient(It.IsAny<string>()), Times.Never);
     }
 
     #endregion
@@ -386,7 +382,7 @@ repo: 'Azure/azure-rest-api-specs'
 ";
         var service = new APIViewFeedbackService(
             _mockApiViewService.Object,
-            _mockOpenAIClient.Object,
+            _mockCopilotClient.Object,
             _mockGitHubService.Object,
             _logger);
 
@@ -414,7 +410,7 @@ repo: 'Azure/azure-rest-api-specs'
 ";
         var service = new APIViewFeedbackService(
             _mockApiViewService.Object,
-            _mockOpenAIClient.Object,
+            _mockCopilotClient.Object,
             _mockGitHubService.Object,
             _logger);
 
@@ -438,7 +434,7 @@ repo: 'Azure/azure-rest-api-specs'
         var yamlContent = "{ invalid yaml content @#$%";
         var service = new APIViewFeedbackService(
             _mockApiViewService.Object,
-            _mockOpenAIClient.Object,
+            _mockCopilotClient.Object,
             _mockGitHubService.Object,
             _logger);
 
@@ -453,38 +449,6 @@ repo: 'Azure/azure-rest-api-specs'
         Assert.That(commitSha, Is.Null);
         Assert.That(tspProjectPath, Is.Null);
         Assert.That(targetRepo, Is.Null);
-    }
-
-    #endregion
-
-    #region ConsolidateComments Tests
-
-    [Test]
-    public async Task ConsolidateComments_WithOpenAIException_UsesFallback()
-    {
-        // Arrange
-        var comments = new[]
-        {
-            CreateAPIViewComment("thread1", 1, "Comment 1", createdBy: "user1", createdOn: "2024-01-01"),
-            CreateAPIViewComment("thread1", 1, "Comment 2", createdBy: "user2", createdOn: "2024-01-02")
-        };
-        var commentsJson = JsonSerializer.Serialize(comments);
-        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(It.IsAny<string>()))
-            .ReturnsAsync(commentsJson);
-
-        var mockChatClient = new Mock<ChatClient>();
-        mockChatClient.Setup(x => x.CompleteChatAsync(It.IsAny<IEnumerable<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("OpenAI API error"));
-        _mockOpenAIClient.Setup(x => x.GetChatClient(It.IsAny<string>()))
-            .Returns(mockChatClient.Object);
-
-        // Act
-        var result = await _service.GetConsolidatedComments("test-revision");
-
-        // Assert
-        Assert.That(result, Has.Count.EqualTo(1));
-        Assert.That(result[0].Comment, Does.StartWith("["));
-        Assert.That(result[0].Comment, Does.Contain("user1: Comment 1, user2: Comment 2"));
     }
 
     #endregion

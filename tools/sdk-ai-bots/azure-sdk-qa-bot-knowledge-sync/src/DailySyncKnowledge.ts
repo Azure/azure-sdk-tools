@@ -77,7 +77,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         await preprocessSpectorCases(docsDir);
 
         console.log(`processing typespec-azure-resource-manager library`);
-        new TypeSpecProcessor(docsDir, "typespec-azure/packages/typespec-azure-resource-manager/lib").processTypeSpecLibraries();
+        processTypeSpec(docsDir, "typespec-azure/packages/typespec-azure-resource-manager/lib");
 
         console.log('Processing documentation sources...');
         
@@ -869,5 +869,16 @@ async function preprocessSpectorCases(docsDir: string): Promise<void> {
     } catch (error) {
         console.error('Error processing spector cases:', error);
         throw error;
+    }
+}
+
+/**
+ * Process TypeSpec library
+ */
+function processTypeSpec(docsDir: string, relativeLibDir: string) : void {
+    try {
+        new TypeSpecProcessor(docsDir, relativeLibDir).processTypeSpecLibraries();
+    } catch (error) {
+        console.error(`Error processing typespec library: ${relativeLibDir}`, error);
     }
 }

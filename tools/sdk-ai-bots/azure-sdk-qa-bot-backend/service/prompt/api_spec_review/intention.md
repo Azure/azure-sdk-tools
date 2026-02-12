@@ -19,9 +19,13 @@ The question must be classified into one of these categories:
     - How to get my spec PR reviewed quickly?
     - Who can review my spec PR?
 
-- **breaking-changes**: Questions about handling breaking changes in APIs, such as:
+- **api-breaking-changes**: Questions about handling breaking changes in APIs, such as:
     - Breaking change suppression
     - How can I get approval for breaking changes?
+
+- **sdk-breaking-changes**: Questions about handling breaking changes in SDKs, such as:
+    - What is the process for approving SDK breaking changes?
+    - How to get the sdk breaking change review?
 
 - **unknown**: Questions that:
     - Lack sufficient context to determine the specific category

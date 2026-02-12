@@ -65,6 +65,11 @@ func TestRoutingTenant_General(t *testing.T) {
 			"For JS - I see that the pipeline run has passed successfully but in the PR we are getting the broken error: [404] broken link https://learn.microsoft.com/javascript/api/@azure/arm-dell-storage. Do you know what's causing this or how to fix it?",
 			model.TenantID_JavaScriptChannelQaBot,
 		},
+		{
+			"API Spec onboarding",
+			"I am from a  service team and need to work on the SDKs. Here is the API spec. what should I do? ",
+			model.TenantID_AzureSDKOnboarding,
+		},
 	}
 
 	for _, tc := range testcases {

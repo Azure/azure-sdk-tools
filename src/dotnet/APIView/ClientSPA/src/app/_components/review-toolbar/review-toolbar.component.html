@@ -1,7 +1,7 @@
-<div class="review-toolbar d-flex align-items-center ps-2 py-1 pe-2">
+<div class="review-toolbar d-flex align-items-center gap-3 ps-2 py-1 pe-0">
     <!-- Diff Revision Dropdown -->
-    <span *ngIf="diffApiRevisionsMenu.length > 0" class="d-flex align-items-center me-3">
-        <label class="small fw-semibold me-2" for="diff-api-revision-select">Diff :</label>
+    <span *ngIf="diffApiRevisionsMenu.length > 0" class="d-flex align-items-center">
+        <label class="small fw-semibold me-2 toolbar-label" for="diff-api-revision-select">Diff :</label>
         <p-select
             [options]="diffApiRevisionsMenu"
             [(ngModel)]="selectedDiffAPIRevision"
@@ -76,31 +76,50 @@
         </p-select>
     </span>
 
-    <!-- Diff Style Toggle -->
-    <span *ngIf="isDiffView && contentHasDiff !== false" class="d-flex align-items-center diff-style-toggle-wrapper me-3">
-        <p-selectButton (onChange)="onDiffStyleChange($event)" [options]="diffStyleOptions" [(ngModel)]="selectedDiffStyle" [unselectable]="true" optionLabel="label" optionValue="value" styleClass="neutral-toggle-group">
-            <ng-template let-item pTemplate="item">
-                <span [style.font-weight]="item.value === selectedDiffStyle ? '700' : '400'">
-                    {{ item.label }}
-                </span>
-            </ng-template>
-        </p-selectButton>
+    <!-- Diff Style Dropdown -->
+    <span *ngIf="isDiffView && contentHasDiff !== false" class="d-flex align-items-center">
+        <p-select
+            [options]="diffStyleOptions"
+            [(ngModel)]="selectedDiffStyle"
+            optionLabel="label"
+            optionValue="value"
+            (onChange)="onDiffStyleChange($event)"
+            styleClass="diff-style-dropdown"
+            [appendTo]="'body'"
+            title="Diff style">
+        </p-select>
     </span>
 
     <!-- Diff Navigation Buttons -->
-    <div *ngIf="isDiffView && contentHasDiff" class="me-3">
+    <div *ngIf="isDiffView && contentHasDiff" class="d-flex align-items-center">
         <p-buttongroup>
-            <p-button (onClick)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" [text]="true" size="small">
-                <i class="bi bi-arrow-up"></i>
+            <p-button (onClick)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" [text]="true" size="small" ariaLabel="Previous diff" title="Previous diff">
+                <i class="bi bi-chevron-up"></i>
             </p-button>
-            <p-button (onClick)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.next)" [text]="true" size="small">
-                <i class="bi bi-arrow-down"></i>
+            <p-button (onClick)="diffNavigationEmitter.emit(CodeLineRowNavigationDirection.next)" [text]="true" size="small" ariaLabel="Next diff" title="Next diff">
+                <i class="bi bi-chevron-down"></i>
+            </p-button>
+        </p-buttongroup>
+    </div>
+
+    <!-- Spacer to push Comment Nav and Search to right -->
+    <div class="flex-grow-1"></div>
+
+    <!-- Comment Navigation Buttons -->
+    <div *ngIf="showCommentsSwitch" class="d-flex align-items-center me-2">
+        <span class="small fw-semibold me-1 toolbar-label">Comment Nav</span>
+        <p-buttongroup>
+            <p-button (onClick)="commentNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" [text]="true" size="small" ariaLabel="Previous comment" title="Previous comment">
+                <i class="bi bi-chevron-up"></i>
+            </p-button>
+            <p-button (onClick)="commentNavigationEmitter.emit(CodeLineRowNavigationDirection.next)" [text]="true" size="small" ariaLabel="Next comment" title="Next comment">
+                <i class="bi bi-chevron-down"></i>
             </p-button>
         </p-buttongroup>
     </div>
 
     <!-- Search Bar and Controls -->
-    <div class="ms-auto d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2">
         <p-iconField iconPosition="left">
             <p-inputIcon styleClass="pi pi-search" />
             <input type="text" [formControl]="codeLineSearchText" pInputText placeholder="Search" class="review-search-input" data-clarity-region="toolbar-review-search-input" style="width: 200px;"/>
@@ -121,7 +140,12 @@
                 </p-button>
             </p-buttongroup>
         </div>
-        
+
+        <!-- Copy Review Text Button -->
+        <button type="button" class="search-nav-btn" (click)="copyReviewText()" data-clarity-region="toolbar-copy-review-text" aria-label="Copy review text" [title]="copyTextSuccess ? 'Review text copied!' : 'Copy review text'">
+            <i class="bi" [ngClass]="copyTextSuccess ? 'bi-clipboard-check' : 'bi-clipboard'"></i>
+        </button>
+
         <!-- Settings Gear Icon with Popover -->
         <button type="button" class="search-nav-btn settings-btn" (click)="settingsPanel.toggle($event)" data-clarity-region="toolbar-settings-button" aria-label="Page settings" title="Page settings">
             <i class="bi bi-gear"></i>

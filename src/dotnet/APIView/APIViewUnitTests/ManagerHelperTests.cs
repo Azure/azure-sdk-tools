@@ -164,5 +164,45 @@ namespace APIViewUnitTests
 
             Assert.Equal("https://spa/review/rId?activeApiRevisionId=aId&diffApiRevisionId=dId", url);
         }
+
+        [Fact]
+        public void Returns_Valid_Uri_With_ElementId()
+        {
+            var config = GetConfig("https://host", "https://spa");
+            var services = new List<LanguageService>
+            {
+                new DummyLanguageService("TestLanguage", false)
+            };
+
+            var url = ManagerHelpers.ResolveReviewUrl(
+                reviewId: "rId",
+                apiRevisionId: "aId",
+                language: "TestLanguage",
+                configuration: config,
+                languageServices: services,
+                elementId: "Azure.Storage.BlobClient");
+
+            Assert.Equal("https://host/Assemblies/Review/rId?revisionId=aId#Azure.Storage.BlobClient", url);
+        }
+
+        [Fact]
+        public void Returns_Valid_Spa_Uri_With_ElementId()
+        {
+            var config = GetConfig("https://host", "https://spa");
+            var services = new List<LanguageService>
+            {
+                new DummyLanguageService("TestLanguage", true)
+            };
+
+            var url = ManagerHelpers.ResolveReviewUrl(
+                reviewId: "rId",
+                apiRevisionId: "aId",
+                language: "TestLanguage",
+                configuration: config,
+                languageServices: services,
+                elementId: "Azure.Storage.BlobClient");
+
+            Assert.Equal("https://spa/review/rId?activeApiRevisionId=aId&nId=Azure.Storage.BlobClient", url);
+        }
     }
 }

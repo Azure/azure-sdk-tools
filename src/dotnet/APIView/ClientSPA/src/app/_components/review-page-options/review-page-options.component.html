@@ -1,7 +1,7 @@
 <ng-container *ngIf="loadingStatus === 'completed'; else loadingOrFailedTemplate">
-    <app-page-options-section sectionName="Approval">
-    <ul class="list-group">
-        <li class="list-group-item text-center">
+    <div class="px-1 pt-4">
+        <h6 class="mb-2 fw-semibold">Approval</h6>
+        <div class="text-center py-2">
             <ng-container *ngIf="userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)">
                 <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
                     <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
@@ -27,8 +27,8 @@
             <ng-template #noAPIRevisionApprovers>
                 <span class="small text-muted mt-1">Current Revision approval pending</span>
             </ng-template>
-        </li>
-        <li class="list-group-item text-center" *ngIf="review?.language !== 'TypeSpec' && review?.language !== 'Swagger'">
+        </div>
+        <div class="text-center py-2" *ngIf="review?.language !== 'TypeSpec' && review?.language !== 'Swagger'">
             <ng-container *ngIf="reviewIsApproved; else reviewIsNotApproved">
                 <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
@@ -50,8 +50,8 @@
             <ng-template #userIsNotAPreferedApprover>
                 <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
-        </li>
-        <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">
+        </div>
+        <div class="text-center py-2" *ngIf="canRequestNamespaceReview">
             <div class="d-grid gap-2">
                 <button class="{{namespaceReviewBtnClass}}" type="button"
                         (click)="handleNamespaceReviewAction()"
@@ -62,99 +62,154 @@
                 </button>
             </div>
             <span *ngIf="namespaceReviewMessage" class="small text-muted mt-2 d-block">{{namespaceReviewMessage}}</span>
-        </li>
-    </ul>
-    </app-page-options-section>
+        </div>
+    </div>
 
-    <app-page-options-section *ngIf="associatedPullRequests.length > 0" sectionName="Associated Pull Requests">
-    <ul class="list-group">
-        <li class="list-group-item" *ngFor="let pullRequest of associatedPullRequests">
-            <a href="https://github.com/{{pullRequest.repoName}}/pull/{{pullRequest.pullRequestNumber}}" target="_blank">{{pullRequest.repoName}}/{{pullRequest.pullRequestNumber}}</a>
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0" sectionName="Associated API Revisions" [collapsedInput]="true">
-    <ul class="list-group">
-        <li class="list-group-item" *ngFor="let pullRequest of pullRequestsOfAssociatedAPIRevisions">
-            <span>
-                <img src="{{assetsPath}}/images/{{ pullRequest.language | languageNames: userProfile?.preferences?.theme }}-original.svg" class="me-2" width="20" height="20">
-                <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank" ><small>{{pullRequest.packageName}}</small></a>
+    <hr class="my-2">
+    <div class="px-1 py-2">
+        <div class="d-flex justify-content-between align-items-center mb-2 cursor-pointer"
+            role="button"
+            tabindex="0"
+            aria-label="Select reviewers"
+            data-clarity-region="reviewers-gear"
+            (click)="reviewersPanel.toggle($event)"
+            (keydown.enter)="reviewersPanel.toggle($event)"
+            (keydown.space)="reviewersPanel.toggle($event); $event.preventDefault()">
+            <h6 class="mb-0 fw-semibold">Reviewers</h6>
+            <span class="btn btn-link p-0 text-muted" aria-hidden="true" tabindex="-1" title="Select reviewers">
+                <i class="bi bi-gear"></i>
             </span>
-        </li>
-    </ul>
-    </app-page-options-section>
+        </div>
+        <div *ngIf="selectedApprovers.length > 0; else noReviewers">
+            <div *ngFor="let approver of selectedApprovers" class="d-flex align-items-center py-1">
+                <img src="https://github.com/{{ approver }}.png?size=30" class="me-2 rounded-circle" width="20" height="20" [attr.alt]="approver + ' avatar'" />
+                <span class="small">{{ approver }}</span>
+            </div>
+        </div>
+        <ng-template #noReviewers>
+            <span class="small text-muted">No reviewers assigned</span>
+        </ng-template>
+    </div>
 
-    <app-page-options-section sectionName="Page Utils">
-    <ul class="list-group">
-        <li class="list-group-item" *ngIf="showCommentsSwitch">
-            <label class="small mx-1 fw-semibold">Comment:</label>
-            <div class="d-grid gap-2">
-                <div class="btn-group btn-group-sm" role="group" aria-label="Comment Navigation">
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="commentThreadNavigationEmitter.emit(CodeLineRowNavigationDirection.prev)" data-clarity-region="review-comment-prev">
-                        <i class="bi bi-arrow-up"></i>Prev</button>
-                    <button type="button" class="btn btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="top" (click)="commentThreadNavigationEmitter.emit(CodeLineRowNavigationDirection.next)" data-clarity-region="review-comment-next">
-                        <i class="bi bi-arrow-down"></i>Next</button>
+    <p-popover #reviewersPanel styleClass="reviewers-panel" (onHide)="resetReviewerSearch()">
+        <ng-template pTemplate="content">
+            <div style="width: 300px;">
+                <div class="p-2 border-bottom">
+                    <div class="position-relative">
+                        <input type="text"
+                            class="form-control form-control-sm pe-4"
+                            placeholder="Type or choose a user"
+                            aria-label="Search reviewers"
+                            [(ngModel)]="reviewerSearchText"
+                            (input)="filterReviewers()">
+                        <button *ngIf="reviewerSearchText"
+                            type="button"
+                            class="btn btn-link btn-sm position-absolute end-0 top-50 translate-middle-y p-0 me-2 text-muted"
+                            (click)="resetReviewerSearch()"
+                            aria-label="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="reviewer-list" style="max-height: 300px; overflow-y: auto;">
+                    <div *ngIf="filteredApprovers.length === 0" class="px-3 py-2 text-muted small">
+                        Nothing to show
+                    </div>
+                    <div *ngFor="let approver of filteredApprovers"
+                        class="d-flex align-items-center px-3 py-2 reviewer-item cursor-pointer"
+                        [class.selected]="selectedApprovers.includes(approver)"
+                        role="checkbox"
+                        [attr.aria-checked]="selectedApprovers.includes(approver)"
+                        tabindex="0"
+                        (click)="toggleReviewer(approver)"
+                        (keydown.enter)="toggleReviewer(approver)"
+                        (keydown.space)="toggleReviewer(approver); $event.preventDefault()">
+                        <i class="bi bi-check me-2" style="font-size: 1.25rem;" [style.visibility]="selectedApprovers.includes(approver) ? 'visible' : 'hidden'" aria-hidden="true"></i>
+                        <img src="https://github.com/{{ approver }}.png?size=30" class="me-2 rounded-circle" width="20" height="20" [attr.alt]="approver + ' avatar'" />
+                        <span class="small">{{ approver }}</span>
+                    </div>
                 </div>
             </div>
-        </li>
-        <li class="list-group-item">
+        </ng-template>
+    </p-popover>
+
+    <ng-container *ngIf="review && userProfile && userProfile.userName && isCopilotReviewSupported">
+        <hr class="my-2">
+        <div class="px-1 py-2">
+            <h6 class="mb-2 fw-semibold">Copilot</h6>
             <div class="d-grid gap-2">
-                <button type="button" class="btn btn-outline-primary" tooltipPosition="top" (click)="copyReviewText($event)" data-clarity-region="copy-review-text-button">
-                    <i class="bi bi-clipboard"></i>
-                    {{ copyReviewTextButtonText }}
+                <button type="button" class="btn btn-outline-primary" tooltipPosition="top" [disabled]="generateAIReviewButtonText === AI_REVIEW_BUTTON_TEXT.GENERATING" (click)="generateAIReview()" data-clarity-region="generate-copilot-review-button">
+                    <i *ngIf="aiReviewGenerationState === 'NotStarted' || aiReviewGenerationState == 'Completed'" class="bi bi-stars"></i>
+                    <div *ngIf="aiReviewGenerationState == 'InProgress'" class="spinner-grow spinner-grow-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    {{ generateAIReviewButtonText }}
                 </button>
-                <ng-container *ngIf="review && userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName) && isCopilotReviewSupported">
-                    <button type="button" class="btn btn-outline-primary" tooltipPosition="top" [disabled]="generateAIReviewButtonText == 'Generating review...'" (click)="generateAIReview()" data-clarity-region="generate-copilot-review-button">
-                        <i *ngIf="aiReviewGenerationState === 'NotStarted' || aiReviewGenerationState == 'Completed'" class="bi bi-stars"></i>
-                        <div *ngIf="aiReviewGenerationState == 'InProgress'" class="spinner-grow spinner-grow-sm" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        {{ generateAIReviewButtonText }}
-                    </button>
-                    <button *ngIf="aiReviewGenerationState == 'Completed' && userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)" type="button" class="btn btn-outline-danger" (click)="clearAutoGeneratedComments()"><i class="bi bi-x-lg me-2"></i>Clear copilot comments</button>
-                </ng-container>
             </div>
-        </li>
-    </ul>
-    </app-page-options-section>
+        </div>
+    </ng-container>
+
+    <hr class="my-2">
+    <div class="px-1 py-2">
+        <h6 class="mb-2 fw-semibold">Notifications</h6>
+        <div class="d-grid gap-2">
+            <button type="button"
+                [ngClass]="subscribeSwitch ? 'btn btn-primary' : 'btn btn-outline-primary'"
+                (click)="onSubscribeButtonClick()"
+                data-clarity-region="toggle-subscribe">
+                <i class="bi" [ngClass]="subscribeSwitch ? 'bi-bell-slash' : 'bi-bell'"></i>
+                {{ subscribeSwitch ? 'Unsubscribe' : 'Subscribe' }}
+            </button>
+        </div>
+        <span class="small text-muted mt-2 d-block">
+            {{ subscribeSwitch ? 'You\'re receiving notifications for this review.' : 'You\'re not receiving notifications for this review.' }}
+        </span>
+    </div>
+
+    <ng-container *ngIf="associatedPullRequests.length > 0">
+        <hr class="my-2">
+        <div class="px-1 py-2">
+            <h6 class="mb-2 fw-semibold">Associated Pull Requests</h6>
+            <div *ngFor="let pullRequest of associatedPullRequests" class="py-1">
+                <a href="https://github.com/{{pullRequest.repoName}}/pull/{{pullRequest.pullRequestNumber}}" target="_blank">{{pullRequest.repoName}}/{{pullRequest.pullRequestNumber}}</a>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-container *ngIf="pullRequestsOfAssociatedAPIRevisions.length > 0">
+        <hr class="my-2">
+        <div class="px-1 py-2">
+            <h6 class="mb-2 fw-semibold">Associated API Revisions</h6>
+            <div *ngFor="let pullRequest of pullRequestsOfAssociatedAPIRevisions" class="py-1">
+                <span>
+                    <img src="{{assetsPath}}/images/{{ pullRequest.language | languageNames: userProfile?.preferences?.theme }}-original.svg" class="me-2" width="20" height="20">
+                    <a [href]="getPullRequestsOfAssociatedAPIRevisionsUrl(pullRequest)" target="_blank"><small>{{pullRequest.packageName}}</small></a>
+                </span>
+            </div>
+        </div>
+    </ng-container>
+
+    <ng-container *ngIf="isAdmin">
+        <hr class="my-2">
+        <div class="px-1 py-2">
+            <h6 class="mb-2 fw-semibold">Admin Actions</h6>
+            <div class="d-grid gap-2">
+                <button *ngIf="(aiReviewGenerationState == 'Completed' || activeAPIRevision?.hasAutoGeneratedComments) && isCopilotReviewSupported" type="button" class="btn btn-outline-danger" (click)="clearAutoGeneratedComments()">
+                    <i class="bi bi-x-lg me-2"></i>Clear copilot comments
+                </button>
+                <button type="button"
+                    class="btn btn-outline-danger"
+                    (click)="deleteReview()"
+                    pTooltip="Delete this review and all its revisions"
+                    tooltipPosition="top"
+                    data-clarity-region="delete-review-button">
+                    <i class="bi bi-trash"></i> Delete Review
+                </button>
+            </div>
+        </div>
+    </ng-container>
 
 
-    <app-page-options-section sectionName="API Revision Options">
-    <ul class="list-group">
-        <li class="list-group-item">
-            <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
-            <p-multiSelect
-                [options]="preferredApprovers"
-                [(ngModel)]="selectedApprovers"
-                placeholder="Add Reviewers"
-                [showClear]="true"
-                (onPanelHide)="handleAssignedReviewersChange()"
-                styleClass="full-width-input"
-                data-clarity-region="reviewers-multiselect">
-                    <ng-template let-approver pTemplate="item">
-                        <div class="flex align-items-center gap-2">
-                            <img
-                                src="https://github.com/{{ approver }}.png?size=30"
-                                class="me-2 rounded reviewer-avatar" />
-                            <span>{{ approver }}</span>
-                        </div>
-                    </ng-template>
-            </p-multiSelect>
-        </li>
-    </ul>
-    </app-page-options-section>
-
-    <app-page-options-section sectionName="Review Options">
-    <ul class="list-group">
-        <li class="list-group-item">
-            <p-toggleswitch [(ngModel)]="subscribeSwitch"
-            (onChange)="onSubscribeSwitchChange($event)"
-            data-clarity-region="toggle-subscribe" />
-            <label class="ms-2">Subscribe</label>
-        </li>
-    </ul>
-    </app-page-options-section>
 
     <p-dialog header="Approve APIRevision"
     [modal]="true" [(visible)]="showAPIRevisionApprovalModal"

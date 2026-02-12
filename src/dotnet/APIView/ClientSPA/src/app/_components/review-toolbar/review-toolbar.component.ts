@@ -65,6 +65,8 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   @Output() showHiddenAPIEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter: EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter: EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
+  @Output() copyReviewTextEmitter: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() commentNavigationEmitter: EventEmitter<number> = new EventEmitter<number>();
 
   private destroy$ = new Subject<void>();
 
@@ -108,6 +110,9 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   // Search properties
   codeLineSearchText: FormControl = new FormControl('');
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
+
+  // Copy button state
+  copyTextSuccess: boolean = false;
 
   // Safe display properties
   currentMatchIndexValue: number = 0;
@@ -303,7 +308,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
     const searchInfo = this.codeLineSearchInfo;
     if (searchInfo && searchInfo.currentMatch && searchInfo.totalMatchCount !== undefined && direction !== 0) {
       let newMatch = searchInfo.currentMatch;
-      
+
       if (direction > 0) {
         if (newMatch.next) {
           newMatch = newMatch.next;
@@ -321,7 +326,7 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
           }
         }
       }
-      
+
       this.codeLineSearchInfoEmitter.emit(new CodeLineSearchInfo(newMatch, searchInfo.totalMatchCount));
     }
   }
@@ -329,6 +334,14 @@ export class ReviewToolbarComponent implements OnInit, OnChanges {
   clearReviewSearch() {
     this.codeLineSearchText.setValue('');
     this.codeLineSearchTextEmitter.emit('');
+  }
+
+  copyReviewText() {
+    this.copyTextSuccess = true;
+    this.copyReviewTextEmitter.emit(this.isDiffView);
+    setTimeout(() => {
+      this.copyTextSuccess = false;
+    }, 1500);
   }
 
   mapRevisionToMenu(apiRevisions: APIRevision[]) {

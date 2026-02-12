@@ -42,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string linkSdkPrCommandName = "link-sdk-pr";
         private const string listOverdueReleasePlansCommandName = "list-overdue";
         private const string updateApiSpecPullRequestCommandName = "update-spec-pr";
+        private const string getServiceDetailsCommandName = "get-service-details";
         private const string abandonReleasePlanCommandName = "abandon";
 
         // MCP Tool Names
@@ -54,6 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string CheckApiSpecReadyToolName = "azsdk_check_api_spec_ready_for_sdk";
         private const string LinkSdkPullRequestToolName = "azsdk_link_sdk_pull_request_to_release_plan";
         private const string UpdateApiSpecPullRequestToolName = "azsdk_update_api_spec_pull_request_in_release_plan";
+        private const string GetServiceDetailsToolName = "azsdk_get_service_details_by_typespec_path";
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
 
         // Options
@@ -72,6 +74,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-path")
         {
             Description = "Path to TypeSpec project",
+            Required = true,
+        };
+
+        private readonly Option<string> typeSpecProjectOpt = new("--typespec-project")
+        {
+            Description = "TypeSpec project path to find product information",
             Required = true,
         };
 
@@ -215,6 +223,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             new McpCommand(linkSdkPrCommandName, "Link SDK pull request to release plan", LinkSdkPullRequestToolName) { languageOpt, pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
             new McpCommand(listOverdueReleasePlansCommandName, "List in-progress release plans that are past their SDK release deadline") { notifyOwnersOpt, azureSDKEmailerUriOpt, },
             new McpCommand(updateApiSpecPullRequestCommandName, "Update TypeSpec pull request URL in a release plan", UpdateApiSpecPullRequestToolName) { pullRequestOpt, workItemIdOpt, releasePlanNumberOpt, },
+            new McpCommand(getServiceDetailsCommandName, "Get service and product details (service tree ID, service ID, package display name) in service tree for TypeSpec project", GetServiceDetailsToolName) { typeSpecProjectOpt, },
             new McpCommand(abandonReleasePlanCommandName, "Abandon a release plan", AbandonReleasePlanToolName) { workItemIdOpt, releasePlanNumberOpt, }
         ];
 
@@ -268,6 +277,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 case updateApiSpecPullRequestCommandName:
                     return await UpdateSpecPullRequestInReleasePlan(specPullRequestUrl: commandParser.GetValue(pullRequestOpt), workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt));
 
+                case getServiceDetailsCommandName:
+                    return await GetProductByTypeSpecPath(commandParser.GetValue(typeSpecProjectOpt));
                 case abandonReleasePlanCommandName:
                     return await AbandonReleasePlan(workItemId: commandParser.GetValue(workItemIdOpt), releasePlanId: commandParser.GetValue(releasePlanNumberOpt));
 
@@ -1264,6 +1275,53 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return new ReleaseWorkflowResponse
                 {
                     ResponseError = $"Failed to update TypeSpec pull request URL in release plan: {ex.Message}",
+                };
+            }
+        }
+
+        [McpServerTool(Name = GetServiceDetailsToolName), Description("Get service and service tree product details for a product using TypeSpec project path: Get service tree product details (service tree ID, service ID, package display name, product service tree link).")]
+        public async Task<ProductInfoResponse> GetProductByTypeSpecPath(string typeSpecProjectPath)
+        {
+            try
+            {
+                logger.LogInformation("Finding product information for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+
+                // Validate input
+                if (string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                {
+                    return new ProductInfoResponse
+                    {
+                        ResponseError = "TypeSpec project path cannot be empty.",
+                        TypeSpecProject = typeSpecProjectPath
+                    };
+                }
+
+                // Get product info from DevOps service
+                var productInfo = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(typeSpecProjectPath);
+
+                if (productInfo == null)
+                {
+                    return new ProductInfoResponse
+                    {
+                        Message = $"No release plan found for TypeSpec project path: {typeSpecProjectPath}",
+                        TypeSpecProject = typeSpecProjectPath
+                    };
+                }
+
+                return new ProductInfoResponse
+                {
+                    ProductInfo = productInfo,
+                    Message = "Successfully retrieved product information.",
+                    TypeSpecProject = typeSpecProjectPath
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to find product information for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                return new ProductInfoResponse
+                {
+                    ResponseError = $"Failed to find product information: {ex.Message}",
+                    TypeSpecProject = typeSpecProjectPath
                 };
             }
         }

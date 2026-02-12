@@ -61,7 +61,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync((ReviewListItemModel)null); // No existing review
 
             _mockReviewManager.Setup(m => m.CreateReviewAsync(
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>()))
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>(), It.IsAny<string>()))
                 .ReturnsAsync(new ReviewListItemModel
                 {
                     Id = "new-review-id",
@@ -83,7 +83,8 @@ namespace APIViewUnitTests
                 "TestPackage",
                 "C#",
                 false,
-                It.Is<PackageType?>(pt => pt.HasValue && pt.Value == expectedPackageType)),
+                It.Is<PackageType?>(pt => pt.HasValue && pt.Value == expectedPackageType),
+                null),
                 Times.Once);
         }
 
@@ -103,7 +104,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync((ReviewListItemModel)null);
 
             _mockReviewManager.Setup(m => m.CreateReviewAsync(
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>()))
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>(), It.IsAny<string>()))
                 .ReturnsAsync(new ReviewListItemModel
                 {
                     Id = "new-review-id",
@@ -125,7 +126,8 @@ namespace APIViewUnitTests
                 "TestPackage",
                 "C#",
                 false,
-                It.Is<PackageType?>(pt => !pt.HasValue)),
+                It.Is<PackageType?>(pt => !pt.HasValue),
+                null),
                 Times.Once);
         }
 
@@ -562,7 +564,7 @@ namespace APIViewUnitTests
             };
 
             _mockReviewManager.Setup(m => m.CreateReviewAsync(
-                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>()))
+                    It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<PackageType?>(), It.IsAny<string>()))
                 .ReturnsAsync(newReview);
 
             _mockApiRevisionsManager.Setup(m => m.CreateAPIRevisionAsync(
@@ -574,7 +576,7 @@ namespace APIViewUnitTests
             var (review, _) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
-            _mockReviewManager.Verify(m => m.CreateReviewAsync("NewPackage", "Python", false, null), Times.Once);
+            _mockReviewManager.Verify(m => m.CreateReviewAsync("NewPackage", "Python", false, null, null), Times.Once);
             review.Should().NotBeNull();
             review.Id.Should().Be("new-review-id");
         }

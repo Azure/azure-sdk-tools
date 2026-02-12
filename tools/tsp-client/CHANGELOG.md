@@ -1,5 +1,10 @@
 # Release
 
+## Unreleased - 0.32.0
+
+- Remove `autorest`, `autorest/core`, and `autorest/openapi-to-typespec` from tsp-client dependencies.
+- Use `npx` to call openapi-to-typespec conversion tool.
+
 ## 2025-11-24 - 0.31.0
 
 - Add support for batch library generation. See [README](./README.md) for more information on how to configure.

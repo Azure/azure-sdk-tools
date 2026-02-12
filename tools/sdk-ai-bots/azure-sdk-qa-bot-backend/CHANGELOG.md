@@ -1,6 +1,12 @@
 # Release History
 
-## 0.9.0 (unreleased)
+## 0.9.1 (unreleased)
+
+### Features Added
+
+* Enable tenant routing for `azure_sdk_qa_bot` tenant.
+
+## 0.9.0 (2026-02-02)
 
 ### Features Added
 

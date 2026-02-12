@@ -50,16 +50,19 @@ Use the **Azure Identity SDK** with `DefaultAzureCredential`, which automaticall
 **C# Example:**
 
 ```csharp
+using Azure.Core;
 using Azure.Identity;
+using System.Net.Http.Headers;
 
 const string scope = "api://azure-sdk-qa-bot/.default"; // Use api://azure-sdk-qa-bot-dev/.default for dev
 
 var credential = new DefaultAzureCredential();
 var token = await credential.GetTokenAsync(
-    new TokenRequestContext(new[] { scope })
+    new TokenRequestContext(new[] { scope }), 
+    CancellationToken.None
 );
 
-// Use token.Token in Authorization header
+// Assumes httpClient is an existing HttpClient instance
 httpClient.DefaultRequestHeaders.Authorization = 
     new AuthenticationHeaderValue("Bearer", token.Token);
 ```

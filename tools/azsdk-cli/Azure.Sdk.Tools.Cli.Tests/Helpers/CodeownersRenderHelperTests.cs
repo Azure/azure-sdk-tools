@@ -63,31 +63,15 @@ public class CodeownersRenderHelperTests
     [TestCase("azure-sdk-for-net", "net", ".NET")]
     public void GetLanguageFromRepoName_ReturnsExpectedLanguage(string repoName, string expectedSuffix, string expectedLanguage)
     {
-        // Setup mock to return expected language for the suffix
-        _mockInputSanitizer.Setup(s => s.SanitizeLanguage(expectedSuffix)).Returns(expectedLanguage);
-
-        var helper = new CodeownersRenderHelper(
-            _mockDevOpsService.Object,
-            _mockPowershellHelper.Object,
-            _mockInputSanitizer.Object,
-            _logger);
-
-        var result = helper.GetLanguageFromRepoName(repoName);
+        var result = CodeownersRenderHelper.GetLanguageFromRepoName(repoName);
 
         Assert.That(result, Is.EqualTo(expectedLanguage));
-        _mockInputSanitizer.Verify(s => s.SanitizeLanguage(expectedSuffix), Times.Once);
     }
 
     [Test]
     public void GetLanguageFromRepoName_ThrowsForInvalidRepoName()
     {
-        var helper = new CodeownersRenderHelper(
-            _mockDevOpsService.Object,
-            _mockPowershellHelper.Object,
-            _mockInputSanitizer.Object,
-            _logger);
-
-        Assert.Throws<ArgumentException>(() => helper.GetLanguageFromRepoName("unknown-repo"));
+        Assert.Throws<ArgumentException>(() => CodeownersRenderHelper.GetLanguageFromRepoName("unknown-repo"));
     }
 
     #endregion

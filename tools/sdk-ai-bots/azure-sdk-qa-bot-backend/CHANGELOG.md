@@ -1,6 +1,6 @@
 # Release History
 
-## 0.9.1 (unreleased)
+## 0.9.1 (2026-02-13)
 
 ### Features Added
 
@@ -10,6 +10,7 @@
 
 * Set fixed seed to reduce randomness of LLM
 * Adjust prompt to adopt GPT-5 series models
+* Migrate azopenai sdk to official openai go library
 
 ## 0.9.0 (2026-02-02)
 

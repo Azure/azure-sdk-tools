@@ -14,8 +14,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
 /// Helper class for classifying feedback items using LLM-powered classification.
-/// Uses a single batch LLM call to classify all items at once, then generates
-/// manual update guidance for FAILURE items.
+/// Uses chunked batch LLM calls to classify items (default 8 per batch for accuracy),
+/// then generates manual update guidance for FAILURE items.
 /// </summary>
 public class FeedbackClassifierService
 {
@@ -25,15 +25,18 @@ public class FeedbackClassifierService
     private readonly string _specRepoBasePath;
     private readonly string? _packagePath;
     private readonly ITypeSpecHelper _typeSpecHelper;
+    private readonly int _batchSize;
 
     public const int MaxIterations = 4;
+    public const int DefaultBatchSize = 8;
 
     public FeedbackClassifierService(
         ICopilotAgentRunner agentRunner,
         ILoggerFactory loggerFactory,
         ITypeSpecHelper typeSpecHelper,
         string tspProjectPath,
-        string? packagePath = null)
+        string? packagePath = null,
+        int? batchSize = null)
     {
         _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
@@ -41,10 +44,11 @@ public class FeedbackClassifierService
         _tspProjectPath = tspProjectPath;
         _specRepoBasePath = GetSpecRepoBasePath(tspProjectPath);
         _packagePath = packagePath;
+        _batchSize = batchSize ?? DefaultBatchSize;
     }
 
     /// <summary>
-    /// Classifies multiple feedback items in a single batch LLM call, then generates
+    /// Classifies multiple feedback items in chunked batch LLM calls, then generates
     /// manual update guidance for FAILURE items individually.
     /// </summary>
     public async Task<bool> ClassifyAsync(
@@ -60,9 +64,23 @@ public class FeedbackClassifierService
             return true;
         }
 
-        // Stage 1: Batch classify all items in a single LLM call
-        _logger.LogInformation("Stage 1: Batch classifying {Count} items in a single LLM call", customizableItems.Count);
-        await BatchClassifyAsync(customizableItems, globalContext, language, serviceName, ct);
+        // Stage 1: Batch classify items in chunks for to balance accuracy and speed
+        var chunks = customizableItems
+            .Select((item, index) => new { item, index })
+            .GroupBy(x => x.index / _batchSize)
+            .Select(g => g.Select(x => x.item).ToList())
+            .ToList();
+
+        _logger.LogInformation("Stage 1: Classifying {Count} items in {ChunkCount} batch(es) of up to {BatchSize} items", 
+            customizableItems.Count, chunks.Count, _batchSize);
+
+        for (int i = 0; i < chunks.Count; i++)
+        {
+            var chunk = chunks[i];
+            _logger.LogInformation("Processing batch {BatchNum}/{TotalBatches} ({ItemCount} items)", 
+                i + 1, chunks.Count, chunk.Count);
+            await BatchClassifyAsync(chunk, globalContext, language, serviceName, ct);
+        }
 
         // Stage 2: Generate manual update guidance for FAILURE items (no file tools for speed)
         var failureItems = customizableItems.Where(i => i.Status == FeedbackStatus.FAILURE).ToList();

@@ -180,8 +180,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
-    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
-    public Task<CommandResponse> UpdateAsync(
+    [Description("Classify feedback and update customized TypeSpec-generated client code")]
+    public Task<CommandResponse> ClassifyAndUpdate(
         string commitSha,
         string packagePath,
         string tspProjectPath,
@@ -362,7 +362,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                     ResponseError = "Commit SHA is required." 
                 };
             }
-            return await RegenerateAndApplyCodeCustomizations(commitSha, packagePath, ct);
+            return await UpdateAsync(commitSha, packagePath, tspProjectPath, ct);
         }
         catch (Exception ex)
         {
@@ -687,10 +687,12 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <summary>
     /// Applies code customizations: regenerates SDK from TypeSpec and patches customization files.
     /// </summary>
-    private async Task<CustomizedCodeUpdateResponse> RegenerateAndApplyCodeCustomizations(
+    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
+    public async Task<CustomizedCodeUpdateResponse> UpdateAsync(
         string commitSha,
         string packagePath,
-        CancellationToken ct)
+        string tspProjectPath,
+        CancellationToken ct = default)
     {
         var languageService = await GetLanguageServiceAsync(packagePath, ct);
         if (!languageService.IsCustomizedCodeUpdateSupported)

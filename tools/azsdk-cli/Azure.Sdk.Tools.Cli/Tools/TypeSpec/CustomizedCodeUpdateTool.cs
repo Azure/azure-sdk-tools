@@ -262,6 +262,15 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
                 // Step 1: Preprocess feedback
                 var feedbackContext = await PreprocessFeedback(apiViewUrl, plainTextFeedback, ct);
+                if (feedbackContext == null)
+                {
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Message = "Failed to preprocess feedback.",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                        ResponseError = "Failed to preprocess feedback from provided sources."
+                    };
+                }
 
                 // Initialize tracking lists, which items set to customizable for now.
                 var customizable = feedbackContext.FeedbackItems.ToList();
@@ -286,6 +295,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 OutputResults(customizable, success, failure, globalContext.ToString());
                 return BuildResponse(success, failure, customizable);
 
+                /* Temporarily commented out - unreachable during testing phase
                 // Step 3: Apply TypeSpec customizations
                 logger.LogInformation("=== Applying TypeSpec Customizations ===");
                 var customizationResult = await ApplyCustomizations(customizable, tspProjectPath, language, globalContext.ToString(), ct);
@@ -350,6 +360,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 // Step 7: Output final results
                 OutputResults(customizable, success, failure, globalContext.ToString());
                 return BuildResponse(success, failure, customizable);
+                End of temporarily commented out section */
             }
 
             // Otherwise, run standard update flow without classification
@@ -395,6 +406,11 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         {
             var feedbackItemLogger = loggerFactory.CreateLogger<PlainTextFeedbackItem>();
             feedbackItem = new PlainTextFeedbackItem(plainTextFeedback, feedbackItemLogger);
+        }
+
+        if (feedbackItem == null)
+        {
+            return null;
         }
 
         var context = await feedbackItem.PreprocessAsync(ct);

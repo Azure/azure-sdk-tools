@@ -437,11 +437,11 @@ public sealed partial class JavaLanguageService : LanguageService
             // Update the version
             versionElement.Value = version;
 
-            // Save the updated pom.xml
+            // Save the updated pom.xml, preserving original formatting
             logger.LogDebug("Saving updated pom.xml to {PomPath}", pomPath);
             using (var stream = File.Create(pomPath))
             {
-                await doc.SaveAsync(stream, SaveOptions.None, ct);
+                await doc.SaveAsync(stream, SaveOptions.DisableFormatting, ct);
             }
 
             logger.LogInformation("Successfully updated version in pom.xml from {OldVersion} to {NewVersion}", oldVersion, version);

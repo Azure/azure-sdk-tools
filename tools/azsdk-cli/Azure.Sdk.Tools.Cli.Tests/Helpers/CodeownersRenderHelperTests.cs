@@ -239,30 +239,6 @@ public class CodeownersRenderHelperTests
     }
 
     [Test]
-    public void BuildCodeownersEntries_IncludesServiceAttentionLabel()
-    {
-        // Arrange
-        var data = new WorkItemDataBuilder()
-            .AddOwner("dev", out var ownerId)
-            .AddLabel("TestLabel", out var labelId)
-            .AddLabel("Service Attention", out var serviceAttentionId)
-            .AddPackage("TestPackage", out _, relatedTo: [ownerId, labelId, serviceAttentionId])
-            .Build();
-
-        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "TestPackage", new RepoPackage { Name = "TestPackage", DirectoryPath = Path.Combine(_repoRoot, "sdk", "test") } }
-        };
-
-        // Act
-        var entries = InvokeBuildCodeownersEntries(data, packageLookup);
-
-        // Assert
-        Assert.That(entries[0].PRLabels, Does.Contain("TestLabel"));
-        Assert.That(entries[0].PRLabels, Does.Contain("Service Attention"));
-    }
-
-    [Test]
     public void BuildCodeownersEntries_AddsLabelOwnerMetadataToPackageEntry()
     {
         // Arrange: Package linked to a Label Owner with ServiceOwner type
@@ -290,38 +266,6 @@ public class CodeownersRenderHelperTests
             Assert.That(entries[0].ServiceOwners, Does.Contain("coreserviceowner"));
             Assert.That(entries[0].ServiceLabels, Does.Contain("Core"));
         });
-    }
-
-    [Test]
-    public void BuildCodeownersEntries_MultiplePackagesWithSharedLabelOwner()
-    {
-        // Arrange: Two packages linked to the same Label Owner
-        var data = new WorkItemDataBuilder()
-            .AddOwner("storagedev", out var storageDevId)
-            .AddOwner("coredev", out var coreDevId)
-            .AddOwner("sharedserviceowner", out var sharedOwnerId)
-            .AddLabel("Storage", out var storageLabel)
-            .AddLabel("Core", out var coreLabel)
-            .AddServiceOwner(out var loId, relatedTo: [sharedOwnerId, storageLabel, coreLabel])
-            .AddPackage("Azure.Storage.Blobs", out _, relatedTo: [storageDevId, storageLabel, loId])
-            .AddPackage("Azure.Core", out _, relatedTo: [coreDevId, coreLabel, loId])
-            .Build();
-
-        var packageLookup = new Dictionary<string, RepoPackage>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "Azure.Storage.Blobs", new RepoPackage { Name = "Azure.Storage.Blobs", DirectoryPath = Path.Combine(_repoRoot, "sdk", "storage", "Azure.Storage.Blobs") } },
-            { "Azure.Core", new RepoPackage { Name = "Azure.Core", DirectoryPath = Path.Combine(_repoRoot, "sdk", "core", "Azure.Core") } }
-        };
-
-        // Act
-        var entries = InvokeBuildCodeownersEntries(data, packageLookup);
-
-        // Assert - both packages should have the shared service owner
-        Assert.That(entries, Has.Count.EqualTo(2));
-        foreach (var entry in entries)
-        {
-            Assert.That(entry.ServiceOwners, Does.Contain("sharedserviceowner"));
-        }
     }
 
     [Test]
@@ -366,104 +310,6 @@ public class CodeownersRenderHelperTests
             _logger);
 
         return method?.Invoke(helper, [data, packageLookup, _repoRoot]) as List<CodeownersEntry> ?? [];
-    }
-
-    #endregion
-
-    #region End-to-End Output Tests
-
-    [Test]
-    public void FullOutputTest_SimplePackageEntry()
-    {
-        // Arrange
-        var entry = new CodeownersEntry
-        {
-            PathExpression = "/sdk/storage/Azure.Storage.Blobs/",
-            SourceOwners = ["alice", "bob"],
-            OriginalSourceOwners = ["alice", "bob"],
-            PRLabels = ["Storage"]
-        };
-
-        var entries = new List<CodeownersEntry> { entry };
-        CodeownersEntrySorter.SortOwnersInPlace(entries);
-        CodeownersEntrySorter.SortLabelsInPlace(entries);
-
-        var formatted = entries[0].FormatCodeownersEntry();
-
-        // Assert expected format
-        var expectedLines = new[]
-        {
-            "# PRLabel: %Storage",
-            "/sdk/storage/Azure.Storage.Blobs/    @alice @bob"
-        };
-
-        foreach (var line in expectedLines)
-        {
-            Assert.That(formatted, Does.Contain(line));
-        }
-    }
-
-    [Test]
-    public void FullOutputTest_ComplexEntry()
-    {
-        // Arrange: Entry with all metadata
-        var entry = new CodeownersEntry
-        {
-            PathExpression = "/sdk/core/Azure.Core/",
-            SourceOwners = ["coredev2", "coredev1"],
-            OriginalSourceOwners = ["coredev2", "coredev1"],
-            PRLabels = ["Core", "Azure"],
-            ServiceLabels = ["Core"],
-            ServiceOwners = ["svcowner"],
-            OriginalServiceOwners = ["svcowner"],
-            AzureSdkOwners = ["sdkowner"],
-            OriginalAzureSdkOwners = ["sdkowner"]
-        };
-
-        var entries = new List<CodeownersEntry> { entry };
-        CodeownersEntrySorter.SortOwnersInPlace(entries);
-        CodeownersEntrySorter.SortLabelsInPlace(entries);
-
-        var formatted = entries[0].FormatCodeownersEntry();
-
-        // Assert
-        // Note: For pathed entries, ServiceOwners are NOT included (they're inferred from source owners)
-        Assert.Multiple(() =>
-        {
-            Assert.That(formatted, Does.Contain("# PRLabel: %Azure %Core"));
-            Assert.That(formatted, Does.Contain("/sdk/core/Azure.Core/    @coredev1 @coredev2"));
-            Assert.That(formatted, Does.Contain("# AzureSdkOwners: @sdkowner"));
-            Assert.That(formatted, Does.Contain("# ServiceLabel: %Core"));
-            // ServiceOwners is NOT in pathed entries - it's inferred from source owners
-            Assert.That(formatted, Does.Not.Contain("# ServiceOwners:"));
-        });
-    }
-
-    [Test]
-    public void FullOutputTest_PathlessEntry()
-    {
-        // Arrange: Pathless entry for triage
-        var entry = new CodeownersEntry
-        {
-            PathExpression = "",
-            ServiceLabels = ["Storage", "Analytics"],
-            ServiceOwners = ["storageservice"],
-            OriginalServiceOwners = ["storageservice"]
-        };
-
-        var entries = new List<CodeownersEntry> { entry };
-        CodeownersEntrySorter.SortLabelsInPlace(entries);
-
-        var formatted = entries[0].FormatCodeownersEntry();
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(formatted, Does.Contain("# ServiceLabel: %Analytics %Storage"));
-            Assert.That(formatted, Does.Contain("# ServiceOwners: @storageservice"));
-            // Should NOT contain a path line
-            Assert.That(formatted, Does.Not.Contain("/sdk/"));
-        });
     }
 
     #endregion

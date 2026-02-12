@@ -602,7 +602,9 @@ public class APIRevisionsManagerTests
             IsApproved = isApproved,
             IsDeleted = isDeleted,
             LastUpdatedOn = lastUpdatedOn,
+            CreatedOn = lastUpdatedOn, // Set CreatedOn to same as LastUpdatedOn for tests
             APIRevisionType = APIRevisionType.Manual,
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>(), // Initialize ChangeHistory
             Files = new List<APICodeFileModel>
             {
                 new APICodeFileModel

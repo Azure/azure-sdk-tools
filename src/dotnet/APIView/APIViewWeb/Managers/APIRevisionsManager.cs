@@ -882,28 +882,34 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task AutoArchiveAPIRevisions(int archiveAfterMonths)
         {
-            var lastUpdatedDate = DateTime.Now.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
+            var lastUpdatedDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
             var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
 
             // Group revisions by ReviewId to identify which revisions to preserve
             var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId).ToList();
             var revisionsToPreserve = new HashSet<string>();
 
-            var reviewIds = revisionsByReview.Select(g => g.Key).ToHashSet();
+            // Fetch all revisions for affected reviews concurrently to avoid N+1 sequential calls
+            var reviewIds = revisionsByReview.Select(g => g.Key).ToList();
+            var revisionTasks = reviewIds
+                .Select(id => _apiRevisionsRepository.GetAPIRevisionsAsync(id))
+                .ToList();
+            var revisionResults = await Task.WhenAll(revisionTasks);
+            
             var allRevisionsDict = new Dictionary<string, IEnumerable<APIRevisionListItemModel>>();
-            foreach (string reviewId in reviewIds)
+            for (int i = 0; i < reviewIds.Count; i++)
             {
-                allRevisionsDict[reviewId] = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+                allRevisionsDict[reviewIds[i]] = revisionResults[i];
             }
 
             foreach (var reviewGroup in revisionsByReview)
             {
                 var allRevisionsForReview = allRevisionsDict[reviewGroup.Key];
                 
-                // Find the last approved stable release
+                // Find the last approved stable release by creation date to avoid preserving edited old versions
                 var lastApprovedStable = allRevisionsForReview
                     .Where(r => r.IsApproved && !IsPrerelease(r))
-                    .OrderByDescending(r => r.LastUpdatedOn)
+                    .OrderByDescending(r => r.CreatedOn)
                     .FirstOrDefault();
                 
                 if (lastApprovedStable != null)
@@ -911,10 +917,10 @@ namespace APIViewWeb.Managers
                     revisionsToPreserve.Add(lastApprovedStable.Id);
                 }
 
-                // Find the last preview release (approved or not)
+                // Find the last preview release (approved or not) by creation date
                 var lastPreview = allRevisionsForReview
                     .Where(r => IsPrerelease(r))
-                    .OrderByDescending(r => r.LastUpdatedOn)
+                    .OrderByDescending(r => r.CreatedOn)
                     .FirstOrDefault();
                 
                 if (lastPreview != null)
@@ -924,11 +930,14 @@ namespace APIViewWeb.Managers
             }
 
             // Archive inactive revisions, excluding preserved ones
+            int preservedCount = 0;
+            int archivedCount = 0;
+            
             foreach (var apiRevision in manualRevisions)
             {
                 if (revisionsToPreserve.Contains(apiRevision.Id))
                 {
-                    _telemetryClient.TrackTrace($"Skipping auto-archive for preserved revision {apiRevision.Id} ({apiRevision.PackageName})");
+                    preservedCount++;
                     continue;
                 }
 
@@ -937,6 +946,7 @@ namespace APIViewWeb.Managers
                 try
                 {
                     await SoftDeleteAPIRevisionAsync(apiRevision: apiRevision, notes: "Auto archived");
+                    archivedCount++;
                     await Task.Delay(500);
                 }
                 catch (Exception e)
@@ -948,6 +958,14 @@ namespace APIViewWeb.Managers
                     _telemetryClient.StopOperation(operation);
                 }
             }
+            
+            // Log summary telemetry once per run instead of per revision
+            _telemetryClient.TrackEvent("AutoArchiveAPIRevisions", new Dictionary<string, string>
+            {
+                { "PreservedCount", preservedCount.ToString() },
+                { "ArchivedCount", archivedCount.ToString() },
+                { "TotalProcessed", manualRevisions.Count().ToString() }
+            });
         }
 
         /// <summary>
@@ -957,14 +975,7 @@ namespace APIViewWeb.Managers
         /// <returns>True if the revision is a prerelease, false otherwise</returns>
         private bool IsPrerelease(APIRevisionListItemModel revision)
         {
-            if (revision.Files == null || !revision.Files.Any())
-            {
-                return false;
-            }
-
-            // Assume all files in a revision have the same package version
-            // (revisions are typically for a single package version)
-            var packageVersion = revision.Files.First().PackageVersion;
+            var packageVersion = GetPackageVersion(revision);
             if (string.IsNullOrEmpty(packageVersion))
             {
                 return false;
@@ -980,6 +991,23 @@ namespace APIViewWeb.Managers
                 // If version parsing fails, treat as non-prerelease to be conservative
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Safely extracts package version from a revision's files
+        /// </summary>
+        /// <param name="revision">The API revision</param>
+        /// <returns>Package version string or null if not available</returns>
+        private string GetPackageVersion(APIRevisionListItemModel revision)
+        {
+            if (revision.Files == null || !revision.Files.Any())
+            {
+                return null;
+            }
+
+            // Assume all files in a revision have the same package version
+            // (revisions are typically for a single package version)
+            return revision.Files.First().PackageVersion;
         }
 
         /// <summary>

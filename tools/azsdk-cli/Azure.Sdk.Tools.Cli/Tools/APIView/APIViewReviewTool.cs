@@ -77,7 +77,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     {
         try
         {
-            (string revisionId, _) = ApiViewUrlParser.ExtractIds(apiViewUrl);
+            (string revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
 
             string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
             if (result == null)
@@ -114,7 +114,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             return new APIViewResponse { ResponseError = $"Invalid content type '{contentType}'. Must be one of: {validValues}." };
         }
 
-        (string revisionId, string reviewId) = ApiViewUrlParser.ExtractIds(apiViewUrl!);
+        (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl!);
         try
         {
             string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);

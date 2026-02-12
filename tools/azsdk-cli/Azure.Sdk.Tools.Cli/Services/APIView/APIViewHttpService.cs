@@ -7,37 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewHttpService
 {
-    Task<string?> GetAsync(string endpoint, string? environment = null);
-    
-    /// <summary>
-    /// Detects the APIView environment (staging or production) from a URL.
-    /// </summary>
-    /// <param name="url">The APIView URL to analyze</param>
-    /// <returns>"staging" if the URL contains apiviewstagingtest.com, otherwise "production"</returns>
-    static string DetectEnvironmentFromUrl(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            return GetDefaultEnvironment();
-        }
-            
-        // Check for staging URL patterns
-        if (url.Contains("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase) ||
-            url.Contains("staging", StringComparison.OrdinalIgnoreCase))
-        {
-            return "staging";
-        }
-        
-        return "production";
-    }
-    
-    /// <summary>
-    /// Gets the default environment from environment variable or returns "production".
-    /// </summary>
-    static string GetDefaultEnvironment()
-    {
-        return Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT") ?? "production";
-    }
+    Task<string?> GetAsync(string endpoint);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -62,11 +32,16 @@ public class APIViewHttpService : IAPIViewHttpService
         _logger = logger;
     }
 
-    public async Task<string?> GetAsync(string endpoint, string? environment = null)
+    private static string GetEnvironment()
+    {
+        return Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT") ?? "production";
+    }
+
+    public async Task<string?> GetAsync(string endpoint)
     {
         try
         {
-            environment ??= IAPIViewHttpService.GetDefaultEnvironment();
+            string environment = GetEnvironment();
             string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
             HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
 

@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -20,7 +21,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
     private readonly ITypeSpecHelper typeSpecHelper;
-    private readonly IAPIViewFeedbackCustomizationsHelpers feedbackHelper;
+    private readonly IAPIViewFeedbackService feedbackService;
     private readonly ILoggerFactory loggerFactory;
     private readonly ICopilotAgentRunner _agentRunner;
     
@@ -32,7 +33,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <param name="gitHelper">The Git helper for repository operations.</param>
     /// <param name="tspClientHelper">The TypeSpec client helper for regeneration operations.</param>
     /// <param name="typeSpecHelper">The TypeSpec helper for spec repo path resolution.</param>
-    /// <param name="feedbackHelper">The feedback helper for extracting feedback from various sources.</param>
+    /// <param name="feedbackService">The feedback service for extracting feedback from various sources.</param>
     /// <param name="loggerFactory">The logger factory for creating loggers.</param>
     /// <param name="agentRunner">The copilot agent runner for LLM-powered classification.</param>
     public CustomizedCodeUpdateTool(
@@ -41,14 +42,14 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         IGitHelper gitHelper,
         ITspClientHelper tspClientHelper,
         ITypeSpecHelper typeSpecHelper,
-        IAPIViewFeedbackCustomizationsHelpers feedbackHelper,
+        IAPIViewFeedbackService feedbackService,
         ILoggerFactory loggerFactory,
         ICopilotAgentRunner agentRunner
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper;
         this.typeSpecHelper = typeSpecHelper;
-        this.feedbackHelper = feedbackHelper;
+        this.feedbackService = feedbackService;
         this.loggerFactory = loggerFactory;
         _agentRunner = agentRunner;
     }
@@ -86,6 +87,12 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     private readonly Option<string> plainTextFeedbackOption = new("--plain-text-feedback")
     {
         Description = "Plain text feedback for classification (e.g., build errors)",
+        Required = false
+    };
+
+    private readonly Option<string> plainTextFeedbackFileOption = new("--plain-text-feedback-file")
+    {
+        Description = "Path to a file containing plain text feedback for classification",
         Required = false
     };
 
@@ -143,7 +150,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             packagePathArg,
             tspProjectPathArg,
             apiViewUrlOption,
-            plainTextFeedbackOption
+            plainTextFeedbackOption,
+            plainTextFeedbackFileOption
        };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -153,11 +161,12 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         var tspProjectPath = parseResult.GetValue(tspProjectPathArg);
         var apiViewUrl = parseResult.GetValue(apiViewUrlOption);
         var plainTextFeedback = parseResult.GetValue(plainTextFeedbackOption);
+        var plainTextFeedbackFile = parseResult.GetValue(plainTextFeedbackFileOption);
         
         try
         {
             logger.LogInformation("Starting client update for {packagePath}", packagePath);
-            return await RunUpdateAsync(commitSha, packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, ct);
+            return await RunUpdateAsync(commitSha, packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, plainTextFeedbackFile, ct);
         }
         catch (Exception ex)
         {
@@ -172,25 +181,53 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     }
 
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
-    public Task<CustomizedCodeUpdateResponse> UpdateAsync(
+    public Task<CommandResponse> UpdateAsync(
         string commitSha,
         string packagePath,
         string tspProjectPath,
         string? apiViewUrl = null,
         string? plainTextFeedback = null,
+        string? plainTextFeedbackFile = null,
         CancellationToken ct = default)
-        => RunUpdateAsync(commitSha, packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, ct);
+        => RunUpdateAsync(commitSha, packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, plainTextFeedbackFile, ct);
 
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(
+    private async Task<CommandResponse> RunUpdateAsync(
         string commitSha,
         string packagePath,
         string tspProjectPath,
         string? apiViewUrl,
         string? plainTextFeedback,
+        string? plainTextFeedbackFile,
         CancellationToken ct)
     {
         try
         {
+            // Read feedback from file if provided
+            if (!string.IsNullOrEmpty(plainTextFeedbackFile))
+            {
+                if (!File.Exists(plainTextFeedbackFile))
+                {
+                    return new CustomizedCodeUpdateResponse 
+                    { 
+                        Message = $"Plain text feedback file does not exist: {plainTextFeedbackFile}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
+                        ResponseError = $"Plain text feedback file does not exist: {plainTextFeedbackFile}" 
+                    };
+                }
+
+                var fileContent = await File.ReadAllTextAsync(plainTextFeedbackFile, ct);
+                logger.LogInformation("Read {length} characters from feedback file: {file}", fileContent.Length, plainTextFeedbackFile);
+                
+                // Combine with existing plain text feedback if both are provided
+                if (!string.IsNullOrEmpty(plainTextFeedback))
+                {
+                    plainTextFeedback = $"{plainTextFeedback}\n\n--- Content from file: {plainTextFeedbackFile} ---\n\n{fileContent}";
+                }
+                else
+                {
+                    plainTextFeedback = fileContent;
+                }
+            }
 
             if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
             {
@@ -352,12 +389,12 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         if (!string.IsNullOrEmpty(apiViewUrl))
         {
             var feedbackItemLogger = loggerFactory.CreateLogger<APIViewFeedbackItem>();
-            feedbackItem = new APIViewFeedbackItem(apiViewUrl, feedbackHelper, feedbackItemLogger);
+            feedbackItem = new APIViewFeedbackItem(apiViewUrl, feedbackService, feedbackItemLogger);
         }
         else if (!string.IsNullOrEmpty(plainTextFeedback))
         {
-            var feedbackItemLogger = loggerFactory.CreateLogger<BuildLogFeedbackItem>();
-            feedbackItem = new BuildLogFeedbackItem(plainTextFeedback, feedbackItemLogger);
+            var feedbackItemLogger = loggerFactory.CreateLogger<PlainTextFeedbackItem>();
+            feedbackItem = new PlainTextFeedbackItem(plainTextFeedback, feedbackItemLogger);
         }
 
         var context = await feedbackItem.PreprocessAsync(ct);
@@ -390,16 +427,16 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <summary>
     /// Builds the final response from classified items.
     /// </summary>
-    private CustomizedCodeUpdateResponse BuildResponse(
+    private FeedbackClassificationResponse BuildResponse(
         List<FeedbackItem> success,
         List<FeedbackItem> failure,
         List<FeedbackItem> customizable)
     {
-        var classifications = new List<CustomizedCodeUpdateResponse.ItemClassificationDetails>();
+        var classifications = new List<FeedbackClassificationResponse.ItemClassificationDetails>();
         
         foreach (var item in success)
         {
-            classifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
+            classifications.Add(new FeedbackClassificationResponse.ItemClassificationDetails
             {
                 ItemId = item.Id,
                 Classification = "SUCCESS",
@@ -411,7 +448,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         
         foreach (var item in failure)
         {
-            classifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
+            classifications.Add(new FeedbackClassificationResponse.ItemClassificationDetails
             {
                 ItemId = item.Id,
                 Classification = "FAILURE",
@@ -423,7 +460,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         
         foreach (var item in customizable)
         {
-            classifications.Add(new CustomizedCodeUpdateResponse.ItemClassificationDetails
+            classifications.Add(new FeedbackClassificationResponse.ItemClassificationDetails
             {
                 ItemId = item.Id,
                 Classification = "TSP_APPLICABLE",
@@ -433,7 +470,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             });
         }
 
-        return new CustomizedCodeUpdateResponse
+        return new FeedbackClassificationResponse
         {
             Message = $"Processing complete: {success.Count} succeeded, {failure.Count} failed, {customizable.Count} tsp-applicable",
             Classifications = classifications

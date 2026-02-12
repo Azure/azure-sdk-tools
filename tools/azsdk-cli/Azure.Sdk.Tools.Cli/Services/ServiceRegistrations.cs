@@ -13,7 +13,6 @@ using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -43,7 +42,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
             services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
             services.AddSingleton<IAPIViewService, APIViewService>();
-            services.AddSingleton<IAPIViewFeedbackCustomizationsHelpers, APIViewFeedbackCustomizationsHelpers>();
 
             services.AddScoped<LanguageService, DotnetLanguageService>();
             services.AddScoped<LanguageService, JavaLanguageService>();
@@ -132,29 +130,30 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var openAiBaseUrl = Environment.GetEnvironmentVariable("OPENAI_BASE_URL");
                 var azureOpenAiEndpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
 
-                Uri? openAiEndpoint = null;
+                Uri? endpoint = null;
 
                 // Priority 1: Use OPENAI_BASE_URL if it exists
                 if (!string.IsNullOrWhiteSpace(openAiBaseUrl))
                 {
-                    openAiEndpoint = new Uri(openAiBaseUrl);
+                    endpoint = new Uri(openAiBaseUrl);
                 }
-                // Priority 2: Use AZURE_OPENAI_ENDPOINT if it exists
+                // Priority 2: Use AZURE_OPENAI_ENDPOINT with /openai/v1 postfix if it exists
                 else if (!string.IsNullOrWhiteSpace(azureOpenAiEndpoint))
                 {
-                    openAiEndpoint = new Uri(azureOpenAiEndpoint.TrimEnd('/'));
+                    var baseEndpoint = azureOpenAiEndpoint.TrimEnd('/') + "/openai/v1";
+                    endpoint = new Uri(baseEndpoint);
                 }
                 // Priority 3: If no OPENAI_API_KEY but no Azure endpoint, use openai-shared
                 else if (string.IsNullOrWhiteSpace(openAiApiKey))
                 {
-                    openAiEndpoint = new Uri("https://openai-shared.openai.azure.com/");
+                    endpoint = new Uri("https://openai-shared.openai.azure.com/openai/v1");
                 }
                 // Priority 4: OPENAI_API_KEY exists but no Azure endpoint - use standard OpenAI (no endpoint)
 
                 // If we have an endpoint, use the Azure helper which handles bearer token vs API key
-                if (openAiEndpoint != null)
+                if (endpoint != null)
                 {
-                    return AzureOpenAIClientHelper.CreateAzureOpenAIClient(openAiEndpoint, credential);
+                    return AzureOpenAIClientHelper.CreateAzureOpenAIClient(endpoint, credential);
                 }
 
                 // For standard OpenAI (OPENAI_API_KEY exists, no Azure endpoint)

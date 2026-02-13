@@ -13,8 +13,6 @@ public interface ICodeownersRenderHelper
     /// </summary>
     /// <param name="repoRoot">Path to the repository root</param>
     /// <param name="repoName">Repository name in the format Azure/azure-sdk-for-{lang}</param>
-    /// <param name="orgName">Azure DevOps organization (default: azure-sdk)</param>
-    /// <param name="projectName">Azure DevOps project (default: Release)</param>
     /// <param name="packageTypes">Package types to filter by (default: ["client"])</param>
     /// <param name="sectionName">Section name in CODEOWNERS file to update (default: "Client Libraries")</param>
     /// <param name="ct">Cancellation token</param>
@@ -22,8 +20,6 @@ public interface ICodeownersRenderHelper
     Task<string> RenderCodeownersAsync(
         string repoRoot,
         string repoName,
-        string orgName = "azure-sdk",
-        string projectName = "Release",
         List<string>? packageTypes = null,
         string sectionName = "Client Libraries",
         CancellationToken ct = default);

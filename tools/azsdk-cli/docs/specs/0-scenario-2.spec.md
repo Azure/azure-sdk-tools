@@ -130,7 +130,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → `azsdk_typespec_authoring` **(Agent Mode only)**
+2. **TypeSpec Authoring** → `azsdk_typespec_consult` **(Agent Mode only)**
    - AI-powered assistance for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
@@ -217,11 +217,11 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
-**Tool:** `azsdk_typespec_authoring`
+**Tool:** `azsdk_typespec_consult` (MCP) / `azsdk typespec consult` (CLI)
 
-**Availability:** Agent Mode only - This tool requires conversational interaction with natural language prompts and is not suitable for CLI usage.
+**Availability:** Agent Mode only - This tool requires conversational interaction with natural language prompts and is not suitable for CLI usage in Scenario 2. The CLI command is available but primarily intended for direct use rather than workflow integration.
 
-**Purpose:** Provide intelligent, context-aware assistance for TypeSpec authoring by integrating with Azure SDK RAG (Retrieval-Augmented Generation) knowledge base. Helps developers define or edit TypeSpec following Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices.
+**Purpose:** Provide a solution to define or edit TypeSpec API specifications for TypeSpec-related tasks. The tool integrates with Azure SDK RAG (Retrieval-Augmented Generation) knowledge base to help developers define or edit TypeSpec following Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices.
 
 **Capabilities:**
 
@@ -234,18 +234,37 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Input Parameters:**
 
-- `--request`: The TypeSpec-related request or task description (required)
-- `--additional-information`: Additional context for the request (optional)
-- `--typespec-source-path`: Path to TypeSpec source file or folder (optional, defaults to current directory)
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `<request>` | string | Yes | N/A | The TypeSpec-related request or task description |
+| `--additional-information` | string | No | "" | Additional context for the request |
+| `--category` | string | No | Auto-detected | Request category (e.g., "versioning", "resource-modeling", "routing") |
+
+**Output Format:**
+
+```json
+{
+  "is_successful": true,
+  "solution": "<solution-for-the-typespec-task>",
+  "references": [
+    {
+      "title": "How to define a preview version",
+      "source": "typespec_azure_docs",
+      "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version"
+    }
+  ]
+}
+```
 
 **Workflow:**
 
 1. User describes TypeSpec authoring task in natural language
-2. Tool analyzes existing TypeSpec project structure and current state
-3. Tool queries Azure SDK Knowledge Base with structured request
-4. Knowledge Base returns RAG-powered solution with step-by-step guidance
-5. Tool formats solution with documentation references
-6. Agent applies changes to TypeSpec files and presents results to user
+2. Agent analyzes existing TypeSpec project structure and current state
+3. Agent collects required information for the task (e.g., namespace, version, current project structure)
+4. Agent invokes `azsdk_typespec_consult` tool with the user's request and any additional context
+5. Tool queries Azure SDK Knowledge Base with structured request containing the user's intent and project context
+6. Knowledge Base returns RAG-powered solution with step-by-step guidance and documentation references
+7. Agent applies the solution to update TypeSpec files and presents changes to user with explanations and reference links
 
 **Examples:**
 
@@ -256,7 +275,7 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Success:**
 
-- Generated TypeSpec code passes compilation without errors, validated with `azsdk_run_typespec_validation` tool. 
+- Generated TypeSpec code passes compilation without errors, validated with `azsdk_run_typespec_validation` tool
 - Generated code follows Azure ARM/DP/SDK guidelines (validated by linter/validator)
 - Generated code includes proper decorators and templates (no hallucinated decorators)
 - Solution includes relevant documentation references
@@ -655,20 +674,23 @@ Add a new preview API version 2025-10-01-preview for service widget resource man
 
 **Expected Agent Activity:**
 
-1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
-3. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
-4. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
-5. Ask for features to add to this version. e.g.
-    - Add new resources
-    - Add new operations to an existing resource
-    - Add new models, unions, or enums
-    - Deprecate resources
-    - Deprecate operations
-    - Deprecate models, unions, or enums
-6. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-7. Update code, by default the features will only be added to this new version
-8. Summarize all the actions taken and display the reference docs
+1. Analyzes current TypeSpec project to identify namespace and version
+2. Calls `azsdk_typespec_consult` tool with the request and collected information
+3. Apply version related changes according to the retrieved solution:
+   - Replace an existing preview with the new preview version if latest version is preview, otherwise, just add the new preview version
+   - Update examples according to API changes
+4. Ask for features to add or update to this version. e.g.
+   - Add new resources
+   - Add new operations to an existing resource
+   - Add new models, unions, or enums
+   - Update existing resources
+   - Update existing operations
+   - Update existing models, unions, or enums
+   - Remove resources, operations, or models
+5. For each feature, collect enough information (e.g., if it's an operation, clarify if it is async/LRO operation) and call `azsdk_typespec_consult` to get implementation guidance
+6. Apply changes according to the retrieved solutions
+7. Compile the TypeSpec to validate generated OpenAPI
+8. Summarize all actions taken and display reference documentation
 
 ### TypeSpec Authoring - Update TypeSpec to follow Azure guidelines
 
@@ -680,10 +702,11 @@ Update the TypeSpec code to follow Azure guidelines for service widget resource 
 
 **Expected Agent Activity:**
 
-1. Validate the TypeSpec code and display a list of code snippets that violates Azure guidelines, and the suggested fix
-1. Let user confirm which one to fix
-1. Apply the code fix
-1. Compile the fixed TypeSpec code and let user validate the output
+1. Validate the TypeSpec code and display a list of code snippets that violate Azure guidelines, and the suggested fix
+2. Let user confirm which one to fix
+3. Call `azsdk_typespec_consult` tool to get detailed fix guidance for confirmed issues
+4. Apply the code fix according to the solution
+5. Compile the fixed TypeSpec code and let user validate the output
 
 ### TypeSpec Authoring - Add a new stable API version
 
@@ -695,21 +718,24 @@ Add a new stable API version 2025-10-01 for service widget resource management.
 
 **Expected Agent Activity:**
 
-1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
-3. Add a enum option `v2025_10_01` in version enum for this new API version
-4. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
-5. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
-6. Ask for features to add to this version. e.g.
-    - Add new resources
-    - Add new operations to an existing resource
-    - Add new models, unions, or enums
-    - Deprecate resources
-    - Deprecate operations
-    - Deprecate models, unions, or enums
-7. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-8. Update code, by default the features will only be added to this new version
-9. Summarize all the actions taken and display the reference docs
+1. Analyzes current TypeSpec project to identify namespace and version
+2. Calls `azsdk_typespec_consult` tool with the request and collected information
+3. Apply changes according to the retrieved solution:
+   - Add the new stable API version
+   - Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
+   - Update examples according to API changes
+4. Ask for features to add or update to this version. e.g.
+   - Add new resources
+   - Add new operations to an existing resource
+   - Add new models, unions, or enums
+   - Update existing resources
+   - Update existing operations
+   - Update existing models, unions, or enums
+   - Remove resources, operations, or models
+5. For each feature, collect enough information (e.g., if it's an operation, clarify if it is async/LRO operation) and call `azsdk_typespec_consult` to get implementation guidance
+6. Apply changes according to the retrieved solutions
+7. Compile the TypeSpec to validate generated OpenAPI
+8. Summarize all actions taken and display reference documentation
 
 ### Sample Generation
 

@@ -29,7 +29,7 @@ export interface DocumentationPath {
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
     relativeByRepoPath?: boolean;
-    isSpectorTest?: boolean;
+    isGenerated?: boolean;
     metadata?: Metadata;
     overrides?: Override[];
 }
@@ -64,7 +64,7 @@ export interface DocumentationSource {
     folder: string;
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
-    isSpectorTest?: boolean;
+    isGenerated?: boolean;
     metadata?: Metadata;
     overrides?: Override[];
 }
@@ -130,7 +130,7 @@ export class ConfigurationLoader {
                     folder: docPath.folder,
                     fileNameLowerCase: docPath.fileNameLowerCase,
                     ignoredPaths: docPath.ignoredPaths,
-                    isSpectorTest: docPath.isSpectorTest,
+                    isGenerated: docPath.isGenerated,
                     metadata: docPath.metadata,
                     overrides: docPath.overrides,
                 });

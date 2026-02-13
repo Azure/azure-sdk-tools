@@ -6,6 +6,7 @@ import { SpectorCaseProcessor } from './services/SpectorCaseProcessor';
 import { ConfigurationLoader, RepositoryConfig, DocumentationSource, Metadata } from './services/ConfigurationLoader';
 import { SearchService } from './services/SearchService';
 import { MetadataResolver } from './services/MetadataResolver';
+import { TypeSpecProcessor } from './services/TypeSpecProcessor';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -74,6 +75,9 @@ export async function processDailySyncKnowledge(): Promise<void> {
         
         // Preprocess spector cases
         await preprocessSpectorCases(docsDir);
+
+        console.log(`processing typespec-azure-resource-manager library`);
+        processTypeSpec(docsDir, "typespec-azure/packages/typespec-azure-resource-manager/lib");
 
         console.log('Processing documentation sources...');
         
@@ -636,7 +640,7 @@ export function processMarkdownFile(
                 isValid: false
             };
         }
-        if (source.isSpectorTest) {
+        if (source.isGenerated) {
             // remove generated prefix
             processed.filename = processed.filename.replace(/^generated#/, '');
         }
@@ -865,5 +869,16 @@ async function preprocessSpectorCases(docsDir: string): Promise<void> {
     } catch (error) {
         console.error('Error processing spector cases:', error);
         throw error;
+    }
+}
+
+/**
+ * Process TypeSpec library
+ */
+function processTypeSpec(docsDir: string, relativeLibDir: string) : void {
+    try {
+        new TypeSpecProcessor(docsDir, relativeLibDir).processTypeSpecLibraries();
+    } catch (error) {
+        console.error(`Error processing typespec library: ${relativeLibDir}`, error);
     }
 }

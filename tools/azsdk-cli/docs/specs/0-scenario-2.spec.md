@@ -130,7 +130,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → `azsdk_typespec_consult`
+2. **TypeSpec Authoring** → `azsdk_typespec_generate_authoring_plan`
    - AI-powered assistance for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
@@ -217,7 +217,7 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
-**Tool:** `azsdk_typespec_consult`
+**Tool:** `azsdk_typespec_generate_authoring_plan`
 
 **Availability:** Agent Mode and CLI Mode - Agent Mode provides conversational interaction with natural language prompts; CLI Mode provides direct command-line access for scripting and automation.
 
@@ -242,8 +242,9 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Input Parameters:**
 
-- `<request>`: The TypeSpec-related request or task description (required)
-- `--additional-information`: Additional context for the request (optional)
+- `--request`: The TypeSpec-related task or user request sent to an AI agent to produce a proposed solution or execution plan with references (required)
+- `--additional-information`: Additional information to consider for the TypeSpec project (optional)
+- `--typespec-project`: The root path of the TypeSpec project (optional, defaults to current directory)
 
 **Workflow:**
 
@@ -669,7 +670,7 @@ add a new ARM resource type named 'Asset' with CRUD operations
    - If child resource, identify the parent resource
    - What properties should the resource have?
    - Should operations be synchronous or asynchronous/LRO?
-3. Calls `azsdk_typespec_consult` tool with the request and collected information
+3. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 4. Apply changes according to the retrieved solution:
    - Create resource model extending appropriate base (`TrackedResource`/`ProxyResource`)
    - Add resource name parameter
@@ -691,7 +692,7 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-2. Calls `azsdk_typespec_consult` tool with the request and collected information
+2. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 3. Apply version related changes according to the retrieved solution:
    - Replace an existing preview with the new preview version if latest version is preview, otherwise, just add the new preview version
    - Update the Versions enum to include new version with `@previewVersion` decorator
@@ -734,7 +735,7 @@ add a new stable API version 2025-10-01 for service widget resource management
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-2. Calls `azsdk_typespec_consult` tool with the request and collected information
+2. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 3. Apply changes according to the retrieved solution:
    - Add the new stable version to the Versions enum
    - Add a new example folder for the new version and copy any still-relevant examples
@@ -885,43 +886,46 @@ Environment verification complete: 4/5 languages ready
 Use --auto-install flag to remediate issues automatically.
 ```
 
-### 2. TypeSpec Consult
+### 2. TypeSpec Generate Authoring Plan
 
 **Command:**
 
 ```bash
-azsdk typespec consult <typespec-request> --additional-information <additional-context>
+azsdk typespec generate-authoring-plan --request <typespec-request> [--additional-information <additional-context>] [--typespec-project <project-path>]
 ```
-
-**Arguments:**
-
-- `<typespec-request>`: The TypeSpec-related request or task description (required)
 
 **Options:**
 
-- `--additional-information <value>`: Additional context for the request (optional)
+- `--request <value>`: (Required) The TypeSpec-related task or request to generate a solution for
+- `--additional-information <value>`: Additional information, such as context about the TypeSpec project (optional)
+- `--typespec-project <value>`: The root path of the TypeSpec project (optional, defaults to current directory)
 
 **Examples:**
 
 ```bash
 # Get solution for adding a new ARM resource
-azsdk typespec consult "add a new ARM resource type named 'Asset' with CRUD operations"
+azsdk typespec generate-authoring-plan --request "add a new ARM resource type named 'Asset' with CRUD operations"
 
 # Get solution for adding a new preview API version
-azsdk typespec consult "add a new preview API version 2025-10-01-preview for service widget resource management"
+azsdk typespec generate-authoring-plan --request "add a new preview API version 2025-10-01-preview for service widget resource management"
 
 # Get solution for updating TypeSpec to follow guidelines
-azsdk typespec consult "update the TypeSpec code to follow Azure guidelines" \
+azsdk typespec generate-authoring-plan --request "update the TypeSpec code to follow Azure guidelines" \
   --additional-information "The current code uses incorrect decorators"
+
+# Specify TypeSpec project path
+azsdk typespec generate-authoring-plan \
+  --request "add a new ARM resource type named 'Asset' with CRUD operations" \
+  --typespec-project ./my-typespec-project
 ```
 
 **Expected Output:**
 
 ```text
+TypeSpec project: ./tsp
 **Solution:** To add a new ARM resource type named 'Asset' with CRUD operations, you need to define the resource model, properties, and operations interface following Azure Resource Manager patterns.
 
 **Step-by-step guidance:**
-
 1. Create a resource model extending TrackedResource or ProxyResource:
    - For top-level resources that require location tracking, use TrackedResource<TProperties>
    - For child resources or resources without location, use ProxyResource<TProperties>
@@ -942,16 +946,34 @@ azsdk typespec consult "update the TypeSpec code to follow Azure guidelines" \
    - Use ArmListBySubscription for listing by subscription
 
 **References:**
-- ARM Resource Operations: https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type
-- Azure TypeSpec Style Guide: https://azure.github.io/typespec-azure/docs/style-guide
+- **ARM Resource Operations** (typespec_azure_docs)
+  https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type
+  Snippet: To define an ARM resource...
+
+**Query Analysis:**
+- Category: resource-modeling
+- Scope: branded
+- Service Type: management-plane
 ```
 
 **Error Cases:**
 
 ```text
-✗ Error: Required argument missing for command: 'typespec consult'
-  
-Usage: azsdk typespec consult <typespec-request> [options]
+Option '--request' is required.
+
+Description:
+  Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure 
+  service.
+
+Usage:
+  azsdk tsp generate-authoring-plan [options]
+
+Options:
+  --request (REQUIRED)      The TypeSpec‑related task or user request sent to an AI agent to produce a proposed 
+                            solution or execution plan with references.
+  --additional-information  The additional information to consider for the TypeSpec project.
+  --typespec-project        The root path of the TypeSpec project
+  -h, --help                Show help and usage information
 ```
 
 ### 3. Translate Samples

@@ -105,9 +105,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         private readonly Option<string> labelOption = new("--label", "-l")
         {
-            Description = "Label name(s). Can be specified multiple times.",
+            Description = "Label name",
             Required = false,
-            AllowMultipleArgumentsPerToken = true,
         };
 
         private readonly Option<string> packageOption = new("--package")

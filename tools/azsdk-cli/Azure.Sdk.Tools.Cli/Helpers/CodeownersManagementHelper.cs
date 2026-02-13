@@ -199,7 +199,7 @@ public class CodeownersManagementHelper : ICodeownersManagementHelper
         }
         else
         {
-            labelOwner = await _devOpsService.CreateLabelOwnerWorkItemAsync(repo, "", path, labels.ToList());
+            labelOwner = await _devOpsService.CreateLabelOwnerWorkItemAsync(repo, "PR Label", path, labels.ToList());
         }
 
         foreach (var labelWi in labelWorkItems)

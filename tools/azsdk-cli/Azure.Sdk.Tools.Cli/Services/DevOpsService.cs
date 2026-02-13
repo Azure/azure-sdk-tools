@@ -1812,7 +1812,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             if (sourceWorkItem?.Relations != null)
             {
                 var existingLink = sourceWorkItem.Relations
-                    .FirstOrDefault(r => r.Rel == "System.LinkTypes.Related" && r.Url?.Contains($"/workItems/{targetWorkItemId}") == true);
+                    .FirstOrDefault(r => r.Rel == "System.LinkTypes.Related" && r.Url?.EndsWith($"/workItems/{targetWorkItemId}") == true);
                 if (existingLink != null)
                 {
                     logger.LogInformation("Related link already exists between {sourceId} and {targetId}", sourceWorkItemId, targetWorkItemId);
@@ -1854,7 +1854,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             for (int i = 0; i < sourceWorkItem.Relations.Count; i++)
             {
                 var relation = sourceWorkItem.Relations[i];
-                if (relation.Rel == "System.LinkTypes.Related" && relation.Url?.Contains($"/workItems/{targetWorkItemId}") == true)
+                if (relation.Rel == "System.LinkTypes.Related" && relation.Url?.EndsWith($"/workItems/{targetWorkItemId}") == true)
                 {
                     relationIndex = i;
                     break;

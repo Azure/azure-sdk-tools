@@ -330,6 +330,7 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
   "full_context": "<full-context-used-to-generate-solution>",
   "reasoning": "<llm-reasoning-process>",
   "query_intention": {
+    "question": "<analyzed-question>",
     "category": "versioning",
     "question_scope": "branded",
     "service_type": "management-plane"
@@ -391,6 +392,7 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
   "full_context": "<context-used>",
   "reasoning": "<llm-reasoning>",
   "intention": {
+    "question": "<analyzed-question>",
     "category": "<detected-category>",
     "question_scope": "<branded|unbranded|unknown>",
     "service_type": "<management-plane|data-plane|unknown>"

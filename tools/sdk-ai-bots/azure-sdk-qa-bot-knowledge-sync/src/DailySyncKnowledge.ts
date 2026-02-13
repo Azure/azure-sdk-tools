@@ -640,7 +640,7 @@ export function processMarkdownFile(
                 isValid: false
             };
         }
-        if (source.isSpectorTest) {
+        if (source.isGenerated) {
             // remove generated prefix
             processed.filename = processed.filename.replace(/^generated#/, '');
         }

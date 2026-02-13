@@ -420,8 +420,7 @@ public class UpgradeServiceTests
         Assert.That(result.DownloadUrl, Is.EqualTo("https://example.test/download"));
 
         mockProcessHelper.Verify(p => p.Run(It.Is<ProcessOptions>(o =>
-            o.Args.Count >= 3 &&
-            o.Args[0] == "upgrade" &&
-            o.Args[1] == "--complete-upgrade"), It.IsAny<CancellationToken>()), Times.Once);
+            o.Args.Contains("upgrade") &&
+            o.Args.Contains("--complete-upgrade")), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

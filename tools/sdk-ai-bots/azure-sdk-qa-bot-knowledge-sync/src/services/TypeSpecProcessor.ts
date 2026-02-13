@@ -213,6 +213,14 @@ export class TypeSpecProcessor {
             comments: blockCommentLines
         };
     }
+
+    private parseInterface(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionBodyStart: number, nextDefinitionStart: number): TypeSpecDefinition[] {
+        if (definitionType !== 'interface') {
+            return [];
+        }
+        // TODO: Implement interface parsing logic
+        return [];
+    }
     /**
      * Extract description from @doc decorator or JSDoc-style comments.
      */

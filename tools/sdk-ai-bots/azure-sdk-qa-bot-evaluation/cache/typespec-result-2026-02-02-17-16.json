@@ -1,0 +1,498 @@
+[
+    {
+        "testcase": "How to make an interface internal ?",
+        "expected": {
+            "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted\u2014as long as you remove all previously generated SDK output before regenerating. Or you can use _patch.py to customize the code.",
+            "references": [
+                {
+                    "title": "Decorators",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+                },
+                {
+                    "title": "How to remove certain classes for Python SDK only",
+                    "link": ""
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "How to remove certain classes for Python SDK only",
+                    "link": ""
+                },
+                {
+                    "title": "HTTP Test scenarios",
+                    "link": "https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/readme.tsp"
+                },
+                {
+                    "title": "",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+                },
+                {
+                    "title": "Missing \"externalDocs\"",
+                    "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+                },
+                {
+                    "title": "Table of Contents",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+                },
+                {
+                    "title": "Code here",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/04method"
+                },
+                {
+                    "title": "Decorators",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+                },
+                {
+                    "title": "Suppressing Failures",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement"
+                },
+                {
+                    "title": "missing \"title\" on model  property",
+                    "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+                },
+                {
+                    "title": "Usages for Test for internal decorator.",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/usage/main.tsp"
+                },
+                {
+                    "title": "SDK generation configuration",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+                },
+                {
+                    "title": "Interfaces",
+                    "link": "https://typespec.io/docs/language-basics/interfaces"
+                },
+                {
+                    "title": "Usages for Test for internal decorator.",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/usage/main.tsp"
+                },
+                {
+                    "title": "Versioning",
+                    "link": "https://azure.github.io/typespec-azure/docs/getstarted/versioning"
+                },
+                {
+                    "title": "SDK generation configuration",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+                },
+                {
+                    "title": "",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff-for-TypeSpec"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Clients",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client"
+                },
+                {
+                    "title": "Basic methods",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/04method"
+                },
+                {
+                    "title": "Decorators",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+                },
+                {
+                    "title": "Suppressing Failures",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement"
+                },
+                {
+                    "title": "Generated Types",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+                },
+                {
+                    "title": "How to remove certain classes for Python SDK only",
+                    "link": ""
+                },
+                {
+                    "title": "Clients",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client"
+                },
+                {
+                    "title": "Versioning",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/10versioning"
+                },
+                {
+                    "title": "Emitter framework",
+                    "link": "https://typespec.io/docs/extending-typespec/emitter-framework"
+                },
+                {
+                    "title": "How to remove certain classes for Python SDK only",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "To make an interface internal so that it does not appear in the public interface of the generated Python SDK, you should use the `@access(Access.internal)` decorator from the `@azure-tools/typespec-client-generator-core` library. However, simply marking the interface or its operations as internal is not sufficient if any of its operations or types are referenced by public APIs elsewhere. \n\nThe correct approach is:\n1. Decorate the interface with `@access(Access.internal, \"python\")` if you want to restrict it only for Python, or just `@access(Access.internal)` for all languages.\n2. Ensure that ALL operations under the interface are also decorated with `@access(Access.internal, \"python\")` (or without the scope if you want to hide them in all languages).\n3. Make sure that none of the models or types used by these operations are referenced by any public operation or model. If a model is referenced by a public operation, it will be promoted to public regardless of the interface's access.\n\nExample:\n```typespec\nimport \"@azure-tools/typespec-client-generator-core\";\nusing Azure.ClientGenerator.Core;\n\n@access(Access.internal, \"python\")\ninterface EvaluationResultsOperations {\n  @access(Access.internal, \"python\")\n  op getEvaluationResults(): EvaluationResult;\n}\n\n@access(Access.internal, \"python\")\nmodel EvaluationResult {\n  value: string;\n}\n```\n\nIf you follow this pattern, the interface and its operations will be generated but will not be exposed in the public Python SDK client. If you still see the interface in the public client, double-check that none of its operations or models are referenced by any public API.\n\nNote: If you want to hide the interface only for Python, use the `scope` parameter as shown above. If you want to hide it for all SDKs, omit the scope.\n\nIf you need to remove the interface entirely from the SDK, you can use the `@removed(version)` decorator, but this will remove it for all languages and all SDKs, which is not what you want in this scenario.",
+            "references": [
+                {
+                    "title": "Decorators | Azure.ClientGenerator.Core | `@access`",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+                },
+                {
+                    "title": "How to remove certain classes for Python SDK only | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Usages for Test for internal decorator. | Scenario: This scenario contains internal operations. All should be generated but not exposed.",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "Usages for Test for internal decorator. | Scenario: This scenario contains internal operations. All should be generated but not exposed.",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+                },
+                {
+                    "title": "How to remove certain classes for Python SDK only | answer",
+                    "link": ""
+                },
+                {
+                    "title": "",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+                },
+                {
+                    "title": "Missing \"externalDocs\" | answer",
+                    "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+                },
+                {
+                    "title": "Table of Contents | How Does the Suppression Work",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+                },
+                {
+                    "title": "Usages for Test for internal decorator. | Full Sample:",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+                },
+                {
+                    "title": "Usages for Test for internal decorator. | Scenario: This scenario contains two operations, one public, another internal. The public one should be generated and exported while the internal one should be generated but not exposed.",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+                },
+                {
+                    "title": "Code here | Using `@clientLocation` to control parameter placement",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/04method"
+                },
+                {
+                    "title": "Usages for Test for internal decorator. | Full Sample:",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+                },
+                {
+                    "title": "Decorators | Azure.ClientGenerator.Core | `@clientLocation` {#@Azure.ClientGenerator.Core.clientLocation}",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+                },
+                {
+                    "title": "Suppressing Failures",
+                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-specs-pr"
+                },
+                {
+                    "title": "missing \"title\" on model  property | answer",
+                    "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+                },
+                {
+                    "title": "SDK generation configuration | Enable SDK generation",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+                },
+                {
+                    "title": "Interfaces",
+                    "link": "https://typespec.io/docs/language-basics/interfaces"
+                },
+                {
+                    "title": "Versioning | Adding New Operations",
+                    "link": "https://azure.github.io/typespec-azure/docs/getstarted/versioning"
+                },
+                {
+                    "title": "SDK generation configuration",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+                },
+                {
+                    "title": "Decorators | Azure.ClientGenerator.Core | `@client` {#@Azure.ClientGenerator.Core.client}",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+                },
+                {
+                    "title": "Visibility | Lifecycle visibility",
+                    "link": "https://typespec.io/docs/language-basics/visibility"
+                },
+                {
+                    "title": "Decorators | Azure.ClientGenerator.Core | `@access` {#@Azure.ClientGenerator.Core.access}",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+                },
+                {
+                    "title": "Usages for Test for internal decorator. | Scenario: This scenario contains internal operations. All should be generated but not exposed.",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+                },
+                {
+                    "title": "Usages for Test for internal decorator. | Scenario: This scenario contains internal operations. All should be generated but not exposed.",
+                    "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+                },
+                {
+                    "title": "Guideline for Client Emitter | Client Type Calculation Logic | Access Calculation",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/guideline"
+                },
+                {
+                    "title": "Clients | Customizations",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client"
+                },
+                {
+                    "title": "Generated Types | Models | Discriminator",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+                },
+                {
+                    "title": "Decorators | Azure.ClientGenerator.Core | `@clientName` {#@Azure.ClientGenerator.Core.clientName}",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+                }
+            ]
+        },
+        "knowledge_match": 0.3,
+        "knowledge_match_exact_matches": [
+            {
+                "title": "",
+                "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+            },
+            {
+                "title": "",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+            },
+            {
+                "title": "",
+                "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
+            },
+            {
+                "title": "Suppressing Failures",
+                "link": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement"
+            },
+            {
+                "title": "SDK generation configuration",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+            },
+            {
+                "title": "",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+            },
+            {
+                "title": "Interfaces",
+                "link": "https://typespec.io/docs/language-basics/interfaces"
+            },
+            {
+                "title": "SDK generation configuration",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+            },
+            {
+                "title": "Suppressing Failures",
+                "link": "https://github.com/Azure/azure-rest-api-specs/wiki/TypeSpec-Requirement"
+            }
+        ],
+        "knowledge_match_unexpected_refs": [
+            {
+                "title": "Usages for Test for internal decorator. | Scenario: This scenario contains internal operations. All should be generated but not exposed.",
+                "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+            },
+            {
+                "title": "How to remove certain classes for Python SDK only | answer",
+                "link": ""
+            },
+            {
+                "title": "Missing \"externalDocs\" | answer",
+                "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+            },
+            {
+                "title": "Table of Contents | How Does the Suppression Work",
+                "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+            },
+            {
+                "title": "Usages for Test for internal decorator. | Full Sample:",
+                "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+            },
+            {
+                "title": "Usages for Test for internal decorator. | Scenario: This scenario contains two operations, one public, another internal. The public one should be generated and exported while the internal one should be generated but not exposed.",
+                "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+            },
+            {
+                "title": "Code here | Using `@clientLocation` to control parameter placement",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/04method"
+            },
+            {
+                "title": "Usages for Test for internal decorator. | Full Sample:",
+                "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+            },
+            {
+                "title": "Decorators | Azure.ClientGenerator.Core | `@clientLocation` {#@Azure.ClientGenerator.Core.clientLocation}",
+                "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+            },
+            {
+                "title": "",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-specs-pr"
+            },
+            {
+                "title": "missing \"title\" on model  property | answer",
+                "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+            },
+            {
+                "title": "SDK generation configuration | Enable SDK generation",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+            },
+            {
+                "title": "Versioning | Adding New Operations",
+                "link": "https://azure.github.io/typespec-azure/docs/getstarted/versioning"
+            },
+            {
+                "title": "Decorators | Azure.ClientGenerator.Core | `@client` {#@Azure.ClientGenerator.Core.client}",
+                "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+            },
+            {
+                "title": "Visibility | Lifecycle visibility",
+                "link": "https://typespec.io/docs/language-basics/visibility"
+            },
+            {
+                "title": "Decorators | Azure.ClientGenerator.Core | `@access` {#@Azure.ClientGenerator.Core.access}",
+                "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+            },
+            {
+                "title": "Usages for Test for internal decorator. | Scenario: This scenario contains internal operations. All should be generated but not exposed.",
+                "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+            },
+            {
+                "title": "Usages for Test for internal decorator. | Scenario: This scenario contains internal operations. All should be generated but not exposed.",
+                "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/access/main.tsp"
+            },
+            {
+                "title": "Guideline for Client Emitter | Client Type Calculation Logic | Access Calculation",
+                "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/guideline"
+            },
+            {
+                "title": "Clients | Customizations",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client"
+            },
+            {
+                "title": "Generated Types | Models | Discriminator",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+            },
+            {
+                "title": "Decorators | Azure.ClientGenerator.Core | `@clientName` {#@Azure.ClientGenerator.Core.clientName}",
+                "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+            }
+        ],
+        "knowledge_match_missing_refs": [
+            {
+                "title": "How to remove certain classes for Python SDK only",
+                "link": ""
+            },
+            {
+                "title": "HTTP Test scenarios",
+                "link": "https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/readme.tsp"
+            },
+            {
+                "title": "Missing \"externalDocs\"",
+                "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+            },
+            {
+                "title": "Table of Contents",
+                "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Breaking-Changes"
+            },
+            {
+                "title": "Code here",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/04method"
+            },
+            {
+                "title": "Decorators",
+                "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+            },
+            {
+                "title": "missing \"title\" on model  property",
+                "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+            },
+            {
+                "title": "Usages for Test for internal decorator.",
+                "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/usage/main.tsp"
+            },
+            {
+                "title": "Usages for Test for internal decorator.",
+                "link": "https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/azure/client-generator-core/usage/main.tsp"
+            },
+            {
+                "title": "Versioning",
+                "link": "https://azure.github.io/typespec-azure/docs/getstarted/versioning"
+            },
+            {
+                "title": "",
+                "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff-for-TypeSpec"
+            },
+            {
+                "title": "Convert OpenAPI specs to TypeSpec",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+            },
+            {
+                "title": "Clients",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client"
+            },
+            {
+                "title": "Basic methods",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/04method"
+            },
+            {
+                "title": "Decorators",
+                "link": "https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/decorators"
+            },
+            {
+                "title": "Generated Types",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+            },
+            {
+                "title": "How to remove certain classes for Python SDK only",
+                "link": ""
+            },
+            {
+                "title": "Clients",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/03client"
+            },
+            {
+                "title": "Versioning",
+                "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/10versioning"
+            },
+            {
+                "title": "Emitter framework",
+                "link": "https://typespec.io/docs/extending-typespec/emitter-framework"
+            },
+            {
+                "title": "How to remove certain classes for Python SDK only",
+                "link": ""
+            }
+        ],
+        "knowledge_match_result": "fail",
+        "overall_score": 0.3
+    },
+    {
+        "average_score": 0.3,
+        "total_evals": 1,
+        "knowledge_match_pass_rate": 0,
+        "knowledge_match_fail_rate": 1
+    }
+]

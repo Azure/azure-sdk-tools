@@ -1,0 +1,1276 @@
+[
+    {
+        "testcase": "Fixing Invalid Type Specifications and SDK Regeneration in Released APIs",
+        "expected": {
+            "answer": "To fix invalid type specifications in previously released APIs and regenerate SDKs, you should follow these steps:\nFix the Spec and Follow Breaking Change Process: If your fix is a breaking change or a bug fix in an already released API version, you must submit a PR against the main branch of the public Azure REST API specs repository. If your PR is labeled with BreakingChangeReviewRequired or VersioningReviewRequired, you must get approval from the Breaking Change Review Board (see aka.ms/brch). For bug fixes, you may be able to apply the BreakingChange-Approved-BugFix label yourself, but the process should be strictly followed.\nARM Review: Once the breaking change review is resolved, request ARM review. Note: You cannot proceed to ARM review until the breaking change process is complete.\nSDK Generation and Release Plan:\nFor TypeSpec-based management plane SDKs (Java, JavaScript, Python, Go):\nUse the release planner to request SDK generation for the fixed API version. This will create a tracking issue in the Azure/sdk-release-request repo.\nThe Shanghai SDK team will generate the SDK and open a PR in the corresponding SDK repository. However, it is the service owner's responsibility to follow up, complete any customizations, and drive the PR through review and merge. You will be notified when the PR is created.\nAfter the SDK is generated, follow the release guidance to publish the package.\nFor .NET: Service owners must generate the SDK manually using the updated TypeSpec, then create and submit a PR to the azure-sdk-for-net repository.\nManual Follow-Up: While the initial SDK PRs for Java, JavaScript, Python, and Go are created automatically after you request generation, you are still responsible for any manual updates, review, and merging of these PRs. For .NET, all steps are manual after generation.\nSummary:\nYou do not need to manually create PRs in each SDK repo for Java, JavaScript, Python, and Go; the release planner and SDK generation pipelines will create draft PRs for you after you request generation.\nYou must still review, customize (if needed), and drive the SDK PRs to completion.\nFor .NET, the process is manual: you generate and submit the PR yourself.\nAlways ensure you have breaking change and ARM approvals before requesting SDK generation.\nFor more details, see the referenced documentation below.",
+            "references": [
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "What is TypeSpec?",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Publish Android SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-android-docs"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Using the SDK generated by the SDK generation pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "What is TypeSpec?",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "ServiceOwners:                                          @fakeUser2 @Azure/fakeTeam2",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "To fix invalid type specifications in previously released APIs (both preview and stable), you should follow a structured process that ensures compliance with Azure SDK and ARM review requirements, as well as proper handling of breaking changes:\n\n1. **Create a Release Branch and Plan**: Start by creating a dedicated release branch for your fix in the Azure REST API specs repository. Then, create a release plan in the Release Planner tool to track the work and ensure all steps are documented.\n\n2. **Implement the Fix**: Update the type specification in your API spec (TypeSpec or OpenAPI) on the release branch. Make sure the changes are isolated to the affected versions (preview and stable) and do not introduce unrelated changes.\n\n3. **Breaking Change Review**: Since this is a breaking change to a previously released API, you must email the Breaking Change Board (azbreakchangereview@microsoft.com) for approval. The ARM review board will also need to review your changes if this is a management plane API. Ensure your PR includes clear documentation of the change and its impact.\n\n4. **ARM Review and Approval**: Submit a pull request with your changes against the release branch. The ARM review board will review the PR. Address any feedback and obtain required approvals.\n\n5. **SDK Regeneration and Updates**:\n   - Once the spec fix is merged, SDK generation pipelines will NOT automatically trigger for previously released versions. You will need to manually initiate SDK regeneration for each affected language and version.\n   - For each SDK repo (.NET, Java, Python, JS/TS, Go), create a manual PR that updates the SDK to reflect the fixed type specification. This involves regenerating the SDK from the updated spec and pushing the changes to a new branch in each SDK repo.\n   - Ensure you follow the standard SDK release process, including updating CHANGELOG.md, adding tests/samples as needed, and obtaining APIView approval for GA releases.\n\n6. **SDK Release**: After all manual PRs are reviewed and merged, run the release pipelines for each SDK to publish the updated packages. Make sure to approve only the relevant packages in the pipeline.\n\n**Summary:**\n- Breaking changes require explicit review and approval by ARM and the Breaking Change Board.\n- SDKs for previously released versions must be manually regenerated and updated via PRs in each SDK repo.\n- Use the Release Planner to track the process and ensure compliance with Azure SDK release guidelines.\n\nIf you need further help with the process or tooling, reach out via the provided Teams channels or email contacts.",
+            "references": [
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                },
+                {
+                    "title": "Using the SDK generated by the SDK generation pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "What is TypeSpec?",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Publish Android SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-android-docs"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                },
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "CODEOWNERS",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+                },
+                {
+                    "title": "Using the SDK generated by the SDK generation pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "similarity_prompt_tokens": 2000,
+        "similarity_completion_tokens": 1,
+        "similarity_total_tokens": 2001,
+        "similarity_finish_reason": "length",
+        "similarity_model": "gpt-4.1-2025-04-14",
+        "similarity_sample_input": "[{\"role\": \"user\", \"content\": \"{\\\"query\\\": \\\"title: Fixing Invalid Type Specifications and SDK Regeneration in Released APIs\\\\n\\\\nquestion: Hi Azure SDK Onboarding,\\\\nOur team found an invalid type specification in our previous 2 API releases (1 preview, 1 stable).  I've read through (lightly) the breaking change deep dive, which looks like I'll have to reach out to the review board to get their approval, however, I was wondering what is the recommended way to implement a fix for existing APIs, up to the point where it can be reviewed by ARM and Breaking changes board.\\\\nNormally, I would create a branch, commit a base version for review, then create a release plan against the new branch (then add in changes, get ARM sign off, then request the sdk release).\\\\nHow do I regenerate the SDKs once I have a fix in place for the previously released verisons?  Will they require manual updates (e.g. create a PR in each sdk repo with a fix)?\\\\nAny guidance would be appreciated!\\\", \\\"response\\\": \\\"To fix invalid type specifications in previously released APIs (both preview and stable), you should follow a structured process that ensures compliance with Azure SDK and ARM review requirements, as well as proper handling of breaking changes:\\\\n\\\\n1. **Create a Release Branch and Plan**: Start by creating a dedicated release branch for your fix in the Azure REST API specs repository. Then, create a release plan in the Release Planner tool to track the work and ensure all steps are documented.\\\\n\\\\n2. **Implement the Fix**: Update the type specification in your API spec (TypeSpec or OpenAPI) on the release branch. Make sure the changes are isolated to the affected versions (preview and stable) and do not introduce unrelated changes.\\\\n\\\\n3. **Breaking Change Review**: Since this is a breaking change to a previously released API, you must email the Breaking Change Board (azbreakchangereview@microsoft.com) for approval. The ARM review board will also need to review your changes if this is a management plane API. Ensure your PR includes clear documentation of the change and its impact.\\\\n\\\\n4. **ARM Review and Approval**: Submit a pull request with your changes against the release branch. The ARM review board will review the PR. Address any feedback and obtain required approvals.\\\\n\\\\n5. **SDK Regeneration and Updates**:\\\\n   - Once the spec fix is merged, SDK generation pipelines will NOT automatically trigger for previously released versions. You will need to manually initiate SDK regeneration for each affected language and version.\\\\n   - For each SDK repo (.NET, Java, Python, JS/TS, Go), create a manual PR that updates the SDK to reflect the fixed type specification. This involves regenerating the SDK from the updated spec and pushing the changes to a new branch in each SDK repo.\\\\n   - Ensure you follow the standard SDK release process, including updating CHANGELOG.md, adding tests/samples as needed, and obtaining APIView approval for GA releases.\\\\n\\\\n6. **SDK Release**: After all manual PRs are reviewed and merged, run the release pipelines for each SDK to publish the updated packages. Make sure to approve only the relevant packages in the pipeline.\\\\n\\\\n**Summary:**\\\\n- Breaking changes require explicit review and approval by ARM and the Breaking Change Board.\\\\n- SDKs for previously released versions must be manually regenerated and updated via PRs in each SDK repo.\\\\n- Use the Release Planner to track the process and ensure compliance with Azure SDK release guidelines.\\\\n\\\\nIf you need further help with the process or tooling, reach out via the provided Teams channels or email contacts.\\\", \\\"ground_truth\\\": \\\"To fix invalid type specifications in previously released APIs and regenerate SDKs, you should follow these steps:\\\\nFix the Spec and Follow Breaking Change Process: If your fix is a breaking change or a bug fix in an already released API version, you must submit a PR against the main branch of the public Azure REST API specs repository. If your PR is labeled with BreakingChangeReviewRequired or VersioningReviewRequired, you must get approval from the Breaking Change Review Board (see aka.ms/brch). For bug fixes, you may be able to apply the BreakingChange-Approved-BugFix label yourself, but the process should be strictly followed.\\\\nARM Review: Once the breaking change review is resolved, request ARM review. Note: You cannot proceed to ARM review until the breaking change process is complete.\\\\nSDK Generation and Release Plan:\\\\nFor TypeSpec-based management plane SDKs (Java, JavaScript, Python, Go):\\\\nUse the release planner to request SDK generation for the fixed API version. This will create a tracking issue in the Azure/sdk-release-request repo.\\\\nThe Shanghai SDK team will generate the SDK and open a PR in the corresponding SDK repository. However, it is the service owner's responsibility to follow up, complete any customizations, and drive the PR through review and merge. You will be notified when the PR is created.\\\\nAfter the SDK is generated, follow the release guidance to publish the package.\\\\nFor .NET: Service owners must generate the SDK manually using the updated TypeSpec, then create and submit a PR to the azure-sdk-for-net repository.\\\\nManual Follow-Up: While the initial SDK PRs for Java, JavaScript, Python, and Go are created automatically after you request generation, you are still responsible for any manual updates, review, and merging of these PRs. For .NET, all steps are manual after generation.\\\\nSummary:\\\\nYou do not need to manually create PRs in each SDK repo for Java, JavaScript, Python, and Go; the release planner and SDK generation pipelines will create draft PRs for you after you request generation.\\\\nYou must still review, customize (if needed), and drive the SDK PRs to completion.\\\\nFor .NET, the process is manual: you generate and submit the PR yourself.\\\\nAlways ensure you have breaking change and ARM approvals before requesting SDK generation.\\\\nFor more details, see the referenced documentation below.\\\"}\"}]",
+        "similarity_sample_output": "[{\"role\": \"assistant\", \"content\": \"4\"}]",
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The Response covers most steps but incorrectly states that manual PR creation is needed for all SDKs, missing the automation for most languages described in the Ground Truth. This is a significant omission, but most other steps are present.",
+        "response_completeness_prompt_tokens": 2325,
+        "response_completeness_completion_tokens": 297,
+        "response_completeness_total_tokens": 2622,
+        "response_completeness_finish_reason": "stop",
+        "response_completeness_model": "gpt-4.1-2025-04-14",
+        "response_completeness_sample_input": "[{\"role\": \"user\", \"content\": \"{\\\"response\\\": \\\"To fix invalid type specifications in previously released APIs (both preview and stable), you should follow a structured process that ensures compliance with Azure SDK and ARM review requirements, as well as proper handling of breaking changes:\\\\n\\\\n1. **Create a Release Branch and Plan**: Start by creating a dedicated release branch for your fix in the Azure REST API specs repository. Then, create a release plan in the Release Planner tool to track the work and ensure all steps are documented.\\\\n\\\\n2. **Implement the Fix**: Update the type specification in your API spec (TypeSpec or OpenAPI) on the release branch. Make sure the changes are isolated to the affected versions (preview and stable) and do not introduce unrelated changes.\\\\n\\\\n3. **Breaking Change Review**: Since this is a breaking change to a previously released API, you must email the Breaking Change Board (azbreakchangereview@microsoft.com) for approval. The ARM review board will also need to review your changes if this is a management plane API. Ensure your PR includes clear documentation of the change and its impact.\\\\n\\\\n4. **ARM Review and Approval**: Submit a pull request with your changes against the release branch. The ARM review board will review the PR. Address any feedback and obtain required approvals.\\\\n\\\\n5. **SDK Regeneration and Updates**:\\\\n   - Once the spec fix is merged, SDK generation pipelines will NOT automatically trigger for previously released versions. You will need to manually initiate SDK regeneration for each affected language and version.\\\\n   - For each SDK repo (.NET, Java, Python, JS/TS, Go), create a manual PR that updates the SDK to reflect the fixed type specification. This involves regenerating the SDK from the updated spec and pushing the changes to a new branch in each SDK repo.\\\\n   - Ensure you follow the standard SDK release process, including updating CHANGELOG.md, adding tests/samples as needed, and obtaining APIView approval for GA releases.\\\\n\\\\n6. **SDK Release**: After all manual PRs are reviewed and merged, run the release pipelines for each SDK to publish the updated packages. Make sure to approve only the relevant packages in the pipeline.\\\\n\\\\n**Summary:**\\\\n- Breaking changes require explicit review and approval by ARM and the Breaking Change Board.\\\\n- SDKs for previously released versions must be manually regenerated and updated via PRs in each SDK repo.\\\\n- Use the Release Planner to track the process and ensure compliance with Azure SDK release guidelines.\\\\n\\\\nIf you need further help with the process or tooling, reach out via the provided Teams channels or email contacts.\\\", \\\"ground_truth\\\": \\\"To fix invalid type specifications in previously released APIs and regenerate SDKs, you should follow these steps:\\\\nFix the Spec and Follow Breaking Change Process: If your fix is a breaking change or a bug fix in an already released API version, you must submit a PR against the main branch of the public Azure REST API specs repository. If your PR is labeled with BreakingChangeReviewRequired or VersioningReviewRequired, you must get approval from the Breaking Change Review Board (see aka.ms/brch). For bug fixes, you may be able to apply the BreakingChange-Approved-BugFix label yourself, but the process should be strictly followed.\\\\nARM Review: Once the breaking change review is resolved, request ARM review. Note: You cannot proceed to ARM review until the breaking change process is complete.\\\\nSDK Generation and Release Plan:\\\\nFor TypeSpec-based management plane SDKs (Java, JavaScript, Python, Go):\\\\nUse the release planner to request SDK generation for the fixed API version. This will create a tracking issue in the Azure/sdk-release-request repo.\\\\nThe Shanghai SDK team will generate the SDK and open a PR in the corresponding SDK repository. However, it is the service owner's responsibility to follow up, complete any customizations, and drive the PR through review and merge. You will be notified when the PR is created.\\\\nAfter the SDK is generated, follow the release guidance to publish the package.\\\\nFor .NET: Service owners must generate the SDK manually using the updated TypeSpec, then create and submit a PR to the azure-sdk-for-net repository.\\\\nManual Follow-Up: While the initial SDK PRs for Java, JavaScript, Python, and Go are created automatically after you request generation, you are still responsible for any manual updates, review, and merging of these PRs. For .NET, all steps are manual after generation.\\\\nSummary:\\\\nYou do not need to manually create PRs in each SDK repo for Java, JavaScript, Python, and Go; the release planner and SDK generation pipelines will create draft PRs for you after you request generation.\\\\nYou must still review, customize (if needed), and drive the SDK PRs to completion.\\\\nFor .NET, the process is manual: you generate and submit the PR yourself.\\\\nAlways ensure you have breaking change and ARM approvals before requesting SDK generation.\\\\nFor more details, see the referenced documentation below.\\\"}\"}]",
+        "response_completeness_sample_output": "[{\"role\": \"assistant\", \"content\": \"<S0>Let's think step by step:\\n1. The Ground Truth specifies that for fixing invalid type specifications in previously released APIs, the process involves submitting a PR to the main branch, following breaking change and ARM review processes, and using the release planner for SDK generation.\\n2. For Java, JavaScript, Python, and Go, SDK PRs are created automatically after requesting generation; manual PR creation is only required for .NET.\\n3. The Response describes a process that includes creating a release branch, planning, implementing the fix, breaking change and ARM review, and manual SDK regeneration and PR creation for all languages.\\n4. The Response incorrectly states that SDK regeneration and manual PR creation are required for all languages, while the Ground Truth says this is only needed for .NET; for other languages, the process is automated after requesting generation.\\n5. The Response does mention breaking change and ARM review, and use of the Release Planner, but misses the distinction between manual and automated SDK PR creation.\\n6. The Response is mostly complete but contains a significant error regarding SDK PR creation for Java, JavaScript, Python, and Go, which is a key part of the process.\\n</S0>\\n<S1>The Response covers most steps but incorrectly states that manual PR creation is needed for all SDKs, missing the automation for most languages described in the Ground Truth. This is a significant omission, but most other steps are present.</S1>\\n<S2>4</S2>\"}]",
+        "reference_match": 0.75,
+        "reference_match_exact_matches": [
+            {
+                "title": "Suppress validation failures on a PR",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Work against the release branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            }
+        ],
+        "reference_match_unexpected_refs": [
+            {
+                "title": "Using the SDK generated by the SDK generation pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+            },
+            {
+                "title": "Run release SDK pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+            }
+        ],
+        "reference_match_missing_refs": [
+            {
+                "title": "Generate .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+            }
+        ],
+        "reference_match_result": "fail",
+        "knowledge_match": 0.9615384615384616,
+        "knowledge_match_exact_matches": [
+            {
+                "title": "bad",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Convert OpenAPI specs to TypeSpec",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Convert OpenAPI specs to TypeSpec",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+            },
+            {
+                "title": "Convert OpenAPI specs to TypeSpec",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+            },
+            {
+                "title": "What is TypeSpec?",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+            },
+            {
+                "title": "Generate .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+            },
+            {
+                "title": "Suppress validation failures on a PR",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Suppress validation failures on a PR",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            },
+            {
+                "title": "Publish Android SDK reference docs",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-android-docs"
+            },
+            {
+                "title": "Publish SDK reference docs",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            },
+            {
+                "title": "Run release SDK pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+            },
+            {
+                "title": "Suppress validation failures on a PR",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Work against the release branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+            },
+            {
+                "title": "Suppress validation failures on a PR",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Using the SDK generated by the SDK generation pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+            },
+            {
+                "title": "Suppress validation failures on a PR",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "What is TypeSpec?",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+            },
+            {
+                "title": "Suppress validation failures on a PR",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            }
+        ],
+        "knowledge_match_unexpected_refs": [
+            {
+                "title": "CODEOWNERS",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+            }
+        ],
+        "knowledge_match_missing_refs": [
+            {
+                "title": "ServiceOwners:                                          @fakeUser2 @Azure/fakeTeam2",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+            }
+        ],
+        "knowledge_match_result": "pass",
+        "overall_score": 5.711538461538462
+    },
+    {
+        "testcase": "TypeSpec SDK API Reviews Process for Management Plane Services",
+        "expected": {
+            "answer": "Welcome to the TypeSpec and Azure SDK onboarding process! Since you are working on a new preview API version and have generated the SDKs (autogenerated SDK API reviews), here is how you get these reviewed by the specific SDK teams:\nManagement Plane (ARM) SDKs Do NOT Require Arch Board Review:\nFor management plane (ARM) libraries like Azure Fleet, you do NOT need to schedule an SDK Architecture Board meeting. The review process is handled through the pull request (PR) workflow in the Azure REST API Specs repository.\nSDK Review Process for Your Scenario:\nAfter your REST API spec PR is approved and merged, the next steps are:\nEnsure you have a release plan created in the Azure SDK Release Planner.\nThe SDK generation and release planning will involve tracking the release plan milestones, where you can monitor which language SDKs are being generated and when they are ready for review.\nAssigning Specific SDK Teams as Reviewers:\nSDK teams are automatically assigned as reviewers for their respective language repos using the CODEOWNERS file in each SDK repository. If your service is not already listed in the CODEOWNERS file for a given language SDK repo, you should add your service and the appropriate GitHub users or teams to ensure SDK team visibility and review (see the reference for details).\nYou can also @-mention specific SDK team members in the generated SDK PRs in each language repository if you need urgent attention.\nHow to Track and Request Review:\nAfter the SDK PR is generated (either manually or via automation), monitor the PR in the respective SDK repo. The SDK team responsible for that language will review according to the CODEOWNERS assignment.\nIf you do not see timely review or need to escalate, reach out to the language-specific Teams channel or the SDK repo maintainers directly.\nSummary of Steps:\nConfirm your service is listed in the CODEOWNERS file for each SDK repo.\nCreate/track your release plan in the Azure SDK Release Planner.\nMonitor and follow up on the generated SDK PRs for reviews.\nFor Management Plane, no Arch Board meeting is needed; reviews are handled via the PR process.\nLet me know if you need guidance on updating CODEOWNERS or navigating the release planner!\nReferences below provide detailed steps and process links.",
+            "references": [
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "CODEOWNERS",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "What is TypeSpec?",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "What is TypeSpec?",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Using the SDK generated by the SDK generation pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "CODEOWNERS",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+                },
+                {
+                    "title": "Using the SDK generated by the SDK generation pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "SDK generation configuration",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "To get your autogenerated SDK API reviews (APIView links) reviewed by the appropriate SDK teams, you should ensure that the correct reviewers are automatically assigned via the CODEOWNERS file in the relevant SDK repository. The Azure SDK and Azure REST API Specs GitHub repositories use the CODEOWNERS file to automatically add reviewers to PRs based on the service label and directory. \n\nHere's what you need to do:\n\n1. Locate the relevant block in the CODEOWNERS file for your service (e.g., Compute/Fleet) in the SDK repo (such as azure-sdk-for-net for .NET, azure-sdk-for-java for Java, etc.).\n2. Update the GitHub aliases listed for your service to include the appropriate SDK team members or GitHub teams who should review the APIView links and SDK changes.\n3. When your PR is opened or updated, these reviewers will be automatically assigned and notified to review the SDK API changes.\n\nIf you need to update who gets assigned or mentioned, follow the instructions in the CODEOWNERS documentation. This ensures that the right SDK teams are looped in for review and feedback.\n\nIf you have any issues or need further assistance, you can reach out via the Teams channel or email azsdkarch-help@microsoft.com for support.",
+            "references": [
+                {
+                    "title": "CODEOWNERS",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "What is TypeSpec?",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "What is TypeSpec?",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Using the SDK generated by the SDK generation pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "CODEOWNERS",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "CODEOWNERS",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+                },
+                {
+                    "title": "SDK generation configuration",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "similarity_prompt_tokens": 1611,
+        "similarity_completion_tokens": 1,
+        "similarity_total_tokens": 1612,
+        "similarity_finish_reason": "length",
+        "similarity_model": "gpt-4.1-2025-04-14",
+        "similarity_sample_input": "[{\"role\": \"user\", \"content\": \"{\\\"query\\\": \\\"title: TypeSpec SDK API Reviews Process for Management Plane Services\\\\n\\\\nquestion: Hello General,\\\\nFirst time working on typespec. I'm from Compute team and this is my api-specs PR to add a new preview API version: Add 2025-07-01-preview API version to Azure Fleet by diyellap \\\\u00b7 Pull Request #36207 \\\\u00b7 Azure/azure-rest-api-specs.\\\\nIt has autogenerated SDK API reviews. How to get these reviewed by specific SDK teams?\\\", \\\"response\\\": \\\"To get your autogenerated SDK API reviews (APIView links) reviewed by the appropriate SDK teams, you should ensure that the correct reviewers are automatically assigned via the CODEOWNERS file in the relevant SDK repository. The Azure SDK and Azure REST API Specs GitHub repositories use the CODEOWNERS file to automatically add reviewers to PRs based on the service label and directory. \\\\n\\\\nHere's what you need to do:\\\\n\\\\n1. Locate the relevant block in the CODEOWNERS file for your service (e.g., Compute/Fleet) in the SDK repo (such as azure-sdk-for-net for .NET, azure-sdk-for-java for Java, etc.).\\\\n2. Update the GitHub aliases listed for your service to include the appropriate SDK team members or GitHub teams who should review the APIView links and SDK changes.\\\\n3. When your PR is opened or updated, these reviewers will be automatically assigned and notified to review the SDK API changes.\\\\n\\\\nIf you need to update who gets assigned or mentioned, follow the instructions in the CODEOWNERS documentation. This ensures that the right SDK teams are looped in for review and feedback.\\\\n\\\\nIf you have any issues or need further assistance, you can reach out via the Teams channel or email azsdkarch-help@microsoft.com for support.\\\", \\\"ground_truth\\\": \\\"Welcome to the TypeSpec and Azure SDK onboarding process! Since you are working on a new preview API version and have generated the SDKs (autogenerated SDK API reviews), here is how you get these reviewed by the specific SDK teams:\\\\nManagement Plane (ARM) SDKs Do NOT Require Arch Board Review:\\\\nFor management plane (ARM) libraries like Azure Fleet, you do NOT need to schedule an SDK Architecture Board meeting. The review process is handled through the pull request (PR) workflow in the Azure REST API Specs repository.\\\\nSDK Review Process for Your Scenario:\\\\nAfter your REST API spec PR is approved and merged, the next steps are:\\\\nEnsure you have a release plan created in the Azure SDK Release Planner.\\\\nThe SDK generation and release planning will involve tracking the release plan milestones, where you can monitor which language SDKs are being generated and when they are ready for review.\\\\nAssigning Specific SDK Teams as Reviewers:\\\\nSDK teams are automatically assigned as reviewers for their respective language repos using the CODEOWNERS file in each SDK repository. If your service is not already listed in the CODEOWNERS file for a given language SDK repo, you should add your service and the appropriate GitHub users or teams to ensure SDK team visibility and review (see the reference for details).\\\\nYou can also @-mention specific SDK team members in the generated SDK PRs in each language repository if you need urgent attention.\\\\nHow to Track and Request Review:\\\\nAfter the SDK PR is generated (either manually or via automation), monitor the PR in the respective SDK repo. The SDK team responsible for that language will review according to the CODEOWNERS assignment.\\\\nIf you do not see timely review or need to escalate, reach out to the language-specific Teams channel or the SDK repo maintainers directly.\\\\nSummary of Steps:\\\\nConfirm your service is listed in the CODEOWNERS file for each SDK repo.\\\\nCreate/track your release plan in the Azure SDK Release Planner.\\\\nMonitor and follow up on the generated SDK PRs for reviews.\\\\nFor Management Plane, no Arch Board meeting is needed; reviews are handled via the PR process.\\\\nLet me know if you need guidance on updating CODEOWNERS or navigating the release planner!\\\\nReferences below provide detailed steps and process links.\\\"}\"}]",
+        "similarity_sample_output": "[{\"role\": \"assistant\", \"content\": \"4\"}]",
+        "response_completeness": 3.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response includes the main process for reviewer assignment via CODEOWNERS and escalation, but omits several important steps and context (release planner, Arch Board review exemption, @-mentioning, summary steps). It covers about half of the necessary information.",
+        "response_completeness_prompt_tokens": 2040,
+        "response_completeness_completion_tokens": 377,
+        "response_completeness_total_tokens": 2417,
+        "response_completeness_finish_reason": "stop",
+        "response_completeness_model": "gpt-4.1-2025-04-14",
+        "response_completeness_sample_input": "[{\"role\": \"user\", \"content\": \"{\\\"response\\\": \\\"To get your autogenerated SDK API reviews (APIView links) reviewed by the appropriate SDK teams, you should ensure that the correct reviewers are automatically assigned via the CODEOWNERS file in the relevant SDK repository. The Azure SDK and Azure REST API Specs GitHub repositories use the CODEOWNERS file to automatically add reviewers to PRs based on the service label and directory. \\\\n\\\\nHere's what you need to do:\\\\n\\\\n1. Locate the relevant block in the CODEOWNERS file for your service (e.g., Compute/Fleet) in the SDK repo (such as azure-sdk-for-net for .NET, azure-sdk-for-java for Java, etc.).\\\\n2. Update the GitHub aliases listed for your service to include the appropriate SDK team members or GitHub teams who should review the APIView links and SDK changes.\\\\n3. When your PR is opened or updated, these reviewers will be automatically assigned and notified to review the SDK API changes.\\\\n\\\\nIf you need to update who gets assigned or mentioned, follow the instructions in the CODEOWNERS documentation. This ensures that the right SDK teams are looped in for review and feedback.\\\\n\\\\nIf you have any issues or need further assistance, you can reach out via the Teams channel or email azsdkarch-help@microsoft.com for support.\\\", \\\"ground_truth\\\": \\\"Welcome to the TypeSpec and Azure SDK onboarding process! Since you are working on a new preview API version and have generated the SDKs (autogenerated SDK API reviews), here is how you get these reviewed by the specific SDK teams:\\\\nManagement Plane (ARM) SDKs Do NOT Require Arch Board Review:\\\\nFor management plane (ARM) libraries like Azure Fleet, you do NOT need to schedule an SDK Architecture Board meeting. The review process is handled through the pull request (PR) workflow in the Azure REST API Specs repository.\\\\nSDK Review Process for Your Scenario:\\\\nAfter your REST API spec PR is approved and merged, the next steps are:\\\\nEnsure you have a release plan created in the Azure SDK Release Planner.\\\\nThe SDK generation and release planning will involve tracking the release plan milestones, where you can monitor which language SDKs are being generated and when they are ready for review.\\\\nAssigning Specific SDK Teams as Reviewers:\\\\nSDK teams are automatically assigned as reviewers for their respective language repos using the CODEOWNERS file in each SDK repository. If your service is not already listed in the CODEOWNERS file for a given language SDK repo, you should add your service and the appropriate GitHub users or teams to ensure SDK team visibility and review (see the reference for details).\\\\nYou can also @-mention specific SDK team members in the generated SDK PRs in each language repository if you need urgent attention.\\\\nHow to Track and Request Review:\\\\nAfter the SDK PR is generated (either manually or via automation), monitor the PR in the respective SDK repo. The SDK team responsible for that language will review according to the CODEOWNERS assignment.\\\\nIf you do not see timely review or need to escalate, reach out to the language-specific Teams channel or the SDK repo maintainers directly.\\\\nSummary of Steps:\\\\nConfirm your service is listed in the CODEOWNERS file for each SDK repo.\\\\nCreate/track your release plan in the Azure SDK Release Planner.\\\\nMonitor and follow up on the generated SDK PRs for reviews.\\\\nFor Management Plane, no Arch Board meeting is needed; reviews are handled via the PR process.\\\\nLet me know if you need guidance on updating CODEOWNERS or navigating the release planner!\\\\nReferences below provide detailed steps and process links.\\\"}\"}]",
+        "response_completeness_sample_output": "[{\"role\": \"assistant\", \"content\": \"<S0>Let's think step by step:  \\n1. The ground truth contains several key points:  \\n   - Management Plane (ARM) SDKs do NOT require Arch Board review; handled via PR workflow.  \\n   - After REST API spec PR approval, create/track a release plan in Azure SDK Release Planner.  \\n   - SDK teams are assigned as reviewers via CODEOWNERS; if not listed, add your service/team.  \\n   - You can @-mention SDK team members for urgent attention.  \\n   - Monitor PRs for review; escalate via Teams channel or repo maintainers if needed.  \\n   - Summary: CODEOWNERS listing, release plan, PR monitoring, no Arch Board meeting for Management Plane.  \\n2. The response covers:  \\n   - Using CODEOWNERS for automatic reviewer assignment.  \\n   - How to update CODEOWNERS.  \\n   - Notification and review process via PRs.  \\n   - Escalation via Teams channel or email.  \\n3. Missing from the response:  \\n   - Explicit mention that Management Plane SDKs do NOT require Arch Board review.  \\n   - The need to create/track a release plan in Azure SDK Release Planner.  \\n   - Monitoring release plan milestones for SDK generation and review readiness.  \\n   - Option to @-mention SDK team members for urgent attention.  \\n   - The summary of steps and references.  \\n4. The response does cover the CODEOWNERS process and escalation, but misses about half of the key steps and context from the ground truth.</S0>\\n<S1>The response includes the main process for reviewer assignment via CODEOWNERS and escalation, but omits several important steps and context (release planner, Arch Board review exemption, @-mentioning, summary steps). It covers about half of the necessary information.</S1>\\n<S2>3</S2>\"}]",
+        "reference_match": 0.25,
+        "reference_match_exact_matches": [
+            {
+                "title": "CODEOWNERS",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+            }
+        ],
+        "reference_match_unexpected_refs": [],
+        "reference_match_missing_refs": [
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            }
+        ],
+        "reference_match_result": "fail",
+        "knowledge_match": 1.0,
+        "knowledge_match_exact_matches": [
+            {
+                "title": "Generate .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+            },
+            {
+                "title": "Convert OpenAPI specs to TypeSpec",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+            },
+            {
+                "title": "Convert OpenAPI specs to TypeSpec",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            },
+            {
+                "title": "What is TypeSpec?",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+            },
+            {
+                "title": "What is TypeSpec?",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "bad",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            },
+            {
+                "title": "Using the SDK generated by the SDK generation pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "CODEOWNERS",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners"
+            },
+            {
+                "title": "Using the SDK generated by the SDK generation pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "SDK generation configuration",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-spec-gen-sdk-config"
+            }
+        ],
+        "knowledge_match_unexpected_refs": [],
+        "knowledge_match_missing_refs": [],
+        "knowledge_match_result": "pass",
+        "overall_score": 4.85
+    },
+    {
+        "testcase": "Reusing Release Plans from Preview to GA",
+        "expected": {
+            "answer": "You cannot simply reuse your public preview release plan for your GA (General Availability) SDK release. Each major milestone (public preview, GA, etc.) requires its own release plan in the Azure SDK Release Planner. The GA release plan will have additional requirements, such as more comprehensive testing, additional samples, and potentially a final architecture review. You should create a new release plan specifically for your GA SDK release to ensure all required steps and validations are tracked and completed. The release planner helps you track your progress and ensures you meet all the prerequisites for a GA release.\nHowever, you can use your public preview release plan as a reference or template to speed up the creation of your GA release plan, but it is important to go through the official process and create a dedicated GA plan.\nIf you have already completed some steps during public preview (such as generating SDKs or completing reviews), those may not need to be repeated, but you must still document and track them in the GA release plan.",
+            "references": [
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "You cannot directly reuse the same release plan created for your service's public preview for the General Availability (GA) SDK release. Each release phase (preview and GA) requires its own release plan to ensure that all requirements, validations, and approvals specific to that phase are properly tracked and completed. For GA release, you must create a new release plan that reflects the updated scope, timelines, and any changes since the preview. This ensures compliance with the Azure SDK approval release guidelines and enables proper tracking in the release pipeline. However, you can use the information and structure from your preview release plan as a reference when creating the GA release plan to streamline the process.",
+            "references": [
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Using the SDK generated by the SDK generation pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "Run release SDK pipeline",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "similarity_prompt_tokens": 1184,
+        "similarity_completion_tokens": 1,
+        "similarity_total_tokens": 1185,
+        "similarity_finish_reason": "length",
+        "similarity_model": "gpt-4.1-2025-04-14",
+        "similarity_sample_input": "[{\"role\": \"user\", \"content\": \"{\\\"query\\\": \\\"title: Reusing Release Plans from Preview to GA\\\\n\\\\nquestion: I have created a release plan for my service for public preview. Can I reuse this release plan for my GA SDK release?\\\", \\\"response\\\": \\\"You cannot directly reuse the same release plan created for your service's public preview for the General Availability (GA) SDK release. Each release phase (preview and GA) requires its own release plan to ensure that all requirements, validations, and approvals specific to that phase are properly tracked and completed. For GA release, you must create a new release plan that reflects the updated scope, timelines, and any changes since the preview. This ensures compliance with the Azure SDK approval release guidelines and enables proper tracking in the release pipeline. However, you can use the information and structure from your preview release plan as a reference when creating the GA release plan to streamline the process.\\\", \\\"ground_truth\\\": \\\"You cannot simply reuse your public preview release plan for your GA (General Availability) SDK release. Each major milestone (public preview, GA, etc.) requires its own release plan in the Azure SDK Release Planner. The GA release plan will have additional requirements, such as more comprehensive testing, additional samples, and potentially a final architecture review. You should create a new release plan specifically for your GA SDK release to ensure all required steps and validations are tracked and completed. The release planner helps you track your progress and ensures you meet all the prerequisites for a GA release.\\\\nHowever, you can use your public preview release plan as a reference or template to speed up the creation of your GA release plan, but it is important to go through the official process and create a dedicated GA plan.\\\\nIf you have already completed some steps during public preview (such as generating SDKs or completing reviews), those may not need to be repeated, but you must still document and track them in the GA release plan.\\\"}\"}]",
+        "similarity_sample_output": "[{\"role\": \"assistant\", \"content\": \"4\"}]",
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, capturing the main requirements for a separate GA release plan and referencing the use of the preview plan, but it misses some minor details about specific GA requirements and documentation of previously completed steps.",
+        "response_completeness_prompt_tokens": 1670,
+        "response_completeness_completion_tokens": 405,
+        "response_completeness_total_tokens": 2075,
+        "response_completeness_finish_reason": "stop",
+        "response_completeness_model": "gpt-4.1-2025-04-14",
+        "response_completeness_sample_input": "[{\"role\": \"user\", \"content\": \"{\\\"response\\\": \\\"You cannot directly reuse the same release plan created for your service's public preview for the General Availability (GA) SDK release. Each release phase (preview and GA) requires its own release plan to ensure that all requirements, validations, and approvals specific to that phase are properly tracked and completed. For GA release, you must create a new release plan that reflects the updated scope, timelines, and any changes since the preview. This ensures compliance with the Azure SDK approval release guidelines and enables proper tracking in the release pipeline. However, you can use the information and structure from your preview release plan as a reference when creating the GA release plan to streamline the process.\\\", \\\"ground_truth\\\": \\\"You cannot simply reuse your public preview release plan for your GA (General Availability) SDK release. Each major milestone (public preview, GA, etc.) requires its own release plan in the Azure SDK Release Planner. The GA release plan will have additional requirements, such as more comprehensive testing, additional samples, and potentially a final architecture review. You should create a new release plan specifically for your GA SDK release to ensure all required steps and validations are tracked and completed. The release planner helps you track your progress and ensures you meet all the prerequisites for a GA release.\\\\nHowever, you can use your public preview release plan as a reference or template to speed up the creation of your GA release plan, but it is important to go through the official process and create a dedicated GA plan.\\\\nIf you have already completed some steps during public preview (such as generating SDKs or completing reviews), those may not need to be repeated, but you must still document and track them in the GA release plan.\\\"}\"}]",
+        "response_completeness_sample_output": "[{\"role\": \"assistant\", \"content\": \"<S0>Let's think step by step:  \\n1. The ground truth states that you cannot simply reuse the public preview release plan for GA; each milestone needs its own plan in the Azure SDK Release Planner.  \\n2. The ground truth specifies that the GA release plan has additional requirements (comprehensive testing, samples, architecture review) and that a new plan must be created to track all steps and validations.  \\n3. The ground truth mentions that the release planner helps track progress and prerequisites for GA.  \\n4. It also says you can use the preview plan as a reference/template, but must go through the official process and create a dedicated GA plan.  \\n5. If some steps were completed during preview, they may not need to be repeated, but must be documented and tracked in the GA plan.\\n\\nNow, the response:  \\n- Correctly states you cannot directly reuse the preview plan for GA and that each phase needs its own plan.  \\n- Mentions the need for a new GA release plan reflecting updated scope, timelines, and changes.  \\n- States this ensures compliance and proper tracking in the release pipeline.  \\n- Says you can use the preview plan as a reference to streamline the GA plan creation.\\n\\nMissing:  \\n- The response does not mention the Azure SDK Release Planner by name.  \\n- It does not specify the additional requirements for GA (comprehensive testing, samples, architecture review).  \\n- It does not mention that previously completed steps may not need to be repeated but must be documented and tracked in the GA plan.\\n\\nThe response covers most of the main points (separate plans, reference/template use, compliance/tracking), but omits some specific details about additional requirements and documentation of previously completed steps.</S0>\\n<S1>The response is mostly complete, capturing the main requirements for a separate GA release plan and referencing the use of the preview plan, but it misses some minor details about specific GA requirements and documentation of previously completed steps.</S1>\\n<S2>4</S2>\"}]",
+        "reference_match": 0.3333333333333333,
+        "reference_match_exact_matches": [
+            {
+                "title": "Run release SDK pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+            }
+        ],
+        "reference_match_unexpected_refs": [],
+        "reference_match_missing_refs": [
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            }
+        ],
+        "reference_match_result": "fail",
+        "knowledge_match": 1.0,
+        "knowledge_match_exact_matches": [
+            {
+                "title": "Run release SDK pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-pipeline"
+            },
+            {
+                "title": "Publish SDK reference docs",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Publish SDK reference docs",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            }
+        ],
+        "knowledge_match_unexpected_refs": [
+            {
+                "title": "Using the SDK generated by the SDK generation pipeline",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-draft-pullrequest"
+            }
+        ],
+        "knowledge_match_missing_refs": [],
+        "knowledge_match_result": "pass",
+        "overall_score": 5.333333333333333
+    },
+    {
+        "testcase": "Target Branch Selection for Onboarding New Resource Types",
+        "expected": {
+            "answer": "When onboarding new resource types (especially for ARM/Control Plane APIs), the right target branch depends on the stage of your API and whether your work should be public or private:\nIf your resource types are still under development or in private preview (not ready for public visibility), you should target the RPSaaSMaster branch in the private repo: azure-rest-api-specs-pr.\nOnce your API is ready for public preview or GA, you should target the main branch in the public repo: azure-rest-api-specs.\nYou mentioned getting a branch protection error. This is likely because the main branch in the private repo is read-only and mirrored from the public repo. You cannot merge directly into main in the private repo. For private work, use RPSaaSMaster. For public release, use main in the public repo.\nSummary:\nUse azure-rest-api-specs-pr/RPSaaSMaster for private onboarding and early-stage work.\nUse azure-rest-api-specs/main for public onboarding and final publishing.\nIf you need to update your PR, change the target branch to RPSaaSMaster in the private repo for onboarding new resource types. If your resource is ready for public consumption, move it to a PR against the public repo's main branch.\nLet me know if you need help updating your PR or have questions about the process!",
+            "references": [
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                },
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                },
+                {
+                    "title": "Troubleshooting REST API documentation",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-docs-troubleshooting"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                }
+            ]
+        },
+        "actual": {
+            "answer": "You should target the appropriate release branch in the correct repository based on whether your onboarding is for a private or public API spec. For onboarding new resource types:\n\n- If your API spec is not yet public, you should use the private repo (azure-rest-api-specs-pr) and target either 'RPSaaSMaster' or 'RPSaaSDev' as your base branch. These branches are specifically designated for private onboarding and development before public release.\n- If your API spec is ready for public onboarding, you should use the public repo (azure-rest-api-specs) and target the 'main' branch.\n\nBranch protection errors typically occur if you attempt to merge directly into a protected branch (such as 'main' or 'RPSaaSMaster') without following the required process. The correct workflow is:\n1. Create a topic branch from the appropriate release branch (e.g., 'RPSaaSMaster' in private repo or 'main' in public repo).\n2. Submit your PR against the release branch, not directly against 'main' or 'RPSaaSMaster'.\n\nThis ensures compliance with branch protection rules and allows for proper review and CI validation. If you are getting a branch protection error, double-check that your PR is not trying to merge directly into a protected branch. Instead, create a topic branch off the release branch and submit your PR against it.\n\nSummary:\n- Use 'RPSaaSMaster' in azure-rest-api-specs-pr for private onboarding.\n- Use 'main' in azure-rest-api-specs for public onboarding.\n- Always create a topic branch from the release branch and submit your PR against the release branch, not directly into protected branches.\n\nIf you need more details on how to create and work against release branches, see the referenced onboarding documentation.",
+            "references": [
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                }
+            ],
+            "knowledges": [
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                },
+                {
+                    "title": "Convert OpenAPI specs to TypeSpec",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Request an SDK Architecture Review",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+                },
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                },
+                {
+                    "title": "Troubleshooting REST API documentation",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-docs-troubleshooting"
+                },
+                {
+                    "title": "Suppress validation failures on a PR",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Prerequisites to release .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+                },
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                },
+                {
+                    "title": "Publish SDK reference docs",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Work against the release branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+                },
+                {
+                    "title": "Generate .NET management plane SDK",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+                },
+                {
+                    "title": "Create a new branch",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+                },
+                {
+                    "title": "bad",
+                    "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+                }
+            ]
+        },
+        "similarity": 4.0,
+        "gpt_similarity": 4.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "similarity_prompt_tokens": 1556,
+        "similarity_completion_tokens": 1,
+        "similarity_total_tokens": 1557,
+        "similarity_finish_reason": "length",
+        "similarity_model": "gpt-4.1-2025-04-14",
+        "similarity_sample_input": "[{\"role\": \"user\", \"content\": \"{\\\"query\\\": \\\"title: Target Branch Selection for Onboarding New Resource Types\\\\n\\\\nquestion: General I have created a PR to onboard new resource types. Is this the right target branch?\\\\nI was suggested to use azure-rest-api-specs-pr/RPSaaSMaster (private) Or azure-rest-api-specs/main (public) as the target branch?\\\\nI am getting branch protection error with the current PR.\\\\nLink to PR : https://github.com/Azure/azure-rest-api-specs-pr/pull/23390\\\\nThank you for the help!\\\", \\\"response\\\": \\\"You should target the appropriate release branch in the correct repository based on whether your onboarding is for a private or public API spec. For onboarding new resource types:\\\\n\\\\n- If your API spec is not yet public, you should use the private repo (azure-rest-api-specs-pr) and target either 'RPSaaSMaster' or 'RPSaaSDev' as your base branch. These branches are specifically designated for private onboarding and development before public release.\\\\n- If your API spec is ready for public onboarding, you should use the public repo (azure-rest-api-specs) and target the 'main' branch.\\\\n\\\\nBranch protection errors typically occur if you attempt to merge directly into a protected branch (such as 'main' or 'RPSaaSMaster') without following the required process. The correct workflow is:\\\\n1. Create a topic branch from the appropriate release branch (e.g., 'RPSaaSMaster' in private repo or 'main' in public repo).\\\\n2. Submit your PR against the release branch, not directly against 'main' or 'RPSaaSMaster'.\\\\n\\\\nThis ensures compliance with branch protection rules and allows for proper review and CI validation. If you are getting a branch protection error, double-check that your PR is not trying to merge directly into a protected branch. Instead, create a topic branch off the release branch and submit your PR against it.\\\\n\\\\nSummary:\\\\n- Use 'RPSaaSMaster' in azure-rest-api-specs-pr for private onboarding.\\\\n- Use 'main' in azure-rest-api-specs for public onboarding.\\\\n- Always create a topic branch from the release branch and submit your PR against the release branch, not directly into protected branches.\\\\n\\\\nIf you need more details on how to create and work against release branches, see the referenced onboarding documentation.\\\", \\\"ground_truth\\\": \\\"When onboarding new resource types (especially for ARM/Control Plane APIs), the right target branch depends on the stage of your API and whether your work should be public or private:\\\\nIf your resource types are still under development or in private preview (not ready for public visibility), you should target the RPSaaSMaster branch in the private repo: azure-rest-api-specs-pr.\\\\nOnce your API is ready for public preview or GA, you should target the main branch in the public repo: azure-rest-api-specs.\\\\nYou mentioned getting a branch protection error. This is likely because the main branch in the private repo is read-only and mirrored from the public repo. You cannot merge directly into main in the private repo. For private work, use RPSaaSMaster. For public release, use main in the public repo.\\\\nSummary:\\\\nUse azure-rest-api-specs-pr/RPSaaSMaster for private onboarding and early-stage work.\\\\nUse azure-rest-api-specs/main for public onboarding and final publishing.\\\\nIf you need to update your PR, change the target branch to RPSaaSMaster in the private repo for onboarding new resource types. If your resource is ready for public consumption, move it to a PR against the public repo's main branch.\\\\nLet me know if you need help updating your PR or have questions about the process!\\\"}\"}]",
+        "similarity_sample_output": "[{\"role\": \"assistant\", \"content\": \"4\"}]",
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 3,
+        "response_completeness_reason": "The response is mostly complete, accurately reflecting the main claims and instructions from the ground truth, but it omits some minor details about the read-only status of the private main branch and the process for updating PRs as the API matures.",
+        "response_completeness_prompt_tokens": 1973,
+        "response_completeness_completion_tokens": 280,
+        "response_completeness_total_tokens": 2253,
+        "response_completeness_finish_reason": "stop",
+        "response_completeness_model": "gpt-4.1-2025-04-14",
+        "response_completeness_sample_input": "[{\"role\": \"user\", \"content\": \"{\\\"response\\\": \\\"You should target the appropriate release branch in the correct repository based on whether your onboarding is for a private or public API spec. For onboarding new resource types:\\\\n\\\\n- If your API spec is not yet public, you should use the private repo (azure-rest-api-specs-pr) and target either 'RPSaaSMaster' or 'RPSaaSDev' as your base branch. These branches are specifically designated for private onboarding and development before public release.\\\\n- If your API spec is ready for public onboarding, you should use the public repo (azure-rest-api-specs) and target the 'main' branch.\\\\n\\\\nBranch protection errors typically occur if you attempt to merge directly into a protected branch (such as 'main' or 'RPSaaSMaster') without following the required process. The correct workflow is:\\\\n1. Create a topic branch from the appropriate release branch (e.g., 'RPSaaSMaster' in private repo or 'main' in public repo).\\\\n2. Submit your PR against the release branch, not directly against 'main' or 'RPSaaSMaster'.\\\\n\\\\nThis ensures compliance with branch protection rules and allows for proper review and CI validation. If you are getting a branch protection error, double-check that your PR is not trying to merge directly into a protected branch. Instead, create a topic branch off the release branch and submit your PR against it.\\\\n\\\\nSummary:\\\\n- Use 'RPSaaSMaster' in azure-rest-api-specs-pr for private onboarding.\\\\n- Use 'main' in azure-rest-api-specs for public onboarding.\\\\n- Always create a topic branch from the release branch and submit your PR against the release branch, not directly into protected branches.\\\\n\\\\nIf you need more details on how to create and work against release branches, see the referenced onboarding documentation.\\\", \\\"ground_truth\\\": \\\"When onboarding new resource types (especially for ARM/Control Plane APIs), the right target branch depends on the stage of your API and whether your work should be public or private:\\\\nIf your resource types are still under development or in private preview (not ready for public visibility), you should target the RPSaaSMaster branch in the private repo: azure-rest-api-specs-pr.\\\\nOnce your API is ready for public preview or GA, you should target the main branch in the public repo: azure-rest-api-specs.\\\\nYou mentioned getting a branch protection error. This is likely because the main branch in the private repo is read-only and mirrored from the public repo. You cannot merge directly into main in the private repo. For private work, use RPSaaSMaster. For public release, use main in the public repo.\\\\nSummary:\\\\nUse azure-rest-api-specs-pr/RPSaaSMaster for private onboarding and early-stage work.\\\\nUse azure-rest-api-specs/main for public onboarding and final publishing.\\\\nIf you need to update your PR, change the target branch to RPSaaSMaster in the private repo for onboarding new resource types. If your resource is ready for public consumption, move it to a PR against the public repo's main branch.\\\\nLet me know if you need help updating your PR or have questions about the process!\\\"}\"}]",
+        "response_completeness_sample_output": "[{\"role\": \"assistant\", \"content\": \"<S0>Let's think step by step:  \\n1. The ground truth explains the correct target branches for onboarding new resource types, distinguishing between private (RPSaaSMaster in azure-rest-api-specs-pr) and public (main in azure-rest-api-specs) stages.  \\n2. It clarifies that the main branch in the private repo is read-only and mirrored, so direct merges are not allowed.  \\n3. It provides guidance on updating PRs and moving them between branches as the API matures.  \\n4. The response covers the distinction between private and public onboarding, specifies the correct branches, and explains the workflow for creating topic branches and submitting PRs.  \\n5. The response also addresses branch protection errors and compliance with branch protection rules.  \\n6. However, the response does not explicitly mention that the main branch in the private repo is read-only and mirrored from the public repo, nor does it mention updating PRs or moving them as the API matures.  \\n7. Most key information is present, but a few minor details are missing.</S0>\\n<S1>The response is mostly complete, accurately reflecting the main claims and instructions from the ground truth, but it omits some minor details about the read-only status of the private main branch and the process for updating PRs as the API matures.</S1>\\n<S2>4</S2>\"}]",
+        "reference_match": 1.0,
+        "reference_match_exact_matches": [
+            {
+                "title": "Create a new branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+            },
+            {
+                "title": "Create a new branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+            }
+        ],
+        "reference_match_unexpected_refs": [
+            {
+                "title": "Work against the release branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+            }
+        ],
+        "reference_match_missing_refs": [],
+        "reference_match_result": "pass",
+        "knowledge_match": 1.0,
+        "knowledge_match_exact_matches": [
+            {
+                "title": "Convert OpenAPI specs to TypeSpec",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+            },
+            {
+                "title": "Publish SDK reference docs",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+            },
+            {
+                "title": "Create a new branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+            },
+            {
+                "title": "Work against the release branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+            },
+            {
+                "title": "Convert OpenAPI specs to TypeSpec",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs/api-typespec-conversion"
+            },
+            {
+                "title": "Generate .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+            },
+            {
+                "title": "Request an SDK Architecture Review",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-review"
+            },
+            {
+                "title": "Create a new branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+            },
+            {
+                "title": "Troubleshooting REST API documentation",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-docs-troubleshooting"
+            },
+            {
+                "title": "Suppress validation failures on a PR",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "bad",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Prerequisites to release .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-release/sdk-release-mgmt-dotnet"
+            },
+            {
+                "title": "bad",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-suppressions"
+            },
+            {
+                "title": "Publish SDK reference docs",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-docs"
+            },
+            {
+                "title": "Generate .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+            },
+            {
+                "title": "Work against the release branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-2-update"
+            },
+            {
+                "title": "Generate .NET management plane SDK",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/develop/sdk-generate-mgmt-dotnet"
+            },
+            {
+                "title": "Create a new branch",
+                "link": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-tutorial/api-tutorial-1-branch"
+            }
+        ],
+        "knowledge_match_unexpected_refs": [],
+        "knowledge_match_missing_refs": [],
+        "knowledge_match_result": "pass",
+        "overall_score": 6.0
+    },
+    {
+        "average_score": 5.473717948717948,
+        "total_evals": 4,
+        "similarity_pass_rate": 4,
+        "groundedness_pass_rate": 0,
+        "response_completeness_pass_rate": 4,
+        "reference_match_pass_rate": 1,
+        "knowledge_match_pass_rate": 4,
+        "similarity_fail_rate": 0,
+        "groundedness_fail_rate": 0,
+        "response_completeness_fail_rate": 0,
+        "reference_match_fail_rate": 3,
+        "knowledge_match_fail_rate": 0
+    }
+]

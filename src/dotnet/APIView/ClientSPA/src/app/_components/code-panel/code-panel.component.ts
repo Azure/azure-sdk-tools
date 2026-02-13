@@ -68,6 +68,10 @@ export class CodePanelComponent implements OnChanges {
   diffNodeNavigationPointer: number | undefined = undefined;
 
   menuItemsLineActions: MenuItem[] = [];
+  
+  //Cached values to avoid recalculation in template
+  noDiffInContentMessageVisible: boolean = false;
+  cachedLineMenu: MenuItem[] = [];
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
@@ -81,6 +85,8 @@ export class CodePanelComponent implements OnChanges {
       { label: 'Copy line', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLineToClipBoard(event) },
       { label: 'Copy permalink', icon: 'bi bi-clipboard', command: (event) => this.copyCodeLinePermaLinkToClipBoard(event) }
     ];
+    
+    this.cachedLineMenu = this.menuItemsLineActions;
 
     fromEvent<KeyboardEvent>(document, 'keydown')
       .pipe(
@@ -96,6 +102,7 @@ export class CodePanelComponent implements OnChanges {
   async ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
       if (changes['codePanelRowData'].currentValue.length > 0) {
+        this.preComputeCachedValues();
         this.loadCodePanelViewPort();
         this.updateHasActiveConversations();
       } else {
@@ -106,6 +113,19 @@ export class CodePanelComponent implements OnChanges {
 
     if (changes['loadFailed'] && changes['loadFailed'].currentValue) {
       this.isLoading = false;
+    }
+    
+    if (changes['userProfile'] && this.codePanelRowData.length > 0) {
+      this.preComputeCanAddComment();
+    }
+    
+    if (changes['crossLanguageRowData'] && this.codePanelRowData.length > 0) {
+      this.preComputeLineNumberClasses();
+    }
+    
+    if (changes['codePanelData'] || changes['isDiffView']) {
+      this.noDiffInContentMessageVisible = this.codePanelData != null && 
+        !this.isLoading && this.isDiffView && !this.codePanelData?.hasDiff;
     }
 
     if (changes['codeLineSearchText']) {
@@ -221,23 +241,112 @@ export class CodePanelComponent implements OnChanges {
   }
 
   canAddComment(item: CodePanelRowData): boolean {
-    const hasNonWhitespaceContent = item.rowOfTokens &&
-                                     item.rowOfTokens.some(token => token.value && token.value.trim().length > 0);
+    if (item.cachedCanAddComment !== null) {
+      return item.cachedCanAddComment;
+    }
+    return this.computeCanAddComment(item);
+  }
+
+  /**
+   * Computes whether a comment can be added to a row.
+   * Extracted to avoid duplication between canAddComment() and preCompute methods.
+   */
+  private computeCanAddComment(row: CodePanelRowData): boolean {
+    if (this.userProfile === undefined) {
+      return false;
+    }
+    
+    const hasNonWhitespaceContent = row.rowOfTokens &&
+      row.rowOfTokens.some(token => token.value && token.value.trim().length > 0);
 
     // Handle rowClasses being either a Set or an Array (can happen after JSON deserialization)
     let isRemoved = false;
-    if (item.rowClasses) {
-      if (item.rowClasses instanceof Set) {
-        isRemoved = item.rowClasses.has('removed');
-      } else if (Array.isArray(item.rowClasses)) {
-        isRemoved = (item.rowClasses as unknown as string[]).includes('removed');
+    if (row.rowClasses) {
+      if (row.rowClasses instanceof Set) {
+        isRemoved = row.rowClasses.has('removed');
+      } else if (Array.isArray(row.rowClasses)) {
+        isRemoved = (row.rowClasses as unknown as string[]).includes('removed');
       }
     }
 
-    return item.type === CodePanelRowDatatype.CodeLine &&
+    return row.type === CodePanelRowDatatype.CodeLine &&
            !isRemoved &&
-           this.userProfile !== undefined &&
            hasNonWhitespaceContent;
+  }
+
+  /**
+   * Builds a Set of cross-language IDs for O(1) lookup.
+   */
+  private buildCrossLanguageIdSet(): Set<string> {
+    const crossLanguageIds = new Set<string>();
+    for (const item of this.crossLanguageRowData) {
+      for (const key of Object.keys(item.content)) {
+        crossLanguageIds.add(key.toLowerCase());
+      }
+    }
+    return crossLanguageIds;
+  }
+
+ 
+  /**
+   * Pre-computes all cached values for rows and tokens when data loads.
+   */
+  private preComputeCachedValues(): void {
+    const crossLanguageIds = this.buildCrossLanguageIdSet();
+    
+    for (const row of this.codePanelRowData) {
+      row.cachedClassObject = getCodePanelRowDataClass(row);
+      row.cachedClassString = Object.keys(row.cachedClassObject).filter(k => row.cachedClassObject![k]).join(' ');
+      
+      const hasCrossLang = !!(row.crossLanguageId && crossLanguageIds.has(row.crossLanguageId.toLowerCase()));
+      row.cachedLineNumberClassObject = { 'line-number': true, 'has-cross-language': hasCrossLang };
+      row.cachedLineNumberClassString = hasCrossLang ? 'line-number has-cross-language' : 'line-number';
+      
+      row.cachedMarginLeft = (row.indent - 1) * 15;
+      
+      row.cachedCanAddComment = this.computeCanAddComment(row);
+      
+      if (row.rowOfTokens) {
+        for (const token of row.rowOfTokens) {
+          token.cachedClassObject = getStructuredTokenClass(token);
+          token.cachedClassString = Object.keys(token.cachedClassObject).filter(k => token.cachedClassObject![k]).join(' ');
+          token.cachedNavigationId = (token.properties && 'NavigateToId' in token.properties) 
+            ? token.properties['NavigateToId'] : '';
+          token.cachedNavigationUrl = (token.properties && 'NavigateToUrl' in token.properties) 
+            ? token.properties['NavigateToUrl'] : '';
+        }
+      }
+    }
+  }
+  
+  /**
+   * Re-computes canAddComment for all rows (called when userProfile changes)
+   */
+  private preComputeCanAddComment(): void {
+    for (const row of this.codePanelRowData) {
+      row.cachedCanAddComment = this.computeCanAddComment(row);
+    }
+  }
+  
+  /**
+   * Re-computes line number classes for all rows (called when crossLanguageRowData changes)
+   */
+  private preComputeLineNumberClasses(): void {
+    const crossLanguageIds = this.buildCrossLanguageIdSet();
+    
+    for (const row of this.codePanelRowData) {
+      const hasCrossLang = !!(row.crossLanguageId && crossLanguageIds.has(row.crossLanguageId.toLowerCase()));
+      row.cachedLineNumberClassObject = { 'line-number': true, 'has-cross-language': hasCrossLang };
+      row.cachedLineNumberClassString = hasCrossLang ? 'line-number has-cross-language' : 'line-number';
+    }
+  }
+  
+  trackByRowIndex(index: number, item: CodePanelRowData): string {
+    return item.nodeIdHashed ? `${item.nodeIdHashed}-${item.rowPositionInGroup}-${item.type}` : `idx-${index}`;
+  }
+  
+  trackByTokenIndex(index: number, token: StructuredToken): string {
+    return token.id || `${index}-${token.value}`;
   }
 
   addNewCommentThread(event: Event) {
@@ -591,6 +700,7 @@ export class CodePanelComponent implements OnChanges {
     highlightRow: boolean = true, updateQueryParams: boolean = true): Promise<void> {
     let index = 0;
     let scrollIndex: number | undefined = undefined;
+    let targetIndex: number | undefined = undefined;
     let indexesHighlighted: number[] = [];
     while (index < this.codePanelRowData.length) {
       if (scrollIndex && this.codePanelRowData[index].nodeIdHashed !== nodeIdHashed) {
@@ -607,6 +717,7 @@ export class CodePanelComponent implements OnChanges {
         indexesHighlighted.push(index);
         if (!scrollIndex) {
           scrollIndex = index;
+          targetIndex = index; 
         }
       }
       index++;
@@ -626,8 +737,17 @@ export class CodePanelComponent implements OnChanges {
       }
 
       let newQueryParams = getQueryParams(this.route);
-      if (updateQueryParams) {
-        newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
+      if (updateQueryParams && targetIndex !== undefined) {
+        let nodeIdForUrl = this.codePanelRowData[targetIndex].nodeId;
+        if (!nodeIdForUrl && this.codePanelRowData[targetIndex].type === CodePanelRowDatatype.CommentThread) {
+          const nodeIdHashedForLookup = this.codePanelRowData[targetIndex].nodeIdHashed;
+          const rowPosition = this.codePanelRowData[targetIndex].associatedRowPositionInGroup;
+          const codeLines = this.codePanelData?.nodeMetaData[nodeIdHashedForLookup]?.codeLines;
+          if (codeLines && codeLines[rowPosition]) {
+            nodeIdForUrl = codeLines[rowPosition].nodeId;
+          }
+        }
+        newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = nodeIdForUrl;
       } else {
         newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = null;
       }
@@ -692,6 +812,7 @@ export class CodePanelComponent implements OnChanges {
     row.nodeIdHashed = nodeIdHashed;
     row.threadId = threadId;
     row.rowClasses = new Set<string>(['user-comment-thread']);
+    row.cachedClassString = 'user-comment-thread';
     row.associatedRowPositionInGroup = position;
     row.comments = comments;
     row.showReplyTextBox = comments.length === 0;
@@ -884,22 +1005,36 @@ export class CodePanelComponent implements OnChanges {
     const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
     let navigateToRow: CodePanelRowData | undefined = undefined;
+    let foundIndex: number | undefined = undefined;
+    
     if (direction == CodeLineRowNavigationDirection.next) {
-      const startIndex = (this.commentThreadNavigationPointer && this.commentThreadNavigationPointer >= firstVisible && this.commentThreadNavigationPointer <= lastVisible) ?
-        this.commentThreadNavigationPointer + 1 : firstVisible;
-      navigateToRow = this.findNextCommentThread(startIndex);
+      const startIndex = (this.commentThreadNavigationPointer !== undefined) 
+        ? this.commentThreadNavigationPointer + 1 
+        : firstVisible;
+      foundIndex = this.findNextCommentThreadIndex(startIndex);
+      
+      if (foundIndex === undefined && this.commentThreadNavigationPointer !== undefined) {
+        foundIndex = this.findNextCommentThreadIndex(0);
+      }
     }
     else {
-      const startIndex = (this.commentThreadNavigationPointer && this.commentThreadNavigationPointer >= firstVisible && this.commentThreadNavigationPointer <= lastVisible) ?
-        this.commentThreadNavigationPointer - 1 : lastVisible;
-      navigateToRow = this.findPrevCommentthread(startIndex);
+      const startIndex = (this.commentThreadNavigationPointer !== undefined) 
+        ? this.commentThreadNavigationPointer - 1 
+        : lastVisible;
+      foundIndex = this.findPrevCommentThreadIndex(startIndex);
+      
+      if (foundIndex === undefined && this.commentThreadNavigationPointer !== undefined) {
+        foundIndex = this.findPrevCommentThreadIndex(this.codePanelRowData.length - 1);
+      }
     }
 
-    if (navigateToRow) {
-      this.scrollToNode(navigateToRow.nodeIdHashed);
+    if (foundIndex !== undefined) {
+      navigateToRow = this.codePanelRowData[foundIndex];
+      this.commentThreadNavigationPointer = foundIndex;
+      this.scrollToCommentThread(foundIndex);
     }
     else {
-      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Comment Navigation', detail: 'No more active comments threads to navigate to.', key: 'bc', life: 3000 });
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Comment Navigation', detail: 'No active comment threads to navigate to.', key: 'bc', life: 3000 });
     }
   }
 
@@ -1179,26 +1314,80 @@ export class CodePanelComponent implements OnChanges {
     }
   }
 
-  private findNextCommentThread(index: number): CodePanelRowData | undefined {
+  private findNextCommentThreadIndex(index: number): number | undefined {
     while (index < this.codePanelRowData.length) {
       if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
-        this.commentThreadNavigationPointer = index;
-        return this.codePanelRowData[index];
+        return index;
       }
       index++;
     }
     return undefined;
   }
 
-  private findPrevCommentthread(index: number): CodePanelRowData | undefined {
+  private findPrevCommentThreadIndex(index: number): number | undefined {
     while (index < this.codePanelRowData.length && index >= 0) {
       if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
-        this.commentThreadNavigationPointer = index;
-        return this.codePanelRowData[index];
+        return index;
       }
       index--;
     }
     return undefined;
+  }
+
+  /**
+   * Scrolls to a comment thread by its index in codePanelRowData and highlights it
+   */
+  private async scrollToCommentThread(targetIndex: number): Promise<void> {
+    this.clearNavigationHighlight();
+    
+    const row = this.codePanelRowData[targetIndex];
+    if (!row) return;
+    
+    const rowClasses = this.ensureRowClassesSet(row);
+    rowClasses.add('active');
+    row.cachedClassString = Array.from(rowClasses).join(' ');
+    
+    const scrollIndex = Math.max(targetIndex - 2, 0);
+    
+    if (scrollIndex < this.codePanelRowSource?.adapter?.bufferInfo.firstIndex! ||
+        scrollIndex > this.codePanelRowSource?.adapter?.bufferInfo.lastIndex!) {
+      await this.codePanelRowSource?.adapter?.reload(scrollIndex);
+    } else {
+      await this.codePanelRowSource?.adapter?.fix({
+        scrollToItem: (item) => item.data === row,
+        scrollToItemOpt: { behavior: 'smooth', block: 'center' }
+      });
+    }
+    
+    let newQueryParams = getQueryParams(this.route);
+    let nodeIdForUrl = row.nodeId;
+    if (!nodeIdForUrl && row.type === CodePanelRowDatatype.CommentThread) {
+      const nodeIdHashedForLookup = row.nodeIdHashed;
+      const rowPosition = row.associatedRowPositionInGroup;
+      const codeLines = this.codePanelData?.nodeMetaData[nodeIdHashedForLookup]?.codeLines;
+      if (codeLines && codeLines[rowPosition]) {
+        nodeIdForUrl = codeLines[rowPosition].nodeId;
+      }
+    }
+    newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = nodeIdForUrl;
+    this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+    
+    setTimeout(() => {
+      rowClasses.delete('active');
+      row.cachedClassString = Array.from(rowClasses).join(' ');
+    }, 1500);
+  }
+
+  private clearNavigationHighlight(): void {
+    for (const row of this.codePanelRowData) {
+      if (row.rowClasses) {
+        const rowClasses = this.ensureRowClassesSet(row);
+        if (rowClasses.has('active')) {
+          rowClasses.delete('active');
+          row.cachedClassString = Array.from(rowClasses).join(' ');
+        }
+      }
+    }
   }
 
   private findNextDiffNode(index: number): CodePanelRowData | undefined {

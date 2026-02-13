@@ -5,6 +5,13 @@ export class StructuredToken {
     tags: Set<string>;
     properties: { [key: string]: string; };
     renderClasses: Set<string>;
+    
+    // Cached computed values for performance - avoid recalculating on every change detection
+    cachedClassObject: { [key: string]: boolean } | null = null;
+    cachedNavigationId: string | null = null;
+    cachedNavigationUrl: string | null = null;
+    // Use string instead of object to avoid __spreadValues overhead
+    cachedClassString: string = '';
 
     constructor(
         value = '',

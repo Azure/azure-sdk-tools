@@ -36,6 +36,15 @@ export class CodePanelRowData {
   isHiddenAPI: boolean;
   draftCommentText: string = '';
   
+  // Cached computed values for performance - avoid recalculating on every change detection
+  cachedClassObject: { [key: string]: boolean } | null = null;
+  cachedLineNumberClassObject: { [key: string]: boolean } | null = null;
+  cachedCanAddComment: boolean | null = null;
+  // Use strings instead of objects to avoid __spreadValues overhead
+  cachedClassString: string = '';
+  cachedLineNumberClassString: string = '';
+  cachedMarginLeft: number = 0;
+  
   constructor(
     type: string = '',
     lineNumber: number = 0,

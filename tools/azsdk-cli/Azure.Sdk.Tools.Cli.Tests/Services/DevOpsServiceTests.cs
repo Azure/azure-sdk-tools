@@ -305,7 +305,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 {
                     return Task.FromResult(workItem);
                 }
-                throw new Exception($"Work item {id} not found");
+                throw new InvalidOperationException($"Work item {id} not found");
             }
         }
 

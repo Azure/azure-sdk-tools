@@ -632,7 +632,7 @@ namespace APIViewUnitTests
         [Fact]
         public async Task CreateAutomaticRevisionAsync_WhenAllPendingRevisionsDeleted_CreatesNewRevision()
         {
-            // This test covers Edge Case 1: Queue empties during deletion
+            // This test covers Edge Case 1: Multiple pending revisions that don't match get deleted
             var codeFile = CreateCodeFile("TestPackage", "1.0.0", "C#");
             using var memoryStream = new MemoryStream();
 
@@ -650,7 +650,7 @@ namespace APIViewUnitTests
                 APIRevisionType = APIRevisionType.Automatic,
                 IsApproved = false,
                 IsReleased = false,
-                CreatedOn = DateTime.UtcNow.AddDays(-2),
+                CreatedOn = DateTime.UtcNow.AddDays(-3),
                 Files = new List<APICodeFileModel> { new APICodeFileModel { PackageVersion = "0.9.0" } }
             };
 
@@ -661,8 +661,19 @@ namespace APIViewUnitTests
                 APIRevisionType = APIRevisionType.Automatic,
                 IsApproved = false,
                 IsReleased = false,
-                CreatedOn = DateTime.UtcNow.AddDays(-1),
+                CreatedOn = DateTime.UtcNow.AddDays(-2),
                 Files = new List<APICodeFileModel> { new APICodeFileModel { PackageVersion = "0.9.1" } }
+            };
+
+            var pendingRevision3 = new APIRevisionListItemModel
+            {
+                Id = "pending-revision-3",
+                ReviewId = "review-id",
+                APIRevisionType = APIRevisionType.Automatic,
+                IsApproved = false,
+                IsReleased = false,
+                CreatedOn = DateTime.UtcNow.AddDays(-1),
+                Files = new List<APICodeFileModel> { new APICodeFileModel { PackageVersion = "0.9.2" } }
             };
 
             var newRevision = new APIRevisionListItemModel
@@ -677,9 +688,9 @@ namespace APIViewUnitTests
 
             _mockApiRevisionsManager.Setup(m => m.GetAPIRevisionsAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>()))
-                .ReturnsAsync(new List<APIRevisionListItemModel> { pendingRevision2, pendingRevision1 });
+                .ReturnsAsync(new List<APIRevisionListItemModel> { pendingRevision3, pendingRevision2, pendingRevision1 });
 
-            // Both revisions don't match the new content (so they get deleted)
+            // All revisions don't match the new content (so they get deleted)
             _mockApiRevisionsManager.Setup(m => m.AreAPIRevisionsTheSame(
                     It.IsAny<APIRevisionListItemModel>(), It.IsAny<RenderedCodeFile>(), It.IsAny<bool>()))
                 .ReturnsAsync(false);
@@ -700,15 +711,19 @@ namespace APIViewUnitTests
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
-            // Verify both revisions were deleted
+            // Verify first two revisions were deleted (the third becomes latestAutomaticAPIRevision after dequeue)
+            _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
+                It.Is<APIRevisionListItemModel>(r => r.Id == "pending-revision-3"),
+                It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
                 It.Is<APIRevisionListItemModel>(r => r.Id == "pending-revision-2"),
                 It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            // pending-revision-1 is the final latestAutomaticAPIRevision after the loop, not deleted
             _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
                 It.Is<APIRevisionListItemModel>(r => r.Id == "pending-revision-1"),
-                It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+                It.IsAny<string>(), It.IsAny<string>()), Times.Never);
 
-            // Should create new revision instead of returning deleted one
+            // Should create new revision because pending-revision-1 doesn't match
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<APIRevisionType>(),
                 It.IsAny<string>(), It.IsAny<MemoryStream>(), It.IsAny<CodeFile>(),

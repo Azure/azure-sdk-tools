@@ -977,6 +977,9 @@ namespace APIViewWeb.Managers
         public async Task AutoPurgeAPIRevisions(int purgeAfterMonths)
         {
             const int DelayBetweenDeletionsMs = 500; // Rate limiting to avoid overwhelming services
+            
+            // AddMonths handles month-end edge cases correctly (e.g., Jan 31 minus 1 month = Dec 31)
+            // This ensures accurate grace period calculation regardless of month lengths
             var deletedBeforeDate = DateTime.UtcNow.AddMonths(-purgeAfterMonths);
             
             // Query for soft-deleted Manual revisions

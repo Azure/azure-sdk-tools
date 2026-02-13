@@ -14,8 +14,8 @@ import uuid
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from src._database_manager import DatabaseManager
 from src._models import Example, Guideline, Memory
+from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
-from src._utils import run_prompty
 
 
 def handle_thread_resolution_request(*, comments: list[str], language: str, package_name: str, code: str) -> str:
@@ -62,7 +62,7 @@ def _parse_action(*, language: str, code: str, package_name: str, comments: list
         "package_name": package_name,
         "comments": comments,
     }
-    raw_results = run_prompty(folder="thread_resolution", filename="parse_thread_resolution_action", inputs=inputs)
+    raw_results = run_prompt(folder="thread_resolution", filename="parse_thread_resolution_action", inputs=inputs)
     try:
         results = json.loads(raw_results)
         return results
@@ -78,7 +78,7 @@ def _parse_plan(*, language: str, code: str, package_name: str, comments: list[s
         "comments": comments,
         "reasoning": reasoning,
     }
-    raw_results = run_prompty(folder="thread_resolution", filename="parse_thread_resolution_to_memory", inputs=inputs)
+    raw_results = run_prompt(folder="thread_resolution", filename="parse_thread_resolution_to_memory", inputs=inputs)
     try:
         results = json.loads(raw_results)
         return results
@@ -165,7 +165,7 @@ def _summarize_results(results: dict):
         "results": results,
     }
     try:
-        summary = run_prompty(folder="thread_resolution", filename="summarize_actions", inputs=inputs)
+        summary = run_prompt(folder="thread_resolution", filename="summarize_actions", inputs=inputs)
         return summary
     except Exception as e:
         print(f"Error summarizing results: {e}")

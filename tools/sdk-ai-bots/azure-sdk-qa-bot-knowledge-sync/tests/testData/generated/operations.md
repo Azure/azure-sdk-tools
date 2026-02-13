@@ -1,6 +1,6 @@
 # TypeSpec Definitions
 
-Source: `testData\operations.tsp`
+Source: `testData/operations.tsp`
 
 ---
 

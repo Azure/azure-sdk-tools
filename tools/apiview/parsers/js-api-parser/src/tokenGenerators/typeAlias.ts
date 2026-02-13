@@ -41,7 +41,7 @@ function generate(item: ApiTypeAlias, deprecated?: boolean): GeneratorResult {
 
   // Add type parameters (e.g., <T, U extends SomeType>)
   if (typeParameters?.length > 0) {
-    tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+    tokens.push(createToken(TokenKind.Text, "<", { deprecated }));
     typeParameters.forEach((tp, index) => {
       tokens.push(createToken(TokenKind.TypeName, tp.name, { deprecated }));
 
@@ -60,7 +60,7 @@ function generate(item: ApiTypeAlias, deprecated?: boolean): GeneratorResult {
       // Handle default type
       if (tp.defaultTypeExcerpt?.text.trim()) {
         tokens.push(
-          createToken(TokenKind.Punctuation, "=", {
+          createToken(TokenKind.Text, "=", {
             hasPrefixSpace: true,
             hasSuffixSpace: true,
             deprecated,
@@ -70,13 +70,13 @@ function generate(item: ApiTypeAlias, deprecated?: boolean): GeneratorResult {
       }
 
       if (index < typeParameters.length - 1) {
-        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+        tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
       }
     });
-    tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+    tokens.push(createToken(TokenKind.Text, ">", { deprecated }));
   }
 
-  // Add equals sign
+  // Add equals sign (for type alias assignment - remains Punctuation)
   tokens.push(
     createToken(TokenKind.Punctuation, "=", {
       hasPrefixSpace: true,

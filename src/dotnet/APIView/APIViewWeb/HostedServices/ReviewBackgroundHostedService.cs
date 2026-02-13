@@ -18,6 +18,7 @@ namespace APIViewWeb.HostedServices
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionManager;
         private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
+        private readonly int _autoPurgeGracePeriodMonths; // This is the period after soft-delete before hard-delete
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
         private readonly int _backgroundBatchProcessCount;
         private readonly TelemetryClient _telemetryClient;
@@ -54,6 +55,13 @@ namespace APIViewWeb.HostedServices
             {
                 _autoArchiveInactiveGracePeriodMonths = 4;
             }
+
+            var purgeGracePeriod = configuration["PurgeReviewGracePeriodInMonths"];
+            if (String.IsNullOrEmpty(purgeGracePeriod) || !int.TryParse(purgeGracePeriod, out _autoPurgeGracePeriodMonths))
+            {
+                _autoPurgeGracePeriodMonths = 6; // Default to 6 months after soft-delete
+            }
+
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
             {
@@ -75,7 +83,12 @@ namespace APIViewWeb.HostedServices
                 try
                 {
                     await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, _isUpgradeTestEnabled, _packageNameFilterForUpgrade);
-                    await ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                    
+                    // Start both archive and purge tasks concurrently
+                    var archiveTask = ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                    var purgeTask = PurgeDeletedAPIReviews(stoppingToken, _autoPurgeGracePeriodMonths);
+                    
+                    await Task.WhenAll(archiveTask, purgeTask);
                 }
                 catch (Exception ex)
                 {
@@ -99,6 +112,27 @@ namespace APIViewWeb.HostedServices
                 finally
                 {
                     // Wait 6 hours before running archive task again
+                    await Task.Delay(6 * 60 * 60000, stoppingToken);
+                }                
+            }
+            while (!stoppingToken.IsCancellationRequested);
+        }
+
+        private async Task PurgeDeletedAPIReviews(CancellationToken stoppingToken, int purgeAfter)
+        {
+            do
+            {
+                try
+                {
+                    await _apiRevisionManager.AutoPurgeAPIRevisions(purgeAfter);
+                }
+                catch(Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                }
+                finally
+                {
+                    // Wait 6 hours before running purge task again
                     await Task.Delay(6 * 60 * 60000, stoppingToken);
                 }                
             }

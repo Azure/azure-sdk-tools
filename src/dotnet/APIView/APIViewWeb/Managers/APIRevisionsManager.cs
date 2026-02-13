@@ -969,6 +969,111 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Permanently deletes (hard deletes) API revisions that have been soft-deleted for a specified period.
+        /// Only removes Manual and PullRequest revision types to preserve Automatic revisions for history.
+        /// Deletes both Cosmos DB entries and associated blob storage (code files and originals).
+        /// </summary>
+        /// <param name="purgeAfterMonths">Number of months a revision must be soft-deleted before being purged</param>
+        public async Task AutoPurgeAPIRevisions(int purgeAfterMonths)
+        {
+            var deletedBeforeDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(purgeAfterMonths * 30));
+            
+            // Query for soft-deleted Manual revisions
+            var manualRevisions = await _apiRevisionsRepository.GetSoftDeletedAPIRevisionsAsync(
+                deletedBefore: deletedBeforeDate, 
+                apiRevisionType: APIRevisionType.Manual);
+            
+            // Query for soft-deleted PullRequest revisions
+            var pullRequestRevisions = await _apiRevisionsRepository.GetSoftDeletedAPIRevisionsAsync(
+                deletedBefore: deletedBeforeDate, 
+                apiRevisionType: APIRevisionType.PullRequest);
+            
+            // Combine both types
+            var revisionsToDelete = manualRevisions.Concat(pullRequestRevisions).ToList();
+            
+            int successCount = 0;
+            int errorCount = 0;
+            
+            foreach (var apiRevision in revisionsToDelete)
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Purging Revision " + apiRevision.Id };
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    // Delete associated blobs (code files and originals)
+                    foreach (var file in apiRevision.Files ?? new List<APICodeFileModel>())
+                    {
+                        try
+                        {
+                            // Delete code file blob
+                            await _codeFileRepository.DeleteCodeFileAsync(apiRevision.Id, file.FileId);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log but continue - blob may not exist
+                            _telemetryClient.TrackException(ex, new Dictionary<string, string>
+                            {
+                                { "RevisionId", apiRevision.Id },
+                                { "FileId", file.FileId },
+                                { "ErrorType", "CodeFileDeletion" }
+                            });
+                        }
+                        
+                        // Delete original file blob if it exists
+                        if (file.HasOriginal)
+                        {
+                            try
+                            {
+                                await _originalsRepository.DeleteOriginalAsync(file.FileId);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log but continue - blob may not exist
+                                _telemetryClient.TrackException(ex, new Dictionary<string, string>
+                                {
+                                    { "RevisionId", apiRevision.Id },
+                                    { "FileId", file.FileId },
+                                    { "ErrorType", "OriginalFileDeletion" }
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Delete Cosmos DB entry
+                    await _apiRevisionsRepository.DeleteAPIRevisionAsync(apiRevision.Id, apiRevision.ReviewId);
+                    
+                    successCount++;
+                    
+                    // Small delay to avoid overwhelming services
+                    await Task.Delay(500);
+                }
+                catch (Exception e)
+                {
+                    errorCount++;
+                    _telemetryClient.TrackException(e, new Dictionary<string, string>
+                    {
+                        { "RevisionId", apiRevision.Id },
+                        { "ReviewId", apiRevision.ReviewId },
+                        { "ErrorType", "PurgeFailure" }
+                    });
+                }
+                finally
+                {
+                    _telemetryClient.StopOperation(operation);
+                }
+            }
+            
+            // Log summary telemetry
+            _telemetryClient.TrackEvent("AutoPurgeAPIRevisions", new Dictionary<string, string>
+            {
+                { "SuccessCount", successCount.ToString() },
+                { "ErrorCount", errorCount.ToString() },
+                { "TotalProcessed", revisionsToDelete.Count.ToString() },
+                { "PurgeAfterMonths", purgeAfterMonths.ToString() }
+            });
+        }
+
+        /// <summary>
         /// Determines if a revision is a prerelease based on its package version
         /// </summary>
         /// <param name="revision">The API revision to check</param>

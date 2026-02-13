@@ -280,16 +280,6 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 - Versioning: "add a new preview API version 2025-10-01-preview for service widget"
 - Fixing compliance: "update this TypeSpec to follow Azure ARM guidelines"
 
-**Authentication:**
-
-- The TypeSpec authoring tool authenticates with the Knowledge Base using Microsoft Authentication Library (MSAL) public client authentication
-- Uses interactive browser flow for authentication (MSAL `AcquireTokenInteractive`)
-- Access tokens are cached in memory for the lifetime of the process and are not persisted to disk by default
-- The tool uses the Azure Knowledge Base service and is configured with a default service by default. If you want to use a different Azure Knowledge Base service instead of the default one, set following environment variables to override:
-  - `AZURE_SDK_KB_ENDPOINT`: Service endpoint
-  - `AZURE_SDK_KB_CLIENT_ID`: Application (client) ID of the service
-  - `AZURE_SDK_KB_SCOPE`: Authentication scope
-
 **Success:**
 
 - Generated TypeSpec code passes compilation without errors, validated with `azsdk_run_typespec_validation` tool. 

@@ -486,6 +486,17 @@ public class JavaASTAnalyser implements Analyser {
         }
     }
 
+    /**
+     * Attempts to add navigation link and tooltip information to a token for ClassOrInterfaceType nodes.
+     * 
+     * This method serves two purposes:
+     * 1. Sets the NavigateToId if the type is defined within the current review (enables clickable navigation)
+     * 2. Sets the FullyQualifiedType for tooltips to show the full package name when hovering over types
+     *    (helpful for disambiguating types with the same name from different packages)
+     * 
+     * @param token The token to potentially modify
+     * @param node The AST node being processed
+     */
     private void possiblyAddNavigationLink(ReviewToken token, Node node) {
         if (node instanceof ClassOrInterfaceType) {
             ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) node;
@@ -511,6 +522,18 @@ public class JavaASTAnalyser implements Analyser {
         }
     }
     
+    /**
+     * Attempts to get the fully qualified type name for a ClassOrInterfaceType.
+     * This is used to populate tooltips showing the full package path for types.
+     * 
+     * Currently, this method handles types that have an explicit scope in the source code
+     * (e.g., java.util.List, java.time.OffsetDateTime). For simple type names without
+     * a scope (e.g., List, OffsetDateTime), this returns null as import resolution
+     * would be required, which is complex and not yet implemented.
+     * 
+     * @param classOrInterfaceType The type to resolve
+     * @return The fully qualified type name if it can be determined, null otherwise
+     */
     private String getFullyQualifiedTypeName(ClassOrInterfaceType classOrInterfaceType) {
         // Check if the type has a scope (e.g., java.util.List or Map.Entry)
         if (classOrInterfaceType.getScope().isPresent()) {

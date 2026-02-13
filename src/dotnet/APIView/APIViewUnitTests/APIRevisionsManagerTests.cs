@@ -78,6 +78,7 @@ public class APIRevisionsManagerTests
     private readonly Mock<IDevopsArtifactRepository> _mockDevopsArtifactRepository;
     private readonly Mock<IHubContext<SignalRHub>> _mockHubContext;
     private readonly Mock<INotificationManager> _mockNotificationManager;
+    private readonly Mock<ICosmosCommentsRepository> _mockCommentsRepository;
     private readonly Mock<IBlobOriginalsRepository> _mockOriginalsRepository;
     private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
     private readonly TelemetryClient _telemetryClient;
@@ -95,6 +96,7 @@ public class APIRevisionsManagerTests
         _mockCodeFileManager = new Mock<ICodeFileManager>();
         _mockDevopsArtifactRepository = new Mock<IDevopsArtifactRepository>();
         _mockNotificationManager = new Mock<INotificationManager>();
+        _mockCommentsRepository = new Mock<ICosmosCommentsRepository>();
         _mockConfiguration = new Mock<IConfiguration>();
 
         TelemetryConfiguration telemetryConfiguration = new();
@@ -116,6 +118,7 @@ public class APIRevisionsManagerTests
             _mockCodeFileRepository.Object,
             _mockOriginalsRepository.Object,
             _mockNotificationManager.Object,
+            _mockCommentsRepository.Object,
             _telemetryClient,
             _mockConfiguration.Object
         );
@@ -842,6 +845,337 @@ public class APIRevisionsManagerTests
                 }
             }
         };
+    }
+
+    #endregion
+
+    #region GetReviewQualityScoreAsync Tests
+
+    private APIRevisionListItemModel CreateRevisionForQualityTest(string reviewId = "review-1", string revisionId = "rev-1")
+    {
+        return new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            ReviewId = reviewId,
+            Language = "Python",
+            PackageName = "test-package",
+            Files = new List<APICodeFileModel>
+            {
+                new APICodeFileModel
+                {
+                    FileId = "file-1",
+                    FileName = "test.whl",
+                    PackageName = "test-package",
+                    PackageVersion = "1.0.0",
+                    VersionString = "1.0.0"
+                }
+            }
+        };
+    }
+
+    private CommentItemModel CreateComment(
+        CommentSeverity? severity,
+        bool isResolved = false,
+        CommentSource source = CommentSource.UserGenerated,
+        float confidenceScore = 1.0f,
+        string reviewId = "review-1")
+    {
+        return new CommentItemModel
+        {
+            ReviewId = reviewId,
+            CommentType = CommentType.APIRevision,
+            Severity = severity,
+            IsResolved = isResolved,
+            CommentSource = source,
+            ConfidenceScore = confidenceScore,
+            CommentText = "Test comment"
+        };
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_NoComments_Returns100()
+    {
+        var revision = CreateRevisionForQualityTest();
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(new List<CommentItemModel>());
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(100, result.Score);
+        Assert.Equal(0, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_OnlyResolvedComments_Returns100()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix, isResolved: true),
+            CreateComment(CommentSeverity.ShouldFix, isResolved: true)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(100, result.Score);
+        Assert.Equal(0, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_QuestionComments_DoNotDegradeScore()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.Question),
+            CreateComment(CommentSeverity.Question),
+            CreateComment(CommentSeverity.Question)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(100, result.Score);
+        Assert.Equal(3, result.UnresolvedQuestionCount);
+        Assert.Equal(3, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_MustFixDegradesScoreTheMost()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(80, result.Score); // 100 - 20
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_ShouldFixPenalty()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.ShouldFix)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(90, result.Score); // 100 - 10
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_SuggestionPenalty()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.Suggestion)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(95, result.Score); // 100 - 5
+        Assert.Equal(1, result.UnresolvedSuggestionCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_MixedSeverities_CumulativePenalty()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix),
+            CreateComment(CommentSeverity.ShouldFix),
+            CreateComment(CommentSeverity.Suggestion),
+            CreateComment(CommentSeverity.Question)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // 100 - 20 (MustFix) - 10 (ShouldFix) - 5 (Suggestion) - 0 (Question) = 65
+        Assert.Equal(65, result.Score);
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+        Assert.Equal(1, result.UnresolvedSuggestionCount);
+        Assert.Equal(1, result.UnresolvedQuestionCount);
+        Assert.Equal(4, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_ScoreNeverBelowZero()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>();
+        // 6 MustFix = 120 penalty, score should clamp to 0
+        for (int i = 0; i < 6; i++)
+        {
+            comments.Add(CreateComment(CommentSeverity.MustFix));
+        }
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(0, result.Score);
+        Assert.Equal(6, result.UnresolvedMustFixCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_AIGeneratedComments_ScaledByConfidence()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            // AI-generated MustFix with 0.5 confidence → penalty = 20 * 0.5 = 10
+            CreateComment(CommentSeverity.MustFix, source: CommentSource.AIGenerated, confidenceScore: 0.5f)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(90, result.Score); // 100 - (20 * 0.5) = 90
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_AIGeneratedWithZeroConfidence_NoPenalty()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix, source: CommentSource.AIGenerated, confidenceScore: 0f)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(100, result.Score);
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_UserAndAICommentsMixed()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            // User MustFix: -20
+            CreateComment(CommentSeverity.MustFix),
+            // AI ShouldFix with 0.8 confidence: -10 * 0.8 = -8
+            CreateComment(CommentSeverity.ShouldFix, source: CommentSource.AIGenerated, confidenceScore: 0.8f),
+            // User Suggestion: -5
+            CreateComment(CommentSeverity.Suggestion)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // 100 - 20 - 8 - 5 = 67
+        Assert.Equal(67, result.Score, precision: 2);
+        Assert.Equal(3, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_NullSeverity_NoPenalty()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(severity: null)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(100, result.Score);
+        // null severity comments are counted but not penalized
+        Assert.Equal(1, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_SampleRevisionComments_Ignored()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            new CommentItemModel
+            {
+                ReviewId = "review-1",
+                CommentType = CommentType.SampleRevision, // Not APIRevision
+                Severity = CommentSeverity.MustFix,
+                IsResolved = false,
+                CommentSource = CommentSource.UserGenerated,
+                CommentText = "Sample comment"
+            }
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        Assert.Equal(100, result.Score);
+        Assert.Equal(0, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_DiagnosticComments_FullPenalty()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.ShouldFix, source: CommentSource.Diagnostic)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // Diagnostic comments are not AI-generated, so full penalty applies
+        Assert.Equal(90, result.Score);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_InvalidRevisionId_ThrowsArgumentException()
+    {
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync("bad-id")).ReturnsAsync((APIRevisionListItemModel)null);
+
+        await Assert.ThrowsAsync<ArgumentException>(() => _manager.GetReviewQualityScoreAsync("bad-id"));
     }
 
     #endregion

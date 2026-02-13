@@ -68,6 +68,7 @@ namespace APIViewWeb.Managers;
                         var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
                         var latestAutomaticAPIRevision = automaticRevisionsQueue.Peek();
                         var comments = await _commentsManager.GetCommentsAsync(review.Id);
+                        var deletedRevisionIds = new HashSet<string>();
 
                         while (
                             automaticRevisionsQueue.Any() &&
@@ -76,6 +77,7 @@ namespace APIViewWeb.Managers;
                             !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                             !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                         {
+                            deletedRevisionIds.Add(latestAutomaticAPIRevision.Id);
                             await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
                             latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
                         }
@@ -97,7 +99,9 @@ namespace APIViewWeb.Managers;
                             }
                         }
 
-                        if (await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion))
+                        // Only reuse latestAutomaticAPIRevision if it wasn't deleted
+                        if (!deletedRevisionIds.Contains(latestAutomaticAPIRevision.Id) &&
+                            await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion))
                         {
                             apiRevision = latestAutomaticAPIRevision;
                             createNewRevision = false;

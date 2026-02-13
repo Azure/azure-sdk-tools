@@ -96,23 +96,37 @@ public class VerifySetupTool : LanguageMcpTool
                 Results = new List<RequirementCheckResult>()
             };
 
-            // Start all checks concurrently
+            // Split requirements into two passes:
+            // 1. Requirements with no dependencies (can run concurrently)
+            // 2. Requirements with dependencies (run after pass 1 so dependency status is known)
+            var noDeps = reqsToCheck.Where(r => r.DependsOn.Count == 0).ToList();
+            var hasDeps = reqsToCheck.Where(r => r.DependsOn.Count > 0).ToList();
+
+            // Pass 1: Check requirements with no dependencies concurrently
             var checkTasks = new List<Task<(Requirement req, DefaultCommandResponse result)>>();
-            
-            foreach (var req in reqsToCheck)
+            foreach (var req in noDeps)
             {
                 logger.LogInformation("Checking requirement: {Requirement}", req.Name);
-
                 var task = RunCheck(req, ctx, ct).ContinueWith(t => (req, t.Result), TaskScheduler.Default);
                 checkTasks.Add(task);
             }
+            var pass1Results = await Task.WhenAll(checkTasks);
 
-            var results = await Task.WhenAll(checkTasks);
+            // Pass 2: Check requirements with dependencies sequentially
+            // (sequential so transitive dependency failures are visible to later checks)
+            var pass2Results = new List<(Requirement req, DefaultCommandResponse result)>();
+            foreach (var req in hasDeps)
+            {
+                logger.LogInformation("Checking requirement: {Requirement}", req.Name);
+                var result = await RunCheck(req, ctx, ct);
+                pass2Results.Add((req, result));
+            }
 
-            // Collect failed requirements
+            // Collect failed requirements from both passes
+            var allResults = pass1Results.Concat(pass2Results);
             var failedReqs = new List<(Requirement req, DefaultCommandResponse result)>();
 
-            foreach (var (req, result) in results)
+            foreach (var (req, result) in allResults)
             {
                 if (result.Message != null)
                 {
@@ -124,8 +138,19 @@ public class VerifySetupTool : LanguageMcpTool
             if (autoInstall && failedReqs.Count > 0)
             {
                 logger.LogInformation("Auto-install is enabled. Attempting to auto-install requirements that support it.");
-                var installable = failedReqs.Where(f => f.req.IsAutoInstallable).ToList();
-                var notInstallable = failedReqs.Where(f => !f.req.IsAutoInstallable).ToList();
+
+                // Skip auto-install for requirements whose dependencies failed — installing them would be pointless
+                var hasFailedDeps = failedReqs.Where(f => f.req.DependsOn.Any(d => ctx.FailedRequirements.Contains(d))).ToList();
+                var canAttempt = failedReqs.Except(hasFailedDeps).ToList();
+
+                // Report dependency-blocked failures (not installable due to missing prereq)
+                foreach (var (req, result) in hasFailedDeps)
+                {
+                    AddFailedResult(response, req, result, ctx);
+                }
+
+                var installable = canAttempt.Where(f => f.req.IsAutoInstallable).ToList();
+                var notInstallable = canAttempt.Where(f => !f.req.IsAutoInstallable).ToList();
 
                 // Report non-installable failures
                 foreach (var (req, result) in notInstallable)
@@ -235,6 +260,23 @@ public class VerifySetupTool : LanguageMcpTool
 
     private async Task<DefaultCommandResponse> RunCheck(Requirement req, RequirementContext ctx, CancellationToken ct)
     {
+        // Check if any dependencies have failed
+        var failedDeps = req.DependsOn
+            .Where(d => ctx.FailedRequirements.Contains(d))
+            .ToList();
+
+        if (failedDeps.Count > 0)
+        {
+            var depList = string.Join(", ", failedDeps);
+            logger.LogWarning("Skipping {Requirement}: depends on {Dependencies} which failed or is not installed.",
+                req.Name, depList);
+            ctx.FailedRequirements.Add(req.Name);
+            return new DefaultCommandResponse
+            {
+                Message = $"Skipped {req.Name}: depends on {depList} which failed or is not installed."
+            };
+        }
+
         try
         {
             var checkResult = await req.RunCheckAsync(processHelper, ctx, ct);
@@ -243,6 +285,7 @@ public class VerifySetupTool : LanguageMcpTool
             {
                 logger.LogError("Requirement {Requirement} check failed", 
                     req.Name);
+                ctx.FailedRequirements.Add(req.Name);
                 return new DefaultCommandResponse
                 {
                     Message = $"Requirement {req.Name} check failed: {checkResult.Error ?? checkResult.Output}."
@@ -255,6 +298,7 @@ public class VerifySetupTool : LanguageMcpTool
             {
                 logger.LogError("Requirement {Requirement} failed, requires upgrade to version {Version}.", 
                     req.Name, versionCheckResult);
+                ctx.FailedRequirements.Add(req.Name);
                 return new DefaultCommandResponse
                 {
                     Message = $"Requirement {req.Name} failed, requires upgrade to version {versionCheckResult}"
@@ -266,6 +310,7 @@ public class VerifySetupTool : LanguageMcpTool
             var instructions = req.GetInstructions(ctx);
             logger.LogError(ex, "Requirement {Requirement} check failed to execute.\n\nInstructions: {Instructions}", 
                 req.Name, string.Join(", ", instructions));
+            ctx.FailedRequirements.Add(req.Name);
             return new DefaultCommandResponse
             {
                 Message = $"Requirement {req.Name} check failed to execute.\n\tException: {ex.Message}"

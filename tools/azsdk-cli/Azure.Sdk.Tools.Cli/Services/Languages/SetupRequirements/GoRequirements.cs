@@ -41,6 +41,7 @@ public static class GoRequirements
     public class GoImportsRequirement : Requirement
     {
         public override string Name => "goimports";
+        public override IReadOnlyList<string> DependsOn => ["Go"];
         public override bool IsAutoInstallable => true;
 
         public override string[][]? GetInstallCommands(RequirementContext ctx)
@@ -73,6 +74,7 @@ public static class GoRequirements
     {
         public override string Name => "golangci-lint";
         public override string[] CheckCommand => ["golangci-lint", "--version"];
+        public override IReadOnlyList<string> DependsOn => ["Go"];
         public override string? NotAutoInstallableReason => NotInstallableReasons.SystemTool;
 
         public override bool ShouldCheck(RequirementContext ctx) 
@@ -89,6 +91,7 @@ public static class GoRequirements
         public override string Name => "generator";
         public override string? MinVersion => "0.4.3";
         public override string[] CheckCommand => ["generator", "-v"];
+        public override IReadOnlyList<string> DependsOn => ["Go"];
         public override bool IsAutoInstallable => true;
 
         public override string[][]? GetInstallCommands(RequirementContext ctx)

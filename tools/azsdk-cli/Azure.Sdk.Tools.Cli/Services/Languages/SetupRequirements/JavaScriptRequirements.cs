@@ -18,6 +18,7 @@ public static class JavaScriptRequirements
     {
         public override string Name => "pnpm";
         public override string[] CheckCommand => ["pnpm", "--version"];
+        public override IReadOnlyList<string> DependsOn => ["Node.js"];
         public override bool IsAutoInstallable => true;
 
         public override string[][]? GetInstallCommands(RequirementContext ctx)

@@ -37,6 +37,13 @@ public abstract class Requirement
     public abstract string Name { get; }
 
     /// <summary>
+    /// Names of other requirements that must be installed before this one can work.
+    /// Uses <see cref="Name"/> strings (e.g., "Python", "Node.js", "Java").
+    /// Default is empty (no dependencies).
+    /// </summary>
+    public virtual IReadOnlyList<string> DependsOn => [];
+
+    /// <summary>
     /// Determines whether this requirement should be checked in the given context.
     /// </summary>
     /// <param name="ctx">The current environment context.</param>

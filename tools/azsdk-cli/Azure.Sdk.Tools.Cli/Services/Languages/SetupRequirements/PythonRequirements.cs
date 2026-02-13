@@ -14,6 +14,8 @@ public abstract class PythonRequirementBase : Requirement
 {
     private const string PythonRepoName = "azure-sdk-for-python";
 
+    public override IReadOnlyList<string> DependsOn => ["Python", "pip"];
+
     /// <summary>
     /// The raw check command before Python executable resolution.
     /// </summary>

@@ -54,6 +54,7 @@ public static class JavaRequirements
     {
         public override string Name => "Maven";
         public override string[] CheckCommand => ["mvn", "-v"];
+        public override IReadOnlyList<string> DependsOn => ["Java"];
         public override string? NotAutoInstallableReason => NotInstallableReasons.BuildTool;
 
         public override bool ShouldCheck(RequirementContext ctx) 

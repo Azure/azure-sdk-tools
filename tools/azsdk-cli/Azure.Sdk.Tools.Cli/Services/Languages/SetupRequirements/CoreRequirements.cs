@@ -43,6 +43,7 @@ public static class CoreRequirements
     {
         public override string Name => "tsp-client";
         public override string? MinVersion => "0.24.0";
+        public override IReadOnlyList<string> DependsOn => ["Node.js"];
         public override bool IsAutoInstallable => true;
 
         public override string[][]? GetInstallCommands(RequirementContext ctx)
@@ -81,6 +82,7 @@ public static class CoreRequirements
         public override string Name => "tsp";
         public override string? MinVersion => "1.0.0";
         public override string[] CheckCommand => ["tsp", "--version"];
+        public override IReadOnlyList<string> DependsOn => ["Node.js"];
         public override bool IsAutoInstallable => true;
 
         public override string[][]? GetInstallCommands(RequirementContext ctx)
@@ -212,6 +214,7 @@ public static class CoreRequirements
     {
         public override string Name => "pip";
         public override string[] CheckCommand => ["python", "-m", "pip", "--version"];
+        public override IReadOnlyList<string> DependsOn => ["Python"];
 
         public override string? Reason => "Pip is required for all repos because it's used in a common Verify-Readme Powershell script.";
         public override bool IsAutoInstallable => false;

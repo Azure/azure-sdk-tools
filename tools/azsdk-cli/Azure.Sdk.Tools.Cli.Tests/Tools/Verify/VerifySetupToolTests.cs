@@ -435,4 +435,63 @@ internal class VerifySetupToolTests
         Assert.That(nodeResult.NotAutoInstallableReason, Is.Not.Null.And.Not.Empty);
         Assert.That(nodeResult.Instructions, Is.Not.Empty);
     }
+
+    [Test]
+    public async Task VerifySetup_SkipsDependents_WhenDependencyFails()
+    {
+        // Arrange - Node.js fails, so tsp-client and tsp (which depend on Node.js) should be skipped
+        SetupFailedProcessMock("node", 1, "node: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        // Assert - Node.js should fail normally
+        Assert.That(result.ResponseError, Is.Null);
+        var nodeResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("Node"));
+        Assert.That(nodeResult, Is.Not.Null);
+
+        // tsp-client and tsp should be skipped due to Node.js dependency failure
+        var tspClientResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp-client"));
+        Assert.That(tspClientResult, Is.Not.Null);
+        Assert.That(tspClientResult!.RequirementStatusDetails, Does.Contain("Skipped"));
+        Assert.That(tspClientResult.RequirementStatusDetails, Does.Contain("Node.js"));
+
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult, Is.Not.Null);
+        Assert.That(tspResult!.RequirementStatusDetails, Does.Contain("Skipped"));
+        Assert.That(tspResult.RequirementStatusDetails, Does.Contain("Node.js"));
+    }
+
+    [Test]
+    public async Task VerifySetup_AutoInstall_SkipsDependents_WhenDependencyFails()
+    {
+        // Arrange - Node.js fails (not auto-installable), so tsp (auto-installable, depends on Node.js)
+        // should NOT be attempted for auto-install
+        SetupFailedProcessMock("node", 1, "node: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+
+        // Assert - tsp should NOT have auto-install attempted since its dependency (Node.js) failed
+        Assert.That(result.ResponseError, Is.Null);
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult, Is.Not.Null);
+        Assert.That(tspResult!.AutoInstallAttempted, Is.False);
+        Assert.That(tspResult.RequirementStatusDetails, Does.Contain("Skipped"));
+        Assert.That(tspResult.RequirementStatusDetails, Does.Contain("Node.js"));
+    }
 }

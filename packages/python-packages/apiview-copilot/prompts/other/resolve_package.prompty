@@ -20,9 +20,7 @@ model:
     azure_deployment: gpt-5-mini
     api_version: 2025-03-01-preview
   parameters:
-    temperature: 0.0
-    top_p: 1.0
-    max_tokens: 500
+    max_completion_tokens: 500
 sample:
   package_query: "azure storage blobs"
   language: "Python"

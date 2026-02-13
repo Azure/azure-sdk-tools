@@ -18,6 +18,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using System.Globalization;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Codeowners;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -112,6 +113,15 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label);
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath);
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
+        Task<OwnerWorkItem?> GetOwnerByGitHubAliasAsync(string gitHubAlias);
+        Task<OwnerWorkItem> CreateOwnerWorkItemAsync(string gitHubAlias);
+        Task<List<LabelOwnerWorkItem>> GetLabelOwnersByRepoAndPathAsync(string repo, string repoPath);
+        Task<List<LabelOwnerWorkItem>> GetLabelOwnersByRepoAsync(string repo);
+        Task<LabelOwnerWorkItem> CreateLabelOwnerWorkItemAsync(string repo, string labelType, string repoPath, List<string> labelNames);
+        Task AddRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId);
+        Task RemoveRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId);
+        Task<PackageWorkItem?> GetPackageByNameAsync(string packageName);
+        Task<LabelWorkItem?> GetLabelByNameAsync(string labelName);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -1667,6 +1677,241 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogError(ex, "Failed to get product info for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
                 throw new Exception($"Failed to get product info for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
             }
+        }
+
+        public async Task<OwnerWorkItem?> GetOwnerByGitHubAliasAsync(string gitHubAlias)
+        {
+            var escapedAlias = gitHubAlias?.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
+                        $" AND [System.WorkItemType] = 'Owner'" +
+                        $" AND [Custom.GitHubAlias] = '{escapedAlias}'";
+
+            var workItems = await FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+            if (workItems.Count == 0)
+            {
+                return null;
+            }
+
+            return WorkItemMappers.MapToOwnerWorkItem(workItems[0]);
+        }
+
+        public async Task<OwnerWorkItem> CreateOwnerWorkItemAsync(string gitHubAlias)
+        {
+            // Idempotent: check if already exists
+            var existing = await GetOwnerByGitHubAliasAsync(gitHubAlias);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            {
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.Title",
+                    Value = $"Owner {gitHubAlias}"
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.GitHubAlias",
+                    Value = gitHubAlias
+                }
+            };
+
+            logger.LogInformation("Creating Owner work item for '{gitHubAlias}'", gitHubAlias);
+            var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(patchDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, "Owner");
+
+            if (workItem == null || workItem.Id == null)
+            {
+                throw new Exception($"Failed to create Owner work item for '{gitHubAlias}'");
+            }
+
+            logger.LogInformation("Created Owner work item {workItemId} for '{gitHubAlias}'", workItem.Id, gitHubAlias);
+            return WorkItemMappers.MapToOwnerWorkItem(workItem);
+        }
+
+        public async Task<List<LabelOwnerWorkItem>> GetLabelOwnersByRepoAndPathAsync(string repo, string repoPath)
+        {
+            var escapedRepo = repo?.Replace("'", "''");
+            var escapedPath = repoPath?.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
+                        $" AND [System.WorkItemType] = 'Label Owner'" +
+                        $" AND [Custom.Repository] = '{escapedRepo}'" +
+                        $" AND [Custom.RepoPath] = '{escapedPath}'";
+
+            var workItems = await FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+            return workItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
+        }
+
+        public async Task<List<LabelOwnerWorkItem>> GetLabelOwnersByRepoAsync(string repo)
+        {
+            var escapedRepo = repo?.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
+                        $" AND [System.WorkItemType] = 'Label Owner'" +
+                        $" AND [Custom.Repository] = '{escapedRepo}'";
+
+            var workItems = await FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+            return workItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
+        }
+
+        public async Task<LabelOwnerWorkItem> CreateLabelOwnerWorkItemAsync(string repo, string labelType, string repoPath, List<string> labelNames)
+        {
+            var labelList = string.Join(", ", labelNames);
+            var title = $"Label Owner: {repo} - {labelType} - {labelList}";
+
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            {
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.Title",
+                    Value = title
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.LabelType",
+                    Value = labelType
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.Repository",
+                    Value = repo
+                },
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/Custom.RepoPath",
+                    Value = repoPath
+                }
+            };
+
+            logger.LogInformation("Creating Label Owner work item '{title}'", title);
+            var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(patchDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, "Label Owner");
+
+            if (workItem == null || workItem.Id == null)
+            {
+                throw new Exception($"Failed to create Label Owner work item '{title}'");
+            }
+
+            logger.LogInformation("Created Label Owner work item {workItemId}", workItem.Id);
+            return WorkItemMappers.MapToLabelOwnerWorkItem(workItem);
+        }
+
+        public async Task AddRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId)
+        {
+            var workItemClient = connection.GetWorkItemClient();
+
+            // Check if link already exists
+            var sourceWorkItem = await workItemClient.GetWorkItemAsync(sourceWorkItemId, expand: WorkItemExpand.Relations);
+            var targetUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}/_apis/wit/workItems/{targetWorkItemId}";
+
+            if (sourceWorkItem?.Relations != null)
+            {
+                var existingLink = sourceWorkItem.Relations
+                    .FirstOrDefault(r => r.Rel == "System.LinkTypes.Related" && r.Url?.Contains($"/workItems/{targetWorkItemId}") == true);
+                if (existingLink != null)
+                {
+                    logger.LogInformation("Related link already exists between {sourceId} and {targetId}", sourceWorkItemId, targetWorkItemId);
+                    return;
+                }
+            }
+
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            {
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/relations/-",
+                    Value = new
+                    {
+                        rel = "System.LinkTypes.Related",
+                        url = targetUrl,
+                        attributes = new { comment = "Added by azsdk-cli" }
+                    }
+                }
+            };
+
+            logger.LogInformation("Adding related link from {sourceId} to {targetId}", sourceWorkItemId, targetWorkItemId);
+            await workItemClient.UpdateWorkItemAsync(patchDocument, sourceWorkItemId);
+        }
+
+        public async Task RemoveRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId)
+        {
+            var workItemClient = connection.GetWorkItemClient();
+            var sourceWorkItem = await workItemClient.GetWorkItemAsync(sourceWorkItemId, expand: WorkItemExpand.Relations);
+
+            if (sourceWorkItem?.Relations == null)
+            {
+                logger.LogInformation("No relations found on work item {sourceId}", sourceWorkItemId);
+                return;
+            }
+
+            var relationIndex = -1;
+            for (int i = 0; i < sourceWorkItem.Relations.Count; i++)
+            {
+                var relation = sourceWorkItem.Relations[i];
+                if (relation.Rel == "System.LinkTypes.Related" && relation.Url?.Contains($"/workItems/{targetWorkItemId}") == true)
+                {
+                    relationIndex = i;
+                    break;
+                }
+            }
+
+            if (relationIndex < 0)
+            {
+                logger.LogInformation("No related link found between {sourceId} and {targetId}", sourceWorkItemId, targetWorkItemId);
+                return;
+            }
+
+            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
+            {
+                new JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Remove,
+                    Path = $"/relations/{relationIndex}"
+                }
+            };
+
+            logger.LogInformation("Removing related link from {sourceId} to {targetId}", sourceWorkItemId, targetWorkItemId);
+            await workItemClient.UpdateWorkItemAsync(patchDocument, sourceWorkItemId);
+        }
+
+        public async Task<PackageWorkItem?> GetPackageByNameAsync(string packageName)
+        {
+            var escapedName = packageName?.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
+                        $" AND [System.WorkItemType] = 'Package'" +
+                        $" AND [Custom.Package] = '{escapedName}'";
+
+            var workItems = await FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+            if (workItems.Count == 0)
+            {
+                return null;
+            }
+
+            var packages = workItems.Select(WorkItemMappers.MapToPackageWorkItem).ToList();
+            var latest = WorkItemMappers.GetLatestPackageVersions(packages);
+            return latest.FirstOrDefault();
+        }
+
+        public async Task<LabelWorkItem?> GetLabelByNameAsync(string labelName)
+        {
+            var escapedName = labelName?.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
+                        $" AND [System.WorkItemType] = 'Label'" +
+                        $" AND [Custom.Label] = '{escapedName}'";
+
+            var workItems = await FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+            if (workItems.Count == 0)
+            {
+                return null;
+            }
+
+            return WorkItemMappers.MapToLabelWorkItem(workItems[0]);
         }
     }
 }

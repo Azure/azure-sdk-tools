@@ -3,7 +3,7 @@ param(
   [string] $OutFile
 )
 
-. (Join-Path $RepoRoot '/eng/common/scripts/common.ps1')
+. (Join-Path $RepoRoot 'eng/common/scripts/common.ps1')
 
 $pkgProperties = Get-AllPkgProperties
 

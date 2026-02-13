@@ -66,7 +66,6 @@ internal class TypeSpecCustomizationServiceTests
     [Explicit]  // Mark as explicit/manual because this test takes 26 seconds
     public async Task ApplyCustomization_WithRealCopilotSdk_CompletesSuccessfully()
     {
-
         if (!await CopilotTestHelper.IsCopilotAvailableAsync())
         {
             Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");

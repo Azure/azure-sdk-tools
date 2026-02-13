@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -148,7 +149,7 @@ public class SampleGeneratorToolTests
         });
         var testServiceLogger = new TestLogger<SampleGeneratorTool>();
         tool = new SampleGeneratorTool(microagentHostServiceMock.Object, testServiceLogger, mockGitHelper.Object, _languageServices);
-        tool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        tool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
         var command = tool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Do thing", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
@@ -294,7 +295,7 @@ public class SampleGeneratorToolTests
 
         var emptyToolLogger = new TestLogger<SampleGeneratorTool>();
         var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, emptyToolLogger, _mockGitHelper.Object, []);
-        errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        errorTool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
         var command = errorTool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Anything", "--package-path", pkgPath]);
         int exitCode = await parseResult.InvokeAsync();
@@ -380,7 +381,7 @@ public class SampleGeneratorToolTests
             _languageServices
         );
 
-        tool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        tool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
     }
 
     private async Task<(string repoRoot, string packagePath)> CreateFakeGoPackageAsync()

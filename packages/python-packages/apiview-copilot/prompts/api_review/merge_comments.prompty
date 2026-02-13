@@ -10,10 +10,8 @@ model:
     azure_deployment: gpt-5-mini
     api_version: 2025-03-01-preview
   parameters:
-    temperature: 0.0
-    top_p: 1.0
     stop: []
-    max_tokens: 16384
+    max_completion_tokens: 16384
     response_format: ${file:comment_result_schema.json}
 sample:
   comments: |

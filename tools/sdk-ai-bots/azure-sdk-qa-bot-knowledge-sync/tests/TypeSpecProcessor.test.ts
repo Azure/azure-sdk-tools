@@ -154,6 +154,46 @@ interface UserOperations {
             expect(definitions[1].decorators).toHaveLength(2);
         });
 
+        it('should handle multi-line operation signatures in interfaces', () => {
+            const content = `
+interface ResourceOperations {
+    @get
+    @route("/resources/{id}")
+    getResource(
+        @path id: string,
+        @query expand?: string
+    ): Resource;
+    
+    @get
+    @route("/resources")
+    listResources(
+        @query top?: int32,
+        @query skip?: int32
+    ): ResourceList;
+}`;
+            
+            const definitions = processor['parseTypeSpecDefinitions'](content);
+            
+            expect(definitions).toHaveLength(2);
+            expect(definitions[0].name).toBe('getResource');
+            expect(definitions[0].code).toContain('@path id: string');
+            expect(definitions[0].code).toContain('@query expand?: string');
+            
+            expect(definitions[1].name).toBe('listResources');
+            expect(definitions[1].code).toContain('@query top?: int32');
+        });
+
+        it('should handle empty interfaces', () => {
+            const content = `
+interface EmptyOperations {
+}`;
+            
+            const definitions = processor['parseTypeSpecDefinitions'](content);
+            
+            // Empty interface should produce no definitions
+            expect(definitions).toHaveLength(0);
+        });
+
         it('should parse union definitions', () => {
             const content = `
 union StringOrNumber {

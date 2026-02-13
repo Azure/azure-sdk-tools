@@ -140,74 +140,55 @@ public static class FileTools
                 {
                     throw new ArgumentException("Search pattern cannot be empty", nameof(pattern));
                 }
-
                 if (!ToolHelpers.TryGetSafeFullPath(baseDir, path, out var searchPath))
                 {
                     throw new ArgumentException("The provided path is invalid or outside the allowed base directory.");
                 }
-
                 if (!Path.Exists(searchPath))
                 {
                     throw new ArgumentException($"Path {path} does not exist", nameof(path));
                 }
 
+                var regex = isRegex ? new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled) : null;
+                var files = File.Exists(searchPath)
+                    ? [searchPath]
+                    : Directory.GetFiles(searchPath, "*", SearchOption.AllDirectories).Take(2000).ToArray();
+
                 var matches = new List<object>();
-                var files = new List<string>();
-
-                if (File.Exists(searchPath))
-                {
-                    files.Add(searchPath);
-                }
-                else if (Directory.Exists(searchPath))
-                {
-                    files.AddRange(Directory.GetFiles(searchPath, "*", SearchOption.AllDirectories));
-                }
-
-                Regex? regex = null;
-                if (isRegex)
-                {
-                    try
-                    {
-                        regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        throw new ArgumentException($"Invalid regular expression: {ex.Message}", nameof(pattern));
-                    }
-                }
-
                 foreach (var file in files)
                 {
                     try
                     {
-                        var lines = File.ReadAllLines(file);
-                        for (int i = 0; i < lines.Length; i++)
+                        // Skip files > 2MB (use ReadFile for large files)
+                        if (new FileInfo(file).Length > 2 * 1024 * 1024)
                         {
-                            bool isMatch = isRegex
-                                ? regex!.IsMatch(lines[i])
-                                : lines[i].Contains(pattern, StringComparison.OrdinalIgnoreCase);
+                            continue;
+                        }
 
-                            if (isMatch)
+                        int lineNum = 0;
+                        foreach (var line in File.ReadLines(file))
+                        {
+                            lineNum++;
+                            if (isRegex ? regex!.IsMatch(line) : line.Contains(pattern, StringComparison.OrdinalIgnoreCase))
                             {
                                 matches.Add(new
                                 {
                                     FilePath = Path.GetRelativePath(baseDir, file),
-                                    LineNumber = i + 1,
-                                    Content = lines[i].Trim()
+                                    LineNumber = lineNum,
+                                    Content = line.Trim()
                                 });
-
                                 if (matches.Count >= maxResults)
                                 {
-                                    return new { Matches = matches, TotalMatches = matches.Count };
+                                    break;
                                 }
                             }
                         }
+                        if (matches.Count >= maxResults)
+                        {
+                            break;
+                        }
                     }
-                    catch (Exception)
-                    {
-                        // Skip files that can't be read (binary, permission issues, etc.)
-                        continue;
-                    }
+                    catch { /* Skip unreadable files */ }
                 }
 
                 return new { Matches = matches, TotalMatches = matches.Count };

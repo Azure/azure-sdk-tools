@@ -151,6 +151,14 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         Consult the reference documentation provided to determine if any supported
         TypeSpec client customization decorator can address the feedback.
 
+        **Common feedback patterns that ARE TypeSpec-applicable:**
+        - Renaming (client, operation, model, property, enum value) → `@@clientName` or `@clientName`
+        - Visibility/access (make internal, hide, not public, expose publicly) → `@@access` or `@access`
+        - Language-specific (exclude from Python, suppress for JS, only in .NET, not for Java) → `@@scope` with language parameter
+        - Client structure (split client, merge operations, operation groups) → `@client`, `@operationGroup`
+        - Client location/namespace changes → `@clientLocation`, `@clientNamespace`
+        - Type overrides (use different type in SDK) → `@@alternateType`, `@@override`
+
         **Code Changes Required (FAILURE):**
         If the feedback requires changes that TypeSpec decorators cannot handle (e.g., custom
         serialization logic, complex method implementations, test changes, documentation edits

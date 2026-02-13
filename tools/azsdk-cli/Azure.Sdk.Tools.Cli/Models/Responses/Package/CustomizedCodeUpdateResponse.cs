@@ -51,6 +51,7 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         public const string NoLanguageService = "NoLanguageService";
         public const string InvalidInput = "InvalidInput";
         public const string UnexpectedError = "UnexpectedError";
+        public const string TypeSpecCustomizationFailed = "TypeSpecCustomizationFailed";
     }
 
     [JsonPropertyName("message")]
@@ -60,6 +61,13 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonPropertyName("errorCode")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ErrorCode { get; set; }
+
+    /// <summary>
+    /// Summary of TypeSpec client.tsp changes applied during the TypeSpec Customizations phase.
+    /// </summary>
+    [JsonPropertyName("typeSpecChangesSummary")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? TypeSpecChangesSummary { get; set; }
 
     protected override string Format()
     {
@@ -71,6 +79,14 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
+        }
+        if (TypeSpecChangesSummary is { Count: > 0 })
+        {
+            sb.AppendLine("TypeSpec Changes:");
+            foreach (var change in TypeSpecChangesSummary)
+            {
+                sb.AppendLine($"  - {change}");
+            }
         }
         return sb.ToString();
     }

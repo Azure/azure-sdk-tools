@@ -122,8 +122,15 @@ export class TypeSpecProcessor {
                             break;
                         }
                     }
-                    const definition = this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, i);
-                    definitions.push(definition);
+                    
+                    // Handle interface definitions by parsing operations
+                    if (currentType === 'interface') {
+                        const operations = this.parseInterface(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, i);
+                        definitions.push(...operations);
+                    } else {
+                        const definition = this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, i);
+                        definitions.push(definition);
+                    }
                     
                     currentDefinitionStart = l + 1;
                     currentDefinitionBodyStart = i;
@@ -135,7 +142,12 @@ export class TypeSpecProcessor {
 
         //handle the last definition
         if (currentDefinitionStart !== -1 && currentType && currentName) {
-            definitions.push(this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length -1));
+            if (currentType === 'interface') {
+                const operations = this.parseInterface(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length - 1);
+                definitions.push(...operations);
+            } else {
+                definitions.push(this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length - 1));
+            }
         }
         return definitions;
     }
@@ -218,8 +230,146 @@ export class TypeSpecProcessor {
         if (definitionType !== 'interface') {
             return [];
         }
-        // TODO: Implement interface parsing logic
-        return [];
+        
+        // Find the end of the interface definition
+        let definitionEnd = -1;
+        for (let l = nextDefinitionStart; l > definitionStart; l--) {
+            let trim = lines[l].trim();
+            if (trim.endsWith('}')) {
+                definitionEnd = l;
+                break;
+            }
+        }
+
+        if (definitionEnd === -1) {
+            const clampedNext = Math.min(nextDefinitionStart, lines.length - 1);
+            definitionEnd = Math.max(definitionStart, clampedNext);
+        }
+
+        // Find the opening brace of the interface body
+        let interfaceBodyStart = -1;
+        for (let i = definitionBodyStart; i <= definitionEnd; i++) {
+            if (lines[i].includes('{')) {
+                interfaceBodyStart = i;
+                break;
+            }
+        }
+
+        if (interfaceBodyStart === -1) {
+            return [];
+        }
+
+        const operations: TypeSpecDefinition[] = [];
+        
+        // Parse operations within the interface body
+        let currentOpStart = -1;
+        let currentOpName = '';
+        let currentOpDecorators: string[] = [];
+        let currentOpComments: string[] = [];
+        let inBlockComment = false;
+        let inDecoratorBlock = false;
+        let parenthesisCount = 0;
+
+        for (let i = interfaceBodyStart + 1; i < definitionEnd; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+
+            // Skip empty lines
+            if (!trimmed) {
+                continue;
+            }
+
+            // Handle block comments /** ... */
+            if (trimmed.startsWith('/**') && !inBlockComment) {
+                if (currentOpStart === -1) {
+                    currentOpStart = i;
+                }
+                currentOpComments.push(trimmed);
+                if (!trimmed.endsWith('*/')) {
+                    inBlockComment = true;
+                }
+                continue;
+            }
+            if (inBlockComment) {
+                currentOpComments.push(trimmed);
+                if (trimmed.endsWith('*/')) {
+                    inBlockComment = false;
+                }
+                continue;
+            }
+
+            // Handle single-line comments //
+            if (trimmed.startsWith('//')) {
+                if (currentOpStart === -1) {
+                    currentOpStart = i;
+                }
+                currentOpComments.push(trimmed);
+                continue;
+            }
+
+            // Handle decorators
+            if (trimmed.startsWith('@')) {
+                if (currentOpStart === -1) {
+                    currentOpStart = i;
+                }
+                if (!inDecoratorBlock) {
+                    parenthesisCount = (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+                    currentOpDecorators.push(trimmed);
+                    inDecoratorBlock = parenthesisCount > 0;
+                } else {
+                    // Continuation of previous decorator
+                    currentOpDecorators[currentOpDecorators.length - 1] += '\n' + trimmed;
+                    parenthesisCount += (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+                    if (parenthesisCount === 0) {
+                        inDecoratorBlock = false;
+                    }
+                }
+                continue;
+            }
+
+            // Check for operation signature (operationName(...): returnType;)
+            const opMatch = trimmed.match(/^(\w+)\s*\(/);
+            if (opMatch && !inDecoratorBlock) {
+                currentOpName = opMatch[1];
+                if (currentOpStart === -1) {
+                    currentOpStart = i;
+                }
+
+                // Find the end of the operation (semicolon)
+                let opEnd = i;
+                let foundEnd = false;
+                for (let j = i; j < definitionEnd; j++) {
+                    if (lines[j].includes(';')) {
+                        opEnd = j;
+                        foundEnd = true;
+                        break;
+                    }
+                }
+
+                if (foundEnd && currentOpName) {
+                    const description = this.extractDescription(currentOpDecorators, currentOpComments);
+                    const opCode = lines.slice(currentOpStart, opEnd + 1).join('\n');
+                    
+                    operations.push({
+                        type: 'operation',
+                        name: currentOpName,
+                        code: opCode,
+                        decorators: currentOpDecorators,
+                        description,
+                        comments: currentOpComments
+                    });
+
+                    // Reset for next operation
+                    currentOpStart = -1;
+                    currentOpName = '';
+                    currentOpDecorators = [];
+                    currentOpComments = [];
+                    i = opEnd; // Skip to end of current operation
+                }
+            }
+        }
+
+        return operations;
     }
     /**
      * Extract description from @doc decorator or JSDoc-style comments.

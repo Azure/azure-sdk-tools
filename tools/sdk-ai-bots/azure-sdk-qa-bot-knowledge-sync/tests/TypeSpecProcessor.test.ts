@@ -106,7 +106,7 @@ model User {
             expect(definitions[0].decorators[1]).toContain('@resource');
         });
 
-        it('should parse interface definitions', () => {
+        it('should parse interface definitions and extract operations', () => {
             const content = `
 interface UserOperations {
     getUser(): User;
@@ -115,9 +115,43 @@ interface UserOperations {
             
             const definitions = processor['parseTypeSpecDefinitions'](content);
             
-            expect(definitions).toHaveLength(1);
-            expect(definitions[0].type).toBe('interface');
-            expect(definitions[0].name).toBe('UserOperations');
+            // Interface should be parsed into individual operations
+            expect(definitions).toHaveLength(2);
+            expect(definitions[0].type).toBe('operation');
+            expect(definitions[0].name).toBe('getUser');
+            expect(definitions[1].type).toBe('operation');
+            expect(definitions[1].name).toBe('createUser');
+        });
+
+        it('should extract decorators and comments from interface operations', () => {
+            const content = `
+interface UserOperations {
+    /**
+     * Get a user by ID
+     */
+    @get
+    @route("users/{id}")
+    getUser(@path id: string): User;
+    
+    @post
+    @route("users")
+    createUser(@body user: User): User;
+}`;
+            
+            const definitions = processor['parseTypeSpecDefinitions'](content);
+            
+            expect(definitions).toHaveLength(2);
+            
+            // First operation should have comments and decorators
+            expect(definitions[0].name).toBe('getUser');
+            expect(definitions[0].description).toContain('Get a user by ID');
+            expect(definitions[0].decorators).toHaveLength(2);
+            expect(definitions[0].decorators[0]).toContain('@get');
+            expect(definitions[0].decorators[1]).toContain('@route');
+            
+            // Second operation should have decorators
+            expect(definitions[1].name).toBe('createUser');
+            expect(definitions[1].decorators).toHaveLength(2);
         });
 
         it('should parse union definitions', () => {

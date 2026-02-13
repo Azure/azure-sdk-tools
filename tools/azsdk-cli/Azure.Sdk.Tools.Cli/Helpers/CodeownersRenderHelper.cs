@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
@@ -36,8 +37,6 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
     public async Task<string> RenderCodeownersAsync(
         string repoRoot,
         string repoName,
-        string orgName = "azure-sdk",
-        string projectName = "Release",
         List<string>? packageTypes = null,
         string sectionName = "Client Libraries",
         CancellationToken ct = default)
@@ -46,8 +45,7 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         _logger.LogInformation("=== RenderCodeownersFile ===");
         _logger.LogInformation("Repository Root: {RepoRoot}", repoRoot);
         _logger.LogInformation("Repository: {RepoName}", repoName);
-        _logger.LogInformation("Organization: {OrgName}", orgName);
-        _logger.LogInformation("Project: {ProjectName}", projectName);
+        _logger.LogInformation("Project: {ProjectName}", Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT);
         _logger.LogInformation("Package Types: {PackageTypes}", string.Join(", ", packageTypes));
         _logger.LogInformation("Section: {SectionName}", sectionName);
 
@@ -63,7 +61,7 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
 
         // Step 2: Fetch work items from Azure DevOps
         _logger.LogInformation("Step 2: Fetching work items from Azure DevOps...");
-        var workItemData = await FetchAllWorkItemsAsync(projectName, repoName, language, packageTypes, ct);
+        var workItemData = await FetchAllWorkItemsAsync(repoName, language, packageTypes, ct);
 
         // Step 3: Build CODEOWNERS entries
         _logger.LogInformation("Step 3: Building CODEOWNERS entries...");
@@ -160,14 +158,14 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         return [];
     }
 
-    private async Task<WorkItemData> FetchAllWorkItemsAsync(string projectName, string repoName, string language, List<string> packageTypes, CancellationToken ct)
+    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, string language, List<string> packageTypes, CancellationToken ct)
     {
         // Build package type filter using IN clause
         var packageTypeList = string.Join(", ", packageTypes.Select(pt => $"'{pt}'"));
         var packageQuery = $"[System.WorkItemType] = 'Package' AND [Custom.Language] = '{language}' AND [Custom.PackageType] IN ({packageTypeList})";
 
         // Fetch Packages by language and package type
-        var allPackages = await FetchWorkItemsAsync<PackageWorkItem>(projectName,
+        var allPackages = await FetchWorkItemsAsync<PackageWorkItem>(
             packageQuery,
             WorkItemMappers.MapToPackageWorkItem);
         _logger.LogInformation("Packages (all versions): {Count}", allPackages.Count);
@@ -177,19 +175,19 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         _logger.LogInformation("Packages (latest versions): {Count}", packages.Count);
 
         // Fetch all Owners (no filter needed)
-        var owners = await FetchWorkItemsAsync<OwnerWorkItem>(projectName,
+        var owners = await FetchWorkItemsAsync<OwnerWorkItem>(
             "[System.WorkItemType] = 'Owner'",
             WorkItemMappers.MapToOwnerWorkItem);
         _logger.LogInformation("Owners: {Count}", owners.Count);
 
         // Fetch all Labels (no filter needed)
-        var labels = await FetchWorkItemsAsync<LabelWorkItem>(projectName,
+        var labels = await FetchWorkItemsAsync<LabelWorkItem>(
             "[System.WorkItemType] = 'Label'",
             WorkItemMappers.MapToLabelWorkItem);
         _logger.LogInformation("Labels: {Count}", labels.Count);
 
         // Fetch Label Owners by repository
-        var labelOwners = await FetchWorkItemsAsync<LabelOwnerWorkItem>(projectName,
+        var labelOwners = await FetchWorkItemsAsync<LabelOwnerWorkItem>(
             $"[System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{repoName}'",
             WorkItemMappers.MapToLabelOwnerWorkItem);
         _logger.LogInformation("Label Owners: {Count}", labelOwners.Count);
@@ -207,11 +205,10 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
     }
 
     private async Task<List<T>> FetchWorkItemsAsync<T>(
-        string project,
         string whereClause,
         Func<WorkItem, T> factory)
     {
-        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{project}' AND {whereClause}";
+        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND {whereClause}";
         var workItems = await _devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
         return workItems.Select(factory).ToList();
     }

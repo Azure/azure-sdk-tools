@@ -83,18 +83,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Description = "Path to the repository root",
         };
 
-        private readonly Option<string> orgOption = new("--org")
-        {
-            Description = "Azure DevOps organization",
-            Required = false,
-        };
-
-        private readonly Option<string> projectOption = new("--project")
-        {
-            Description = "Azure DevOps project",
-            Required = false,
-        };
-
         private readonly Option<string[]> packageTypesOption = new("--package-types")
         {
             Description = "Package types to include (default: client)",
@@ -159,7 +147,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(renderCodeownersCommandName, "Render CODEOWNERS file from Azure DevOps work items")
             {
-                repoRootArgument, repoOption, orgOption, projectOption, packageTypesOption, sectionOption,
+                repoRootArgument, repoOption, packageTypesOption, sectionOption,
             }
         ];
 
@@ -209,13 +197,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var repoRoot = parseResult.GetValue(repoRootArgument);
                 var repo = parseResult.GetValue(repoOption);
-                var org = parseResult.GetValue(orgOption) ?? "azure-sdk";
-                var project = parseResult.GetValue(projectOption) ?? "Release";
                 var packageTypesValue = parseResult.GetValue(packageTypesOption);
                 var packageTypes = (packageTypesValue != null && packageTypesValue.Length > 0) ? packageTypesValue.ToList() : ["client"];
                 var section = parseResult.GetValue(sectionOption) ?? "Client Libraries";
 
-                var renderResult = await RenderCodeowners(repoRoot ?? "", repo ?? "", org, project, packageTypes, section, ct);
+                var renderResult = await RenderCodeowners(repoRoot ?? "", repo ?? "", packageTypes, section, ct);
                 return renderResult;
             }
 
@@ -544,8 +530,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<DefaultCommandResponse> RenderCodeowners(
             string repoRoot,
             string repo,
-            string org,
-            string project,
             List<string> packageTypes,
             string section,
             CancellationToken ct)
@@ -585,7 +569,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                var result = await codeownersRenderHelper.RenderCodeownersAsync(repoRoot, repo, org, project, packageTypes, section, ct);
+                var result = await codeownersRenderHelper.RenderCodeownersAsync(repoRoot, repo, packageTypes, section, ct);
 
                 return new DefaultCommandResponse
                 {

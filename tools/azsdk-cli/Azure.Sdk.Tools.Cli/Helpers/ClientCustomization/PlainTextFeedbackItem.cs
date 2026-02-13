@@ -29,8 +29,8 @@ public class PlainTextFeedbackItem : IFeedbackItem
         // Treat entire text as a single feedback item
         var feedbackItem = new FeedbackItem
         {
-            Text = "Plain text feedback",
-            Context = _plainText,
+            Text = _plainText,
+            Context = string.Empty,
             Metadata = new Dictionary<string, string> {}
         };
         
@@ -38,7 +38,7 @@ public class PlainTextFeedbackItem : IFeedbackItem
 
         var context = new FeedbackContext
         {
-            FormattedFeedback = _plainText,
+            FormattedFeedback = feedbackItem.FormattedPrompt,
             FeedbackItems = new List<FeedbackItem> { feedbackItem },
             InputType = "plain-text",
             Metadata = new Dictionary<string, string>{}

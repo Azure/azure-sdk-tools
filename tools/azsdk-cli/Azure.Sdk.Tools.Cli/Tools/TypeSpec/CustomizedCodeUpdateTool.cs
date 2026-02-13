@@ -60,18 +60,6 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
 
-    private readonly Argument<string> updateCommitSha = new("update-commit-sha")
-    {
-        Description = "SHA of the commit to apply update changes for",
-        Arity = ArgumentArity.ExactlyOne
-    };
-
-    private readonly Argument<string> packagePathArg = new("package-path")
-    {
-        Description = "Path to the SDK package directory",
-        Arity = ArgumentArity.ExactlyOne
-    };
-
     private readonly Argument<string> tspProjectPathArg = new("tsp-project-path")
     {
         Description = "Path to the TypeSpec project directory",
@@ -146,9 +134,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     protected override Command GetCommand() =>
        new McpCommand("customized-update", "Update customized TypeSpec-generated client code with automated patch analysis.", CustomizedCodeUpdateToolName)
        {
-            updateCommitSha,
-            packagePathArg,
             tspProjectPathArg,
+            SharedOptions.PackagePath,
             apiViewUrlOption,
             plainTextFeedbackOption,
             plainTextFeedbackFileOption
@@ -156,8 +143,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var commitSha = parseResult.GetValue(updateCommitSha);
-        var packagePath = parseResult.GetValue(packagePathArg);
+        var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
         var tspProjectPath = parseResult.GetValue(tspProjectPathArg);
         var apiViewUrl = parseResult.GetValue(apiViewUrlOption);
         var plainTextFeedback = parseResult.GetValue(plainTextFeedbackOption);
@@ -166,7 +152,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         try
         {
             logger.LogInformation("Starting client update for {packagePath}", packagePath);
-            return await RunUpdateAsync(commitSha, packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, plainTextFeedbackFile, ct);
+            return await RunUpdateAsync(packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, plainTextFeedbackFile, ct);
         }
         catch (Exception ex)
         {
@@ -180,19 +166,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
-    [Description("Classify feedback and update customized TypeSpec-generated client code")]
-    public Task<CommandResponse> ClassifyAndUpdate(
-        string commitSha,
-        string packagePath,
-        string tspProjectPath,
-        string? apiViewUrl = null,
-        string? plainTextFeedback = null,
-        string? plainTextFeedbackFile = null,
-        CancellationToken ct = default)
-        => RunUpdateAsync(commitSha, packagePath, tspProjectPath, apiViewUrl, plainTextFeedback, plainTextFeedbackFile, ct);
-
     private async Task<CommandResponse> RunUpdateAsync(
-        string commitSha,
         string packagePath,
         string tspProjectPath,
         string? apiViewUrl,
@@ -203,7 +177,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         try
         {
             // Read feedback from file if provided
-            if (!string.IsNullOrEmpty(plainTextFeedbackFile))
+            if (!string.IsNullOrWhiteSpace(plainTextFeedbackFile))
             {
                 if (!File.Exists(plainTextFeedbackFile))
                 {
@@ -217,16 +191,18 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
                 var fileContent = await File.ReadAllTextAsync(plainTextFeedbackFile, ct);
                 logger.LogInformation("Read {length} characters from feedback file: {file}", fileContent.Length, plainTextFeedbackFile);
-                
-                // Combine with existing plain text feedback if both are provided
-                if (!string.IsNullOrEmpty(plainTextFeedback))
+
+            }
+
+            // Validate that at least one feedback source is provided
+            if (string.IsNullOrWhiteSpace(apiViewUrl) && string.IsNullOrWhiteSpace(plainTextFeedback))
+            {
+                return new CustomizedCodeUpdateResponse
                 {
-                    plainTextFeedback = $"{plainTextFeedback}\n\n--- Content from file: {plainTextFeedbackFile} ---\n\n{fileContent}";
-                }
-                else
-                {
-                    plainTextFeedback = fileContent;
-                }
+                    Message = "No feedback provided. Please specify either --apiview-url or --plain-text-feedback (or --plain-text-feedback-file).",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    ResponseError = "Either --apiview-url or --plain-text-feedback (or --plain-text-feedback-file) must be provided."
+                };
             }
 
             if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
@@ -248,9 +224,6 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                     ResponseError = $"TypeSpec project path does not exist: {tspProjectPath}" 
                 };
             }            
-            // If feedback sources provided, use feedback-driven classification
-            if (!string.IsNullOrEmpty(apiViewUrl) || !string.IsNullOrEmpty(plainTextFeedback))
-            {
                 // Create a classifier instance with the correct paths for tool operations
                 var classifier = new FeedbackClassifierService(
                     _agentRunner,
@@ -266,9 +239,9 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 {
                     return new CustomizedCodeUpdateResponse
                     {
-                        Message = "Failed to preprocess feedback.",
+                        Message = "No valid feedback provided. Please specify either a valid --apiview-url or --plain-text-feedback (or --plain-text-feedback-file).",
                         ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                        ResponseError = "Failed to preprocess feedback from provided sources."
+                        ResponseError = "Either a valid --apiview-url or --plain-text-feedback must be provided for classification."
                     };
                 }
 
@@ -361,19 +334,6 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 OutputResults(customizable, success, failure, globalContext.ToString());
                 return BuildResponse(success, failure, customizable);
                 End of temporarily commented out section */
-            }
-
-            // Otherwise, run standard update flow without classification
-            if (string.IsNullOrWhiteSpace(commitSha))
-            {
-                return new CustomizedCodeUpdateResponse 
-                { 
-                    Message = "Commit SHA is required.",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
-                    ResponseError = "Commit SHA is required." 
-                };
-            }
-            return await UpdateAsync(commitSha, packagePath, tspProjectPath, ct);
         }
         catch (Exception ex)
         {
@@ -395,22 +355,17 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         string? plainTextFeedback,
         CancellationToken ct)
     {
-        IFeedbackItem? feedbackItem = null;
+        IFeedbackItem feedbackItem;
 
-        if (!string.IsNullOrEmpty(apiViewUrl))
+        if (!string.IsNullOrWhiteSpace(apiViewUrl))
         {
             var feedbackItemLogger = loggerFactory.CreateLogger<APIViewFeedbackItem>();
             feedbackItem = new APIViewFeedbackItem(apiViewUrl, feedbackService, feedbackItemLogger);
         }
-        else if (!string.IsNullOrEmpty(plainTextFeedback))
+        else
         {
             var feedbackItemLogger = loggerFactory.CreateLogger<PlainTextFeedbackItem>();
-            feedbackItem = new PlainTextFeedbackItem(plainTextFeedback, feedbackItemLogger);
-        }
-
-        if (feedbackItem == null)
-        {
-            return null;
+            feedbackItem = new PlainTextFeedbackItem(plainTextFeedback!, feedbackItemLogger);
         }
 
         var context = await feedbackItem.PreprocessAsync(ct);
@@ -584,17 +539,9 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     {
         try
         {
-            // TODO: Placeholder for real code
-            var result = await tspClientHelper.UpdateGenerationAsync(tspProjectPath, ct: ct);
-            
-            if (result.IsSuccessful)
-            {
-                return (true, "SDK generation succeeded");
-            }
-            else
-            {
-                return (false, $"SDK generation failed: {result.ResponseError}");
-            }
+            // TODO: Placeholder for real SDK generation
+            await Task.CompletedTask; // Suppress async warning
+            return (true, "SDK generation succeeded (placeholder)");
         }
         catch (Exception ex)
         {

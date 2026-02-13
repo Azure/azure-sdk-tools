@@ -27,7 +27,6 @@ public class FeedbackClassifierService
     private readonly ITypeSpecHelper _typeSpecHelper;
     private readonly int _batchSize;
 
-    public const int MaxIterations = 4;
     public const int DefaultBatchSize = 8;
 
     public FeedbackClassifierService(
@@ -74,12 +73,15 @@ public class FeedbackClassifierService
         _logger.LogInformation("Stage 1: Classifying {Count} items in {ChunkCount} batch(es) of up to {BatchSize} items", 
             customizableItems.Count, chunks.Count, _batchSize);
 
+        // Load the TypeSpec customization guide once for all batches
+        var referenceDocContent = await LoadTspCustomizationGuideAsync(ct);
+
         for (int i = 0; i < chunks.Count; i++)
         {
             var chunk = chunks[i];
             _logger.LogInformation("Processing batch {BatchNum}/{TotalBatches} ({ItemCount} items)", 
                 i + 1, chunks.Count, chunk.Count);
-            await BatchClassifyAsync(chunk, globalContext, language, serviceName, ct);
+            await BatchClassifyAsync(chunk, globalContext, language, serviceName, referenceDocContent, ct);
         }
 
         // Stage 2: Generate manual update guidance for FAILURE items (no file tools for speed)
@@ -106,10 +108,9 @@ public class FeedbackClassifierService
         string globalContext,
         string? language,
         string? serviceName,
+        string referenceDocContent,
         CancellationToken ct)
     {
-        var referenceDocContent = await LoadTspCustomizationGuideAsync(ct);
-
         var template = new FeedbackClassificationTemplate(
             serviceName: serviceName,
             language: language,
@@ -131,7 +132,7 @@ public class FeedbackClassifierService
         var result = await _agentRunner.RunAsync(new CopilotAgent<string>
         {
             Instructions = prompt,
-            MaxIterations = 50,
+            MaxIterations = 25,
             Tools = specTools
         }, ct);
 

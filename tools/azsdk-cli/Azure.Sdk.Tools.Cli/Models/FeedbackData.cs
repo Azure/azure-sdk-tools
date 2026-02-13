@@ -71,9 +71,10 @@ public enum FeedbackStatus
 public class FeedbackItem
 {
     /// <summary>
-    /// Unique identifier for the feedback item (auto-generated UUID).
+    /// Unique identifier for the feedback item (8-char short GUID).
+    /// Kept short to reduce LLM transcription errors while remaining unique within a batch.
     /// </summary>
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string Id { get; set; } = Guid.NewGuid().ToString().Substring(0, 8);
     
     /// <summary>
     /// The feedback/error text

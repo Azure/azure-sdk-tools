@@ -68,7 +68,7 @@ namespace APIViewWeb.Managers
         public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)
         {
             var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            await SendEmailsAsync(review, user, GetHtmlContent(comment, review), comment.TaggedUsers);
+            await SendSubscriberNotificationsAsync(review, user, GetHtmlContent(comment, review), comment.TaggedUsers);
         }
 
         public async Task NotifyUserOnCommentTag(CommentItemModel comment)
@@ -84,9 +84,23 @@ namespace APIViewWeb.Managers
 
         public async Task NotifyApproversOfReview(ClaimsPrincipal user, string apiRevisionId, HashSet<string> reviewers)
         {
+            if (reviewers == null || reviewers.Count == 0)
+            {
+                return;
+            }
+
             var userProfile = await _userProfileRepository.TryGetUserProfileAsync(user.GetGitHubLogin());
             var apiRevision = await _apiRevisionRepository.GetAPIRevisionAsync(apiRevisionId);
-            foreach (var reviewer in reviewers)
+
+            var existingReviewers = new HashSet<string>(
+                apiRevision.AssignedReviewers.Select(assignment => assignment.AssingedTo),
+                StringComparer.OrdinalIgnoreCase);
+
+            var newReviewers = reviewers
+                .Where(reviewer => !existingReviewers.Contains(reviewer))
+                .ToList();
+
+            foreach (var reviewer in newReviewers)
             {
                 var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
                 await SendUserEmailsAsync(apiRevision, reviewerProfile,
@@ -99,7 +113,7 @@ namespace APIViewWeb.Managers
             var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}");
             var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{PageModelHelpers.ResolveRevisionLabel(revision)}</a>," +
                 $" was uploaded by <b>{revision.CreatedBy}</b>.";
-            await SendEmailsAsync(review, user, htmlContent, null);
+            await SendSubscriberNotificationsAsync(review, user, htmlContent, null);
         }
         /// <summary>
         /// Toggle Subscription to a Review
@@ -237,7 +251,7 @@ namespace APIViewWeb.Managers
             // SendEmailAsync already handles email validation
             await SendEmailAsync(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
         }
-        private async Task SendEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
+        private async Task SendSubscriberNotificationsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
         {
             var initiatingUserEmail = GetUserEmail(user);
             
@@ -368,9 +382,8 @@ namespace APIViewWeb.Managers
                 _logger.LogTrace("Email sender service URL is not configured. Email will not be sent to {EmailToList} with subject: {Subject}", emailToList, subject);
                 return;
             }
-            
-            var emailToAddress = !string.IsNullOrEmpty(_testEmailToAddress) ? _testEmailToAddress : emailToList;
-            var requestBody = new EmailModel(emailToAddress, subject, content);
+
+            var requestBody = CreateEmailModel(emailToList, subject, content);
             var httpClient = new HttpClient();
             
             try
@@ -387,6 +400,25 @@ namespace APIViewWeb.Managers
             {
                 _telemetryClient.TrackException(ex);
             }
+        }
+
+        private EmailModel CreateEmailModel(string emailToList, string subject, string content)
+        {
+            var isTestMode = !string.IsNullOrEmpty(_testEmailToAddress);
+            var emailToAddress = isTestMode ? _testEmailToAddress : emailToList;
+            var emailContent = AppendTestModeFooter(content, emailToList, isTestMode);
+            return new EmailModel(emailToAddress, subject, emailContent);
+        }
+
+        private static string AppendTestModeFooter(string content, string intendedRecipients, bool isTestMode)
+        {
+            if (!isTestMode)
+            {
+                return content;
+            }
+
+            var encodedRecipients = WebUtility.HtmlEncode(intendedRecipients);
+            return content + $"<br><br><hr><div style='font-size: 12px; color: #666;'><b>Test mode:</b> Intended recipients: {encodedRecipients}</div>";
         }
 
         public async Task NotifyStakeholdersOfManualApproval(ReviewListItemModel review, IEnumerable<ReviewListItemModel> associatedReviews)

@@ -197,8 +197,8 @@ namespace APIViewWeb.LeanControllers
         [HttpPost("{reviewId}/{apiRevisionId}/reviewers", Name = "AddReviewers")]
         public async Task<ActionResult<APIRevisionListItemModel>> AddReviewersAsync(string reviewId, string apiRevisionId, [FromBody] HashSet<string> reviewers)
         {
-            var apiRevision = await _apiRevisionsManager.UpdateAPIRevisionReviewersAsync(User, apiRevisionId, reviewers);
             await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
+            var apiRevision = await _apiRevisionsManager.UpdateAPIRevisionReviewersAsync(User, apiRevisionId, reviewers);
 
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }

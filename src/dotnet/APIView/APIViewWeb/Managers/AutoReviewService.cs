@@ -66,20 +66,25 @@ namespace APIViewWeb.Managers;
                     if (automaticRevisions.Any())
                     {
                         var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
-                        var latestAutomaticAPIRevision = automaticRevisionsQueue.Peek();
                         var comments = await _commentsManager.GetCommentsAsync(review.Id);
-                        var deletedRevisionIds = new HashSet<string>();
+                        APIRevisionListItemModel latestAutomaticAPIRevision = null;
 
-                        while (
-                            automaticRevisionsQueue.Any() &&
-                            !latestAutomaticAPIRevision.IsApproved &&
-                            !latestAutomaticAPIRevision.IsReleased &&
-                            !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
-                            !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
+                        while (automaticRevisionsQueue.Any())
                         {
-                            deletedRevisionIds.Add(latestAutomaticAPIRevision.Id);
-                            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
                             latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
+
+                            // Check if we should keep this revision
+                            if (latestAutomaticAPIRevision.IsApproved ||
+                                latestAutomaticAPIRevision.IsReleased ||
+                                await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) ||
+                                comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
+                            {
+                                break;
+                            }
+
+                            // Delete this revision
+                            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
+                            latestAutomaticAPIRevision = null;  // Mark as consumed
                         }
 
                         // We should compare against only latest revision when calling this API from scheduled CI runs
@@ -99,8 +104,8 @@ namespace APIViewWeb.Managers;
                             }
                         }
 
-                        // Only reuse latestAutomaticAPIRevision if it wasn't deleted
-                        if (!deletedRevisionIds.Contains(latestAutomaticAPIRevision.Id) &&
+                        // Only reuse latestAutomaticAPIRevision if one was kept
+                        if (latestAutomaticAPIRevision != null &&
                             await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion))
                         {
                             apiRevision = latestAutomaticAPIRevision;

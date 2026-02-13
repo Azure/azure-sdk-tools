@@ -711,17 +711,16 @@ namespace APIViewUnitTests
             var (_, apiRevision) = await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
-            // Verify first two revisions were deleted (the third becomes latestAutomaticAPIRevision after dequeue)
+            // Verify all three revisions were deleted since none match the new content
             _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
                 It.Is<APIRevisionListItemModel>(r => r.Id == "pending-revision-3"),
                 It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
                 It.Is<APIRevisionListItemModel>(r => r.Id == "pending-revision-2"),
                 It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-            // pending-revision-1 is the final latestAutomaticAPIRevision after the loop, not deleted
             _mockApiRevisionsManager.Verify(m => m.SoftDeleteAPIRevisionAsync(
                 It.Is<APIRevisionListItemModel>(r => r.Id == "pending-revision-1"),
-                It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+                It.IsAny<string>(), It.IsAny<string>()), Times.Once);
 
             // Should create new revision because pending-revision-1 doesn't match
             _mockApiRevisionsManager.Verify(m => m.CreateAPIRevisionAsync(

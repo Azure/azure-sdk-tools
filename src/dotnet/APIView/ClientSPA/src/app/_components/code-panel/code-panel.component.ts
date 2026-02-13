@@ -247,10 +247,6 @@ export class CodePanelComponent implements OnChanges {
     return this.computeCanAddComment(item);
   }
 
-  /**
-   * Computes whether a comment can be added to a row.
-   * Extracted to avoid duplication between canAddComment() and preCompute methods.
-   */
   private computeCanAddComment(row: CodePanelRowData): boolean {
     if (this.userProfile === undefined) {
       return false;
@@ -339,10 +335,6 @@ export class CodePanelComponent implements OnChanges {
       row.cachedLineNumberClassObject = { 'line-number': true, 'has-cross-language': hasCrossLang };
       row.cachedLineNumberClassString = hasCrossLang ? 'line-number has-cross-language' : 'line-number';
     }
-  }
-  
-  trackByRowIndex(index: number, item: CodePanelRowData): string {
-    return item.nodeIdHashed ? `${item.nodeIdHashed}-${item.rowPositionInGroup}-${item.type}` : `idx-${index}`;
   }
   
   trackByTokenIndex(index: number, token: StructuredToken): string {
@@ -1004,7 +996,6 @@ export class CodePanelComponent implements OnChanges {
   navigateToCommentThread(direction: CodeLineRowNavigationDirection) {
     const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
-    let navigateToRow: CodePanelRowData | undefined = undefined;
     let foundIndex: number | undefined = undefined;
     
     if (direction == CodeLineRowNavigationDirection.next) {
@@ -1029,7 +1020,6 @@ export class CodePanelComponent implements OnChanges {
     }
 
     if (foundIndex !== undefined) {
-      navigateToRow = this.codePanelRowData[foundIndex];
       this.commentThreadNavigationPointer = foundIndex;
       this.scrollToCommentThread(foundIndex);
     }

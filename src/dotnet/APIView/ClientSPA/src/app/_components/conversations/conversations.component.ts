@@ -124,6 +124,7 @@ export class ConversationsComponent implements OnChanges {
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
       this.isLoading = false;
+      this.changeDetectorRef.markForCheck();
     }
     else if (this.apiRevisions.length > 0 && this.comments.length === 0) {
       this.apiRevisionsWithComments = [];

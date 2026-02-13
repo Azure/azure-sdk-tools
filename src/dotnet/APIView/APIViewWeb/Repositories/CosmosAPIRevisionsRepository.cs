@@ -342,7 +342,7 @@ namespace APIViewWeb
             var queryStringBuilder = new StringBuilder("SELECT * FROM Revisions c WHERE c.IsDeleted = true");
             
             // Filter by LastUpdatedOn - revisions that were soft-deleted before the specified date
-            queryStringBuilder.Append($" AND c.LastUpdatedOn < '{deletedBefore.ToString("yyyy-MM-dd")}'");
+            queryStringBuilder.Append(" AND c.LastUpdatedOn < @deletedBefore");
             
             if (apiRevisionType != APIRevisionType.All)
             {
@@ -351,6 +351,7 @@ namespace APIViewWeb
 
             var revisions = new List<APIRevisionListItemModel>();
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@deletedBefore", deletedBefore.ToString("yyyy-MM-dd"))
                 .WithParameter("@apiRevisionType", apiRevisionType.ToString());
 
             using FeedIterator<APIRevisionListItemModel> feedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);

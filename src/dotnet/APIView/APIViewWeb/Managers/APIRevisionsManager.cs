@@ -976,7 +976,8 @@ namespace APIViewWeb.Managers
         /// <param name="purgeAfterMonths">Number of months a revision must be soft-deleted before being purged</param>
         public async Task AutoPurgeAPIRevisions(int purgeAfterMonths)
         {
-            var deletedBeforeDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(purgeAfterMonths * 30));
+            const int DelayBetweenDeletionsMs = 500; // Rate limiting to avoid overwhelming services
+            var deletedBeforeDate = DateTime.UtcNow.AddMonths(-purgeAfterMonths);
             
             // Query for soft-deleted Manual revisions
             var manualRevisions = await _apiRevisionsRepository.GetSoftDeletedAPIRevisionsAsync(
@@ -1045,7 +1046,7 @@ namespace APIViewWeb.Managers
                     successCount++;
                     
                     // Small delay to avoid overwhelming services
-                    await Task.Delay(500);
+                    await Task.Delay(DelayBetweenDeletionsMs);
                 }
                 catch (Exception e)
                 {

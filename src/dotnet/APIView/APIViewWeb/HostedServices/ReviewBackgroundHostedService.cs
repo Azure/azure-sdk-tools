@@ -112,7 +112,7 @@ namespace APIViewWeb.HostedServices
                 finally
                 {
                     // Wait 6 hours before running archive task again
-                    await Task.Delay(6 * 60 * 60000, stoppingToken);
+                    await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
                 }                
             }
             while (!stoppingToken.IsCancellationRequested);
@@ -133,7 +133,7 @@ namespace APIViewWeb.HostedServices
                 finally
                 {
                     // Wait 6 hours before running purge task again
-                    await Task.Delay(6 * 60 * 60000, stoppingToken);
+                    await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
                 }                
             }
             while (!stoppingToken.IsCancellationRequested);

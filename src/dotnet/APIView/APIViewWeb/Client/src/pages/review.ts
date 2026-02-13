@@ -46,6 +46,9 @@ $(() => {
 
     // Enable cross Language Comments Indicator
     cm.crossLanguageViewCommentIndicator();
+    
+    // Initialize Bootstrap tooltips for type definitions
+    rvM.initializeTypeTooltips();
   });
 
   /* ADD FUNCTIONS TO LEFT NAVIGATION

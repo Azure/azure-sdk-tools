@@ -92,6 +92,15 @@ namespace ApiView
                     stringBuilder.Append(" id=\"").Append(id).Append("\"");
                 }
                 stringBuilder.Append(" class=\"").Append(elementClass).Append("\"");
+                
+                // Add tooltip data attribute for types with fully qualified names
+                if (token.Kind == CodeFileTokenKind.TypeName && !string.IsNullOrEmpty(token.FullyQualifiedType))
+                {
+                    stringBuilder.Append(" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" title=\"");
+                    stringBuilder.Append(HttpUtility.HtmlEncode(token.FullyQualifiedType));
+                    stringBuilder.Append("\"");
+                }
+                
                 stringBuilder.Append(">");
                 stringBuilder.Append(HttpUtility.HtmlEncode(token.Value));
 

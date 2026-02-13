@@ -758,3 +758,19 @@ export function addCrossLaguageCloseBtnHandler() {
       $(this).closest(".cross-language-panel").addClass("d-none");
     });
   }
+
+/**
+ * Initialize Bootstrap tooltips for type definitions
+ * Tooltips display the fully qualified type name when hovering over types
+ */
+export function initializeTypeTooltips() {
+  // Initialize tooltips using Bootstrap 5 API
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  const tooltipList = Array.from(tooltipTriggerList).map(tooltipTriggerEl => {
+    // @ts-ignore - Bootstrap is loaded via CDN
+    return new bootstrap.Tooltip(tooltipTriggerEl, {
+      trigger: 'hover',
+      placement: 'top'
+    });
+  });
+}

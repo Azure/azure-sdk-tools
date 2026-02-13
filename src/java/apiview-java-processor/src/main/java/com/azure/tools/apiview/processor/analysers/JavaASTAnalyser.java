@@ -490,16 +490,48 @@ public class JavaASTAnalyser implements Analyser {
         if (node instanceof ClassOrInterfaceType) {
             ClassOrInterfaceType classOrInterfaceType = (ClassOrInterfaceType) node;
             String shortName = classOrInterfaceType.getNameAsString();
-
-            // Check if the short name exists in the map
-            if (shortClassNameToFullyQualfiedNameMap.containsKey(shortName)) {
-                // If it does, get the fully qualified name from the map. This is also the ID we should have used
-                // when we defined the token that we want to link to
-                String fullyQualifiedName = shortClassNameToFullyQualfiedNameMap.get(shortName);
-//                token.addProperty(PROPERTY_NAVIGATE_TO_ID, fullyQualifiedName);
-                token.setNavigateToId(fullyQualifiedName);
+            
+            // Try to get the fully qualified name for the tooltip
+            String fullyQualifiedName = getFullyQualifiedTypeName(classOrInterfaceType);
+            if (fullyQualifiedName != null) {
+                // Set the fully qualified name for tooltip display
+                token.setFullyQualifiedType(fullyQualifiedName);
+                
+                // Check if the short name exists in the map (for navigation within the review)
+                if (shortClassNameToFullyQualfiedNameMap.containsKey(shortName)) {
+                    // This is a type within the current review, so we can navigate to it
+                    token.setNavigateToId(shortClassNameToFullyQualfiedNameMap.get(shortName));
+                }
+            } else if (shortClassNameToFullyQualfiedNameMap.containsKey(shortName)) {
+                // If we don't have a fully qualified name but it's in our map, use that
+                String mappedFullyQualifiedName = shortClassNameToFullyQualfiedNameMap.get(shortName);
+                token.setNavigateToId(mappedFullyQualifiedName);
+                token.setFullyQualifiedType(mappedFullyQualifiedName);
             }
         }
+    }
+    
+    private String getFullyQualifiedTypeName(ClassOrInterfaceType classOrInterfaceType) {
+        // Check if the type has a scope (e.g., java.util.List or Map.Entry)
+        if (classOrInterfaceType.getScope().isPresent()) {
+            // Build the fully qualified name from the scope chain
+            StringBuilder fqn = new StringBuilder();
+            ClassOrInterfaceType current = classOrInterfaceType;
+            while (current.getScope().isPresent()) {
+                current = current.getScope().get();
+                if (fqn.length() > 0) {
+                    fqn.insert(0, ".");
+                }
+                fqn.insert(0, current.getNameAsString());
+            }
+            fqn.append(".").append(classOrInterfaceType.getNameAsString());
+            return fqn.toString();
+        }
+        
+        // For simple names, we would need import resolution which is complex
+        // For now, just return null if we don't have a scope
+        // This will be enhanced later with proper import resolution
+        return null;
     }
 
 

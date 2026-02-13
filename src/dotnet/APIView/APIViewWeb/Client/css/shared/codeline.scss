@@ -306,6 +306,15 @@
     color: var(--class-color) !important;
 }
 
+/* Add dashed underline to types with tooltips to indicate they are hoverable */
+.class[data-bs-toggle="tooltip"] {
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-decoration-color: var(--class-color);
+    text-underline-offset: 2px;
+    cursor: help;
+}
+
 code {
     color: var(--code-color) !important;
 }

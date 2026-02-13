@@ -10,6 +10,7 @@
             DefinitionId = null;
             CrossLanguageDefinitionId = null;
             NumberOfLinesinLeafSection = numberOfLinesinLeafSection;
+            FullyQualifiedType = null;
         }
 
         public string DefinitionId { get; set; }
@@ -23,6 +24,8 @@
         public string CrossLanguageDefinitionId { get; set; }
 
         public int? NumberOfLinesinLeafSection { get; set; }
+
+        public string FullyQualifiedType { get; set; }
 
         public override string ToString()
         {

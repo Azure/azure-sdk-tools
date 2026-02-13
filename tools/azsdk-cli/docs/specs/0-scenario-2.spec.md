@@ -130,11 +130,11 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → `azsdk_typespec_authoring` **(Agent Mode only)**
+2. **TypeSpec Authoring** → `azsdk_typespec_consult`
    - AI-powered assistance for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
-   - **Note**: This tool is only available in Agent Mode as it requires conversational interaction and natural language prompts
+   - **Note**: Available in both Agent Mode (with conversational interaction) and CLI Mode (for direct command-line usage)
    - **Checkpoint**: Create a git commit after TypeSpec changes are applied
 
 3. **Generating** → `azsdk_package_generate_code` (local), `azsdk_run_generate_sdk` (pipeline)
@@ -217,11 +217,19 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
-**Tool:** `azsdk_typespec_authoring`
+**Tool:** `azsdk_typespec_consult`
 
-**Availability:** Agent Mode only - This tool requires conversational interaction with natural language prompts and is not suitable for CLI usage.
+**Availability:** Agent Mode and CLI Mode - Agent Mode provides conversational interaction with natural language prompts; CLI Mode provides direct command-line access for scripting and automation.
 
 **Purpose:** Provide intelligent, context-aware assistance for TypeSpec authoring by integrating with Azure SDK RAG (Retrieval-Augmented Generation) knowledge base. Helps developers define or edit TypeSpec following Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices.
+
+**Background:** TypeSpec is the foundation of the Azure SDK ecosystem, and well-crafted TypeSpec contributes to producing high-quality SDKs. However, Azure API developers face significant challenges when authoring TypeSpec:
+
+- **Problem 1: Writing TypeSpec that follows Azure guidelines** - Generic AI assistance (like standard GitHub Copilot) cannot provide effective help because it lacks domain-specific knowledge about Azure TypeSpec patterns and standards. For example, when asked to create an ARM resource, generic AI may generate incorrect code that invents non-existent decorators like `@armResource` or `@armResourceOperation`, rather than using the correct patterns with `TrackedResource`, `@armResourceOperations`, and operation templates like `ArmResourceRead` and `ArmResourceCreateOrReplaceAsync`.
+
+- **Problem 2: Updating TypeSpec for expected compilation outputs** - Azure API developers need to update TypeSpec to achieve expected outputs after compilation (e.g., correct API paths in generated OpenAPI). Generic AI cannot guide developers on how to properly fix these domain-specific challenges, such as using `@parentResource` and `@route` decorators to achieve correct resource hierarchy paths.
+
+- **Problem 3: API versioning complexity** - Azure has specific guidelines for managing API versions (preview vs stable, breaking changes, deprecation), but generic AI lacks the context to guide developers through these patterns correctly.
 
 **Capabilities:**
 
@@ -234,34 +242,34 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Input Parameters:**
 
-- `--request`: The TypeSpec-related request or task description (required)
+- `<request>`: The TypeSpec-related request or task description (required)
 - `--additional-information`: Additional context for the request (optional)
-- `--typespec-source-path`: Path to TypeSpec source file or folder (optional, defaults to current directory)
 
 **Workflow:**
 
 1. User describes TypeSpec authoring task in natural language
-2. Tool analyzes existing TypeSpec project structure and current state
+2. Agent/Tool analyzes existing TypeSpec project structure and current state (in Agent Mode)
 3. Tool queries Azure SDK Knowledge Base with structured request
-4. Knowledge Base returns RAG-powered solution with step-by-step guidance
-5. Tool formats solution with documentation references
-6. Agent applies changes to TypeSpec files and presents results to user
+4. Knowledge Base returns RAG-powered solution with step-by-step guidance and documentation references
+5. Tool formats solution with context-aware recommendations
+6. Agent applies changes to TypeSpec files and presents results to user (in Agent Mode), or outputs solution for manual application (in CLI Mode)
 
 **Examples:**
 
-- Adding ARM resources: "add an ARM resource named 'Asset' with CRUD operations"
+- Adding ARM resources: "add a new ARM resource type named 'Asset' with CRUD operations"
 - Updating routes: "change the route for interface Assets to include employees/{employeeName} before assets/{assetName}"
-- Versioning: "add a new preview API version 2025-10-01-preview for service widget"
+- Versioning: "add a new preview API version 2025-10-01-preview for service widget resource management"
 - Fixing compliance: "update this TypeSpec to follow Azure ARM guidelines"
 
 **Success:**
 
-- Generated TypeSpec code passes compilation without errors, validated with `azsdk_run_typespec_validation` tool. 
-- Generated code follows Azure ARM/DP/SDK guidelines (validated by linter/validator)
-- Generated code includes proper decorators and templates (no hallucinated decorators)
-- Solution includes relevant documentation references
+- Generated TypeSpec code passes compilation without errors
+- Generated code follows Azure ARM/DP/SDK guidelines (validated by automated linter/validator)
+- Generated code includes proper decorators and templates (no hallucinated decorators like `@armResource` or `@armResourceOperation`; uses correct decorators like `@armResourceOperations`)
+- Solution includes relevant documentation references with accurate links to appropriate sections
 - Responses correctly interpret natural language intent
 - Reduces reviewer comments on TypeSpec standards violations
+- Improves on generic AI baseline by reducing decorator hallucinations and improving adherence to Azure patterns
 
 ### 3. Generating
 
@@ -645,71 +653,103 @@ Refresh only outdated or failing test recordings for the Health Deidentification
 3. Execute `azsdk_package_run_tests --mode playback --test-filter <pattern>` to validate new recordings.
 4. Summarize which recordings changed and any remaining discrepancies.
 
+### TypeSpec Authoring - Add a new ARM resource
+
+**Prompt:**
+
+```text
+add a new ARM resource type named 'Asset' with CRUD operations
+```
+
+**Expected Agent Activity:**
+
+1. Analyzes current TypeSpec project structure and namespace
+2. Clarifies resource characteristics with user:
+   - Is this a top-level resource or a child resource?
+   - If child resource, identify the parent resource
+   - What properties should the resource have?
+   - Should operations be synchronous or asynchronous/LRO?
+3. Calls `azsdk_typespec_consult` tool with the request and collected information
+4. Apply changes according to the retrieved solution:
+   - Create resource model extending appropriate base (`TrackedResource`/`ProxyResource`)
+   - Add resource name parameter
+   - Define resource properties model
+   - Create interface with `@armResourceOperations` decorator
+   - Implement CRUD operations using appropriate templates (`ArmResourceRead`, `ArmResourceCreateOrReplaceAsync`, etc.)
+   - For child resources, apply `@parentResource` decorator
+5. Compile the TypeSpec to validate generated OpenAPI paths
+6. Summarize all actions taken and display reference documentation
+
 ### TypeSpec Authoring - Add a new preview API version
 
 **Prompt:**
 
 ```text
-Add a new preview API version 2025-10-01-preview for service widget resource management
+add a new preview API version 2025-10-01-preview for service widget resource management
 ```
 
 **Expected Agent Activity:**
 
-1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
-3. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
-4. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
-5. Ask for features to add to this version. e.g.
-    - Add new resources
-    - Add new operations to an existing resource
-    - Add new models, unions, or enums
-    - Deprecate resources
-    - Deprecate operations
-    - Deprecate models, unions, or enums
-6. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-7. Update code, by default the features will only be added to this new version
-8. Summarize all the actions taken and display the reference docs
+1. Analyzes current TypeSpec project to identify namespace and version
+2. Calls `azsdk_typespec_consult` tool with the request and collected information
+3. Apply version related changes according to the retrieved solution:
+   - Replace an existing preview with the new preview version if latest version is preview, otherwise, just add the new preview version
+   - Update the Versions enum to include new version with `@previewVersion` decorator
+   - Add a new example folder for the new version and copy any still-relevant examples
+4. Ask for features to add or update to this version. e.g.
+   - Add new resources
+   - Add new operations to an existing resource
+   - Add new models, unions, or enums
+   - Update existing resources
+   - Update existing operations
+   - Update existing models, unions, or enums
+   - Remove resources, operations, or models
+5. Collect enough information for each feature (e.g., if it's an operation, clarify if it is async/LRO operation)
+6. Update code, by default the features will only be added to this new version
+7. Summarize all the actions taken and display the reference docs
 
 ### TypeSpec Authoring - Update TypeSpec to follow Azure guidelines
 
 **Prompt:**
 
 ```text
-Update the TypeSpec code to follow Azure guidelines for service widget resource management.
+update the TypeSpec code to follow Azure guidelines for service widget resource management
 ```
 
 **Expected Agent Activity:**
 
 1. Validate the TypeSpec code and display a list of code snippets that violates Azure guidelines, and the suggested fix
-1. Let user confirm which one to fix
-1. Apply the code fix
-1. Compile the fixed TypeSpec code and let user validate the output
+2. Let user confirm which one to fix
+3. Apply the code fix
+4. Compile the fixed TypeSpec code and let user validate the output
 
 ### TypeSpec Authoring - Add a new stable API version
 
 **Prompt:**
 
 ```text
-Add a new stable API version 2025-10-01 for service widget resource management.
+add a new stable API version 2025-10-01 for service widget resource management
 ```
 
 **Expected Agent Activity:**
 
-1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
-3. Add a enum option `v2025_10_01` in version enum for this new API version
-4. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
-5. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
-6. Ask for features to add to this version. e.g.
-    - Add new resources
-    - Add new operations to an existing resource
-    - Add new models, unions, or enums
-    - Deprecate resources
-    - Deprecate operations
-    - Deprecate models, unions, or enums
-7. Collect enough information, e.g. if it's operation, clarify if it is async/LRO operation
-8. Update code, by default the features will only be added to this new version
-9. Summarize all the actions taken and display the reference docs
+1. Analyzes current TypeSpec project to identify namespace and version
+2. Calls `azsdk_typespec_consult` tool with the request and collected information
+3. Apply changes according to the retrieved solution:
+   - Add the new stable version to the Versions enum
+   - Add a new example folder for the new version and copy any still-relevant examples
+   - Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
+4. Ask for features to add or update to this version. e.g.
+   - Add new resources
+   - Add new operations to an existing resource
+   - Add new models, unions, or enums
+   - Update existing resources
+   - Update existing operations
+   - Update existing models, unions, or enums
+   - Remove resources, operations, or models
+5. Collect enough information for each feature (e.g., if it's an operation, clarify if it is async/LRO operation)
+6. Update code, by default the features will only be added to this new version
+7. Summarize all the actions taken and display the reference docs
 
 ### Sample Generation
 
@@ -845,66 +885,78 @@ Environment verification complete: 4/5 languages ready
 Use --auto-install flag to remediate issues automatically.
 ```
 
-### 2. Run Tests
+### 2. TypeSpec Consult
 
 **Command:**
 
 ```bash
-azsdk package samples translate --from <source_package_path> --to <target_package_path>
+azsdk typespec consult <typespec-request> --additional-information <additional-context>
 ```
+
+**Arguments:**
+
+- `<typespec-request>`: The TypeSpec-related request or task description (required)
 
 **Options:**
 
-- `--from <path>`: Path to the source package directory (required)
-- `--to <path>`: Path to the target package directory (required)
-- `--overwrite`: Overwrite existing files without prompting
-- `--model <name>`: Azure OpenAI deployment name to use (default: uses configured model)
+- `--additional-information <value>`: Additional context for the request (optional)
 
 **Examples:**
 
 ```bash
-# Translate Python samples to TypeScript
-azsdk package samples translate \
-  --from ~/azure-sdk-for-python/sdk/ai/azure-ai-projects \
-  --to ~/azure-sdk-for-js/sdk/ai/ai-projects \
-  --overwrite
+# Get solution for adding a new ARM resource
+azsdk typespec consult "add a new ARM resource type named 'Asset' with CRUD operations"
 
-# Translate Java samples to .NET
-azsdk package samples translate \
-  --from ~/azure-sdk-for-java/sdk/ai/azure-ai-projects \
-  --to ~/azure-sdk-for-net/sdk/ai/Azure.AI.Projects
+# Get solution for adding a new preview API version
+azsdk typespec consult "add a new preview API version 2025-10-01-preview for service widget resource management"
 
-# Translate with specific model
-azsdk package samples translate \
-  --from ~/azure-sdk-for-net/sdk/ai/Azure.AI.Projects \
-  --to ~/azure-sdk-for-python/sdk/ai/azure-ai-projects \
-  --model gpt-4o
+# Get solution for updating TypeSpec to follow guidelines
+azsdk typespec consult "update the TypeSpec code to follow Azure guidelines" \
+  --additional-information "The current code uses incorrect decorators"
 ```
 
 **Expected Output:**
 
 ```text
-Translating samples from Python to TypeScript...
+**Solution:** To add a new ARM resource type named 'Asset' with CRUD operations, you need to define the resource model, properties, and operations interface following Azure Resource Manager patterns.
 
-✓ Source language detected: Python
-✓ Target language detected: TypeScript
-✓ Discovered 5 Python sample files
-✓ Translating basic_usage.py → basic_usage.ts
-✓ Translating chat_completions.py → chat_completions.ts
-✓ Translating embeddings.py → embeddings.ts
-✓ Translating file_operations.py → file_operations.ts
-✓ Translating streaming.py → streaming.ts
-✓ Validating translated samples
+**Step-by-step guidance:**
 
-Translation complete:
-  5 samples translated successfully
-  Samples location: samples/
-  Directory structure preserved
+1. Create a resource model extending TrackedResource or ProxyResource:
+   - For top-level resources that require location tracking, use TrackedResource<TProperties>
+   - For child resources or resources without location, use ProxyResource<TProperties>
+
+2. Define the resource properties model:
+   - Create an AssetProperties model with the resource-specific properties
+   - Use appropriate TypeSpec types and decorators for validation
+
+3. Create an interface with @armResourceOperations decorator:
+   - Define CRUD operations using ARM operation templates
+   - Use ArmResourceRead for GET operations
+   - Use ArmResourceCreateOrReplaceAsync for PUT operations
+   - Use ArmResourcePatchAsync for PATCH operations
+   - Use ArmResourceDeleteWithoutOkAsync for DELETE operations
+
+4. Add list operations:
+   - Use ArmResourceListByParent for listing by resource group
+   - Use ArmListBySubscription for listing by subscription
+
+**References:**
+- ARM Resource Operations: https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type
+- Azure TypeSpec Style Guide: https://azure.github.io/typespec-azure/docs/style-guide
+```
+
+**Error Cases:**
+
+```text
+✗ Error: Required argument missing for command: 'typespec consult'
+  
+Usage: azsdk typespec consult <typespec-request> [options]
 ```
 
 ### 3. Translate Samples
 
-**Command:****
+**Command:**
 
 ```bash
 azsdk package samples translate --from <source_package_path> --to <target_package_path>

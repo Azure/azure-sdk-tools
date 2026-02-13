@@ -45,10 +45,11 @@ from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
+from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, run_prompty
+from src._utils import get_language_pretty_name
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -1180,7 +1181,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
 
     comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
 
-    theme_output = run_prompty(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
+    theme_output = run_prompt(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
     print(theme_output)
 
     print(f"Comment count: {len(comment_texts)}")

@@ -603,7 +603,7 @@ def resolve_package(
 
         Returns None if no matching package is found.
     """
-    from src._utils import run_prompty
+    from src._prompt_runner import run_prompt
 
     try:
         reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
@@ -643,7 +643,7 @@ def resolve_package(
 
             # Use LLM to find the best match
             try:
-                llm_result = run_prompty(
+                llm_result = run_prompt(
                     folder="other",
                     filename="resolve_package.prompty",
                     inputs={

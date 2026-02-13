@@ -12,7 +12,7 @@ Refactored to use modular workflow registry and base class pattern.
 
 import json
 
-from src._utils import run_prompty
+from src._prompt_runner import run_prompt
 from src.mention._open_guidelines_issue_workflow import OpenGuidelinesIssueWorkflow
 from src.mention._open_parser_issue_workflow import OpenParserIssueWorkflow
 from src.mention._update_kb_workflow import UpdateKnowledgeBaseWorkflow
@@ -35,7 +35,7 @@ def _parse_conversation_action(
         "trigger_comment": trigger_comment,
         "other_comments": other_comments,
     }
-    raw_results = run_prompty(folder="mention", filename="parse_conversation_action", inputs=inputs)
+    raw_results = run_prompt(folder="mention", filename="parse_conversation_action", inputs=inputs)
     try:
         results = json.loads(raw_results)
         return results

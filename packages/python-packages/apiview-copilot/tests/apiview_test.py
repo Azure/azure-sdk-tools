@@ -189,7 +189,7 @@ class TestResolvePackageLLMFallback:
         """Test that LLM is called when no exact match is found."""
         with (
             patch("src._apiview.get_apiview_cosmos_client") as mock_client,
-            patch("src._utils.run_prompty") as mock_prompty,
+            patch("src._prompt_runner._run_prompt_template") as mock_prompty,
         ):
             reviews_container = MockContainerClient(mock_reviews_data)
             revisions_container = MockContainerClient(mock_revisions_data)
@@ -212,7 +212,7 @@ class TestResolvePackageLLMFallback:
         """Test that None is returned when LLM returns NO_MATCH."""
         with (
             patch("src._apiview.get_apiview_cosmos_client") as mock_client,
-            patch("src._utils.run_prompty") as mock_prompty,
+            patch("src._prompt_runner._run_prompt_template") as mock_prompty,
         ):
             reviews_container = MockContainerClient(mock_reviews_data)
 
@@ -230,7 +230,7 @@ class TestResolvePackageLLMFallback:
         """Test that None is returned when LLM raises an exception."""
         with (
             patch("src._apiview.get_apiview_cosmos_client") as mock_client,
-            patch("src._utils.run_prompty") as mock_prompty,
+            patch("src._prompt_runner._run_prompt_template") as mock_prompty,
         ):
             reviews_container = MockContainerClient(mock_reviews_data)
 
@@ -420,7 +420,7 @@ class TestResolvePackageEdgeCases:
         """Test that None is returned when LLM returns a package not in results."""
         with (
             patch("src._apiview.get_apiview_cosmos_client") as mock_client,
-            patch("src._utils.run_prompty") as mock_prompty,
+            patch("src._prompt_runner._run_prompt_template") as mock_prompty,
         ):
             reviews_container = MockContainerClient(mock_reviews_data)
 

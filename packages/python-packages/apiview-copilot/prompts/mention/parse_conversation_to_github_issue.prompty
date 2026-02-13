@@ -10,7 +10,6 @@ model:
     azure_deployment: gpt-5-mini
     api_version: 2025-03-01-preview
   parameters:
-    stop: []
     max_completion_tokens: 16384
     response_format: ${file:github_issue_result_schema.json}
 sample:

@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 
 import requests
 from src._diff import create_diff_with_line_numbers
-from src._utils import run_prompty
+from src._prompt_runner import run_prompt
 from src.agent.tools._base import Tool
 
 
@@ -45,7 +45,7 @@ class UtilityTools(Tool):
         :param language: The programming language of the API (e.g., 'python', 'java', 'typescript').
         :return: Summary of the API.
         """
-        response = run_prompty(
+        response = run_prompt(
             folder="summarize", filename="summarize_api", inputs={"content": api, "language": language}
         )
         return response
@@ -61,7 +61,7 @@ class UtilityTools(Tool):
         :return: Summary of the differences.
         """
         api_diff = create_diff_with_line_numbers(old=base, new=target)
-        response = run_prompty(
+        response = run_prompt(
             folder="summarize", filename="summarize_diff", inputs={"content": api_diff, "language": language}
         )
         return response
@@ -148,6 +148,7 @@ class UtilityTools(Tool):
             Returns the full API text content for that revision
         """
         from urllib.parse import parse_qs
+
         from src._apiview import ApiViewClient
 
         parsed = urlparse(url)

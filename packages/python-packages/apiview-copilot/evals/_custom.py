@@ -20,7 +20,7 @@ from pathlib import Path
 
 from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from evals._util import ensure_json_obj
-from src._prompty_parser import execute_prompty
+from src._prompt_runner import _execute_prompt_template
 from src._settings import SettingsManager
 
 
@@ -40,7 +40,7 @@ def _mention_summarize_workflow(testcase: str, results: dict):
         "testcase": testcase,
         "results": results,
     }
-    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -57,7 +57,7 @@ def _mention_action_workflow(
         "other_comments": other_comments,
         "trigger_comment": trigger_comment,
     }
-    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -75,7 +75,7 @@ def _thread_resolution_action_workflow(
         "code": code,
         "comments": comments,
     }
-    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -89,7 +89,7 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
         "outline": outline,
         "content": content,
     }
-    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -102,7 +102,7 @@ def _filter_existing_comment(testcase: str, response: str, language: str, existi
         "existing": existing,
         "comment": comment,
     }
-    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -119,7 +119,7 @@ def _deduplicate_parser_issue(
         "issue_context": issue_context,
         "existing_issues": existing_issues,
     }
-    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -136,7 +136,7 @@ def _deduplicate_guidelines_issue(
         "issue_context": issue_context,
         "existing_issues": existing_issues,
     }
-    result = execute_prompty(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 

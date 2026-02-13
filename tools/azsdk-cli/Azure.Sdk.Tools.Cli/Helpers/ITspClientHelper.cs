@@ -28,8 +28,9 @@ public interface ITspClientHelper
     /// <param name="tspLocationDirectory">Path to the directory containing tsp-location.yaml.</param>
     /// <param name="commitSha">Optional commit SHA to update the tsp-location.yaml with before regeneration. If null, uses the commit SHA from the existing tsp-location.yaml.</param>
     /// <param name="isCli">True when invoked from CLI flow (suppresses duplicate streamed output in error text).</param>
+    /// <param name="localSpecRepoPath">Optional path to a local spec repo. When provided, tsp-client copies files from the local filesystem instead of cloning from a remote repo.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, CancellationToken ct = default);
+    Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, string? localSpecRepoPath = null, CancellationToken ct = default);
 
     /// <summary>
     /// Runs `tsp-client init` to initialize SDK generation from a tspconfig.yaml file.

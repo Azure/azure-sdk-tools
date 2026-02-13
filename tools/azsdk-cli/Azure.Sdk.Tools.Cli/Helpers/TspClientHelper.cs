@@ -79,28 +79,34 @@ public class TspClientHelper : ITspClientHelper
     }
 
     /// <inheritdoc />
-    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, CancellationToken ct = default)
+    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, string? localSpecRepoPath = null, CancellationToken ct = default)
     {
         var tspLocationPath = Path.Combine(tspLocationDirectory, "tsp-location.yaml");
-        logger.LogInformation("tsp-client update: {tspLocationDirectory}, commit: {commit}", tspLocationDirectory, commitSha ?? "(latest)");
-        
+        logger.LogInformation("tsp-client update: {tspLocationDirectory}, commit: {commit}, localSpecRepo: {localSpecRepo}", tspLocationDirectory, commitSha ?? "(latest)", localSpecRepoPath ?? "(none)");
+
         if (!File.Exists(tspLocationPath))
         {
-            return new TspToolResponse {
+            return new TspToolResponse
+            {
                 ResponseError = $"tsp-location.yaml not found at path: {tspLocationPath}",
                 TypeSpecProject = tspLocationDirectory
             };
         }
-        
+
         var repoRootFolder = await gitHelper.DiscoverRepoRootAsync(tspLocationDirectory, ct);
-        
+
         var args = new List<string> { "tsp-client", "update" };
         if (!string.IsNullOrEmpty(commitSha))
         {
             args.Add("--commit");
             args.Add(commitSha);
         }
-        
+        if (!string.IsNullOrEmpty(localSpecRepoPath))
+        {
+            args.Add("--local-spec-repo");
+            args.Add(localSpecRepoPath);
+        }
+
         var npmPrefix = await GetNpmPrefixAsync(repoRootFolder, ct);
         var npmOptions = new NpmOptions(
             npmPrefix,

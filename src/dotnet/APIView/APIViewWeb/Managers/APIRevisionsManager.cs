@@ -703,6 +703,8 @@ namespace APIViewWeb.Managers
         {
             if (!apiRevision.IsDeleted)
             {
+                _telemetryClient.TrackTrace($"Soft-deleting API revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}, User={userName}, Notes={notes}");
+
                 var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
                      changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
 
@@ -885,6 +887,8 @@ namespace APIViewWeb.Managers
             var lastUpdatedDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
             var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
 
+            _telemetryClient.TrackTrace($"AutoArchive: Found {manualRevisions.Count()} manual revisions not updated since {lastUpdatedDate}");
+
             // Group revisions by ReviewId to identify which revisions to preserve
             var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId).ToList();
             var revisionsToPreserve = new HashSet<string>();
@@ -929,6 +933,8 @@ namespace APIViewWeb.Managers
                 }
             }
 
+            _telemetryClient.TrackTrace($"AutoArchive: Preserving {revisionsToPreserve.Count} revisions (last stable/preview per review)");
+
             // Archive inactive revisions, excluding preserved ones
             int preservedCount = 0;
             int archivedCount = 0;
@@ -951,7 +957,12 @@ namespace APIViewWeb.Managers
                 }
                 catch (Exception e)
                 {
-                    _telemetryClient.TrackException(e);
+                    _telemetryClient.TrackException(e, new Dictionary<string, string>
+                    {
+                        { "RevisionId", apiRevision.Id },
+                        { "ReviewId", apiRevision.ReviewId },
+                        { "ErrorType", "AutoArchiveFailure" }
+                    });
                 }
                 finally
                 {
@@ -959,6 +970,8 @@ namespace APIViewWeb.Managers
                 }
             }
             
+            _telemetryClient.TrackTrace($"AutoArchive: Completed. Archived={archivedCount}, Preserved={preservedCount}, TotalProcessed={manualRevisions.Count()}");
+
             // Log summary telemetry once per run instead of per revision
             _telemetryClient.TrackEvent("AutoArchiveAPIRevisions", new Dictionary<string, string>
             {
@@ -981,6 +994,8 @@ namespace APIViewWeb.Managers
             // AddMonths handles month-end edge cases correctly (e.g., Jan 31 minus 1 month = Dec 31)
             // This ensures accurate grace period calculation regardless of month lengths
             var deletedBeforeDate = DateTime.UtcNow.AddMonths(-purgeAfterMonths);
+
+            _telemetryClient.TrackTrace($"AutoPurge: Starting. Looking for revisions soft-deleted before {deletedBeforeDate} (purgeAfterMonths={purgeAfterMonths})");
             
             // Query for soft-deleted Manual revisions
             var manualRevisions = await _apiRevisionsRepository.GetSoftDeletedAPIRevisionsAsync(
@@ -994,6 +1009,8 @@ namespace APIViewWeb.Managers
             
             // Combine both types
             var revisionsToDelete = manualRevisions.Concat(pullRequestRevisions).ToList();
+
+            _telemetryClient.TrackTrace($"AutoPurge: Found {revisionsToDelete.Count} revisions to purge (Manual={manualRevisions.Count()}, PullRequest={pullRequestRevisions.Count()})");
             
             int successCount = 0;
             int errorCount = 0;
@@ -1004,6 +1021,8 @@ namespace APIViewWeb.Managers
                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
+                    _telemetryClient.TrackTrace($"AutoPurge: Purging revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}, FileCount={apiRevision.Files?.Count ?? 0}");
+
                     // Delete associated blobs (code files and originals)
                     foreach (var file in apiRevision.Files ?? new List<APICodeFileModel>())
                     {
@@ -1047,6 +1066,7 @@ namespace APIViewWeb.Managers
                     await _apiRevisionsRepository.DeleteAPIRevisionAsync(apiRevision.Id, apiRevision.ReviewId);
                     
                     successCount++;
+                    _telemetryClient.TrackTrace($"AutoPurge: Successfully purged revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}");
                     
                     // Small delay to avoid overwhelming services
                     await Task.Delay(DelayBetweenDeletionsMs);
@@ -1067,6 +1087,8 @@ namespace APIViewWeb.Managers
                 }
             }
             
+            _telemetryClient.TrackTrace($"AutoPurge: Completed. Success={successCount}, Errors={errorCount}, TotalProcessed={revisionsToDelete.Count}");
+
             // Log summary telemetry
             _telemetryClient.TrackEvent("AutoPurgeAPIRevisions", new Dictionary<string, string>
             {

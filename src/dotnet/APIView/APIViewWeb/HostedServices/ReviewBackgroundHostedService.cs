@@ -78,22 +78,28 @@ namespace APIViewWeb.HostedServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (!_isDisabled)
+            if (_isDisabled)
             {
-                try
-                {
-                    await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, _isUpgradeTestEnabled, _packageNameFilterForUpgrade);
+                _telemetryClient.TrackTrace("ReviewBackgroundHostedService is disabled via configuration. Exiting.");
+                return;
+            }
+
+            _telemetryClient.TrackTrace($"ReviewBackgroundHostedService starting. ArchiveGracePeriod={_autoArchiveInactiveGracePeriodMonths} months, PurgeGracePeriod={_autoPurgeGracePeriodMonths} months");
+
+            try
+            {
+                await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, _isUpgradeTestEnabled, _packageNameFilterForUpgrade);
                     
-                    // Start both archive and purge tasks concurrently
-                    var archiveTask = ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
-                    var purgeTask = PurgeDeletedAPIReviews(stoppingToken, _autoPurgeGracePeriodMonths);
+                // Start both archive and purge tasks concurrently
+                var archiveTask = ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                var purgeTask = PurgeDeletedAPIReviews(stoppingToken, _autoPurgeGracePeriodMonths);
                     
-                    await Task.WhenAll(archiveTask, purgeTask);
-                }
-                catch (Exception ex)
-                {
-                    _telemetryClient.TrackException(ex);
-                }
+                await Task.WhenAll(archiveTask, purgeTask);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackTrace($"ReviewBackgroundHostedService encountered a fatal error: {ex.Message}");
+                _telemetryClient.TrackException(ex);
             }
         }
 
@@ -101,12 +107,15 @@ namespace APIViewWeb.HostedServices
         {
             do
             {
+                _telemetryClient.TrackTrace($"AutoArchive cycle starting. ArchiveAfter={archiveAfter} months");
                 try
                 {
                     await _apiRevisionManager.AutoArchiveAPIRevisions(archiveAfter);
+                    _telemetryClient.TrackTrace("AutoArchive cycle completed successfully.");
                 }
                 catch(Exception ex)
                 {
+                    _telemetryClient.TrackTrace($"AutoArchive cycle failed: {ex.Message}");
                     _telemetryClient.TrackException(ex);
                 }
                 finally
@@ -122,12 +131,15 @@ namespace APIViewWeb.HostedServices
         {
             do
             {
+                _telemetryClient.TrackTrace($"AutoPurge cycle starting. PurgeAfter={purgeAfter} months");
                 try
                 {
                     await _apiRevisionManager.AutoPurgeAPIRevisions(purgeAfter);
+                    _telemetryClient.TrackTrace("AutoPurge cycle completed successfully.");
                 }
                 catch(Exception ex)
                 {
+                    _telemetryClient.TrackTrace($"AutoPurge cycle failed: {ex.Message}");
                     _telemetryClient.TrackException(ex);
                 }
                 finally

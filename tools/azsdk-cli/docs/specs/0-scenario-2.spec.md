@@ -130,7 +130,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → `azsdk_typespec_authoring` **(Agent Mode only)**
+2. **TypeSpec Authoring** → `azsdk_typespec_generate_authoring_plan` **(Agent Mode only)**
    - AI-powered assistance for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
@@ -217,7 +217,7 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
-**Tool:** `azsdk_typespec_authoring`
+**Tool:** `azsdk_typespec_generate_authoring_plan`
 
 **Availability:** Agent Mode only - This tool requires conversational interaction with natural language prompts and is not suitable for CLI usage.
 
@@ -234,9 +234,35 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Input Parameters:**
 
-- `--request`: The TypeSpec-related request or task description (required)
-- `--additional-information`: Additional context for the request (optional)
-- `--typespec-source-path`: Path to TypeSpec source file or folder (optional, defaults to current directory)
+- `--request`: The TypeSpec-related task or user request sent to an AI agent to produce a proposed solution or execution plan with references (required)
+- `--additional-information`: Additional information to consider for the TypeSpec project (optional)
+- `--typespec-project`: The root path of the TypeSpec project (optional, defaults to current directory)
+
+**Output Format:**
+
+```json
+{
+  "operation_status": "Succeeded",
+  "typespec_project": "./tsp",
+  "solution": "<solution-for-the-typespec-task>",
+  "references": [
+    {
+      "title": "How to define a preview version",
+      "source": "typespec_azure_docs",
+      "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version",
+      "snippet": "To define a preview version..."
+    }
+  ],
+  "full_context": "<full-context-used-to-generate-solution>",
+  "reasoning": "<llm-reasoning-process>",
+  "query_intention": {
+    "question": "<analyzed-question>",
+    "category": "versioning",
+    "question_scope": "branded",
+    "service_type": "management-plane"
+  }
+}
+```
 
 **Workflow:**
 
@@ -253,6 +279,16 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 - Updating routes: "change the route for interface Assets to include employees/{employeeName} before assets/{assetName}"
 - Versioning: "add a new preview API version 2025-10-01-preview for service widget"
 - Fixing compliance: "update this TypeSpec to follow Azure ARM guidelines"
+
+**Authentication:**
+
+- The TypeSpec authoring tool authenticates with the Knowledge Base using Microsoft Authentication Library (MSAL) public client authentication
+- Uses interactive browser flow for authentication (MSAL `AcquireTokenInteractive`)
+- Access tokens are cached in memory for the lifetime of the process and are not persisted to disk by default
+- The tool uses the Azure Knowledge Base service and is configured with a default service by default. If you want to use a different Azure Knowledge Base service instead of the default one, set following environment variables to override:
+  - `AZURE_SDK_KB_ENDPOINT`: Service endpoint
+  - `AZURE_SDK_KB_CLIENT_ID`: Application (client) ID of the service
+  - `AZURE_SDK_KB_SCOPE`: Authentication scope
 
 **Success:**
 
@@ -656,7 +692,7 @@ Add a new preview API version 2025-10-01-preview for service widget resource man
 **Expected Agent Activity:**
 
 1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+2. **Agent calls** `azsdk_typespec_generate_authoring_plan` with the request and collected information
 3. Add a enum option `v2025_10_01_preview` in version enum for this new API version and decorate with `@previewVersion`
 4. Add a new example folder for the new version `2025-10-01-preview` and copy any still-relevant examples
 5. Ask for features to add to this version. e.g.
@@ -696,7 +732,7 @@ Add a new stable API version 2025-10-01 for service widget resource management.
 **Expected Agent Activity:**
 
 1. analyzes current TypeSpec project to identify namespace and version
-2. **Agent calls** `azsdk_typespec_retrieve_solution` with the request and collected information
+2. **Agent calls** `azsdk_typespec_generate_authoring_plan` with the request and collected information
 3. Add a enum option `v2025_10_01` in version enum for this new API version
 4. Add a new example folder for the new version `2025-10-01` and copy any still-relevant examples
 5. Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version

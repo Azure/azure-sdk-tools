@@ -11,6 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
     [TestFixture]
     internal class CodeownersEntryTests
     {
+        private static string NormalizeLineEndings(string input)
+            => input.Replace("\r\n", "\n").Replace("\r", "\n");
 
         #region formatCodeownersEntry Tests
 
@@ -32,11 +34,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var result = codeownersEntry.FormatCodeownersEntry();
 
             // Assert
-            Assert.That(result, Is.EqualTo("""
-            # ServiceLabel: %Service Bus
-            # PRLabel: %Service Bus
-            sdk/servicebus/    @source1 @source2
-            """));
+            var expected = """
+                # ServiceLabel: %Service Bus
+                # PRLabel: %Service Bus
+                sdk/servicebus/    @source1 @source2
+                """;
+            Assert.That(NormalizeLineEndings(result), Is.EqualTo(NormalizeLineEndings(expected)));
         }
 
         [Test]
@@ -56,9 +59,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var result = codeownersEntry.FormatCodeownersEntry();
 
             // Assert
-            Assert.That(result, Is.EqualTo("""
-            sdk/servicebus/    @source1 @source2
-            """));
+            var expected = """
+                sdk/servicebus/    @source1 @source2
+                """;
+            Assert.That(NormalizeLineEndings(result), Is.EqualTo(NormalizeLineEndings(expected)));
         }
 
         [Test]
@@ -75,10 +79,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var result = codeownersEntry.FormatCodeownersEntry();
 
             // Assert
-            Assert.That(result, Is.EqualTo("""
-            # AzureSdkOwners: @sdkowner1 @sdkowner2
-            # ServiceLabel: %Service Label
-            """));
+            var expected = """
+                # AzureSdkOwners: @sdkowner1 @sdkowner2
+                # ServiceLabel: %Service Label
+                """;
+            Assert.That(NormalizeLineEndings(result), Is.EqualTo(NormalizeLineEndings(expected)));
         }
 
         [Test]
@@ -95,10 +100,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var result = codeownersEntry.FormatCodeownersEntry();
 
             // Assert
-            Assert.That(result, Is.EqualTo("""
-            # ServiceLabel: %Service Label
-            # ServiceOwners: @serviceowner1 @serviceowner2
-            """));
+            var expected = """
+                # ServiceLabel: %Service Label
+                # ServiceOwners: @serviceowner1 @serviceowner2
+                """;
+            Assert.That(NormalizeLineEndings(result), Is.EqualTo(NormalizeLineEndings(expected)));
         }
 
         [Test]
@@ -116,11 +122,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var result = codeownersEntry.FormatCodeownersEntry();
 
             // Assert
-            Assert.That(result, Is.EqualTo("""
-            # AzureSdkOwners: @sdkowner1 @sdkowner2
-            # ServiceLabel: %Service Label
-            # ServiceOwners: @serviceowner1 @serviceowner2
-            """));
+            var expected = """
+                # AzureSdkOwners: @sdkowner1 @sdkowner2
+                # ServiceLabel: %Service Label
+                # ServiceOwners: @serviceowner1 @serviceowner2
+                """;
+            Assert.That(NormalizeLineEndings(result), Is.EqualTo(NormalizeLineEndings(expected)));
         }
 
         [Test]
@@ -138,10 +145,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var result = codeownersEntry.FormatCodeownersEntry();
 
             // Assert
-            Assert.That(result, Is.EqualTo("""
-            # AzureSdkOwners: @sdkowner1 @sdkowner2
-            sdk/servicebus/    @source1 @source2
-            """));
+            var expected = """
+                # AzureSdkOwners: @sdkowner1 @sdkowner2
+                sdk/servicebus/    @source1 @source2
+                """;
+            Assert.That(NormalizeLineEndings(result), Is.EqualTo(NormalizeLineEndings(expected)));
         }
 
         #endregion

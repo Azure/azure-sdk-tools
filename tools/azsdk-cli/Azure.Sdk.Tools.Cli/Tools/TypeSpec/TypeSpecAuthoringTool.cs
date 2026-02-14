@@ -108,6 +108,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         [McpServerTool(Name = "azsdk_typespec_generate_authoring_plan")]
         [Description(@"Generate solutions or execution plans for TypeSpec‑related tasks, such as defining and updating TypeSpec‑based API specifications for an Azure service.
+This tool applies to all tasks involving **TypeSpec**:
+- Writing new TypeSpec definitions: service, api version, resource, models, operations
+- Editing or refactoring existing TypeSpec files, editing api version, service, resource, models, operations, or properties.
+- Versioning evolution:
+  - Make a **preview** API **stable (GA)**.
+  - Replace an existing **preview** with a **new preview**.
+  - Replace a **preview** with a **stable**
+  - Replacing a preview API with a stable API and a new preview API.
+  - **Add** a preview or **add** a stable API version.
+- Resolving TypeSpec-related issues
 Pass in a `request` to get an AI-generated response with references.
 Returns an answer with supporting references and documentation links
 ")]

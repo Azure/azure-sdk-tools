@@ -130,11 +130,11 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → `azure-typespec-author` **(Agent Mode only)**
-   - AI-powered custom agent for authoring or modifying TypeSpec API specifications
+2. **TypeSpec Authoring** → TypeSpec Authoring Skills **(Agent Mode only)**
+   - AI-powered skills for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
-   - **Note**: This is a custom agent that provides conversational interaction and intelligently applies TypeSpec changes
+   - **Note**: Skills are transparently invoked by GitHub Copilot based on TypeSpec context detection
    - **Checkpoint**: Create a git commit after TypeSpec changes are applied
 
 3. **Generating** → `azsdk_package_generate_code` (local), `azsdk_run_generate_sdk` (pipeline)
@@ -217,9 +217,9 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
-**Agent/Skill:** `azure-typespec-author`
+**Skill:** TypeSpec Authoring Skills (leveraging `azsdk_typespec_generate_authoring_plan` MCP tool)
 
-**Availability:** Agent Mode only - This custom agent requires conversational interaction with natural language prompts and intelligently invokes underlying tools to apply TypeSpec changes.
+**Availability:** Agent Mode only - These skills are automatically invoked by GitHub Copilot based on TypeSpec context detection (file extensions, project structure, active file content).
 
 **Purpose:** Provide intelligent, context-aware assistance for TypeSpec authoring by integrating with Azure SDK RAG (Retrieval-Augmented Generation) knowledge base. Helps developers define or edit TypeSpec following Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices.
 
@@ -242,11 +242,12 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Workflow:**
 
-1. User describes TypeSpec authoring task in natural language to the `azure-typespec-author` agent
-2. Agent analyzes existing TypeSpec project structure and current state
-3. Agent invokes the TypeSpec Solution Tool (MCP: `azsdk_typespec_generate_authoring_plan`) with the user's request and any additional context
-4. Knowledge Base returns RAG-powered solution with step-by-step guidance and documentation references
-5. Agent applies the solution to update TypeSpec files and presents results to user with explanations and reference links
+1. User describes TypeSpec authoring task in natural language to GitHub Copilot
+2. Copilot's skill detects TypeSpec context based on file extensions (`.tsp`), project structure (`tspconfig.yaml`, TypeSpec dependencies), and active file content
+3. Skill automatically invokes the `azsdk_typespec_generate_authoring_plan` MCP tool with the user's request and project context
+4. The MCP tool queries Azure SDK Knowledge Base with structured request
+5. Knowledge Base returns RAG-powered solution with step-by-step guidance and documentation references
+6. Copilot processes the solution and applies appropriate file edits, presenting changes to the user with explanations
 
 **Examples:**
 
@@ -881,7 +882,7 @@ Use --auto-install flag to remediate issues automatically.
 
 ### 2. TypeSpec Generate Authoring Plan
 
-**Note:** This CLI command is used internally by the `azure-typespec-author` agent and is not intended for direct user invocation in Scenario 2. Users should interact with the `azure-typespec-author` agent in Agent Mode for TypeSpec authoring tasks.
+**Note:** This CLI command is used internally by the TypeSpec Authoring Skills in GitHub Copilot and is not intended for direct user invocation in Scenario 2. Users should interact with GitHub Copilot in Agent Mode, which will automatically invoke this skill when working with TypeSpec files.
 
 **Command:**
 

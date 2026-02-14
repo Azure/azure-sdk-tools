@@ -50,11 +50,14 @@ def restore_data_from_backup(backup_storage_url, dest_url, db_name):
             x for x in source_contents if x['id'] not in dest_records or x['_ts'] > dest_records[x['id']][1]
         ]
         if missing_records:
+            total = len(missing_records)
             logging.info(
-                "Found {} missing/updated rows in source DB".format(len(missing_records))
+                "Found {} missing/updated rows in source DB".format(total)
             )
-            for row in missing_records:
+            for i, row in enumerate(missing_records):
                 dest_container_client.upsert_item(row)
+                if (i + 1) % 100 == 0:
+                    logging.info("Progress: {}/{} records synced for {}".format(i + 1, total, cosmos_container_name))
             logging.info("Records in cosmosdb source container {} is synced successfully to destination container.".format(cosmos_container_name))
         else:
             logging.info("Destination DB container is in sync with source cosmosDB")

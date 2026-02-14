@@ -57,6 +57,7 @@ stages:
 
         - task: AzurePowerShell@5
           displayName: Sync CosmosDB
+          timeoutInMinutes: 180
           inputs:
             azureSubscription: 'Azure SDK Engineering System'
             ScriptType: 'InlineScript'

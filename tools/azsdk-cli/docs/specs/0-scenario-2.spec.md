@@ -134,7 +134,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - AI-powered skills for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
-   - **Note**: Skills are transparently invoked by GitHub Copilot based on TypeSpec context detection
+   - **Note**: `azsdk_typespec_authoring` skill is transparently invoked by GitHub Copilot based on TypeSpec context detection
    - **Checkpoint**: Create a git commit after TypeSpec changes are applied
 
 3. **Generating** → `azsdk_package_generate_code` (local), `azsdk_run_generate_sdk` (pipeline)

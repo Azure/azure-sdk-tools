@@ -20,6 +20,10 @@ public class ReviewToken implements JsonSerializable<ReviewToken> {
     // navigateToId should be set if the underlying token is required to be displayed as HREF to another type within
     // the review. For e.g. a param type which is class name in the same package
     private String navigateToId;
+    
+    // fullyQualifiedType stores the fully qualified type name for types from dependency libraries
+    // This will be shown as a tooltip to help identify which package a type comes from
+    private String fullyQualifiedType;
 
     // set skipDiff to true if underlying token needs to be ignored from diff calculation. For e.g. package metadata or
     // dependency versions are usually excluded when comparing two revisions to avoid reporting them as API changes
@@ -111,6 +115,11 @@ public class ReviewToken implements JsonSerializable<ReviewToken> {
         this.navigateToId = navigateToId;
         return this;
     }
+    
+    public ReviewToken setFullyQualifiedType(String fullyQualifiedType) {
+        this.fullyQualifiedType = fullyQualifiedType;
+        return this;
+    }
 
     public ReviewToken setDocumentation() {
         this.isDocumentation = true;
@@ -144,6 +153,10 @@ public class ReviewToken implements JsonSerializable<ReviewToken> {
             .writeStringField(JSON_NAME_VALUE, value)
             .writeStringField("NavigationDisplayName", navigationDisplayName)
             .writeStringField("NavigateToId", navigateToId);
+        
+        if (fullyQualifiedType != null) {
+            jsonWriter.writeStringField("FullyQualifiedType", fullyQualifiedType);
+        }
 
         if (skipDiff) {
             jsonWriter.writeBooleanField("SkipDiff", skipDiff);

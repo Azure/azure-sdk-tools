@@ -9,7 +9,7 @@ import { TimelineModule } from 'primeng/timeline';
 import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { TimeagoModule } from 'ngx-timeago';
-import { take } from 'rxjs/operators';
+import { finalize, take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { RelatedCommentsDialogComponent } from '../related-comments-dialog/related-comments-dialog.component';
@@ -116,6 +116,7 @@ export class CommentThreadComponent {
   showRelatedCommentsDialog: boolean = false;
   relatedComments: CommentItemModel[] = [];
   selectedCommentId: string = '';
+  isBatchUpdating: boolean = false;
 
   showAIFeedbackDialog: boolean = false;
   showAIDeleteDialog: boolean = false;
@@ -253,7 +254,12 @@ export class CommentThreadComponent {
     const menu : MenuItem[] = [];
     if (comment && this.userProfile?.userName === comment.createdBy && !this.isSystemGenerated(comment)) {
       menu.push(...this.menuItemsLoggedInUsers);
-    } else if (comment && comment.createdBy == "azure-sdk" && this.preferredApprovers.includes(this.userProfile?.userName!)) {
+    } else if (
+      comment &&
+      comment.createdBy == "azure-sdk" &&
+      this.preferredApprovers.includes(this.userProfile?.userName!) &&
+      !this.isDiagnostic(comment)
+    ) {
       menu.push(...this.menuItemsLoggedInArchitects);
     }
     if (this.instanceLocation !== "samples") {
@@ -342,6 +348,11 @@ export class CommentThreadComponent {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
     const title = target.getAttribute("data-element-id");
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+
+    if (comment?.commentSource === CommentSource.Diagnostic) {
+      return;
+    }
 
     const deleteAction = {
       commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
@@ -351,8 +362,6 @@ export class CommentThreadComponent {
       associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
       title: title // Used for Sample Instance of CommentThread
     } as CommentUpdatesDto;
-
-    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
 
     if (comment?.commentSource === CommentSource.AIGenerated) {
       this.pendingDeleteAction = deleteAction;
@@ -482,6 +491,11 @@ export class CommentThreadComponent {
   toggleUpVoteAction(event: Event) {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    if (comment && this.isDiagnostic(comment)) {
+      return;
+    }
+
     this.commentUpvoteActionEmitter.emit(
       {
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
@@ -497,6 +511,10 @@ export class CommentThreadComponent {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    if (comment && this.isDiagnostic(comment)) {
+      return;
+    }
+
     const isAIComment = comment?.commentSource === CommentSource.AIGenerated;
     const hasDownvote = comment?.downvotes?.includes(this.userProfile?.userName || '');
 
@@ -743,6 +761,7 @@ export class CommentThreadComponent {
       this.visibleRelatedCommentsCache.set(cacheKey, this.relatedComments);
     }
 
+    this.isBatchUpdating = false;
     this.showRelatedCommentsDialog = true;
   }
 
@@ -763,6 +782,8 @@ export class CommentThreadComponent {
       isDelete: disposition === 'delete'
     } : undefined;
 
+    this.isBatchUpdating = true;
+
     this.commentsService.commentsBatchOperation(this.reviewId, {
       commentIds: commentIds,
       vote: batchVote || 'none',
@@ -770,7 +791,11 @@ export class CommentThreadComponent {
       disposition: disposition,
       severity: severity,
       feedback: feedback
-    }).subscribe({
+    }).pipe(
+      finalize(() => {
+        this.isBatchUpdating = false;
+      })
+    ).subscribe({
       next: (response) => {
         const createdComments = response.body || [];
 
@@ -784,6 +809,12 @@ export class CommentThreadComponent {
         }
 
         this.emitCreationEvents(createdComments);
+
+        if (this.allComments && this.allComments.length > 0) {
+          CommentRelationHelper.calculateRelatedComments(this.allComments);
+        }
+        this.visibleRelatedCommentsCache.clear();
+        this.changeDetectorRef.detectChanges();
 
         this.showRelatedCommentsDialog = false;
       },

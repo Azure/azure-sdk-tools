@@ -12,6 +12,8 @@
         placeholder="Severity"
         [style]="{'width': '140px'}"
         styleClass="severity-dropdown"
+        overlayStyleClass="severity-dropdown-panel"
+        appendTo="body"
         (click)="$event.stopPropagation()">
       </p-select>
     </div>
@@ -37,6 +39,8 @@
           optionValue="value"
           [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
           styleClass="severity-dropdown"
+          overlayStyleClass="severity-dropdown-panel"
+          appendTo="body"
           (click)="$event.stopPropagation()">
         </p-select>
       </div>

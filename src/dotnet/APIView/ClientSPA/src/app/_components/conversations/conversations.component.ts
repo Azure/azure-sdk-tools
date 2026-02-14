@@ -340,6 +340,9 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
           this.addCommentToCommentThread(commentUpdates);
         }
         break;
+      case CommentThreadUpdateAction.CommentTextUpdate:
+        this.updateCommentTextInCommentThread(commentUpdates);
+        break;
       case CommentThreadUpdateAction.CommentResolved:
         this.applyCommentResolutionUpdate(commentUpdates);
         break;
@@ -348,7 +351,14 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
   private updateCommentTextInCommentThread(commentUpdates: CommentUpdatesDto) {
     if (this.comments.some(c => c.id === commentUpdates.commentId!)) {
-      this.comments.find(c => c.id === commentUpdates.commentId!)!.commentText = commentUpdates.commentText!;
+      const comment = this.comments.find(c => c.id === commentUpdates.commentId!)!;
+      if (commentUpdates.commentText !== undefined) {
+        comment.commentText = commentUpdates.commentText;
+      }
+      if (commentUpdates.severity !== undefined) {
+        comment.severity = commentUpdates.severity;
+      }
+      this.createCommentThreads();
     }
   }
 

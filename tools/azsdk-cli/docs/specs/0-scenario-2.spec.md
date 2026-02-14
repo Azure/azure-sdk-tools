@@ -130,7 +130,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → TypeSpec Authoring Skills **(Agent Mode only)**
+2. **TypeSpec Authoring** → `azsdk_typespec_authoring` skill**(Agent Mode only)**
    - AI-powered skills for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes

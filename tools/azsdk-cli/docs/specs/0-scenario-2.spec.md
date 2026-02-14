@@ -130,11 +130,11 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - Optionally remediate missing or out-of-date tools with `--auto-install` option
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
-2. **TypeSpec Authoring** → `azsdk_typespec_generate_authoring_plan`
-   - AI-powered assistance for authoring or modifying TypeSpec API specifications
+2. **TypeSpec Authoring** → `azure-typespec-author` **(Agent Mode only)**
+   - AI-powered custom agent for authoring or modifying TypeSpec API specifications
    - Leverages Azure SDK knowledge base for guidelines-compliant code
    - Helps with ARM resources, versioning, routing, and compliance fixes
-   - **Note**: Available in both Agent Mode (with conversational interaction) and CLI Mode (for direct command-line usage)
+   - **Note**: This is a custom agent that provides conversational interaction and intelligently applies TypeSpec changes
    - **Checkpoint**: Create a git commit after TypeSpec changes are applied
 
 3. **Generating** → `azsdk_package_generate_code` (local), `azsdk_run_generate_sdk` (pipeline)
@@ -217,9 +217,9 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
-**Tool:** `azsdk_typespec_generate_authoring_plan`
+**Agent/Skill:** `azure-typespec-author`
 
-**Availability:** Agent Mode and CLI Mode - Agent Mode provides conversational interaction with natural language prompts; CLI Mode provides direct command-line access for scripting and automation.
+**Availability:** Agent Mode only - This custom agent requires conversational interaction with natural language prompts and intelligently invokes underlying tools to apply TypeSpec changes.
 
 **Purpose:** Provide intelligent, context-aware assistance for TypeSpec authoring by integrating with Azure SDK RAG (Retrieval-Augmented Generation) knowledge base. Helps developers define or edit TypeSpec following Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices.
 
@@ -240,20 +240,13 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 - **Resource Hierarchy**: Helps define parent-child resource relationships with correct routing using `@parentResource` and `@route` decorators
 - **Common Scenarios**: Handles ARM resource creation, path corrections, versioning changes, and fixing non-compliant code patterns
 
-**Input Parameters:**
-
-- `--request`: The TypeSpec-related task or user request sent to an AI agent to produce a proposed solution or execution plan with references (required)
-- `--additional-information`: Additional information to consider for the TypeSpec project (optional)
-- `--typespec-project`: The root path of the TypeSpec project (optional, defaults to current directory)
-
 **Workflow:**
 
-1. User describes TypeSpec authoring task in natural language
-2. Agent/Tool analyzes existing TypeSpec project structure and current state (in Agent Mode)
-3. Tool queries Azure SDK Knowledge Base with structured request
+1. User describes TypeSpec authoring task in natural language to the `azure-typespec-author` agent
+2. Agent analyzes existing TypeSpec project structure and current state
+3. Agent invokes the TypeSpec Solution Tool (MCP: `azsdk_typespec_generate_authoring_plan`) with the user's request and any additional context
 4. Knowledge Base returns RAG-powered solution with step-by-step guidance and documentation references
-5. Tool formats solution with context-aware recommendations
-6. Agent applies changes to TypeSpec files and presents results to user (in Agent Mode), or outputs solution for manual application (in CLI Mode)
+5. Agent applies the solution to update TypeSpec files and presents results to user with explanations and reference links
 
 **Examples:**
 
@@ -887,6 +880,8 @@ Use --auto-install flag to remediate issues automatically.
 ```
 
 ### 2. TypeSpec Generate Authoring Plan
+
+**Note:** This CLI command is used internally by the `azure-typespec-author` agent and is not intended for direct user invocation in Scenario 2. Users should interact with the `azure-typespec-author` agent in Agent Mode for TypeSpec authoring tasks.
 
 **Command:**
 

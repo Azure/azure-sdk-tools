@@ -951,26 +951,6 @@ TypeSpec project: ./tsp
 - Service Type: management-plane
 ```
 
-**Error Cases:**
-
-```text
-Option '--request' is required.
-
-Description:
-  Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure 
-  service.
-
-Usage:
-  azsdk tsp generate-authoring-plan [options]
-
-Options:
-  --request (REQUIRED)      The TypeSpec‑related task or user request sent to an AI agent to produce a proposed 
-                            solution or execution plan with references.
-  --additional-information  The additional information to consider for the TypeSpec project.
-  --typespec-project        The root path of the TypeSpec project
-  -h, --help                Show help and usage information
-```
-
 ### 3. Translate Samples
 
 **Command:**

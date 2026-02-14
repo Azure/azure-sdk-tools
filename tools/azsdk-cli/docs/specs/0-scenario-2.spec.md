@@ -217,7 +217,7 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 Before or during SDK generation, developers may need to author or modify TypeSpec API specifications. Scenario 2 introduces AI-powered assistance for TypeSpec authoring that leverages the Azure SDK knowledge base to generate standards-compliant code.
 
-**Skill:** TypeSpec Authoring Skills (leveraging `azsdk_typespec_generate_authoring_plan` MCP tool)
+**Skill:** `azsdk_typespec_authoring` skill (leveraging `azsdk_typespec_generate_authoring_plan` MCP tool)
 
 **Availability:** Agent Mode only - These skills are automatically invoked by GitHub Copilot based on TypeSpec context detection (file extensions, project structure, active file content).
 

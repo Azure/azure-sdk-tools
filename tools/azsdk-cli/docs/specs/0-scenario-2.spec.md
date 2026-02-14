@@ -219,7 +219,7 @@ Before or during SDK generation, developers may need to author or modify TypeSpe
 
 **Skill:** `azsdk_typespec_authoring` skill (leveraging `azsdk_typespec_generate_authoring_plan` MCP tool)
 
-**Availability:** Agent Mode only - These skills are automatically invoked by GitHub Copilot based on TypeSpec context detection (file extensions, project structure, active file content).
+**Availability:** Agent Mode only - `azsdk_typespec_authoring` skill is automatically invoked by GitHub Copilot based on TypeSpec context detection (file extensions, project structure, active file content).
 
 **Purpose:** Provide intelligent, context-aware assistance for TypeSpec authoring by integrating with Azure SDK RAG (Retrieval-Augmented Generation) knowledge base. Helps developers define or edit TypeSpec following Azure Resource Manager (ARM) patterns, Data Plane (DP) standards, SDK guidelines, and TypeSpec best practices.
 

@@ -61,7 +61,8 @@ def restore_data_from_backup(backup_storage_url, dest_url, db_name):
         if missing_records:
             logging.info("Found {} missing/updated rows to sync".format(len(missing_records)))
             
-            # Batch upsert records for better performance
+            # Batch logging for progress visibility (records still upserted individually)
+            # TODO: Future optimization - use Cosmos DB bulk executor for true batch operations
             batch_size = 100
             total_records = len(missing_records)
             for i in range(0, total_records, batch_size):

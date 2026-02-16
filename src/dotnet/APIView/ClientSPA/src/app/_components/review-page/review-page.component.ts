@@ -204,7 +204,6 @@ export class ReviewPageComponent implements OnInit {
     this.codePanelData = null;
     this.loadFailed = false;
     this.changeDetectorRef.detectChanges();
-    this.loadComments();
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
       this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);

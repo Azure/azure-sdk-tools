@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TimeagoModule } from 'ngx-timeago';
 import { TimelineModule } from 'primeng/timeline';
@@ -29,7 +29,7 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
     ],
     changeDetection: ChangeDetectionStrategy.OnPush 
 })
-export class ConversationsComponent implements OnChanges {
+export class ConversationsComponent implements OnChanges, OnDestroy {
   @Input() apiRevisions: APIRevision[] = [];
   @Input() activeApiRevisionId: string | null = null;
   @Input() comments: CommentItemModel[] = [];
@@ -90,25 +90,21 @@ export class ConversationsComponent implements OnChanges {
       this.diagnosticsTruncated = false;
       
       // Categorize comments:
-      // 1. User comments (show all)
+      // 1. User comments (anything that's not diagnostic or AI-generated)
       // 2. AI Generated comments (show all)
       // 3. Diagnostic comments (limit to 250 from active revision)
       
       const userComments = this.comments.filter(comment => 
-        comment.commentSource === CommentSource.UserGenerated || 
-        (comment.commentSource !== CommentSource.Diagnostic && 
-         comment.commentSource !== CommentSource.AIGenerated && 
-         comment.createdBy !== 'azure-sdk')
+        comment.commentSource !== CommentSource.Diagnostic && comment.commentSource !== CommentSource.AIGenerated
       );
       
       const aiGeneratedComments = this.comments.filter(comment => 
         comment.commentSource === CommentSource.AIGenerated
       );
       
-      const diagnosticCommentsForRevision = this.comments.filter(comment => {
-        const isDiagnostic = comment.commentSource === CommentSource.Diagnostic || comment.createdBy === 'azure-sdk';
-        return isDiagnostic && comment.apiRevisionId === this.activeApiRevisionId;
-      });
+      const diagnosticCommentsForRevision = this.comments.filter(comment => 
+        comment.commentSource === CommentSource.Diagnostic && comment.apiRevisionId === this.activeApiRevisionId
+      );
       
       this.totalDiagnosticsInRevision = diagnosticCommentsForRevision.length;
       

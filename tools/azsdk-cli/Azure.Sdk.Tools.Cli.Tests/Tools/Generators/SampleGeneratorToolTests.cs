@@ -5,6 +5,7 @@ using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -546,5 +547,38 @@ public class SampleGeneratorToolTests
 
         // Assert: parser/tool should fail with non-zero exit code
         Assert.That(parseResult.Errors, Is.Not.Empty, "Expected parse errors when required --prompt option is missing");
+    }
+
+    [Test]
+    public async Task GenerateSamples_PopulatesTelemetryFields()
+    {
+        // Arrange
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
+        var generatedSamples = new List<GeneratedSample>
+        {
+            new("sample_one", "package main\nfunc main(){}"),
+            new("sample_two", "package main\nfunc main(){}")
+        };
+
+        microagentHostServiceMock
+            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(generatedSamples);
+
+        // Act
+        var response = await tool.GenerateSamplesAsync(packagePath, "Generate samples", overwrite: false);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Language, Is.EqualTo(SdkLanguage.Go), "Language should be set");
+            Assert.That(response.PackageName, Is.EqualTo("sdk/security/keyvault/azkeys"), "Package name should be set");
+            Assert.That(response.PackageType, Is.EqualTo(SdkType.Dataplane), "Package type should be set");
+            Assert.That(response.Version, Is.EqualTo("1.5.0"), "Version should be set");
+            
+            // Verify samples_count is in Result as an anonymous type
+            Assert.That(response.Result, Is.Not.Null, "Result should not be null");
+            var json = System.Text.Json.JsonSerializer.Serialize(response.Result);
+            Assert.That(json, Does.Contain("\"samples_count\":2"), "Result should contain samples_count with value 2");
+        });
     }
 }

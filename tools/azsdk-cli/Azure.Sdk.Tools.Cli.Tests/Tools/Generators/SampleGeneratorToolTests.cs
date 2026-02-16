@@ -560,8 +560,8 @@ public class SampleGeneratorToolTests
             new("sample_two", "package main\nfunc main(){}")
         };
 
-        microagentHostServiceMock
-            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+        copilotAgentRunnerMock
+            .Setup(m => m.RunAsync(It.IsAny<CopilotAgent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
         // Act

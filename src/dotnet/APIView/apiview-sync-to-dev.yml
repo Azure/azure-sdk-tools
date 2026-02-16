@@ -14,6 +14,7 @@ stages:
     jobs:
       - job: 'BlobCopy'
         displayName: 'Sync API reviews'
+        timeoutInMinutes: 240  # Increased from default 60 min to 4 hours for large data sync
         pool:
           name: azsdk-pool
           demands: ImageOverride -equals windows-2022

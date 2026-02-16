@@ -4,8 +4,8 @@
 using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -29,16 +29,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     [McpServerToolType, Description("Generates sample files for Azure SDK packages based on prompts.")]
     public class SampleGeneratorTool : LanguageMcpTool
     {
-        private readonly IMicroagentHostService _microagentHostService;
+        private readonly ICopilotAgentRunner _copilotAgentRunner;
 
         public SampleGeneratorTool(
-            IMicroagentHostService microagentHostService,
+            ICopilotAgentRunner copilotAgentRunner,
             ILogger<SampleGeneratorTool> logger,
             IGitHelper gitHelper,
             IEnumerable<LanguageService> languageServices
         ) : base(languageServices, gitHelper, logger)
         {
-            _microagentHostService = microagentHostService;
+            _copilotAgentRunner = copilotAgentRunner;
         }
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageSample];
 
@@ -238,20 +238,20 @@ Scenarios description:
 ";
             logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of context", context.Length);
 
-            var microagent = string.IsNullOrEmpty(model)
-                ? new Microagent<List<GeneratedSample>>() { Instructions = enhancedPrompt }
-                : new Microagent<List<GeneratedSample>>() { Instructions = enhancedPrompt, Model = model };
+            var agent = string.IsNullOrEmpty(model)
+                ? new CopilotAgent<List<GeneratedSample>>() { Instructions = enhancedPrompt }
+                : new CopilotAgent<List<GeneratedSample>>() { Instructions = enhancedPrompt, Model = model };
 
-            logger.LogInformation("Calling microagent service...");
-            var samples = await _microagentHostService.RunAgentToCompletion(microagent, ct);
-            logger.LogInformation("Microagent service returned");
-            logger.LogDebug("Microagent completed, returned {sampleCount} samples", samples?.Count ?? 0);
+            logger.LogInformation("Calling copilot agent service...");
+            var samples = await _copilotAgentRunner.RunAsync(agent, ct);
+            logger.LogInformation("Copilot agent service returned");
+            logger.LogDebug("Copilot agent completed, returned {sampleCount} samples", samples?.Count ?? 0);
 
             var writtenSamples = new List<GeneratedSample>();
 
             if (samples == null || samples.Count == 0)
             {
-                logger.LogWarning("Microagent returned no samples");
+                logger.LogWarning("Copilot agent returned no samples");
             }
             else
             {

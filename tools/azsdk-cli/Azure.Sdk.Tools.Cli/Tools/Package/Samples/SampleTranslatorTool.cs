@@ -5,8 +5,8 @@ using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -40,16 +40,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
     [McpServerToolType, Description("Translates sample code files from a source Azure SDK package to a target package in a different programming language. Takes samples from the source package's samples directory, understands the functionality being demonstrated, and generates equivalent idiomatic code for the target language.")]
     public class SampleTranslatorTool : LanguageMcpTool
     {
-        private readonly IMicroagentHostService _microagentHostService;
+        private readonly ICopilotAgentRunner _copilotAgentRunner;
 
         public SampleTranslatorTool(
-            IMicroagentHostService microagentHostService,
+            ICopilotAgentRunner copilotAgentRunner,
             ILogger<SampleTranslatorTool> logger,
             IGitHelper gitHelper,
             IEnumerable<LanguageService> languageServices
         ) : base(languageServices, gitHelper, logger)
         {
-            _microagentHostService = microagentHostService;
+            _copilotAgentRunner = copilotAgentRunner;
         }
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageSample];
@@ -398,19 +398,19 @@ Return a JSON array of objects with 'OriginalFileName', 'TranslatedFileName', an
 
             logger.LogDebug("Enhanced prompt prepared with {contextLength} characters of context", targetPackageContext.Length);
 
-            var microagent = string.IsNullOrEmpty(model)
-                ? new Microagent<List<TranslatedSample>>() { Instructions = enhancedPrompt }
-                : new Microagent<List<TranslatedSample>>() { Instructions = enhancedPrompt, Model = model };
+            var agent = string.IsNullOrEmpty(model)
+                ? new CopilotAgent<List<TranslatedSample>>() { Instructions = enhancedPrompt }
+                : new CopilotAgent<List<TranslatedSample>>() { Instructions = enhancedPrompt, Model = model };
 
-            logger.LogInformation("Calling translation microagent service...");
-            var translatedSamples = await _microagentHostService.RunAgentToCompletion(microagent, ct);
-            logger.LogInformation("Translation microagent service returned");
+            logger.LogInformation("Calling translation copilot agent service...");
+            var translatedSamples = await _copilotAgentRunner.RunAsync(agent, ct);
+            logger.LogInformation("Translation copilot agent service returned");
 
             var writtenSamples = new List<TranslatedSample>();
 
             if (translatedSamples == null || translatedSamples.Count == 0)
             {
-                logger.LogWarning("Translation microagent returned no samples for this batch");
+                logger.LogWarning("Translation copilot agent returned no samples for this batch");
                 return writtenSamples;
             }
 

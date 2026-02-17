@@ -92,15 +92,7 @@ namespace APIViewWeb.Managers
             var userProfile = await _userProfileRepository.TryGetUserProfileAsync(user.GetGitHubLogin());
             var apiRevision = await _apiRevisionRepository.GetAPIRevisionAsync(apiRevisionId);
 
-            var existingReviewers = new HashSet<string>(
-                apiRevision.AssignedReviewers.Select(assignment => assignment.AssingedTo),
-                StringComparer.OrdinalIgnoreCase);
-
-            var newReviewers = reviewers
-                .Where(reviewer => !existingReviewers.Contains(reviewer))
-                .ToList();
-
-            foreach (var reviewer in newReviewers)
+            foreach (var reviewer in reviewers)
             {
                 var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
                 await SendUserEmailsAsync(apiRevision, reviewerProfile,

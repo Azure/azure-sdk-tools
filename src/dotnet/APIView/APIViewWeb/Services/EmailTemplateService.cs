@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Net;
 using APIViewWeb.LeanModels;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
@@ -21,7 +22,7 @@ namespace APIViewWeb.Services
         private async Task<string> LoadEmbeddedTemplateAsync(string templateName)
         {
             var assembly = typeof(EmailTemplateService).GetTypeInfo().Assembly;
-            var resourceName = $"APIViewWeb.EmailTemplates.{templateName}";
+            var resourceName = $"APIViewWeb.EmailTemplates.{templateName.Replace('/', '.').Replace('\\', '.')}";
             
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
@@ -43,23 +44,16 @@ namespace APIViewWeb.Services
         {
             var template = await LoadEmbeddedTemplateAsync("NamespaceReviewRequestEmail.html");
 
-            // Generate language links HTML like the pending namespace approval tab
-            var languageLinksHtml = GenerateLanguageLinksHtml(languageReviews);
+            var languageLinksHtml = await GenerateLanguageLinksHtmlAsync(languageReviews);
+            var notesSectionHtml = await GenerateNotesSectionHtmlAsync(notes);
 
-            // Generate notes section HTML if notes are provided
-            var notesSectionHtml = string.IsNullOrEmpty(notes) 
-                ? "" 
-                : $@"<div class=""notes-section"">
-                        <div class=""notes-title"">Additional Notes:</div>
-                        <div>{notes}</div>
-                     </div>";
-
-            // Replace all placeholders
-            return template
-                .Replace("{{PackageName}}", packageName)
-                .Replace("{{TypeSpecUrl}}", typeSpecUrl)
-                .Replace("{{LanguageLinks}}", languageLinksHtml)
-                .Replace("{{NotesSection}}", notesSectionHtml);
+            return RenderTemplate(template, new Dictionary<string, string>
+            {
+                ["{{PackageName}}"] = Encode(packageName),
+                ["{{TypeSpecUrl}}"] = Encode(typeSpecUrl),
+                ["{{LanguageLinks}}"] = languageLinksHtml,
+                ["{{NotesSection}}"] = notesSectionHtml,
+            });
         }
 
         public async Task<string> GetNamespaceReviewApprovedEmailAsync(
@@ -69,48 +63,71 @@ namespace APIViewWeb.Services
         {
             var template = await LoadEmbeddedTemplateAsync("NamespaceReviewApprovedEmail.html");
 
-            // Generate language package names in the simple format
-            var languagePackagesHtml = GenerateLanguagePackagesHtml(languageReviews);
+            var languagePackagesHtml = await GenerateLanguagePackagesHtmlAsync(languageReviews);
 
-            // Replace all placeholders
-            return template
-                .Replace("{{PackageName}}", packageName)
-                .Replace("{{TypeSpecUrl}}", typeSpecUrl)
-                .Replace("{{LanguageViews}}", languagePackagesHtml);
+            return RenderTemplate(template, new Dictionary<string, string>
+            {
+                ["{{PackageName}}"] = Encode(packageName),
+                ["{{TypeSpecUrl}}"] = Encode(typeSpecUrl),
+                ["{{LanguageViews}}"] = languagePackagesHtml,
+            });
         }
 
-        private string GenerateLanguagePackagesHtml(IEnumerable<ReviewListItemModel> languageReviews)
+        private async Task<string> GenerateLanguagePackagesHtmlAsync(IEnumerable<ReviewListItemModel> languageReviews)
         {
             if (languageReviews == null || !languageReviews.Any())
                 return "<li class=\"package-item\">No language-specific package names available yet.</li>";
 
-            var packagesHtml = "";
-            foreach (var review in languageReviews)
+            var itemTemplate = await LoadEmbeddedTemplateAsync("Partials/LanguagePackageItem.html");
+
+            return string.Join(string.Empty, languageReviews.Select(review => RenderTemplate(itemTemplate, new Dictionary<string, string>
             {
-                // Build format to match the request email styling
-                packagesHtml += $@"
-                    <li class=""package-item"">
-                        <span class=""language-name"">{review.Language}:</span>{review.PackageName}
-                    </li>";
-            }
-            return packagesHtml;
+                ["{{LanguageName}}"] = Encode(review.Language),
+                ["{{PackageName}}"] = Encode(review.PackageName),
+            })));
         }
 
-        private string GenerateLanguageLinksHtml(IEnumerable<ReviewListItemModel> languageReviews)
+        private async Task<string> GenerateLanguageLinksHtmlAsync(IEnumerable<ReviewListItemModel> languageReviews)
         {
             if (languageReviews == null || !languageReviews.Any())
                 return "<li class=\"language-item\">No language-specific reviews available yet.</li>";
 
-            var linksHtml = "";
-            foreach (var review in languageReviews)
+            var itemTemplate = await LoadEmbeddedTemplateAsync("Partials/LanguageLinkItem.html");
+
+            return string.Join(string.Empty, languageReviews.Select(review => RenderTemplate(itemTemplate, new Dictionary<string, string>
             {
-                linksHtml += $@"
-                    <li class=""language-item"">
-                        <span class=""language-name"">{review.Language}:</span>
-                        <a href=""{_apiviewEndpoint}/Assemblies/Review/{review.Id}"" class=""package-link"">{review.PackageName}</a>
-                    </li>";
+                ["{{LanguageName}}"] = Encode(review.Language),
+                ["{{ReviewUrl}}"] = Encode($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}"),
+                ["{{PackageName}}"] = Encode(review.PackageName),
+            })));
+        }
+
+        private async Task<string> GenerateNotesSectionHtmlAsync(string notes)
+        {
+            if (string.IsNullOrWhiteSpace(notes))
+                return string.Empty;
+
+            var notesTemplate = await LoadEmbeddedTemplateAsync("Partials/NotesSection.html");
+            return RenderTemplate(notesTemplate, new Dictionary<string, string>
+            {
+                ["{{Notes}}"] = Encode(notes),
+            });
+        }
+
+        private static string RenderTemplate(string template, IDictionary<string, string> tokens)
+        {
+            var rendered = template;
+            foreach (var token in tokens)
+            {
+                rendered = rendered.Replace(token.Key, token.Value ?? string.Empty);
             }
-            return linksHtml;
+
+            return rendered;
+        }
+
+        private static string Encode(string value)
+        {
+            return WebUtility.HtmlEncode(value ?? string.Empty);
         }
     }
 }

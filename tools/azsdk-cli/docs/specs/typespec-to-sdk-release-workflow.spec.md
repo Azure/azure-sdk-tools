@@ -123,7 +123,7 @@ An intelligent, guided workflow that orchestrates the entire TypeSpec-to-SDK rel
 5. Show a visual representation of steps completed in the workflow and what's pending.
 6. Provide intelligent decision points (local vs. pipeline generation, troubleshooting guidance)
 7. Integrate sub-skills seamlessly for specialized tasks (TypeSpec authoring, APIView resolution, etc.)
-8. Support all five SDK languages: .NET, Java, JavaScript, Python, Go
+8. Support all five tier-1 SDK languages: .NET, Java, JavaScript, Python, Go
 9. Create a fully automated agentic workflow to query all required details from the user and run the steps in the workflow and until generating spec and SDK pull requests
 
 ---

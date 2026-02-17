@@ -73,7 +73,19 @@ public abstract class PythonRequirementBase : Requirement
 
         // 1. Check AZSDKTOOLS_PYTHON_VENV_PATH environment variable
         const string pythonName = "python";
-        var resolved = PythonOptions.ResolvePythonExecutable(pythonName);
+        string resolved;
+        try
+        {
+            resolved = PythonOptions.ResolvePythonExecutable(pythonName);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            return (null, new RequirementCheckOutput
+            {
+                Success = false,
+                Error = $"{ex.Message} Please update or unset the AZSDKTOOLS_PYTHON_VENV_PATH environment variable to point to a valid venv directory."
+            });
+        }
         if (!string.Equals(resolved, pythonName, StringComparison.Ordinal))
         {
             // PythonOptions resolved to a venv path from the environment variable
@@ -105,7 +117,7 @@ public abstract class PythonRequirementBase : Requirement
             {
                 Success = false,
                 Output = createResult.Output?.Trim(),
-                Error = $"Failed to create venv at {repoVenvPath}: {createResult.Output?.Trim()}"
+                Error = $"Failed to create Python virtual environment at '{repoVenvPath}' using 'python -m venv' (exit code {createResult.ExitCode}). Command output: {createResult.Output?.Trim()}"
             });
         }
 

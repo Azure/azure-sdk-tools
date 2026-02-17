@@ -97,7 +97,7 @@ public class RequirementCheckResult
     /// </summary>
     [JsonPropertyName("autoInstallSucceeded")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public bool AutoInstallSucceeded => AutoInstallAttempted && AutoInstallError == null;
+    public bool AutoInstallSucceeded => AutoInstallAttempted && string.IsNullOrEmpty(AutoInstallError);
     /// <summary>
     /// Error message if auto-install was attempted but failed.
     /// </summary>

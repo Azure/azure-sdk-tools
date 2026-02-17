@@ -58,7 +58,7 @@ public class VerifySetupTool : LanguageMcpTool
 
     private readonly Option<bool> autoInstallParam = new("--auto-install", "-i")
     {
-        Description = "Automatically install requirements that support auto-installation.",
+        Description = "Automatically install missing requirements that support auto-installation. If false, only checks requirements and provides installation instructions.",
         Required = false,
     };
 
@@ -78,7 +78,7 @@ public class VerifySetupTool : LanguageMcpTool
         return await VerifySetup(parsed, packagePath, autoInstall, ct);
     }
 
-    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. Set autoInstall to true to automatically install requirements that support auto-installation.")]
+    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. Set autoInstall to false to just check requirements, or true to automatically install requirements that support auto-installation.")]
     public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, bool autoInstall = false, CancellationToken ct = default)
     {
         try

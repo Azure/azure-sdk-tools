@@ -380,10 +380,21 @@ internal class VerifySetupToolTests
     [Test]
     public async Task VerifySetup_AutoInstall_InstallCommandFails()
     {
-        // Arrange - tsp check fails, and the install command also fails
+        // Arrange - tsp version check fails (so auto-install is triggered)
         mockProcessHelper
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(opt => opt.Args.Any(a => a == "tsp") || opt.Command.Contains("tsp")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 1,
+                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, "tsp: command not found") }
+            });
+
+        // Arrange - the npm install command for tsp also fails
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Command.Contains("npm") && opt.Args.Any(a => a.Contains("@typespec/compiler"))),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult
             {

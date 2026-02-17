@@ -378,6 +378,55 @@ internal class VerifySetupToolTests
     }
 
     [Test]
+    public async Task VerifySetup_AutoInstall_InstallSucceeds_ButRecheckFails()
+    {
+        // Arrange - tsp check always fails, but install command succeeds.
+        // This simulates a scenario where the install completes successfully
+        // but the tool still isn't available (e.g., PATH not updated, version
+        // still below minimum, or tool requires a restart to become available).
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Args.Any(a => a == "tsp") || opt.Command.Contains("tsp")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 1,
+                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, "tsp: command not found") }
+            });
+
+        // npm install succeeds (so RunInstallAsync returns success)
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Command.Contains("npm") && opt.Args.Any(a => a.Contains("@typespec/compiler"))),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 0,
+                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardOutput, "added 1 package") }
+            });
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+
+        // Assert - install was attempted but verification still fails
+        Assert.That(result.ResponseError, Is.Null);
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult, Is.Not.Null);
+        Assert.That(tspResult!.AutoInstallAttempted, Is.True);
+        Assert.That(tspResult.AutoInstallSucceeded, Is.False);
+        Assert.That(tspResult.AutoInstallError, Is.Not.Null.And.Not.Empty);
+        Assert.That(tspResult.RequirementStatusDetails, Does.Contain("verification still fails"));
+        Assert.That(tspResult.Instructions, Is.Not.Empty);
+    }
+
+    [Test]
     public async Task VerifySetup_AutoInstall_InstallCommandFails()
     {
         // Arrange - tsp version check fails (so auto-install is triggered)

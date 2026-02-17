@@ -256,8 +256,10 @@ This workflow supports both experimentation and production SDK releases through 
 ├─────────────────────────┤                                 │
 │ • Verify environment    │                                 │
 │ • Generate SDK locally  │                                 │
-│ • Build & test package  │                                 │
-│ • Run validations       │                                 │
+│ • Build SDK             │                                 │
+│ • Customize TypeSpec &  │                                 │
+│   regenerate if errors  │                                 │
+│ • Test & run validation │                                 │
 └───────────┬─────────────┘                                 │
             │                                               │
             ▼                                               │
@@ -449,7 +451,7 @@ After TypeSpec is ready, user chooses one of two paths:
 
 ###### Step 3A: Local SDK Generation (Experimentation Path)
 
-**Skill Used**: [Generate SDK Locally Skill](#skill-4-generate-sdk-locally)
+**Skill Used**: [Generate SDK Locally Skill](#skill-4-generate-sdk-locally), [TypeSpec Customization Skill](#skill-3-typespec-customization)
 
 **Purpose**: Generate and test SDK locally without creating PRs.
 
@@ -458,12 +460,15 @@ After TypeSpec is ready, user chooses one of two paths:
 1. Verify environment setup for target languages
 2. Run local SDK generation (`azsdk_package_generate_code`)
 3. Build generated code
-4. Run tests in playback mode
-5. Validate samples and run linting
-6. If errors occur, iterate on TypeSpec and regenerate
+4. If build fails or SDK customization is needed:
+   - Apply TypeSpec customizations using [TypeSpec Customization Skill](#skill-3-typespec-customization)
+   - Regenerate SDK and rebuild
+5. Run tests
+6. Validate and run linting
 
 **At this point, user can either:**
-- Continue iterating (modify TypeSpec, regenerate SDK locally)
+
+- Continue iterating (modify TypeSpec, customize, regenerate SDK locally)
 - Transition to release workflow (proceed to Step 4)
 
 **Status Updates**:
@@ -525,24 +530,28 @@ After TypeSpec is ready, user chooses one of two paths:
 ###### Option A: Use Existing Local SDK (Skip Generation)
 
 If SDK was already generated locally during Step 3A:
+
 1. Confirm local SDK is still valid and up-to-date
 2. Proceed directly to Step 6 (Create SDK PRs)
 
 ###### Option B: Local SDK Generation
 
-**Skill Used**: [Generate SDK Locally Skill](#skill-4-generate-sdk-locally)
+**Skill Used**: [Generate SDK Locally Skill](#skill-4-generate-sdk-locally), [TypeSpec Customization Skill](#skill-3-typespec-customization)
 
 **Actions**:
 
 1. Verify environment setup for target languages
 2. Run `azsdk_package_generate_code` for each language
 3. Build generated code
-4. Run tests in playback mode
-5. Validate samples and run linting
-6. If any step fails:
+4. If build fails:
+   - Apply TypeSpec customizations using [TypeSpec Customization Skill](#skill-3-typespec-customization)
+   - Regenerate SDK and rebuild
+5. Run tests
+6. Validate and run linting
+7. If any step fails:
    - Report errors with troubleshooting guidance
    - Allow user to fix and retry
-7. Prepare package for release:
+8. Prepare package for release:
    - Update changelog
    - Update metadata
    - Update version
@@ -579,10 +588,9 @@ If SDK was already generated locally during Step 3A:
 
 **Actions**:
 
-1. Create SDK pull requests for each target language
-2. **Link SDK PRs to release plan** (required)
-3. Update release plan with SDK PR links
-4. Verify PR pipeline status. Fix TypeSpec and rerun SDK generation if there are any build errors.
+1. Create SDK pull requests for each target language if not already generated.
+2. **Link SDK PRs to release plan**
+3. Verify PR pipeline status. Fix TypeSpec and rerun SDK generation if there are any build errors.
 
 **Note**: If pipeline generation (Step 5 Option C) was used, this step is automatic.
 
@@ -729,12 +737,13 @@ The workflow is designed to support users who have already completed some steps 
 
 **Actions**:
 
+1. Identify the release plan
 1. Identify failed language(s)
-2. Switch to local SDK generation for debugging
-3. Guide user through error resolution
-4. If TypeSpec customization needed, invoke [TypeSpec Customization Skill](#skill-3-typespec-customization)
-5. Regenerate SDK locally
-6. Create SDK PR manually and link to release plan
+1. Switch to local SDK generation for debugging
+1. Guide user through error resolution
+1. If TypeSpec customization needed, invoke [TypeSpec Customization Skill](#skill-3-typespec-customization)
+1. Regenerate SDK locally
+1. Create SDK PR manually and link to release plan
 
 ```
 ┌───────────────────────────┐
@@ -787,11 +796,12 @@ The workflow is designed to support users who have already completed some steps 
 
 **Actions**:
 
+1. Identify the release plan using the TypeSpec project of the package.
 1. Identify which package preparation steps are needed
-2. Update changelog content
-3. Update package metadata
-4. Run validation checks
-5. Create or update SDK PR
+1. Update changelog content
+1. Update package metadata
+1. Run validation checks
+1. Create or update SDK PR
 
 ```
 ┌───────────────────────────┐
@@ -878,7 +888,7 @@ The end-to-end workflow orchestrates these specialized sub-skills:
 
 - `azsdk_package_customize_code`
 
-**Spec Reference**: [3-customizing-client-tsp.spec.md](3-customizing-client-tsp.spec.md)
+**Spec Reference**: [customizing-client-tsp.spec.md](3-customizing-client-tsp.spec.md)
 **Skill reference**: TypeSpec customization should refer `TypeSpec Authoring and Validation` skill to validate the TypeSpec
 ---
 

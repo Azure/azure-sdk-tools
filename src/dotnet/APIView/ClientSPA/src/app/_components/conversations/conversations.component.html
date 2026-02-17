@@ -1,8 +1,14 @@
 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
 </div>
-<p *ngIf="!isLoading && (getAPIRevisionWithComments()).length == 0" class="ms-4">This Review has no comments</p>
-<p-timeline *ngIf="!isLoading" [value]="getAPIRevisionWithComments()">
+<p *ngIf="!isLoading && apiRevisionsWithComments.length == 0 && !diagnosticsTruncated" class="ms-4">This Review has no comments</p>
+<div *ngIf="!isLoading && diagnosticsTruncated" class="mx-4 mb-3">
+    <div class="alert alert-warning py-2 mb-0" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <small>Only the first 250 of {{ totalDiagnosticsInRevision }} diagnostic comments are shown in this panel. View all diagnostics in the code panel.</small>
+    </div>
+</div>
+<p-timeline *ngIf="!isLoading" [value]="apiRevisionsWithComments">
     <ng-template pTemplate="marker" let-apiRevision>
         <i class="bi bi-clock-history"></i>
     </ng-template>
@@ -19,7 +25,7 @@
                 <span class="emphasis-badge secondary me-2">last updated: {{ apiRevision | lastUpdatedOn | timeago }}</span>
                 <span class="me-2" *ngIf="apiRevision.label">{{ apiRevision.label }}</span>
             </span>
-            <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); let isLast = last" class="my-2 conversation-group-threads">
+            <div *ngFor="let commentThread of commentThreads.get(apiRevision.id); trackBy: trackByThreadId; let isLast = last" class="my-2 conversation-group-threads">
                 <a class="small conversation-group-element-id" (click)="navigateToCommentThreadOnRevisionPage($event)">{{ commentThread!.comments[0].elementId }}</a>
                 <app-comment-thread 
                     [codePanelRowData]="commentThread"

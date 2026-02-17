@@ -9,20 +9,6 @@ using System.Reflection;
 
 namespace APIViewWeb.Services
 {
-    public interface IEmailTemplateService
-    {
-        Task<string> GetNamespaceReviewRequestEmailAsync(
-            string packageName,
-            string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews,
-            string notes = null);
-
-        Task<string> GetNamespaceReviewApprovedEmailAsync(
-            string packageName,
-            string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews);
-    }
-
     public class EmailTemplateService : IEmailTemplateService
     {
         private readonly string _apiviewEndpoint;

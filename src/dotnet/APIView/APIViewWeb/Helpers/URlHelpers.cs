@@ -8,9 +8,23 @@ namespace APIViewWeb.Helpers
         public static List<string> GetAllowedOrigins()
         {
             return new List<string>() {
-                    "https://spa.apiviewuxtest.com",
+                    // Production
+                    "https://apiview.azurewebsites.net",
+                    "https://spa.apiview.azurewebsites.net",
+                    "https://apiview.dev",
+                    "https://spa.apiview.dev",
+                    // Staging
+                    "https://apiviewstaging.azurewebsites.net",
+                    "https://spa.apiviewstaging.azurewebsites.net",
+                    "https://apiviewstagingtest.com",
                     "https://spa.apiviewstagingtest.com",
-                    "https://spa.apiview.dev"
+                    "https://apiview.org",
+                    "https://spa.apiview.org",
+                    // UX Test
+                    "https://apiviewuat.azurewebsites.net",
+                    "https://spa.apiviewuat.azurewebsites.net",
+                    "https://apiviewuxtest.com",
+                    "https://spa.apiviewuxtest.com"
                 };
         }
 
@@ -22,7 +36,7 @@ namespace APIViewWeb.Helpers
         public static string[] GetAllowedStagingOrigins()
         {
             var hosts = GetAllowedOrigins();
-            hosts.Add("https://localhost:4200");
+            hosts.Add("http://localhost:5000");
             return hosts.ToArray();
         }
     }

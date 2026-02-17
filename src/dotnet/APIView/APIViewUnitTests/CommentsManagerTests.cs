@@ -1586,6 +1586,21 @@ public class CommentsManagerTests
     }
 
     [Fact]
+    public async Task SoftDeleteCommentAsync_WhenDiagnostic_ThrowsAuthorizationFailed()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _);
+        ClaimsPrincipal user = CreateUser("test-user");
+
+        CommentItemModel comment = CreateComment(threadId: "diagnostic-thread");
+        comment.CommentSource = CommentSource.Diagnostic;
+        commentsRepoMock.Setup(r => r.GetCommentAsync("review1", "comment1")).ReturnsAsync(comment);
+
+        await Assert.ThrowsAsync<AuthorizationFailedException>(() => manager.SoftDeleteCommentAsync(user, "review1", "comment1"));
+
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
+    }
+
+    [Fact]
     public async Task ToggleVoteAsync_BroadcastsThreadId()
     {
         CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock,
@@ -1745,6 +1760,105 @@ public class CommentsManagerTests
         Assert.Single(result);
         commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
         apiRevisionsManagerMock.Verify(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SyncDiagnosticCommentsAsync_WithHashMatch_BackfillsMissingCorrelationId()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
+
+        var diagnostics = new[]
+        {
+            new CodeDiagnostic("do-not-hardcode-dedent", "target1", "Diagnostic message", null)
+        };
+
+        var apiRevision1 = new APIRevisionListItemModel
+        {
+            Id = "rev1",
+            ReviewId = "review1",
+            DiagnosticsHash = null
+        };
+
+        CommentItemModel createdDiagnosticComment = null;
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c =>
+            {
+                if (createdDiagnosticComment == null)
+                {
+                    createdDiagnosticComment = c;
+                }
+            })
+            .Returns(Task.CompletedTask);
+
+        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        // First sync to establish hash and generated diagnostic comment id
+        await manager.SyncDiagnosticCommentsAsync(apiRevision1, diagnostics, new List<CommentItemModel>());
+        string establishedHash = apiRevision1.DiagnosticsHash;
+
+        // Simulate pre-existing comment created before correlation-id support
+        var existingCommentWithoutCorrelation = new CommentItemModel
+        {
+            Id = createdDiagnosticComment.Id,
+            ReviewId = createdDiagnosticComment.ReviewId,
+            APIRevisionId = createdDiagnosticComment.APIRevisionId,
+            CommentSource = CommentSource.Diagnostic,
+            CorrelationId = null,
+            ChangeHistory = new List<CommentChangeHistoryModel>()
+        };
+
+        commentsRepoMock.Invocations.Clear();
+        apiRevisionsManagerMock.Invocations.Clear();
+
+        var apiRevision2 = new APIRevisionListItemModel
+        {
+            Id = "rev1",
+            ReviewId = "review1",
+            DiagnosticsHash = establishedHash
+        };
+
+        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision2, diagnostics, new List<CommentItemModel> { existingCommentWithoutCorrelation });
+
+        Assert.Single(result);
+        Assert.Equal("do-not-hardcode-dedent", result[0].CorrelationId);
+        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.Is<CommentItemModel>(c => c.Id == createdDiagnosticComment.Id && c.CorrelationId == "do-not-hardcode-dedent")), Times.Once);
+        apiRevisionsManagerMock.Verify(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SyncDiagnosticCommentsAsync_WhenDiagnosticIdMissing_UsesBracketedRuleIdAsCorrelationId()
+    {
+        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
+
+        var apiRevision = new APIRevisionListItemModel
+        {
+            Id = "rev1",
+            ReviewId = "review1",
+            DiagnosticsHash = null
+        };
+
+        var diagnostics = new[]
+        {
+            new CodeDiagnostic(
+                diagnosticId: "",
+                targetId: "target1",
+                text: "Do not hardcode dedent value in docstring. [do-not-hardcode-dedent]",
+                helpLinkUri: null)
+        };
+
+        CommentItemModel createdComment = null;
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c => createdComment = c)
+            .Returns(Task.CompletedTask);
+
+        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        await manager.SyncDiagnosticCommentsAsync(apiRevision, diagnostics, new List<CommentItemModel>());
+
+        Assert.NotNull(createdComment);
+        Assert.Equal("do-not-hardcode-dedent", createdComment.CorrelationId);
     }
 
     [Fact]

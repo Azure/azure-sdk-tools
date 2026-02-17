@@ -97,7 +97,7 @@
       <div class="d-flex align-items-center justify-content-end gap-2 mb-3">
         <!-- Disposition Dropdown -->
         <p-select
-          [options]="dispositionOptions"
+          [options]="availableDispositionOptions"
           [(ngModel)]="selectedDisposition"
           optionLabel="label"
           optionValue="value"
@@ -129,10 +129,10 @@
         </app-comment-severity>
 
         <!-- Vertical Separator -->
-        <div class="vr mx-2"></div>
+        <div *ngIf="!isDiagnosticCorrelationContext" class="vr mx-2"></div>
 
         <!-- Vote Buttons -->
-        <div class="d-flex align-items-center vote-section">
+        <div *ngIf="!isDiagnosticCorrelationContext" class="d-flex align-items-center vote-section">
           <button
             type="button"
             class="btn btn-link p-2 vote-btn"
@@ -148,6 +148,11 @@
             <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active fs-5' : 'bi bi-hand-thumbs-down text-muted fs-5'"></span>
           </button>
         </div>
+      </div>
+
+      <div *ngIf="isDiagnosticCorrelationContext" class="alert alert-info py-2 px-3 mb-3" role="alert">
+        <i class="bi bi-info-circle me-1"></i>
+        Diagnostic correlation group: delete and vote actions are disabled.
       </div>
 
       <!-- Inline Feedback Section (appears when downvoting AI comments for keepOpen/resolve) -->
@@ -248,18 +253,26 @@
         <button
           type="button"
           class="btn btn-outline-secondary"
+          [disabled]="isApplyingChanges"
           (click)="onHide()">
           Cancel
         </button>
         <button
           type="button"
           class="btn btn-primary"
-          [disabled]="getSelectedCount() === 0 || (showInlineFeedback && selectedDisposition !== 'delete' && !canSubmitFeedback) || !isDeletionReasonValid"
+          [disabled]="isApplyingChanges || getSelectedCount() === 0 || (showInlineFeedback && selectedDisposition !== 'delete' && !canSubmitFeedback) || !isDeletionReasonValid"
           (click)="resolveSelected()">
-          <i class="pi pi-check"></i>
-          Apply Changes ({{ getSelectedCount() }})
+          <ng-container *ngIf="!isApplyingChanges">
+            <i class="pi pi-check"></i>
+            Apply Changes ({{ getSelectedCount() }})
+          </ng-container>
+          <ng-container *ngIf="isApplyingChanges">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Updating...
+          </ng-container>
         </button>
       </div>
+
     </div>
   </div>
 </p-dialog>

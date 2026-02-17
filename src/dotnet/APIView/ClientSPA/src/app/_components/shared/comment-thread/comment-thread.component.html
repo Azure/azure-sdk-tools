@@ -109,13 +109,13 @@
                             </a>
                         </ng-template>
                     </p-menu>
-                    <button [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
+                    <button *ngIf="!isDiagnostic(comment)" [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
                         <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active" pTooltip="{{comment.upvotes.join(', ')}}" tooltipPosition="bottom">{{comment.upvotes.length}}</span>
                         <ng-template #noUpVotes>
                             <span class="bi bi-hand-thumbs-up"></span>
                         </ng-template>
                     </button>
-                    <button *ngIf="comment.createdBy == 'azure-sdk'" [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
+                    <button *ngIf="comment.createdBy == 'azure-sdk' && !isDiagnostic(comment)" [attr.data-btn-id]="comment.id" (click)="toggleDownVoteAction($event)" class="p-panel-header-icon p-link">
                         <span *ngIf="comment.downvotes.length > 0; else noDownVotes" class="bi bi-hand-thumbs-down-fill emoji-active" pTooltip="{{comment.downvotes.join(', ')}}" tooltipPosition="bottom">{{comment.downvotes.length}}</span>
                         <ng-template #noDownVotes>
                             <span class="bi bi-hand-thumbs-down"></span>
@@ -189,6 +189,7 @@
   [allCodePanelRowData]="allCodePanelRowData"
   [userProfile]="userProfile"
   [preferredApprovers]="preferredApprovers"
+    [isApplyingChanges]="isBatchUpdating"
   [(visible)]="showRelatedCommentsDialog"
   (resolveSelectedComments)="onResolveSelectedComments($event)">
 </app-related-comments-dialog>

@@ -9,6 +9,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -445,8 +446,18 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
-            await AssertOwnerAsync(user, comment);
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, user.GetGitHubLogin());
+            string userName = user.GetGitHubLogin();
+
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new AuthorizationFailedException();
+            }
+            else
+            {
+                await AssertOwnerAsync(user, comment);
+            }
+
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, userName);
             comment.ChangeHistory = changeUpdate.ChangeHistory;
             comment.IsDeleted = changeUpdate.ChangeStatus;
             await _commentsRepository.UpsertCommentAsync(comment);
@@ -844,9 +855,31 @@ namespace APIViewWeb.Managers
             string currentHash = ComputeDiagnosticsHash(diagnostics);
             if (apiRevision.DiagnosticsHash == currentHash)
             {
-                return existingComments
+                var existingDiagnosticCommentsForRevision = existingComments
                     .Where(c => c.CommentSource == CommentSource.Diagnostic && c.APIRevisionId == apiRevisionId)
                     .ToList();
+
+                // Even when diagnostics are unchanged, backfill/update correlation ids so
+                // related-comment grouping can work for older diagnostic comments.
+                var correlationByCommentId = new Dictionary<string, string>();
+                foreach (var diagnostic in diagnostics)
+                {
+                    string diagnosticHash = GenerateDiagnosticHash(diagnostic.TargetId, diagnostic.Text);
+                    string commentId = $"diag-{apiRevisionId}-{diagnosticHash}";
+                    correlationByCommentId[commentId] = GetDiagnosticCorrelationId(diagnostic);
+                }
+
+                foreach (var existingComment in existingDiagnosticCommentsForRevision)
+                {
+                    if (correlationByCommentId.TryGetValue(existingComment.Id, out string expectedCorrelationId) &&
+                        existingComment.CorrelationId != expectedCorrelationId)
+                    {
+                        existingComment.CorrelationId = expectedCorrelationId;
+                        await _commentsRepository.UpsertCommentAsync(existingComment);
+                    }
+                }
+
+                return existingDiagnosticCommentsForRevision;
             }
 
             Dictionary<string, CommentItemModel> existingDiagnosticComments = existingComments
@@ -864,6 +897,7 @@ namespace APIViewWeb.Managers
 
                 CommentSeverity newSeverity = MapDiagnosticLevelToSeverity(diagnostic.Level);
                 string newCommentText = BuildDiagnosticCommentText(diagnostic.Text, diagnostic.HelpLinkUri);
+                string newCorrelationId = GetDiagnosticCorrelationId(diagnostic);
 
                 if (existingDiagnosticComments.TryGetValue(commentId, out var existingComment))
                 {
@@ -898,6 +932,12 @@ namespace APIViewWeb.Managers
                         needsUpdate = true;
                     }
 
+                    if (existingComment.CorrelationId != newCorrelationId)
+                    {
+                        existingComment.CorrelationId = newCorrelationId;
+                        needsUpdate = true;
+                    }
+
                     if (needsUpdate)
                     {
                         await _commentsRepository.UpsertCommentAsync(existingComment);
@@ -916,6 +956,7 @@ namespace APIViewWeb.Managers
                     ElementId = diagnostic.TargetId,
                     ThreadId = threadId,
                     CommentText = newCommentText,
+                    CorrelationId = newCorrelationId,
                     CommentSource = CommentSource.Diagnostic,
                     Severity = newSeverity,
                     CreatedBy = ApiViewConstants.AzureSdkBotName,
@@ -988,6 +1029,29 @@ namespace APIViewWeb.Managers
         private static string BuildDiagnosticCommentText(string diagnosticText, string helpLinkUri)
         {
             return string.IsNullOrEmpty(helpLinkUri) ? diagnosticText : $"{diagnosticText}\n\n[Details]({helpLinkUri})";
+        }
+
+        /// <summary>
+        /// Returns a stable correlation id for diagnostics.
+        /// Prefer explicit DiagnosticId. If missing, extract trailing bracketed id from text, e.g. [do-not-hardcode-dedent].
+        /// </summary>
+        private static string GetDiagnosticCorrelationId(CodeDiagnostic diagnostic)
+        {
+            if (!string.IsNullOrWhiteSpace(diagnostic?.DiagnosticId))
+            {
+                return diagnostic.DiagnosticId.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(diagnostic?.Text))
+            {
+                var match = Regex.Match(diagnostic.Text, @"\[([^\[\]]+)\]\s*$");
+                if (match.Success)
+                {
+                    return match.Groups[1].Value.Trim();
+                }
+            }
+
+            return null;
         }
 
         private static CommentSeverity MapDiagnosticLevelToSeverity(CodeDiagnosticLevel level)

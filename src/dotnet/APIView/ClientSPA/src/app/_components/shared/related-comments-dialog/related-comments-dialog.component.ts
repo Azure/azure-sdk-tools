@@ -52,6 +52,7 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
   @Input() userProfile: UserProfile | undefined;
   @Input() preferredApprovers: string[] = [];
+  @Input() isApplyingChanges: boolean = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() resolveSelectedComments = new EventEmitter<CommentResolutionData>();
 
@@ -84,6 +85,28 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     { label: 'Delete', value: 'delete' as ConversationDisposition, icon: 'pi pi-trash' }
   ];
 
+  get isDiagnosticCorrelationContext(): boolean {
+    if (!this.relatedComments || this.relatedComments.length === 0) {
+      return false;
+    }
+
+    const sourceComment = this.relatedComments.find(c => c.id === this.selectedCommentId);
+    if (sourceComment) {
+      return sourceComment.commentSource === 'diagnostic';
+    }
+
+    // Fallback for edge cases where source comment isn't present in this list.
+    return this.relatedComments.some(c => c.commentSource === 'diagnostic');
+  }
+
+  get availableDispositionOptions() {
+    if (this.isDiagnosticCorrelationContext) {
+      return this.dispositionOptions.filter(o => o.value !== 'delete');
+    }
+
+    return this.dispositionOptions;
+  }
+
   // Permission check: User can edit severity if they can edit ALL selected comments
   get canEditSeverity(): boolean {
     if (!this.userProfile || this.relatedComments.length === 0) {
@@ -115,6 +138,7 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
         this.resetSelection();
         this.codeContextCache.clear();
         this.updateSeverityFromComments();
+        this.enforceDiagnosticCorrelationRestrictions();
       }
     }
   }
@@ -130,6 +154,20 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     this.feedbackReasons = [];
     this.feedbackAdditionalComments = '';
     this.updateSeverityFromComments();
+    this.enforceDiagnosticCorrelationRestrictions();
+  }
+
+  private enforceDiagnosticCorrelationRestrictions() {
+    if (!this.isDiagnosticCorrelationContext) {
+      return;
+    }
+
+    if (this.selectedDisposition === 'delete') {
+      this.selectedDisposition = 'keepOpen';
+    }
+
+    this.batchVote = null;
+    this.showInlineFeedback = false;
   }
 
   private updateSeverityFromComments() {
@@ -206,7 +244,18 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   }
 
   resolveSelected() {
+    if (this.isApplyingChanges) {
+      return;
+    }
+
     if (this.selectedCommentIds.size > 0) {
+      if (this.isDiagnosticCorrelationContext) {
+        this.batchVote = null;
+        if (this.selectedDisposition === 'delete') {
+          this.selectedDisposition = 'keepOpen';
+        }
+      }
+
       const resolutionData: CommentResolutionData = {
         commentIds: Array.from(this.selectedCommentIds),
         batchVote: this.batchVote || undefined,
@@ -224,7 +273,6 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       console.log('🔍 Resolution data being emitted:', resolutionData);
 
       this.resolveSelectedComments.emit(resolutionData);
-      this.onHide();
     }
   }
 
@@ -237,6 +285,10 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   }
 
   toggleBatchVote(voteType: 'up' | 'down') {
+    if (this.isDiagnosticCorrelationContext) {
+      return;
+    }
+
     if (this.batchVote === voteType) {
       this.batchVote = null;
       this.showInlineFeedback = false;

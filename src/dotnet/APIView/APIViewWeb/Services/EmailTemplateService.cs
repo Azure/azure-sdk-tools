@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Net;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Helpers;
+using APIViewWeb.Models;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
 
@@ -69,7 +71,59 @@ namespace APIViewWeb.Services
             {
                 ["{{PackageName}}"] = Encode(packageName),
                 ["{{TypeSpecUrl}}"] = Encode(typeSpecUrl),
-                ["{{LanguageViews}}"] = languagePackagesHtml,
+                ["{{LanguagePackages}}"] = languagePackagesHtml,
+            });
+        }
+
+        public async Task<string> GetApproverReviewEmailAsync(string requesterUserName, string reviewId, string reviewName)
+        {
+            var template = await LoadEmbeddedTemplateAsync("ApproverReviewRequestEmail.html");
+            return RenderTemplate(template, new Dictionary<string, string>
+            {
+                ["{{RequesterProfileUrl}}"] = Encode($"{_apiviewEndpoint}/Assemblies/Profile/{requesterUserName}"),
+                ["{{RequesterUserName}}"] = Encode(requesterUserName),
+                ["{{ReviewUrl}}"] = Encode($"{_apiviewEndpoint}/Assemblies/Review/{reviewId}"),
+                ["{{ReviewName}}"] = Encode(reviewName),
+                ["{{RequestedReviewsUrl}}"] = Encode($"{_apiviewEndpoint}/Assemblies/RequestedReviews/"),
+            });
+        }
+
+        public async Task<string> GetCommentTagEmailAsync(CommentItemModel comment, ReviewListItemModel review, string reviewUrl)
+        {
+            var template = await LoadEmbeddedTemplateAsync("CommentTagEmail.html");
+            return RenderTemplate(template, new Dictionary<string, string>
+            {
+                ["{{PosterProfileUrl}}"] = Encode($"{_apiviewEndpoint}/Assemblies/Profile/{comment.CreatedBy}"),
+                ["{{PosterUserName}}"] = Encode(comment.CreatedBy),
+                ["{{ReviewUrl}}"] = Encode(reviewUrl),
+                ["{{ReviewName}}"] = Encode(review.PackageName),
+                ["{{CommentBodyHtml}}"] = CommentMarkdownExtensions.MarkdownAsHtml(comment.CommentText),
+            });
+        }
+
+        public async Task<string> GetSubscriberCommentEmailAsync(CommentItemModel comment, string elementUrl = null)
+        {
+            var template = await LoadEmbeddedTemplateAsync("SubscriberCommentEmail.html");
+            var elementSection = string.IsNullOrEmpty(comment.ElementId) || string.IsNullOrEmpty(elementUrl)
+                ? string.Empty
+                : $"In <a href='{Encode(elementUrl)}'>{Encode(comment.ElementId)}</a>:<br><br>";
+
+            return RenderTemplate(template, new Dictionary<string, string>
+            {
+                ["{{Heading}}"] = GetContentHeading(comment, includeHtml: true),
+                ["{{ElementSection}}"] = elementSection,
+                ["{{CommentBodyHtml}}"] = CommentMarkdownExtensions.MarkdownAsHtml(comment.CommentText),
+            });
+        }
+
+        public async Task<string> GetNewRevisionEmailAsync(ReviewListItemModel review, APIRevisionListItemModel revision)
+        {
+            var template = await LoadEmbeddedTemplateAsync("NewRevisionEmail.html");
+            return RenderTemplate(template, new Dictionary<string, string>
+            {
+                ["{{RevisionUrl}}"] = Encode($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}"),
+                ["{{RevisionLabel}}"] = Encode(PageModelHelpers.ResolveRevisionLabel(revision)),
+                ["{{CreatedBy}}"] = Encode(revision.CreatedBy),
             });
         }
 
@@ -128,6 +182,11 @@ namespace APIViewWeb.Services
         private static string Encode(string value)
         {
             return WebUtility.HtmlEncode(value ?? string.Empty);
+        }
+
+        private static string GetContentHeading(CommentItemModel comment, bool includeHtml)
+        {
+            return $"{(includeHtml ? $"<b>{Encode(comment.CreatedBy)}</b>" : $"{Encode(comment.CreatedBy)}")} commented on this review.";
         }
     }
 }

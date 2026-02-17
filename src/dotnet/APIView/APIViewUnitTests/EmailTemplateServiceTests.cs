@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Models;
 using APIViewWeb.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -90,7 +91,7 @@ namespace APIViewUnitTests
 
             content.Should().Contain("Namespace Review Approved");
             content.Should().Contain("No language-specific package names available yet.");
-            content.Should().NotContain("{{LanguageViews}}");
+            content.Should().NotContain("{{LanguagePackages}}");
         }
 
         [Fact]
@@ -104,6 +105,76 @@ namespace APIViewUnitTests
 
             content.Should().NotContain("Additional Notes:");
             content.Should().Contain("No language-specific reviews available yet.");
+        }
+
+        [Fact]
+        public async Task GetApproverReviewEmailAsync_RendersApproverLinks()
+        {
+            var content = await _service.GetApproverReviewEmailAsync("requester-user", "review-id", "Azure.AI.Test");
+
+            content.Should().Contain("requester-user");
+            content.Should().Contain("https://apiview.test/Assemblies/Profile/requester-user");
+            content.Should().Contain("https://apiview.test/Assemblies/Review/review-id");
+            content.Should().Contain("Azure.AI.Test");
+            content.Should().Contain("RequestedReviews");
+        }
+
+        [Fact]
+        public async Task GetCommentTagEmailAsync_RendersMentionAndCommentBody()
+        {
+            var comment = new CommentItemModel
+            {
+                CreatedBy = "author",
+                CommentText = "**hello**"
+            };
+            var review = new ReviewListItemModel
+            {
+                PackageName = "Azure.AI.Test"
+            };
+
+            var content = await _service.GetCommentTagEmailAsync(comment, review, "https://apiview.test/review/url");
+
+            content.Should().Contain("mentioned you in");
+            content.Should().Contain("https://apiview.test/Assemblies/Profile/author");
+            content.Should().Contain("https://apiview.test/review/url");
+            content.Should().Contain("Azure.AI.Test");
+            content.Should().Contain("<strong>hello</strong>");
+        }
+
+        [Fact]
+        public async Task GetSubscriberCommentEmailAsync_WithElementLink_RendersHeadingElementAndBody()
+        {
+            var comment = new CommentItemModel
+            {
+                CreatedBy = "author",
+                ElementId = "Sample.Method",
+                CommentText = "review comment"
+            };
+
+            var content = await _service.GetSubscriberCommentEmailAsync(comment, "https://apiview.test/review/line");
+
+            content.Should().Contain("<b>author</b> commented on this review.");
+            content.Should().Contain("In <a href='https://apiview.test/review/line'>Sample.Method</a>:");
+            content.Should().Contain("<p>review comment</p>");
+        }
+
+        [Fact]
+        public async Task GetNewRevisionEmailAsync_RendersRevisionLabelAndAuthor()
+        {
+            var review = new ReviewListItemModel { Id = "review-id" };
+            var revision = new APIRevisionListItemModel
+            {
+                Id = "revision-id",
+                Label = "v2",
+                CreatedBy = "author"
+            };
+
+            var content = await _service.GetNewRevisionEmailAsync(review, revision);
+
+            content.Should().Contain("A new revision");
+            content.Should().Contain("https://apiview.test/Assemblies/Review/review-id");
+            content.Should().Contain("v2");
+            content.Should().Contain("author");
         }
     }
 }

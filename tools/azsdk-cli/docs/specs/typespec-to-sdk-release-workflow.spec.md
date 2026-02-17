@@ -1548,7 +1548,7 @@ This workflow is complete when:
 - All sub-skills integrate seamlessly
 - Local and pipeline SDK generation paths both work correctly
 - APIView feedback can be retrieved and resolved within workflow
-- Works for all 5 SDK languages (.NET, Java, JavaScript, Python, Go)
+- Works for all tier-1 SDK languages (.NET, Java, JavaScript, Python, Go)
 - Clear guidance provided at each decision point
 - Errors and failures are handled gracefully with troubleshooting guidance
 

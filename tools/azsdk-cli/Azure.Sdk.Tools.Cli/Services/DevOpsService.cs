@@ -364,6 +364,18 @@ namespace Azure.Sdk.Tools.Cli.Services
                         }
                         if (parentType.Equals("Release Plan"))
                         {
+                            // Check if parent work item is in abandoned state
+                            if (parentWorkItem.Fields.TryGetValue("System.State", out Object? parentState))
+                            {
+                                var state = parentState?.ToString();
+                                if (state != null && (state.Equals("Abandoned", StringComparison.OrdinalIgnoreCase) ||
+                                                      state.Equals("Closed", StringComparison.OrdinalIgnoreCase) ||
+                                                      state.Equals("Duplicate", StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    logger.LogInformation("Skipping release plan work item {WorkItemId} in {State} state", parentWorkItemId, state);
+                                    continue;
+                                }
+                            }
                             return await MapWorkItemToReleasePlanAsync(parentWorkItem);
                         }
                     }

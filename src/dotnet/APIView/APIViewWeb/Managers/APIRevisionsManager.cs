@@ -605,7 +605,6 @@ namespace APIViewWeb.Managers
             }
             else
             {
-
                 CodeFile codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevision.Id, codeFileModel.FileId);
                 if (codeFile?.Diagnostics != null && codeFile.Diagnostics.Length > 0)
                 {

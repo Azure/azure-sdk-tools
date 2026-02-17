@@ -150,6 +150,11 @@ namespace APIViewWeb
             services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
             services.AddSingleton<UserProfileCache>();
 
+            // OAuth environment and cross-domain auth services
+            services.AddDataProtection();
+            services.AddSingleton<IOAuthEnvironmentService, OAuthEnvironmentService>();
+            services.AddSingleton<IAuthTokenService, AuthTokenService>();
+
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
             services.AddSingleton<LanguageService, CLanguageService>();

@@ -58,6 +58,73 @@ public abstract class PythonRequirementBase : Requirement
     public override bool IsAutoInstallable => true;
 
     /// <summary>
+    /// Resolves an executable path by checking for a venv in order:
+    /// 1. AZSDKTOOLS_PYTHON_VENV_PATH environment variable (via PythonOptions)
+    /// 2. Existing .venv directory at the given repo root
+    /// Returns the original executable name if no venv is found.
+    /// </summary>
+    private static string ResolveVenvExecutable(string executableName, string repoRoot)
+    {
+        // 1. Try env var via PythonOptions
+        try
+        {
+            var resolved = PythonOptions.ResolvePythonExecutable(executableName);
+            if (!string.Equals(resolved, executableName, StringComparison.Ordinal))
+            {
+                return resolved;
+            }
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // Env var set but path invalid — fall through to .venv fallback
+        }
+
+        // 2. Check for existing .venv at repo root
+        var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
+        var repoVenvPath = Path.Combine(repoRoot, ".venv");
+        if (Directory.Exists(repoVenvPath))
+        {
+            var candidate = Path.Combine(repoVenvPath, binDir, executableName);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+                !executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                candidate += ".exe";
+            }
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return executableName;
+    }
+
+    /// <summary>
+    /// Overrides the base check to resolve executables from venv before running.
+    /// Uses the same resolution order as install: env var → .venv at repo root.
+    /// This ensures checks succeed after auto-install creates a .venv.
+    /// </summary>
+    public override async Task<RequirementCheckOutput> RunCheckAsync(
+        IProcessHelper processHelper,
+        RequirementContext ctx,
+        CancellationToken ct = default)
+    {
+        var cmd = RawCheckCommand.ToArray();
+        if (cmd.Length > 0)
+        {
+            cmd[0] = ResolveVenvExecutable(cmd[0], ctx.RepoRoot);
+        }
+
+        var result = await RunCommandAsync(processHelper, cmd, ctx, ct);
+        return new RequirementCheckOutput
+        {
+            Success = result.ExitCode == 0,
+            Output = result.Output?.Trim(),
+            Error = result.ExitCode != 0 ? result.Output?.Trim() : null
+        };
+    }
+
+    /// <summary>
     /// Resolves the venv path and Python executable for installs.
     /// Resolution order:
     /// 1. AZSDKTOOLS_PYTHON_VENV_PATH environment variable (via PythonOptions)

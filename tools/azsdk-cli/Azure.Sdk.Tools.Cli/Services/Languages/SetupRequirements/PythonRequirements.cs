@@ -13,6 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 public abstract class PythonRequirementBase : Requirement
 {
     private const string PythonRepoName = "azure-sdk-for-python";
+    private const string PythonPrRepoName = "azure-sdk-for-python-pr";
 
     public override IReadOnlyList<string> DependsOn => ["Python", "pip"];
 
@@ -22,7 +23,7 @@ public abstract class PythonRequirementBase : Requirement
     protected abstract string[] RawCheckCommand { get; }
 
     /// <summary>
-    /// The pip install target for this requirement (e.g., "eng/tools/azure-sdk-tools[build]").
+    /// The pip install target for this requirement (e.g., "eng/tools/azure-sdk-tools").
     /// Override in subclasses to specify the pip install package/path.
     /// </summary>
     protected abstract string PipInstallTarget { get; }
@@ -137,9 +138,13 @@ public abstract class PythonRequirementBase : Requirement
     {
         // Resolve venv Python executable
         var (pythonExe, venvError) = await ResolveVenvPythonAsync(processHelper, ctx, ct);
-        if (venvError != null)
+        if (venvError != null || pythonExe == null)
         {
-            return venvError;
+            return venvError ?? new RequirementCheckOutput
+            {
+                Success = false,
+                Error = "Failed to resolve Python virtual environment executable."
+            };
         }
 
         // Resolve pip install target
@@ -147,7 +152,7 @@ public abstract class PythonRequirementBase : Requirement
         if (IsRepoRelativeInstall)
         {
             // Repo-relative installs require the azure-sdk-for-python repo
-            if (!ctx.RepoName.Equals(PythonRepoName, StringComparison.OrdinalIgnoreCase))
+            if (!ctx.RepoName.Equals(PythonRepoName, StringComparison.OrdinalIgnoreCase) && !ctx.RepoName.Equals(PythonPrRepoName, StringComparison.OrdinalIgnoreCase))
             {
                 return new RequirementCheckOutput
                 {
@@ -166,7 +171,7 @@ public abstract class PythonRequirementBase : Requirement
         }
 
         var installOptions = new ProcessOptions(
-            pythonExe!,
+            pythonExe,
             args: ["-m", "pip", "install", installTarget],
             timeout: InstallTimeout,
             logOutputStream: true,
@@ -201,7 +206,7 @@ public static class PythonRequirements
     {
         public override string Name => "azpysdk";
         protected override string[] RawCheckCommand => ["azpysdk", "--help"];
-        protected override string PipInstallTarget => "eng/tools/azure-sdk-tools[build]";
+        protected override string PipInstallTarget => "eng/tools/azure-sdk-tools";
 
         public override string? Reason => "Required for validating Python SDKs";
 
@@ -210,7 +215,7 @@ public static class PythonRequirements
             return [
                 "Navigate to the Python SDK repository root directory",
                 "Ensure your virtual environment is activated",
-                "python -m pip install eng/tools/azure-sdk-tools[build]"];
+                "python -m pip install eng/tools/azure-sdk-tools"];
         }
     }
 

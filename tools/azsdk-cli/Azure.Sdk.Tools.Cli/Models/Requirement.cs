@@ -164,7 +164,6 @@ public abstract class Requirement
             $"Requirement '{Name}' is auto-installable but GetInstallCommands did not return any commands to execute.");
         }
     }
-       
 
     /// <summary>
     /// Optional reason why the requirement is needed.

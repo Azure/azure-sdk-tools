@@ -112,6 +112,16 @@ public class VerifySetupTool : LanguageMcpTool
             }
             var pass1Results = await Task.WhenAll(checkTasks);
 
+            // Populate FailedRequirements from pass 1 before running pass 2,
+            // so that dependency checks in pass 2 see all pass 1 failures.
+            foreach (var (req, result) in pass1Results)
+            {
+                if (result.Message != null)
+                {
+                    ctx.FailedRequirements.Add(req.Name);
+                }
+            }
+
             // Pass 2: Check requirements with dependencies sequentially
             // (sequential so transitive dependency failures are visible to later checks)
             var pass2Results = new List<(Requirement req, DefaultCommandResponse result)>();
@@ -119,6 +129,10 @@ public class VerifySetupTool : LanguageMcpTool
             {
                 logger.LogInformation("Checking requirement: {Requirement}", req.Name);
                 var result = await RunCheck(req, ctx, ct);
+                if (result.Message != null)
+                {
+                    ctx.FailedRequirements.Add(req.Name);
+                }
                 pass2Results.Add((req, result));
             }
 
@@ -187,6 +201,7 @@ public class VerifySetupTool : LanguageMcpTool
                         else
                         {
                             logger.LogWarning("Requirement {Requirement} install completed but verification still fails: {Message}", req.Name, recheck.Message);
+                            ctx.FailedRequirements.Add(req.Name);
                             response.Results.Add(new RequirementCheckResult
                             {
                                 Requirement = displayName,
@@ -202,6 +217,7 @@ public class VerifySetupTool : LanguageMcpTool
                     else
                     {
                         logger.LogError("Auto-install failed for {Requirement}: {Error}", req.Name, installResult.Error);
+                        ctx.FailedRequirements.Add(req.Name);
                         response.Results.Add(new RequirementCheckResult
                         {
                             Requirement = displayName,
@@ -238,6 +254,8 @@ public class VerifySetupTool : LanguageMcpTool
 
     private void AddFailedResult(VerifySetupResponse response, Requirement req, DefaultCommandResponse result, RequirementContext ctx)
     {
+        ctx.FailedRequirements.Add(req.Name);
+
         var instructions = req.GetInstructions(ctx).ToList();
         var displayName = GetDisplayName(req);
 
@@ -270,7 +288,6 @@ public class VerifySetupTool : LanguageMcpTool
             var depList = string.Join(", ", failedDeps);
             logger.LogWarning("Skipping {Requirement}: depends on {Dependencies} which failed or is not installed.",
                 req.Name, depList);
-            ctx.FailedRequirements.Add(req.Name);
             return new DefaultCommandResponse
             {
                 Message = $"Skipped {req.Name}: depends on {depList} which failed or is not installed."
@@ -285,7 +302,6 @@ public class VerifySetupTool : LanguageMcpTool
             {
                 logger.LogError("Requirement {Requirement} check failed", 
                     req.Name);
-                ctx.FailedRequirements.Add(req.Name);
                 return new DefaultCommandResponse
                 {
                     Message = $"Requirement {req.Name} check failed: {checkResult.Error ?? checkResult.Output}."
@@ -298,7 +314,6 @@ public class VerifySetupTool : LanguageMcpTool
             {
                 logger.LogError("Requirement {Requirement} failed, requires upgrade to version {Version}.", 
                     req.Name, versionCheckResult);
-                ctx.FailedRequirements.Add(req.Name);
                 return new DefaultCommandResponse
                 {
                     Message = $"Requirement {req.Name} failed, requires upgrade to version {versionCheckResult}"
@@ -310,7 +325,6 @@ public class VerifySetupTool : LanguageMcpTool
             var instructions = req.GetInstructions(ctx);
             logger.LogError(ex, "Requirement {Requirement} check failed to execute.\n\nInstructions: {Instructions}", 
                 req.Name, string.Join(", ", instructions));
-            ctx.FailedRequirements.Add(req.Name);
             return new DefaultCommandResponse
             {
                 Message = $"Requirement {req.Name} check failed to execute.\n\tException: {ex.Message}"

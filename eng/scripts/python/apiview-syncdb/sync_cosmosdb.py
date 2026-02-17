@@ -7,6 +7,7 @@ import os
 import logging
 import traceback
 from ast import literal_eval
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from azure.cosmos import CosmosClient
 from azure.identity import AzurePowerShellCredential, ChainedTokenCredential, AzureCliCredential
 from azure.storage.blob import BlobServiceClient
@@ -61,19 +62,35 @@ def restore_data_from_backup(backup_storage_url, dest_url, db_name):
         if missing_records:
             logging.info("Found {} missing/updated rows to sync".format(len(missing_records)))
             
-            # Batch logging for progress visibility (records still upserted individually)
-            # TODO: Future optimization - use Cosmos DB bulk executor for true batch operations
-            batch_size = 100
+            # Use parallel upserts for better performance
+            # ThreadPoolExecutor allows concurrent upsert operations to Cosmos DB
+            max_workers = 10  # Number of parallel threads
+            batch_size = 100  # Log progress every N records
             total_records = len(missing_records)
-            for i in range(0, total_records, batch_size):
-                batch = missing_records[i:i + batch_size]
-                batch_end = min(i + batch_size, total_records)
-                logging.info("Upserting records {}-{} of {}".format(i + 1, batch_end, total_records))
+            upserted_count = 0
+            
+            def upsert_item(item):
+                """Helper function to upsert a single item"""
+                try:
+                    dest_container_client.upsert_item(item)
+                    return True
+                except Exception as e:
+                    logging.error("Failed to upsert item {}: {}".format(item.get('id', 'unknown'), str(e)))
+                    return False
+            
+            # Execute upserts in parallel using ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Submit all upsert tasks
+                future_to_item = {executor.submit(upsert_item, record): record for record in missing_records}
                 
-                for row in batch:
-                    dest_container_client.upsert_item(row)
-                    
-            logging.info("✓ Container {} synced successfully ({} records upserted)".format(cosmos_container_name, total_records))
+                # Process completed tasks and log progress
+                for future in as_completed(future_to_item):
+                    if future.result():
+                        upserted_count += 1
+                        if upserted_count % batch_size == 0:
+                            logging.info("Upserted {}/{} records".format(upserted_count, total_records))
+            
+            logging.info("✓ Container {} synced successfully ({} records upserted)".format(cosmos_container_name, upserted_count))
         else:
             logging.info("✓ Container {} is already in sync".format(cosmos_container_name))
 

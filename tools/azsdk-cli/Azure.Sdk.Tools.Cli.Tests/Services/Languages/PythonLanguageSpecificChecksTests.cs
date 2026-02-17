@@ -1,103 +1,175 @@
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services.Languages;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
+namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
-[TestFixture]
-internal class PythonLanguageSpecificChecksTests
+/// <summary>
+/// Python-specific implementation of language checks.
+/// </summary>
+public partial class PythonLanguageService : LanguageService
 {
-    private Mock<IProcessHelper> _processHelperMock = null!;
-    private Mock<INpxHelper> _npxHelperMock = null!;
-    private Mock<IPythonHelper> _pythonHelperMock = null!;
-    private Mock<IGitHelper> _gitHelperMock = null!;
-    private Mock<ICommonValidationHelpers> _commonValidationHelpersMock = null!;
-    private PythonLanguageService _languageService = null!;
-
-    [SetUp]
-    public void SetUp()
+    public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        _processHelperMock = new Mock<IProcessHelper>();
-        _npxHelperMock = new Mock<INpxHelper>();
-        _pythonHelperMock = new Mock<IPythonHelper>();
-        _gitHelperMock = new Mock<IGitHelper>();
-        _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-python");
-        _commonValidationHelpersMock = new Mock<ICommonValidationHelpers>();
+        try
+        {
+            logger.LogInformation("Starting snippet update for Python project at: {PackagePath}", packagePath);
 
-        _languageService = new PythonLanguageService(
-            _processHelperMock.Object,
-            _pythonHelperMock.Object,
-            _npxHelperMock.Object,
-            _gitHelperMock.Object,
-            NullLogger<PythonLanguageService>.Instance,
-            _commonValidationHelpersMock.Object,
-            Mock.Of<IFileHelper>(),
-            Mock.Of<ISpecGenSdkConfigHelper>(),
-            Mock.Of<IChangelogHelper>());
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
+            var scriptPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools", "ci_tools", "snippet_update", "python_snippet_updater.py");
+
+            if (!File.Exists(scriptPath))
+            {
+                logger.LogError("Python snippet updater script not found at: {ScriptPath}", scriptPath);
+                return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}");
+            }
+
+            var pythonCheckResult = await pythonHelper.Run(new PythonOptions("python", ["--version"]), cancellationToken);
+            if (pythonCheckResult.ExitCode != 0)
+            {
+                logger.LogError("Python is not installed or not available in PATH");
+                return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.");
+            }
+
+            var result = await pythonHelper.Run(new PythonOptions("python", [scriptPath, packagePath], workingDirectory: packagePath), cancellationToken);
+
+            if (result.ExitCode == 0)
+            {
+                logger.LogInformation("Snippet update completed successfully - all snippets are up to date");
+                return new PackageCheckResponse(result.ExitCode, "All snippets are up to date");
+            }
+            else
+            {
+                logger.LogWarning("Snippet update detected out-of-date snippets with exit code {ExitCode}", result.ExitCode);
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Some snippets were updated or need attention");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating snippets for Python project at: {PackagePath}", packagePath);
+            return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}");
+        }
     }
 
-    #region HasCustomizations Tests
-
-    [Test]
-    public void HasCustomizations_ReturnsTrue_WhenPatchFileHasNonEmptyAllExport()
+    public override async Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        using var tempDir = TempDirectory.Create("python-customization-test");
-        var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
-        Directory.CreateDirectory(azureDir);
-        
-        File.WriteAllText(Path.Combine(azureDir, "_patch.py"), 
-            "__all__ = [\"CustomClient\"]\n\nclass CustomClient:\n    pass");
+        try
+        {
+            logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
 
-        var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+            var lintingTools = new[]
+            {
+                ("pylint", new PythonOptions("azpysdk", ["pylint", "--isolate", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(3))),
+                ("mypy", new PythonOptions("azpysdk", ["mypy", "--isolate", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(3))),
+            };
 
-        Assert.That(result, Is.True);
+            logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
+
+            var lintingTasks = lintingTools.Select(async tool =>
+            {
+                var (toolName, options) = tool;
+                var result = await pythonHelper.Run(options, cancellationToken);
+                return (toolName, result);
+            });
+
+            var allResults = await Task.WhenAll(lintingTasks);
+            var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
+
+            if (failedTools.Count == 0)
+            {
+                logger.LogInformation("All linting tools completed successfully - no issues found");
+                return new PackageCheckResponse(0, "All linting tools completed successfully - no issues found");
+            }
+            else
+            {
+                var failedToolNames = string.Join(", ", failedTools.Select(t => t.toolName));
+                var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.toolName} ===\n{t.result.Output}"));
+                
+                logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
+                    failedTools.Count, allResults.Length, failedToolNames);
+                
+                return new PackageCheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
+            return new PackageCheckResponse(1, "", $"Error running code linting: {ex.Message}");
+        }
     }
 
-    [Test]
-    public void HasCustomizations_ReturnsTrue_WhenMultilineAllExport()
+        public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        using var tempDir = TempDirectory.Create("python-multiline-test");
-        var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
-        Directory.CreateDirectory(azureDir);
-        
-        File.WriteAllText(Path.Combine(azureDir, "_patch.py"), 
-            "__all__ = [\n    \"CustomClient\",\n]");
+        try
+        {
+            logger.LogInformation("Starting dependency analysis for Python project at: {PackagePath}", packagePath);
 
-        var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+            var result = await pythonHelper.Run(new PythonOptions("azpysdk", ["mindependency", "--isolate", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(5)), cancellationToken);
 
-        Assert.That(result, Is.True);
+            if (result.ExitCode == 0)
+            {
+                logger.LogInformation("Dependency analysis completed successfully - no issues found");
+                return new PackageCheckResponse(result.ExitCode, "Dependency analysis completed successfully - all minimum dependencies are compatible");
+            }
+            else
+            {
+                logger.LogWarning("Dependency analysis found issues with exit code {ExitCode}", result.ExitCode);
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Dependency analysis found issues with minimum dependency versions");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error running dependency analysis for Python project at: {PackagePath}", packagePath);
+            return new PackageCheckResponse(1, "", $"Error running dependency analysis: {ex.Message}");
+        }
     }
 
-    [Test]
-    public void HasCustomizations_ReturnsFalse_WhenPatchFileHasEmptyAllExport()
+    public override async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        using var tempDir = TempDirectory.Create("python-empty-patch-test");
-        var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
-        Directory.CreateDirectory(azureDir);
-        
-        File.WriteAllText(Path.Combine(azureDir, "_patch.py"), "__all__: List[str] = []");
+        try
+        {
+            logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
+            
+            var result = await pythonHelper.Run(new PythonOptions("azpysdk", ["black", "--isolate", packagePath], workingDirectory: packagePath), cancellationToken);
 
-        var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
-
-        Assert.That(result, Is.False);
+            if (result.ExitCode == 0)
+            {
+                logger.LogInformation("Code formatting completed successfully - no issues found");
+                return new PackageCheckResponse(result.ExitCode, "Code formatting completed successfully - no issues found");
+            }
+            else
+            {
+                logger.LogWarning("Code formatting found issues with exit code {ExitCode}", result.ExitCode);
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Code formatting found issues that need attention");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error running code formatting for Python project at: {PackagePath}", packagePath);
+            return new PackageCheckResponse(1, "", $"Error running code formatting: {ex.Message}");
+        }
     }
 
-    [Test]
-    public void HasCustomizations_ReturnsFalse_WhenNoPatchFilesExist()
+    public override async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        using var tempDir = TempDirectory.Create("python-no-patch-test");
-        var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
-        Directory.CreateDirectory(azureDir);
-        
-        File.WriteAllText(Path.Combine(azureDir, "client.py"), "# Client code");
-
-        var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
-
-        Assert.That(result, Is.False);
+        return await commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);
     }
 
-    #endregion
+    public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
+        var packageName = Path.GetFileName(packagePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public override async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
+        var relativePath = Path.GetRelativePath(repoRoot, packagePath);
+        var spellingCheckPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
+        return await commonValidationHelpers.CheckSpelling(spellingCheckPath, packagePath, fixCheckErrors, cancellationToken);
+    }
 }

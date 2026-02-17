@@ -30,6 +30,7 @@ namespace APIViewWeb.Managers
         private readonly ICosmosReviewRepository _reviewsRepository;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICosmosAPIRevisionsRepository _apiRevisionsRepository;
+        private readonly IDiagnosticCommentService _diagnosticCommentService;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly ICodeFileManager _codeFileManager;
@@ -43,6 +44,7 @@ namespace APIViewWeb.Managers
             IAuthorizationService authorizationService,
             ICosmosReviewRepository reviewsRepository,
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
+            IDiagnosticCommentService diagnosticCommentService,
             IHubContext<SignalRHub> signalRHubContext,
             IEnumerable<LanguageService> languageServices,
             IDevopsArtifactRepository devopsArtifactRepository,
@@ -55,6 +57,7 @@ namespace APIViewWeb.Managers
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
+            _diagnosticCommentService = diagnosticCommentService;
             _authorizationService = authorizationService;
             _signalRHubContext = signalRHubContext;
             _codeFileManager = codeFileManager;
@@ -582,21 +585,39 @@ namespace APIViewWeb.Managers
                 createdBy: user.GetGitHubLogin(),
                 label: label);
 
-            var codeFile = await _codeFileManager.CreateCodeFileAsync(
+            APICodeFileModel codeFileModel = await _codeFileManager.CreateCodeFileAsync(
                 apiRevision.Id,
                 name,
                 true,
                 fileStream,
                 language);
 
-            apiRevision.Files.Add(codeFile);
+            apiRevision.Files.Add(codeFileModel);
 
             var languageService = language != null ? _languageServices.FirstOrDefault(l => l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
+            bool isPipelineGenerated = languageService != null && languageService.IsReviewGenByPipeline;
+            
             // Run pipeline to generate the review if sandbox is enabled
-            if (languageService != null && languageService.IsReviewGenByPipeline)
+            if (isPipelineGenerated)
             {
                 // Run offline review gen for review and reviewCodeFileModel
-                await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFile.FileId, name, language);
+                await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFileModel.FileId, name, language);
+            }
+            else
+            {
+
+                CodeFile codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevision.Id, codeFileModel.FileId);
+                if (codeFile?.Diagnostics != null && codeFile.Diagnostics.Length > 0)
+                {
+                    DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                        review.Id,
+                        apiRevision.Id,
+                        null, // No existing hash for new revisions
+                        codeFile.Diagnostics,
+                        []);
+                    
+                    apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
+                }
             }
 
             // auto subscribe revision creation user
@@ -937,6 +958,15 @@ namespace APIViewWeb.Managers
             {
                 apiRevisionCodeFile.FileName = originalName;
             }
+
+            DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                reviewId,
+                apiRevision.Id,
+                null, 
+                codeFile.Diagnostics,
+                []);
+            
+            apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
 
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;

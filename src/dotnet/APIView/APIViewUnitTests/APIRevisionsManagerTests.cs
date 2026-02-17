@@ -69,6 +69,7 @@ public class APIRevisionsManagerTests
 {
     private readonly APIRevisionsManager _manager;
     private readonly Mock<ICosmosAPIRevisionsRepository> _mockAPIRevisionsRepository;
+    private readonly Mock<IDiagnosticCommentService> _mockDiagnosticCommentService;
     private readonly Mock<IAuthorizationService> _mockAuthorizationService;
     private readonly Mock<ICodeFileManager> _mockCodeFileManager;
     private readonly Mock<IBlobCodeFileRepository> _mockCodeFileRepository;
@@ -86,6 +87,7 @@ public class APIRevisionsManagerTests
         _mockReviewsRepository = new Mock<ICosmosReviewRepository>();
         _mockCodeFileRepository = new Mock<IBlobCodeFileRepository>();
         _mockAPIRevisionsRepository = new Mock<ICosmosAPIRevisionsRepository>();
+        _mockDiagnosticCommentService = new Mock<IDiagnosticCommentService>();
         _mockOriginalsRepository = new Mock<IBlobOriginalsRepository>();
         _mockAuthorizationService = new Mock<IAuthorizationService>();
         _mockHubContext = new Mock<IHubContext<SignalRHub>>();
@@ -105,6 +107,7 @@ public class APIRevisionsManagerTests
             _mockAuthorizationService.Object,
             _mockReviewsRepository.Object,
             _mockAPIRevisionsRepository.Object,
+            _mockDiagnosticCommentService.Object,
             _mockHubContext.Object,
             languageServices,
             _mockDevopsArtifactRepository.Object,

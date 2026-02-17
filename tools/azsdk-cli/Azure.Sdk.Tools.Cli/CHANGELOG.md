@@ -4,6 +4,9 @@
 
 ### Features Added
 
+- Added `azsdk upgrade` command and `#azsdk_upgrade` mcp tool to perform a self-upgrade to the latest (or specified) version
+- The CLI and MCP server will proactively check for new updates and notify the user on a 1 and 3 day TTL, respectively
+
 ### Breaking Changes
 
 ### Bugs Fixed

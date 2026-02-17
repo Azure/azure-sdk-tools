@@ -22,7 +22,7 @@ namespace APIViewWeb.Managers.Interfaces
     {
         public List<CommentItemModel> Comments { get; set; } = [];
         public string DiagnosticsHash { get; set; }
-        //Indicates whether synchronization was performed (true) or skipped due to matching hash (false).
+        // Indicates whether synchronization was performed (true) or skipped due to matching hash (false).
         public bool WasSynced { get; set; }
     }
 }

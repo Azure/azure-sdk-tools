@@ -283,7 +283,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Wiql wiql,
                 bool? timePrecision = null,
                 int? top = null,
-                object userState = null,
+                object? userState = null,
                 CancellationToken cancellationToken = default)
             {
                 var result = new WorkItemQueryResult
@@ -294,13 +294,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             }
 
 
-            public override Task<List<WorkItem>> GetWorkItemsAsync(IEnumerable<int> ids, IEnumerable<string> fields = null, DateTime? asOf = null, WorkItemExpand? expand = null, WorkItemErrorPolicy? errorPolicy = null, object userState = null, CancellationToken cancellationToken = default(CancellationToken))
+            public override Task<List<WorkItem>> GetWorkItemsAsync(IEnumerable<int> ids, IEnumerable<string>? fields = null, DateTime? asOf = null, WorkItemExpand? expand = null, WorkItemErrorPolicy? errorPolicy = null, object? userState = null, CancellationToken cancellationToken = default(CancellationToken))
             {
                 var workItems = _queryWorkItems.Where(wi => ids.Contains(wi.Id ?? 0)).ToList();
                 return Task.FromResult(workItems);
             }
 
-            public override Task<WorkItem> GetWorkItemAsync(string project, int id, IEnumerable<string> fields = null, DateTime? asOf = null, WorkItemExpand? expand = null, object userState = null, CancellationToken cancellationToken = default(CancellationToken))
+            public override Task<WorkItem> GetWorkItemAsync(string project, int id, IEnumerable<string>? fields = null, DateTime? asOf = null, WorkItemExpand? expand = null, object? userState = null, CancellationToken cancellationToken = default(CancellationToken))
             {
                 if (_workItems.TryGetValue(id, out var workItem))
                 {
@@ -312,10 +312,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             public override Task<WorkItem> GetWorkItemAsync(
                 int id,
-                IEnumerable<string> fields = null,
+                IEnumerable<string>? fields = null,
                 DateTime? asOf = null,
                 WorkItemExpand? expand = null,
-                object userState = null,
+                object? userState = null,
                 CancellationToken cancellationToken = default)
             {
                 if (_workItems.TryGetValue(id, out var workItem))

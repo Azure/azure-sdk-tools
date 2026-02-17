@@ -68,7 +68,7 @@ namespace APIViewWeb.Managers
         public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)
         {
             var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            await SendSubscriberNotificationsAsync(review, user, GetHtmlContent(comment, review), comment.TaggedUsers);
+            await SendSubscriberEmailAsync(review, user, GetHtmlContent(comment, review), comment.TaggedUsers);
         }
 
         public async Task NotifyUserOnCommentTag(CommentItemModel comment)
@@ -113,7 +113,7 @@ namespace APIViewWeb.Managers
             var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}");
             var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{PageModelHelpers.ResolveRevisionLabel(revision)}</a>," +
                 $" was uploaded by <b>{revision.CreatedBy}</b>.";
-            await SendSubscriberNotificationsAsync(review, user, htmlContent, null);
+            await SendSubscriberEmailAsync(review, user, htmlContent, null);
         }
         /// <summary>
         /// Toggle Subscription to a Review
@@ -251,7 +251,7 @@ namespace APIViewWeb.Managers
             // SendEmailAsync already handles email validation
             await SendEmailAsync(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
         }
-        private async Task SendSubscriberNotificationsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
+        private async Task SendSubscriberEmailAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
         {
             var initiatingUserEmail = GetUserEmail(user);
             

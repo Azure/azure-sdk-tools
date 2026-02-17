@@ -38,6 +38,27 @@ public class PythonOptions : ProcessOptions
     }
 
     /// <summary>
+    /// Resolves an executable path within a given venv directory.
+    /// Handles platform-specific bin directory (Scripts vs bin) and .exe suffix.
+    /// </summary>
+    /// <param name="venvPath">Absolute path to the venv root directory.</param>
+    /// <param name="executableName">Name of the executable (e.g., "python", "pytest").</param>
+    /// <returns>Full path to the executable within the venv.</returns>
+    public static string ResolveFromVenvPath(string venvPath, string executableName)
+    {
+        var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
+        var candidate = Path.Combine(venvPath, binDir, executableName);
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+            !executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        {
+            candidate += ".exe";
+        }
+
+        return candidate;
+    }
+
+    /// <summary>
     /// Resolves a Python executable path from venv.
     /// Checks in order: AZSDKTOOLS_PYTHON_VENV_PATH env var.
     /// </summary>
@@ -57,21 +78,7 @@ public class PythonOptions : ProcessOptions
                     $"Python venv path specified in {VenvEnvironmentVariable} does not exist: {venvPath}");
             }
 
-            var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-            var venvExecutablePath = Path.Combine(venvPath, binDir, executableName);
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                if (!executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    return venvExecutablePath + ".exe";
-                }
-                return venvExecutablePath;
-            }
-            else
-            {
-                return venvExecutablePath;
-            }
+            return ResolveFromVenvPath(venvPath, executableName);
         }
         return executableName;
     }

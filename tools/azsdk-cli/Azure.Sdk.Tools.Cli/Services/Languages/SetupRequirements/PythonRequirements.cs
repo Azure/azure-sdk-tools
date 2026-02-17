@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 
@@ -36,22 +35,6 @@ public abstract class PythonRequirementBase : Requirement
     /// </summary>
     protected virtual bool IsRepoRelativeInstall => true;
 
-    /// <summary>
-    /// Resolves the Python executable path at runtime.
-    /// </summary>
-    public override string[] CheckCommand
-    {
-        get
-        {
-            var cmd = RawCheckCommand.ToArray();
-            if (cmd.Length > 0) 
-            {
-                cmd[0] = PythonOptions.ResolvePythonExecutable(cmd[0]);
-            }
-            return cmd;
-        }
-    }
-
     public override bool ShouldCheck(RequirementContext ctx)
         => ctx.Languages.Contains(SdkLanguage.Python);
 
@@ -71,7 +54,12 @@ public abstract class PythonRequirementBase : Requirement
             var resolved = PythonOptions.ResolvePythonExecutable(executableName);
             if (!string.Equals(resolved, executableName, StringComparison.Ordinal))
             {
-                return resolved;
+                // Verify the resolved path actually exists before returning;
+                // fall through to .venv fallback if it doesn't.
+                if (File.Exists(resolved))
+                {
+                    return resolved;
+                }
             }
         }
         catch (DirectoryNotFoundException)
@@ -80,16 +68,10 @@ public abstract class PythonRequirementBase : Requirement
         }
 
         // 2. Check for existing .venv at repo root
-        var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
         var repoVenvPath = Path.Combine(repoRoot, ".venv");
         if (Directory.Exists(repoVenvPath))
         {
-            var candidate = Path.Combine(repoVenvPath, binDir, executableName);
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
-                !executableName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            {
-                candidate += ".exe";
-            }
+            var candidate = PythonOptions.ResolveFromVenvPath(repoVenvPath, executableName);
             if (File.Exists(candidate))
             {
                 return candidate;
@@ -136,9 +118,6 @@ public abstract class PythonRequirementBase : Requirement
         RequirementContext ctx,
         CancellationToken ct)
     {
-        var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-        var exeName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "python.exe" : "python";
-
         // 1. Check AZSDKTOOLS_PYTHON_VENV_PATH environment variable
         const string pythonName = "python";
         string resolved;
@@ -170,7 +149,7 @@ public abstract class PythonRequirementBase : Requirement
 
         // 2. Check for existing .venv at repo root
         var repoVenvPath = Path.Combine(ctx.RepoRoot, ".venv");
-        var repoVenvPythonExe = Path.Combine(repoVenvPath, binDir, exeName);
+        var repoVenvPythonExe = PythonOptions.ResolveFromVenvPath(repoVenvPath, pythonName);
         if (Directory.Exists(repoVenvPath) && File.Exists(repoVenvPythonExe))
         {
             return (repoVenvPythonExe, null);

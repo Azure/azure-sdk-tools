@@ -11,9 +11,9 @@
 
   <!-- Microsoft Clarity Analytics -->
   <script type="text/javascript">
-    // Only load Clarity in production (exclude localhost, staging, dev environments)
-    const excludedHosts = ['localhost', '127.0.0.1', 'apiviewstagingtest.com', 'apiviewuxtest.com', 'apiview.org', 'apiview.dev'];
-    const isProduction = !excludedHosts.includes(window.location.hostname);
+    // Only load Clarity in production (apiview.dev)
+    const hostname = window.location.hostname;
+    const isProduction = hostname === 'apiview.dev' || hostname.endsWith('.apiview.dev');
 
     if (isProduction) {
       (function(c,l,a,r,i,t,y){

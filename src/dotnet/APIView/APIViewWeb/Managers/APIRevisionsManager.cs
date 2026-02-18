@@ -731,12 +731,12 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
         }
 
-        private static async Task<TypeSpecMetadata> ExtractTypeSpecMetadataForReviewAsync(ZipArchive archive, string targetReviewId)
+        private static async Task<TypeSpecMetadata> ExtractTypeSpecMetadataForReviewAsync(ZipArchive archive, string targetReviewId, string metadataFileName)
         {
             var metadataEntry = archive.Entries.FirstOrDefault(e =>
                 e.FullName.Split("/") is { Length: >= 4 } parts &&
                 parts[1].Equals(targetReviewId, StringComparison.OrdinalIgnoreCase) &&
-                Path.GetFileName(e.FullName).Equals(ApiViewConstants.TypeSpecMetadataFileName, StringComparison.OrdinalIgnoreCase));
+                Path.GetFileName(e.FullName).Equals(metadataFileName, StringComparison.OrdinalIgnoreCase));
 
             if (metadataEntry == null)
                 return null;
@@ -759,8 +759,9 @@ namespace APIViewWeb.Managers
         /// <param name="buildId"></param>
         /// <param name="artifact"></param>
         /// <param name="project"></param>
+        /// <param name="metadataFileName">Optional TypeSpec metadata file name (e.g., "typespec-metadata.json").</param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project)
+        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project, string metadataFileName = null)
         {
             var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
@@ -775,7 +776,7 @@ namespace APIViewWeb.Managers
 
                 // Skip metadata files - they are processed on-demand for TypeSpec reviews
                 var fileName = Path.GetFileName(reviewFilePath);
-                if (fileName.Equals(ApiViewConstants.TypeSpecMetadataFileName, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(metadataFileName) && fileName.Equals(metadataFileName, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 var reviewId = reviewDetails[1];
@@ -809,9 +810,9 @@ namespace APIViewWeb.Managers
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
                         // Process TypeSpec metadata if available for this review (lazy load only for TypeSpec)
-                        if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.TypeSpecLanguage)
+                        if (!string.IsNullOrEmpty(metadataFileName) && !string.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.TypeSpecLanguage)
                         {
-                            var typeSpecMetadata = await ExtractTypeSpecMetadataForReviewAsync(archive, reviewId);
+                            var typeSpecMetadata = await ExtractTypeSpecMetadataForReviewAsync(archive, reviewId, metadataFileName);
                             if (typeSpecMetadata != null)
                             {
                                 await _projectsManager.UpsertProjectFromMetadataAsync(ApiViewConstants.AzureSdkBotName, typeSpecMetadata, review);

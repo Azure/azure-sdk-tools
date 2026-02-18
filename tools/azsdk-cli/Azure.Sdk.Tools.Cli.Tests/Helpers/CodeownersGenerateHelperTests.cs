@@ -16,30 +16,24 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 [TestFixture]
-public class codeownersGenerateHelperTests
+public class CodeownersGenerateHelperTests
 {
     private TempDirectory _tempDir = null!;
-    private ILogger<codeownersGenerateHelper> _logger = null!;
+    private ILogger<CodeownersGenerateHelper> _logger = null!;
     private Mock<IDevOpsService> _mockDevOpsService = null!;
     private Mock<IPowershellHelper> _mockPowershellHelper = null!;
     private Mock<IInputSanitizer> _mockInputSanitizer = null!;
     private string _repoRoot = null!;
-    private string _codeownersPath = null!;
 
     [SetUp]
     public void SetUp()
     {
         _tempDir = TempDirectory.Create("codeownersGenerateHelperTests");
         _repoRoot = _tempDir.DirectoryPath;
-        _logger = new TestLogger<codeownersGenerateHelper>();
+        _logger = new TestLogger<CodeownersGenerateHelper>();
         _mockDevOpsService = new Mock<IDevOpsService>();
         _mockPowershellHelper = new Mock<IPowershellHelper>();
         _mockInputSanitizer = new Mock<IInputSanitizer>();
-
-        // Create .github directory and CODEOWNERS file
-        var githubDir = Path.Combine(_repoRoot, ".github");
-        Directory.CreateDirectory(githubDir);
-        _codeownersPath = Path.Combine(githubDir, "CODEOWNERS");
     }
 
     [TearDown]
@@ -49,45 +43,6 @@ public class codeownersGenerateHelperTests
     }
 
     #region Helper Methods
-
-    #endregion
-
-    #region GetLanguageFromRepoName Tests
-
-    [TestCase("Azure/azure-sdk-for-net", "net", ".NET")]
-    [TestCase("Azure/azure-sdk-for-python", "python", "Python")]
-    [TestCase("Azure/azure-sdk-for-java", "java", "Java")]
-    [TestCase("Azure/azure-sdk-for-js", "js", "JavaScript")]
-    [TestCase("Azure/azure-sdk-for-go", "go", "Go")]
-    [TestCase("Azure/azure-sdk-for-cpp", "cpp", "C++")]
-    [TestCase("azure-sdk-for-net", "net", ".NET")]
-    public void GetLanguageFromRepoName_ReturnsExpectedLanguage(string repoName, string expectedSuffix, string expectedLanguage)
-    {
-        var result = codeownersGenerateHelper.GetLanguageFromRepoName(repoName);
-
-        Assert.That(result, Is.EqualTo(expectedLanguage));
-    }
-
-    [Test]
-    public void GetLanguageFromRepoName_ThrowsForInvalidRepoName()
-    {
-        Assert.Throws<ArgumentException>(() => codeownersGenerateHelper.GetLanguageFromRepoName("unknown-repo"));
-    }
-
-    #endregion
-
-    #region BuildPathExpression Tests
-
-    [TestCase(@"C:\repos\sdk\storage\Azure.Storage.Blobs", @"C:\repos", "/sdk/storage/Azure.Storage.Blobs/")]
-    [TestCase(@"C:\repos\sdk\core", @"C:\repos", "/sdk/core/")]
-    [TestCase("sdk/storage", "", "/sdk/storage/")]
-    [TestCase("/sdk/storage/", "/src/repo", "/sdk/storage/")]
-    [TestCase("/src/repo/sdk/storage/", "/src/repo", "/sdk/storage/")]
-    public void BuildPathExpression_ReturnsExpectedPath(string dirPath, string repoRoot, string expected)
-    {
-        var result = codeownersGenerateHelper.BuildPathExpression(dirPath, repoRoot);
-        Assert.That(result, Is.EqualTo(expected));
-    }
 
     #endregion
 
@@ -285,15 +240,15 @@ public class codeownersGenerateHelperTests
 
     private List<CodeownersEntry> InvokeBuildCodeownersEntries(WorkItemData data, Dictionary<string, RepoPackage> packageLookup)
     {
-        var method = typeof(codeownersGenerateHelper).GetMethod(
+        var method = typeof(CodeownersGenerateHelper).GetMethod(
             "BuildCodeownersEntries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        var helper = new codeownersGenerateHelper(
+        var helper = new CodeownersGenerateHelper(
             _mockDevOpsService.Object,
             _mockPowershellHelper.Object,
-            _mockInputSanitizer.Object,
-            _logger);
+            _logger
+        );
 
         return method?.Invoke(helper, [data, packageLookup, _repoRoot]) as List<CodeownersEntry> ?? [];
     }

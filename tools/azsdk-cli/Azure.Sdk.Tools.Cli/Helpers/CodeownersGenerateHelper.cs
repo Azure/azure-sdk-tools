@@ -18,9 +18,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// Generates CODEOWNERS files from Azure DevOps work items.
 /// </summary>
 public class CodeownersGenerateHelper(
-        IDevOpsService devOpsService,
-        IPowershellHelper powershellHelper,
-        ILogger<CodeownersGenerateHelper> logger) : ICodeownersGenerateHelper
+    IDevOpsService devOpsService,
+    IPowershellHelper powershellHelper,
+    ILogger<CodeownersGenerateHelper> logger
+) : ICodeownersGenerateHelper
 {
     private readonly IDevOpsService devOpsService = devOpsService;
     private readonly IPowershellHelper powershellHelper = powershellHelper;

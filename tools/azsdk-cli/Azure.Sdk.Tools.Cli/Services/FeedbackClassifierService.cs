@@ -210,7 +210,7 @@ public class FeedbackClassifierService
         item.Status = status;
         if (!string.IsNullOrEmpty(reason))
         {
-            item.Reason = reason;
+            item.ClassificationReason = reason;
             item.Context += $"\n\nClassification: {classification}\nReason: {reason}";
         }
         

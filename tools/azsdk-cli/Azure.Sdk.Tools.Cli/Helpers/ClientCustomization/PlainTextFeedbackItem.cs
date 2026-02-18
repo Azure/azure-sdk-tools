@@ -22,7 +22,7 @@ public class PlainTextFeedbackItem : IFeedbackItem
         _logger = logger;
     }
 
-    public Task<FeedbackContext> PreprocessAsync(CancellationToken ct = default)
+    public Task<FeedbackBatch> PreprocessAsync(CancellationToken ct = default)
     {
         _logger.LogInformation("Processing plain text feedback");
 
@@ -30,20 +30,14 @@ public class PlainTextFeedbackItem : IFeedbackItem
         var feedbackItem = new FeedbackItem
         {
             Text = _plainText,
-            Context = string.Empty,
-            Metadata = new Dictionary<string, string> {}
+            Context = string.Empty
         };
-        
-        feedbackItem.FormattedPrompt = $"Id: {feedbackItem.Id}\nText: {_plainText}\nContext: {feedbackItem.Context}";
 
-        var context = new FeedbackContext
+        var batch = new FeedbackBatch
         {
-            FormattedFeedback = feedbackItem.FormattedPrompt,
-            FeedbackItems = new List<FeedbackItem> { feedbackItem },
-            InputType = "plain-text",
-            Metadata = new Dictionary<string, string>{}
+            Items = new List<FeedbackItem> { feedbackItem }
         };
 
-        return Task.FromResult(context);
+        return Task.FromResult(batch);
     }
 }

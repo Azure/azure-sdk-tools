@@ -27,7 +27,7 @@ public class APIViewFeedbackItem : IFeedbackItem
         _logger = logger;
     }
 
-    public async Task<FeedbackContext> PreprocessAsync(CancellationToken ct = default)
+    public async Task<FeedbackBatch> PreprocessAsync(CancellationToken ct = default)
     {
         _logger.LogInformation("Preprocessing APIView feedback from: {Url}", _apiViewUrl);
 
@@ -49,23 +49,15 @@ public class APIViewFeedbackItem : IFeedbackItem
                 Text = text,
                 Context = string.Empty
             };
-            item.FormattedPrompt = $"Id: {item.Id}\nText: {text}\nContext: ";
             return item;
         }).ToList();
 
         _logger.LogInformation("Converted {Count} comments to feedback items", feedbackItems.Count);
 
-        return new FeedbackContext
+        return new FeedbackBatch
         {
-            FormattedFeedback = string.Join("\n\n", feedbackItems.Select(f => f.FormattedPrompt)),
-            FeedbackItems = feedbackItems,
-            Language = metadata.Language,
-            PackageName = metadata.PackageName,
-            InputType = "apiview",
-            Metadata = new Dictionary<string, string>
-            {
-                ["APIViewUrl"] = _apiViewUrl
-            }
+            Items = feedbackItems,
+            Language = metadata.Language
         };
     }
 }

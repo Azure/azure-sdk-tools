@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 public interface IFeedbackItem
 {
     /// <summary>
-    /// Preprocesses the input and returns a standardized feedback context
+    /// Preprocesses the input and returns a batch of feedback items
     /// </summary>
-    Task<FeedbackContext> PreprocessAsync(CancellationToken ct = default);
+    Task<FeedbackBatch> PreprocessAsync(CancellationToken ct = default);
 }

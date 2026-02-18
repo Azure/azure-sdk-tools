@@ -97,7 +97,6 @@ public class FeedbackClassifierServiceTests
     {
         var item = new FeedbackItem { Text = text };
         if (id != null) item.Id = id;
-        item.FormattedPrompt = $"Text: {text}\nContext: ";
         return item;
     }
 
@@ -150,7 +149,7 @@ public class FeedbackClassifierServiceTests
         {
             Id = id,
             Text = text,
-            FormattedPrompt = $"Id: {id}\nText: {text}\nContext: {context}"
+            Context = context
         };
     }
 
@@ -159,7 +158,7 @@ public class FeedbackClassifierServiceTests
         TestContext.WriteLine("Classification results:");
         foreach (var item in items)
         {
-            TestContext.WriteLine($"  [{item.Id}] Status: {item.Status}, Reason: {item.Reason}");
+            TestContext.WriteLine($"  [{item.Id}] Status: {item.Status}, Reason: {item.ClassificationReason}");
         }
     }
 
@@ -311,7 +310,7 @@ public class FeedbackClassifierServiceTests
         await service.ClassifyAsync(items, "global context");
 
         // Assert
-        Assert.That(item.Reason, Is.EqualTo("Non-actionable feedback - approval comment with no requested changes"));
+        Assert.That(item.ClassificationReason, Is.EqualTo("Non-actionable feedback - approval comment with no requested changes"));
         Assert.That(item.Context, Does.Contain("Classification: SUCCESS"));
         Assert.That(item.Context, Does.Contain("Reason: Non-actionable feedback - approval comment with no requested changes"));
     }
@@ -389,18 +388,18 @@ public class FeedbackClassifierServiceTests
 
         LogClassificationResults(items);
 
-        Assert.That(items, Has.All.Property("Reason").Not.Null.And.Not.Empty,
+        Assert.That(items, Has.All.Property("ClassificationReason").Not.Null.And.Not.Empty,
             "All items should have a reason after classification");
 
         // TSP_APPLICABLE assertions - check status and that reason mentions the appropriate decorator
         Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE),
             "Client rename should be TSP_APPLICABLE");
-        Assert.That(items[0].Reason, Does.Contain("clientName").IgnoreCase,
+        Assert.That(items[0].ClassificationReason, Does.Contain("clientName").IgnoreCase,
             "Rename reason should mention @clientName decorator");
 
         Assert.That(items[1].Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE),
             "Making operation internal should be TSP_APPLICABLE");
-        Assert.That(items[1].Reason, Does.Contain("access").IgnoreCase,
+        Assert.That(items[1].ClassificationReason, Does.Contain("access").IgnoreCase,
             "Visibility change reason should mention @access decorator");
 
         // SUCCESS assertions - just check status (reason existence already verified above)
@@ -436,7 +435,7 @@ public class FeedbackClassifierServiceTests
             {
                 Id = id,
                 Text = "Rename the 'Items' property to 'Documents' for consistency",
-                FormattedPrompt = $"Id: {id}\nText: Rename the 'Items' property to 'Documents'\nContext: COMPILATION ERROR: @@clientName target not found - property 'Items' does not exist in model 'ListResponse'"
+                Context = "COMPILATION ERROR: @@clientName target not found - property 'Items' does not exist in model 'ListResponse'"
             }
         };
 

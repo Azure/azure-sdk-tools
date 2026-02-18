@@ -4,44 +4,19 @@
 namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
-/// Standardized feedback context after preprocessing
+/// Batch of feedback items after preprocessing
 /// </summary>
-public class FeedbackContext
+public class FeedbackBatch
 {
-    /// <summary>
-    /// Formatted feedback ready for classification prompt
-    /// </summary>
-    public string FormattedFeedback { get; set; } = string.Empty;
-    
     /// <summary>
     /// Individual feedback items for per-item classification
     /// </summary>
-    public List<FeedbackItem> FeedbackItems { get; set; } = new();
+    public List<FeedbackItem> Items { get; set; } = new();
     
     /// <summary>
     /// Target SDK language (e.g., python, csharp, java)
     /// </summary>
     public string? Language { get; set; }
-    
-    /// <summary>
-    /// Service name for the SDK
-    /// </summary>
-    public string? ServiceName { get; set; }
-    
-    /// <summary>
-    /// Package name
-    /// </summary>
-    public string? PackageName { get; set; }
-    
-    /// <summary>
-    /// Type of input source
-    /// </summary>
-    public string InputType { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// Additional metadata specific to the input type
-    /// </summary>
-    public Dictionary<string, string> Metadata { get; set; } = new();
 }
 
 /// <summary>
@@ -82,11 +57,6 @@ public class FeedbackItem
     public string Text { get; set; } = string.Empty;
     
     /// <summary>
-    /// Formatted version for prompt with Id, Text, and Context
-    /// </summary>
-    public string FormattedPrompt { get; set; } = string.Empty;
-    
-    /// <summary>
     /// Current status of this feedback item
     /// </summary>
     public FeedbackStatus Status { get; set; } = FeedbackStatus.TSP_APPLICABLE;
@@ -104,10 +74,18 @@ public class FeedbackItem
     /// <summary>
     /// Reason for the classification decision
     /// </summary>
-    public string Reason { get; set; } = string.Empty;
-    
+    public string ClassificationReason { get; set; } = string.Empty;
+
     /// <summary>
-    /// Additional metadata specific to this feedback item
+    /// Appends a labeled section to the running context.
     /// </summary>
-    public Dictionary<string, string> Metadata { get; set; } = new();
+    public void AppendContext(string section, string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return;
+        }
+        var formatted = $"=== {section} ===\n{content}\n=== End {section} ===";
+        Context = string.IsNullOrEmpty(Context) ? formatted : $"{Context}\n\n{formatted}";
+    }
 }

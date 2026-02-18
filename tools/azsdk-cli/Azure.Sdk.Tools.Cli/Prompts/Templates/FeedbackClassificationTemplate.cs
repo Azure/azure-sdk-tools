@@ -103,7 +103,8 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
             --- ITEM {i + 1} ---
             ID: {item.Id}
-            {item.FormattedPrompt}
+            Text: {item.Text}
+            Context: {item.Context}
             """);
         }
 

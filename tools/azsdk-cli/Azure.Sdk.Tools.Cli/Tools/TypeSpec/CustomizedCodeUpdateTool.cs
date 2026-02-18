@@ -246,7 +246,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 }
 
                 // Initialize tracking lists, which items set to customizable for now.
-                var customizable = feedbackContext.FeedbackItems.ToList();
+                var customizable = feedbackContext.Items.ToList();
                 var success = new List<FeedbackItem>();
                 var failure = new List<FeedbackItem>();
 
@@ -303,14 +303,14 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 if (!buildResult.Success)
                 {
                     var buildErrorText = $"Build failed after applying TypeSpec customizations:\n{buildResult.Summary}";
-                    var buildFeedbackContext = await PreprocessFeedback(null, buildErrorText, ct);
+                    var buildFeedbackBatch = await PreprocessFeedback(null, buildErrorText, ct);
                     
-                    if (buildFeedbackContext != null && buildFeedbackContext.FeedbackItems.Any())
+                    if (buildFeedbackBatch != null && buildFeedbackBatch.Items.Any())
                     {
-                        customizable.AddRange(buildFeedbackContext.FeedbackItems);
+                        customizable.AddRange(buildFeedbackBatch.Items);
                         
                         // Update original items to reference build failure
-                        foreach (var item in customizable.Except(buildFeedbackContext.FeedbackItems))
+                        foreach (var item in customizable.Except(buildFeedbackBatch.Items))
                         {
                             item.Context += "\nBuild failed - see build error items";
                         }
@@ -350,7 +350,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <summary>
     /// Preprocesses feedback from APIView or plain text sources.
     /// </summary>
-    private async Task<FeedbackContext?> PreprocessFeedback(
+    private async Task<FeedbackBatch?> PreprocessFeedback(
         string? apiViewUrl,
         string? plainTextFeedback,
         CancellationToken ct)
@@ -411,7 +411,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             {
                 ItemId = item.Id,
                 Classification = "SUCCESS",
-                Reason = !string.IsNullOrEmpty(item.Reason) ? item.Reason : "Item successfully resolved",
+                Reason = !string.IsNullOrEmpty(item.ClassificationReason) ? item.ClassificationReason : "Item successfully resolved",
                 NextAction = item.NextAction,
                 Text = item.Text
             });
@@ -423,7 +423,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             {
                 ItemId = item.Id,
                 Classification = "FAILURE",
-                Reason = !string.IsNullOrEmpty(item.Reason) ? item.Reason : "Item could not be resolved",
+                Reason = !string.IsNullOrEmpty(item.ClassificationReason) ? item.ClassificationReason : "Item could not be resolved",
                 NextAction = item.NextAction,
                 Text = item.Text
             });
@@ -435,7 +435,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             {
                 ItemId = item.Id,
                 Classification = "TSP_APPLICABLE",
-                Reason = !string.IsNullOrEmpty(item.Reason) ? item.Reason : "Item applicable for TypeSpec customization",
+                Reason = !string.IsNullOrEmpty(item.ClassificationReason) ? item.ClassificationReason : "Item applicable for TypeSpec customization",
                 NextAction = item.NextAction,
                 Text = item.Text
             });

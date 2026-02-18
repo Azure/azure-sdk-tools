@@ -25,13 +25,4 @@ public interface ICodeownersGenerateHelper
         string[] packageTypes,
         string sectionName,
         CancellationToken ct = default);
-
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="path"></param>
-    /// <param name="entries"></param>
-    /// <param name="sectionName"></param>
-    /// <returns></returns>
-    Task WriteCodeownersFile(string path, List<CodeownersEntry> entries, string sectionName);
 }

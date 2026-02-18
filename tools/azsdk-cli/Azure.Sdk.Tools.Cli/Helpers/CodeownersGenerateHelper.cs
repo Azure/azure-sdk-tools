@@ -355,7 +355,7 @@ public class CodeownersGenerateHelper(
         return "/" + normalized.TrimStart('/') + "/";
     }
 
-    public async Task WriteCodeownersFile(string path, List<CodeownersEntry> entries, string sectionName)
+    private async Task WriteCodeownersFile(string path, List<CodeownersEntry> entries, string sectionName)
     {
         if (!File.Exists(path))
         {

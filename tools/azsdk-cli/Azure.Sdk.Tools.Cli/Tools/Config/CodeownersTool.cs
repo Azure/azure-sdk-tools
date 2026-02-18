@@ -203,18 +203,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             if (command == generateCodeownersCommandName)
             {
-                if (!System.Diagnostics.Debugger.IsAttached)
-                {
-                    System.Diagnostics.Debugger.Launch();
-                }
                 var repoRoot = await gitHelper.DiscoverRepoRootAsync(
                     parseResult.GetValue(repoRootOption)
                 );
-                var repo = await gitHelper.GetRepoFullNameAsync(repoRoot);
                 var packageTypes = parseResult.GetValue(packageTypesOption);
                 var section = parseResult.GetValue(sectionOption);
-
-                var generateResult = await GenerateCodeowners(repoRoot, repo, packageTypes, section, ct);
+                var generateResult = await GenerateCodeowners(repoRoot, packageTypes, section, ct);
                 return generateResult;
             }
 
@@ -542,7 +536,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// </summary>
         public async Task<DefaultCommandResponse> GenerateCodeowners(
             string repoRoot,
-            string repo,
             string[] packageTypes,
             string section,
             CancellationToken ct)
@@ -564,6 +557,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                         ResponseError = $"Repository root not found: {repoRoot}"
                     };
                 }
+
+                var repo = await gitHelper.GetRepoFullNameAsync(repoRoot);
 
                 var codeownersPath = Path.Combine(repoRoot, ".github", "CODEOWNERS");
                 if (!File.Exists(codeownersPath))

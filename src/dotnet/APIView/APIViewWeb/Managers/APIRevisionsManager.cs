@@ -37,6 +37,7 @@ namespace APIViewWeb.Managers
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IProjectsManager _projectsManager;
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
@@ -51,6 +52,7 @@ namespace APIViewWeb.Managers
             IBlobOriginalsRepository originalsRepository,
             INotificationManager notificationManager,
             TelemetryClient telemetryClient,
+            IProjectsManager projectsManager,
             IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
@@ -64,6 +66,7 @@ namespace APIViewWeb.Managers
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
             _telemetryClient = telemetryClient;
+            _projectsManager = projectsManager;
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
             {
@@ -728,6 +731,27 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
         }
 
+        private static async Task<TypeSpecMetadata> ExtractTypeSpecMetadataForReviewAsync(ZipArchive archive, string targetReviewId)
+        {
+            var metadataEntry = archive.Entries.FirstOrDefault(e =>
+                e.FullName.Split("/") is { Length: >= 4 } parts &&
+                parts[1].Equals(targetReviewId, StringComparison.OrdinalIgnoreCase) &&
+                Path.GetFileName(e.FullName).Equals(ApiViewConstants.TypeSpecMetadataFileName, StringComparison.OrdinalIgnoreCase));
+
+            if (metadataEntry == null)
+                return null;
+
+            try
+            {
+                await using var metadataStream = metadataEntry.Open();
+                return await JsonSerializer.DeserializeAsync<TypeSpecMetadata>(metadataStream);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
         /// <summary>
         /// UpdateAPIRevisionCodeFileAsync
         /// </summary>
@@ -740,12 +764,18 @@ namespace APIViewWeb.Managers
         {
             var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
+
             foreach (var entry in archive.Entries)
             {
                 var reviewFilePath = entry.FullName;
                 var reviewDetails = reviewFilePath.Split("/");
 
                 if (reviewDetails.Length < 4 || !reviewFilePath.EndsWith(".json"))
+                    continue;
+
+                // Skip metadata files - they are processed on-demand for TypeSpec reviews
+                var fileName = Path.GetFileName(reviewFilePath);
+                if (fileName.Equals(ApiViewConstants.TypeSpecMetadataFileName, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 var reviewId = reviewDetails[1];
@@ -777,6 +807,16 @@ namespace APIViewWeb.Managers
                         file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
                         await _reviewsRepository.UpsertReviewAsync(review);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+
+                        // Process TypeSpec metadata if available for this review (lazy load only for TypeSpec)
+                        if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.TypeSpecLanguage)
+                        {
+                            var typeSpecMetadata = await ExtractTypeSpecMetadataForReviewAsync(archive, reviewId);
+                            if (typeSpecMetadata != null)
+                            {
+                                await _projectsManager.UpsertProjectFromMetadataAsync(ApiViewConstants.AzureSdkBotName, typeSpecMetadata, review);
+                            }
+                        }
 
                         if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
                         {

@@ -14,7 +14,7 @@ stages:
     jobs:
       - job: 'BlobCopy'
         displayName: 'Sync API reviews'
-        timeoutInMinutes: 180  # 3 hours with parallel upserts (down from 4 hours)
+        timeoutInMinutes: 180 
         pool:
           name: azsdk-pool
           demands: ImageOverride -equals windows-2022

@@ -9,8 +9,10 @@ import traceback
 from ast import literal_eval
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from azure.cosmos import CosmosClient
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.identity import AzurePowerShellCredential, ChainedTokenCredential, AzureCliCredential
 from azure.storage.blob import BlobServiceClient
+import time
 
 logging.getLogger().setLevel(logging.INFO)
 http_logger = logging.getLogger("azure.core.pipeline.policies.http_logging_policy")
@@ -56,41 +58,93 @@ def restore_data_from_backup(backup_storage_url, dest_url, db_name):
 
         # find missing or updated records
         # updated records has new timestamp value in column(_ts)
-        missing_records = [
-            x for x in source_contents if x['id'] not in dest_records or x['_ts'] > dest_records[x['id']][1]
-        ]
+        # Note: _ts in backup may be stored as string or int, so we convert both to int for comparison
+        missing_records = []
+        for x in source_contents:
+            record_id = x.get('id')
+            if not record_id:
+                logging.warning("Record without 'id' field found, skipping")
+                continue
+            
+            source_ts = x.get('_ts', 0)
+            # Handle _ts that might be string or int
+            if isinstance(source_ts, str):
+                try:
+                    source_ts = int(source_ts)
+                except ValueError:
+                    source_ts = 0
+            
+            if record_id not in dest_records:
+                missing_records.append(x)
+            else:
+                dest_ts = dest_records[record_id][1]
+                if isinstance(dest_ts, str):
+                    try:
+                        dest_ts = int(dest_ts)
+                    except ValueError:
+                        dest_ts = 0
+                if source_ts > dest_ts:
+                    missing_records.append(x)
         if missing_records:
             logging.info("Found {} missing/updated rows to sync".format(len(missing_records)))
             
             # Use parallel upserts for better performance
             # ThreadPoolExecutor allows concurrent upsert operations to Cosmos DB
-            max_workers = 10  # Number of parallel threads
+            max_workers = 20  # Number of parallel threads - increased for better throughput
             batch_size = 100  # Log progress every N records
             total_records = len(missing_records)
             upserted_count = 0
+            failed_count = 0
+            max_retries = 3  # Number of retries for transient failures
             
-            def upsert_item(item):
-                """Helper function to upsert a single item"""
-                try:
-                    dest_container_client.upsert_item(item)
-                    return True
-                except Exception as e:
-                    logging.error("Failed to upsert item {}: {}".format(item.get('id', 'unknown'), str(e)))
-                    return False
+            def upsert_item_with_retry(item, retries=max_retries):
+                """Helper function to upsert a single item with retry logic"""
+                for attempt in range(retries):
+                    try:
+                        dest_container_client.upsert_item(item)
+                        return True
+                    except CosmosHttpResponseError as e:
+                        if e.status_code == 429:  # Too Many Requests - throttling
+                            # Wait with exponential backoff
+                            retry_after = float(e.headers.get('x-ms-retry-after-ms', 1000)) / 1000
+                            time.sleep(retry_after * (2 ** attempt))
+                            continue
+                        elif e.status_code >= 500:  # Server error - retry
+                            time.sleep(1 * (2 ** attempt))
+                            continue
+                        else:
+                            logging.error("Failed to upsert item {}: {} (status: {})".format(
+                                item.get('id', 'unknown'), str(e), e.status_code))
+                            return False
+                    except Exception as e:
+                        logging.error("Failed to upsert item {}: {}".format(item.get('id', 'unknown'), str(e)))
+                        return False
+                logging.error("Failed to upsert item {} after {} retries".format(item.get('id', 'unknown'), retries))
+                return False
             
             # Execute upserts in parallel using ThreadPoolExecutor
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 # Submit all upsert tasks
-                future_to_item = {executor.submit(upsert_item, record): record for record in missing_records}
+                future_to_item = {executor.submit(upsert_item_with_retry, record): record for record in missing_records}
                 
                 # Process completed tasks and log progress
                 for future in as_completed(future_to_item):
                     if future.result():
                         upserted_count += 1
-                        if upserted_count % batch_size == 0:
-                            logging.info("Upserted {}/{} records".format(upserted_count, total_records))
+                    else:
+                        failed_count += 1
+                    
+                    processed = upserted_count + failed_count
+                    if processed % batch_size == 0:
+                        logging.info("Progress: {}/{} records processed ({} upserted, {} failed)".format(
+                            processed, total_records, upserted_count, failed_count))
             
-            logging.info("✓ Container {} synced successfully ({} records upserted)".format(cosmos_container_name, upserted_count))
+            if failed_count > 0:
+                logging.warning("⚠ Container {} synced with {} failures ({} records upserted)".format(
+                    cosmos_container_name, failed_count, upserted_count))
+            else:
+                logging.info("✓ Container {} synced successfully ({} records upserted)".format(
+                    cosmos_container_name, upserted_count))
         else:
             logging.info("✓ Container {} is already in sync".format(cosmos_container_name))
 

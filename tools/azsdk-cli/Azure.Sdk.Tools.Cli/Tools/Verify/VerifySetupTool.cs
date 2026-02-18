@@ -56,10 +56,16 @@ public class VerifySetupTool : LanguageMcpTool
         AllowMultipleArgumentsPerToken = true
     };
 
-    private readonly Option<bool> autoInstallParam = new("--auto-install", "-i")
+    private readonly Option<List<string>> autoInstallParam = new("--auto-install", "-i")
     {
-        Description = "Automatically install missing requirements that support auto-installation. If false, only checks requirements and provides installation instructions.",
-        Required = false,
+        Description = "Install specific missing requirements by name. Without arguments: interactively prompt for each installable requirement.",
+        Arity = ArgumentArity.ZeroOrMore,
+        AllowMultipleArgumentsPerToken = true
+    };
+
+    private readonly Option<bool> allowUpgradeParam = new("--allow-upgrade")
+    {
+        Description = "When combined with --auto-install, install all installable requirements without prompting. Intended for CI/automation.",
     };
 
     protected override Command GetCommand() =>
@@ -67,19 +73,106 @@ public class VerifySetupTool : LanguageMcpTool
         {
             languagesParam,
             autoInstallParam,
+            allowUpgradeParam,
             SharedOptions.PackagePath
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var parsed = GetLanguagesFromOption(parseResult);
+        var languages = GetLanguagesFromOption(parseResult);
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-        var autoInstall = parseResult.GetValue(autoInstallParam);
-        return await VerifySetup(parsed, packagePath, autoInstall, ct);
+        var autoInstallValues = parseResult.GetValue(autoInstallParam) ?? [];
+        bool autoInstallFlagPresent = parseResult.Tokens.Any(t => t.Value is "--auto-install" or "-i");
+        var allowUpgrade = parseResult.GetValue(allowUpgradeParam);
+
+        return await RunVerifyWithInstallPolicy(
+            languages, packagePath, autoInstallFlagPresent, autoInstallValues, allowUpgrade, ct);
     }
 
-    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. Set autoInstall to false to just check requirements, or true to automatically install requirements that support auto-installation.")]
-    public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, bool autoInstall = false, CancellationToken ct = default)
+    /// <summary>
+    /// CLI-only orchestration: handles interactive prompts and --allow-upgrade logic
+    /// before delegating to the core VerifySetup method.
+    /// </summary>
+    private async Task<CommandResponse> RunVerifyWithInstallPolicy(
+        HashSet<SdkLanguage> languages, string packagePath,
+        bool autoInstallFlagPresent, List<string> autoInstallValues,
+        bool allowUpgrade, CancellationToken ct)
+    {
+        // No --auto-install flag → check only
+        if (!autoInstallFlagPresent)
+        {
+            return await VerifySetup(languages, packagePath, requirementsToInstall: null, ct);
+        }
+
+        // --auto-install with explicit names → pass through
+        if (autoInstallValues.Count > 0)
+        {
+            return await VerifySetup(languages, packagePath, autoInstallValues, ct);
+        }
+
+        // --auto-install (no names): run check first to discover installable failures
+        var checkResult = await VerifySetup(languages, packagePath, requirementsToInstall: null, ct);
+        var installable = GetInstallableNames(checkResult);
+
+        if (installable.Count == 0)
+        {
+            return checkResult;
+        }
+
+        // --allow-upgrade → install all installable without prompting
+        if (allowUpgrade)
+        {
+            return await VerifySetup(languages, packagePath, installable, ct);
+        }
+
+        // Interactive: prompt y/N for each installable requirement
+        var approved = PromptForApproval(installable);
+
+        if (approved.Count == 0)
+        {
+            return checkResult;
+        }
+
+        return await VerifySetup(languages, packagePath, approved, ct);
+    }
+
+    private static List<string> GetInstallableNames(VerifySetupResponse response)
+    {
+        return response.Results?
+            .Where(r => r.IsAutoInstallable && !r.AutoInstallAttempted)
+            .Select(r => NormalizeRequirementName(r.Requirement))
+            .ToList() ?? [];
+    }
+
+    private static List<string> PromptForApproval(List<string> installable)
+    {
+        var approved = new List<string>();
+        Console.WriteLine("\nThe following requirements can be auto-installed:");
+        foreach (var reqName in installable)
+        {
+            Console.Write($"  Install {reqName}? [y/N]: ");
+            var response = Console.ReadLine()?.Trim();
+            if (string.Equals(response, "y", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(response, "yes", StringComparison.OrdinalIgnoreCase))
+            {
+                approved.Add(reqName);
+            }
+        }
+        return approved;
+    }
+
+    /// <summary>
+    /// Strips version suffix from display names (e.g., "Node.js (&gt;= 22.16.0)" → "Node.js")
+    /// so that requirement names from the response can match Requirement.Name.
+    /// </summary>
+    private static string NormalizeRequirementName(string name)
+    {
+        var parenIndex = name.IndexOf(" (>=");
+        return parenIndex >= 0 ? name[..parenIndex].Trim() : name.Trim();
+    }
+
+    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. When requirementsToInstall is empty or not provided, only checks requirements and reports failures. Each failed result includes isAutoInstallable to indicate if it can be auto-installed. To install, call again with requirementsToInstall containing the exact requirement names the user approved. Invalid requirement names are silently ignored.")]
+    public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, List<string> requirementsToInstall = null, CancellationToken ct = default)
     {
         try
         {
@@ -148,32 +241,52 @@ public class VerifySetupTool : LanguageMcpTool
                 }
             }
 
-            // If auto-install is enabled, attempt to install failed requirements that support it
-            if (autoInstall && failedReqs.Count > 0)
-            {
-                logger.LogInformation("Auto-install is enabled. Attempting to auto-install requirements that support it.");
+            // Determine which requirements to install based on requirementsToInstall
+            var requestedSet = (requirementsToInstall ?? [])
+                .Select(n => NormalizeRequirementName(n))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            bool installRequested = requestedSet.Count > 0;
 
-                // Skip auto-install for requirements whose dependencies failed — installing them would be pointless
+            if (installRequested && failedReqs.Count > 0)
+            {
+                logger.LogInformation("Install requested for: {Requirements}", string.Join(", ", requestedSet));
+
+                // Skip install for requirements whose dependencies failed
                 var hasFailedDeps = failedReqs.Where(f => f.req.DependsOn.Any(d => ctx.FailedRequirements.Contains(d))).ToList();
                 var canAttempt = failedReqs.Except(hasFailedDeps).ToList();
 
-                // Report dependency-blocked failures (not installable due to missing prereq)
+                // Report dependency-blocked failures
                 foreach (var (req, result) in hasFailedDeps)
                 {
                     AddFailedResult(response, req, result, ctx);
                 }
 
-                var installable = canAttempt.Where(f => f.req.IsAutoInstallable).ToList();
-                var notInstallable = canAttempt.Where(f => !f.req.IsAutoInstallable).ToList();
+                // Filter to only requested + installable requirements
+                var toInstall = canAttempt.Where(f => f.req.IsAutoInstallable && requestedSet.Contains(f.req.Name)).ToList();
+                var notRequested = canAttempt.Where(f => !requestedSet.Contains(f.req.Name)).ToList();
+                var requestedButNotInstallable = canAttempt.Where(f => requestedSet.Contains(f.req.Name) && !f.req.IsAutoInstallable).ToList();
 
-                // Report non-installable failures
-                foreach (var (req, result) in notInstallable)
+                // Log warnings for invalid/non-installable requested names
+                var validNames = failedReqs.Select(f => f.req.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                foreach (var name in requestedSet.Where(n => !validNames.Contains(n)))
+                {
+                    logger.LogWarning("Ignoring unknown or passing requirement name: {Name}", name);
+                }
+
+                // Report non-requested failures
+                foreach (var (req, result) in notRequested)
+                {
+                    AddFailedResult(response, req, result, ctx);
+                }
+
+                // Report requested-but-not-installable failures
+                foreach (var (req, result) in requestedButNotInstallable)
                 {
                     AddFailedResult(response, req, result, ctx);
                 }
 
                 // Run installs sequentially
-                foreach (var (req, result) in installable)
+                foreach (var (req, result) in toInstall)
                 {
                     logger.LogInformation("Auto-installing requirement: {Requirement}", req.Name);
 
@@ -233,7 +346,7 @@ public class VerifySetupTool : LanguageMcpTool
             }
             else
             {
-                // No auto-install: report all failures with installability info
+                // No install requested: report all failures with installability info
                 foreach (var (req, result) in failedReqs)
                 {
                     AddFailedResult(response, req, result, ctx);

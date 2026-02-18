@@ -366,7 +366,7 @@ internal class VerifySetupToolTests
         );
 
         // Act
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", requirementsToInstall: new List<string> { "tsp" });
 
         // Assert
         Assert.That(result.ResponseError, Is.Null);
@@ -413,7 +413,7 @@ internal class VerifySetupToolTests
         );
 
         // Act
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", requirementsToInstall: new List<string> { "tsp" });
 
         // Assert - install was attempted but verification still fails
         Assert.That(result.ResponseError, Is.Null);
@@ -459,7 +459,7 @@ internal class VerifySetupToolTests
         );
 
         // Act
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", requirementsToInstall: new List<string> { "tsp" });
 
         // Assert - AutoInstallError should be reported
         Assert.That(result.ResponseError, Is.Null);
@@ -483,8 +483,8 @@ internal class VerifySetupToolTests
             languageServices
         );
 
-        // Act - auto-install enabled, but Node.js can't be auto-installed
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+        // Act - request install of Node.js by name, but it can't be auto-installed
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", requirementsToInstall: new List<string> { "Node.js" });
 
         // Assert - should report failure with instructions, not attempt install
         Assert.That(result.ResponseError, Is.Null);
@@ -544,7 +544,7 @@ internal class VerifySetupToolTests
         );
 
         // Act
-        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", autoInstall: true);
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", requirementsToInstall: new List<string> { "tsp" });
 
         // Assert - tsp should NOT have auto-install attempted since its dependency (Node.js) failed
         Assert.That(result.ResponseError, Is.Null);
@@ -553,5 +553,96 @@ internal class VerifySetupToolTests
         Assert.That(tspResult!.AutoInstallAttempted, Is.False);
         Assert.That(tspResult.RequirementStatusDetails, Does.Contain("Skipped"));
         Assert.That(tspResult.RequirementStatusDetails, Does.Contain("Node.js"));
+    }
+
+    [Test]
+    public async Task VerifySetup_CheckOnly_WhenNoRequirementsToInstall()
+    {
+        // Arrange - tsp check fails
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act - no requirementsToInstall (check-only mode)
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        // Assert - should report failure but not attempt install
+        Assert.That(result.ResponseError, Is.Null);
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult, Is.Not.Null);
+        Assert.That(tspResult!.AutoInstallAttempted, Is.False);
+        Assert.That(tspResult.IsAutoInstallable, Is.True);
+    }
+
+    [Test]
+    public async Task VerifySetup_IgnoresInvalidRequirementNames()
+    {
+        // Arrange - tsp check fails
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act - request install of a non-existent requirement
+        var result = await tool.VerifySetup(
+            new HashSet<SdkLanguage> { SdkLanguage.DotNet },
+            "/test/path/dotnet",
+            requirementsToInstall: new List<string> { "nonexistent-tool", "fake-req" });
+
+        // Assert - should not crash, tsp failure reported but not installed (not in requested list)
+        Assert.That(result.ResponseError, Is.Null);
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult, Is.Not.Null);
+        Assert.That(tspResult!.AutoInstallAttempted, Is.False);
+    }
+
+    [Test]
+    public async Task VerifySetup_OnlyInstallsRequestedRequirements()
+    {
+        // Arrange - both tsp and tsp-client fail
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+
+        // Make tsp-client also fail
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Args.Any(a => a.Contains("tsp-client"))),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 1,
+                OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, "tsp-client: command not found") }
+            });
+
+        var tool = new VerifySetupTool(
+            mockProcessHelper.Object,
+            logger,
+            _mockGitHelper.Object,
+            languageServices
+        );
+
+        // Act - only request install of tsp, not tsp-client
+        var result = await tool.VerifySetup(
+            new HashSet<SdkLanguage> { SdkLanguage.DotNet },
+            "/test/path/dotnet",
+            requirementsToInstall: new List<string> { "tsp" });
+
+        // Assert - tsp should have install attempted, tsp-client should not
+        Assert.That(result.ResponseError, Is.Null);
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult, Is.Not.Null);
+        Assert.That(tspResult!.AutoInstallAttempted, Is.True);
+
+        var tspClientResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp-client"));
+        Assert.That(tspClientResult, Is.Not.Null);
+        Assert.That(tspClientResult!.AutoInstallAttempted, Is.False);
     }
 }

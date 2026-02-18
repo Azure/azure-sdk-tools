@@ -78,22 +78,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
-        // Render command options
-        private readonly Argument<string> repoRootArgument = new("repo-root")
+        // Generate command options
+        private readonly Option<string> repoRootOption = new("--repo-root")
         {
-            Description = "Path to the repository root",
+            Description = "Path to the repository root (default: repo root of current directory)",
+            Required = false,
         };
 
         private readonly Option<string[]> packageTypesOption = new("--package-types")
         {
             Description = "Package types to include (default: client)",
             Required = false,
+            DefaultValueFactory = _ => ["client"],
+            AllowMultipleArgumentsPerToken = true,
         };
 
         private readonly Option<string> sectionOption = new("--section")
         {
             Description = "Section name in CODEOWNERS file to update (default: Client Libraries)",
             Required = false,
+            DefaultValueFactory = _ => "Client Libraries",
         };
 
         // Management command options
@@ -135,8 +139,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTool> logger;
-        private readonly ICodeownersValidatorHelper codeownersValidator;
-        private readonly ICodeownersRenderHelper codeownersRenderHelper;
+        private readonly ICodeownersValidatorHelper codeownersValidatorHelper;
+        private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
+        private readonly IGitHelper gitHelper;
         private readonly ICodeownersManagementHelper managementHelper;
 
         // URL constants
@@ -145,7 +150,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         // Command names
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
-        private const string renderCodeownersCommandName = "render";
+        private const string generateCodeownersCommandName = "generate";
         private const string viewCodeownersCommandName = "view";
         private const string addCodeownersCommandName = "add";
         private const string removeCodeownersCommandName = "remove";
@@ -162,14 +167,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ILogger<CodeownersTool> logger,
             ILoggerFactory? loggerFactory,
             ICodeownersValidatorHelper codeownersValidator,
-            ICodeownersRenderHelper codeownersRenderHelper,
+            ICodeownersGenerateHelper codeownersGenerateHelper,
+            IGitHelper gitHelper,
             ICodeownersManagementHelper managementHelper
         )
         {
             this.githubService = githubService;
             this.logger = logger;
-            this.codeownersValidator = codeownersValidator;
-            this.codeownersRenderHelper = codeownersRenderHelper;
+            this.codeownersValidatorHelper = codeownersValidator;
+            this.codeownersGenerateHelper = codeownersGenerateHelper;
+            this.gitHelper = gitHelper;
             this.managementHelper = managementHelper;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
@@ -192,9 +199,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 repoOption, serviceLabelOption, pathOptionOptional,
             },
-            new(renderCodeownersCommandName, "Render CODEOWNERS file from Azure DevOps work items")
+            new(generateCodeownersCommandName, "Generate CODEOWNERS file from Azure DevOps work items")
             {
-                repoRootArgument, repoOption, packageTypesOption, sectionOption,
+                repoRootOption, packageTypesOption, sectionOption,
             },
             new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
             {
@@ -252,16 +259,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 return validateResult;
             }
 
-            if (command == renderCodeownersCommandName)
+            if (command == generateCodeownersCommandName)
             {
-                var repoRoot = parseResult.GetValue(repoRootArgument);
-                var repo = parseResult.GetValue(repoOption);
-                var packageTypesValue = parseResult.GetValue(packageTypesOption);
-                var packageTypes = (packageTypesValue != null && packageTypesValue.Length > 0) ? packageTypesValue.ToList() : ["client"];
-                var section = parseResult.GetValue(sectionOption) ?? "Client Libraries";
+                var repoRoot = parseResult.GetValue(repoRootOption)
+                    ?? await gitHelper.DiscoverRepoRootAsync(".");
+                var repo = await gitHelper.GetRepoFullNameAsync(repoRoot);
+                var packageTypes = parseResult.GetValue(packageTypesOption);
+                var section = parseResult.GetValue(sectionOption);
 
-                var renderResult = await RenderCodeowners(repoRoot ?? "", repo ?? "", packageTypes, section, ct);
-                return renderResult;
+                var generateResult = await GenerateCodeowners(repoRoot, repo, packageTypes, section, ct);
+                return generateResult;
             }
 
             if (command == viewCodeownersCommandName)
@@ -551,7 +558,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
-                var result = await codeownersValidator.ValidateCodeOwnerAsync(username, verbose: false);
+                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false);
 
                 if (string.IsNullOrEmpty(result.Username))
                 {
@@ -619,12 +626,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         }
 
         /// <summary>
-        /// Renders CODEOWNERS file from Azure DevOps work items.
+        /// Generates CODEOWNERS file from Azure DevOps work items.
         /// </summary>
-        public async Task<DefaultCommandResponse> RenderCodeowners(
+        public async Task<DefaultCommandResponse> GenerateCodeowners(
             string repoRoot,
             string repo,
-            List<string> packageTypes,
+            string[] packageTypes,
             string section,
             CancellationToken ct)
         {
@@ -646,11 +653,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                if (string.IsNullOrWhiteSpace(repo))
+                if (!Regex.IsMatch(repo, @"^Azure/azure-sdk-for-"))
                 {
                     return new DefaultCommandResponse
                     {
-                        ResponseError = "Repository name (--repo) is required"
+                        ResponseError = "Repository name (--repo) is required must be of the form Azure/azure-sdk-for-<language>"
                     };
                 }
 
@@ -663,19 +670,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                var result = await codeownersRenderHelper.RenderCodeownersAsync(repoRoot, repo, packageTypes, section, ct);
+                await codeownersGenerateHelper.GenerateCodeowners(repoRoot, repo, packageTypes, section, ct);
 
                 return new DefaultCommandResponse
                 {
-                    Message = $"CODEOWNERS file rendered successfully to {codeownersPath}"
+                    Message = $"CODEOWNERS file generated successfully to {codeownersPath}"
                 };
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to render CODEOWNERS file");
+                logger.LogError(ex, "Failed to generate CODEOWNERS file");
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Failed to render CODEOWNERS file: {ex.Message}"
+                    ResponseError = $"Failed to generate CODEOWNERS file: {ex.Message}"
                 };
             }
         }
@@ -690,10 +697,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
-                // Normalize alias
                 user = NormalizeAlias(user);
 
-                // Validate exactly one axis
                 var axes = new[] { user, label, package, path }.Count(a => !string.IsNullOrEmpty(a));
                 if (axes == 0)
                 {

@@ -9,12 +9,11 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <ToolCommandName>azsdk</ToolCommandName>
     <!-- CS8002: GitHub.Copilot.SDK is not strong-named (preview package) -->
-    <!-- NU5111: Scripts in tools folder are runtime dependencies, not install scripts -->
-    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604;CS8002;NU5111</NoWarn>
+    <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604;CS8002</NoWarn>
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
-    <VersionPrefix>0.5.16</VersionPrefix>
+    <VersionPrefix>0.5.17</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Package metadata -->
@@ -64,10 +63,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Images/quokka.ansi" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Scripts\*.ps1" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

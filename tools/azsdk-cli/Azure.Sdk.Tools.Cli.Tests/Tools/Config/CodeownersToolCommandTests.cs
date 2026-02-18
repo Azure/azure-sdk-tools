@@ -16,7 +16,8 @@ public class CodeownersToolCommandTests
 {
     private MockGitHubService _mockGithub;
     private Mock<ICodeownersValidatorHelper> _mockValidator;
-    private Mock<ICodeownersRenderHelper> _mockRenderHelper;
+    private Mock<ICodeownersGenerateHelper> _mockGenerateHelper;
+    private Mock<IGitHelper> _mockGitHelper;
     private Mock<ICodeownersManagementHelper> _mockManagementHelper;
     private CodeownersTool _tool;
 
@@ -25,7 +26,8 @@ public class CodeownersToolCommandTests
     {
         _mockGithub = new MockGitHubService();
         _mockValidator = new Mock<ICodeownersValidatorHelper>();
-        _mockRenderHelper = new Mock<ICodeownersRenderHelper>();
+        _mockGenerateHelper = new Mock<ICodeownersGenerateHelper>();
+        _mockGitHelper = new Mock<IGitHelper>();
         _mockManagementHelper = new Mock<ICodeownersManagementHelper>();
 
         _tool = new CodeownersTool(
@@ -33,7 +35,8 @@ public class CodeownersToolCommandTests
             new TestLogger<CodeownersTool>(),
             null,
             _mockValidator.Object,
-            _mockRenderHelper.Object,
+            _mockGenerateHelper.Object,
+            _mockGitHelper.Object,
             _mockManagementHelper.Object);
     }
 

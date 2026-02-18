@@ -3,10 +3,10 @@
 ## 1. Overview
 
 ### 1.1 Problem
-The Azure SDK CLI (`azsdk-cli`) has CODEOWNERS commands (`update`, `validate`, `render`) that operate on the CODEOWNERS file directly. There is no way to query or modify the underlying Azure DevOps work item relationships (Owner, Package, Label, Label Owner) that are the source of truth for CODEOWNERS data.
+The Azure SDK CLI (`azsdk-cli`) has CODEOWNERS commands (`update`, `validate`, `generate`) that operate on the CODEOWNERS file directly. There is no way to query or modify the underlying Azure DevOps work item relationships (Owner, Package, Label, Label Owner) that are the source of truth for CODEOWNERS data.
 
 ### 1.2 Solution
-Add three new subcommands to `CodeownersTool.cs` — `view`, `add`, and `remove` — that operate on Azure DevOps work items and their relationships. The CODEOWNERS file is regenerated separately via the existing `render` command.
+Add three new subcommands to `CodeownersTool.cs` — `view`, `add`, and `remove` — that operate on Azure DevOps work items and their relationships. The CODEOWNERS file is regenerated separately via the existing `generate` command.
 
 ### 1.3 Scope
 - **In scope**: View, add, and remove operations on work item relationships; MCP tool exposure; test scaffolding; MCP agent instructions.
@@ -281,7 +281,7 @@ WI-14 (agent instructions) — no code dependencies, can be done in parallel
 
 | Decision | Resolution | Rationale |
 |----------|-----------|-----------|
-| Work items vs CODEOWNERS file | Work items only | Work items are the source of truth; `render` regenerates the file |
+| Work items vs CODEOWNERS file | Work items only | Work items are the source of truth; `generate` regenerates the file |
 | Auto-create Labels? | No | Labels are centrally managed; surface error if missing |
 | Auto-create Owners? | Yes, after validation | Validate GitHub alias is a valid code owner first |
 | Auto-create Label Owners? | Yes | Create when repo+type+label combination doesn't exist |

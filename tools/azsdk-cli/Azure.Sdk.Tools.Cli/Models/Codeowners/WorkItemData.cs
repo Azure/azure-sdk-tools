@@ -6,7 +6,7 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 namespace Azure.Sdk.Tools.Cli.Models.Codeowners;
 
 /// <summary>
-/// Container for all work item data needed to render CODEOWNERS entries.
+/// Container for all work item data needed to generate CODEOWNERS entries.
 /// </summary>
 public record WorkItemData(
     Dictionary<int, PackageWorkItem> Packages,

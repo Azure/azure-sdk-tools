@@ -171,7 +171,7 @@ public class VerifySetupTool : LanguageMcpTool
         return parenIndex >= 0 ? name[..parenIndex].Trim() : name.Trim();
     }
 
-    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. When requirementsToInstall is empty or not provided, only checks requirements and reports failures. Each failed result includes isAutoInstallable to indicate if it can be auto-installed. To install, call again with requirementsToInstall containing the exact requirement names the user approved. Invalid requirement names are silently ignored.")]
+    [McpServerTool(Name = VerifySetupToolName), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, the packagePath of the repo to check, and an optional list of requirement names to try installing. When `requirementsToInstall` is null, only checks requirements and reports failures. To install missing requirements, call with `requirementsToInstall` containing the exact requirement names the user wants to install.")]
     public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, List<string> requirementsToInstall = null, CancellationToken ct = default)
     {
         try

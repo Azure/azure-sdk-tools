@@ -8,6 +8,7 @@ using Octokit;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
@@ -100,10 +101,73 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             DefaultValueFactory = _ => "Client Libraries",
         };
 
+        // Management command options
+        private readonly Option<string> viewUserOption = new("--user")
+        {
+            Description = "GitHub alias to look up",
+            Required = false,
+        };
+
+        private readonly Option<string> viewLabelOption = new("--label")
+        {
+            Description = "Label name to look up (for view) or label(s) for add/remove",
+            Required = false,
+        };
+
+        private readonly Option<string[]> labelsOption = new("--label")
+        {
+            Description = "Label name(s). Can be specified multiple times.",
+            Required = false,
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+        private readonly Option<string> viewPackageOption = new("--package")
+        {
+            Description = "Package name to look up",
+            Required = false,
+        };
+
+        private readonly Option<string> mgmtPathOption = new("--path", "-p")
+        {
+            Description = "Repository path (e.g., sdk/formrecognizer/)",
+            Required = false,
+        };
+
+        private readonly Option<string> mgmtRepoOption = new("--repo", "-r")
+        {
+            Description = "Repository name (e.g., Azure/azure-sdk-for-python)",
+            Required = false,
+        };
+
+        private readonly Option<string> mgmtRepoRequiredOption = new("--repo", "-r")
+        {
+            Description = "Repository name (e.g., Azure/azure-sdk-for-python)",
+            Required = true,
+        };
+
+        private readonly Option<string> ownerTypeOption = new("--owner-type")
+        {
+            Description = "Owner type: service-owner, azsdk-owner, or pr-label",
+            Required = false,
+        };
+
+        private readonly Option<string> mgmtUserOption = new("--user")
+        {
+            Description = "GitHub alias of the owner",
+            Required = false,
+        };
+
+        private readonly Option<string> mgmtPackageOption = new("--package")
+        {
+            Description = "Package name",
+            Required = false,
+        };
+
         private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersValidatorHelper codeownersValidatorHelper;
         private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
+        private readonly ICodeownersManagementHelper codeownersManagementHelper;
         private readonly IGitHelper gitHelper;
 
         // URL constants
@@ -113,10 +177,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
         private const string generateCodeownersCommandName = "generate";
+        private const string viewCodeownersCommandName = "view";
+        private const string addCodeownersCommandName = "add";
+        private const string removeCodeownersCommandName = "remove";
 
         // MCP Tool Names
         private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
         private const string ValidateCodeownersEntryToolName = "azsdk_engsys_validate_codeowners_entry_for_service";
+        private const string CodeownerViewToolName = "azsdk_engsys_codeowner_view";
+        private const string CodeownerAddToolName = "azsdk_engsys_codeowner_add";
+        private const string CodeownerRemoveToolName = "azsdk_engsys_codeowner_remove";
 
         public CodeownersTool(
             IGitHubService githubService,
@@ -124,13 +194,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ILoggerFactory? loggerFactory,
             ICodeownersValidatorHelper codeownersValidator,
             ICodeownersGenerateHelper codeownersGenerateHelper,
-            IGitHelper gitHelper
+            IGitHelper gitHelper,
+            ICodeownersManagementHelper codeownersManagementHelper
         )
         {
             this.githubService = githubService;
             this.logger = logger;
             this.codeownersValidatorHelper = codeownersValidator;
             this.codeownersGenerateHelper = codeownersGenerateHelper;
+            this.codeownersManagementHelper = codeownersManagementHelper;
             this.gitHelper = gitHelper;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
@@ -156,6 +228,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(generateCodeownersCommandName, "Generate CODEOWNERS file from Azure DevOps work items")
             {
                 repoRootOption, packageTypesOption, sectionOption,
+            },
+            new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
+            {
+                viewUserOption, viewLabelOption, viewPackageOption, mgmtPathOption, mgmtRepoOption,
+            },
+            new(addCodeownersCommandName, "Add ownership relationships between DevOps work items")
+            {
+                mgmtRepoRequiredOption, mgmtUserOption, mgmtPackageOption, labelsOption, mgmtPathOption, ownerTypeOption,
+            },
+            new(removeCodeownersCommandName, "Remove ownership relationships between DevOps work items")
+            {
+                mgmtRepoRequiredOption, mgmtUserOption, mgmtPackageOption, labelsOption, mgmtPathOption, ownerTypeOption,
             }
         ];
 
@@ -210,6 +294,38 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var section = parseResult.GetValue(sectionOption);
                 var generateResult = await GenerateCodeowners(repoRoot, packageTypes, section, ct);
                 return generateResult;
+            }
+
+            if (command == viewCodeownersCommandName)
+            {
+                var user = parseResult.GetValue(viewUserOption);
+                var label = parseResult.GetValue(viewLabelOption);
+                var package = parseResult.GetValue(viewPackageOption);
+                var path = parseResult.GetValue(mgmtPathOption);
+                var repo = parseResult.GetValue(mgmtRepoOption);
+                return await ViewCodeowners(user, label, package, path, repo);
+            }
+
+            if (command == addCodeownersCommandName)
+            {
+                var repo = parseResult.GetValue(mgmtRepoRequiredOption) ?? "";
+                var user = parseResult.GetValue(mgmtUserOption);
+                var package = parseResult.GetValue(mgmtPackageOption);
+                var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
+                var path = parseResult.GetValue(mgmtPathOption);
+                var ownerType = parseResult.GetValue(ownerTypeOption);
+                return await AddCodeowners(repo, user, package, labels, path, ownerType);
+            }
+
+            if (command == removeCodeownersCommandName)
+            {
+                var repo = parseResult.GetValue(mgmtRepoRequiredOption) ?? "";
+                var user = parseResult.GetValue(mgmtUserOption);
+                var package = parseResult.GetValue(mgmtPackageOption);
+                var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
+                var path = parseResult.GetValue(mgmtPathOption);
+                var ownerType = parseResult.GetValue(ownerTypeOption);
+                return await RemoveCodeowners(repo, user, package, labels, path, ownerType);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -584,6 +700,204 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     ResponseError = $"Failed to generate CODEOWNERS file: {ex.Message}"
                 };
             }
+        }
+
+        [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label, package, or path. Exactly one of --user, --label, --package, or --path must be specified.")]
+        public async Task<CommandResponse> ViewCodeowners(
+            string? user = null,
+            string? label = null,
+            string? package = null,
+            string? path = null,
+            string? repo = null)
+        {
+            try
+            {
+                // Validate exactly one lookup axis
+                var axes = new[] { user, label, package, path }.Count(a => !string.IsNullOrEmpty(a));
+                if (axes == 0)
+                {
+                    return new DefaultCommandResponse { ResponseError = "Exactly one of --user, --label, --package, or --path must be specified." };
+                }
+                if (axes > 1)
+                {
+                    return new DefaultCommandResponse { ResponseError = "Only one of --user, --label, --package, or --path can be specified at a time." };
+                }
+
+                if (!string.IsNullOrEmpty(user))
+                {
+                    return await codeownersManagementHelper.GetViewByUserAsync(user, repo);
+                }
+                if (!string.IsNullOrEmpty(label))
+                {
+                    return await codeownersManagementHelper.GetViewByLabelAsync(label, repo);
+                }
+                if (!string.IsNullOrEmpty(package))
+                {
+                    return await codeownersManagementHelper.GetViewByPackageAsync(package);
+                }
+                return await codeownersManagementHelper.GetViewByPathAsync(path!, repo);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error viewing codeowners data");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        [McpServerTool(Name = CodeownerAddToolName), Description("Add ownership relationships between DevOps work items. Requires --repo. Use --user+--package, --user+--label+--owner-type, --user+--path+--owner-type, or --label+--path.")]
+        public async Task<CommandResponse> AddCodeowners(
+            string repo,
+            string? user = null,
+            string? package = null,
+            List<string>? label = null,
+            string? path = null,
+            string? ownerType = null)
+        {
+            try
+            {
+                var labels = label ?? [];
+                var validationError = ValidateAddRemoveParams(user, package, labels, path, ownerType, isAdd: true);
+                if (validationError != null)
+                {
+                    return new DefaultCommandResponse { ResponseError = validationError };
+                }
+
+                string result;
+                if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(package))
+                {
+                    result = await codeownersManagementHelper.AddOwnerToPackageAsync(user, package, repo);
+                }
+                else if (!string.IsNullOrEmpty(user) && labels.Count > 0)
+                {
+                    result = await codeownersManagementHelper.AddOwnerToLabelAsync(user, labels, repo, ownerType!, path);
+                }
+                else if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(path))
+                {
+                    result = await codeownersManagementHelper.AddOwnerToPathAsync(user, repo, path, ownerType!);
+                }
+                else
+                {
+                    result = await codeownersManagementHelper.AddLabelToPathAsync(labels, repo, path!);
+                }
+
+                return new DefaultCommandResponse
+                {
+                    Message = result,
+                    NextSteps = ["Run the 'generate' command to regenerate the CODEOWNERS file from the updated work items."]
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error adding codeowners relationship");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        [McpServerTool(Name = CodeownerRemoveToolName), Description("Remove ownership relationships between DevOps work items. Requires --repo. Same parameter rules as add.")]
+        public async Task<CommandResponse> RemoveCodeowners(
+            string repo,
+            string? user = null,
+            string? package = null,
+            List<string>? label = null,
+            string? path = null,
+            string? ownerType = null)
+        {
+            try
+            {
+                var labels = label ?? [];
+                var validationError = ValidateAddRemoveParams(user, package, labels, path, ownerType, isAdd: false);
+                if (validationError != null)
+                {
+                    return new DefaultCommandResponse { ResponseError = validationError };
+                }
+
+                string result;
+                if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(package))
+                {
+                    result = await codeownersManagementHelper.RemoveOwnerFromPackageAsync(user, package, repo);
+                }
+                else if (!string.IsNullOrEmpty(user) && labels.Count > 0)
+                {
+                    result = await codeownersManagementHelper.RemoveOwnerFromLabelAsync(user, labels, repo, ownerType!);
+                }
+                else if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(path))
+                {
+                    result = await codeownersManagementHelper.RemoveOwnerFromPathAsync(user, repo, path, ownerType!);
+                }
+                else
+                {
+                    result = await codeownersManagementHelper.RemoveLabelFromPathAsync(labels, repo, path!);
+                }
+
+                return new DefaultCommandResponse
+                {
+                    Message = result,
+                    NextSteps = ["Run the 'generate' command to regenerate the CODEOWNERS file from the updated work items."]
+                };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error removing codeowners relationship");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        /// <summary>
+        /// Validates parameter combinations for add/remove commands.
+        /// </summary>
+        internal static string? ValidateAddRemoveParams(string? user, string? package, List<string> labels, string? path, string? ownerType, bool isAdd)
+        {
+            var hasUser = !string.IsNullOrEmpty(user);
+            var hasPackage = !string.IsNullOrEmpty(package);
+            var hasLabels = labels.Count > 0;
+            var hasPath = !string.IsNullOrEmpty(path);
+            var hasOwnerType = !string.IsNullOrEmpty(ownerType);
+
+            // Scenario: User + Package
+            if (hasUser && hasPackage)
+            {
+                if (hasOwnerType)
+                {
+                    return "Cannot specify --owner-type when adding/removing a user from a package. Packages only have source owners.";
+                }
+                return null;
+            }
+
+            // Scenario: User + Label(s)
+            if (hasUser && hasLabels)
+            {
+                if (!hasOwnerType)
+                {
+                    return "Must specify --owner-type (service-owner, azsdk-owner, or pr-label) when adding/removing a user from a label.";
+                }
+                if (ownerType!.Equals("pr-label", StringComparison.OrdinalIgnoreCase) && !hasPath)
+                {
+                    return "Must specify --path when using --owner-type pr-label.";
+                }
+                return null;
+            }
+
+            // Scenario: User + Path (no labels, no package)
+            if (hasUser && hasPath && !hasPackage && !hasLabels)
+            {
+                if (!hasOwnerType)
+                {
+                    return "Must specify --owner-type (service-owner, azsdk-owner, or pr-label) when adding/removing a user from a path.";
+                }
+                return null;
+            }
+
+            // Scenario: Label(s) + Path (no user)
+            if (hasLabels && hasPath && !hasUser)
+            {
+                if (hasOwnerType)
+                {
+                    return "Cannot specify --owner-type when adding/removing labels to/from a path.";
+                }
+                return null;
+            }
+
+            return "Invalid parameter combination. Use: --user+--package, --user+--label+--owner-type, --user+--path+--owner-type, or --label+--path.";
         }
     }
 }

@@ -79,7 +79,11 @@ public static class WorkItemMappers
     {
         return packages
             .GroupBy(p => p.PackageName, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.OrderByDescending(p => p.PackageVersionMajorMinor, MajorMinorVersionComparer.Default).First())
+            .Select(g => g.OrderByDescending(
+                // Convert major.minor to major.minor.0 for proper comparison
+                p => $"{p.PackageVersionMajorMinor}.0",
+                VersionHelper.Default).First()
+            )
             .ToList();
     }
 }

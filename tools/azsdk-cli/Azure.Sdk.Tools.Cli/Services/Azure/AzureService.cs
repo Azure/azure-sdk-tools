@@ -20,7 +20,9 @@ public class AzureService : IAzureService
         {
             return new ChainedTokenCredential(
                 new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId }),
-                new WorkloadIdentityCredential(new WorkloadIdentityCredentialOptions { TenantId = tenantId })
+                new WorkloadIdentityCredential(new WorkloadIdentityCredentialOptions { TenantId = tenantId }),
+                // Environment variables for Azure pipeline credentials are created by Azure pipeline tasks AzureCLI@2 and AzurePowerShell@5
+                new AzurePipelinesCredential(Environment.GetEnvironmentVariable("AZURESUBSCRIPTION_TENANT_ID"), Environment.GetEnvironmentVariable("AZURESUBSCRIPTION_TENANT_ID"), Environment.GetEnvironmentVariable("AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"), Environment.GetEnvironmentVariable("SYSTEM_ACCESSTOKEN"))
             );
 
         }

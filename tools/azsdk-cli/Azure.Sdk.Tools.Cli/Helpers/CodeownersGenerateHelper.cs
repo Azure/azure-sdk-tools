@@ -95,8 +95,7 @@ public class CodeownersGenerateHelper(
 
             if (result.ExitCode != 0)
             {
-                logger.LogWarning("Getting package properties failed with exit code {ExitCode}: {Output}", result.ExitCode, result.Output);
-                return [];
+                throw new InvalidOperationException($"Getting package properties failed with exit code {result.ExitCode}: {result.Output}");
             }
 
             var packages = JsonSerializer.Deserialize<List<RepoPackage>>(
@@ -106,7 +105,8 @@ public class CodeownersGenerateHelper(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to get packages from repository");
+            logger.LogError(ex, "Failed to get packages from repository");
+            throw;
         }
         finally
         {

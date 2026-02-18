@@ -16,37 +16,6 @@
                             <div id="emaiInputlHelp" class="form-text">Enter your email to get notifications. Leave blank to stop emails.</div>
                         </div>
                     </li>
-                    <li *ngIf="isApprover" class="list-group-item" id="reviewLanguagesListItem">
-                        <div class="mb-1">
-                            <label for="reviewLanguagesMultiSelect" class="form-label fw-semibold">Review languages</label>
-                            <div class="card flex justify-content-center">
-                                <p-multiSelect
-                                    id="reviewLanguagesMultiSelect"
-                                    (onChange)="onProfileChange($event)"
-                                    [options]="languages"
-                                    [filter]="false"
-                                    [ngModel]="selectedLanguages"
-                                    optionLabel="label"
-                                    [placeholder]="isAdmin ? 'Select languages (Admin: all languages available)' : 'Select languages you want to be able to approve.'"
-                                    [showClear]="true"
-                                    (onClear)="onProfileChange($event)"
-                                    [maxSelectedLabels]="12"
-                                    selectedItemsLabel="{0} items selected"
-                                    [style]="{'width':'100%'}">
-                                    <ng-template let-option pTemplate="item">
-                                        <div class="inline-block vertical-align-middle">
-                                            <img [alt]="" src="{{assetsPath}}/images/{{ option.label | languageNames: userProfile?.preferences?.theme }}-original.svg" width="24" class="vertical-align-middle" />
-                                            <span class="mx-2 mt-1">{{ option.label }}</span>
-                                        </div>
-                                    </ng-template>
-                                </p-multiSelect>
-                            </div>
-                            <div id="reviewLanguagesHelp" class="form-text">
-                                <span *ngIf="isAdmin">As an admin, you can approve reviews for all languages.</span>
-                                <span *ngIf="!isAdmin && approvableLanguages.length > 0">You can approve reviews for: {{approvableLanguages.join(', ')}}</span>
-                            </div>
-                        </div>
-                    </li>
                     
                     <!-- Permissions Section -->
                     <li class="list-group-item" id="permissionsListItem">

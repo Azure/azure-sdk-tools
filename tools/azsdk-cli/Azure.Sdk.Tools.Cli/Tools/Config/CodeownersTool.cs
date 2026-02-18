@@ -14,6 +14,8 @@ using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Config
 {
@@ -77,10 +79,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
-        // Render command options
-        private readonly Argument<string> repoRootArgument = new("repo-root")
+        // Generate command options
+        private readonly Option<string> repoOptionGenerate = new("--repo", "-r")
         {
-            Description = "Path to the repository root",
+            Description = "Full repository name (e.g. Azure/azure-sdk-for-net). Required if running outside the context of an SDK repository.",
+            Required = false,
+        };
+        private readonly Option<string> repoRootOption = new("--repo-root")
+        {
+            Description = "Path to the repository root (default: repo root of current directory)",
+            Required = false,
         };
 
         private readonly Option<string[]> packageTypesOption = new("--package-types")
@@ -98,7 +106,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersValidatorHelper codeownersValidator;
-        private readonly ICodeownersRenderHelper codeownersRenderHelper;
+        private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
+        private readonly IGitHelper gitHelper;
 
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
@@ -106,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         // Command names
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
-        private const string renderCodeownersCommandName = "render";
+        private const string generateCodeownersCommandName = "generate";
 
         // MCP Tool Names
         private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
@@ -117,13 +126,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ILogger<CodeownersTool> logger,
             ILoggerFactory? loggerFactory,
             ICodeownersValidatorHelper codeownersValidator,
-            ICodeownersRenderHelper codeownersRenderHelper
+            ICodeownersGenerateHelper codeownersGenerateHelper,
+            IGitHelper gitHelper
         )
         {
             this.githubService = githubService;
             this.logger = logger;
             this.codeownersValidator = codeownersValidator;
-            this.codeownersRenderHelper = codeownersRenderHelper;
+            this.codeownersGenerateHelper = codeownersGenerateHelper;
+            this.gitHelper = gitHelper;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
         }
@@ -145,9 +156,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 repoOption, serviceLabelOption, pathOptionOptional,
             },
-            new(renderCodeownersCommandName, "Render CODEOWNERS file from Azure DevOps work items")
+            new(generateCodeownersCommandName, "Generate CODEOWNERS file from Azure DevOps work items")
             {
-                repoRootArgument, repoOption, packageTypesOption, sectionOption,
+                repoRootOption, repoOptionGenerate, packageTypesOption, sectionOption,
             }
         ];
 
@@ -193,16 +204,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 return validateResult;
             }
 
-            if (command == renderCodeownersCommandName)
+            if (command == generateCodeownersCommandName)
             {
-                var repoRoot = parseResult.GetValue(repoRootArgument);
-                var repo = parseResult.GetValue(repoOption);
+                var repoRoot = parseResult.GetValue(repoRootOption)
+                    ?? await gitHelper.DiscoverRepoRootAsync(".");
+                var repo = parseResult.GetValue(repoOptionGenerate)
+                    ?? await gitHelper.GetRepoFullNameAsync(repoRoot);
                 var packageTypesValue = parseResult.GetValue(packageTypesOption);
                 var packageTypes = (packageTypesValue != null && packageTypesValue.Length > 0) ? packageTypesValue.ToList() : ["client"];
                 var section = parseResult.GetValue(sectionOption) ?? "Client Libraries";
 
-                var renderResult = await RenderCodeowners(repoRoot ?? "", repo ?? "", packageTypes, section, ct);
-                return renderResult;
+                var generateResult = await GenerateCodeowners(repoRoot ?? "", repo ?? "", packageTypes, section, ct);
+                return generateResult;
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -525,9 +538,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         }
 
         /// <summary>
-        /// Renders CODEOWNERS file from Azure DevOps work items.
+        /// Generates CODEOWNERS file from Azure DevOps work items.
         /// </summary>
-        public async Task<DefaultCommandResponse> RenderCodeowners(
+        public async Task<DefaultCommandResponse> GenerateCodeowners(
             string repoRoot,
             string repo,
             List<string> packageTypes,
@@ -552,11 +565,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                if (string.IsNullOrWhiteSpace(repo))
+                if (!Regex.IsMatch(repo, @"^Azure/azure-sdk-for-"))
                 {
                     return new DefaultCommandResponse
                     {
-                        ResponseError = "Repository name (--repo) is required"
+                        ResponseError = "Repository name (--repo) is required must be of the form Azure/azure-sdk-for-<language>"
                     };
                 }
 
@@ -569,19 +582,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                var result = await codeownersRenderHelper.RenderCodeownersAsync(repoRoot, repo, packageTypes, section, ct);
+                var result = await codeownersGenerateHelper.GenerateCodeownersAsync(repoRoot, repo, packageTypes, section, ct);
 
                 return new DefaultCommandResponse
                 {
-                    Message = $"CODEOWNERS file rendered successfully to {codeownersPath}"
+                    Message = $"CODEOWNERS file generated successfully to {codeownersPath}"
                 };
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to render CODEOWNERS file");
+                logger.LogError(ex, "Failed to generate CODEOWNERS file");
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Failed to render CODEOWNERS file: {ex.Message}"
+                    ResponseError = $"Failed to generate CODEOWNERS file: {ex.Message}"
                 };
             }
         }

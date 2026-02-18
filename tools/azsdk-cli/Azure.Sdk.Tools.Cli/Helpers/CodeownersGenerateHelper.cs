@@ -13,20 +13,20 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
-/// Renders CODEOWNERS files from Azure DevOps work items.
+/// Generates CODEOWNERS files from Azure DevOps work items.
 /// </summary>
-public class CodeownersRenderHelper : ICodeownersRenderHelper
+public class CodeownersGenerateHelper : ICodeownersGenerateHelper
 {
     private readonly IDevOpsService _devOpsService;
     private readonly IPowershellHelper _powershellHelper;
     private readonly IInputSanitizer _inputSanitizer;
-    private readonly ILogger<CodeownersRenderHelper> _logger;
+    private readonly ILogger<CodeownersGenerateHelper> _logger;
 
-    public CodeownersRenderHelper(
+    public CodeownersGenerateHelper(
         IDevOpsService devOpsService,
         IPowershellHelper powershellHelper,
         IInputSanitizer inputSanitizer,
-        ILogger<CodeownersRenderHelper> logger)
+        ILogger<CodeownersGenerateHelper> logger)
     {
         _devOpsService = devOpsService;
         _powershellHelper = powershellHelper;
@@ -34,7 +34,7 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         _logger = logger;
     }
 
-    public async Task<string> RenderCodeownersAsync(
+    public async Task<string> GenerateCodeownersAsync(
         string repoRoot,
         string repoName,
         List<string>? packageTypes = null,
@@ -42,7 +42,6 @@ public class CodeownersRenderHelper : ICodeownersRenderHelper
         CancellationToken ct = default)
     {
         packageTypes ??= ["client"];
-        _logger.LogInformation("=== RenderCodeownersFile ===");
         _logger.LogInformation("Repository Root: {RepoRoot}", repoRoot);
         _logger.LogInformation("Repository: {RepoName}", repoName);
         _logger.LogInformation("Project: {ProjectName}", Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT);

@@ -16,10 +16,10 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 [TestFixture]
-public class CodeownersRenderHelperTests
+public class codeownersGenerateHelperTests
 {
     private TempDirectory _tempDir = null!;
-    private ILogger<CodeownersRenderHelper> _logger = null!;
+    private ILogger<codeownersGenerateHelper> _logger = null!;
     private Mock<IDevOpsService> _mockDevOpsService = null!;
     private Mock<IPowershellHelper> _mockPowershellHelper = null!;
     private Mock<IInputSanitizer> _mockInputSanitizer = null!;
@@ -29,9 +29,9 @@ public class CodeownersRenderHelperTests
     [SetUp]
     public void SetUp()
     {
-        _tempDir = TempDirectory.Create("CodeownersRenderHelperTests");
+        _tempDir = TempDirectory.Create("codeownersGenerateHelperTests");
         _repoRoot = _tempDir.DirectoryPath;
-        _logger = new TestLogger<CodeownersRenderHelper>();
+        _logger = new TestLogger<codeownersGenerateHelper>();
         _mockDevOpsService = new Mock<IDevOpsService>();
         _mockPowershellHelper = new Mock<IPowershellHelper>();
         _mockInputSanitizer = new Mock<IInputSanitizer>();
@@ -63,7 +63,7 @@ public class CodeownersRenderHelperTests
     [TestCase("azure-sdk-for-net", "net", ".NET")]
     public void GetLanguageFromRepoName_ReturnsExpectedLanguage(string repoName, string expectedSuffix, string expectedLanguage)
     {
-        var result = CodeownersRenderHelper.GetLanguageFromRepoName(repoName);
+        var result = codeownersGenerateHelper.GetLanguageFromRepoName(repoName);
 
         Assert.That(result, Is.EqualTo(expectedLanguage));
     }
@@ -71,7 +71,7 @@ public class CodeownersRenderHelperTests
     [Test]
     public void GetLanguageFromRepoName_ThrowsForInvalidRepoName()
     {
-        Assert.Throws<ArgumentException>(() => CodeownersRenderHelper.GetLanguageFromRepoName("unknown-repo"));
+        Assert.Throws<ArgumentException>(() => codeownersGenerateHelper.GetLanguageFromRepoName("unknown-repo"));
     }
 
     #endregion
@@ -85,7 +85,7 @@ public class CodeownersRenderHelperTests
     [TestCase("/src/repo/sdk/storage/", "/src/repo", "/sdk/storage/")]
     public void BuildPathExpression_ReturnsExpectedPath(string dirPath, string repoRoot, string expected)
     {
-        var result = CodeownersRenderHelper.BuildPathExpression(dirPath, repoRoot);
+        var result = codeownersGenerateHelper.BuildPathExpression(dirPath, repoRoot);
         Assert.That(result, Is.EqualTo(expected));
     }
 
@@ -285,11 +285,11 @@ public class CodeownersRenderHelperTests
 
     private List<CodeownersEntry> InvokeBuildCodeownersEntries(WorkItemData data, Dictionary<string, RepoPackage> packageLookup)
     {
-        var method = typeof(CodeownersRenderHelper).GetMethod(
+        var method = typeof(codeownersGenerateHelper).GetMethod(
             "BuildCodeownersEntries",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        var helper = new CodeownersRenderHelper(
+        var helper = new codeownersGenerateHelper(
             _mockDevOpsService.Object,
             _mockPowershellHelper.Object,
             _mockInputSanitizer.Object,

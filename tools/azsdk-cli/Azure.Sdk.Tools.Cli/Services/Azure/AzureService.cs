@@ -18,7 +18,11 @@ public class AzureService : IAzureService
         // that we need to optimize for a cached credential.
         if (IsRunningInPipeline())
         {
-            return new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId });
+            return new ChainedTokenCredential(
+                new AzureCliCredential(new AzureCliCredentialOptions { TenantId = tenantId }),
+                new WorkloadIdentityCredential(new WorkloadIdentityCredentialOptions { TenantId = tenantId })
+            );
+
         }
 
         try

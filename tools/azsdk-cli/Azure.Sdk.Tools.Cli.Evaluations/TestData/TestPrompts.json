@@ -104,8 +104,8 @@
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon my release plan", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel the release plan for my service", "category": "all" },
 
-    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Find product details for my typespec project", "category":  "all" },
-    { "toolName": "azsdk_get_service_details_by_typespec_path",  "prompt": "What service does this TypeSpec project belong to?", "category": "all" },
-    { "toolName": "azsdk_get_service_details_by_typespec_path",  "prompt": "Show me the service information for this TypeSpec path", "category": "all" }
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Find product details for my typespec project", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "What service does this TypeSpec project belong to?", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Show me the service information for this TypeSpec path", "category": "all" }
   ]
 }

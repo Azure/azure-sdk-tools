@@ -100,7 +100,7 @@ public class CodeownersGenerateHelper(
 
             var packages = JsonSerializer.Deserialize<List<RepoPackage>>(
                 await File.ReadAllTextAsync(tempFile, ct),
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return packages;
         }
         catch (Exception ex)
@@ -121,8 +121,6 @@ public class CodeownersGenerateHelper(
                 logger.LogWarning(ex, "Failed to delete temporary file: {TempFile}", tempFile);
             }
         }
-
-        return [];
     }
 
     private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, SdkLanguage language, string[] packageTypes, CancellationToken ct)

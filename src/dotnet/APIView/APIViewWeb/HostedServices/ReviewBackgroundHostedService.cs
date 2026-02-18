@@ -14,6 +14,8 @@ namespace APIViewWeb.HostedServices
 {
     public class ReviewBackgroundHostedService : BackgroundService
     {
+        private static readonly TimeSpan BackgroundTaskInterval = TimeSpan.FromHours(6);
+
         private readonly bool _isDisabled;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionManager;
@@ -120,8 +122,8 @@ namespace APIViewWeb.HostedServices
                 }
                 finally
                 {
-                    // Wait 6 hours before running archive task again
-                    await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
+                    // Wait before running archive task again
+                    await Task.Delay(BackgroundTaskInterval, stoppingToken);
                 }                
             }
             while (!stoppingToken.IsCancellationRequested);
@@ -144,8 +146,8 @@ namespace APIViewWeb.HostedServices
                 }
                 finally
                 {
-                    // Wait 6 hours before running purge task again
-                    await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
+                    // Wait before running purge task again
+                    await Task.Delay(BackgroundTaskInterval, stoppingToken);
                 }                
             }
             while (!stoppingToken.IsCancellationRequested);

@@ -351,7 +351,7 @@ namespace APIViewWeb
 
             var revisions = new List<APIRevisionListItemModel>();
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
-                .WithParameter("@deletedBefore", deletedBefore.ToString("yyyy-MM-dd"))
+                .WithParameter("@deletedBefore", deletedBefore.ToUniversalTime())
                 .WithParameter("@apiRevisionType", apiRevisionType.ToString());
 
             using FeedIterator<APIRevisionListItemModel> feedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);

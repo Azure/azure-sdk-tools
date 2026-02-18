@@ -559,14 +559,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                if (!Regex.IsMatch(repo, @"^Azure/azure-sdk-for-"))
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = "Repository name (--repo) is required must be of the form Azure/azure-sdk-for-<language>"
-                    };
-                }
-
                 var codeownersPath = Path.Combine(repoRoot, ".github", "CODEOWNERS");
                 if (!File.Exists(codeownersPath))
                 {

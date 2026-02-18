@@ -633,9 +633,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
-    // Determine base path - use /spa/browser/ if we're on spa.* hostname, otherwise use /
-    const basePath = window.location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
-    return `${window.location.protocol}//${window.location.host}${basePath}review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
+    return `${window.location.protocol}//${window.location.host}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**

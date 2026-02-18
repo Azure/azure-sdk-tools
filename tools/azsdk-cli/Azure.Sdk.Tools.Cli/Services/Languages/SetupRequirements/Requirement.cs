@@ -2,8 +2,9 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Models;
+namespace Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 
 /// <summary>
 /// Result of running a requirement check.

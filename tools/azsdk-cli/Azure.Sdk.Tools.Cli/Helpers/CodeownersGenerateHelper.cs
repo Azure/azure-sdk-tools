@@ -108,6 +108,17 @@ public class CodeownersGenerateHelper(
         {
             logger.LogWarning(ex, "Failed to get packages from repository");
         }
+        finally
+        {
+            try
+            {
+                File.Delete(tempFile);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to delete temporary file: {TempFile}", tempFile);
+            }
+        }
 
         return [];
     }

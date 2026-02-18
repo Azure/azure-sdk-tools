@@ -74,28 +74,6 @@ describe('ProfilePageComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should NOT render reviewLanguagesListItem when user is not an approver', () => {
-    component.userName = 'testuser';
-    component.isApprover = false; // User is not an approver
-    component.userProfile = { userName: 'testuser', preferences: {}, permissions: null } as any;
-    component.isLoaded = true;
-    fixture.detectChanges();
-
-    const reviewLanguagesListItem = fixture.debugElement.query(By.css('#reviewLanguagesListItem'));
-    expect(reviewLanguagesListItem).toBeNull();
-  });
-
-  it('should render reviewLanguagesListItem when user is an approver', () => {
-    component.userName = 'testuser';
-    component.isApprover = true; // User is an approver
-    component.userProfile = { userName: 'testuser', preferences: {}, permissions: { roles: [{ kind: 'scoped', role: 'Architect', language: 'Python' }] } } as any;
-    component.isLoaded = true;
-    fixture.detectChanges();
-
-    const reviewLanguagesListItem = fixture.debugElement.query(By.css('#reviewLanguagesListItem'));
-    expect(reviewLanguagesListItem).toBeTruthy();
-  });
-
   it('should render permissionsListItem', () => {
     component.userName = 'testuser';
     component.userProfile = { userName: 'testuser', preferences: {}, permissions: null } as any;

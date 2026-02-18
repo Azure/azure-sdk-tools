@@ -134,5 +134,9 @@ No batching requirement when comments are being added live.
 
 ## Questions
 - Empty submit: define whether Approve/RequestChanges with zero comments is allowed.
+    - Approve -> Yes
+    - Request Changes -> No
 - Post-submit edits: define whether editing/deleting an included comment changes historical submission rendering.
+    - No ->  The history entry would basically say "Summer submitted a review with Comments" because there's already an "Approval" event. Since the history wouldn't go into what comments were made, editing a comment probably shouldn't change the history entry.
 - Ownership validation: clarify if commentIds must be created by submitting reviewer only, or can include bot/other comments.
+    - AVC will be treated as any other reviewer, so I think it's appropriate to log an AVC review in the same way. The difference being that with AVC, you actually receive all comments in a batch, so that should actually simplify the logic in that case. There's no need to "collect" the comments.

@@ -175,7 +175,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
         private static string TruncateString(string s, int maxLength)
         {
             if (string.IsNullOrEmpty(s) || s.Length <= maxLength)
+            {
                 return s;
+            }
             return s.Substring(0, maxLength) + "...";
         }
 

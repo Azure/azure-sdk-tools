@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.CodeownersUtils.Parsing;
+
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
@@ -17,10 +19,19 @@ public interface ICodeownersGenerateHelper
     /// <param name="sectionName">Section name in CODEOWNERS file to update</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>The generated CODEOWNERS content that was written</returns>
-    Task<string> GenerateCodeownersAsync(
+    Task GenerateCodeowners(
         string repoRoot,
         string repoName,
         string[] packageTypes,
         string sectionName,
         CancellationToken ct = default);
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="entries"></param>
+    /// <param name="sectionName"></param>
+    /// <returns></returns>
+    Task WriteCodeownersFile(string path, List<CodeownersEntry> entries, string sectionName);
 }

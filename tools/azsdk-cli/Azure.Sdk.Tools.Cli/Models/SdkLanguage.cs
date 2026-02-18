@@ -63,6 +63,7 @@ public static class SdkLanguageHelpers
     {
         switch (language.ToLower())
         {
+            case "net":
             case ".net":
             case "dotnet":
             case "c#":

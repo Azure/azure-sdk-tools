@@ -578,7 +578,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                var result = await codeownersGenerateHelper.GenerateCodeownersAsync(repoRoot, repo, packageTypes, section, ct);
+                await codeownersGenerateHelper.GenerateCodeowners(repoRoot, repo, packageTypes, section, ct);
 
                 return new DefaultCommandResponse
                 {

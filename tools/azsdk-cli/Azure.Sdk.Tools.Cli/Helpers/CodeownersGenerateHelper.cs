@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Text;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
@@ -24,77 +26,61 @@ public class CodeownersGenerateHelper(
     private readonly IPowershellHelper powershellHelper = powershellHelper;
     private readonly ILogger<CodeownersGenerateHelper> logger = logger;
 
-    public async Task<string> GenerateCodeownersAsync(
+    public async Task GenerateCodeowners(
         string repoRoot,
         string repoName,
         string[] packageTypes,
         string sectionName,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Repository Root: {RepoRoot}", repoRoot);
-        logger.LogInformation("Repository: {RepoName}", repoName);
-        logger.LogInformation("Project: {ProjectName}", Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT);
-        logger.LogInformation("Package Types: {PackageTypes}", string.Join(", ", packageTypes));
-        logger.LogInformation("Section: {SectionName}", sectionName);
 
-        // Get language from repo name
-        var language = GetLanguageFromRepoName(repoName);
-        logger.LogInformation("Language: {Language}", language);
+        // Get language from full repo name (e.g. Azure/azure-sdk-for-net -> .NET)
+        var language = SdkLanguageHelpers.GetLanguageForRepo(
+            repoName.Split('/').Last()
+        );
 
-        // Step 1: Get packages from repository
-        logger.LogInformation("Step 1: Getting package paths from repository...");
+        logger.LogInformation("""
+            Repository Root: {repoRoot}
+            Repository: {repoName}
+            Project: {Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}
+            Package Types: {packageTypes}
+            Section: {sectionName}
+            Language: {Language}
+            """,
+            repoRoot,
+            repoName,
+            Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT,
+            string.Join(", ", packageTypes),
+            sectionName,
+            language
+        );
+
+        logger.LogInformation("Getting package paths from repository...");
         var repoPackages = await GetPackagesFromRepoAsync(repoRoot, ct);
         logger.LogInformation("Found {Count} packages in repository", repoPackages.Count);
         var packageLookup = repoPackages.ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
 
-        // Step 2: Fetch work items from Azure DevOps
-        logger.LogInformation("Step 2: Fetching work items from Azure DevOps...");
+        logger.LogInformation("Fetching work items from Azure DevOps...");
         var workItemData = await FetchAllWorkItemsAsync(repoName, language, packageTypes, ct);
 
-        // Step 3: Build CODEOWNERS entries
-        logger.LogInformation("Step 3: Building CODEOWNERS entries...");
+        logger.LogInformation("Building CODEOWNERS entries...");
         var entries = BuildCodeownersEntries(workItemData, packageLookup, repoRoot);
         logger.LogInformation("Total entries: {Count}", entries.Count);
 
-        // Step 4: Sort entries
-        logger.LogInformation("Step 4: Sorting entries...");
+        logger.LogInformation("Sorting entries...");
         CodeownersEntrySorter.SortOwnersInPlace(entries);
         CodeownersEntrySorter.SortLabelsInPlace(entries);
         entries = CodeownersEntrySorter.SortEntries(entries);
 
-        // Step 5: Update CODEOWNERS file
-        logger.LogInformation("Step 5: Updating CODEOWNERS file...");
+        logger.LogInformation("Updating CODEOWNERS file...");
         var codeownersPath = Path.Combine(repoRoot, ".github", "CODEOWNERS");
-        var output = WriteCodeownersFile(codeownersPath, entries, sectionName);
-        return output;
-    }
-
-    public static string GetLanguageFromRepoName(string repoName)
-    {
-        if (!repoName.Contains("azure-sdk-for-", StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ArgumentException($"Repository name '{repoName}' does not match expected format 'azure-sdk-for-<language>'");
-        }
-
-        string suffix = repoName[(repoName.LastIndexOf('-') + 1)..].ToLowerInvariant();
-        return suffix switch
-        {
-            "c" => "C",
-            "cpp" => "C++",
-            "go" => "Go",
-            "java" => "Java",
-            "js" => "JavaScript",
-            "net" => ".NET",
-            "python" => "Python",
-            "rust" => "Rust",
-            _ => suffix
-        };
+        await WriteCodeownersFile(codeownersPath, entries, sectionName);
     }
 
     private async Task<List<RepoPackage>> GetPackagesFromRepoAsync(string repoRoot, CancellationToken ct)
     {
-        string tempFile = Path.GetTempFileName();
-        string command = $". (Join-Path '{repoRoot}' 'eng/common/scripts/common.ps1'); $pkgProperties = Get-AllPkgProperties; $pkgProperties | ConvertTo-Json -Depth 100 | Set-Content -Path '{tempFile}'";
+        //string tempFile = Path.GetTempFileName();
+        string command = $". (Join-Path '{repoRoot}' 'eng/common/scripts/common.ps1'); ($pkgProperties = Get-AllPkgProperties) *> Out-Null; $pkgProperties | ConvertTo-Json -Depth 100";
 
         try
         {
@@ -112,30 +98,20 @@ public class CodeownersGenerateHelper(
                 return [];
             }
 
-            if (File.Exists(tempFile) && new FileInfo(tempFile).Length > 0)
-            {
-                string json = await File.ReadAllTextAsync(tempFile, ct);
-                var packages = JsonSerializer.Deserialize<List<RepoPackage>>(json,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
-                return packages;
-            }
+            var packages = JsonSerializer.Deserialize<List<RepoPackage>>(
+                result.Stdout,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+            return packages;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to get packages from repository");
         }
-        finally
-        {
-            if (File.Exists(tempFile))
-            {
-                File.Delete(tempFile);
-            }
-        }
 
         return [];
     }
 
-    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, string language, string[] packageTypes, CancellationToken ct)
+    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, SdkLanguage language, string[] packageTypes, CancellationToken ct)
     {
         // Build package type filter using IN clause
         var packageTypeList = string.Join(", ", packageTypes.Select(pt => $"'{pt}'"));
@@ -378,7 +354,7 @@ public class CodeownersGenerateHelper(
         return "/" + normalized.TrimStart('/') + "/";
     }
 
-    private string WriteCodeownersFile(string path, List<CodeownersEntry> entries, string sectionName)
+    public async Task WriteCodeownersFile(string path, List<CodeownersEntry> entries, string sectionName)
     {
         if (!File.Exists(path))
         {
@@ -386,7 +362,7 @@ public class CodeownersGenerateHelper(
             throw new FileNotFoundException($"CODEOWNERS file not found: {path}");
         }
 
-        var lines = File.ReadAllLines(path).ToList();
+        var lines = (await File.ReadAllLinesAsync(path)).ToList();
         var (headerStart, contentStart, sectionEnd) = CodeownersSectionFinder.FindSection(lines, sectionName);
 
         if (contentStart == -1)
@@ -420,9 +396,7 @@ public class CodeownersGenerateHelper(
         // Content after section
         output.AddRange(lines[sectionEnd..]);
 
-        File.WriteAllLines(path, output);
+        await File.WriteAllTextAsync(path, string.Join("\n", output));
         logger.LogInformation("Updated: {Path}", path);
-
-        return string.Join(Environment.NewLine, output);
     }
 }

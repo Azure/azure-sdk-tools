@@ -82,6 +82,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             Description = "Path to the repository root (default: repo root of current directory)",
             Required = false,
+            DefaultValueFactory = _ => ".",
         };
 
         private readonly Option<string[]> packageTypesOption = new("--package-types")
@@ -202,8 +203,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             if (command == generateCodeownersCommandName)
             {
-                var repoRoot = parseResult.GetValue(repoRootOption)
-                    ?? await gitHelper.DiscoverRepoRootAsync(".");
+                if (!System.Diagnostics.Debugger.IsAttached)
+                {
+                    System.Diagnostics.Debugger.Launch();
+                }
+                var repoRoot = await gitHelper.DiscoverRepoRootAsync(
+                    parseResult.GetValue(repoRootOption)
+                );
                 var repo = await gitHelper.GetRepoFullNameAsync(repoRoot);
                 var packageTypes = parseResult.GetValue(packageTypesOption);
                 var section = parseResult.GetValue(sectionOption);

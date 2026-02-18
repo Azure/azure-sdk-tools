@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 
 namespace Azure.Sdk.Tools.Cli;
@@ -89,6 +90,11 @@ public class Program
                 .AddMcpServer()
                 .WithStdioServerTransport();
         }
+
+        // NOTE: This must be called AFTER the above MCP registrations to ensure
+        // the upgrade notification hosted service is only started after the MCP host.
+        // Otherwise upgrade notification logs will not be forwarded to the client.
+        ServiceRegistrations.RegisterUpgradeServices(builder.Services);
 
         return builder;
     }

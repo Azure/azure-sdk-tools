@@ -235,6 +235,7 @@ export class ReviewPageComponent implements OnInit {
         this.hasHiddenAPIThatIsDiff = this.codePanelData.hasHiddenAPIThatIsDiff;
         this.processEmbeddedComments();
         this.workerService.terminateWorker();
+        this.loadComments();
       }
     });
   }
@@ -674,7 +675,16 @@ export class ReviewPageComponent implements OnInit {
 
   handleNumberOfActiveThreadsEmitter(value: number) {
     this.numberOfActiveConversation = value;
-    this.createSideMenu();
+    if (this.sideMenu) {
+      const conversationsItem = this.sideMenu.find(item => item.tooltip === 'Conversations');
+      if (conversationsItem) {
+        conversationsItem.badge = (value > 0) ? value.toString() : undefined;
+        this.sideMenu = [...this.sideMenu];
+        this.changeDetectorRef.detectChanges();
+      }
+    } else {
+      this.createSideMenu();
+    }
   }
 
   handleScrollToNodeEmitter(value: string) {

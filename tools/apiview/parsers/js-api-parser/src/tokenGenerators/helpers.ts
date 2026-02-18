@@ -304,6 +304,41 @@ export function buildTypeNodeTokens(
     return children.length > 0 ? children : undefined;
   }
 
+  if (ts.isImportTypeNode(node)) {
+    // Handle import("@azure/logger").AzureLogger
+    tokens.push(createToken(TokenKind.Keyword, "import", { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
+
+    // The argument is a string literal (module specifier)
+    const modulePath = node.argument.getText();
+    tokens.push(createToken(TokenKind.StringLiteral, modulePath, { deprecated }));
+
+    tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+
+    // Handle qualifier (e.g., .AzureLogger)
+    if (node.qualifier) {
+      tokens.push(createToken(TokenKind.Punctuation, ".", { deprecated }));
+      tokens.push(createToken(TokenKind.TypeName, node.qualifier.getText(), { deprecated }));
+    }
+
+    // Handle type arguments (e.g., import("...").SomeType<T>)
+    if (node.typeArguments?.length) {
+      tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+      node.typeArguments.forEach((arg, index) => {
+        if (index > 0) {
+          tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+        }
+        const nestedChildren = buildTypeNodeTokens(arg, tokens, deprecated, depth);
+        if (nestedChildren?.length) {
+          children.push(...nestedChildren);
+        }
+      });
+      tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+    }
+
+    return children.length > 0 ? children : undefined;
+  }
+
   const text = node.getText();
   const tokenKind = getTokenKind(text);
   tokens.push(createToken(tokenKind, text, { deprecated }));

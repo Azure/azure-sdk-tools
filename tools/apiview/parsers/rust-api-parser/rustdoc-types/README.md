@@ -28,7 +28,7 @@ This project uses vendored dependencies to ensure consistent rustdoc-types. The 
 1. Update the version in `Cargo.toml`:
     ```toml
     [dependencies]
-    rustdoc-types = "0.33.0"  # Replace with desired version
+    rustdoc-types = "0.33.0"  # Retain as baseline; add new version for migration.
     ```
 
 2. **Vendor Dependencies**:
@@ -75,7 +75,13 @@ The `FORMAT_VERSION` in `vendor/rustdoc-types/src/lib.rs` is critical for compat
 2. Verify it's compatible with your rustdoc JSON output version
 3. If they don't match, you may need to use a different version of `rustdoc-types`
 
-Current `FORMAT_VERSION`: 37 (as of rustdoc-types 0.33.0)
+Current `FORMAT_VERSION`: 37 (as of `rustdoc-types` 0.33.0). Unless there is a strong reason to change it, this is now considered our *base version*.
+Any subsequent versions should be made compatible. Still check the input `FORMAT_VERSION` and do any migration necessary and do not warn for versions we handle e.g., v45 (as of `rustdoc-types` 0.41).
+
+This is necessary because APIView will run the Rust API parser again on all previous JSON documents in the database, which would be incompatible.
+Format v37 will, therefore, serve as our base version so that we can have something to migrate to.
+This may mean that we have to create a separate `rustdoc-types.ts` for each version in the future,
+including multi-version dependencies of `rustdoc-types` but hopefully we can avoid that as long as `rustdoc-types` doesn't change too much with our MSRV.
 
 ## Licensing
 

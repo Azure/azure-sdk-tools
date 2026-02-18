@@ -43,10 +43,16 @@ function generate(item: ApiVariable, deprecated?: boolean): GeneratorResult {
 
   if (typeText) {
     children = parseTypeText(typeText, tokens, deprecated);
-    if (!children) {
-      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
-    }
-  } else {
+  }
+
+  // Add initializer value if present (e.g., = 1000000)
+  const initializerText = item.initializerExcerpt?.text?.trim();
+  if (initializerText) {
+    tokens.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+    tokens.push(createToken(TokenKind.StringLiteral, initializerText, { deprecated }));
+  }
+
+  if (!children) {
     tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
   }
 

@@ -14,6 +14,7 @@ function createMockVariable(
   displayName: string,
   typeExcerptText: string,
   excerptTokens: ExcerptToken[],
+  initializerText?: string,
 ): ApiVariable {
   const mock: any = {
     kind: ApiItemKind.Variable,
@@ -37,6 +38,7 @@ function createMockVariable(
       text: typeExcerptText,
       spannedTokens: [{ kind: ExcerptTokenKind.Content, text: typeExcerptText }],
     },
+    initializerExcerpt: initializerText ? { text: initializerText } : undefined,
     releaseTag: undefined,
     tsdocComment: undefined,
   };
@@ -205,6 +207,60 @@ describe("variableTokenGenerator", () => {
       expect(() => variableTokenGenerator.generate(mockClass, false)).toThrow(
         "Invalid item TestClass of kind Class for Variable token generator.",
       );
+    });
+
+    it("includes initializer value when present", () => {
+      const mockVariable = createMockVariable(
+        "MAX_SIZE",
+        "number",
+        createBasicExcerptTokens("MAX_SIZE", "number"),
+        "1000000",
+      );
+
+      const { tokens } = variableTokenGenerator.generate(mockVariable, false);
+
+      const equalsToken = tokens.find((t) => t.Value === "=");
+      expect(equalsToken).toBeDefined();
+      expect(equalsToken).toMatchObject({
+        Kind: TokenKind.Punctuation,
+        Value: "=",
+        HasPrefixSpace: true,
+        HasSuffixSpace: true,
+      });
+
+      const valueToken = tokens.find((t) => t.Value === "1000000");
+      expect(valueToken).toBeDefined();
+      expect(valueToken).toMatchObject({
+        Kind: TokenKind.StringLiteral,
+        Value: "1000000",
+      });
+    });
+
+    it("includes string initializer value", () => {
+      const mockVariable = createMockVariable(
+        "DEFAULT_NAME",
+        "string",
+        createBasicExcerptTokens("DEFAULT_NAME", "string"),
+        '"hello"',
+      );
+
+      const { tokens } = variableTokenGenerator.generate(mockVariable, false);
+
+      const valueToken = tokens.find((t) => t.Value === '"hello"');
+      expect(valueToken).toBeDefined();
+    });
+
+    it("does not include initializer tokens when no initializer", () => {
+      const mockVariable = createMockVariable(
+        "myVar",
+        "string",
+        createBasicExcerptTokens("myVar", "string"),
+      );
+
+      const { tokens } = variableTokenGenerator.generate(mockVariable, false);
+
+      const equalsToken = tokens.find((t) => t.Value === "=");
+      expect(equalsToken).toBeUndefined();
     });
   });
 });

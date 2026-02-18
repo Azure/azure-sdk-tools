@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         private Mock<IGitHelper> _mockGitHelper;
         private Mock<ICodeownersValidatorHelper> _mockCodeownersValidator;
         private Mock<ICodeownersGenerateHelper> _mockcodeownersGenerateHelper;
+        private Mock<ICodeownersManagementHelper> _mockCodeownersManagement;
 
         private CodeownersTool _tool;
 
@@ -29,6 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
             _mockCodeownersValidator = new Mock<ICodeownersValidatorHelper>();
             _mockcodeownersGenerateHelper = new Mock<ICodeownersGenerateHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
+            _mockCodeownersManagement = new Mock<ICodeownersManagementHelper>();
 
             _tool = new CodeownersTool(
                 _mockGithub,
@@ -36,7 +38,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 null,
                 _mockCodeownersValidator.Object,
                 _mockcodeownersGenerateHelper.Object,
-                _mockGitHelper.Object
+                _mockGitHelper.Object,
+                _mockCodeownersManagement.Object
             );
         }
 
@@ -70,7 +73,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 null,
                 _mockCodeownersValidator.Object,
                 _mockcodeownersGenerateHelper.Object,
-                _mockGitHelper.Object
+                _mockGitHelper.Object,
+                _mockCodeownersManagement.Object
             );
 
             var result = await tool.UpdateCodeowners("repo", false, "", "NonExistService", [], [], true);
@@ -109,7 +113,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 null,
                 validator.Object,
                 _mockcodeownersGenerateHelper.Object,
-                _mockGitHelper.Object
+                _mockGitHelper.Object,
+                _mockCodeownersManagement.Object
             );
             var result = await tool.UpdateCodeowners("repoName", false, "/sdk/myservice/", "MyService", ["@oldowner", "@newowner"], ["@newowner", "@newowner2"], true);
             Assert.IsNotNull(result);
@@ -144,7 +149,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 new TestLogger<CodeownersTool>(),
                 null, validator.Object,
                 _mockcodeownersGenerateHelper.Object,
-                _mockGitHelper.Object
+                _mockGitHelper.Object,
+                _mockCodeownersManagement.Object
             );
             // Remove @removeowner, keep @oldowner
             var result = await tool.UpdateCodeowners("repoName", false, "/sdk/myservice/", "MyService", ["@oldowner"], [], false);
@@ -192,7 +198,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 null,
                 validator.Object,
                 _mockcodeownersGenerateHelper.Object,
-                _mockGitHelper.Object
+                _mockGitHelper.Object,
+                _mockCodeownersManagement.Object
             );
 
             var result = await tool.UpdateCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", ["@a", "@b"], ["@s1", "@s2"], true);
@@ -241,7 +248,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 null,
                 validator.Object,
                 generateHelper.Object,
-                _mockGitHelper.Object
+                _mockGitHelper.Object,
+                _mockCodeownersManagement.Object
             );
 
             var result = await tool.ValidateCodeownersEntryForService("test-repo", "Any", null);

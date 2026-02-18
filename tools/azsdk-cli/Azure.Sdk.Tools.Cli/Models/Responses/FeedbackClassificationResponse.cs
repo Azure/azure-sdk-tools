@@ -38,14 +38,6 @@ public class FeedbackClassificationResponse : CommandResponse
                 
                 sb.AppendLine($"**Classification:** {item.Classification}");
                 sb.AppendLine($"**Reason:** {item.Reason}");
-                
-                if (!string.IsNullOrEmpty(item.NextAction))
-                {
-                    sb.AppendLine();
-                    sb.AppendLine("**Next Action:**");
-                    sb.AppendLine(item.NextAction);
-                }
-                
                 sb.AppendLine("---");
             }
             sb.AppendLine();
@@ -64,7 +56,6 @@ public class FeedbackClassificationResponse : CommandResponse
         public string ItemId { get; set; } = string.Empty;
         public string Classification { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
-        public string? NextAction { get; set; }
         public string? Text { get; set; }
     }
 }

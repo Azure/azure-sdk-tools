@@ -67,11 +67,6 @@ public class FeedbackItem
     public string Context { get; set; } = string.Empty;
     
     /// <summary>
-    /// Next action guidance from the classifier (what should be done next)
-    /// </summary>
-    public string NextAction { get; set; } = string.Empty;
-    
-    /// <summary>
     /// Reason for the classification decision
     /// </summary>
     public string ClassificationReason { get; set; } = string.Empty;

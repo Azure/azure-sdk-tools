@@ -83,14 +83,13 @@ public class FeedbackClassifierServiceTests
 
     #region Mocked Test Helpers
 
-    private FeedbackClassifierService CreateMockedService(string? packagePath = null)
+    private FeedbackClassifierService CreateMockedService()
     {
         return new FeedbackClassifierService(
             _mockAgentRunner.Object,
             _loggerFactory,
             _mockTypeSpecHelper.Object,
-            _testTspPath,
-            packagePath);
+            _testTspPath);
     }
 
     private static FeedbackItem CreateTestItem(string text, string? id = null)
@@ -138,8 +137,7 @@ public class FeedbackClassifierServiceTests
             copilotAgentRunner,
             LoggerFactory.Create(builder => builder.AddConsole()),
             typeSpecHelper,
-            _typeSpecProjectPath,
-            packagePath: null);
+            _typeSpecProjectPath);
     }
 
     private static FeedbackItem CreateLiveTestItem(string text, string context = "")
@@ -167,17 +165,16 @@ public class FeedbackClassifierServiceTests
     #region ClassifyAsync Flow Tests
 
     [Test]
-    public async Task ClassifyAsync_EmptyList_ReturnsTrue()
+    public async Task ClassifyAsync_EmptyList_ReturnsImmediately()
     {
         // Arrange
         var service = CreateMockedService();
         var items = new List<FeedbackItem>();
 
         // Act
-        var result = await service.ClassifyAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context");
 
-        // Assert
-        Assert.That(result, Is.True);
+        // Assert - no LLM calls made for empty list
         _mockAgentRunner.Verify(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -210,10 +207,9 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        var result = await service.ClassifyAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context");
 
         // Assert
-        Assert.That(result, Is.True, "All items resolved (SUCCESS or FAILURE) should return true");
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.SUCCESS));
         Assert.That(item2.Status, Is.EqualTo(FeedbackStatus.FAILURE));
     }
@@ -240,15 +236,18 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        var result = await service.ClassifyAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context");
 
         // Assert
-        Assert.That(result, Is.False, "Items still TSP_APPLICABLE should return false");
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE));
     }
 
+    /// <summary>
+    /// Tests that FAILURE classification is applied correctly.
+    /// Note: NextAction guidance generation was removed - FAILURE items are just classified.
+    /// </summary>
     [Test]
-    public async Task ClassifyAsync_FailureItems_GeneratesNextAction()
+    public async Task ClassifyAsync_FailureItems_ClassifiedCorrectly()
     {
         // Arrange
         var service = CreateMockedService();
@@ -256,32 +255,20 @@ public class FeedbackClassifierServiceTests
         var item1 = CreateTestItem("Add support for streaming responses with progress callbacks when uploading large documents", "item-1");
         var items = new List<FeedbackItem> { item1 };
 
-        // First call returns batch classification
-        // Second call returns guidance for FAILURE item
-        var callCount = 0;
         _mockAgentRunner
             .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() =>
-            {
-                callCount++;
-                if (callCount == 1)
-                {
-                    return """
-                        [item-1]
-                        Classification: FAILURE
-                        Reason: Streaming support with progress callbacks requires code-level implementation; no TypeSpec decorator can add streaming behavior
-                        """;
-                }
-                return "Implement streaming in the SDK by creating a custom operation wrapper that handles chunked uploads and emits progress events.";
-            });
+            .ReturnsAsync("""
+                [item-1]
+                Classification: FAILURE
+                Reason: Streaming support with progress callbacks requires code-level implementation; no TypeSpec decorator can add streaming behavior
+                """);
 
         // Act
-        var result = await service.ClassifyAsync(items, "global context", language: "python");
+        await service.ClassifyItemsAsync(items, "global context", language: "python");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.FAILURE));
-        Assert.That(item1.NextAction, Is.Not.Null.And.Not.Empty);
-        Assert.That(item1.NextAction, Does.Contain("streaming").Or.Contains("upload").Or.Contains("progress"));
+        Assert.That(item1.ClassificationReason, Does.Contain("streaming").IgnoreCase);
     }
 
     #endregion
@@ -307,7 +294,7 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context");
 
         // Assert
         Assert.That(item.ClassificationReason, Is.EqualTo("Non-actionable feedback - approval comment with no requested changes"));
@@ -337,7 +324,7 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.SUCCESS));
@@ -380,7 +367,7 @@ public class FeedbackClassifierServiceTests
             CreateLiveTestItem("Add support for custom retry policies with circuit breaker pattern for transient failures")
         };
 
-        await service.ClassifyAsync(
+        await service.ClassifyItemsAsync(
             items,
             globalContext: "Testing comprehensive feedback classification",
             language: "python",
@@ -439,7 +426,7 @@ public class FeedbackClassifierServiceTests
             }
         };
 
-        await service.ClassifyAsync(
+        await service.ClassifyItemsAsync(
             items,
             globalContext: $"--- TYPESPEC CUSTOMIZATIONS ---\nId: {id}\nText: Rename the 'Items' property to 'Documents'\nContext: COMPILATION ERROR: @@clientName target not found - property 'Items' does not exist in model 'ListResponse'",
             language: "python",
@@ -452,10 +439,11 @@ public class FeedbackClassifierServiceTests
     }
 
     /// <summary>
-    /// Live test: Verifies FAILURE items generate NextAction guidance for manual implementation.
+    /// Live test: Verifies FAILURE items are classified correctly.
+    /// Note: NextAction guidance generation was removed.
     /// </summary>
     [Test]
-    public async Task Live_ClassifyAsync_FailureItems_GenerateNextActionGuidance()
+    public async Task Live_ClassifyAsync_FailureItems_ClassifiedCorrectly()
     {
         if (!await CopilotTestHelper.IsCopilotAvailableAsync())
         {
@@ -470,21 +458,16 @@ public class FeedbackClassifierServiceTests
             CreateLiveTestItem("Add support for streaming responses with progress callbacks when downloading large blobs")
         };
 
-        await service.ClassifyAsync(
+        await service.ClassifyItemsAsync(
             items,
-            globalContext: "Testing manual guidance generation for code-level changes",
+            globalContext: "Testing classification for code-level changes",
             language: "python",
-            serviceName: "StorageBlob",
-            codeCustomizationDocUrl: "https://aka.ms/azsdk/python/customization");
+            serviceName: "StorageBlob");
 
         LogClassificationResults(items);
 
         Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.FAILURE),
             "Streaming with progress callbacks requires code implementation -> FAILURE");
-        Assert.That(items[0].NextAction, Is.Not.Null.And.Not.Empty,
-            "FAILURE items should have NextAction guidance for manual implementation");
-
-        TestContext.WriteLine($"NextAction guidance:\n{items[0].NextAction}");
     }
 
     #endregion

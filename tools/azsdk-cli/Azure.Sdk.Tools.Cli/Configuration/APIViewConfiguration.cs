@@ -7,7 +7,7 @@ public static class APIViewConfiguration
     public static readonly Dictionary<string, string> BaseUrlEndpoints = new()
     {
         { "production", "https://apiview.dev" },
-        { "staging", "https://apiview.org" },
+        { "staging", "https://apiviewstagingtest.com" },
         { "local", "http://localhost:5000" }
     };
 

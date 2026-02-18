@@ -10,8 +10,7 @@ namespace APIViewWeb.Helpers
             return new List<string>() {
                     "https://spa.apiviewuxtest.com",
                     "https://spa.apiviewstagingtest.com",
-                    "https://spa.apiview.dev",
-                    "https://spa.apiview.org"
+                    "https://spa.apiview.dev"
                 };
         }
 

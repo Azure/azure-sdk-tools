@@ -10,15 +10,6 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils;
 public static class CodeownersSectionFinder
 {
     /// <summary>
-    /// Finds the Client Libraries section in a CODEOWNERS file.
-    /// </summary>
-    /// <returns>Tuple of (headerStart, contentStart, sectionEnd) line indices, or (-1, -1, -1) if not found.</returns>
-    public static (int headerStart, int contentStart, int sectionEnd) FindClientLibrariesSection(List<string> lines)
-    {
-        return FindSection(lines, "Client Libraries");
-    }
-
-    /// <summary>
     /// Finds a named section in a CODEOWNERS file.
     /// </summary>
     /// <returns>Tuple of (headerStart, contentStart, sectionEnd) line indices, or (-1, -1, -1) if not found.</returns>

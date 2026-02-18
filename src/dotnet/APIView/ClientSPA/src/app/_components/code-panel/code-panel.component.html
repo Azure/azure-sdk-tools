@@ -44,7 +44,6 @@
         [associatedCodeLine]="getAssociatedCodeLine(item)"
         [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"
         [userProfile]="userProfile"
-        [preferredApprovers]="preferredApprovers"
         [reviewId]="reviewId || ''"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
         (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"

@@ -101,21 +101,6 @@ namespace APIViewWeb.LeanControllers
             return StatusCode(StatusCodes.Status404NotFound);
         }
 
-        [HttpGet("allowedApprovers", Name = "AllowedApprovers")]
-        public ActionResult<HashSet<string>> GetAllowedApproversAsync()
-        {
-            var allowedApprovers = _configuration["approvers"];
-            return new LeanJsonResult(allowedApprovers, StatusCodes.Status200OK);
-        }
-
-        [HttpGet("{reviewId}/preferredApprovers", Name = "PreferredApprovers")]
-        public async Task<ActionResult<HashSet<string>>> GetPreferredApproversAsync(string reviewId)
-        {
-            var review = await _reviewManager.GetReviewAsync(User, reviewId);
-            HashSet<string> preferredApprovers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, User, review);
-            return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
-        }
-
         [HttpGet("enableNamespaceReview", Name = "EnableNamespaceReview")]
         public ActionResult<bool> IsNamespaceReviewEnabled()
         {

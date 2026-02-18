@@ -55,7 +55,6 @@ public class CommentsManagerTests
             .Returns(Task.CompletedTask);
 
         Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["approvers"]).Returns("architect1");
         configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
@@ -85,6 +84,12 @@ public class CommentsManagerTests
         Mock<INotificationManager> notificationManagerMock = new();
         Mock<IHttpClientFactory> httpClientFactoryMock = new();
         Mock<ILogger<CommentsManager>> logger = new();
+        Mock<IPermissionsManager> permissionsManagerMock = new();
+        permissionsManagerMock.Setup(p => p.GetEffectivePermissionsAsync("architect1")).ReturnsAsync(
+            new EffectivePermissions()
+            {
+                Roles = [new GlobalRoleAssignment() { Role = GlobalRole.Admin }]
+            });
 
         Mock<HttpMessageHandler> handlerMock = new();
         handlerMock
@@ -129,6 +134,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            permissionsManagerMock.Object,
             copilotAuthService.Object,
             logger.Object
         );
@@ -1032,6 +1038,7 @@ public class CommentsManagerTests
         Mock<IAuthorizationService> authServiceMock = new();
         Mock<INotificationManager> notificationManagerMock = new();
         Mock<IHttpClientFactory> httpClientFactoryMock = new();
+        Mock<IPermissionsManager> permissionsManagerMock = new();
         Mock<ILogger<CommentsManager>> logger = new();
 
         Mock<HttpMessageHandler> handlerMock = new();
@@ -1079,6 +1086,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            permissionsManagerMock.Object,
             copilotAuthServiceMock.Object,
             logger.Object
         );
@@ -1150,6 +1158,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
             new Mock<ICopilotAuthenticationService>().Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
@@ -1215,6 +1224,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
             new Mock<ICopilotAuthenticationService>().Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
@@ -1328,6 +1338,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
             copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );

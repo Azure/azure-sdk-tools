@@ -42,7 +42,6 @@ export class CodePanelComponent implements OnChanges {
   @Input() loadFailedMessage: string | undefined;
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
-  @Input() preferredApprovers: string[] = [];
   @Input() allComments: CommentItemModel[] = [];
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();

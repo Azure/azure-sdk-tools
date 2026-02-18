@@ -1,40 +1,49 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Managers.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Configuration;
 
-namespace APIViewWeb
+namespace APIViewWeb;
+
+public class CommentOwnerRequirementHandler : IAuthorizationHandler
 {
-    public class CommentOwnerRequirementHandler : IAuthorizationHandler
-    {
-        private readonly IConfiguration _configuration;
-        public CommentOwnerRequirementHandler(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
+    private readonly IPermissionsManager _permissionsManager;
 
-        public Task HandleAsync(AuthorizationHandlerContext context)
+    public CommentOwnerRequirementHandler(IPermissionsManager permissionsManager)
+    {
+        _permissionsManager = permissionsManager;
+    }
+
+    public async Task HandleAsync(AuthorizationHandlerContext context)
+    {
+        foreach (IAuthorizationRequirement requirement in context.Requirements)
         {
-            foreach (var requirement in context.Requirements)
+            if (requirement is CommentOwnerRequirement)
             {
-                if (requirement is CommentOwnerRequirement)
+                string creator = ((CommentItemModel)context.Resource)?.CreatedBy;
+                string loggedInUserName = context.User.GetGitHubLogin();
+
+                // User can edit their own comments
+                if (creator == loggedInUserName)
                 {
-                    var creator = ((CommentItemModel)context.Resource).CreatedBy;
-                    var approvers = _configuration["Approvers"].Split(',');
-                    var loggedInUserName = context.User.GetGitHubLogin();
-                    if (creator == loggedInUserName ||
-                        (approvers.Contains(loggedInUserName) && creator == ApiViewConstants.AzureSdkBotName))
+                    context.Succeed(requirement);
+                    continue;
+                }
+
+                if (creator == ApiViewConstants.AzureSdkBotName && !string.IsNullOrEmpty(loggedInUserName))
+                {
+                    EffectivePermissions permissions =
+                        await _permissionsManager.GetEffectivePermissionsAsync(loggedInUserName);
+                    if (permissions.IsLanguageApprover)
                     {
                         context.Succeed(requirement);
                     }
                 }
             }
-            return Task.CompletedTask;
         }
     }
 }

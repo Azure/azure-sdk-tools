@@ -15,24 +15,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// <summary>
 /// Generates CODEOWNERS files from Azure DevOps work items.
 /// </summary>
-public class CodeownersGenerateHelper : ICodeownersGenerateHelper
-{
-    private readonly IDevOpsService _devOpsService;
-    private readonly IPowershellHelper _powershellHelper;
-    private readonly IInputSanitizer _inputSanitizer;
-    private readonly ILogger<CodeownersGenerateHelper> _logger;
-
-    public CodeownersGenerateHelper(
+public class CodeownersGenerateHelper(
         IDevOpsService devOpsService,
         IPowershellHelper powershellHelper,
-        IInputSanitizer inputSanitizer,
-        ILogger<CodeownersGenerateHelper> logger)
-    {
-        _devOpsService = devOpsService;
-        _powershellHelper = powershellHelper;
-        _inputSanitizer = inputSanitizer;
-        _logger = logger;
-    }
+        ILogger<CodeownersGenerateHelper> logger) : ICodeownersGenerateHelper
+{
+    private readonly IDevOpsService devOpsService = devOpsService;
+    private readonly IPowershellHelper powershellHelper = powershellHelper;
+    private readonly ILogger<CodeownersGenerateHelper> logger = logger;
 
     public async Task<string> GenerateCodeownersAsync(
         string repoRoot,
@@ -41,40 +31,39 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
         string sectionName,
         CancellationToken ct = default)
     {
-        packageTypes ??= ["client"];
-        _logger.LogInformation("Repository Root: {RepoRoot}", repoRoot);
-        _logger.LogInformation("Repository: {RepoName}", repoName);
-        _logger.LogInformation("Project: {ProjectName}", Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT);
-        _logger.LogInformation("Package Types: {PackageTypes}", string.Join(", ", packageTypes));
-        _logger.LogInformation("Section: {SectionName}", sectionName);
+        logger.LogInformation("Repository Root: {RepoRoot}", repoRoot);
+        logger.LogInformation("Repository: {RepoName}", repoName);
+        logger.LogInformation("Project: {ProjectName}", Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT);
+        logger.LogInformation("Package Types: {PackageTypes}", string.Join(", ", packageTypes));
+        logger.LogInformation("Section: {SectionName}", sectionName);
 
         // Get language from repo name
         var language = GetLanguageFromRepoName(repoName);
-        _logger.LogInformation("Language: {Language}", language);
+        logger.LogInformation("Language: {Language}", language);
 
         // Step 1: Get packages from repository
-        _logger.LogInformation("Step 1: Getting package paths from repository...");
+        logger.LogInformation("Step 1: Getting package paths from repository...");
         var repoPackages = await GetPackagesFromRepoAsync(repoRoot, ct);
-        _logger.LogInformation("Found {Count} packages in repository", repoPackages.Count);
+        logger.LogInformation("Found {Count} packages in repository", repoPackages.Count);
         var packageLookup = repoPackages.ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
 
         // Step 2: Fetch work items from Azure DevOps
-        _logger.LogInformation("Step 2: Fetching work items from Azure DevOps...");
+        logger.LogInformation("Step 2: Fetching work items from Azure DevOps...");
         var workItemData = await FetchAllWorkItemsAsync(repoName, language, packageTypes, ct);
 
         // Step 3: Build CODEOWNERS entries
-        _logger.LogInformation("Step 3: Building CODEOWNERS entries...");
+        logger.LogInformation("Step 3: Building CODEOWNERS entries...");
         var entries = BuildCodeownersEntries(workItemData, packageLookup, repoRoot);
-        _logger.LogInformation("Total entries: {Count}", entries.Count);
+        logger.LogInformation("Total entries: {Count}", entries.Count);
 
         // Step 4: Sort entries
-        _logger.LogInformation("Step 4: Sorting entries...");
+        logger.LogInformation("Step 4: Sorting entries...");
         CodeownersEntrySorter.SortOwnersInPlace(entries);
         CodeownersEntrySorter.SortLabelsInPlace(entries);
         entries = CodeownersEntrySorter.SortEntries(entries);
 
         // Step 5: Update CODEOWNERS file
-        _logger.LogInformation("Step 5: Updating CODEOWNERS file...");
+        logger.LogInformation("Step 5: Updating CODEOWNERS file...");
         var codeownersPath = Path.Combine(repoRoot, ".github", "CODEOWNERS");
         var output = WriteCodeownersFile(codeownersPath, entries, sectionName);
         return output;
@@ -104,33 +93,22 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
 
     private async Task<List<RepoPackage>> GetPackagesFromRepoAsync(string repoRoot, CancellationToken ct)
     {
-        // Find the script - check the assembly directory and current directory
-        string script = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "Get-AllPkgProperties.ps1");
-        if (!File.Exists(script))
-        {
-            script = Path.Combine(Directory.GetCurrentDirectory(), "Scripts", "Get-AllPkgProperties.ps1");
-        }
-
-        if (!File.Exists(script))
-        {
-            _logger.LogWarning("Get-AllPkgProperties.ps1 not found at {Path}", script);
-            return [];
-        }
-
         string tempFile = Path.GetTempFileName();
+        string command = $". (Join-Path '{repoRoot}' 'eng/common/scripts/common.ps1'); $pkgProperties = Get-AllPkgProperties; $pkgProperties | ConvertTo-Json -Depth 100 | Set-Content -Path '{tempFile}'";
+
         try
         {
             var options = new PowershellOptions(
-                script,
-                ["-RepoRoot", repoRoot, "-OutFile", tempFile],
+                ["-Command", command],
                 logOutputStream: false,
-                timeout: TimeSpan.FromMinutes(5));
+                timeout: TimeSpan.FromMinutes(5)
+            );
 
-            var result = await _powershellHelper.Run(options, ct);
+            var result = await powershellHelper.Run(options, ct);
 
             if (result.ExitCode != 0)
             {
-                _logger.LogWarning("Get-AllPkgProperties.ps1 failed with exit code {ExitCode}: {Output}", result.ExitCode, result.Output);
+                logger.LogWarning("Getting package properties failed with exit code {ExitCode}: {Output}", result.ExitCode, result.Output);
                 return [];
             }
 
@@ -144,7 +122,7 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get packages from repository");
+            logger.LogWarning(ex, "Failed to get packages from repository");
         }
         finally
         {
@@ -167,29 +145,29 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
         var allPackages = await FetchWorkItemsAsync<PackageWorkItem>(
             packageQuery,
             WorkItemMappers.MapToPackageWorkItem);
-        _logger.LogInformation("Packages (all versions): {Count}", allPackages.Count);
+        logger.LogInformation("Packages (all versions): {Count}", allPackages.Count);
 
         // Group packages by name then take the package with the latest "Custom.PackageVersionMajorMinor"
         var packages = WorkItemMappers.GetLatestPackageVersions(allPackages);
-        _logger.LogInformation("Packages (latest versions): {Count}", packages.Count);
+        logger.LogInformation("Packages (latest versions): {Count}", packages.Count);
 
         // Fetch all Owners (no filter needed)
         var owners = await FetchWorkItemsAsync<OwnerWorkItem>(
             "[System.WorkItemType] = 'Owner'",
             WorkItemMappers.MapToOwnerWorkItem);
-        _logger.LogInformation("Owners: {Count}", owners.Count);
+        logger.LogInformation("Owners: {Count}", owners.Count);
 
         // Fetch all Labels (no filter needed)
         var labels = await FetchWorkItemsAsync<LabelWorkItem>(
             "[System.WorkItemType] = 'Label'",
             WorkItemMappers.MapToLabelWorkItem);
-        _logger.LogInformation("Labels: {Count}", labels.Count);
+        logger.LogInformation("Labels: {Count}", labels.Count);
 
         // Fetch Label Owners by repository
         var labelOwners = await FetchWorkItemsAsync<LabelOwnerWorkItem>(
             $"[System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{repoName}'",
             WorkItemMappers.MapToLabelOwnerWorkItem);
-        _logger.LogInformation("Label Owners: {Count}", labelOwners.Count);
+        logger.LogInformation("Label Owners: {Count}", labelOwners.Count);
 
         var data = new WorkItemData(
             packages.ToDictionary(p => p.WorkItemId),
@@ -208,7 +186,7 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
         Func<WorkItem, T> factory)
     {
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND {whereClause}";
-        var workItems = await _devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
         return workItems.Select(factory).ToList();
     }
 
@@ -224,7 +202,7 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
         {
             if (!packageLookup.TryGetValue(pkg.PackageName, out var repoPkg))
             {
-                _logger.LogInformation("Package '{PackageName}' not found in repository, skipping...", pkg.PackageName);
+                logger.LogInformation("Package '{PackageName}' not found in repository, skipping...", pkg.PackageName);
                 continue;
             }
 
@@ -404,7 +382,7 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
     {
         if (!File.Exists(path))
         {
-            _logger.LogError("CODEOWNERS file not found: {Path}", path);
+            logger.LogError("CODEOWNERS file not found: {Path}", path);
             throw new FileNotFoundException($"CODEOWNERS file not found: {path}");
         }
 
@@ -413,7 +391,7 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
 
         if (contentStart == -1)
         {
-            _logger.LogError("'{SectionName}' section not found in CODEOWNERS file", sectionName);
+            logger.LogError("'{SectionName}' section not found in CODEOWNERS file", sectionName);
             throw new InvalidOperationException($"'{sectionName}' section not found in CODEOWNERS file");
         }
 
@@ -443,7 +421,7 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
         output.AddRange(lines[sectionEnd..]);
 
         File.WriteAllLines(path, output);
-        _logger.LogInformation("Updated: {Path}", path);
+        logger.LogInformation("Updated: {Path}", path);
 
         return string.Join(Environment.NewLine, output);
     }

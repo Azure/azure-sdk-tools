@@ -7,8 +7,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// Helper class for comparing semantic versions used by the azsdk CLI.
 /// Version format: major.minor.patch[-prerelease] (e.g., 1.0.0, 1.0.0-dev.20240101.1)
 /// </summary>
-public static class VersionHelper
+public class VersionHelper : IComparer<string>
 {
+    public static VersionHelper Default { get; } = new();
+
+    public int Compare(string? x, string? y)
+    {
+        return x == y ? 0 : IsNewer(x!, y!) ? 1 : -1;
+    }
+
     /// <summary>
     /// Compares two version strings and returns true if the remote version is newer than the local version.
     /// </summary>

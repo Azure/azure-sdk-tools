@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.Reflection;
 using Azure.Sdk.Tools.Cli.Attributes;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps

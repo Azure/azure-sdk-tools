@@ -112,7 +112,9 @@ public class CodeownersGenerateHelper(
         {
             try
             {
-                File.Delete(tempFile);
+                if (File.Exists(tempFile)) {
+                    File.Delete(tempFile);
+                }
             }
             catch (Exception ex)
             {

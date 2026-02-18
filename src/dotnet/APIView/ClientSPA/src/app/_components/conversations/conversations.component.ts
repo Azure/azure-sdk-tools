@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TimeagoModule } from 'ngx-timeago';
 import { TimelineModule } from 'primeng/timeline';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
 import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
-import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentType, CommentSource } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';
 import { getTypeClass } from 'src/app/_helpers/common-helpers';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
@@ -26,22 +26,29 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
         TimelineModule,
         CommentThreadComponent,
         LastUpdatedOnPipe
-    ]
+    ],
+    changeDetection: ChangeDetectionStrategy.OnPush 
 })
-export class ConversationsComponent implements OnChanges {
+export class ConversationsComponent implements OnChanges, OnDestroy {
   @Input() apiRevisions: APIRevision[] = [];
   @Input() activeApiRevisionId: string | null = null;
   @Input() comments: CommentItemModel[] = [];
   @Input() review : Review | undefined = undefined;
   @Input() userProfile : UserProfile | undefined;
-  @Input() preferredApprovers : string[] = [];
 
   @Output() scrollToNodeEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() numberOfActiveThreadsEmitter : EventEmitter<number> = new EventEmitter<number>();
   @Output() dismissSidebarAndNavigateEmitter : EventEmitter<{revisionId: string, elementId: string}> = new EventEmitter<{revisionId: string, elementId: string}>();
 
+  private readonly MAX_DIAGNOSTICS_DISPLAY = 250;
+  
   commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
   numberOfActiveThreads: number = 0;
+  // Flag to indicate if diagnostics were truncated due to limit
+  diagnosticsTruncated: boolean = false;
+  totalDiagnosticsInRevision: number = 0;
+  
+  apiRevisionsWithComments: APIRevision[] = [];
 
   apiRevisionsLoaded = false;
   commentsLoaded = false;
@@ -49,7 +56,7 @@ export class ConversationsComponent implements OnChanges {
 
   destroy$ = new Subject<void>();
 
-  constructor(private commentsService: CommentsService, private signalRService: SignalRService) { }
+  constructor(private commentsService: CommentsService, private signalRService: SignalRService, private changeDetectorRef: ChangeDetectorRef) { }
 
   ngOnInit() {
     this.handleRealTimeCommentUpdates();
@@ -64,6 +71,12 @@ export class ConversationsComponent implements OnChanges {
       this.commentsLoaded = true;
     }
 
+    // Recalculate when active revision changes (diagnostic comments are filtered by revision)
+    if (changes['activeApiRevisionId'] && this.apiRevisionsLoaded && this.commentsLoaded) {
+      this.createCommentThreads();
+      return;
+    }
+
     if (this.apiRevisionsLoaded && this.commentsLoaded) {
       this.createCommentThreads();
     }
@@ -73,8 +86,34 @@ export class ConversationsComponent implements OnChanges {
     if (this.apiRevisions.length > 0 && this.comments.length > 0) {
       this.commentThreads = new Map<string, CodePanelRowData[]>();
       this.numberOfActiveThreads = 0;
-      const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
-      const threadGroups = this.comments.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
+      this.diagnosticsTruncated = false;
+      
+      // Categorize comments:
+      // 1. User comments (anything that's not diagnostic or AI-generated)
+      // 2. AI Generated comments (show all)
+      // 3. Diagnostic comments (limit to 250 from active revision)
+      
+      const userComments = this.comments.filter(comment => 
+        comment.commentSource !== CommentSource.Diagnostic && comment.commentSource !== CommentSource.AIGenerated
+      );
+      
+      const aiGeneratedComments = this.comments.filter(comment => 
+        comment.commentSource === CommentSource.AIGenerated
+      );
+      
+      const diagnosticCommentsForRevision = this.comments.filter(comment => 
+        comment.commentSource === CommentSource.Diagnostic && comment.apiRevisionId === this.activeApiRevisionId
+      );
+      
+      this.totalDiagnosticsInRevision = diagnosticCommentsForRevision.length;
+      
+      const limitedDiagnostics = diagnosticCommentsForRevision.slice(0, this.MAX_DIAGNOSTICS_DISPLAY);
+      this.diagnosticsTruncated = diagnosticCommentsForRevision.length > this.MAX_DIAGNOSTICS_DISPLAY;
+      
+      const filteredComments = [...userComments, ...aiGeneratedComments, ...limitedDiagnostics];
+      
+      const allCommentsForCount = [...userComments, ...aiGeneratedComments, ...diagnosticCommentsForRevision];
+      const allThreadGroups = allCommentsForCount.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
         const threadKey = comment.threadId || comment.elementId;
         if (!acc[threadKey]) {
           acc[threadKey] = [];
@@ -82,6 +121,35 @@ export class ConversationsComponent implements OnChanges {
         acc[threadKey].push(comment);
         return acc;
       }, {});
+
+      for (const threadId in allThreadGroups) {
+        if (allThreadGroups.hasOwnProperty(threadId)) {
+          const comments = allThreadGroups[threadId];
+          const isResolved = comments.some(c => c.isResolved);
+          if (!isResolved) {
+            this.numberOfActiveThreads++;
+          }
+        }
+      }
+
+      // Emit total count - this is always needed for the badge
+      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
+      
+      const threadGroups = filteredComments.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
+        const threadKey = comment.threadId || comment.elementId;
+        if (!acc[threadKey]) {
+          acc[threadKey] = [];
+        }
+        acc[threadKey].push(comment);
+        return acc;
+      }, {});
+
+      const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
+      
+      const apiRevisionPositionMap = new Map<string, number>();
+      apiRevisionInOrder.forEach((rev, index) => {
+        apiRevisionPositionMap.set(rev.id, index);
+      });
 
       for (const threadId in threadGroups) {
         if (threadGroups.hasOwnProperty(threadId)) {
@@ -91,9 +159,9 @@ export class ConversationsComponent implements OnChanges {
           let apiRevisionPostion = Number.MAX_SAFE_INTEGER;
 
           for (const apiRevisionId of apiRevisionIds) {
-            const apiRevisionIdPosition = apiRevisionInOrder.findIndex(apiRevision => apiRevision.id === apiRevisionId);
-            if (apiRevisionIdPosition >= 0 && apiRevisionIdPosition < apiRevisionPostion) {
-              apiRevisionPostion = apiRevisionIdPosition;
+            const position = apiRevisionPositionMap.get(apiRevisionId);
+            if (position !== undefined && position < apiRevisionPostion) {
+              apiRevisionPostion = position;
             }
           }
 
@@ -105,10 +173,6 @@ export class ConversationsComponent implements OnChanges {
             codePanelRowData.threadId = threadId;
             codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
 
-            if (!codePanelRowData.isResolvedCommentThread) {
-              this.numberOfActiveThreads++;
-            }
-
             if (this.commentThreads.has(apiRevisionIdForThread)) {
               this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);
             }
@@ -118,18 +182,23 @@ export class ConversationsComponent implements OnChanges {
           }
         }
       }
-      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
+      this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
       this.isLoading = false;
+      this.changeDetectorRef.markForCheck();
     }
     else if (this.apiRevisions.length > 0 && this.comments.length === 0) {
+      this.apiRevisionsWithComments = [];
+      this.numberOfActiveThreads = 0;
+      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       setTimeout(() => {
         this.isLoading = false;
+        this.changeDetectorRef.markForCheck();
       }, 1000);
     }
   }
 
   getAPIRevisionWithComments() {
-    return this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
+    return this.apiRevisionsWithComments;
   }
 
   getAPIRevisionTypeClass(apiRevision: APIRevision) {
@@ -182,9 +251,14 @@ export class ConversationsComponent implements OnChanges {
               this.removeAllAutoGeneratedComments();
               break;
           }
+          this.changeDetectorRef.markForCheck();
         }
       }
     });
+  }
+  
+  trackByThreadId(index: number, commentThread: CodePanelRowData): string {
+    return commentThread.threadId || `${index}`;
   }
 
   handleSaveCommentActionEmitter(commentUpdates: CommentUpdatesDto) {

@@ -43,7 +43,6 @@ export class CodePanelComponent implements OnChanges {
   @Input() loadingMessage: string | undefined;
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
-  @Input() preferredApprovers: string[] = [];
   @Input() allComments: CommentItemModel[] = [];
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -562,7 +561,11 @@ export class CodePanelComponent implements OnChanges {
       this.codePanelRowSource = new Datasource<CodePanelRowData>({
         get: (index, count, success) => {
           const data: CodePanelRowData[] = [];
-          for (let i = index; i <= index + count - 1; i++) {
+          const maxValidIndex = this.codePanelRowData.length - 1;
+          const startIndex = Math.max(0, index);
+          const endIndex = Math.min(index + count - 1, maxValidIndex);
+
+          for (let i = startIndex; i <= endIndex; i++) {
             if (this.codePanelRowData[i]) {
               data.push(this.codePanelRowData[i]);
             }
@@ -575,6 +578,7 @@ export class CodePanelComponent implements OnChanges {
           itemSize: 21,
           startIndex: 0,
           minIndex: 0,
+          maxIndex: this.codePanelRowData.length - 1,
           sizeStrategy: SizeStrategy.Average
         }
       });
@@ -884,23 +888,35 @@ export class CodePanelComponent implements OnChanges {
   navigateToCommentThread(direction: CodeLineRowNavigationDirection) {
     const firstVisible = this.codePanelRowSource?.adapter?.firstVisible!.$index!;
     const lastVisible = this.codePanelRowSource?.adapter?.lastVisible!.$index!;
-    let navigateToRow: CodePanelRowData | undefined = undefined;
+    let foundIndex: number | undefined = undefined;
+
     if (direction == CodeLineRowNavigationDirection.next) {
-      const startIndex = (this.commentThreadNavigationPointer && this.commentThreadNavigationPointer >= firstVisible && this.commentThreadNavigationPointer <= lastVisible) ?
-        this.commentThreadNavigationPointer + 1 : firstVisible;
-      navigateToRow = this.findNextCommentThread(startIndex);
+      const startIndex = (this.commentThreadNavigationPointer !== undefined)
+        ? this.commentThreadNavigationPointer + 1
+        : firstVisible;
+      foundIndex = this.findNextCommentThreadIndex(startIndex);
+
+      if (foundIndex === undefined && this.commentThreadNavigationPointer !== undefined) {
+        foundIndex = this.findNextCommentThreadIndex(0);
+      }
     }
     else {
-      const startIndex = (this.commentThreadNavigationPointer && this.commentThreadNavigationPointer >= firstVisible && this.commentThreadNavigationPointer <= lastVisible) ?
-        this.commentThreadNavigationPointer - 1 : lastVisible;
-      navigateToRow = this.findPrevCommentthread(startIndex);
+      const startIndex = (this.commentThreadNavigationPointer !== undefined)
+        ? this.commentThreadNavigationPointer - 1
+        : lastVisible;
+      foundIndex = this.findPrevCommentThreadIndex(startIndex);
+
+      if (foundIndex === undefined && this.commentThreadNavigationPointer !== undefined) {
+        foundIndex = this.findPrevCommentThreadIndex(this.codePanelRowData.length - 1);
+      }
     }
 
-    if (navigateToRow) {
-      this.scrollToNode(navigateToRow.nodeIdHashed);
+    if (foundIndex !== undefined) {
+      this.commentThreadNavigationPointer = foundIndex;
+      this.scrollToCommentThread(foundIndex);
     }
     else {
-      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Comment Navigation', detail: 'No more active comments threads to navigate to.', key: 'bc', life: 3000 });
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Comment Navigation', detail: 'No active comment threads to navigate to.', key: 'bc', life: 3000 });
     }
   }
 
@@ -1180,26 +1196,75 @@ export class CodePanelComponent implements OnChanges {
     }
   }
 
-  private findNextCommentThread(index: number): CodePanelRowData | undefined {
+  private findNextCommentThreadIndex(index: number): number | undefined {
     while (index < this.codePanelRowData.length) {
       if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
-        this.commentThreadNavigationPointer = index;
-        return this.codePanelRowData[index];
+        return index;
       }
       index++;
     }
     return undefined;
   }
 
-  private findPrevCommentthread(index: number): CodePanelRowData | undefined {
+  private findPrevCommentThreadIndex(index: number): number | undefined {
     while (index < this.codePanelRowData.length && index >= 0) {
       if (this.codePanelRowData[index].type === CodePanelRowDatatype.CommentThread && !this.codePanelRowData![index].isResolvedCommentThread) {
-        this.commentThreadNavigationPointer = index;
-        return this.codePanelRowData[index];
+        return index;
       }
       index--;
     }
     return undefined;
+  }
+
+
+  private async scrollToCommentThread(targetIndex: number): Promise<void> {
+    this.clearNavigationHighlight();
+
+    const row = this.codePanelRowData[targetIndex];
+    if (!row) return;
+
+    const rowClasses = this.ensureRowClassesSet(row);
+    rowClasses.add('active');
+
+    const scrollIndex = Math.max(targetIndex - 2, 0);
+
+    if (scrollIndex < this.codePanelRowSource?.adapter?.bufferInfo.firstIndex! ||
+        scrollIndex > this.codePanelRowSource?.adapter?.bufferInfo.lastIndex!) {
+      await this.codePanelRowSource?.adapter?.reload(scrollIndex);
+    } else {
+      await this.codePanelRowSource?.adapter?.fix({
+        scrollToItem: (item) => item.data === row,
+        scrollToItemOpt: { behavior: 'smooth', block: 'center' }
+      });
+    }
+
+    let newQueryParams = getQueryParams(this.route);
+    let nodeIdForUrl = row.nodeId;
+    if (!nodeIdForUrl && row.type === CodePanelRowDatatype.CommentThread) {
+      const nodeIdHashedForLookup = row.nodeIdHashed;
+      const rowPosition = row.associatedRowPositionInGroup;
+      const codeLines = this.codePanelData?.nodeMetaData[nodeIdHashedForLookup]?.codeLines;
+      if (codeLines && codeLines[rowPosition]) {
+        nodeIdForUrl = codeLines[rowPosition].nodeId;
+      }
+    }
+    newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = nodeIdForUrl;
+    this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+
+    setTimeout(() => {
+      rowClasses.delete('active');
+    }, 1500);
+  }
+
+  private clearNavigationHighlight(): void {
+    for (const row of this.codePanelRowData) {
+      if (row.rowClasses) {
+        const rowClasses = this.ensureRowClassesSet(row);
+        if (rowClasses.has('active')) {
+          rowClasses.delete('active');
+        }
+      }
+    }
   }
 
   private findNextDiffNode(index: number): CodePanelRowData | undefined {

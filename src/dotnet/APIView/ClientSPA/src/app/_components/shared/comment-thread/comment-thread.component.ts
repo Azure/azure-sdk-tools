@@ -24,6 +24,8 @@ import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers'
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
+import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 import { CommentResolutionData } from '../related-comments-dialog/related-comments-dialog.component';
@@ -72,7 +74,6 @@ export class CommentThreadComponent {
   @Input() associatedCodeLine: CodePanelRowData | undefined;
   @Input() actualLineNumber: number = 0;
   @Input() instanceLocation: "code-panel" | "conversations" | "samples" = "code-panel";
-  @Input() preferredApprovers : string[] = [];
   @Input() reviewId: string = '';
   @Input() allComments: CommentItemModel[] = [];
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
@@ -139,12 +140,12 @@ export class CommentThreadComponent {
 
     const firstComment = this.codePanelRowData.comments[0];
     return firstComment.createdBy === this.userProfile?.userName ||
-           (firstComment.createdBy === 'azure-sdk' && this.preferredApprovers.includes(this.userProfile?.userName!));
+           (firstComment.createdBy === 'azure-sdk' && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()));
   }
 
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService, private commentsService: CommentsService) { }
+  constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService, private commentsService: CommentsService, private permissionsService: PermissionsService, private reviewContextService: ReviewContextService) { }
 
   ngOnInit(): void {
     this.menuItemsLoggedInUsers.push({
@@ -253,7 +254,7 @@ export class CommentThreadComponent {
     const menu : MenuItem[] = [];
     if (comment && this.userProfile?.userName === comment.createdBy && !this.isSystemGenerated(comment)) {
       menu.push(...this.menuItemsLoggedInUsers);
-    } else if (comment && comment.createdBy == "azure-sdk" && this.preferredApprovers.includes(this.userProfile?.userName!)) {
+    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
       menu.push(...this.menuItemsLoggedInArchitects);
     }
     if (this.instanceLocation !== "samples") {

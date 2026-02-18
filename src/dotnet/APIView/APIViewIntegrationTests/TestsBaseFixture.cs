@@ -113,8 +113,10 @@ namespace APIViewIntegrationTests
             var loggerMoq = new Mock<ILogger<NotificationManager>>();
             var userProfileManagerMoq = new Mock<IUserProfileManager>();
             var userProfileCache = new UserProfileCache(memoryCache, userProfileManagerMoq.Object, Mock.Of<ILogger<UserProfileCache>>());
+            var languageServicesMoq = new Mock<IEnumerable<LanguageService>>();
+            var notificationPermissionsManagerMoq = new Mock<IPermissionsManager>();
             
-            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, userProfileCache, telemetryClient.Object, emailTemplateServiceMoq.Object, httpClientFactoryMoq.Object, loggerMoq.Object);
+            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, userProfileCache, telemetryClient.Object, emailTemplateServiceMoq.Object, httpClientFactoryMoq.Object, loggerMoq.Object, languageServicesMoq.Object, notificationPermissionsManagerMoq.Object);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -129,6 +131,7 @@ namespace APIViewIntegrationTests
             var backgroundTaskQueueMoq = new Mock<IBackgroundTaskQueue>();
             var commentsLoggerMoq = new Mock<ILogger<CommentsManager>>();
             var copilotAuthServiceMoq = new Mock<ICopilotAuthenticationService>();
+            var permissionsManagerMoq = new Mock<IPermissionsManager>();
 
             var diagnosticCommentService = new DiagnosticCommentService(CommentRepository);
             
@@ -146,6 +149,7 @@ namespace APIViewIntegrationTests
                 configuration: _config,
                 options: options.Object,
                 backgroundTaskQueue: backgroundTaskQueueMoq.Object,
+                permissionsManager: permissionsManagerMoq.Object,
                 copilotAuthService: copilotAuthServiceMoq.Object,
                 logger: commentsLoggerMoq.Object);
 

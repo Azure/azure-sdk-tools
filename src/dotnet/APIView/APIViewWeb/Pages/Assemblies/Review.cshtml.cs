@@ -35,6 +35,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IConfiguration _configuration;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
+        private readonly IPermissionsManager _permissionsManager;
 
         public ReviewPageModel(
             IReviewManager reviewManager,
@@ -47,7 +48,8 @@ namespace APIViewWeb.Pages.Assemblies
             ICosmosUserProfileRepository userProfileRepository,
             IConfiguration configuration,
             IHubContext<SignalRHub> signalRHub,
-            IEnumerable<LanguageService> languageServices)
+            IEnumerable<LanguageService> languageServices,
+            IPermissionsManager permissionsManager)
         {
             _reviewManager = reviewManager;
             _apiRevisionsManager = reviewRevisionManager;
@@ -60,6 +62,7 @@ namespace APIViewWeb.Pages.Assemblies
             _configuration = configuration;
             _signalRHubContext = signalRHub;
             _languageServices = languageServices;
+            _permissionsManager = permissionsManager;
         }
 
         public ReviewContentModel ReviewContent { get; set; }
@@ -90,7 +93,7 @@ namespace APIViewWeb.Pages.Assemblies
             ReviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                 reviewManager: _reviewManager, userProfileCache: _userProfileCache, reviewRevisionsManager: _apiRevisionsManager,
                 commentManager: _commentsManager, codeFileRepository: _codeFileRepository, signalRHubContext: _signalRHubContext,
-                user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId, showDocumentation: (ShowDocumentation ?? false),
+                permissionsManager: _permissionsManager, user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId, showDocumentation: (ShowDocumentation ?? false),
                 showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE, diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
             if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
@@ -154,7 +157,7 @@ namespace APIViewWeb.Pages.Assemblies
                     var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                         reviewManager: _reviewManager, userProfileCache: _userProfileCache, reviewRevisionsManager: _apiRevisionsManager,
                         commentManager: _commentsManager, codeFileRepository: _codeFileRepository, signalRHubContext: _signalRHubContext,
-                        user: User, review: review, revisionId: null, diffRevisionId: null, showDocumentation: (ShowDocumentation ?? false),
+                        permissionsManager: _permissionsManager, user: User, review: review, revisionId: null, diffRevisionId: null, showDocumentation: (ShowDocumentation ?? false),
                         showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE, diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
                     ReviewContent.CrossLanguageViewContent.Add(review.Language, reviewContent);

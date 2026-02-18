@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 {
@@ -28,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 new TestLogger<ReadMeGeneratorTool>(),
                 mockMicroAgentService.Object
             );
-            tool.Initialize(outputHelper, telemetryServiceMock.Object);
+            tool.Initialize(outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
         }
 
         [Test]

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { MenuItem, TreeNode } from 'primeng/api';
@@ -28,6 +28,8 @@ import { HttpResponse } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { SiteNotification } from 'src/app/_models/notificationsModel';
+import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
 
 @Component({
     selector: 'app-review-page',
@@ -35,7 +37,7 @@ import { SiteNotification } from 'src/app/_models/notificationsModel';
     styleUrls: ['./review-page.component.scss'],
     standalone: false
 })
-export class ReviewPageComponent implements OnInit {
+export class ReviewPageComponent implements OnInit, OnDestroy {
   @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;
   @ViewChild(ReviewPageOptionsComponent) reviewPageOptionsComponent!: ReviewPageOptionsComponent;
 
@@ -63,7 +65,6 @@ export class ReviewPageComponent implements OnInit {
   scrollToNodeIdHashed: Subject<string> = new Subject<string>();
   scrollToNodeId: string | undefined = undefined;
   showLineNumbers: boolean = true;
-  preferredApprovers: string[] = [];
   hasFatalDiagnostics: boolean = false;
   hasActiveConversation: boolean = false;
   codeLineSearchInfo: CodeLineSearchInfo | undefined;
@@ -98,7 +99,8 @@ export class ReviewPageComponent implements OnInit {
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
-    private samplesRevisionService: SamplesRevisionService, private titleService: Title, private notificationsService: NotificationsService) { }
+    private samplesRevisionService: SamplesRevisionService, private titleService: Title, private notificationsService: NotificationsService,
+    private reviewContextService: ReviewContextService, private permissionsService: PermissionsService) { }
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
@@ -128,7 +130,6 @@ export class ReviewPageComponent implements OnInit {
     });
 
     this.loadReview(this.reviewId!);
-    this.loadPreferredApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
     this.loadComments();
     this.handleRealTimeReviewUpdates();
@@ -242,6 +243,7 @@ export class ReviewPageComponent implements OnInit {
         this.hasHiddenAPIThatIsDiff = this.codePanelData.hasHiddenAPIThatIsDiff;
         this.processEmbeddedComments();
         this.workerService.terminateWorker();
+        this.loadComments();
       }
     });
   }
@@ -292,6 +294,9 @@ export class ReviewPageComponent implements OnInit {
           this.review = review;
           this.updateLoadingStateBasedOnReviewDeletionStatus();
           this.updatePageTitle();
+          if (review.language) {
+            this.loadApproversForLanguage(review.language);
+          }
         },
         error: (error) => {
           this.loadFailed = true;
@@ -300,11 +305,11 @@ export class ReviewPageComponent implements OnInit {
       });
   }
 
-  loadPreferredApprovers(reviewId: string) {
-    this.reviewsService.getPreferredApprovers(reviewId)
+  loadApproversForLanguage(language: string) {
+    this.permissionsService.getApproversForLanguage(language)
       .pipe(takeUntil(this.destroy$)).subscribe({
-        next: (preferredApprovers: string[]) => {
-          this.preferredApprovers = preferredApprovers;
+        next: (approvers: string[]) => {
+          this.reviewContextService.setLanguageApprovers(approvers);
         }
       });
   }
@@ -330,6 +335,7 @@ export class ReviewPageComponent implements OnInit {
           if (this.apiRevisions.length > 0) {
             this.language = this.apiRevisions[0].language;
             this.languageSafeName = getLanguageCssSafeName(this.language);
+            this.reviewContextService.setLanguage(this.language);
             this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
             if (this.diffApiRevisionId) {
               this.diffAPIRevision = this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0];
@@ -681,7 +687,16 @@ export class ReviewPageComponent implements OnInit {
 
   handleNumberOfActiveThreadsEmitter(value: number) {
     this.numberOfActiveConversation = value;
-    this.createSideMenu();
+    if (this.sideMenu) {
+      const conversationsItem = this.sideMenu.find(item => item.tooltip === 'Conversations');
+      if (conversationsItem) {
+        conversationsItem.badge = (value > 0) ? value.toString() : undefined;
+        this.sideMenu = [...this.sideMenu];
+        this.changeDetectorRef.detectChanges();
+      }
+    } else {
+      this.createSideMenu();
+    }
   }
 
   handleScrollToNodeEmitter(value: string) {
@@ -799,5 +814,6 @@ export class ReviewPageComponent implements OnInit {
     this.destroyLoadAPIRevision$?.complete();
     this.destroyApiTreeBuilder$?.next();
     this.destroyApiTreeBuilder$?.complete();
+    this.reviewContextService.clear();
   }
 }

@@ -1,0 +1,52 @@
+# Validate LLM Instructions Files - verify MCP tool references match declared tools
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - eng/common/instructions/**
+      - tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/**
+      - eng/scripts/Verify-McpToolReferences.ps1
+      - eng/pipelines/validate-instructions-azsdk-references.yml
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - eng/common/instructions/**
+      - tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/**
+      - eng/scripts/Verify-McpToolReferences.ps1
+      - eng/pipelines/validate-instructions-azsdk-references.yml
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
+pool:
+  name: $(LINUXPOOL)
+  demands: ImageOverride -equals $(LINUXVMIMAGE)
+
+jobs:
+  - job: VerifyMcpToolReferences
+    displayName: Verify MCP Tool References
+
+    steps:
+      - checkout: self
+
+      - task: UseDotNet@2
+        displayName: Use .NET 8.0
+        inputs:
+          version: 8.0.x
+
+      - task: UseDotNet@2
+        displayName: Use .NET 9.0
+        inputs:
+          version: 9.0.x
+
+      - pwsh: |
+          ./eng/scripts/Verify-McpToolReferences.ps1 `
+            -InstructionsPath ./eng/common/instructions/azsdk-tools
+        displayName: Verify MCP Tool References

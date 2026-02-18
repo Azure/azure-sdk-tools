@@ -68,7 +68,7 @@ public abstract class CommandResponse
     {
         var value = Format();
 
-        List<string> messages = [];
+        List<string> messages = [value];
         if (!string.IsNullOrEmpty(ResponseError))
         {
             messages.Add("[ERROR] " + ResponseError);

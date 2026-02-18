@@ -353,6 +353,9 @@ public class VerifySetupTool : LanguageMcpTool
                 }
             }
 
+            // Populate NextSteps for auto-installable requirements (for JSON mode and MCP responses)
+            PopulateNextSteps(response);
+
             return response;
         }
         catch (Exception ex)
@@ -382,6 +385,20 @@ public class VerifySetupTool : LanguageMcpTool
             IsAutoInstallable = req.IsAutoInstallable,
             NotAutoInstallableReason = req.NotAutoInstallableReason
         });
+    }
+
+    private static void PopulateNextSteps(VerifySetupResponse response)
+    {
+        var autoInstallableNames = response.Results?
+            .Where(r => r.IsAutoInstallable && !r.AutoInstallAttempted)
+            .Select(r => r.Requirement)
+            .ToList() ?? [];
+
+        if (autoInstallableNames.Count > 0)
+        {
+            response.NextSteps ??= [];
+            response.NextSteps.Add($"Re-run with --auto-install to automatically install: {string.Join(", ", autoInstallableNames)}");
+        }
     }
 
     private static string GetDisplayName(Requirement req)

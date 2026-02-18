@@ -37,8 +37,8 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
     public async Task<string> GenerateCodeownersAsync(
         string repoRoot,
         string repoName,
-        List<string>? packageTypes = null,
-        string sectionName = "Client Libraries",
+        string[] packageTypes,
+        string sectionName,
         CancellationToken ct = default)
     {
         packageTypes ??= ["client"];
@@ -157,7 +157,7 @@ public class CodeownersGenerateHelper : ICodeownersGenerateHelper
         return [];
     }
 
-    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, string language, List<string> packageTypes, CancellationToken ct)
+    private async Task<WorkItemData> FetchAllWorkItemsAsync(string repoName, string language, string[] packageTypes, CancellationToken ct)
     {
         // Build package type filter using IN clause
         var packageTypeList = string.Join(", ", packageTypes.Select(pt => $"'{pt}'"));

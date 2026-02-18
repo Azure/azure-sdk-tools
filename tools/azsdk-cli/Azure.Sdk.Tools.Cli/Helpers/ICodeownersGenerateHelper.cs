@@ -13,14 +13,14 @@ public interface ICodeownersGenerateHelper
     /// </summary>
     /// <param name="repoRoot">Path to the repository root</param>
     /// <param name="repoName">Repository name in the format Azure/azure-sdk-for-{lang}</param>
-    /// <param name="packageTypes">Package types to filter by (default: ["client"])</param>
-    /// <param name="sectionName">Section name in CODEOWNERS file to update (default: "Client Libraries")</param>
+    /// <param name="packageTypes">Package types to filter by</param>
+    /// <param name="sectionName">Section name in CODEOWNERS file to update</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>The generated CODEOWNERS content that was written</returns>
     Task<string> GenerateCodeownersAsync(
         string repoRoot,
         string repoName,
-        List<string>? packageTypes = null,
-        string sectionName = "Client Libraries",
+        string[] packageTypes,
+        string sectionName,
         CancellationToken ct = default);
 }

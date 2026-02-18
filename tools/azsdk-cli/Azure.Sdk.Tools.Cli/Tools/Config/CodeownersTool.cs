@@ -80,11 +80,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         };
 
         // Generate command options
-        private readonly Option<string> repoOptionGenerate = new("--repo", "-r")
-        {
-            Description = "Full repository name (e.g. Azure/azure-sdk-for-net). Required if running outside the context of an SDK repository.",
-            Required = false,
-        };
         private readonly Option<string> repoRootOption = new("--repo-root")
         {
             Description = "Path to the repository root (default: repo root of current directory)",
@@ -95,17 +90,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             Description = "Package types to include (default: client)",
             Required = false,
+            DefaultValueFactory = _ => ["client"],
+            AllowMultipleArgumentsPerToken = true,
         };
 
         private readonly Option<string> sectionOption = new("--section")
         {
             Description = "Section name in CODEOWNERS file to update (default: Client Libraries)",
             Required = false,
+            DefaultValueFactory = _ => "Client Libraries",
         };
 
         private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTool> logger;
-        private readonly ICodeownersValidatorHelper codeownersValidator;
+        private readonly ICodeownersValidatorHelper codeownersValidatorHelper;
         private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
         private readonly IGitHelper gitHelper;
 
@@ -132,7 +130,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             this.githubService = githubService;
             this.logger = logger;
-            this.codeownersValidator = codeownersValidator;
+            this.codeownersValidatorHelper = codeownersValidator;
             this.codeownersGenerateHelper = codeownersGenerateHelper;
             this.gitHelper = gitHelper;
 
@@ -158,7 +156,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(generateCodeownersCommandName, "Generate CODEOWNERS file from Azure DevOps work items")
             {
-                repoRootOption, repoOptionGenerate, packageTypesOption, sectionOption,
+                repoRootOption, packageTypesOption, sectionOption,
             }
         ];
 
@@ -208,13 +206,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var repoRoot = parseResult.GetValue(repoRootOption)
                     ?? await gitHelper.DiscoverRepoRootAsync(".");
-                var repo = parseResult.GetValue(repoOptionGenerate)
-                    ?? await gitHelper.GetRepoFullNameAsync(repoRoot);
-                var packageTypesValue = parseResult.GetValue(packageTypesOption);
-                var packageTypes = (packageTypesValue != null && packageTypesValue.Length > 0) ? packageTypesValue.ToList() : ["client"];
-                var section = parseResult.GetValue(sectionOption) ?? "Client Libraries";
+                var repo = await gitHelper.GetRepoFullNameAsync(repoRoot);
+                var packageTypes = parseResult.GetValue(packageTypesOption);
+                var section = parseResult.GetValue(sectionOption);
 
-                var generateResult = await GenerateCodeowners(repoRoot ?? "", repo ?? "", packageTypes, section, ct);
+                var generateResult = await GenerateCodeowners(repoRoot, repo, packageTypes, section, ct);
                 return generateResult;
             }
 
@@ -470,7 +466,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
-                var result = await codeownersValidator.ValidateCodeOwnerAsync(username, verbose: false);
+                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false);
 
                 if (string.IsNullOrEmpty(result.Username))
                 {
@@ -543,7 +539,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<DefaultCommandResponse> GenerateCodeowners(
             string repoRoot,
             string repo,
-            List<string> packageTypes,
+            string[] packageTypes,
             string section,
             CancellationToken ct)
         {

@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Text;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
@@ -80,13 +79,14 @@ public class CodeownersGenerateHelper(
 
     private async Task<List<RepoPackage>> GetPackagesFromRepoAsync(string repoRoot, CancellationToken ct)
     {
-        //string tempFile = Path.GetTempFileName();
-        string command = $". (Join-Path '{repoRoot}' 'eng/common/scripts/common.ps1'); ($pkgProperties = Get-AllPkgProperties) *> Out-Null; $pkgProperties | ConvertTo-Json -Depth 100";
+        string tempFile = Path.GetTempFileName();
+        string command = $". (Join-Path '{repoRoot}' 'eng/common/scripts/common.ps1'); $pkgProperties = Get-AllPkgProperties; $pkgProperties | ConvertTo-Json -Depth 100 | Set-Content -Path '{tempFile}'";
 
         try
         {
             var options = new PowershellOptions(
-                ["-Command", command],
+                [command],
+                workingDirectory: repoRoot,
                 logOutputStream: false,
                 timeout: TimeSpan.FromMinutes(5)
             );
@@ -100,7 +100,7 @@ public class CodeownersGenerateHelper(
             }
 
             var packages = JsonSerializer.Deserialize<List<RepoPackage>>(
-                result.Stdout,
+                await File.ReadAllTextAsync(tempFile, ct),
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
             return packages;
         }
@@ -116,7 +116,7 @@ public class CodeownersGenerateHelper(
     {
         // Build package type filter using IN clause
         var packageTypeList = string.Join(", ", packageTypes.Select(pt => $"'{pt}'"));
-        var packageQuery = $"[System.WorkItemType] = 'Package' AND [Custom.Language] = '{language}' AND [Custom.PackageType] IN ({packageTypeList})";
+        var packageQuery = $"[System.WorkItemType] = 'Package' AND [Custom.Language] = '{language.ToWorkItemString()}' AND [Custom.PackageType] IN ({packageTypeList})";
 
         // Fetch Packages by language and package type
         var allPackages = await FetchWorkItemsAsync<PackageWorkItem>(
@@ -173,13 +173,14 @@ public class CodeownersGenerateHelper(
         string repoRoot)
     {
         var entries = new List<CodeownersEntry>();
+        var packagesNotFound = new List<string>();
 
         // Build entries for packages
         foreach (var pkg in data.Packages.Values)
         {
             if (!packageLookup.TryGetValue(pkg.PackageName, out var repoPkg))
             {
-                logger.LogInformation("Package '{PackageName}' not found in repository, skipping...", pkg.PackageName);
+                packagesNotFound.Add(pkg.PackageName);
                 continue;
             }
 
@@ -287,6 +288,11 @@ public class CodeownersGenerateHelper(
             AddLabelOwnerMetadata(entry, lo);
         }
         entries.AddRange(pathlessEntriesByLabel.Values);
+
+        if (packagesNotFound.Count > 0)
+        {
+            logger.LogWarning("The following packages have work items but were not found in the repository and skipped: {Packages}", string.Join(", ", packagesNotFound));
+        }
 
         return entries;
     }
@@ -396,6 +402,8 @@ public class CodeownersGenerateHelper(
 
         // Content after section
         output.AddRange(lines[sectionEnd..]);
+        // Newline at end of file
+        output.Add("");
 
         await File.WriteAllTextAsync(path, string.Join("\n", output));
         logger.LogInformation("Updated: {Path}", path);

@@ -14,8 +14,6 @@ using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Config
 {

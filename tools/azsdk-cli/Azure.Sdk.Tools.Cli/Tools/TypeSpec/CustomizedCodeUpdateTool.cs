@@ -140,6 +140,10 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
+    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
+    public Task<CustomizedCodeUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
+        => RunUpdateAsync(commitSha, packagePath, ct);
+
     private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string commitSha, string packagePath, CancellationToken ct)
     {
         try
@@ -285,7 +289,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     }
 
     /// <summary>
-    /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE, SUCCESS, or FAILURE.
+    /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE
+    /// (can be resolved with TSP customizations), SUCCESS (no action needed), or FAILURE (requires manual code customizations).
     /// </summary>
     private async Task<FeedbackClassificationResponse> Classify(
         string tspProjectPath,
@@ -359,10 +364,6 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
-    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
-    public Task<CustomizedCodeUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
-        => RunUpdateAsync(commitSha, packagePath, ct);
-
     private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string packagePath, string commitSha, CancellationToken ct)
     {
         try
@@ -404,5 +405,4 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
         return patchesApplied;
     }
-
 }

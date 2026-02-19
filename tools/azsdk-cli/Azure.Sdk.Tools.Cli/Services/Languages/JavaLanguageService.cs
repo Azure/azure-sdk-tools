@@ -252,8 +252,11 @@ public sealed partial class JavaLanguageService : LanguageService
         return Directory.Exists(customizationSourceRoot) ? customizationSourceRoot : null;
     }
 
+    /// <summary>
+    /// Applies patches to customization files based on build errors.
+    /// This is a mechanical worker - the Classifier does the thinking and routing.
+    /// </summary>
     public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
-        string commitSha,
         string customizationRoot,
         string packagePath,
         string buildError,
@@ -281,12 +284,13 @@ public sealed partial class JavaLanguageService : LanguageService
                 .Select(f => Path.GetRelativePath(customizationRoot, f))
                 .ToList();
 
-            // Build error-driven prompt
+            // Build error-driven prompt - simplified for Phase B mechanical work
             var prompt = new JavaErrorDrivenPatchTemplate(
                 buildError,
                 packagePath,
                 customizationRoot,
-                customizationFiles).BuildPrompt();
+                customizationFiles,
+                patchFilePaths).BuildPrompt();
 
             // Create patch tool so we can retrieve applied patches after microagent completes
             var patchTool = new ClientCustomizationCodePatchTool(customizationRoot)
@@ -295,21 +299,14 @@ public sealed partial class JavaLanguageService : LanguageService
                 Description = "Apply code patches to customization files only (never generated code)"
             };
 
-            // Cancel the agent after first successful patch to prevent wasted tokens.
-            // The repair loop will rebuild and re-invoke if more patches are needed.
-            using var patchCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            patchTool.OnPatchApplied = () => patchCts.Cancel();
-
-            // Safety limit on tool calls per patching session. This is a heuristic -
-            // if real-world usage shows the model needs more calls to complete valid fixes,
-            // this should be tuned based on observed behavior. Typical fix needs 2-5 calls.
-            var agentDefinition = new Microagent<bool>
+            // Single-pass agent: applies all patches it can in one run
+            var agentDefinition = new Microagent<string>
             {
                 Instructions = prompt,
-                MaxToolCalls = 15,
+                MaxToolCalls = 25,
                 Tools =
                 [
-                    new ReadFileTool(packagePath)
+                    new ReadFileTool(packagePath, logger)
                     {
                         Name = "ReadFile",
                         Description = "Read files from the package directory (generated code, customization files, etc.)"
@@ -318,115 +315,30 @@ public sealed partial class JavaLanguageService : LanguageService
                 ]
             };
 
-            // Use microagent system to apply patches
+            // Run the agent to apply patches
             try
             {
                 await microagentHost.RunAgentToCompletion(agentDefinition, ct);
             }
-            catch (OperationCanceledException) when (patchTool.AppliedPatches.Count > 0)
-            {
-                // Expected - agent was cancelled after a successful patch
-                logger.LogDebug("Agent stopped after successful patch application");
-            }
             catch (OperationCanceledException)
             {
-                // Cancelled externally (not by us), re-throw
+                // Cancelled externally, re-throw
                 throw;
             }
             catch (Exception agentEx)
             {
-                // Microagent may have hit MaxToolCalls limit but still applied patches
-                logger.LogDebug(agentEx, "Microagent terminated early");
+                // Agent exhausted its tool budget (MaxToolCalls) without calling Exit.
+                logger.LogDebug(agentEx, "Microagent terminated early (applied {PatchCount} patches)", patchTool.AppliedPatches.Count);
             }
-            logger.LogInformation("[STAGE] Patch application completed, patches applied: {PatchCount}", patchTool.AppliedPatches.Count);
+            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", patchTool.AppliedPatches.Count);
 
             return patchTool.AppliedPatches;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to apply error-driven patches");
+            logger.LogError(ex, "Failed to apply patches");
             return [];
         }
     }
 
-    public override async Task<string?> DiagnoseRemainingErrorsAsync(
-        string buildError,
-        List<AppliedPatch> appliedPatches,
-        string packagePath,
-        CancellationToken ct)
-    {
-        logger.LogInformation("[STAGE] Generating LLM diagnosis for remaining build errors...");
-
-        var patchSummary = appliedPatches.Count > 0
-            ? string.Join("\n\n", appliedPatches.Select(p => 
-                p.OldContent != null && p.NewContent != null
-                    ? $"### {p.FilePath} ({p.ReplacementCount} replacement(s))\nOld:\n```java\n{p.OldContent}\n```\nNew:\n```java\n{p.NewContent}\n```"
-                    : $"- {p.FilePath}: {p.Description} ({p.ReplacementCount} replacement(s))"))
-            : "No patches were successfully applied.";
-
-        var prompt = $"""
-            You are an expert Java SDK developer analyzing a failed build after an automated code repair attempt.
-
-            ## Context
-            A TypeSpec-generated Azure SDK client library was regenerated after a spec change. The regenerated
-            code broke customization wrappers (hand-written code that extends/wraps the generated client).
-            An automated repair agent attempted to fix the customization code by patching it.
-
-            ## Patches Applied
-            {patchSummary}
-
-            ## Remaining Build Errors (after patches)
-            ```
-            {buildError}
-            ```
-
-            ## Package Location
-            {packagePath}
-
-            ## Your Task
-            Analyze the remaining build errors and provide a **targeted diagnosis** as a multi-line string.
-            Your output will be shown directly to the developer so make it actionable and specific.
-            You MUST provide ALL three sections below with substantial detail:
-
-            1. **Root Cause**: What specifically is wrong? Parse the error messages carefully.
-               Example: "The generated beginAnalyzeDocument method now takes 10 parameters (added 'priority' at the end) but the customization code still calls it with 9 arguments."
-
-            2. **Why Repair Failed**: Why couldn't the automated patches fix this?
-               Example: "The patch agent could not match the OldContent string against the actual file content due to encoding differences in the JavaParser string concatenation."
-
-            3. **Specific Fix**: What exactly should the developer do?
-
-               IMPORTANT PRINCIPLE: Follow this priority order and ONLY show ONE approach:
-               a) If the fix can be done in client.tsp (TypeSpec customization) — show ONLY the client.tsp change.
-                  This covers: adding/removing query params from convenience methods, renaming parameters,
-                  spreading model properties, changing method signatures via @override, etc.
-                  Example: Add `priority?: string` to the `@spread` model in client.tsp
-               b) If it CANNOT be fixed in client.tsp (e.g., adding JavaParser AST manipulation,
-                  custom polling strategies, static initializers) — then show the Java customization code.
-               c) If it's a generated code bug — say to file an issue with the Java emitter.
-
-               Do NOT show multiple approaches. Pick the one correct fix.
-
-            Be concise and specific. Do NOT give generic advice. Reference the actual types, methods, and error messages from the build output.
-            """;
-
-        var agent = new Microagent<string>
-        {
-            Instructions = prompt,
-            Tools = [],  // No tools needed - pure reasoning
-            MaxToolCalls = 3  // Just needs to call Exit with the diagnosis
-        };
-
-        try
-        {
-            var result = await microagentHost.RunAgentToCompletion(agent, ct);
-            logger.LogInformation("[STAGE] LLM diagnosis generated successfully");
-            return result;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "LLM diagnosis failed");
-            return null;
-        }
-    }
 }

@@ -206,31 +206,22 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
-        /// Applies automated patches directly to customization code using intelligent analysis.
+        /// Applies patches to customization files based on build errors.
+        /// This is a mechanical worker - it applies safe patches and returns results.
+        /// The Classifier (Phase A) does the thinking and routing.
         /// </summary>
-        /// <param name="commitSha">The commit SHA from TypeSpec changes for context</param>
         /// <param name="customizationRoot">Path to the customization root directory</param>
         /// <param name="packagePath">Path to the package directory containing generated code</param>
-        /// <param name="buildError">The build error and context that triggered automatic repair</param>
+        /// <param name="buildError">The build error that triggered repair</param>
         /// <param name="ct">Cancellation token</param>
-        /// <returns>List of applied patches (empty if none were applied)</returns>
-        public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, string buildError, CancellationToken ct)
+        /// <returns>List of applied patches</returns>
+        public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(
+            string customizationRoot,
+            string packagePath,
+            string buildError,
+            CancellationToken ct)
         {
             return Task.FromResult(new List<AppliedPatch>());
-        }
-
-        /// <summary>
-        /// Uses LLM reasoning to diagnose remaining build errors after patch attempts.
-        /// Produces targeted, actionable guidance instead of generic boilerplate.
-        /// </summary>
-        /// <param name="buildError">The remaining build error output</param>
-        /// <param name="appliedPatches">Patches that were already applied</param>
-        /// <param name="packagePath">Path to the package directory</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>LLM-generated diagnosis string, or null if diagnosis is not supported</returns>
-        public virtual Task<string?> DiagnoseRemainingErrorsAsync(string buildError, List<AppliedPatch> appliedPatches, string packagePath, CancellationToken ct)
-        {
-            return Task.FromResult<string?>(null);
         }
 
         /// <summary>

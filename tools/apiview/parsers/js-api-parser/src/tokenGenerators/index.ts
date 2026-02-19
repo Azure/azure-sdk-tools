@@ -1,4 +1,5 @@
 import { enumTokenGenerator } from "./enum";
+import { enumMemberTokenGenerator } from "./enumMember";
 import { ReviewToken, ReviewLine } from "../models";
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { functionTokenGenerator } from "./function";
@@ -22,6 +23,7 @@ export interface TokenGenerator<T extends ApiItem = ApiItem> {
 
 export const generators: TokenGenerator[] = [
   enumTokenGenerator,
+  enumMemberTokenGenerator,
   classTokenGenerator,
   functionTokenGenerator,
   interfaceTokenGenerator,

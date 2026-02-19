@@ -689,30 +689,53 @@ describe("typeAliasTokenGenerator", () => {
 
       const { tokens, children } = typeAliasTokenGenerator.generate(mockTypeAlias, false);
 
-      const allTokens = [
-        ...tokens,
-        ...(children ?? []).flatMap((line) => [
-          ...line.Tokens,
-          ...(line.Children ?? []).flatMap((childLine) => childLine.Tokens),
-        ]),
-      ];
-
-      const inferToken = allTokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "infer");
-      expect(inferToken).toBeDefined();
-
-      const extendsToken = allTokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "extends");
+      const extendsToken = tokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "extends");
       expect(extendsToken).toBeDefined();
 
-      const pipeToken = allTokens.find((t) => t.Value === "|");
-      expect(pipeToken).toBeDefined();
-
-      const questionToken = allTokens.find((t) => t.Value === "?");
+      const questionToken = tokens.find((t) => t.Value === "?");
       expect(questionToken).toBeDefined();
 
-      const colonToken = allTokens.find((t) => t.Value === ":");
+      const colonToken = tokens.find((t) => t.Value === ":");
       expect(colonToken).toBeDefined();
 
-      expect(children?.length ?? 0).toBeGreaterThan(0);
+      const extendsOperandText = tokens.find(
+        (t) => t.Kind === TokenKind.Text && t.Value.includes("value?: infer TPage"),
+      );
+      expect(extendsOperandText).toBeDefined();
+
+      const pipeCount = (extendsOperandText?.Value.match(/\|/g) ?? []).length;
+      expect(pipeCount).toBeGreaterThan(0);
+
+      expect(children).toBeUndefined();
+    });
+
+    it("normalizes multiline conditional extends operands into one token line", () => {
+      const conditionalType = `TResult extends {
+  body: {
+    value?: infer TPage;
+  };
+} | {
+  body: {
+    members?: infer TPage;
+  };
+} ? GetArrayType<TPage> : Array<unknown>`;
+
+      const mockTypeAlias = createMockTypeAlias(
+        "PaginateReturnMultiline",
+        conditionalType,
+        createBasicExcerptTokens("PaginateReturnMultiline", conditionalType),
+        [createMockTypeParameter("TResult")],
+      );
+
+      const { tokens, children } = typeAliasTokenGenerator.generate(mockTypeAlias, false);
+
+      const extendsOperandText = tokens.find(
+        (t) => t.Kind === TokenKind.Text && t.Value.includes("value?: infer TPage"),
+      );
+      expect(extendsOperandText).toBeDefined();
+      expect(extendsOperandText?.Value.includes("\n")).toBe(false);
+      expect(extendsOperandText?.Value.includes("\r")).toBe(false);
+      expect(children).toBeUndefined();
     });
 
     it("handles template literal type alias", () => {

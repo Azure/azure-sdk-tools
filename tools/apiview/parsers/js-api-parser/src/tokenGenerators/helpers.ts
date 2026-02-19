@@ -90,6 +90,27 @@ function getTokenKind(text: string): TokenKind {
   return TokenKind.Text;
 }
 
+
+function containsTypeLiteral(node: ts.Node): boolean {
+  if (ts.isTypeLiteralNode(node)) {
+    return true;
+  }
+
+  let foundTypeLiteral = false;
+  ts.forEachChild(node, (child) => {
+    if (!foundTypeLiteral && containsTypeLiteral(child)) {
+      foundTypeLiteral = true;
+    }
+  });
+
+  return foundTypeLiteral;
+}
+
+
+function normalizeInlineTypeText(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
 /** Process excerpt tokens and add them to the tokens array */
 export function processExcerptTokens(
   excerptTokens: readonly ExcerptToken[],
@@ -341,10 +362,19 @@ export function buildTypeNodeTokens(
 
 
   if (ts.isConditionalTypeNode(node)) {
-    const checkTypeChildren = buildTypeNodeTokens(node.checkType, tokens, deprecated, depth);
-    if (checkTypeChildren?.length) {
-      children.push(...checkTypeChildren);
-    }
+    const addConditionalOperandTokens = (operand: ts.TypeNode): void => {
+      if (containsTypeLiteral(operand)) {
+        tokens.push(createToken(TokenKind.Text, normalizeInlineTypeText(operand.getText()), { deprecated }));
+        return;
+      }
+
+      const operandChildren = buildTypeNodeTokens(operand, tokens, deprecated, depth);
+      if (operandChildren?.length) {
+        children.push(...operandChildren);
+      }
+    };
+
+    addConditionalOperandTokens(node.checkType);
 
     tokens.push(
       createToken(TokenKind.Keyword, "extends", {
@@ -354,10 +384,7 @@ export function buildTypeNodeTokens(
       }),
     );
 
-    const extendsTypeChildren = buildTypeNodeTokens(node.extendsType, tokens, deprecated, depth);
-    if (extendsTypeChildren?.length) {
-      children.push(...extendsTypeChildren);
-    }
+    addConditionalOperandTokens(node.extendsType);
 
     tokens.push(
       createToken(TokenKind.Punctuation, "?", {
@@ -367,10 +394,7 @@ export function buildTypeNodeTokens(
       }),
     );
 
-    const trueTypeChildren = buildTypeNodeTokens(node.trueType, tokens, deprecated, depth);
-    if (trueTypeChildren?.length) {
-      children.push(...trueTypeChildren);
-    }
+    addConditionalOperandTokens(node.trueType);
 
     tokens.push(
       createToken(TokenKind.Punctuation, ":", {
@@ -380,10 +404,7 @@ export function buildTypeNodeTokens(
       }),
     );
 
-    const falseTypeChildren = buildTypeNodeTokens(node.falseType, tokens, deprecated, depth);
-    if (falseTypeChildren?.length) {
-      children.push(...falseTypeChildren);
-    }
+    addConditionalOperandTokens(node.falseType);
 
     return children.length > 0 ? children : undefined;
   }

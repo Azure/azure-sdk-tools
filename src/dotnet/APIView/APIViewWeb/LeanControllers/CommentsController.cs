@@ -115,6 +115,9 @@ namespace APIViewWeb.LeanControllers
                 return new BadRequestResult();
             }
 
+            // For replies (threadId is set), severity and resolution lock are owned by
+            // the thread starter. Replies must not carry their own severity or alter resolution.
+            var isReply = !string.IsNullOrEmpty(threadId);
             var comment = new CommentItemModel
             {
                 ReviewId = reviewId,
@@ -122,11 +125,11 @@ namespace APIViewWeb.LeanControllers
                 SampleRevisionId = sampleRevisionId,
                 ElementId = elementId,
                 CommentText = commentText,
-                ResolutionLocked = resolutionLocked,
+                ResolutionLocked = isReply ? false : resolutionLocked,
                 CreatedBy = User.GetGitHubLogin(),
                 CreatedOn = DateTime.UtcNow,
                 CommentType = commentType,
-                Severity = severity,
+                Severity = isReply ? null : severity,
                 ThreadId = threadId 
             };
 

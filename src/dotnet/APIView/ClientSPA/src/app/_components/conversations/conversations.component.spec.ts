@@ -20,12 +20,15 @@ import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { APIRevision } from 'src/app/_models/revision';
 import { CommentItemModel, CommentSource } from 'src/app/_models/commentItemModel';
+import { CommentSeverity } from 'src/app/_models/commentItemModel';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { CommentThreadUpdateAction } from 'src/app/_dtos/commentThreadUpdateDto';
+import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { Review } from 'src/app/_models/review';
 
 describe('ConversationComponent', () => {
   let component: ConversationsComponent;
@@ -215,6 +218,129 @@ describe('ConversationComponent', () => {
 
       // Now only 1 active thread
       expect(component.numberOfActiveThreads).toBe(1);
+    });
+  });
+
+  describe('Quality score refresh on comment actions', () => {
+    let commentsService: CommentsService;
+    let signalRService: any;
+    let notifySpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      commentsService = TestBed.inject(CommentsService);
+      signalRService = TestBed.inject(SignalRService);
+      notifySpy = vi.spyOn(commentsService, 'notifyQualityScoreRefresh');
+      if (!signalRService.pushCommentUpdates) {
+        signalRService.pushCommentUpdates = vi.fn();
+      }
+      component.review = { id: 'test-review' } as Review;
+    });
+
+    afterEach(() => {
+      notifySpy.mockRestore();
+    });
+
+    it('should call notifyQualityScoreRefresh after deleting a comment', () => {
+      vi.spyOn(commentsService, 'deleteComment').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'deleteCommentFromCommentThread').mockImplementation(() => {});
+
+      component.handleDeleteCommentActionEmitter({
+        commentId: 'comment-1',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
+      } as CommentUpdatesDto);
+
+      expect(notifySpy).toHaveBeenCalled();
+    });
+
+    it('should call notifyQualityScoreRefresh after resolving a comment', () => {
+      vi.spyOn(commentsService, 'resolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'element-1',
+        threadId: 'thread-1',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+      } as CommentUpdatesDto);
+
+      expect(notifySpy).toHaveBeenCalled();
+    });
+
+    it('should call notifyQualityScoreRefresh after unresolving a comment', () => {
+      vi.spyOn(commentsService, 'unresolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'element-1',
+        threadId: 'thread-1',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentUnResolved,
+      } as CommentUpdatesDto);
+
+      expect(notifySpy).toHaveBeenCalled();
+    });
+
+    it('should call notifyQualityScoreRefresh after creating a new thread', () => {
+      const mockResponse = { threadId: 'new-thread' } as CommentItemModel;
+      vi.spyOn(commentsService, 'createComment').mockReturnValue(of(mockResponse));
+      vi.spyOn(component as any, 'addCommentToCommentThread').mockImplementation(() => {});
+
+      component.handleSaveCommentActionEmitter({
+        revisionId: 'revision-1',
+        elementId: 'element-1',
+        commentText: 'new comment',
+        allowAnyOneToResolve: false,
+        severity: undefined,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+      } as CommentUpdatesDto);
+
+      expect(notifySpy).toHaveBeenCalled();
+    });
+
+    it('should NOT call notifyQualityScoreRefresh when adding a reply to an existing thread', () => {
+      const mockResponse = { threadId: 'existing-thread' } as CommentItemModel;
+      vi.spyOn(commentsService, 'createComment').mockReturnValue(of(mockResponse));
+      vi.spyOn(component as any, 'addCommentToCommentThread').mockImplementation(() => {});
+
+      component.handleSaveCommentActionEmitter({
+        revisionId: 'revision-1',
+        elementId: 'element-1',
+        commentText: 'reply text',
+        threadId: 'existing-thread',
+        allowAnyOneToResolve: undefined,
+        severity: null,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+      } as CommentUpdatesDto);
+
+      expect(notifySpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Severity change propagation', () => {
+    let commentsService: CommentsService;
+
+    beforeEach(() => {
+      commentsService = TestBed.inject(CommentsService);
+    });
+
+    it('should update comment severity when severityChanged$ emits', () => {
+      component.comments = [
+        { id: 'comment-1', severity: CommentSeverity.Suggestion } as CommentItemModel,
+        { id: 'comment-2', severity: CommentSeverity.Question } as CommentItemModel
+      ];
+
+      commentsService.notifySeverityChanged('comment-1', CommentSeverity.MustFix);
+
+      expect(component.comments[0].severity).toBe(CommentSeverity.MustFix);
+      expect(component.comments[1].severity).toBe(CommentSeverity.Question);
+    });
+
+    it('should not fail when severityChanged$ emits for a comment not in conversations', () => {
+      component.comments = [
+        { id: 'comment-1', severity: CommentSeverity.Question } as CommentItemModel
+      ];
+
+      commentsService.notifySeverityChanged('comment-999', CommentSeverity.ShouldFix);
+
+      expect(component.comments[0].severity).toBe(CommentSeverity.Question);
     });
   });
 });

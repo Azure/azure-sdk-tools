@@ -864,7 +864,9 @@ public class APIRevisionsManagerTests
                 new APICodeFileModel
                 {
                     FileId = "file-1",
+                    Name = "test-package (1.0.0)",
                     FileName = "test.whl",
+                    Language = "Python",
                     PackageName = "test-package",
                     PackageVersion = "1.0.0",
                     VersionString = "1.0.0"
@@ -878,17 +880,25 @@ public class APIRevisionsManagerTests
         bool isResolved = false,
         CommentSource source = CommentSource.UserGenerated,
         float confidenceScore = 1.0f,
-        string reviewId = "review-1")
+        string reviewId = "review-1",
+        string apiRevisionId = "rev-1",
+        string elementId = null,
+        string threadId = null,
+        DateTime? createdOn = null)
     {
         return new CommentItemModel
         {
             ReviewId = reviewId,
+            APIRevisionId = apiRevisionId,
             CommentType = CommentType.APIRevision,
             Severity = severity,
             IsResolved = isResolved,
             CommentSource = source,
             ConfidenceScore = confidenceScore,
-            CommentText = "Test comment"
+            CommentText = "Test comment",
+            ElementId = elementId ?? Guid.NewGuid().ToString(),
+            ThreadId = threadId,
+            CreatedOn = createdOn ?? DateTime.UtcNow
         };
     }
 
@@ -1176,6 +1186,142 @@ public class APIRevisionsManagerTests
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync("bad-id")).ReturnsAsync((APIRevisionListItemModel)null);
 
         await Assert.ThrowsAsync<ArgumentException>(() => _manager.GetReviewQualityScoreAsync("bad-id"));
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_RepliesInSameThread_NotCountedSeparately()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var threadElement = "element-thread-1";
+        var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            // Thread starter: ShouldFix
+            CreateComment(CommentSeverity.ShouldFix, elementId: threadElement, createdOn: baseTime),
+            // Reply 1: no severity (null)
+            CreateComment(severity: null, elementId: threadElement, createdOn: baseTime.AddMinutes(5)),
+            // Reply 2: no severity (null)
+            CreateComment(severity: null, elementId: threadElement, createdOn: baseTime.AddMinutes(10))
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // Only the thread starter (ShouldFix) should be counted; replies are ignored
+        Assert.Equal(90, result.Score); // 100 - 10
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+        Assert.Equal(0, result.UnresolvedQuestionCount);
+        Assert.Equal(1, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_ThreadStarterSeverityUsed_NotReplySeverity()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var threadElement = "element-thread-2";
+        var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            // Thread starter: Question (no penalty)
+            CreateComment(CommentSeverity.Question, elementId: threadElement, createdOn: baseTime),
+            // Reply with MustFix severity (should be ignored since it's not the thread starter)
+            CreateComment(CommentSeverity.MustFix, elementId: threadElement, createdOn: baseTime.AddMinutes(5))
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // Only the thread starter (Question) determines severity — MustFix reply is ignored
+        Assert.Equal(100, result.Score);
+        Assert.Equal(1, result.UnresolvedQuestionCount);
+        Assert.Equal(0, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_MultipleThreadsCountedSeparately()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            // Thread 1: MustFix with 2 replies
+            CreateComment(CommentSeverity.MustFix, elementId: "elem-1", createdOn: baseTime),
+            CreateComment(severity: null, elementId: "elem-1", createdOn: baseTime.AddMinutes(1)),
+            CreateComment(severity: null, elementId: "elem-1", createdOn: baseTime.AddMinutes(2)),
+            // Thread 2: ShouldFix with 1 reply
+            CreateComment(CommentSeverity.ShouldFix, elementId: "elem-2", createdOn: baseTime),
+            CreateComment(severity: null, elementId: "elem-2", createdOn: baseTime.AddMinutes(1)),
+            // Thread 3: Question alone
+            CreateComment(CommentSeverity.Question, elementId: "elem-3", createdOn: baseTime)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // 3 threads: MustFix(-20), ShouldFix(-10), Question(0)
+        Assert.Equal(70, result.Score); // 100 - 20 - 10
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+        Assert.Equal(1, result.UnresolvedQuestionCount);
+        Assert.Equal(3, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_ThreadIdTakesPriorityOverElementId()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            // Two comments with different ElementIds but same ThreadId → same thread
+            CreateComment(CommentSeverity.MustFix, elementId: "elem-A", threadId: "thread-1", createdOn: baseTime),
+            CreateComment(severity: null, elementId: "elem-B", threadId: "thread-1", createdOn: baseTime.AddMinutes(1)),
+            // A separate thread via ThreadId
+            CreateComment(CommentSeverity.Suggestion, elementId: "elem-C", threadId: "thread-2", createdOn: baseTime)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // 2 threads: MustFix(-20) and Suggestion(-5)
+        Assert.Equal(75, result.Score); // 100 - 20 - 5
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedSuggestionCount);
+        Assert.Equal(2, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_ElementIdFallbackWhenNoThreadId()
+    {
+        var revision = CreateRevisionForQualityTest();
+        var baseTime = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var comments = new List<CommentItemModel>
+        {
+            // Legacy comments: no ThreadId, grouped by ElementId
+            CreateComment(CommentSeverity.ShouldFix, elementId: "legacy-elem-1", threadId: null, createdOn: baseTime),
+            CreateComment(severity: null, elementId: "legacy-elem-1", threadId: null, createdOn: baseTime.AddMinutes(1)),
+            CreateComment(CommentSeverity.MustFix, elementId: "legacy-elem-2", threadId: null, createdOn: baseTime)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // 2 threads: ShouldFix(-10) and MustFix(-20)
+        Assert.Equal(70, result.Score); // 100 - 10 - 20
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+        Assert.Equal(2, result.TotalUnresolvedCount);
     }
 
     #endregion

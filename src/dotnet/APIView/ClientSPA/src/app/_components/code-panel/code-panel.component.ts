@@ -8,7 +8,7 @@ import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, 
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
-import { CommentItemModel, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { MenuItem, MenuItemCommandEvent, MessageService, ToastMessageOptions } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
@@ -90,6 +90,10 @@ export class CodePanelComponent implements OnChanges {
 
     this.scrollToNodeIdHashed?.pipe(takeUntil(this.destroy$)).subscribe((nodeIdHashed) => {
       this.scrollToNode(nodeIdHashed);
+    });
+
+    this.commentsService.severityChanged$.pipe(takeUntil(this.destroy$)).subscribe(({ commentId, newSeverity }) => {
+      this.updateCommentSeverity(commentId, newSeverity);
     });
   }
 
@@ -739,6 +743,7 @@ export class CodePanelComponent implements OnChanges {
         });
     }
     else {
+      const isNewThread = !commentUpdates.threadId;
       this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity, commentUpdates.threadId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
@@ -747,7 +752,10 @@ export class CodePanelComponent implements OnChanges {
               }
               this.addCommentToCommentThread(commentUpdates, response);
               commentUpdates.comment = response;
-              this.commentsService.notifyQualityScoreRefresh();
+              // Only refresh quality score for new threads, not replies
+              if (isNewThread) {
+                this.commentsService.notifyQualityScoreRefresh();
+              }
             }
           }
         );
@@ -1384,6 +1392,19 @@ export class CodePanelComponent implements OnChanges {
       }
     }
     this.updateHasActiveConversations();
+  }
+
+  private updateCommentSeverity(commentId: string, newSeverity: CommentSeverity) {
+    for (const row of this.codePanelRowData) {
+      if (row.type === CodePanelRowDatatype.CommentThread && row.comments) {
+        const comment = row.comments.find((c: CommentItemModel) => c.id === commentId);
+        if (comment) {
+          comment.severity = newSeverity;
+          this.updateItemInScroller(row);
+          break;
+        }
+      }
+    }
   }
 
   private addCommentToCommentThread(commentUpdates: CommentUpdatesDto, newComment: CommentItemModel) {

@@ -13,8 +13,15 @@ export class CommentsService {
   private _qualityScoreRefreshNeeded = new Subject<void>();
   qualityScoreRefreshNeeded$ = this._qualityScoreRefreshNeeded.asObservable();
 
+  private _severityChanged = new Subject<{ commentId: string, newSeverity: CommentSeverity }>();
+  severityChanged$ = this._severityChanged.asObservable();
+
   notifyQualityScoreRefresh() {
     this._qualityScoreRefreshNeeded.next();
+  }
+
+  notifySeverityChanged(commentId: string, newSeverity: CommentSeverity) {
+    this._severityChanged.next({ commentId, newSeverity });
   }
 
   constructor(private http: HttpClient, private configService: ConfigService) { }

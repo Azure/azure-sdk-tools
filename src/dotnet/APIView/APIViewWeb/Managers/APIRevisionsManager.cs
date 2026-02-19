@@ -1455,6 +1455,20 @@ namespace APIViewWeb.Managers
                     && !c.IsDeleted)
                 .ToList();
 
+            // Group comments by conversation thread. Only the thread-starting comment's severity
+            // should be counted — replies within a thread do not carry their own severity and must
+            // not inflate the score. Use ThreadId when available, falling back to ElementId for
+            // legacy comments that predate thread support.
+            var threads = unresolvedComments
+                .GroupBy(c => !string.IsNullOrEmpty(c.ThreadId) ? c.ThreadId : c.ElementId)
+                .ToList();
+
+            // For each thread, pick the first comment (by creation date) as the representative.
+            // Its severity determines the thread's severity for scoring purposes.
+            var threadRepresentatives = threads
+                .Select(g => g.OrderBy(c => c.CreatedOn).First())
+                .ToList();
+
             var score = new ReviewQualityScore();
             double totalPenalty = 0.0;
 
@@ -1463,7 +1477,7 @@ namespace APIViewWeb.Managers
             // For larger reviews, penalties are proportionally smaller per comment
             double scaleFactor = 100.0 / totalReviewableLines;
 
-            foreach (var comment in unresolvedComments)
+            foreach (var comment in threadRepresentatives)
             {
                 // Questions don't degrade the score
                 if (comment.Severity == CommentSeverity.Question || comment.Severity == null)
@@ -1511,10 +1525,8 @@ namespace APIViewWeb.Managers
                 }
             }
 
-            // Calculate total unresolved count (excluding questions and nulls)
-            score.TotalUnresolvedCount = score.UnresolvedMustFixCount 
-                + score.UnresolvedShouldFixCount 
-                + score.UnresolvedSuggestionCount;
+            // Total unresolved count includes ALL unresolved threads (questions and null-severity included)
+            score.TotalUnresolvedCount = threadRepresentatives.Count;
 
             // Calculate final score: start at 100 and subtract penalty, but never go below 0
             score.Score = Math.Max(0, 100.0 - totalPenalty);

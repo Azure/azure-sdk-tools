@@ -437,6 +437,9 @@ export class CommentThreadComponent {
       if (contentText.length === 0) {
         this.messageService.add(emptyCommentContentWarningMessage);
       } else {
+        // For replies (thread already has comments), severity and resolution settings
+        // are owned by the thread starter and must not be overridden by replies.
+        const isReply = this.codePanelRowData!.comments && this.codePanelRowData!.comments.length > 0;
         this.saveCommentActionEmitter.emit(
           {
             commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
@@ -444,11 +447,11 @@ export class CommentThreadComponent {
             nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
             threadId: this.codePanelRowData!.threadId,
             commentText: content,
-            allowAnyOneToResolve: this.allowAnyOneToResolve,
+            allowAnyOneToResolve: isReply ? undefined : this.allowAnyOneToResolve,
             associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
             elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup,
-            severity: this.selectedSeverity
+            severity: isReply ? null : this.selectedSeverity
           } as CommentUpdatesDto
         );
         this.selectedSeverity = null;
@@ -676,6 +679,7 @@ export class CommentThreadComponent {
       comment.severity = newSeverity;
       this.commentsService.updateCommentSeverity(this.reviewId, commentId, newSeverity).subscribe({
         next: (response) => {
+          this.commentsService.notifySeverityChanged(commentId, newSeverity);
           this.commentsService.notifyQualityScoreRefresh();
         },
         error: (error) => {

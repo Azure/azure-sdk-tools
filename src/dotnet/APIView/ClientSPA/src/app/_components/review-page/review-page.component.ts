@@ -73,6 +73,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   hasHiddenAPIThatIsDiff: boolean = false;
   loadFailed: boolean = false;
   loadFailedMessage: string = "API-Revision Content Load Failed...";
+  loadingMessage: string | undefined = undefined;
 
   showLeftNavigation: boolean = true;
   showPageOptions: boolean = true;
@@ -204,6 +205,12 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     this.codePanelRowData = [];
     this.codePanelData = null;
     this.loadFailed = false;
+    
+    // Set loading message if diagnostics need migration (old revisions without hash)
+    this.loadingMessage = (this.activeAPIRevision && !this.activeAPIRevision.diagnosticsHash)
+      ? 'Processing diagnostics...' 
+      : undefined;
+    
     this.changeDetectorRef.detectChanges();
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();

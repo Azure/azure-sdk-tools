@@ -507,7 +507,7 @@ namespace APIViewUnitTests
         [Fact]
         public void MapDiagnosticLevelToSeverity_Fatal_ReturnsMustFix()
         {
-            var method = typeof(CommentsManager).GetMethod("MapDiagnosticLevelToSeverity",
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
             var result = (CommentSeverity)method?.Invoke(null, [CodeDiagnosticLevel.Fatal]);
@@ -518,7 +518,7 @@ namespace APIViewUnitTests
         [Fact]
         public void MapDiagnosticLevelToSeverity_Error_ReturnsMustFix()
         {
-            var method = typeof(CommentsManager).GetMethod("MapDiagnosticLevelToSeverity",
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
             var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Error]);
@@ -529,7 +529,7 @@ namespace APIViewUnitTests
         [Fact]
         public void MapDiagnosticLevelToSeverity_Warning_ReturnsShouldFix()
         {
-            var method = typeof(CommentsManager).GetMethod("MapDiagnosticLevelToSeverity",
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
             var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Warning]);
@@ -540,7 +540,7 @@ namespace APIViewUnitTests
         [Fact]
         public void MapDiagnosticLevelToSeverity_Info_ReturnsSuggestion()
         {
-            var method = typeof(CommentsManager).GetMethod("MapDiagnosticLevelToSeverity",
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
             var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Info]);
@@ -551,7 +551,7 @@ namespace APIViewUnitTests
         [Fact]
         public void MapDiagnosticLevelToSeverity_Default_ReturnsShouldFix()
         {
-            var method = typeof(CommentsManager).GetMethod("MapDiagnosticLevelToSeverity",
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
             var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Default]);

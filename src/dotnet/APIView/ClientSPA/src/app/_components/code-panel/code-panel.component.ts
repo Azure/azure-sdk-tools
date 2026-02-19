@@ -40,6 +40,7 @@ export class CodePanelComponent implements OnChanges {
   @Input() showDocumentation: boolean = true;
   @Input() loadFailed: boolean = false;
   @Input() loadFailedMessage: string | undefined;
+  @Input() loadingMessage: string | undefined;
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
   @Input() allComments: CommentItemModel[] = [];

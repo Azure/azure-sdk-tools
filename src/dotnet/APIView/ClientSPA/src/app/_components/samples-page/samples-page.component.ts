@@ -529,6 +529,7 @@ export class SamplesPageComponent {
           if (commentThread!.comments.length === 0) {
             this.removeCommentThread(commentUpdates.title);
           }
+          this.commentsService.notifyQualityScoreRefresh();
         }
       });
     });
@@ -542,6 +543,7 @@ export class SamplesPageComponent {
             componentRef.instance.ngOnChanges({
               codePanelRowData: new SimpleChange(null, ct, false)
             });
+            this.commentsService.notifyQualityScoreRefresh();
           }
         });
       }
@@ -552,6 +554,7 @@ export class SamplesPageComponent {
             componentRef.instance.ngOnChanges({
               codePanelRowData: new SimpleChange(null, ct, false)
             });
+            this.commentsService.notifyQualityScoreRefresh();
           }
         });
       }

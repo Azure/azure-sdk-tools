@@ -27,7 +27,7 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
         CommentThreadComponent,
         LastUpdatedOnPipe
     ],
-    changeDetection: ChangeDetectionStrategy.OnPush 
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConversationsComponent implements OnChanges, OnDestroy {
   @Input() apiRevisions: APIRevision[] = [];
@@ -41,13 +41,13 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   @Output() dismissSidebarAndNavigateEmitter : EventEmitter<{revisionId: string, elementId: string}> = new EventEmitter<{revisionId: string, elementId: string}>();
 
   private readonly MAX_DIAGNOSTICS_DISPLAY = 250;
-  
+
   commentThreads: Map<string, CodePanelRowData[]> = new Map<string, CodePanelRowData[]>();
   numberOfActiveThreads: number = 0;
   // Flag to indicate if diagnostics were truncated due to limit
   diagnosticsTruncated: boolean = false;
   totalDiagnosticsInRevision: number = 0;
-  
+
   apiRevisionsWithComments: APIRevision[] = [];
 
   apiRevisionsLoaded = false;
@@ -87,31 +87,54 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.commentThreads = new Map<string, CodePanelRowData[]>();
       this.numberOfActiveThreads = 0;
       this.diagnosticsTruncated = false;
-      
+
       // Categorize comments:
       // 1. User comments (anything that's not diagnostic or AI-generated)
       // 2. AI Generated comments (show all)
       // 3. Diagnostic comments (limit to 250 from active revision)
-      
-      const userComments = this.comments.filter(comment => 
+
+      const userComments = this.comments.filter(comment =>
         comment.commentSource !== CommentSource.Diagnostic && comment.commentSource !== CommentSource.AIGenerated
       );
-      
-      const aiGeneratedComments = this.comments.filter(comment => 
+
+      const aiGeneratedComments = this.comments.filter(comment =>
         comment.commentSource === CommentSource.AIGenerated
       );
-      
-      const diagnosticCommentsForRevision = this.comments.filter(comment => 
+
+      const diagnosticCommentsForRevision = this.comments.filter(comment =>
         comment.commentSource === CommentSource.Diagnostic && comment.apiRevisionId === this.activeApiRevisionId
       );
-      
+
       this.totalDiagnosticsInRevision = diagnosticCommentsForRevision.length;
-      
+
       const limitedDiagnostics = diagnosticCommentsForRevision.slice(0, this.MAX_DIAGNOSTICS_DISPLAY);
       this.diagnosticsTruncated = diagnosticCommentsForRevision.length > this.MAX_DIAGNOSTICS_DISPLAY;
-      
+
       const filteredComments = [...userComments, ...aiGeneratedComments, ...limitedDiagnostics];
-      
+
+      const allCommentsForCount = [...userComments, ...aiGeneratedComments, ...diagnosticCommentsForRevision];
+      const allThreadGroups = allCommentsForCount.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
+        const threadKey = comment.threadId || comment.elementId;
+        if (!acc[threadKey]) {
+          acc[threadKey] = [];
+        }
+        acc[threadKey].push(comment);
+        return acc;
+      }, {});
+
+      for (const threadId in allThreadGroups) {
+        if (allThreadGroups.hasOwnProperty(threadId)) {
+          const comments = allThreadGroups[threadId];
+          const isResolved = comments.some(c => c.isResolved);
+          if (!isResolved) {
+            this.numberOfActiveThreads++;
+          }
+        }
+      }
+
+      // Emit total count - this is always needed for the badge
+      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
+
       const threadGroups = filteredComments.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
         const threadKey = comment.threadId || comment.elementId;
         if (!acc[threadKey]) {
@@ -122,7 +145,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       }, {});
 
       const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
-      
+
       const apiRevisionPositionMap = new Map<string, number>();
       apiRevisionInOrder.forEach((rev, index) => {
         apiRevisionPositionMap.set(rev.id, index);
@@ -167,7 +190,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
           }
         }
       }
-      
+
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
       this.isLoading = false;
@@ -243,7 +266,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       }
     });
   }
-  
+
   trackByThreadId(index: number, commentThread: CodePanelRowData): string {
     return commentThread.threadId || `${index}`;
   }
@@ -263,6 +286,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
               }
               this.addCommentToCommentThread(commentUpdates);
               this.signalRService.pushCommentUpdates(commentUpdates);
+              this.commentsService.notifyQualityScoreRefresh();
             }
           }
         );
@@ -295,6 +319,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       next: () => {
         this.deleteCommentFromCommentThread(commentUpdates);
         this.signalRService.pushCommentUpdates(commentUpdates);
+        this.commentsService.notifyQualityScoreRefresh();
       }
     });
   }
@@ -305,6 +330,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.commentsService.notifyQualityScoreRefresh();
         }
       });
     }
@@ -312,6 +338,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.commentsService.unresolveComments(this.review?.id!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.commentsService.notifyQualityScoreRefresh();
         }
       });
     }

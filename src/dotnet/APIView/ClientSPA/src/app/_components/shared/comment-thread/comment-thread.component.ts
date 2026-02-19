@@ -676,6 +676,7 @@ export class CommentThreadComponent {
       comment.severity = newSeverity;
       this.commentsService.updateCommentSeverity(this.reviewId, commentId, newSeverity).subscribe({
         next: (response) => {
+          this.commentsService.notifyQualityScoreRefresh();
         },
         error: (error) => {
           comment.severity = originalSeverity;

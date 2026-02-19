@@ -747,6 +747,7 @@ export class CodePanelComponent implements OnChanges {
               }
               this.addCommentToCommentThread(commentUpdates, response);
               commentUpdates.comment = response;
+              this.commentsService.notifyQualityScoreRefresh();
             }
           }
         );
@@ -758,6 +759,7 @@ export class CodePanelComponent implements OnChanges {
     this.commentsService.deleteComment(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.deleteCommentFromCommentThread(commentUpdates);
+        this.commentsService.notifyQualityScoreRefresh();
       }
     });
   }
@@ -768,6 +770,7 @@ export class CodePanelComponent implements OnChanges {
       this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.commentsService.notifyQualityScoreRefresh();
         }
       });
     }
@@ -775,6 +778,7 @@ export class CodePanelComponent implements OnChanges {
       this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.commentsService.notifyQualityScoreRefresh();
         }
       });
     }

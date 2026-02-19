@@ -13,9 +13,16 @@ function createMockConstructor(
   options: {
     isProtected?: boolean;
     parameters?: Parameter[];
+    excerptText?: string;
+    overloadIndex?: number;
   } = {},
 ): ApiConstructor {
-  const { isProtected = false, parameters = [] } = options;
+  const {
+    isProtected = false,
+    parameters = [],
+    excerptText = "constructor()",
+    overloadIndex = 1,
+  } = options;
 
   const mock: any = {
     kind: ApiItemKind.Constructor,
@@ -23,7 +30,7 @@ function createMockConstructor(
     isProtected,
     parameters,
     canonicalReference: {
-      toString: () => "@test!TestClass#constructor(1):member",
+      toString: () => `@test!TestClass#constructor(${overloadIndex}):member`,
     },
     containerKey: "",
     getContainerKey: () => "",
@@ -32,14 +39,14 @@ function createMockConstructor(
     members: [],
     fileUrlPath: undefined,
     excerpt: {
-      text: "constructor()",
+      text: excerptText,
       tokenRange: { startIndex: 0, endIndex: 0 },
       tokens: [],
     },
     excerptTokens: [],
     releaseTag: undefined,
     tsdocComment: undefined,
-    overloadIndex: 1,
+    overloadIndex,
   };
 
   return mock as ApiConstructor;
@@ -126,6 +133,49 @@ describe("constructorTokenGenerator", () => {
       expect(values).toContain("?");
       expect(values).toContain("ClientOptions");
       expect(tokens[tokens.length - 1].Value).toBe(";");
+    });
+
+    it("preserves parameter property modifiers", () => {
+      const mockConstructor = createMockConstructor({
+        excerptText:
+          "constructor(public readonly endpoint: string, private credential: TokenCredential)",
+        parameters: [
+          createMockParameter("endpoint", "string"),
+          createMockParameter("credential", "TokenCredential"),
+        ],
+      });
+
+      const { tokens } = constructorTokenGenerator.generate(mockConstructor, false);
+      const values = tokens.map((t) => t.Value).join(" ");
+
+      expect(values).toContain("public readonly endpoint : string");
+      expect(values).toContain("private credential : TokenCredential");
+    });
+
+    it("renders constructor overloads as independent signatures", () => {
+      const overload1 = createMockConstructor({
+        overloadIndex: 1,
+        excerptText: "constructor(connectionString: string)",
+        parameters: [createMockParameter("connectionString", "string")],
+      });
+      const overload2 = createMockConstructor({
+        overloadIndex: 2,
+        excerptText: "constructor(url: string, credential: TokenCredential)",
+        parameters: [
+          createMockParameter("url", "string"),
+          createMockParameter("credential", "TokenCredential"),
+        ],
+      });
+
+      const tokens1 = constructorTokenGenerator.generate(overload1, false).tokens;
+      const tokens2 = constructorTokenGenerator.generate(overload2, false).tokens;
+
+      expect(tokens1.map((t) => t.Value).join(" ")).toContain("connectionString : string");
+      expect(tokens2.map((t) => t.Value).join(" ")).toContain(
+        "url : string , credential : TokenCredential",
+      );
+      expect(tokens1[tokens1.length - 1].Value).toBe(";");
+      expect(tokens2[tokens2.length - 1].Value).toBe(";");
     });
 
     it("marks tokens as deprecated", () => {

@@ -112,29 +112,6 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       
       const filteredComments = [...userComments, ...aiGeneratedComments, ...limitedDiagnostics];
       
-      const allCommentsForCount = [...userComments, ...aiGeneratedComments, ...diagnosticCommentsForRevision];
-      const allThreadGroups = allCommentsForCount.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
-        const threadKey = comment.threadId || comment.elementId;
-        if (!acc[threadKey]) {
-          acc[threadKey] = [];
-        }
-        acc[threadKey].push(comment);
-        return acc;
-      }, {});
-
-      for (const threadId in allThreadGroups) {
-        if (allThreadGroups.hasOwnProperty(threadId)) {
-          const comments = allThreadGroups[threadId];
-          const isResolved = comments.some(c => c.isResolved);
-          if (!isResolved) {
-            this.numberOfActiveThreads++;
-          }
-        }
-      }
-
-      // Emit total count - this is always needed for the badge
-      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
-      
       const threadGroups = filteredComments.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
         const threadKey = comment.threadId || comment.elementId;
         if (!acc[threadKey]) {
@@ -143,6 +120,16 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
         acc[threadKey].push(comment);
         return acc;
       }, {});
+
+      for (const threadId in threadGroups) {
+        if (threadGroups.hasOwnProperty(threadId)) {
+          const isResolved = threadGroups[threadId].some(c => c.isResolved);
+          if (!isResolved) {
+            this.numberOfActiveThreads++;
+          }
+        }
+      }
+      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
 
       const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
       

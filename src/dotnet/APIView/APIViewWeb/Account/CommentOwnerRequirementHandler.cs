@@ -39,7 +39,7 @@ public class CommentOwnerRequirementHandler : IAuthorizationHandler
                     EffectivePermissions permissions =
                         await _permissionsManager.GetEffectivePermissionsAsync(loggedInUserName);
 
-                    // Admins can edit/delete any comment
+                    // Admins can modify comment severity and delete any comment
                     if (permissions.IsAdmin)
                     {
                         context.Succeed(requirement);

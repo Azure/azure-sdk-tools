@@ -203,6 +203,30 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }
 
+        /// <summary>
+        /// Endpoint used by Client SPA for getting the quality score of an API Revision
+        /// </summary>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        [HttpGet("{apiRevisionId}/qualityScore", Name = "GetQualityScore")]
+        public async Task<ActionResult<ReviewQualityScore>> GetQualityScoreAsync(string apiRevisionId)
+        {
+            try
+            {
+                var result = await _apiRevisionsManager.GetReviewQualityScoreAsync(apiRevisionId);
+                return new LeanJsonResult(result, StatusCodes.Status200OK);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error getting quality score: " + ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
         [HttpPost("{reviewId}/generateReview", Name = "GenerateAIReview")]
         public async Task<ActionResult<int>> GenerateAIReview(string reviewId, [FromQuery]string activeApiRevisionId, [FromQuery]string diffApiRevisionId = null)
         {

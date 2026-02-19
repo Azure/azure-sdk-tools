@@ -67,6 +67,45 @@
 
     <hr class="my-2">
     <div class="px-1 py-2">
+        <h6 class="mb-2 fw-semibold">Quality Score</h6>
+        <div *ngIf="qualityScoreLoading" class="text-center py-2">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="small text-muted ms-2">Loading...</span>
+        </div>
+        <div *ngIf="!qualityScoreLoading && qualityScore">
+            <div class="text-center py-1">
+                <span class="fs-3 fw-bold" [ngClass]="getScoreColorClass()">{{qualityScore.score | number:'1.0-0'}}</span>
+                <span class="small text-muted"> / 100</span>
+            </div>
+            <div *ngIf="qualityScore.totalUnresolvedCount > 0" class="small text-muted mt-1">
+                <div *ngIf="qualityScore.unresolvedMustFixCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-exclamation-circle-fill text-danger me-1"></i>Must Fix</span>
+                    <span>{{qualityScore.unresolvedMustFixCount}}</span>
+                </div>
+                <div *ngIf="qualityScore.unresolvedShouldFixCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Should Fix</span>
+                    <span>{{qualityScore.unresolvedShouldFixCount}}</span>
+                </div>
+                <div *ngIf="qualityScore.unresolvedSuggestionCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-info-circle-fill text-info me-1"></i>Suggestion</span>
+                    <span>{{qualityScore.unresolvedSuggestionCount}}</span>
+                </div>
+                <div *ngIf="qualityScore.unresolvedQuestionCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-question-circle-fill text-secondary me-1"></i>Question</span>
+                    <span>{{qualityScore.unresolvedQuestionCount}}</span>
+                </div>
+            </div>
+            <div *ngIf="qualityScore.totalUnresolvedCount === 0" class="small text-muted text-center mt-1">
+                No unresolved comments
+            </div>
+        </div>
+        <div *ngIf="!qualityScoreLoading && !qualityScore" class="small text-muted text-center py-2">
+            Score unavailable
+        </div>
+    </div>
+
+    <hr class="my-2">
+    <div class="px-1 py-2">
         <div class="d-flex justify-content-between align-items-center mb-2 cursor-pointer"
             role="button"
             tabindex="0"

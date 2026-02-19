@@ -685,6 +685,8 @@ describe('CommentThreadComponent', () => {
       const comment = new CommentItemModel();
       comment.id = 'c1';
       comment.severity = CommentSeverity.Question;
+      comment.createdOn = new Date().toISOString();
+      comment.createdBy = 'test-user';
       component.codePanelRowData!.comments = [comment];
 
       vi.spyOn(commentsService, 'updateCommentSeverity').mockReturnValue(of(new HttpResponse({ status: 200 })));
@@ -702,6 +704,8 @@ describe('CommentThreadComponent', () => {
       const comment = new CommentItemModel();
       comment.id = 'c1';
       comment.severity = CommentSeverity.Question;
+      comment.createdOn = new Date().toISOString();
+      comment.createdBy = 'test-user';
       component.codePanelRowData!.comments = [comment];
 
       vi.spyOn(commentsService, 'updateCommentSeverity').mockReturnValue(throwError(() => ({ status: 500 })));

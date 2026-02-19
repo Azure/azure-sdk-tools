@@ -121,22 +121,15 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
         return acc;
       }, {});
 
-      for (const threadId in threadGroups) {
-        if (threadGroups.hasOwnProperty(threadId)) {
-          const isResolved = threadGroups[threadId].some(c => c.isResolved);
-          if (!isResolved) {
-            this.numberOfActiveThreads++;
-          }
-        }
-      }
-      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
-
       const apiRevisionInOrder = this.apiRevisions.sort((a, b) => (new Date(b.createdOn) as any) - (new Date(a.createdOn) as any));
       
       const apiRevisionPositionMap = new Map<string, number>();
       apiRevisionInOrder.forEach((rev, index) => {
         apiRevisionPositionMap.set(rev.id, index);
       });
+
+      // Reset count - only count threads that can actually be displayed
+      this.numberOfActiveThreads = 0;
 
       for (const threadId in threadGroups) {
         if (threadGroups.hasOwnProperty(threadId)) {
@@ -160,6 +153,11 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
             codePanelRowData.threadId = threadId;
             codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
 
+            // Only count active threads that will actually be displayed
+            if (!codePanelRowData.isResolvedCommentThread) {
+              this.numberOfActiveThreads++;
+            }
+
             if (this.commentThreads.has(apiRevisionIdForThread)) {
               this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);
             }
@@ -169,6 +167,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
           }
         }
       }
+      
+      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
       this.isLoading = false;
       this.changeDetectorRef.markForCheck();
@@ -346,8 +346,14 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    this.comments.filter(c => c.elementId === commentUpdates.elementId).forEach(c => {
-      c.isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
+    const isResolved = commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved;
+    this.comments.filter(c => {
+      if (commentUpdates.threadId) {
+        return c.threadId === commentUpdates.threadId || c.elementId === commentUpdates.elementId;
+      }
+      return c.elementId === commentUpdates.elementId;
+    }).forEach(c => {
+      c.isResolved = isResolved;
     });
     this.createCommentThreads();
   }

@@ -12,4 +12,9 @@ public class OwnerWorkItem : WorkItemBase
 {
     [FieldName("Custom.GitHubAlias")]
     public string GitHubAlias { get; set; } = string.Empty;
+
+    /// <summary>
+    /// IDs of related work items (populated from work item relations).
+    /// </summary>
+    public HashSet<int> RelatedIds { get; set; } = [];
 }

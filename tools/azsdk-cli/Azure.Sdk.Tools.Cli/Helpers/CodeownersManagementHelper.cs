@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
@@ -30,51 +31,45 @@ public class CodeownersManagementHelper(
 
     public async Task<CodeownersViewResult> GetViewByUserAsync(string alias, string? repo)
     {
-        alias = NormalizeAlias(alias);
-        var ownerWi = await FindOwnerByAliasAsync(alias);
+        var normalizedAlias = NormalizeGitHubAlias(alias);
+        var ownerWi = await FindOwnerByGitHubAliasAsync(normalizedAlias);
         if (ownerWi == null)
         {
-            return new CodeownersViewResult { ResponseError = $"No Owner work item found for alias '{alias}'." };
+            return new CodeownersViewResult { ResponseError = $"No Owner work item found for alias '{normalizedAlias}'." };
         }
 
-        // Find all packages related to this owner
-        var allPackages = await QueryPackagesAsync();
-        var relatedPackages = allPackages
-            .Where(p => p.RelatedIds.Contains(ownerWi.WorkItemId))
-            .ToList();
+        var relatedPackages = await FetchRelatedPackagesAsync(ownerWi.RelatedIds, repo);
+        var relatedLabelOwners = await FetchRelatedLabelOwnersAsync(ownerWi.RelatedIds, repo);
 
-        // Find all label owners related to this owner
-        var allLabelOwners = await QueryAllLabelOwnersAsync(repo);
-        var relatedLabelOwners = allLabelOwners
-            .Where(lo => lo.RelatedIds.Contains(ownerWi.WorkItemId))
-            .ToList();
-
-        // Hydrate label owners
+        await HydratePackagesAsync(relatedPackages);
         await HydrateLabelOwnersAsync(relatedLabelOwners);
 
         return BuildViewResult(relatedPackages, relatedLabelOwners);
     }
 
-    public async Task<CodeownersViewResult> GetViewByLabelAsync(string label, string? repo)
+    public async Task<CodeownersViewResult> GetViewByLabelAsync(List<string> labels, string? repo)
     {
-        var labelWi = await FindLabelByNameAsync(label);
-        if (labelWi == null)
+        var labelWorkItems = new List<LabelWorkItem>();
+        foreach (var label in labels)
         {
-            return new CodeownersViewResult { ResponseError = $"No Label work item found for '{label}'." };
+            var labelWi = await FindLabelByNameAsync(label);
+            if (labelWi == null)
+            {
+                return new CodeownersViewResult { ResponseError = $"No Label work item found for '{label}'." };
+            }
+            labelWorkItems.Add(labelWi);
         }
 
-        // Find packages related to this label
-        var allPackages = await QueryPackagesAsync();
-        var relatedPackages = allPackages
-            .Where(p => p.RelatedIds.Contains(labelWi.WorkItemId))
+        // Intersect related IDs from all labels (AND semantics)
+        var commonRelatedIds = labelWorkItems
+            .Select(l => l.RelatedIds.AsEnumerable())
+            .Aggregate((a, b) => a.Intersect(b))
             .ToList();
 
-        // Find label owners related to this label
-        var allLabelOwners = await QueryAllLabelOwnersAsync(repo);
-        var relatedLabelOwners = allLabelOwners
-            .Where(lo => lo.RelatedIds.Contains(labelWi.WorkItemId))
-            .ToList();
+        var relatedPackages = await FetchRelatedPackagesAsync(commonRelatedIds, repo);
+        var relatedLabelOwners = await FetchRelatedLabelOwnersAsync(commonRelatedIds, repo);
 
+        await HydratePackagesAsync(relatedPackages);
         await HydrateLabelOwnersAsync(relatedLabelOwners);
 
         return BuildViewResult(relatedPackages, relatedLabelOwners);
@@ -96,14 +91,9 @@ public class CodeownersManagementHelper(
             return new CodeownersViewResult { ResponseError = $"No Package work item found for '{packageName}'." };
         }
 
-        // Hydrate the package
-        await HydratePackageAsync(packageWi);
+        await HydratePackagesAsync([packageWi]);
 
-        // Find related label owners
-        var allLabelOwners = await QueryAllLabelOwnersAsync(null);
-        var relatedLabelOwners = allLabelOwners
-            .Where(lo => packageWi.RelatedIds.Contains(lo.WorkItemId))
-            .ToList();
+        var relatedLabelOwners = await FetchRelatedLabelOwnersAsync(packageWi.RelatedIds);
         await HydrateLabelOwnersAsync(relatedLabelOwners);
 
         return BuildViewResult([packageWi], relatedLabelOwners);
@@ -115,8 +105,8 @@ public class CodeownersManagementHelper(
 
     public async Task<string> AddOwnerToPackageAsync(string alias, string packageName, string repo)
     {
-        alias = NormalizeAlias(alias);
-        var ownerWi = await FindOrCreateOwnerAsync(alias);
+        var normalizedAlias = NormalizeGitHubAlias(alias);
+        var ownerWi = await FindOrCreateOwnerAsync(normalizedAlias);
         var packageWi = await FindPackageByNameAsync(packageName);
         if (packageWi == null)
         {
@@ -124,14 +114,14 @@ public class CodeownersManagementHelper(
         }
 
         await devOpsService.AddRelatedLinkAsync(ownerWi.WorkItemId, packageWi.WorkItemId);
-        return $"Added owner '{alias}' to package '{packageName}'.";
+        return $"Added owner '{normalizedAlias}' to package '{packageName}'.";
     }
 
     public async Task<string> AddOwnerToLabelAsync(string alias, List<string> labels, string repo, string ownerType, string? path)
     {
-        alias = NormalizeAlias(alias);
+        var normalizedAlias = NormalizeGitHubAlias(alias);
         var labelType = ResolveOwnerType(ownerType);
-        var ownerWi = await FindOrCreateOwnerAsync(alias);
+        var ownerWi = await FindOrCreateOwnerAsync(normalizedAlias);
 
         // Validate all labels exist
         var labelWorkItems = new List<LabelWorkItem>();
@@ -157,19 +147,19 @@ public class CodeownersManagementHelper(
             await devOpsService.AddRelatedLinkAsync(labelWi.WorkItemId, labelOwnerWi.WorkItemId);
         }
 
-        return $"Added owner '{alias}' as {ownerType} for label(s) '{string.Join(", ", labels)}' in {repo}.";
+        return $"Added owner '{normalizedAlias}' as {ownerType} for label(s) '{string.Join(", ", labels)}' in {repo}.";
     }
 
     public async Task<string> AddOwnerToPathAsync(string alias, string repo, string path, string ownerType)
     {
-        alias = NormalizeAlias(alias);
+        var normalizedAlias = NormalizeGitHubAlias(alias);
         var labelType = ResolveOwnerType(ownerType);
-        var ownerWi = await FindOrCreateOwnerAsync(alias);
+        var ownerWi = await FindOrCreateOwnerAsync(normalizedAlias);
 
         var labelOwnerWi = await FindOrCreateLabelOwnerAsync(repo, labelType, path, []);
 
         await devOpsService.AddRelatedLinkAsync(ownerWi.WorkItemId, labelOwnerWi.WorkItemId);
-        return $"Added owner '{alias}' as {ownerType} for path '{path}' in {repo}.";
+        return $"Added owner '{normalizedAlias}' as {ownerType} for path '{path}' in {repo}.";
     }
 
     public async Task<string> AddLabelToPathAsync(List<string> labels, string repo, string path)
@@ -211,11 +201,11 @@ public class CodeownersManagementHelper(
 
     public async Task<string> RemoveOwnerFromPackageAsync(string alias, string packageName, string repo)
     {
-        alias = NormalizeAlias(alias);
-        var ownerWi = await FindOwnerByAliasAsync(alias);
+        var normalizedAlias = NormalizeGitHubAlias(alias);
+        var ownerWi = await FindOwnerByGitHubAliasAsync(normalizedAlias);
         if (ownerWi == null)
         {
-            throw new Exception($"Owner '{alias}' not found.");
+            throw new Exception($"Owner '{normalizedAlias}' not found.");
         }
 
         var packageWi = await FindPackageByNameAsync(packageName);
@@ -225,17 +215,17 @@ public class CodeownersManagementHelper(
         }
 
         await devOpsService.RemoveRelatedLinkAsync(ownerWi.WorkItemId, packageWi.WorkItemId);
-        return $"Removed owner '{alias}' from package '{packageName}'.";
+        return $"Removed owner '{normalizedAlias}' from package '{packageName}'.";
     }
 
     public async Task<string> RemoveOwnerFromLabelAsync(string alias, List<string> labels, string repo, string ownerType)
     {
-        alias = NormalizeAlias(alias);
+        var normalizedAlias = NormalizeGitHubAlias(alias);
         var labelType = ResolveOwnerType(ownerType);
-        var ownerWi = await FindOwnerByAliasAsync(alias);
+        var ownerWi = await FindOwnerByGitHubAliasAsync(normalizedAlias);
         if (ownerWi == null)
         {
-            throw new Exception($"Owner '{alias}' not found.");
+            throw new Exception($"Owner '{normalizedAlias}' not found.");
         }
 
         // Find the Label Owner matching repo+labels+type
@@ -255,17 +245,17 @@ public class CodeownersManagementHelper(
             ? " Warning: This Label Owner now has no remaining related work items."
             : "";
 
-        return $"Removed owner '{alias}' from label(s) '{string.Join(", ", labels)}' ({ownerType}) in {repo}.{warning}";
+        return $"Removed owner '{normalizedAlias}' from label(s) '{string.Join(", ", labels)}' ({ownerType}) in {repo}.{warning}";
     }
 
     public async Task<string> RemoveOwnerFromPathAsync(string alias, string repo, string path, string ownerType)
     {
-        alias = NormalizeAlias(alias);
+        var normalizedAlias = NormalizeGitHubAlias(alias);
         var labelType = ResolveOwnerType(ownerType);
-        var ownerWi = await FindOwnerByAliasAsync(alias);
+        var ownerWi = await FindOwnerByGitHubAliasAsync(normalizedAlias);
         if (ownerWi == null)
         {
-            throw new Exception($"Owner '{alias}' not found.");
+            throw new Exception($"Owner '{normalizedAlias}' not found.");
         }
 
         var labelOwners = await QueryLabelOwnersByPathAsync(path, repo);
@@ -277,7 +267,7 @@ public class CodeownersManagementHelper(
         }
 
         await devOpsService.RemoveRelatedLinkAsync(ownerWi.WorkItemId, matchingLo.WorkItemId);
-        return $"Removed owner '{alias}' from path '{path}' ({ownerType}) in {repo}.";
+        return $"Removed owner '{normalizedAlias}' from path '{path}' ({ownerType}) in {repo}.";
     }
 
     public async Task<string> RemoveLabelFromPathAsync(List<string> labels, string repo, string path)
@@ -307,9 +297,9 @@ public class CodeownersManagementHelper(
     // Internal helpers
     // ========================
 
-    internal static string NormalizeAlias(string alias) => alias.TrimStart('@').Trim();
+    public static string NormalizeGitHubAlias(string alias) => alias.TrimStart('@').Trim();
 
-    internal static string ResolveOwnerType(string ownerType)
+    public static string ResolveOwnerType(string ownerType)
     {
         if (OwnerTypeMap.TryGetValue(ownerType, out var resolved))
         {
@@ -318,7 +308,7 @@ public class CodeownersManagementHelper(
         throw new Exception($"Invalid owner type '{ownerType}'. Must be one of: service-owner, azsdk-owner, pr-label.");
     }
 
-    private async Task<OwnerWorkItem?> FindOwnerByAliasAsync(string alias)
+    private async Task<OwnerWorkItem?> FindOwnerByGitHubAliasAsync(string alias)
     {
         var workItems = await devOpsService.QueryWorkItemsByTypeAndFieldAsync("Owner", "Custom.GitHubAlias", alias);
         if (workItems.Count == 0)
@@ -337,7 +327,7 @@ public class CodeownersManagementHelper(
             throw new Exception($"'{alias}' is not a valid code owner. Ensure they are a member of the required GitHub organizations.");
         }
 
-        var existing = await FindOwnerByAliasAsync(alias);
+        var existing = await FindOwnerByGitHubAliasAsync(alias);
         if (existing != null)
         {
             return existing;
@@ -378,15 +368,31 @@ public class CodeownersManagementHelper(
 
     internal async Task<LabelOwnerWorkItem> FindOrCreateLabelOwnerAsync(string repo, string labelType, string repoPath, List<string> labels)
     {
-        // Try to find an existing one matching repo+path+labelType
+        // Try to find an existing one matching repo+path+labelType+labels
         var allLabelOwners = !string.IsNullOrEmpty(repoPath)
             ? await QueryLabelOwnersByPathAsync(repoPath, repo)
             : await QueryAllLabelOwnersAsync(repo);
 
+        // Hydrate label owners to populate their .Labels collections from RelatedIds
+        await HydrateLabelOwnersAsync(allLabelOwners);
+
+        // Resolve expected label names to work item IDs
+        var expectedLabelIds = new HashSet<int>();
+        foreach (var labelName in labels)
+        {
+            var labelWi = await FindLabelByNameAsync(labelName);
+            if (labelWi != null)
+            {
+                expectedLabelIds.Add(labelWi.WorkItemId);
+            }
+        }
+
         var match = allLabelOwners.FirstOrDefault(lo =>
             lo.LabelType.Equals(labelType, StringComparison.OrdinalIgnoreCase) &&
             lo.Repository.Equals(repo, StringComparison.OrdinalIgnoreCase) &&
-            lo.RepoPath.Equals(repoPath, StringComparison.OrdinalIgnoreCase));
+            lo.RepoPath.Equals(repoPath, StringComparison.OrdinalIgnoreCase) &&
+            lo.Labels.Select(l => l.WorkItemId).ToHashSet().SetEquals(expectedLabelIds)
+        );
 
         if (match != null)
         {
@@ -418,14 +424,50 @@ public class CodeownersManagementHelper(
     // Query helpers
     // ========================
 
-    private async Task<List<PackageWorkItem>> QueryPackagesAsync()
+    /// <summary>
+    /// Fetches Package work items from a set of work item IDs, filtering by repo language and deduplicating versions.
+    /// </summary>
+    private async Task<List<PackageWorkItem>> FetchRelatedPackagesAsync(IEnumerable<int> relatedIds, string? repo = null)
     {
-        var workItems = await devOpsService.QueryWorkItemsByTypeAndFieldAsync("Package", "System.WorkItemType", "Package");
-        // The above is a workaround; let's use FetchWorkItemsPagedAsync directly
-        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Package'";
-        var rawWorkItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
-        var packages = rawWorkItems.Select(WorkItemMappers.MapToPackageWorkItem).ToList();
+        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds, expand: WorkItemExpand.Relations);
+
+        var packages = workItems
+            .Where(wi => wi.Fields.TryGetValue("System.WorkItemType", out var type) && type?.ToString() == "Package")
+            .Select(WorkItemMappers.MapToPackageWorkItem)
+            .ToList();
+
+        if (!string.IsNullOrEmpty(repo))
+        {
+            var repoName = repo.Contains('/') ? repo.Split('/').Last() : repo;
+            var language = SdkLanguageHelpers.GetLanguageForRepo(repoName);
+            if (language != SdkLanguage.Unknown)
+            {
+                var languageString = language.ToWorkItemString();
+                packages = packages.Where(p => p.Language.Equals(languageString, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+        }
+
         return WorkItemMappers.GetLatestPackageVersions(packages);
+    }
+
+    /// <summary>
+    /// Fetches Label Owner work items from a set of work item IDs, optionally filtering by repo.
+    /// </summary>
+    private async Task<List<LabelOwnerWorkItem>> FetchRelatedLabelOwnersAsync(IEnumerable<int> relatedIds, string? repo = null)
+    {
+        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds, expand: WorkItemExpand.Relations);
+
+        var labelOwners = workItems
+            .Where(wi => wi.Fields.TryGetValue("System.WorkItemType", out var type) && type?.ToString() == "Label Owner")
+            .Select(WorkItemMappers.MapToLabelOwnerWorkItem)
+            .ToList();
+
+        if (!string.IsNullOrEmpty(repo))
+        {
+            labelOwners = labelOwners.Where(lo => lo.Repository.Equals(repo, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        return labelOwners;
     }
 
     private async Task<List<LabelOwnerWorkItem>> QueryAllLabelOwnersAsync(string? repo)
@@ -469,6 +511,26 @@ public class CodeownersManagementHelper(
     // Hydration helpers
     // ========================
 
+    /// <summary>
+    /// Fetches Owner and Label work items for a set of related IDs, returning them as dictionaries keyed by work item ID.
+    /// </summary>
+    private async Task<(Dictionary<int, OwnerWorkItem> Owners, Dictionary<int, LabelWorkItem> Labels)> FetchRelatedOwnersAndLabelsAsync(List<int> relatedIds)
+    {
+        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds);
+
+        var owners = workItems
+            .Where(wi => wi.Fields.TryGetValue("System.WorkItemType", out var type) && type?.ToString() == "Owner")
+            .Select(WorkItemMappers.MapToOwnerWorkItem)
+            .ToDictionary(o => o.WorkItemId);
+
+        var labels = workItems
+            .Where(wi => wi.Fields.TryGetValue("System.WorkItemType", out var type) && type?.ToString() == "Label")
+            .Select(WorkItemMappers.MapToLabelWorkItem)
+            .ToDictionary(l => l.WorkItemId);
+
+        return (owners, labels);
+    }
+
     private async Task HydrateLabelOwnersAsync(List<LabelOwnerWorkItem> labelOwners)
     {
         if (labelOwners.Count == 0)
@@ -483,22 +545,7 @@ public class CodeownersManagementHelper(
             return;
         }
 
-        // Fetch all potentially related work items
-        var ownerQuery = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Owner'";
-        var labelQuery = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Label'";
-
-        var ownerWorkItems = await devOpsService.FetchWorkItemsPagedAsync(ownerQuery);
-        var labelWorkItems = await devOpsService.FetchWorkItemsPagedAsync(labelQuery);
-
-        var owners = ownerWorkItems
-            .Where(wi => wi.Id.HasValue && allRelatedIds.Contains(wi.Id.Value))
-            .Select(WorkItemMappers.MapToOwnerWorkItem)
-            .ToDictionary(o => o.WorkItemId);
-
-        var labels = labelWorkItems
-            .Where(wi => wi.Id.HasValue && allRelatedIds.Contains(wi.Id.Value))
-            .Select(WorkItemMappers.MapToLabelWorkItem)
-            .ToDictionary(l => l.WorkItemId);
+        var (owners, labels) = await FetchRelatedOwnersAndLabelsAsync(allRelatedIds);
 
         foreach (var lo in labelOwners)
         {
@@ -518,35 +565,35 @@ public class CodeownersManagementHelper(
         }
     }
 
-    private async Task HydratePackageAsync(PackageWorkItem packageWi)
+    private async Task HydratePackagesAsync(List<PackageWorkItem> packages)
     {
-        var allRelatedIds = packageWi.RelatedIds.ToList();
+        if (packages.Count == 0)
+        {
+            return;
+        }
+
+        var allRelatedIds = packages.SelectMany(p => p.RelatedIds).Distinct().ToList();
         if (allRelatedIds.Count == 0)
         {
             return;
         }
 
-        var ownerQuery = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Owner'";
-        var labelQuery = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Label'";
+        var (owners, labels) = await FetchRelatedOwnersAndLabelsAsync(allRelatedIds);
 
-        var ownerWorkItems = await devOpsService.FetchWorkItemsPagedAsync(ownerQuery);
-        var labelWorkItems = await devOpsService.FetchWorkItemsPagedAsync(labelQuery);
-
-        packageWi.Owners.Clear();
-        packageWi.Labels.Clear();
-
-        foreach (var id in allRelatedIds)
+        foreach (var package in packages)
         {
-            var ownerWi = ownerWorkItems.FirstOrDefault(wi => wi.Id == id);
-            if (ownerWi != null)
+            package.Owners.Clear();
+            package.Labels.Clear();
+            foreach (var id in package.RelatedIds)
             {
-                packageWi.Owners.Add(WorkItemMappers.MapToOwnerWorkItem(ownerWi));
-                continue;
-            }
-            var labelWi = labelWorkItems.FirstOrDefault(wi => wi.Id == id);
-            if (labelWi != null)
-            {
-                packageWi.Labels.Add(WorkItemMappers.MapToLabelWorkItem(labelWi));
+                if (owners.TryGetValue(id, out var owner))
+                {
+                    package.Owners.Add(owner);
+                }
+                else if (labels.TryGetValue(id, out var label))
+                {
+                    package.Labels.Add(label);
+                }
             }
         }
     }

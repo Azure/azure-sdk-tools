@@ -239,11 +239,11 @@ public class CodeownersManagementHelperTests
     // ========================
 
     [Test]
-    public void NormalizeAlias_StripsAtSign()
+    public void NormalizeGitHubAlias_StripsAtSign()
     {
-        Assert.That(CodeownersManagementHelper.NormalizeAlias("@johndoe"), Is.EqualTo("johndoe"));
-        Assert.That(CodeownersManagementHelper.NormalizeAlias("johndoe"), Is.EqualTo("johndoe"));
-        Assert.That(CodeownersManagementHelper.NormalizeAlias(" @johndoe "), Is.EqualTo("johndoe"));
+        Assert.That(CodeownersManagementHelper.NormalizeGitHubAlias("@johndoe"), Is.EqualTo("johndoe"));
+        Assert.That(CodeownersManagementHelper.NormalizeGitHubAlias("johndoe"), Is.EqualTo("johndoe"));
+        Assert.That(CodeownersManagementHelper.NormalizeGitHubAlias(" @johndoe "), Is.EqualTo("johndoe"));
     }
 
     [Test]

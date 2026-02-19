@@ -115,6 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         // CODEOWNERS Management methods
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations);
+        Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
         Task<WorkItem> CreateTypedWorkItemAsync(string workItemType, Dictionary<string, object> fields);
         Task AddRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId);
         Task RemoveRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId);
@@ -1692,6 +1693,25 @@ namespace Azure.Sdk.Tools.Cli.Services
             var escapedValue = fieldValue.Replace("'", "''");
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = '{workItemType}' AND [{fieldName}] = '{escapedValue}'";
             return await FetchWorkItemsPagedAsync(query, expand: expand);
+        }
+
+        public async Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            var idList = ids.ToList();
+            if (idList.Count == 0)
+            {
+                return [];
+            }
+
+            var workItemClient = connection.GetWorkItemClient();
+            var workItems = new List<WorkItem>();
+            for (int i = 0; i < idList.Count; i += batchSize)
+            {
+                var batchIds = idList.Skip(i).Take(batchSize).ToList();
+                var batch = await workItemClient.GetWorkItemsAsync(batchIds, expand: expand);
+                workItems.AddRange(batch);
+            }
+            return workItems;
         }
 
         public async Task<WorkItem> CreateTypedWorkItemAsync(string workItemType, Dictionary<string, object> fields)

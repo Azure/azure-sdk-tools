@@ -102,15 +102,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         };
 
         // Management command options
-        private readonly Option<string> viewUserOption = new("--user")
+        private readonly Option<string> viewUserOption = new("--github-user")
         {
             Description = "GitHub alias to look up",
-            Required = false,
-        };
-
-        private readonly Option<string> viewLabelOption = new("--label")
-        {
-            Description = "Label name to look up (for view) or label(s) for add/remove",
             Required = false,
         };
 
@@ -127,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
-        private readonly Option<string> mgmtPathOption = new("--path", "-p")
+        private readonly Option<string> pathOption = new("--path", "-p")
         {
             Description = "Repository path (e.g., sdk/formrecognizer/)",
             Required = false,
@@ -135,14 +129,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         private readonly Option<string> mgmtRepoOption = new("--repo", "-r")
         {
-            Description = "Repository name (e.g., Azure/azure-sdk-for-python)",
+            Description = "Repository name (e.g., Azure/azure-sdk-for-python). Defaults to current repo if in a language repo.",
             Required = false,
-        };
-
-        private readonly Option<string> mgmtRepoRequiredOption = new("--repo", "-r")
-        {
-            Description = "Repository name (e.g., Azure/azure-sdk-for-python)",
-            Required = true,
         };
 
         private readonly Option<string> ownerTypeOption = new("--owner-type")
@@ -231,15 +219,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
             {
-                viewUserOption, viewLabelOption, viewPackageOption, mgmtPathOption, mgmtRepoOption,
+                viewUserOption, labelsOption, viewPackageOption, pathOption, mgmtRepoOption,
             },
             new(addCodeownersCommandName, "Add ownership relationships between DevOps work items")
             {
-                mgmtRepoRequiredOption, mgmtUserOption, mgmtPackageOption, labelsOption, mgmtPathOption, ownerTypeOption,
+                mgmtRepoOption, mgmtUserOption, mgmtPackageOption, labelsOption, pathOption, ownerTypeOption,
             },
             new(removeCodeownersCommandName, "Remove ownership relationships between DevOps work items")
             {
-                mgmtRepoRequiredOption, mgmtUserOption, mgmtPackageOption, labelsOption, mgmtPathOption, ownerTypeOption,
+                mgmtRepoOption, mgmtUserOption, mgmtPackageOption, labelsOption, pathOption, ownerTypeOption,
             }
         ];
 
@@ -299,31 +287,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             if (command == viewCodeownersCommandName)
             {
                 var user = parseResult.GetValue(viewUserOption);
-                var label = parseResult.GetValue(viewLabelOption);
+                var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
                 var package = parseResult.GetValue(viewPackageOption);
-                var path = parseResult.GetValue(mgmtPathOption);
+                var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(mgmtRepoOption);
-                return await ViewCodeowners(user, label, package, path, repo);
+                return await ViewCodeowners(user, labels, package, path, repo);
             }
 
             if (command == addCodeownersCommandName)
             {
-                var repo = parseResult.GetValue(mgmtRepoRequiredOption) ?? "";
+                var repo = parseResult.GetValue(mgmtRepoOption);
                 var user = parseResult.GetValue(mgmtUserOption);
                 var package = parseResult.GetValue(mgmtPackageOption);
                 var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
-                var path = parseResult.GetValue(mgmtPathOption);
+                var path = parseResult.GetValue(pathOption);
                 var ownerType = parseResult.GetValue(ownerTypeOption);
                 return await AddCodeowners(repo, user, package, labels, path, ownerType);
             }
 
             if (command == removeCodeownersCommandName)
             {
-                var repo = parseResult.GetValue(mgmtRepoRequiredOption) ?? "";
+                var repo = parseResult.GetValue(mgmtRepoOption);
                 var user = parseResult.GetValue(mgmtUserOption);
                 var package = parseResult.GetValue(mgmtPackageOption);
                 var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
-                var path = parseResult.GetValue(mgmtPathOption);
+                var path = parseResult.GetValue(pathOption);
                 var ownerType = parseResult.GetValue(ownerTypeOption);
                 return await RemoveCodeowners(repo, user, package, labels, path, ownerType);
             }
@@ -702,18 +690,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label, package, or path. Exactly one of --user, --label, --package, or --path must be specified.")]
+        [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (--user, --label, --package, or --path) must be specified. Multiple labels are treated as AND.")]
         public async Task<CommandResponse> ViewCodeowners(
             string? user = null,
-            string? label = null,
+            List<string>? labels = null,
             string? package = null,
             string? path = null,
             string? repo = null)
         {
             try
             {
-                // Validate exactly one lookup axis
-                var axes = new[] { user, label, package, path }.Count(a => !string.IsNullOrEmpty(a));
+                repo = await ResolveRepoAsync(repo);
+                var repoName = repo?.Split('/').Last() ?? "";
+                if (SdkLanguageHelpers.GetLanguageForRepo(repoName) == SdkLanguage.Unknown)
+                {
+                    return new DefaultCommandResponse { ResponseError = $"Repo '{repo}' is not a recognized language repo. Please specify --repo explicitly." };
+                }
+
+                var hasLabels = labels != null && labels.Count > 0;
+                var axes = new[] { !string.IsNullOrEmpty(user), hasLabels, !string.IsNullOrEmpty(package), !string.IsNullOrEmpty(path) }.Count(a => a);
                 if (axes == 0)
                 {
                     return new DefaultCommandResponse { ResponseError = "Exactly one of --user, --label, --package, or --path must be specified." };
@@ -727,9 +722,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 {
                     return await codeownersManagementHelper.GetViewByUserAsync(user, repo);
                 }
-                if (!string.IsNullOrEmpty(label))
+                if (hasLabels)
                 {
-                    return await codeownersManagementHelper.GetViewByLabelAsync(label, repo);
+                    return await codeownersManagementHelper.GetViewByLabelAsync(labels!, repo);
                 }
                 if (!string.IsNullOrEmpty(package))
                 {
@@ -744,9 +739,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerAddToolName), Description("Add ownership relationships between DevOps work items. Requires --repo. Use --user+--package, --user+--label+--owner-type, --user+--path+--owner-type, or --label+--path.")]
+        [McpServerTool(Name = CodeownerAddToolName), Description("Add ownership relationships between DevOps work items. Use --user+--package, --user+--label+--owner-type, --user+--path+--owner-type, or --label+--path.")]
         public async Task<CommandResponse> AddCodeowners(
-            string repo,
+            string? repo = null,
             string? user = null,
             string? package = null,
             List<string>? label = null,
@@ -755,6 +750,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
+                repo = await ResolveRepoAsync(repo);
+                var repoName = repo?.Split('/').Last() ?? "";
+                if (SdkLanguageHelpers.GetLanguageForRepo(repoName) == SdkLanguage.Unknown)
+                {
+                    return new DefaultCommandResponse { ResponseError = $"Repo '{repo}' is not a recognized language repo. Please specify --repo explicitly." };
+                }
+
                 var labels = label ?? [];
                 var validationError = ValidateAddRemoveParams(user, package, labels, path, ownerType, isAdd: true);
                 if (validationError != null)
@@ -782,8 +784,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                 return new DefaultCommandResponse
                 {
-                    Message = result,
-                    NextSteps = ["Run the 'generate' command to regenerate the CODEOWNERS file from the updated work items."]
+                    Message = result
                 };
             }
             catch (Exception ex)
@@ -793,9 +794,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerRemoveToolName), Description("Remove ownership relationships between DevOps work items. Requires --repo. Same parameter rules as add.")]
+        [McpServerTool(Name = CodeownerRemoveToolName), Description("Remove ownership relationships between DevOps work items. Same parameter rules as add.")]
         public async Task<CommandResponse> RemoveCodeowners(
-            string repo,
+            string? repo = null,
             string? user = null,
             string? package = null,
             List<string>? label = null,
@@ -804,6 +805,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
+                repo = await ResolveRepoAsync(repo);
+                var repoName = repo?.Split('/').Last() ?? "";
+                if (SdkLanguageHelpers.GetLanguageForRepo(repoName) == SdkLanguage.Unknown)
+                {
+                    return new DefaultCommandResponse { ResponseError = $"Repo '{repo}' is not a recognized language repo. Please specify --repo explicitly." };
+                }
+
                 var labels = label ?? [];
                 var validationError = ValidateAddRemoveParams(user, package, labels, path, ownerType, isAdd: false);
                 if (validationError != null)
@@ -831,8 +839,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                 return new DefaultCommandResponse
                 {
-                    Message = result,
-                    NextSteps = ["Run the 'generate' command to regenerate the CODEOWNERS file from the updated work items."]
+                    Message = result
                 };
             }
             catch (Exception ex)
@@ -845,7 +852,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// <summary>
         /// Validates parameter combinations for add/remove commands.
         /// </summary>
-        internal static string? ValidateAddRemoveParams(string? user, string? package, List<string> labels, string? path, string? ownerType, bool isAdd)
+        public static string? ValidateAddRemoveParams(string? user, string? package, List<string> labels, string? path, string? ownerType, bool isAdd)
         {
             var hasUser = !string.IsNullOrEmpty(user);
             var hasPackage = !string.IsNullOrEmpty(package);
@@ -898,6 +905,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
 
             return "Invalid parameter combination. Use: --user+--package, --user+--label+--owner-type, --user+--path+--owner-type, or --label+--path.";
+        }
+
+        /// <summary>
+        /// Resolves the repo name. If not provided, uses GitHelper to detect from the current working directory.
+        /// </summary>
+        private async Task<string?> ResolveRepoAsync(string? repo)
+        {
+            if (!string.IsNullOrEmpty(repo))
+            {
+                return repo;
+            }
+
+            return await gitHelper.GetRepoFullNameAsync(".");
         }
     }
 }

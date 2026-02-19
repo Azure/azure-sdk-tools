@@ -12,7 +12,7 @@ public interface ICodeownersManagementHelper
 {
     // View methods
     Task<CodeownersViewResult> GetViewByUserAsync(string alias, string? repo);
-    Task<CodeownersViewResult> GetViewByLabelAsync(string label, string? repo);
+    Task<CodeownersViewResult> GetViewByLabelAsync(List<string> labels, string? repo);
     Task<CodeownersViewResult> GetViewByPathAsync(string path, string? repo);
     Task<CodeownersViewResult> GetViewByPackageAsync(string packageName);
 

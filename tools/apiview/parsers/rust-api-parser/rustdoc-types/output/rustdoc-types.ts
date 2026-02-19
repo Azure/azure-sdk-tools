@@ -13,7 +13,7 @@
  * specifically from the rustdoc-json-types crate, dual-licensed under MIT and Apache 2.0 licenses.
  * See NOTICE.txt at the root of this repository for details.
  */
-export const FORMAT_VERSION = 45;
+export const FORMAT_VERSION = 37;
 
 export type Id = number;
 export type GenericArgs = {
@@ -37,8 +37,7 @@ export type GenericArgs = {
             /** The output type provided after the `->`, if present. */
             output?: Type;
         }
-    }
-    | "return_type_notation";
+    };
 export type AssocItemConstraintKind = { "equality": Term }
     | { "constraint": GenericBound[] };
 export type Visibility = "public"
@@ -412,7 +411,7 @@ export type GenericBound = {
     }
 }
     | { "outlives": string }
-    | { "use": PreciseCapturingArg[] };
+    | { "use": string[] };
 export type VariantKind = "plain"
     | { "tuple": Id[] }
     | {
@@ -430,8 +429,6 @@ export type GenericArg = { "lifetime": string }
     | { "type": Type }
     | { "const": Constant }
     | "infer";
-export type PreciseCapturingArg = { "lifetime": string }
-    | { "param": string };
 export type Term = { "type": Type }
     | { "constant": Constant };
 export interface AssocItemConstraint {
@@ -484,25 +481,7 @@ export interface Item {
     docs?: string;
     /** This mapping resolves [intra-doc links](https://github.com/rust-lang/rfcs/blob/master/text/1946-intra-rustdoc-links.md) from the docstring to their IDs */
     links: Record<string, Id>;
-    /**
-     * Attributes on this item.
-     * 
-     * Does not include `#[deprecated]` attributes: see the [`Self::deprecation`] field instead.
-     * 
-     * Some attributes appear in pretty-printed Rust form, regardless of their formatting
-     * in the original source code. For example:
-     * - `#[non_exhaustive]` and `#[must_use]` are represented as themselves.
-     * - `#[no_mangle]` and `#[export_name]` are also represented as themselves.
-     * - `#[repr(C)]` and other reprs also appear as themselves,
-     * though potentially with a different order: e.g. `repr(i8, C)` may become `repr(C, i8)`.
-     * Multiple repr attributes on the same item may be combined into an equivalent single attr.
-     * 
-     * Other attributes may appear debug-printed. For example:
-     * - `#[inline]` becomes something similar to `#[attr="Inline(Hint)"]`.
-     * 
-     * As an internal implementation detail subject to change, this debug-printing format
-     * is currently equivalent to the HIR pretty-printing of parsed attributes.
-     */
+    /** Stringified versions of the attributes on this item (e.g. `"#[inline]"`) */
     attrs: string[];
     /** Information about the item’s deprecation, if present. */
     deprecation?: Deprecation;
@@ -607,51 +586,10 @@ export interface ItemSummary {
     kind: ItemKind;
 }
 export interface ExternalCrate {
-    /**
-     * The name of the crate.
-     * 
-     * Note: This is the [*crate* name][crate-name], which may not be the same as the
-     * [*package* name][package-name]. For example, for <https://crates.io/crates/regex-syntax>,
-     * this field will be `regex_syntax` (which uses an `_`, not a `-`).
-     * 
-     * [crate-name]: https://doc.rust-lang.org/stable/cargo/reference/cargo-targets.html#the-name-field
-     * [package-name]: https://doc.rust-lang.org/stable/cargo/reference/manifest.html#the-name-field
-     */
+    /** The name of the crate. */
     name: string;
     /** The root URL at which the crate's documentation lives. */
     html_root_url?: string;
-}
-export interface TargetFeature {
-    /** The name of this target feature. */
-    name: string;
-    /** Other target features which are implied by this target feature, if any. */
-    implies_features: string[];
-    /** If this target feature is unstable, the name of the associated language feature gate. */
-    unstable_feature_gate?: string;
-    /**
-     * Whether this feature is globally enabled for this compilation session.
-     * 
-     * Target features can be globally enabled implicitly as a result of the target's definition.
-     * For example, x86-64 hardware floating point ABIs require saving x87 and SSE2 registers,
-     * which in turn requires globally enabling the `x87` and `sse2` target features so that the
-     * generated machine code conforms to the target's ABI.
-     * 
-     * Target features can also be globally enabled explicitly as a result of compiler flags like
-     * [`-Ctarget-feature`][1] or [`-Ctarget-cpu`][2].
-     * 
-     * [1]: https://doc.rust-lang.org/beta/rustc/codegen-options/index.html#target-feature
-     * [2]: https://doc.rust-lang.org/beta/rustc/codegen-options/index.html#target-cpu
-     */
-    globally_enabled: boolean;
-}
-export interface Target {
-    /** The target triple for which this documentation was generated */
-    triple: string;
-    /**
-     * A list of features valid for use in `#[target_feature]` attributes
-     * for the target where this rustdoc JSON was generated.
-     */
-    target_features: TargetFeature[];
 }
 export interface Crate {
     /** The id of the root [`Module`] item of the local crate. */
@@ -669,8 +607,6 @@ export interface Crate {
     paths: Record<Id, ItemSummary>;
     /** Maps `crate_id` of items to a crate name and html_root_url if it exists. */
     external_crates: Record<number, ExternalCrate>;
-    /** Information about the target for which this documentation was generated */
-    target: Target;
     /**
      * A single version number to be used in the future when making backwards incompatible changes
      * to the JSON output.
@@ -698,19 +634,17 @@ export interface Discriminant {
 }
 export interface Path {
     /**
-     * The path of the type.
-     * 
-     * This will be the path that is *used* (not where it is defined), so
-     * multiple `Path`s may have different values for this field even if
-     * they all refer to the same item. e.g.
+     * The name of the type as declared, e.g. in
      * 
      * ```rust
-     * pub type Vec1 = std::vec::Vec<i32>; // path: "std::vec::Vec"
-     * pub type Vec2 = Vec<i32>; // path: "Vec"
-     * pub type Vec3 = std::prelude::v1::Vec<i32>; // path: "std::prelude::v1::Vec"
+     * mod foo {
+     * struct Bar;
+     * }
      * ```
+     * 
+     * for `foo::Bar`, this field will be `Bar`.
      */
-    path: string;
+    name: string;
     /** The ID of the type. */
     id: Id;
     /**
@@ -961,7 +895,7 @@ export interface Trait {
     /** Whether the trait is marked as `unsafe`. */
     is_unsafe: boolean;
     /**
-     * Whether the trait is [dyn compatible](https://doc.rust-lang.org/reference/items/traits.html#dyn-compatibility)[^1].
+     * Whether the trait is [dyn compatible](https://doc.rust-lang.org/reference/items/traits.html#object-safety)[^1].
      * 
      * [^1]: Formerly known as "object safe".
      */

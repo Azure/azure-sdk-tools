@@ -5,10 +5,10 @@ import {
   GenericBound,
   WherePredicate,
   GenericArgs,
-  PreciseCapturingArg,
 } from "../../../rustdoc-types/output/rustdoc-types";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
 import { typeToReviewTokens } from "./typeToReviewTokens";
+import { getPath } from "./pathUtils";
 
 export function processGenerics(generics: Generics): {
   params: ReviewToken[];
@@ -115,7 +115,7 @@ export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] 
       tokens.push(
         {
           Kind: TokenKind.TypeName,
-          Value: bound.trait_bound.trait.path,
+          Value: getPath(bound.trait_bound.trait),
           NavigateToId: bound.trait_bound.trait.id.toString(),
           HasSuffixSpace: false,
         },
@@ -130,7 +130,7 @@ export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] 
     } else if ("use" in bound) {
       tokens.push({
         Kind: TokenKind.TypeName,
-        Value: getCapturingArg(bound.use),
+        Value: bound.use.toString(),
         HasSuffixSpace: false,
       });
     }
@@ -139,9 +139,9 @@ export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] 
 }
 
 export function processGenericArgs(args: GenericArgs): ReviewToken[] {
-  const result: ReviewToken[] = [];
+  let result: ReviewToken[] = [];
   // Check if args is empty
-  if (!args || typeof args !== "object") return result;
+  if (!args) return result;
   // Process generic arguments based on their type
   if ("angle_bracketed" in args) {
     // Filter valid args that have a type property
@@ -222,14 +222,4 @@ export function processGenericArgs(args: GenericArgs): ReviewToken[] {
     }
   }
   return result;
-}
-
-export function getCapturingArg(args: PreciseCapturingArg | PreciseCapturingArg[]): string {
-  const arg = Array.isArray(args) ? args[0] : args;
-  if ("lifetime" in arg) {
-    return arg.lifetime;
-  } else if ("param" in arg) {
-    return arg.param;
-  }
-  return "";
 }

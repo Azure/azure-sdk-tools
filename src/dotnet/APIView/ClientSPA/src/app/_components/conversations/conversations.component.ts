@@ -112,29 +112,6 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       
       const filteredComments = [...userComments, ...aiGeneratedComments, ...limitedDiagnostics];
       
-      const allCommentsForCount = [...userComments, ...aiGeneratedComments, ...diagnosticCommentsForRevision];
-      const allThreadGroups = allCommentsForCount.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
-        const threadKey = comment.threadId || comment.elementId;
-        if (!acc[threadKey]) {
-          acc[threadKey] = [];
-        }
-        acc[threadKey].push(comment);
-        return acc;
-      }, {});
-
-      for (const threadId in allThreadGroups) {
-        if (allThreadGroups.hasOwnProperty(threadId)) {
-          const comments = allThreadGroups[threadId];
-          const isResolved = comments.some(c => c.isResolved);
-          if (!isResolved) {
-            this.numberOfActiveThreads++;
-          }
-        }
-      }
-
-      // Emit total count - this is always needed for the badge
-      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
-      
       const threadGroups = filteredComments.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
         const threadKey = comment.threadId || comment.elementId;
         if (!acc[threadKey]) {
@@ -150,6 +127,9 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       apiRevisionInOrder.forEach((rev, index) => {
         apiRevisionPositionMap.set(rev.id, index);
       });
+
+      // Reset count - only count threads that can actually be displayed
+      this.numberOfActiveThreads = 0;
 
       for (const threadId in threadGroups) {
         if (threadGroups.hasOwnProperty(threadId)) {
@@ -173,6 +153,11 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
             codePanelRowData.threadId = threadId;
             codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
 
+            // Only count active threads that will actually be displayed
+            if (!codePanelRowData.isResolvedCommentThread) {
+              this.numberOfActiveThreads++;
+            }
+
             if (this.commentThreads.has(apiRevisionIdForThread)) {
               this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);
             }
@@ -182,6 +167,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
           }
         }
       }
+      
+      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
       this.isLoading = false;
       this.changeDetectorRef.markForCheck();
@@ -359,8 +346,14 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    this.comments.filter(c => c.elementId === commentUpdates.elementId).forEach(c => {
-      c.isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
+    const isResolved = commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved;
+    this.comments.filter(c => {
+      if (commentUpdates.threadId) {
+        return c.threadId === commentUpdates.threadId || c.elementId === commentUpdates.elementId;
+      }
+      return c.elementId === commentUpdates.elementId;
+    }).forEach(c => {
+      c.isResolved = isResolved;
     });
     this.createCommentThreads();
   }

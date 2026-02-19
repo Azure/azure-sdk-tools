@@ -163,8 +163,9 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     }
     menu.push(...[
       {
+        id: 'conversations',
         icon: 'bi bi-chat-left-dots',
-        tooltip: 'Conversations',
+        tooltip: (this.numberOfActiveConversation > 0) ? `Conversations (${this.numberOfActiveConversation} unresolved)` : 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => {
           if (this.getLoadingStatus() === 'completed') {
@@ -688,9 +689,10 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   handleNumberOfActiveThreadsEmitter(value: number) {
     this.numberOfActiveConversation = value;
     if (this.sideMenu) {
-      const conversationsItem = this.sideMenu.find(item => item.tooltip === 'Conversations');
+      const conversationsItem = this.sideMenu.find(item => item.id === 'conversations');
       if (conversationsItem) {
         conversationsItem.badge = (value > 0) ? value.toString() : undefined;
+        conversationsItem.tooltip = (value > 0) ? `Conversations (${value} unresolved)` : 'Conversations';
         this.sideMenu = [...this.sideMenu];
         this.changeDetectorRef.detectChanges();
       }

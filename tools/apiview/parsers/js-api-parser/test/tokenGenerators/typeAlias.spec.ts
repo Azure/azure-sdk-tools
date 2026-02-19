@@ -738,6 +738,35 @@ describe("typeAliasTokenGenerator", () => {
       expect(children).toBeUndefined();
     });
 
+    it("handles function type alias returning Promise of type literal", () => {
+      const typeText = `(pageLink: string) => Promise<{
+  page: TPage;
+  nextPageLink?: string;
+}>`;
+      const mockTypeAlias = createMockTypeAlias(
+        "GetPage",
+        typeText,
+        createBasicExcerptTokens("GetPage", typeText),
+        [createMockTypeParameter("TPage")],
+      );
+
+      const { tokens, children } = typeAliasTokenGenerator.generate(mockTypeAlias, false);
+
+      const arrowToken = tokens.find((t) => t.Value === "=>");
+      expect(arrowToken).toBeDefined();
+
+      const promiseToken = tokens.find((t) => t.Kind === TokenKind.TypeName && t.Value === "Promise");
+      expect(promiseToken).toBeDefined();
+
+      const promiseArgToken = tokens.find(
+        (t) => t.Kind === TokenKind.Text && t.Value.includes("nextPageLink?: string"),
+      );
+      expect(promiseArgToken).toBeDefined();
+      expect(promiseArgToken?.Value.includes("\n")).toBe(false);
+      expect(promiseArgToken?.Value.includes("\r")).toBe(false);
+      expect(children).toBeUndefined();
+    });
+
     it("handles template literal type alias", () => {
       const mockTypeAlias = createMockTypeAlias(
         "TemplateLiteralType",

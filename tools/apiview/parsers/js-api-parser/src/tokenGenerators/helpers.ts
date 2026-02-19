@@ -111,6 +111,37 @@ function normalizeInlineTypeText(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
+
+function shouldInlineTypeNode(node: ts.TypeNode): boolean {
+  if (ts.isTypeLiteralNode(node)) {
+    return true;
+  }
+
+  if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node) || ts.isConditionalTypeNode(node)) {
+    return containsTypeLiteral(node);
+  }
+
+  return false;
+}
+
+function addTypeNodeTokensOrInlineLiteral(
+  node: ts.TypeNode,
+  tokens: ReviewToken[],
+  children: ReviewLine[],
+  deprecated: boolean | undefined,
+  depth: number,
+): void {
+  if (shouldInlineTypeNode(node)) {
+    tokens.push(createToken(TokenKind.Text, normalizeInlineTypeText(node.getText()), { deprecated }));
+    return;
+  }
+
+  const nestedChildren = buildTypeNodeTokens(node, tokens, deprecated, depth);
+  if (nestedChildren?.length) {
+    children.push(...nestedChildren);
+  }
+}
+
 /** Process excerpt tokens and add them to the tokens array */
 export function processExcerptTokens(
   excerptTokens: readonly ExcerptToken[],
@@ -315,13 +346,46 @@ export function buildTypeNodeTokens(
             createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
           );
         }
-        const nestedChildren = buildTypeNodeTokens(arg, tokens, deprecated, depth);
-        if (nestedChildren?.length) {
-          children.push(...nestedChildren);
-        }
+        addTypeNodeTokensOrInlineLiteral(arg, tokens, children, deprecated, depth);
       });
       tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
     }
+    return children.length > 0 ? children : undefined;
+  }
+
+
+
+  if (ts.isFunctionTypeNode(node)) {
+    tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
+
+    node.parameters.forEach((param, index) => {
+      if (index > 0) {
+        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+      }
+
+      tokens.push(createToken(TokenKind.MemberName, param.name.getText(), { deprecated }));
+
+      if (param.questionToken) {
+        tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+      }
+
+      tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+      if (param.type) {
+        addTypeNodeTokensOrInlineLiteral(param.type, tokens, children, deprecated, depth);
+      }
+    });
+
+    tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+    tokens.push(
+      createToken(TokenKind.Punctuation, "=>", {
+        hasPrefixSpace: true,
+        hasSuffixSpace: true,
+        deprecated,
+      }),
+    );
+
+    addTypeNodeTokensOrInlineLiteral(node.type, tokens, children, deprecated, depth);
+
     return children.length > 0 ? children : undefined;
   }
 
@@ -363,15 +427,7 @@ export function buildTypeNodeTokens(
 
   if (ts.isConditionalTypeNode(node)) {
     const addConditionalOperandTokens = (operand: ts.TypeNode): void => {
-      if (containsTypeLiteral(operand)) {
-        tokens.push(createToken(TokenKind.Text, normalizeInlineTypeText(operand.getText()), { deprecated }));
-        return;
-      }
-
-      const operandChildren = buildTypeNodeTokens(operand, tokens, deprecated, depth);
-      if (operandChildren?.length) {
-        children.push(...operandChildren);
-      }
+      addTypeNodeTokensOrInlineLiteral(operand, tokens, children, deprecated, depth);
     };
 
     addConditionalOperandTokens(node.checkType);

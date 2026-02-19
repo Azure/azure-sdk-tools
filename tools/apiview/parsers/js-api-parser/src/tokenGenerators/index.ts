@@ -4,6 +4,7 @@ import { ApiItem } from "@microsoft/api-extractor-model";
 import { functionTokenGenerator } from "./function";
 import { interfaceTokenGenerator } from "./interfaces";
 import { classTokenGenerator } from "./class";
+import { constructorTokenGenerator } from "./constructor";
 import { methodTokenGenerator } from "./method";
 import { propertyTokenGenerator } from "./property";
 import { typeAliasTokenGenerator } from "./typeAlias";
@@ -24,6 +25,7 @@ export const generators: TokenGenerator[] = [
   classTokenGenerator,
   functionTokenGenerator,
   interfaceTokenGenerator,
+  constructorTokenGenerator,
   methodTokenGenerator,
   propertyTokenGenerator,
   typeAliasTokenGenerator,

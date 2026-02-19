@@ -99,6 +99,10 @@
 
     { "toolName": "azsdk_verify_setup", "prompt": "Verify my environment setup", "category": "all" },
     { "toolName": "azsdk_verify_setup", "prompt": "Check if I have all required tools installed", "category": "all" },
-    { "toolName": "azsdk_verify_setup", "prompt": "Verify my MCP release tool setup", "category": "all" }
+    { "toolName": "azsdk_verify_setup", "prompt": "Verify my MCP release tool setup", "category": "all" },
+
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new resource 'asset' for service widget with TypeSpec.", "category": "all" },
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new api version for service widget with TypeSpec.", "category": "all" },
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" }
   ]
 }

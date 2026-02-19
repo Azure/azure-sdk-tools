@@ -698,13 +698,14 @@ describe("typeAliasTokenGenerator", () => {
       const colonToken = tokens.find((t) => t.Value === ":");
       expect(colonToken).toBeDefined();
 
-      const extendsOperandText = tokens.find(
-        (t) => t.Kind === TokenKind.Text && t.Value.includes("value?: infer TPage"),
-      );
-      expect(extendsOperandText).toBeDefined();
+      const inferToken = tokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "infer");
+      expect(inferToken).toBeDefined();
 
-      const pipeCount = (extendsOperandText?.Value.match(/\|/g) ?? []).length;
-      expect(pipeCount).toBeGreaterThan(0);
+      const memberToken = tokens.find((t) => t.Kind === TokenKind.MemberName && t.Value === "members");
+      expect(memberToken).toBeDefined();
+
+      const pipeTokenCount = tokens.filter((t) => t.Kind === TokenKind.Punctuation && t.Value === "|").length;
+      expect(pipeTokenCount).toBeGreaterThan(0);
 
       expect(children).toBeUndefined();
     });
@@ -729,12 +730,14 @@ describe("typeAliasTokenGenerator", () => {
 
       const { tokens, children } = typeAliasTokenGenerator.generate(mockTypeAlias, false);
 
-      const extendsOperandText = tokens.find(
-        (t) => t.Kind === TokenKind.Text && t.Value.includes("value?: infer TPage"),
-      );
-      expect(extendsOperandText).toBeDefined();
-      expect(extendsOperandText?.Value.includes("\n")).toBe(false);
-      expect(extendsOperandText?.Value.includes("\r")).toBe(false);
+      const inferToken = tokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "infer");
+      expect(inferToken).toBeDefined();
+
+      const valueToken = tokens.find((t) => t.Kind === TokenKind.MemberName && t.Value === "value");
+      expect(valueToken).toBeDefined();
+
+      const hasNewlineToken = tokens.some((t) => t.Value.includes("\n") || t.Value.includes("\r"));
+      expect(hasNewlineToken).toBe(false);
       expect(children).toBeUndefined();
     });
 
@@ -758,12 +761,85 @@ describe("typeAliasTokenGenerator", () => {
       const promiseToken = tokens.find((t) => t.Kind === TokenKind.TypeName && t.Value === "Promise");
       expect(promiseToken).toBeDefined();
 
-      const promiseArgToken = tokens.find(
-        (t) => t.Kind === TokenKind.Text && t.Value.includes("nextPageLink?: string"),
+      const stringToken = tokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "string");
+      expect(stringToken).toBeDefined();
+
+      const nextPageLinkToken = tokens.find((t) => t.Kind === TokenKind.MemberName && t.Value === "nextPageLink");
+      expect(nextPageLinkToken).toBeDefined();
+
+      const pageToken = tokens.find((t) => t.Kind === TokenKind.MemberName && t.Value === "page");
+      expect(pageToken).toBeDefined();
+
+      expect(children).toBeUndefined();
+    });
+
+    it("classifies LHS identifiers and keyword-like keys as member names in inline object types", () => {
+      const typeText = [
+        "TResult extends {",
+        "  body: {",
+        "    default?: string;",
+        "    members?: infer TPage;",
+        "  };",
+        "} ? TResult : never",
+      ].join("\n");
+
+      const mockTypeAlias = createMockTypeAlias(
+        "InlineMemberNameKeys",
+        typeText,
+        createBasicExcerptTokens("InlineMemberNameKeys", typeText),
+        [createMockTypeParameter("TResult")],
       );
-      expect(promiseArgToken).toBeDefined();
-      expect(promiseArgToken?.Value.includes("\n")).toBe(false);
-      expect(promiseArgToken?.Value.includes("\r")).toBe(false);
+
+      const { tokens } = typeAliasTokenGenerator.generate(mockTypeAlias, false);
+
+      const defaultMemberToken = tokens.find(
+        (t) => t.Kind === TokenKind.MemberName && t.Value === "default",
+      );
+      expect(defaultMemberToken).toBeDefined();
+
+      const defaultKeywordToken = tokens.find(
+        (t) => t.Kind === TokenKind.Keyword && t.Value === "default",
+      );
+      expect(defaultKeywordToken).toBeUndefined();
+
+      const membersToken = tokens.find((t) => t.Kind === TokenKind.MemberName && t.Value === "members");
+      expect(membersToken).toBeDefined();
+    });
+
+    it("detects readonly and template-literal related tokens in complex inline types", () => {
+      const typeText = [
+        "TResult extends {",
+        "  body: {",
+        "    readonly value?: infer TPage;",
+        "    kind?: `\${string}-\${number}`;",
+        "  };",
+        "} ? GetArrayType<TPage> : Array<unknown>",
+      ].join("\n");
+
+      const mockTypeAlias = createMockTypeAlias(
+        "InlineComplexTokens",
+        typeText,
+        createBasicExcerptTokens("InlineComplexTokens", typeText),
+        [createMockTypeParameter("TResult")],
+      );
+
+      const { tokens, children } = typeAliasTokenGenerator.generate(mockTypeAlias, false);
+
+      const readonlyToken = tokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "readonly");
+      expect(readonlyToken).toBeDefined();
+
+      const inferToken = tokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "infer");
+      expect(inferToken).toBeDefined();
+
+      const stringToken = tokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "string");
+      expect(stringToken).toBeDefined();
+
+      const numberToken = tokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "number");
+      expect(numberToken).toBeDefined();
+
+      const kindToken = tokens.find((t) => t.Kind === TokenKind.MemberName && t.Value === "kind");
+      expect(kindToken).toBeDefined();
+
       expect(children).toBeUndefined();
     });
 

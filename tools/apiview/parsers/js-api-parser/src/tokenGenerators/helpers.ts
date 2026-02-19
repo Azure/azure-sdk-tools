@@ -112,6 +112,136 @@ function normalizeInlineTypeText(text: string): string {
 }
 
 
+function isKeywordSyntaxKind(kind: ts.SyntaxKind): boolean {
+  return kind >= ts.SyntaxKind.FirstKeyword && kind <= ts.SyntaxKind.LastKeyword;
+}
+
+type InlineScannedToken = {
+  kind: ts.SyntaxKind;
+  text: string;
+  hasPrefixSpace: boolean;
+  hasSuffixSpace: boolean;
+};
+
+function isInlinePropertyNameLhs(tokens: InlineScannedToken[], index: number): boolean {
+  const current = tokens[index];
+  if (!current) {
+    return false;
+  }
+
+  const isNameKind = current.kind === ts.SyntaxKind.Identifier || isKeywordSyntaxKind(current.kind);
+  if (!isNameKind) {
+    return false;
+  }
+
+  const next = tokens[index + 1];
+  const nextNext = tokens[index + 2];
+  const hasColonAfter = next?.text === ":" || (next?.text === "?" && nextNext?.text === ":");
+  if (!hasColonAfter) {
+    return false;
+  }
+
+  const previousText = tokens[index - 1]?.text;
+  if (!previousText) {
+    return true;
+  }
+
+  if (previousText === "readonly") {
+    return true;
+  }
+
+  return previousText === "{" || previousText === ";" || previousText === ",";
+}
+
+function getInlineTypeTokenKind(kind: ts.SyntaxKind, value: string, isPropertyLhs: boolean): TokenKind {
+  if (isPropertyLhs) {
+    return TokenKind.MemberName;
+  }
+
+  if (kind === ts.SyntaxKind.StringLiteral || kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral) {
+    return TokenKind.StringLiteral;
+  }
+
+  if (kind === ts.SyntaxKind.Identifier) {
+    return TokenKind.TypeName;
+  }
+
+  if (isKeywordSyntaxKind(kind) || isBuiltInType(value)) {
+    return TokenKind.Keyword;
+  }
+
+  if (PUNCTUATION_CHARS.has(value)) {
+    return TokenKind.Punctuation;
+  }
+
+  return TokenKind.Text;
+}
+
+function addInlineTypeTextTokens(text: string, tokens: ReviewToken[], deprecated?: boolean): void {
+  const scanner = ts.createScanner(
+    ts.ScriptTarget.Latest,
+    false,
+    ts.LanguageVariant.Standard,
+    text,
+  );
+
+  const scannedTokens: InlineScannedToken[] = [];
+  let pendingPrefixSpace = false;
+  let previousToken: InlineScannedToken | undefined;
+
+  let token = scanner.scan();
+  while (token !== ts.SyntaxKind.EndOfFileToken) {
+    if (token === ts.SyntaxKind.WhitespaceTrivia || token === ts.SyntaxKind.NewLineTrivia) {
+      pendingPrefixSpace = true;
+      if (previousToken) {
+        previousToken.hasSuffixSpace = true;
+      }
+      token = scanner.scan();
+      continue;
+    }
+
+    if (token === ts.SyntaxKind.SingleLineCommentTrivia || token === ts.SyntaxKind.MultiLineCommentTrivia) {
+      token = scanner.scan();
+      continue;
+    }
+
+    const tokenText = scanner.getTokenText();
+    if (!tokenText) {
+      token = scanner.scan();
+      continue;
+    }
+
+    const scannedToken: InlineScannedToken = {
+      kind: token,
+      text: tokenText,
+      hasPrefixSpace: pendingPrefixSpace,
+      hasSuffixSpace: false,
+    };
+
+    scannedTokens.push(scannedToken);
+    previousToken = scannedToken;
+    pendingPrefixSpace = false;
+
+    token = scanner.scan();
+  }
+
+  scannedTokens.forEach((scannedToken, index) => {
+    const tokenKind = getInlineTypeTokenKind(
+      scannedToken.kind,
+      scannedToken.text,
+      isInlinePropertyNameLhs(scannedTokens, index),
+    );
+
+    tokens.push(
+      createToken(tokenKind, scannedToken.text, {
+        hasPrefixSpace: scannedToken.hasPrefixSpace,
+        hasSuffixSpace: scannedToken.hasSuffixSpace,
+        deprecated,
+      }),
+    );
+  });
+}
+
 function shouldInlineTypeNode(node: ts.TypeNode): boolean {
   if (ts.isTypeLiteralNode(node)) {
     return true;
@@ -132,7 +262,7 @@ function addTypeNodeTokensOrInlineLiteral(
   depth: number,
 ): void {
   if (shouldInlineTypeNode(node)) {
-    tokens.push(createToken(TokenKind.Text, normalizeInlineTypeText(node.getText()), { deprecated }));
+    addInlineTypeTextTokens(normalizeInlineTypeText(node.getText()), tokens, deprecated);
     return;
   }
 

@@ -68,5 +68,20 @@ namespace APIViewWeb.Repositories
         /// <returns></returns>
         public Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId);
 
+        /// <summary>
+        /// Get soft-deleted revisions that have been deleted before a specific date
+        /// </summary>
+        /// <param name="deletedBefore">Date before which revisions should have been soft-deleted</param>
+        /// <param name="apiRevisionType">Type of revisions to retrieve (Manual, PullRequest, etc.)</param>
+        /// <returns></returns>
+        public Task<IEnumerable<APIRevisionListItemModel>> GetSoftDeletedAPIRevisionsAsync(DateTime deletedBefore, APIRevisionType apiRevisionType = APIRevisionType.All);
+
+        /// <summary>
+        /// Hard delete an API revision from Cosmos DB
+        /// </summary>
+        /// <param name="apiRevisionId">The ID of the revision to delete</param>
+        /// <param name="reviewId">The review ID (partition key)</param>
+        /// <returns></returns>
+        public Task DeleteAPIRevisionAsync(string apiRevisionId, string reviewId);
     }
 }

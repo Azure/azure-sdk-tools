@@ -103,7 +103,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var agentRunner = new Mock<ICopilotAgentRunner>();
         var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp, typeSpecHelper.Object, feedbackService.Object, loggerFactory.Object, agentRunner.Object);
         var pkg = CreateTempPackageDir();
-        var result = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, tspProjectPath: "/mock/tsp", ct: CancellationToken.None);
+        var result = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         var run = (CustomizedCodeUpdateResponse)result;
         Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
         Assert.That(run.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide next steps guidance");
@@ -129,7 +129,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
-        var result = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, tspProjectPath: "/mock/tsp", ct: CancellationToken.None);
+        var result = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
         var first = (CustomizedCodeUpdateResponse)result;
         Assert.That(first.ErrorCode, Is.Null, "Should complete successfully without errors");
         Assert.That(first.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for applied patches");
@@ -155,7 +155,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempPackageDir();
         // Create a mock customization directory to trigger patch application
         Directory.CreateDirectory(Path.Combine(pkg, "customization"));
-        var result = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, tspProjectPath: "/mock/tsp", ct: CancellationToken.None);
+        var result = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, ct: CancellationToken.None);
         var resp = (CustomizedCodeUpdateResponse)result;
         // Build failure now returns an error code (structured for classifier)
         Assert.That(resp.ErrorCode, Is.Not.Null, "Should have error code for build failure");

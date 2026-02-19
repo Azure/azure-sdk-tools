@@ -375,8 +375,11 @@ public class FeedbackClassifierServiceTests
 
         LogClassificationResults(items);
 
-        Assert.That(items, Has.All.Property("ClassificationReason").Not.Null.And.Not.Empty,
-            "All items should have a reason after classification");
+        foreach (var item in items)
+        {
+            Assert.That(item.ClassificationReason, Is.Not.Null.And.Not.Empty,
+                $"Item '{item.Text}' should have a classification reason");
+        }
 
         // TSP_APPLICABLE assertions - check status and that reason mentions the appropriate decorator
         Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE),

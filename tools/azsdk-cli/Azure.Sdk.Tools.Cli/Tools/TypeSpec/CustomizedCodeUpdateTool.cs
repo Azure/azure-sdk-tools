@@ -60,34 +60,10 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
 
-    private readonly Argument<string> tspProjectPathArg = new("tsp-project-path")
+    private readonly Argument<string> updateCommitSha = new("update-commit-sha")
     {
-        Description = "Path to the TypeSpec project directory",
+        Description = "SHA of the commit to apply update changes for",
         Arity = ArgumentArity.ExactlyOne
-    };
-
-    private readonly Option<string> apiViewUrlOption = new("--apiview-url")
-    {
-        Description = "APIView URL to fetch comments from for classification",
-        Required = false
-    };
-
-    private readonly Option<string> plainTextFeedbackOption = new("--plain-text-feedback")
-    {
-        Description = "Plain text feedback for classification (e.g., build errors)",
-        Required = false
-    };
-
-    private readonly Option<string> plainTextFeedbackFileOption = new("--plain-text-feedback-file")
-    {
-        Description = "Path to a file containing plain text feedback for classification",
-        Required = false
-    };
-
-    private readonly Option<string> languageOption = new("--language")
-    {
-        Description = "Language of the SDK (e.g. python, java, dotnet, go, javascript). Required if not determinable from feedback source.",
-        Required = false
     };
 
     // NextSteps for success scenarios
@@ -140,25 +116,17 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     protected override Command GetCommand() =>
        new McpCommand("customized-update", "Update customized TypeSpec-generated client code with automated patch analysis.", CustomizedCodeUpdateToolName)
        {
-            tspProjectPathArg,
-            apiViewUrlOption,
-            plainTextFeedbackOption,
-            plainTextFeedbackFileOption,
-            languageOption
+            updateCommitSha, SharedOptions.PackagePath,
        };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var tspProjectPath = parseResult.GetValue(tspProjectPathArg);
-        var apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        var plainTextFeedback = parseResult.GetValue(plainTextFeedbackOption);
-        var plainTextFeedbackFile = parseResult.GetValue(plainTextFeedbackFileOption);
-        var language = parseResult.GetValue(languageOption);
-        
+        var spec = parseResult.GetValue(updateCommitSha);
+        var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
         try
         {
-            logger.LogInformation("Starting classify for tspProjectPath={tspProjectPath}", tspProjectPath);
-            return await RunUpdateAsync(tspProjectPath, apiViewUrl, plainTextFeedback, plainTextFeedbackFile, language, ct);
+            logger.LogInformation("Starting client update for {packagePath}", packagePath);
+            return await RunUpdateAsync(spec, packagePath, ct);
         }
         catch (Exception ex)
         {
@@ -172,7 +140,154 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         }
     }
 
-    private async Task<CommandResponse> RunUpdateAsync(
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string commitSha, string packagePath, CancellationToken ct)
+    {
+        try
+        {
+            if (!Directory.Exists(packagePath))
+            {
+                return new CustomizedCodeUpdateResponse 
+                { 
+                    Message = $"Package path does not exist: {packagePath}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    ResponseError = $"Package path does not exist: {packagePath}"
+                };
+            }
+            if (string.IsNullOrWhiteSpace(commitSha))
+            {
+                return new CustomizedCodeUpdateResponse 
+                { 
+                    Message = "Commit SHA is required.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    ResponseError = "Commit SHA is required." 
+                };
+            }
+            var languageService = await GetLanguageServiceAsync(packagePath, ct);
+            if (!languageService.IsCustomizedCodeUpdateSupported)
+            {
+                return new CustomizedCodeUpdateResponse 
+                { 
+                    Message = "Could not resolve a language service to perform SDK update.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
+                    ResponseError = "Could not resolve a language service to perform SDK update."
+                };
+            }
+
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha, isCli: false, ct);
+            if (!regenResult.IsSuccessful)
+            {
+                return new CustomizedCodeUpdateResponse
+                {
+                    Message = $"Regeneration failed: {regenResult.ResponseError}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
+                    ResponseError = regenResult.ResponseError
+                };
+            }
+
+            var hasCustomizations = languageService.HasCustomizations(packagePath, ct);
+            logger.LogDebug("Has customizations: {HasCustomizations}", hasCustomizations);
+
+            // Check if customizations exist - only activate Phase B if customization files are present
+            if (!hasCustomizations)
+            {
+                logger.LogInformation("No customization files detected - validating build");
+                
+                // Still need to build to verify generated code compiles
+                var (noCustomBuildSuccess, noCustomBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                if (noCustomBuildSuccess)
+                {
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Message = "Regeneration succeeded. No customization files found.",
+                        NextSteps = SuccessNoCustomizationsNextSteps.ToList()
+                    };
+                }
+                else
+                {
+                    logger.LogError("Build failed with no customizations: {Error}", noCustomBuildError);
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Message = $"Build failed after regeneration: {noCustomBuildError}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
+                        ResponseError = noCustomBuildError,
+                        NextSteps = GetBuildNoCustomizationsFailedNextSteps(languageService.Language.ToString()).ToList()
+                    };
+                }
+            }
+
+            logger.LogInformation("Customization files detected - activating Phase B");
+            
+            // Phase B: Apply patches to customization code
+            var patchesApplied = await ApplyPatchesAsync(commitSha, packagePath, packagePath, languageService, ct);
+
+            if (!patchesApplied)
+            {
+                // Customizations exist but patches were not applied
+                logger.LogInformation("Patches were not applied. This may indicate no applicable changes or a patching error.");
+                return new CustomizedCodeUpdateResponse
+                {
+                    Message = "Patches not applied - automatic patching unsuccessful or not applicable.",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
+                    NextSteps = GetPatchesFailedNextSteps().ToList()
+                };
+            }
+
+            // Patches were applied, regenerate and build to validate
+            logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
+            var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(packagePath, commitSha, ct);
+            if (!regenSuccess)
+            {
+                logger.LogWarning("Code regeneration failed: {Error}", regenError);
+                return new CustomizedCodeUpdateResponse
+                {
+                    Message = $"Code regeneration failed after applying patches: {regenError}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
+                    ResponseError = regenError,
+                    NextSteps = GetPatchesFailedNextSteps().ToList()
+                };
+            }
+
+            // Build to validate
+            logger.LogInformation("Regeneration successful, building SDK code to validate...");
+            var (buildSuccess, buildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+
+            if (buildSuccess)
+            {
+                logger.LogInformation("Build completed successfully - validation passed");
+                return new CustomizedCodeUpdateResponse
+                {
+                    Message = "Build passed. Patches applied successfully.",
+                    NextSteps = SuccessPatchesAppliedNextSteps.ToList()
+                };
+            }
+            else
+            {
+                logger.LogError("Build failed: {Error}", buildError);
+                return new CustomizedCodeUpdateResponse
+                {
+                    Message = $"Build failed after applying patches: {buildError}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
+                    ResponseError = buildError,
+                    NextSteps = GetBuildAfterPatchesFailedNextSteps(buildError ?? "Unknown error").ToList()
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Core update failed");
+            return new CustomizedCodeUpdateResponse 
+            { 
+                Message = $"Core update failed: {ex.Message}",
+                ResponseError = ex.Message, 
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError 
+            };
+        }
+    }
+
+    /// <summary>
+    /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE, SUCCESS, or FAILURE.
+    /// </summary>
+    private async Task<FeedbackClassificationResponse> Classify(
         string tspProjectPath,
         string? apiViewUrl,
         string? plainTextFeedback,
@@ -187,12 +302,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             {
                 if (!File.Exists(plainTextFeedbackFile))
                 {
-                    return new CustomizedCodeUpdateResponse 
-                    { 
-                        Message = $"Plain text feedback file does not exist: {plainTextFeedbackFile}",
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
-                        ResponseError = $"Plain text feedback file does not exist: {plainTextFeedbackFile}" 
-                    };
+                    throw new FileNotFoundException($"Plain text feedback file does not exist: {plainTextFeedbackFile}");
                 }
 
                 plainTextFeedback = await File.ReadAllTextAsync(plainTextFeedbackFile, ct);
@@ -201,15 +311,9 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
             if (string.IsNullOrEmpty(tspProjectPath) || !Directory.Exists(tspProjectPath))
             {
-                return new CustomizedCodeUpdateResponse 
-                { 
-                    Message = $"TypeSpec project path is required and must exist: {tspProjectPath}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
-                    ResponseError = $"TypeSpec project path does not exist: {tspProjectPath}" 
-                };
+                throw new DirectoryNotFoundException($"TypeSpec project path does not exist: {tspProjectPath}");
             }
 
-            // Create classifier
             var classifier = new FeedbackClassifierService(
                 _agentRunner,
                 loggerFactory,
@@ -217,7 +321,6 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 tspProjectPath
             );
 
-            // Preprocess the provided feedback source
             FeedbackBatch feedbackBatch;
             if (!string.IsNullOrWhiteSpace(apiViewUrl))
             {
@@ -229,32 +332,22 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             }
             else
             {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = "No feedback provided. Please specify either --apiview-url or --plain-text-feedback (or --plain-text-feedback-file).",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                    ResponseError = "Either --apiview-url or --plain-text-feedback (or --plain-text-feedback-file) must be provided."
-                };
+                throw new ArgumentException("Either --apiview-url or --plain-text-feedback (or --plain-text-feedback-file) must be provided.");
             }
+
             if (feedbackBatch.Items.Count == 0)
             {
-                return new CustomizedCodeUpdateResponse
+                return new FeedbackClassificationResponse
                 {
                     Message = "No valid feedback items found.",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                    ResponseError = "No valid feedback items could be extracted from the provided input."
+                    Classifications = []
                 };
             }
 
             language ??= feedbackBatch.Language;
             if (string.IsNullOrEmpty(language))
             {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = "Language could not be determined. Please specify --language (e.g. python, java, dotnet, go, javascript).",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                    ResponseError = "Language is required but could not be determined from the feedback source."
-                };
+                throw new ArgumentException("Language is required but could not be determined from the feedback source. Please specify --language (e.g. python, java, dotnet, go, javascript).");
             }
 
             return await classifier.ClassifyItemsAsync(feedbackBatch.Items, globalContext: "", language, serviceName: null, ct);
@@ -262,148 +355,13 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Classification failed");
-            return new CustomizedCodeUpdateResponse 
-            { 
-                Message = $"Classification failed: {ex.Message}",
-                ResponseError = ex.Message, 
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError 
-            };
+            throw;
         }
     }
 
-    /// <summary>
-    /// Applies code customizations: regenerates SDK from TypeSpec and patches customization files.
-    /// </summary>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Update customized TypeSpec-generated client code")]
-    public async Task<CustomizedCodeUpdateResponse> UpdateAsync(
-        string commitSha,
-        string packagePath,
-        string tspProjectPath,
-        CancellationToken ct = default)
-    {
-        try
-        {
-        var languageService = await GetLanguageServiceAsync(packagePath, ct);
-        if (!languageService.IsCustomizedCodeUpdateSupported)
-        {
-            return new CustomizedCodeUpdateResponse 
-            { 
-                Message = "Could not resolve a language service to perform SDK update.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService, 
-                ResponseError = "Could not resolve a language service to perform SDK update." 
-            };
-        }
-
-        var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha, ct: ct);
-        if (!regenResult.IsSuccessful)
-        {
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = $"Regeneration failed: {regenResult.ResponseError}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
-                ResponseError = regenResult.ResponseError
-            };
-        }
-
-        var hasCustomizations = languageService.HasCustomizations(packagePath, ct);
-        logger.LogDebug("Has customizations: {HasCustomizations}", hasCustomizations);
-
-        // Check if customizations exist - only activate Phase B if customization files are present
-        if (!hasCustomizations)
-        {
-            logger.LogInformation("No customization files detected - validating build");
-            
-            // Still need to build to verify generated code compiles
-            var (noCustomBuildSuccess, noCustomBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-            if (noCustomBuildSuccess)
-            {
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = "Regeneration succeeded. No customization files found.",
-                    NextSteps = SuccessNoCustomizationsNextSteps.ToList()
-                };
-            }
-            else
-            {
-                logger.LogError("Build failed with no customizations: {Error}", noCustomBuildError);
-                return new CustomizedCodeUpdateResponse
-                {
-                    Message = $"Build failed after regeneration: {noCustomBuildError}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
-                    ResponseError = noCustomBuildError,
-                    NextSteps = GetBuildNoCustomizationsFailedNextSteps(languageService.Language.ToString()).ToList()
-                };
-            }
-        }
-
-        logger.LogInformation("Customization files detected - activating Phase B");
-        
-        // Phase B: Apply patches to customization code
-        var patchesApplied = await ApplyPatchesAsync(commitSha, packagePath, packagePath, languageService, ct);
-
-        if (!patchesApplied)
-        {
-            // Customizations exist but patches were not applied
-            logger.LogInformation("Patches were not applied. This may indicate no applicable changes or a patching error.");
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = "Patches not applied - automatic patching unsuccessful or not applicable.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
-                NextSteps = GetPatchesFailedNextSteps().ToList()
-            };
-        }
-
-        // Patches were applied, regenerate and build to validate
-        logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
-        var (regenSuccess, regenError) = await RegenerateAfterPatchesAsync(packagePath, commitSha, ct);
-        if (!regenSuccess)
-        {
-            logger.LogWarning("Code regeneration failed: {Error}", regenError);
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = $"Code regeneration failed after applying patches: {regenError}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
-                ResponseError = regenError,
-                NextSteps = GetPatchesFailedNextSteps().ToList()
-            };
-        }
-
-        // Build to validate
-        logger.LogInformation("Regeneration successful, building SDK code to validate...");
-        var (buildSuccess, buildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-
-        if (buildSuccess)
-        {
-            logger.LogInformation("Build completed successfully - validation passed");
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = "Build passed. Patches applied successfully.",
-                NextSteps = SuccessPatchesAppliedNextSteps.ToList()
-            };
-        }
-        else
-        {
-            logger.LogError("Build failed: {Error}", buildError);
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = $"Build failed after applying patches: {buildError}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
-                ResponseError = buildError,
-                NextSteps = GetBuildAfterPatchesFailedNextSteps(buildError ?? "Unknown error").ToList()
-            };
-        }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Exception during UpdateAsync");
-            return new CustomizedCodeUpdateResponse
-            {
-                Message = $"An unexpected error occurred: {ex.Message}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
-                ResponseError = ex.Message
-            };
-        }
-    }
+    public Task<CustomizedCodeUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
+        => RunUpdateAsync(commitSha, packagePath, ct);
 
     private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string packagePath, string commitSha, CancellationToken ct)
     {
@@ -447,7 +405,4 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         return patchesApplied;
     }
 
-    /// <summary>
-    /// Extracts the language from a package path like "/path/to/azure-sdk-for-python".
-    /// </summary>
 }

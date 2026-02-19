@@ -60,6 +60,14 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
   ngOnInit() {
     this.handleRealTimeCommentUpdates();
+
+    this.commentsService.severityChanged$.pipe(takeUntil(this.destroy$)).subscribe(({ commentId, newSeverity }) => {
+      const comment = this.comments.find(c => c.id === commentId);
+      if (comment) {
+        comment.severity = newSeverity;
+        this.changeDetectorRef.markForCheck();
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -276,6 +284,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     if (commentUpdates.commentId) {
     }
     else {
+      const isNewThread = !commentUpdates.threadId;
       this.commentsService.createComment(this.review?.id!, commentUpdates.revisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity, commentUpdates.threadId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
@@ -286,7 +295,10 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
               }
               this.addCommentToCommentThread(commentUpdates);
               this.signalRService.pushCommentUpdates(commentUpdates);
-              this.commentsService.notifyQualityScoreRefresh();
+              // Only refresh quality score for new threads, not replies
+              if (isNewThread) {
+                this.commentsService.notifyQualityScoreRefresh();
+              }
             }
           }
         );

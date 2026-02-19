@@ -20,4 +20,4 @@ After releasing the package `@azure-tools/ts-genapi` to the public DevOps feed, 
 
 ## Other changes
 
-In the production environment of the API tool parser, `JavaScriptParserToolPath` is the build variable that contains path where the js parser package gets installed and gets consumed from.
+In the production environment of the API tool parser, `JavaScriptParserToolPath` is the build variable that contains the path where the JS parser package is installed and consumed from.

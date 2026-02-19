@@ -700,13 +700,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
-                repo = await ResolveRepoAsync(repo);
-                var repoName = repo?.Split('/').Last() ?? "";
-                if (SdkLanguageHelpers.GetLanguageForRepo(repoName) == SdkLanguage.Unknown)
-                {
-                    return new DefaultCommandResponse { ResponseError = $"Repo '{repo}' is not a recognized language repo. Please specify --repo explicitly." };
-                }
-
                 var hasLabels = labels != null && labels.Count > 0;
                 var axes = new[] { !string.IsNullOrEmpty(user), hasLabels, !string.IsNullOrEmpty(package), !string.IsNullOrEmpty(path) }.Count(a => a);
                 if (axes == 0)
@@ -720,17 +713,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                 if (!string.IsNullOrEmpty(user))
                 {
-                    return await codeownersManagementHelper.GetViewByUserAsync(user, repo);
+                    return await codeownersManagementHelper.GetViewByUser(user, repo);
                 }
                 if (hasLabels)
                 {
-                    return await codeownersManagementHelper.GetViewByLabelAsync(labels!, repo);
+                    return await codeownersManagementHelper.GetViewByLabel(labels!, repo);
                 }
                 if (!string.IsNullOrEmpty(package))
                 {
-                    return await codeownersManagementHelper.GetViewByPackageAsync(package);
+                    return await codeownersManagementHelper.GetViewByPackage(package);
                 }
-                return await codeownersManagementHelper.GetViewByPathAsync(path!, repo);
+                return await codeownersManagementHelper.GetViewByPath(path!, repo);
             }
             catch (Exception ex)
             {
@@ -767,19 +760,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 string result;
                 if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(package))
                 {
-                    result = await codeownersManagementHelper.AddOwnerToPackageAsync(user, package, repo);
+                    result = await codeownersManagementHelper.AddOwnerToPackage(user, package, repo);
                 }
                 else if (!string.IsNullOrEmpty(user) && labels.Count > 0)
                 {
-                    result = await codeownersManagementHelper.AddOwnerToLabelAsync(user, labels, repo, ownerType!, path);
+                    result = await codeownersManagementHelper.AddOwnerToLabel(user, labels, repo, ownerType!, path);
                 }
                 else if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(path))
                 {
-                    result = await codeownersManagementHelper.AddOwnerToPathAsync(user, repo, path, ownerType!);
+                    result = await codeownersManagementHelper.AddOwnerToPath(user, repo, path, ownerType!);
                 }
                 else
                 {
-                    result = await codeownersManagementHelper.AddLabelToPathAsync(labels, repo, path!);
+                    result = await codeownersManagementHelper.AddLabelToPath(labels, repo, path!);
                 }
 
                 return new DefaultCommandResponse
@@ -822,19 +815,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 string result;
                 if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(package))
                 {
-                    result = await codeownersManagementHelper.RemoveOwnerFromPackageAsync(user, package, repo);
+                    result = await codeownersManagementHelper.RemoveOwnerFromPackage(user, package, repo);
                 }
                 else if (!string.IsNullOrEmpty(user) && labels.Count > 0)
                 {
-                    result = await codeownersManagementHelper.RemoveOwnerFromLabelAsync(user, labels, repo, ownerType!);
+                    result = await codeownersManagementHelper.RemoveOwnerFromLabel(user, labels, repo, ownerType!);
                 }
                 else if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(path))
                 {
-                    result = await codeownersManagementHelper.RemoveOwnerFromPathAsync(user, repo, path, ownerType!);
+                    result = await codeownersManagementHelper.RemoveOwnerFromPath(user, repo, path, ownerType!);
                 }
                 else
                 {
-                    result = await codeownersManagementHelper.RemoveLabelFromPathAsync(labels, repo, path!);
+                    result = await codeownersManagementHelper.RemoveLabelFromPath(labels, repo, path!);
                 }
 
                 return new DefaultCommandResponse

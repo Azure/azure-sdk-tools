@@ -39,7 +39,7 @@ public class CodeownersManagementHelperTests
     public async Task FindOrCreateOwner_ExistingOwner_ReturnsExisting()
     {
         // Arrange: mock QueryWorkItemsByTypeAndFieldAsync to return an existing Owner work item
-        // Act: call FindOrCreateOwnerAsync
+        // Act: call FindOrCreateOwner
         // Assert: returns existing owner, CreateTypedWorkItemAsync NOT called
         await Task.CompletedTask;
     }
@@ -49,7 +49,7 @@ public class CodeownersManagementHelperTests
     public async Task FindOrCreateOwner_NewOwner_CreatesAndReturns()
     {
         // Arrange: mock QueryWorkItemsByTypeAndFieldAsync to return empty, mock ValidateCodeOwnerAsync to return valid
-        // Act: call FindOrCreateOwnerAsync
+        // Act: call FindOrCreateOwner
         // Assert: CreateTypedWorkItemAsync called, returns new owner
         await Task.CompletedTask;
     }
@@ -59,7 +59,7 @@ public class CodeownersManagementHelperTests
     public async Task FindOrCreateOwner_InvalidAlias_ThrowsError()
     {
         // Arrange: mock ValidateCodeOwnerAsync to return IsValidCodeOwner = false
-        // Act/Assert: FindOrCreateOwnerAsync throws Exception
+        // Act/Assert: FindOrCreateOwner throws Exception
         await Task.CompletedTask;
     }
 
@@ -72,7 +72,7 @@ public class CodeownersManagementHelperTests
     public async Task AddOwnerToPackage_CreatesRelatedLink()
     {
         // Arrange: mock owner exists, package exists
-        // Act: AddOwnerToPackageAsync
+        // Act: AddOwnerToPackage
         // Assert: AddRelatedLinkAsync called with correct IDs
         await Task.CompletedTask;
     }
@@ -82,7 +82,7 @@ public class CodeownersManagementHelperTests
     public async Task AddOwnerToPackage_DuplicateLink_SkipsSilently()
     {
         // Arrange: mock AddRelatedLinkAsync is idempotent (no throw)
-        // Act: AddOwnerToPackageAsync
+        // Act: AddOwnerToPackage
         // Assert: no error, returns success message
         await Task.CompletedTask;
     }
@@ -92,7 +92,7 @@ public class CodeownersManagementHelperTests
     public async Task AddOwnerToLabel_ServiceOwner_CreatesRelationships()
     {
         // Arrange: mock owner, label exists, label owner created
-        // Act: AddOwnerToLabelAsync with "service-owner"
+        // Act: AddOwnerToLabel with "service-owner"
         // Assert: AddRelatedLinkAsync called for Owner→LabelOwner and Label→LabelOwner
         await Task.CompletedTask;
     }
@@ -102,7 +102,7 @@ public class CodeownersManagementHelperTests
     public async Task AddOwnerToLabel_PrLabel_CreatesWithPath()
     {
         // Arrange: mock owner, label exists, path provided
-        // Act: AddOwnerToLabelAsync with "pr-label" and path
+        // Act: AddOwnerToLabel with "pr-label" and path
         // Assert: Label Owner created with RepoPath set
         await Task.CompletedTask;
     }
@@ -112,7 +112,7 @@ public class CodeownersManagementHelperTests
     public async Task AddOwnerToPath_CreatesLabelOwnerAndLink()
     {
         // Arrange: mock owner valid, no existing label owner for path
-        // Act: AddOwnerToPathAsync
+        // Act: AddOwnerToPath
         // Assert: CreateTypedWorkItemAsync called for Label Owner, AddRelatedLinkAsync called
         await Task.CompletedTask;
     }
@@ -122,7 +122,7 @@ public class CodeownersManagementHelperTests
     public async Task AddLabelToPath_CreatesRelationship()
     {
         // Arrange: mock label exists, label owner exists for path
-        // Act: AddLabelToPathAsync
+        // Act: AddLabelToPath
         // Assert: AddRelatedLinkAsync called for Label→LabelOwner
         await Task.CompletedTask;
     }
@@ -132,7 +132,7 @@ public class CodeownersManagementHelperTests
     public async Task AddLabelToPath_LabelNotFound_ThrowsError()
     {
         // Arrange: mock label does not exist
-        // Act/Assert: AddLabelToPathAsync throws Exception about label not found
+        // Act/Assert: AddLabelToPath throws Exception about label not found
         await Task.CompletedTask;
     }
 
@@ -145,7 +145,7 @@ public class CodeownersManagementHelperTests
     public async Task RemoveOwnerFromPackage_RemovesRelatedLink()
     {
         // Arrange: mock owner and package exist
-        // Act: RemoveOwnerFromPackageAsync
+        // Act: RemoveOwnerFromPackage
         // Assert: RemoveRelatedLinkAsync called
         await Task.CompletedTask;
     }
@@ -155,7 +155,7 @@ public class CodeownersManagementHelperTests
     public async Task RemoveOwnerFromLabel_RemovesRelatedLink()
     {
         // Arrange: mock owner, label owner with matching type/repo
-        // Act: RemoveOwnerFromLabelAsync
+        // Act: RemoveOwnerFromLabel
         // Assert: RemoveRelatedLinkAsync called
         await Task.CompletedTask;
     }
@@ -165,7 +165,7 @@ public class CodeownersManagementHelperTests
     public async Task RemoveOwnerFromLabel_LastOwner_Warns()
     {
         // Arrange: mock label owner has only this owner
-        // Act: RemoveOwnerFromLabelAsync
+        // Act: RemoveOwnerFromLabel
         // Assert: returns message with warning
         await Task.CompletedTask;
     }
@@ -175,7 +175,7 @@ public class CodeownersManagementHelperTests
     public async Task RemoveOwnerFromPath_RemovesRelatedLink()
     {
         // Arrange: mock owner, label owner matching path+type
-        // Act: RemoveOwnerFromPathAsync
+        // Act: RemoveOwnerFromPath
         // Assert: RemoveRelatedLinkAsync called
         await Task.CompletedTask;
     }
@@ -185,7 +185,7 @@ public class CodeownersManagementHelperTests
     public async Task RemoveLabelFromPath_RemovesRelatedLink()
     {
         // Arrange: mock label, label owner matching path
-        // Act: RemoveLabelFromPathAsync
+        // Act: RemoveLabelFromPath
         // Assert: RemoveRelatedLinkAsync called for label→label owner
         await Task.CompletedTask;
     }
@@ -199,7 +199,7 @@ public class CodeownersManagementHelperTests
     public async Task GetViewByUser_ReturnsPackagesAndLabelOwners()
     {
         // Arrange: use WorkItemDataBuilder to create owner with related packages and label owners
-        // Act: GetViewByUserAsync
+        // Act: GetViewByUser
         // Assert: result contains packages and label owners with correct details
         await Task.CompletedTask;
     }
@@ -209,7 +209,7 @@ public class CodeownersManagementHelperTests
     public async Task GetViewByLabel_ReturnsPackagesAndLabelOwners()
     {
         // Arrange: use WorkItemDataBuilder to create label with related packages and label owners
-        // Act: GetViewByLabelAsync
+        // Act: GetViewByLabel
         // Assert: result contains correct associations
         await Task.CompletedTask;
     }
@@ -219,7 +219,7 @@ public class CodeownersManagementHelperTests
     public async Task GetViewByPath_ReturnsMatchingLabelOwners()
     {
         // Arrange: use WorkItemDataBuilder to create label owners with matching paths
-        // Act: GetViewByPathAsync
+        // Act: GetViewByPath
         // Assert: result contains label owners grouped by path
         await Task.CompletedTask;
     }
@@ -229,7 +229,7 @@ public class CodeownersManagementHelperTests
     public async Task GetViewByPackage_ReturnsOwnersAndLabels()
     {
         // Arrange: use WorkItemDataBuilder to create package with related owners and labels
-        // Act: GetViewByPackageAsync
+        // Act: GetViewByPackage
         // Assert: result contains package details with owners and labels
         await Task.CompletedTask;
     }

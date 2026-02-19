@@ -31,7 +31,7 @@ public class CodeownersViewResult : CommandResponse
             sb.AppendLine("=== Packages ===");
             foreach (var pkg in Packages)
             {
-                sb.AppendLine($"  Package: {pkg.PackageName} (Language: {pkg.Language}, Type: {pkg.PackageType})");
+                sb.AppendLine($"  Package: {pkg.PackageName} (Language: {pkg.Language}, Type: {pkg.PackageType}) [{pkg.WorkItemId}]");
                 if (pkg.SourceOwners?.Count > 0)
                 {
                     sb.AppendLine($"    Source Owners: {string.Join(", ", pkg.SourceOwners)}");
@@ -46,19 +46,23 @@ public class CodeownersViewResult : CommandResponse
         if (PathBasedLabelOwners?.Count > 0)
         {
             sb.AppendLine("=== Path-Based Label Owners ===");
-            foreach (var group in PathBasedLabelOwners)
+            foreach (var repoGroup in PathBasedLabelOwners.GroupBy(g => g.Repo, StringComparer.OrdinalIgnoreCase).OrderBy(rg => rg.Key, StringComparer.OrdinalIgnoreCase))
             {
-                sb.AppendLine($"  Path: {group.Path} (Repo: {group.Repo})");
-                foreach (var item in group.Items ?? [])
+                sb.AppendLine($"  Repo: {repoGroup.Key}");
+                foreach (var group in repoGroup)
                 {
-                    sb.AppendLine($"    Type: {item.LabelType}");
-                    if (item.Owners?.Count > 0)
+                    sb.AppendLine($"    Path: {group.Path}");
+                    foreach (var item in group.Items ?? [])
                     {
-                        sb.AppendLine($"      Owners: {string.Join(", ", item.Owners)}");
-                    }
-                    if (item.Labels?.Count > 0)
-                    {
-                        sb.AppendLine($"      Labels: {string.Join(", ", item.Labels)}");
+                        sb.AppendLine($"      Type: {item.LabelType} [{item.WorkItemId}]");
+                        if (item.Owners?.Count > 0)
+                        {
+                            sb.AppendLine($"        Owners: {string.Join(", ", item.Owners)}");
+                        }
+                        if (item.Labels?.Count > 0)
+                        {
+                            sb.AppendLine($"        Labels: {string.Join(", ", item.Labels)}");
+                        }
                     }
                 }
             }
@@ -67,15 +71,20 @@ public class CodeownersViewResult : CommandResponse
         if (PathlessLabelOwners?.Count > 0)
         {
             sb.AppendLine("=== Pathless Label Owners ===");
-            foreach (var group in PathlessLabelOwners)
+            foreach (var repoGroup in PathlessLabelOwners.GroupBy(g => g.Repo, StringComparer.OrdinalIgnoreCase).OrderBy(rg => rg.Key, StringComparer.OrdinalIgnoreCase))
             {
-                sb.AppendLine($"  Labels: {string.Join(", ", group.LabelSet ?? [])}");
-                foreach (var item in group.Items ?? [])
+                sb.AppendLine($"  Repo: {repoGroup.Key}");
+                foreach (var group in repoGroup)
                 {
-                    sb.AppendLine($"    Type: {item.LabelType}");
-                    if (item.Owners?.Count > 0)
+                    var item = group.Items?.FirstOrDefault();
+                    sb.AppendLine($"    Labels: {string.Join(", ", group.LabelSet ?? [])} [{item?.WorkItemId}]");
+                    if (item != null)
                     {
-                        sb.AppendLine($"      Owners: {string.Join(", ", item.Owners)}");
+                        sb.AppendLine($"      Type: {item.LabelType}");
+                        if (item.Owners?.Count > 0)
+                        {
+                            sb.AppendLine($"      Owners: {string.Join(", ", item.Owners)}");
+                        }
                     }
                 }
             }
@@ -90,6 +99,9 @@ public class CodeownersViewResult : CommandResponse
 /// </summary>
 public class PackageViewItem
 {
+    [JsonPropertyName("work_item_id")]
+    public int WorkItemId { get; set; }
+
     [JsonPropertyName("package_name")]
     public string PackageName { get; set; } = string.Empty;
 
@@ -141,6 +153,13 @@ public class LabelOwnerGroup
 /// </summary>
 public class LabelOwnerViewItem
 {
+    [JsonPropertyName("work_item_id")]
+    public int WorkItemId { get; set; }
+
+    [JsonPropertyName("repo")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Repo { get; set; }
+
     [JsonPropertyName("label_type")]
     public string LabelType { get; set; } = string.Empty;
 

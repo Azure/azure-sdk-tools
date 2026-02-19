@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         };
 
         // Management command options
-        private readonly Option<string> viewUserOption = new("--github-user")
+        private readonly Option<string> githubUserOption = new("--github-user")
         {
             Description = "GitHub alias to look up",
             Required = false,
@@ -115,9 +115,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             AllowMultipleArgumentsPerToken = true,
         };
 
-        private readonly Option<string> viewPackageOption = new("--package")
+        private readonly Option<string> packageOption = new("--package")
         {
-            Description = "Package name to look up",
+            Description = "Package name",
             Required = false,
         };
 
@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
-        private readonly Option<string> mgmtRepoOption = new("--repo", "-r")
+        private readonly Option<string> optionalRepoOption = new("--repo", "-r")
         {
             Description = "Repository name (e.g., Azure/azure-sdk-for-python). Defaults to current repo if in a language repo.",
             Required = false,
@@ -136,18 +136,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly Option<string> ownerTypeOption = new("--owner-type")
         {
             Description = "Owner type: service-owner, azsdk-owner, or pr-label",
-            Required = false,
-        };
-
-        private readonly Option<string> mgmtUserOption = new("--user")
-        {
-            Description = "GitHub alias of the owner",
-            Required = false,
-        };
-
-        private readonly Option<string> mgmtPackageOption = new("--package")
-        {
-            Description = "Package name",
             Required = false,
         };
 
@@ -219,15 +207,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
             {
-                viewUserOption, labelsOption, viewPackageOption, pathOption, mgmtRepoOption,
+                githubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption,
             },
             new(addCodeownersCommandName, "Add ownership relationships between DevOps work items")
             {
-                mgmtRepoOption, mgmtUserOption, mgmtPackageOption, labelsOption, pathOption, ownerTypeOption,
+                optionalRepoOption, githubUserOption, packageOption, labelsOption, pathOption, ownerTypeOption,
             },
             new(removeCodeownersCommandName, "Remove ownership relationships between DevOps work items")
             {
-                mgmtRepoOption, mgmtUserOption, mgmtPackageOption, labelsOption, pathOption, ownerTypeOption,
+                optionalRepoOption, githubUserOption, packageOption, labelsOption, pathOption, ownerTypeOption,
             }
         ];
 
@@ -286,19 +274,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             if (command == viewCodeownersCommandName)
             {
-                var user = parseResult.GetValue(viewUserOption);
+                var user = parseResult.GetValue(githubUserOption);
                 var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
-                var package = parseResult.GetValue(viewPackageOption);
+                var package = parseResult.GetValue(packageOption);
                 var path = parseResult.GetValue(pathOption);
-                var repo = parseResult.GetValue(mgmtRepoOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
                 return await ViewCodeowners(user, labels, package, path, repo);
             }
 
             if (command == addCodeownersCommandName)
             {
-                var repo = parseResult.GetValue(mgmtRepoOption);
-                var user = parseResult.GetValue(mgmtUserOption);
-                var package = parseResult.GetValue(mgmtPackageOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                var user = parseResult.GetValue(githubUserOption);
+                var package = parseResult.GetValue(packageOption);
                 var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
                 var path = parseResult.GetValue(pathOption);
                 var ownerType = parseResult.GetValue(ownerTypeOption);
@@ -307,9 +295,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             if (command == removeCodeownersCommandName)
             {
-                var repo = parseResult.GetValue(mgmtRepoOption);
-                var user = parseResult.GetValue(mgmtUserOption);
-                var package = parseResult.GetValue(mgmtPackageOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                var user = parseResult.GetValue(githubUserOption);
+                var package = parseResult.GetValue(packageOption);
                 var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
                 var path = parseResult.GetValue(pathOption);
                 var ownerType = parseResult.GetValue(ownerTypeOption);
@@ -859,6 +847,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 if (hasOwnerType)
                 {
                     return "Cannot specify --owner-type when adding/removing a user from a package. Packages only have source owners.";
+                }
+                if (hasLabels)
+                {
+                    return "Cannot specify --label when adding/removing a user from a package.";
+                }
+                if (hasPath)
+                {
+                    return "Cannot specify --path when adding/removing a user from a package.";
                 }
                 return null;
             }

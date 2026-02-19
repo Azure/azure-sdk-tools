@@ -299,6 +299,18 @@ public class CodeownersManagementHelper(
 
     public static string NormalizeGitHubAlias(string alias) => alias.TrimStart('@').Trim();
 
+    /// <summary>
+    /// Converts a repo identity (e.g., "Azure/azure-sdk-for-python" or "azure-sdk-for-python")
+    /// to its SdkLanguage work item string (e.g., "Python"). Falls back to the original value
+    /// if the repo is not a known language repo.
+    /// </summary>
+    internal static string RepoToLanguageString(string repo)
+    {
+        var repoName = repo.Contains('/') ? repo.Split('/').Last() : repo;
+        var language = SdkLanguageHelpers.GetLanguageForRepo(repoName);
+        return language != SdkLanguage.Unknown ? language.ToWorkItemString() : repo;
+    }
+
     public static string ResolveOwnerType(string ownerType)
     {
         if (OwnerTypeMap.TryGetValue(ownerType, out var resolved))
@@ -404,8 +416,9 @@ public class CodeownersManagementHelper(
 
     private async Task<LabelOwnerWorkItem> CreateLabelOwnerWorkItem(string repo, string labelType, string repoPath, List<string> labels)
     {
+        var languageString = RepoToLanguageString(repo);
         var labelList = labels.Count > 0 ? string.Join(", ", labels.OrderBy(l => l, StringComparer.OrdinalIgnoreCase)) : "(no labels)";
-        var title = $"Label Owner: {repo} - {labelType} - {labelList}";
+        var title = $"{labelType}: {labelList} - ({languageString})";
 
         var fields = new Dictionary<string, object>
         {
@@ -438,11 +451,9 @@ public class CodeownersManagementHelper(
 
         if (!string.IsNullOrEmpty(repo))
         {
-            var repoName = repo.Contains('/') ? repo.Split('/').Last() : repo;
-            var language = SdkLanguageHelpers.GetLanguageForRepo(repoName);
-            if (language != SdkLanguage.Unknown)
+            var languageString = RepoToLanguageString(repo);
+            if (languageString != repo)
             {
-                var languageString = language.ToWorkItemString();
                 packages = packages.Where(p => p.Language.Equals(languageString, StringComparison.OrdinalIgnoreCase)).ToList();
             }
         }

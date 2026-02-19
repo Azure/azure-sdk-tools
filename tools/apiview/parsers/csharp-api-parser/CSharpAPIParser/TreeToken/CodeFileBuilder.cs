@@ -532,13 +532,12 @@ namespace CSharpAPIParser.TreeToken
 
                     string args = String.Join(", ", attribute.ConstructorArguments.Select(a => GetTypedConstantValue(a)));
 
-                    // Disambiguate identical attributes (e.g. same attribute on partial class parts)
-                    var baseLineId = $"{attribute.AttributeClass.GetId()}({args}).{relatedTo}";
-                    var lineId = baseLineId;
-                    int suffix = 1;
-                    while (!seenLineIds.Add(lineId))
+                    var lineId = $"{attribute.AttributeClass.GetId()}({args}).{relatedTo}";
+                    // Skip duplicate identical attributes (e.g. same attribute declared on multiple partial class parts).
+                    // These are codegen artifacts and carry no additional API surface information.
+                    if (!seenLineIds.Add(lineId))
                     {
-                        lineId = $"{baseLineId}_{suffix++}";
+                        continue;
                     }
 
                     var attributeLine = new ReviewLine()

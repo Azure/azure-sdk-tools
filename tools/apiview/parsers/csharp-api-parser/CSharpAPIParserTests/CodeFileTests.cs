@@ -529,6 +529,7 @@ namespace TestNamespace
             // Simulates the scenario where a partial class has the same attribute declared
             // in both the Generated and Custom files (e.g. [ModelReaderWriterBuildable(typeof(X))]
             // on AzureResourceManagerContext from two partial class parts).
+            // Duplicate identical attributes should be skipped deterministically.
             var sourceCode = @"
 using System;
 
@@ -542,6 +543,7 @@ namespace TestNamespace
 
     [MyBuildable(typeof(string))]
     [MyBuildable(typeof(string))]
+    [MyBuildable(typeof(int))]
     public class TestContext { }
 }";
 
@@ -558,7 +560,7 @@ namespace TestNamespace
             var assemblySymbol = compilation.Assembly;
             var builder = new CSharpAPIParser.TreeToken.CodeFileBuilder();
 
-            // Should not throw - duplicates are disambiguated
+            // Should not throw - duplicate identical attributes are skipped
             var codeFile = builder.Build(assemblySymbol, false, null);
 
             // Verify all LineIds are unique
@@ -576,6 +578,23 @@ namespace TestNamespace
                 }
             }
             CheckLineIds(codeFile.ReviewLines);
+
+            // Verify duplicate identical attribute was skipped: for TestContext,
+            // only 2 unique MyBuildable attribute lines (typeof(string) once + typeof(int) once)
+            int attributeLineCount = 0;
+            void CountAttributes(List<ReviewLine> lines)
+            {
+                foreach (var line in lines)
+                {
+                    if (line.LineId != null && line.LineId.Contains("MyBuildableAttribute(") &&
+                        line.RelatedToLine == "TestNamespace.TestContext")
+                        attributeLineCount++;
+                    if (line.Children?.Count > 0)
+                        CountAttributes(line.Children);
+                }
+            }
+            CountAttributes(codeFile.ReviewLines);
+            Assert.Equal(2, attributeLineCount); // typeof(string) once + typeof(int) once
         }
 
         [Fact]

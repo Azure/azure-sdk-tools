@@ -339,6 +339,86 @@ export function buildTypeNodeTokens(
     return children.length > 0 ? children : undefined;
   }
 
+
+  if (ts.isConditionalTypeNode(node)) {
+    const checkTypeChildren = buildTypeNodeTokens(node.checkType, tokens, deprecated, depth);
+    if (checkTypeChildren?.length) {
+      children.push(...checkTypeChildren);
+    }
+
+    tokens.push(
+      createToken(TokenKind.Keyword, "extends", {
+        hasPrefixSpace: true,
+        hasSuffixSpace: true,
+        deprecated,
+      }),
+    );
+
+    const extendsTypeChildren = buildTypeNodeTokens(node.extendsType, tokens, deprecated, depth);
+    if (extendsTypeChildren?.length) {
+      children.push(...extendsTypeChildren);
+    }
+
+    tokens.push(
+      createToken(TokenKind.Punctuation, "?", {
+        hasPrefixSpace: true,
+        hasSuffixSpace: true,
+        deprecated,
+      }),
+    );
+
+    const trueTypeChildren = buildTypeNodeTokens(node.trueType, tokens, deprecated, depth);
+    if (trueTypeChildren?.length) {
+      children.push(...trueTypeChildren);
+    }
+
+    tokens.push(
+      createToken(TokenKind.Punctuation, ":", {
+        hasPrefixSpace: true,
+        hasSuffixSpace: true,
+        deprecated,
+      }),
+    );
+
+    const falseTypeChildren = buildTypeNodeTokens(node.falseType, tokens, deprecated, depth);
+    if (falseTypeChildren?.length) {
+      children.push(...falseTypeChildren);
+    }
+
+    return children.length > 0 ? children : undefined;
+  }
+
+  if (ts.isInferTypeNode(node)) {
+    tokens.push(
+      createToken(TokenKind.Keyword, "infer", {
+        hasSuffixSpace: true,
+        deprecated,
+      }),
+    );
+    const typeParameterName = node.typeParameter.name.getText();
+    tokens.push(createToken(TokenKind.TypeName, typeParameterName, { deprecated }));
+
+    if (node.typeParameter.constraint) {
+      tokens.push(
+        createToken(TokenKind.Keyword, "extends", {
+          hasPrefixSpace: true,
+          hasSuffixSpace: true,
+          deprecated,
+        }),
+      );
+      const constraintChildren = buildTypeNodeTokens(
+        node.typeParameter.constraint,
+        tokens,
+        deprecated,
+        depth,
+      );
+      if (constraintChildren?.length) {
+        children.push(...constraintChildren);
+      }
+    }
+
+    return children.length > 0 ? children : undefined;
+  }
   const text = node.getText();
   const tokenKind = getTokenKind(text);
   tokens.push(createToken(tokenKind, text, { deprecated }));
@@ -446,3 +526,4 @@ export function parseTypeText(
   tokens.push(createToken(tokenKind, typeText.trim(), { deprecated }));
   return undefined;
 }
+

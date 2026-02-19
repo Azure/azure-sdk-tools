@@ -676,6 +676,45 @@ describe("typeAliasTokenGenerator", () => {
       expect(ampToken).toBeDefined();
     });
 
+    it("handles conditional type alias with union extends and infer", () => {
+      const mockTypeAlias = createMockTypeAlias(
+        "PaginateReturn",
+        "TResult extends { body: { value?: infer TPage; }; } | { body: { members?: infer TPage; }; } ? GetArrayType<TPage> : Array<unknown>",
+        createBasicExcerptTokens(
+          "PaginateReturn",
+          "TResult extends { body: { value?: infer TPage; }; } | { body: { members?: infer TPage; }; } ? GetArrayType<TPage> : Array<unknown>",
+        ),
+        [createMockTypeParameter("TResult")],
+      );
+
+      const { tokens, children } = typeAliasTokenGenerator.generate(mockTypeAlias, false);
+
+      const allTokens = [
+        ...tokens,
+        ...(children ?? []).flatMap((line) => [
+          ...line.Tokens,
+          ...(line.Children ?? []).flatMap((childLine) => childLine.Tokens),
+        ]),
+      ];
+
+      const inferToken = allTokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "infer");
+      expect(inferToken).toBeDefined();
+
+      const extendsToken = allTokens.find((t) => t.Kind === TokenKind.Keyword && t.Value === "extends");
+      expect(extendsToken).toBeDefined();
+
+      const pipeToken = allTokens.find((t) => t.Value === "|");
+      expect(pipeToken).toBeDefined();
+
+      const questionToken = allTokens.find((t) => t.Value === "?");
+      expect(questionToken).toBeDefined();
+
+      const colonToken = allTokens.find((t) => t.Value === ":");
+      expect(colonToken).toBeDefined();
+
+      expect(children?.length ?? 0).toBeGreaterThan(0);
+    });
+
     it("handles template literal type alias", () => {
       const mockTypeAlias = createMockTypeAlias(
         "TemplateLiteralType",

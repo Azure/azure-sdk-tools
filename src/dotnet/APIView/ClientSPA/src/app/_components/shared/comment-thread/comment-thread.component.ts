@@ -158,6 +158,7 @@ export class CommentThreadComponent {
         { title: "csharp", label: ".NET", command: (event) => this.createGitHubIssue(event) },
         { title: "python", label: "Python", command: (event) => this.createGitHubIssue(event) },
         { title: "rust", label: "Rust", command: (event) => this.createGitHubIssue(event) },
+        { title: "apiview", label: "APIView", command: (event) => this.createGitHubIssue(event) },
       ]
     });
   }
@@ -283,6 +284,9 @@ export class CommentThreadComponent {
         break;
       case "rust":
         repo = "azure-sdk-for-rust";
+        break;
+      case "apiview":
+        repo = "azure-sdk-tools";
         break;
     }
 

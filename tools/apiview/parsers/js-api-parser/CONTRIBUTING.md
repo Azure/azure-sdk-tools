@@ -5,7 +5,7 @@
 After making changes to the JS api view parser code, we need to release the `@azure-tools/ts-genapi` package. Steps to release:
 
 1. Make sure package.json has the updated version that you want to release.
-2. Changelog.md should be updated with the version and changes to be released.
+2. CHANGELOG.md should be updated with the version and changes to be released.
 3. Make sure the version getting exported on [this line is correct](https://github.com/Azure/azure-sdk-tools/blob/main/tools/apiview/parsers/js-api-parser/src/export.ts#L64)
 4. Run the internal release pipeline on Azure Devops [`tools/tools - js - apiview-parser`](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5149&_a=summary). Manually approve the release once the build succeeds.
 5. Make sure the public devops feed is updated with the package version you just released - [`azure-sdk-for-js - Azure Artifacts`](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-js). Search for @azure-tools/ts-genapi" and verify the package version released.

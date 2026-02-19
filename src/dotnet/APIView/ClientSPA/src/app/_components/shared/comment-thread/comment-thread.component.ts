@@ -138,6 +138,7 @@ export class CommentThreadComponent {
 
     const firstComment = this.codePanelRowData.comments[0];
     return firstComment.createdBy === this.userProfile?.userName ||
+           this.permissionsService.isAdmin(this.userProfile?.permissions) ||
            (firstComment.createdBy === 'azure-sdk' && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()));
   }
 
@@ -215,9 +216,13 @@ export class CommentThreadComponent {
         { label: 'Edit', icon: 'pi pi-pencil', command: (event) => this.showEditEditor(event) },
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    }
-    // Add delete for architects on AI-generated comments
-    else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
+    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions)) {
+      // Admins can delete any comment but not edit others' comments
+      menu.push({ separator: true });
+      menu.push({ items: [
+        { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
+      ]});
+    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
@@ -307,15 +312,15 @@ export class CommentThreadComponent {
     if (!target) {
       return;
     }
-    
+
     const commentId = target.getAttribute("data-item-id");
     if (!commentId) {
       this.messageService.add({ severity: 'error', summary: 'Copy failed', detail: 'Unable to find comment ID', life: 3000 });
       return;
     }
-    
+
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
-    
+
     const nodeId: string = comment?.elementId || this.codePanelRowData?.nodeId || '';
 
     // Build URL that always points to the review page, preserving revision parameters

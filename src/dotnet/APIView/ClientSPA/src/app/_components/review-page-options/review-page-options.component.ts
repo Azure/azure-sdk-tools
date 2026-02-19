@@ -25,6 +25,7 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteNotificationDto';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
+import { ReviewQualityScore } from 'src/app/_models/reviewQualityScore';
 
 // Constants for AI review button text
 const AI_REVIEW_BUTTON_TEXT = {
@@ -117,6 +118,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   codeLineSearchText: FormControl = new FormControl('');
 
+  qualityScore: ReviewQualityScore | undefined = undefined;
+  qualityScoreLoading: boolean = false;
+
   associatedPullRequests  : PullRequestModel[] = [];
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
@@ -191,6 +195,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
       this.setNamespaceReviewStates();
+      this.fetchQualityScore();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
         this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.GENERATING;
@@ -429,6 +434,28 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
     // Update button state
     this.updateNamespaceReviewButtonState();
+  }
+
+  fetchQualityScore() {
+    if (!this.activeAPIRevision?.id) return;
+    this.qualityScoreLoading = true;
+    this.apiRevisionsService.getQualityScore(this.activeAPIRevision.id).pipe(take(1)).subscribe({
+      next: (score: ReviewQualityScore) => {
+        this.qualityScore = score;
+        this.qualityScoreLoading = false;
+      },
+      error: () => {
+        this.qualityScore = undefined;
+        this.qualityScoreLoading = false;
+      }
+    });
+  }
+
+  getScoreColorClass(): string {
+    if (!this.qualityScore) return '';
+    if (this.qualityScore.score >= 80) return 'text-success';
+    if (this.qualityScore.score >= 50) return 'text-warning';
+    return 'text-danger';
   }
 
   setPullRequestsInfo() {

@@ -32,8 +32,9 @@ internal class ReadFileToolTests
         // Act
         var result = await tool.Invoke(new ReadFileInput("sample.txt"), CancellationToken.None);
 
-        // Assert
-        Assert.That(result.FileContent, Is.EqualTo("Hello World\nSecond Line"));
+        // Assert - ReadFileTool now returns line-numbered content for LLM patch tools
+        Assert.That(result.FileContent, Does.Contain("1: Hello World"));
+        Assert.That(result.FileContent, Does.Contain("2: Second Line"));
     }
 
     [Test]

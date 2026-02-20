@@ -1181,6 +1181,32 @@ export class CodePanelComponent implements OnChanges {
   }
 
   /**
+   * Highlights a comment when the URL contains a comment ID in the fragment (hash)
+   */
+  private highlightCommentFromFragment() {
+    const fragment = window.location.hash;
+    if (!fragment || fragment.length <= 1) {
+      return;
+    }
+
+    const commentId = fragment.substring(1); // Remove the '#' prefix
+    if (!commentId) {
+      return;
+    }
+
+    setTimeout(() => {
+      const commentPanel = this.elementRef.nativeElement.querySelector(`[data-comment-id="${commentId}"]`);
+      if (commentPanel) {
+        commentPanel.classList.add('active');
+        commentPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          commentPanel.classList.remove('active');
+        }, 1550);
+      }
+    }, 600);
+  }
+
+  /**
    * Navigates to the next or previous code line that contains a search match but is outside the viewport
    */
   private navigateToCodeLineWithSearchMatch() {
@@ -1315,8 +1341,9 @@ export class CodePanelComponent implements OnChanges {
     this.initializeDataSource().then(() => {
       this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
         this.isLoading = false;
-        setTimeout(() => {
-          this.scrollToNode(undefined, this.scrollToNodeId);
+        setTimeout(async () => {
+          await this.scrollToNode(undefined, this.scrollToNodeId);
+          this.highlightCommentFromFragment();
           const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
           if (viewport) {
             viewport.addEventListener('scroll', (event) => {

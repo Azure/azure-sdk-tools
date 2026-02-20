@@ -366,4 +366,195 @@ describe('CommentThreadComponent', () => {
       expect(component.codePanelRowData!.showReplyTextBox).toBe(false);
     });
   });
+
+  describe('getCommentActionMenuContent', () => {
+    beforeEach(() => {
+      component.userProfile = { userName: 'test-user' } as any;
+      component.instanceLocation = 'code-panel';
+    });
+
+    it('should always include Copy link as first menu item', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'other-user';
+      component.codePanelRowData!.comments = [comment];
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      expect(menu.length).toBeGreaterThan(0);
+      expect(menu[0].items).toBeDefined();
+      expect(menu[0].items![0].label).toBe('Copy link');
+      expect(menu[0].items![0].icon).toBe('pi pi-link');
+    });
+
+    it('should include Edit and Delete for comment owner', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'test-user';
+      component.codePanelRowData!.comments = [comment];
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      // Find the group with Edit/Delete
+      const editDeleteGroup = menu.find(item => item.items?.some(i => i.label === 'Edit'));
+      expect(editDeleteGroup).toBeDefined();
+      expect(editDeleteGroup!.items!.some(i => i.label === 'Edit')).toBe(true);
+      expect(editDeleteGroup!.items!.some(i => i.label === 'Delete')).toBe(true);
+    });
+
+    it('should not include Edit/Delete for non-owner users', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'other-user';
+      component.codePanelRowData!.comments = [comment];
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      const editDeleteGroup = menu.find(item => item.items?.some(i => i.label === 'Edit'));
+      expect(editDeleteGroup).toBeUndefined();
+    });
+
+    it('should include GitHub Issue submenu for code-panel location', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'other-user';
+      component.codePanelRowData!.comments = [comment];
+      component.instanceLocation = 'code-panel';
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      const githubIssueGroup = menu.find(item => item.label === 'Create GitHub Issue');
+      expect(githubIssueGroup).toBeDefined();
+    });
+
+    it('should not include GitHub Issue submenu for samples location', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'other-user';
+      component.codePanelRowData!.comments = [comment];
+      component.instanceLocation = 'samples';
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      const githubIssueGroup = menu.find(item => item.label === 'Create GitHub Issue');
+      expect(githubIssueGroup).toBeUndefined();
+    });
+  });
+
+  describe('copyCommentLink', () => {
+    let mockClipboard: { writeText: ReturnType<typeof vi.fn> };
+    let originalClipboard: Clipboard;
+    let mockMessageService: MessageService;
+
+    beforeEach(() => {
+      mockClipboard = {
+        writeText: vi.fn().mockResolvedValue(undefined)
+      };
+      originalClipboard = navigator.clipboard;
+      Object.defineProperty(navigator, 'clipboard', {
+        value: mockClipboard,
+        writable: true
+      });
+
+      mockMessageService = TestBed.inject(MessageService);
+      vi.spyOn(mockMessageService, 'add');
+
+      const comment = new CommentItemModel();
+      comment.id = 'test-comment-id';
+      comment.elementId = 'test-element-id';
+      component.codePanelRowData!.comments = [comment];
+      component.codePanelRowData!.nodeId = 'test-node-id';
+    });
+
+    afterEach(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: originalClipboard,
+        writable: true
+      });
+    });
+
+    it('should copy comment link to clipboard with correct URL format', async () => {
+      const mockElement = document.createElement('a');
+      mockElement.setAttribute('data-item-id', 'test-comment-id');
+
+      const mockEvent = {
+        originalEvent: {
+          target: mockElement
+        }
+      } as any;
+
+      component.copyCommentLink(mockEvent);
+
+      expect(mockClipboard.writeText).toHaveBeenCalled();
+      const calledUrl = mockClipboard.writeText.mock.calls[0][0];
+      expect(calledUrl).toContain('nId=test-element-id');
+      expect(calledUrl).toContain('#test-comment-id');
+    });
+
+    it('should show success message after copying link', async () => {
+      const mockElement = document.createElement('a');
+      mockElement.setAttribute('data-item-id', 'test-comment-id');
+
+      const mockEvent = {
+        originalEvent: {
+          target: mockElement
+        }
+      } as any;
+
+      component.copyCommentLink(mockEvent);
+
+      // Wait for the clipboard promise to resolve
+      await mockClipboard.writeText.mock.results[0]?.value;
+
+      expect(mockMessageService.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'success',
+          summary: 'Link copied'
+        })
+      );
+    });
+
+    it('should use comment elementId for nId parameter', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment-with-element';
+      comment.elementId = 'specific-element-id';
+      component.codePanelRowData!.comments = [comment];
+
+      const mockElement = document.createElement('a');
+      mockElement.setAttribute('data-item-id', 'comment-with-element');
+
+      const mockEvent = {
+        originalEvent: {
+          target: mockElement
+        }
+      } as any;
+
+      component.copyCommentLink(mockEvent);
+
+      const calledUrl = mockClipboard.writeText.mock.calls[0][0];
+      expect(calledUrl).toContain('nId=specific-element-id');
+    });
+
+    it('should fallback to nodeId if comment has no elementId', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment-no-element';
+      comment.elementId = '';
+      component.codePanelRowData!.comments = [comment];
+      component.codePanelRowData!.nodeId = 'fallback-node-id';
+
+      const mockElement = document.createElement('a');
+      mockElement.setAttribute('data-item-id', 'comment-no-element');
+
+      const mockEvent = {
+        originalEvent: {
+          target: mockElement
+        }
+      } as any;
+
+      component.copyCommentLink(mockEvent);
+
+      const calledUrl = mockClipboard.writeText.mock.calls[0][0];
+      expect(calledUrl).toContain('nId=fallback-node-id');
+    });
+  });
 });

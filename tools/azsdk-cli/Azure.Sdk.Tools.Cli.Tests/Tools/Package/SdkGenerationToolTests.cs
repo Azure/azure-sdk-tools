@@ -83,16 +83,16 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithTspLocationPath_CallsRunTspUpdate()
     {
         // Arrange
-    var tspLocationPath = Path.Combine(_tempDirectory.DirectoryPath, TspLocationFileName);
+        var tspLocationPath = Path.Combine(_tempDirectory.DirectoryPath, TspLocationFileName);
         File.WriteAllText(tspLocationPath, TestTspLocationContent);
 
-        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
-        { 
-            IsSuccessful = true, 
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse
+        {
+            IsSuccessful = true,
             TypeSpecProject = Path.GetDirectoryName(tspLocationPath)!
         };
         _mockTspClientHelper
-            .Setup(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
@@ -104,7 +104,7 @@ public class SdkGenerationToolTests
         Assert.That(result.NextSteps, Is.Not.Null);
         Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
         Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
-        _mockTspClientHelper.Verify(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockTspClientHelper.Verify(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -128,9 +128,9 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
 
-        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
-        { 
-            IsSuccessful = true, 
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse
+        {
+            IsSuccessful = true,
             TypeSpecProject = _tempDirectory.DirectoryPath
         };
         _mockTspClientHelper
@@ -153,7 +153,7 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithLocalTspConfigPath_ValidInputs_CallsRunTspInit()
     {
         // Arrange
-    var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, TspConfigFileName);
+        var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, TspConfigFileName);
         File.WriteAllText(tspConfigPath, TestTspConfigContent);
 
         // Mock GitHelper to return valid repo root
@@ -161,9 +161,9 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, true, It.IsAny<CancellationToken>())).ReturnsAsync(DefaultSpecRepo);
 
-        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
-        { 
-            IsSuccessful = true, 
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse
+        {
+            IsSuccessful = true,
             TypeSpecProject = _tempDirectory.DirectoryPath
         };
         _mockTspClientHelper
@@ -205,9 +205,9 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
 
-        var failedResult = new Models.Responses.TypeSpec.TspToolResponse 
-        { 
-            IsSuccessful = false, 
+        var failedResult = new Models.Responses.TypeSpec.TspToolResponse
+        {
+            IsSuccessful = false,
             ResponseError = "Failed to initialize TypeSpec generation, see details in the logs.",
             TypeSpecProject = _tempDirectory.DirectoryPath
         };
@@ -279,9 +279,9 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false, It.IsAny<CancellationToken>())).ReturnsAsync(DefaultSpecRepo);
 
-        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
-        { 
-            IsSuccessful = true, 
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse
+        {
+            IsSuccessful = true,
             TypeSpecProject = _tempDirectory.DirectoryPath
         };
         _mockTspClientHelper
@@ -315,9 +315,9 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync(_tempDirectory.DirectoryPath);
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
 
-        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
-        { 
-            IsSuccessful = true, 
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse
+        {
+            IsSuccessful = true,
             TypeSpecProject = _tempDirectory.DirectoryPath
         };
         _mockTspClientHelper
@@ -351,9 +351,9 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false, It.IsAny<CancellationToken>())).ReturnsAsync(DefaultSpecRepo);
 
-        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse 
-        { 
-            IsSuccessful = true, 
+        var expectedResult = new Models.Responses.TypeSpec.TspToolResponse
+        {
+            IsSuccessful = true,
             TypeSpecProject = _tempDirectory.DirectoryPath
         };
         _mockTspClientHelper

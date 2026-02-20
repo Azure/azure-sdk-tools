@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Moq;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
@@ -21,18 +22,47 @@ public class CustomizedCodeUpdateToolAutoTests
         return path;
     }
 
+    private static string CreateTempTypeSpecProjectDir()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "azsdk-tsp-" + Guid.NewGuid().ToString("n"));
+        Directory.CreateDirectory(path);
+        // Create tspconfig.yaml so IsValidTypeSpecProjectPath returns true
+        File.WriteAllText(Path.Combine(path, "tspconfig.yaml"), "# mock tspconfig");
+        return path;
+    }
+
+    private static Mock<ITypeSpecCustomizationService> CreateMockCustomizationService(bool success = true, string[]? changes = null, string? failureReason = null)
+    {
+        var mock = new Mock<ITypeSpecCustomizationService>();
+        mock.Setup(s => s.ApplyCustomizationAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TypeSpecCustomizationServiceResult
+            {
+                Success = success,
+                ChangesSummary = changes ?? (success ? ["Applied test customization"] : []),
+                FailureReason = failureReason
+            });
+        return mock;
+    }
+
+    private static Mock<ITypeSpecHelper> CreateMockTypeSpecHelper(bool isValid = true)
+    {
+        var mock = new Mock<ITypeSpecHelper>();
+        mock.Setup(h => h.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(isValid);
+        return mock;
+    }
+
     // Language service that produces no API changes and no customizations
     private class MockNoChangeLanguageService : LanguageService
     {
         public override SdkLanguage Language { get; } = SdkLanguage.Java;
         public override bool IsCustomizedCodeUpdateSupported => true;
-        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override bool HasCustomizations(string packagePath, CancellationToken ct) => false; // No customizations found
+        public override bool HasCustomizations(string packagePath, CancellationToken ct) => false;
         public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(false);
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-            => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null)); // Mock successful build
+            => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null));
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
         {
             PackagePath = packagePath,
@@ -48,7 +78,7 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     // Language service that has customizations and successful patch application
-    private class MockChangeLanguageService : LanguageService
+    private class MockChangeLanguageService(bool buildSuccess = true) : LanguageService
     {
         public override SdkLanguage Language { get; } = SdkLanguage.Python;
         public override bool IsCustomizedCodeUpdateSupported => true;
@@ -58,11 +88,10 @@ public class CustomizedCodeUpdateToolAutoTests
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
         public override bool HasCustomizations(string packagePath, CancellationToken ct) => true; // Has customizations
-        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
-            => Task.FromResult(true); // Simulate successful patch application
+        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(true); // Simulate successful patch application
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-            => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null)); // Mock successful build
+            => Task.FromResult<(bool, string?, PackageInfo?)>((buildSuccess, buildSuccess ? null : "Build failed for testing", null));
         public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
         {
             PackagePath = packagePath,
@@ -77,105 +106,256 @@ public class CustomizedCodeUpdateToolAutoTests
         });
     }
 
-
     [Test]
-    public async Task Auto_NoCustomizations_CompletesSuccessfully()
+    public async Task TspCustomizations_Succeeds_BuildPasses_ReturnsSuccess()
     {
         var gitHelper = new Mock<IGitHelper>();
-        var processHelper = new Mock<IProcessHelper>();
-        var logger = new TestLogger<LanguageService>();
-        var commonValidationHelper = new Mock<ICommonValidationHelpers>();
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
         var svc = new MockNoChangeLanguageService();
         var tsp = new MockTspHelper();
-        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
-        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
-        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
-        specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
-            .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+        var custService = CreateMockCustomizationService(success: true, changes: ["Renamed FooClient to BarClient"]);
+        var typeSpecHelper = CreateMockTypeSpecHelper();
+
+        var tool = new CustomizedCodeUpdateTool(
+            new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp,
+            custService.Object, typeSpecHelper.Object);
+
         var pkg = CreateTempPackageDir();
-        var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
-        Assert.That(run.ErrorCode, Is.Null, "Should complete successfully without errors");
-        Assert.That(run.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide next steps guidance");
-        Assert.That(run.Message, Does.Contain("No customization"), "Should indicate no customizations found");
+        var tspProject = CreateTempTypeSpecProjectDir();
+
+        var result = await tool.UpdateAsync("Rename FooClient to BarClient", tspProject, pkg, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorCode, Is.Null, "Should complete successfully without errors");
+            Assert.That(result.Message, Does.Contain("successfully"), "Should indicate success");
+            Assert.That(result.TypeSpecChangesSummary, Is.Not.Null.And.Not.Empty, "Should include TypeSpec changes summary");
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide next steps guidance");
+        });
+
     }
 
     [Test]
-    public async Task Auto_WithCustomizations_AppliedSuccessfully()
+    public async Task TspCustomizations_Fails_ReturnsTypeSpecCustomizationFailed()
     {
         var gitHelper = new Mock<IGitHelper>();
-        var svc = new MockChangeLanguageService();
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        var svc = new MockNoChangeLanguageService();
         var tsp = new MockTspHelper();
-        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
+        var custService = CreateMockCustomizationService(success: false, failureReason: "Could not find suitable decorator");
+        var typeSpecHelper = CreateMockTypeSpecHelper();
+
+        var tool = new CustomizedCodeUpdateTool(
+            new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp,
+            custService.Object, typeSpecHelper.Object);
+
+        var pkg = CreateTempPackageDir();
+        var tspProject = CreateTempTypeSpecProjectDir();
+
+        var result = await tool.UpdateAsync("Do something impossible", tspProject, pkg, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorCode, Is.EqualTo("TypeSpecCustomizationFailed"));
+            Assert.That(result.Message, Does.Contain("TypeSpec customization failed"));
+        });
+
+    }
+
+    [Test]
+    public async Task TspCustomizations_Succeeds_BuildFails_HasCustomizations_CodeCustomizationsSucceeds()
+    {
+        var gitHelper = new Mock<IGitHelper>();
         gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-python");
         gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
-        specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
-            .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+
+        // Build fails first (after Phase A), succeeds second (after Phase B)
+        int buildCallCount = 0;
+        var svc = new Mock<LanguageService>();
+        svc.SetupGet(s => s.Language).Returns(SdkLanguage.Python);
+        svc.SetupGet(s => s.IsCustomizedCodeUpdateSupported).Returns(true);
+        svc.Setup(s => s.HasCustomizations(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(true);
+        svc.Setup(s => s.ApplyPatchesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        svc.Setup(s => s.BuildAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                buildCallCount++;
+                return buildCallCount == 1
+                    ? (false, "error CS0246: type not found", (PackageInfo?)null)
+                    : (true, null, (PackageInfo?)null);
+            });
+
+        var tsp = new MockTspHelper();
+        var custService = CreateMockCustomizationService(success: true, changes: ["Applied decorator"]);
+        var typeSpecHelper = CreateMockTypeSpecHelper();
+
+        var tool = new CustomizedCodeUpdateTool(
+            new NullLogger<CustomizedCodeUpdateTool>(), [svc.Object], gitHelper.Object, tsp,
+            custService.Object, typeSpecHelper.Object);
+
         var pkg = CreateTempPackageDir();
-        // Create a mock customization directory
-        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
-        var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
-        Assert.That(first.ErrorCode, Is.Null, "Should complete successfully without errors");
-        Assert.That(first.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for applied patches");
-        Assert.That(first.Message, Does.Contain("Patches applied"), "Should indicate patches were applied successfully");
+        var tspProject = CreateTempTypeSpecProjectDir();
+
+        var result = await tool.UpdateAsync("Fix build error", tspProject, pkg, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorCode, Is.Null, "Should complete successfully after code customizations");
+            Assert.That(result.Message, Does.Contain("patches applied"), "Should indicate code patches were applied");
+            Assert.That(result.TypeSpecChangesSummary, Is.Not.Null.And.Not.Empty, "Should include TypeSpec customization changes");
+        });
+
     }
 
     [Test]
-    public async Task Validation_Failure_Provides_Guidance()
+    public async Task TspCustomizations_Succeeds_BuildFails_NoCustomizations_ReturnsGuidance()
     {
-        var tsp = new MockTspHelper();
         var gitHelper = new Mock<IGitHelper>();
-        var specGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
-        int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
         gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
         gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
-        specGenSdkConfigHelper.Setup(s => s.GetConfigurationAsync(It.IsAny<string>(), It.IsAny<SpecGenSdkConfigType>()))
-            .ReturnsAsync((SpecGenSdkConfigContentType.Unknown, string.Empty));
-        var tool = new CustomizedCodeUpdateTool(new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp);
+
+        var svc = new Mock<LanguageService>();
+        svc.SetupGet(s => s.Language).Returns(SdkLanguage.Java);
+        svc.SetupGet(s => s.IsCustomizedCodeUpdateSupported).Returns(true);
+        svc.Setup(s => s.HasCustomizations(It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(false);
+        svc.Setup(s => s.BuildAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((false, "Build failed: missing symbol", (PackageInfo?)null));
+
+        var tsp = new MockTspHelper();
+        var custService = CreateMockCustomizationService(success: true, changes: ["Applied decorator"]);
+        var typeSpecHelper = CreateMockTypeSpecHelper();
+
+        var tool = new CustomizedCodeUpdateTool(
+            new NullLogger<CustomizedCodeUpdateTool>(), [svc.Object], gitHelper.Object, tsp,
+            custService.Object, typeSpecHelper.Object);
+
         var pkg = CreateTempPackageDir();
-        // Create a mock customization directory to trigger patch application
-        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
-        var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, ct: CancellationToken.None);
-        // Build failure now returns an error code (structured for classifier)
-        Assert.That(resp.ErrorCode, Is.Not.Null, "Should have error code for build failure");
-        Assert.That(resp.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for validation failure");
-        Assert.That(resp.Message, Does.Contain("Build failed"), "Should indicate build failure in message");
+        var tspProject = CreateTempTypeSpecProjectDir();
+
+        var result = await tool.UpdateAsync("Fix something", tspProject, pkg, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorCode, Is.EqualTo("BuildNoCustomizationsFailed"));
+            Assert.That(result.TypeSpecChangesSummary, Is.Not.Null.And.Not.Empty, "Should include TypeSpec customization changes even on failure");
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide manual guidance");
+        });
+
     }
 
-    private class TestLanguageServiceFailThenFix: LanguageService
+    [Test]
+    public async Task InvalidInput_EmptyCustomizationRequest_ReturnsError()
     {
-        public override SdkLanguage Language { get; } = SdkLanguage.Java;
-        public override bool IsCustomizedCodeUpdateSupported => true;
-        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
-        private Func<int> _next;
-        public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
-        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override bool HasCustomizations(string packagePath, CancellationToken ct) => true; // Has customizations
-        public override Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct) => Task.FromResult(true); // Simulate patches applied
-        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
+        var gitHelper = new Mock<IGitHelper>();
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        var svc = new MockNoChangeLanguageService();
+        var tsp = new MockTspHelper();
+        var custService = CreateMockCustomizationService();
+        var typeSpecHelper = CreateMockTypeSpecHelper();
+
+        var tool = new CustomizedCodeUpdateTool(
+            new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp,
+            custService.Object, typeSpecHelper.Object);
+
+        var pkg = CreateTempPackageDir();
+
+        var result = await tool.UpdateAsync("", "/some/tsp/path", pkg, CancellationToken.None);
+        Assert.Multiple(() =>
         {
-            var attempt = _next();
-            if (attempt == 0)
-            {
-                return Task.FromResult(ValidationResult.CreateFailure("compile error"));
-            }
-            return Task.FromResult(ValidationResult.CreateSuccess());
-        }
-        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-            => Task.FromResult<(bool, string?, PackageInfo?)>((false, "Build failed for testing", null)); // Simulate failed build for this test
-        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
-        {
-            PackagePath = packagePath,
-            RepoRoot = "/mock/repo",
-            RelativePath = "sdk/mock/package",
-            PackageName = "mock-package",
-            ServiceName = "mock",
-            PackageVersion = "1.0.0",
-            SamplesDirectory = "/mock/samples",
-            Language = SdkLanguage.Java,
-            SdkType = SdkType.Dataplane
+            Assert.That(result.ErrorCode, Is.EqualTo("InvalidInput"));
+            Assert.That(result.Message, Does.Contain("Plain text feedback is required"));
         });
+
+    }
+
+    [Test]
+    public async Task InvalidInput_BadTypeSpecProjectPath_ReturnsError()
+    {
+        var gitHelper = new Mock<IGitHelper>();
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        var svc = new MockNoChangeLanguageService();
+        var tsp = new MockTspHelper();
+        var custService = CreateMockCustomizationService();
+        var typeSpecHelper = CreateMockTypeSpecHelper(isValid: false);
+
+        var tool = new CustomizedCodeUpdateTool(
+            new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp,
+            custService.Object, typeSpecHelper.Object);
+
+        var pkg = CreateTempPackageDir();
+
+        var result = await tool.UpdateAsync("Do something", "/invalid/path", pkg, CancellationToken.None);
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorCode, Is.EqualTo("InvalidInput"));
+            Assert.That(result.Message, Does.Contain("Invalid TypeSpec project path"));
+        });
+
+    }
+
+    [Test]
+    public async Task TspCustomizations_Succeeds_BuildFails_CodeCustomizationsFails_ReturnsError()
+    {
+        var gitHelper = new Mock<IGitHelper>();
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-python");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+
+        var svc = new MockChangeLanguageService(buildSuccess: false);
+        var tsp = new MockTspHelper();
+        var custService = CreateMockCustomizationService(success: true, changes: ["Applied decorator"]);
+        var typeSpecHelper = CreateMockTypeSpecHelper();
+
+        var tool = new CustomizedCodeUpdateTool(
+            new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp,
+            custService.Object, typeSpecHelper.Object);
+
+        var pkg = CreateTempPackageDir();
+        var tspProject = CreateTempTypeSpecProjectDir();
+
+        var result = await tool.UpdateAsync("Fix something", tspProject, pkg, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorCode, Is.EqualTo("BuildAfterPatchesFailed"));
+            Assert.That(result.TypeSpecChangesSummary, Is.Not.Null.And.Not.Empty, "Should include TypeSpec customization changes");
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
+        });
+
+    }
+
+    [Test]
+    public async Task RegenerationFails_ReturnsError()
+    {
+        var gitHelper = new Mock<IGitHelper>();
+        gitHelper.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+        gitHelper.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("/mock/repo/root");
+        var svc = new MockNoChangeLanguageService();
+
+        var tsp = new Mock<ITspClientHelper>();
+        tsp.Setup(t => t.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = false, ResponseError = "tsp-client update failed", TypeSpecProject = "mock" });
+
+        var custService = CreateMockCustomizationService(success: true, changes: ["Applied decorator"]);
+        var typeSpecHelper = CreateMockTypeSpecHelper();
+
+        var tool = new CustomizedCodeUpdateTool(
+            new NullLogger<CustomizedCodeUpdateTool>(), [svc], gitHelper.Object, tsp.Object,
+            custService.Object, typeSpecHelper.Object);
+
+        var pkg = CreateTempPackageDir();
+        var tspProject = CreateTempTypeSpecProjectDir();
+
+        var result = await tool.UpdateAsync("Rename something", tspProject, pkg, CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ErrorCode, Is.EqualTo("RegenerateFailed"));
+            Assert.That(result.TypeSpecChangesSummary, Is.Not.Null.And.Not.Empty, "Should include TypeSpec customization changes even on regen failure");
+        });
+
     }
 }
 
@@ -183,7 +363,7 @@ internal class MockTspHelper : ITspClientHelper
 {
     public Task<TspToolResponse> ConvertSwaggerAsync(string swaggerReadmePath, string outputDirectory, bool isArm, bool fullyCompatible, bool isCli, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = outputDirectory });
-    public Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, CancellationToken ct = default)
+    public Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, string? localSpecRepoPath = null, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = tspLocationDirectory });
     public Task<TspToolResponse> InitializeGenerationAsync(string workingDirectory, string tspConfigPath, string[]? additionalArgs = null, CancellationToken ct = default)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProject = workingDirectory });

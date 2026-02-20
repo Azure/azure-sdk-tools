@@ -51,6 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;
+
 #pragma warning disable CS1998
         public async virtual Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken cancellationToken = default)
         {
@@ -198,32 +199,33 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
-        /// Determines whether the package has any hand-authored customizations.
+        /// Determines whether the package has customizations and returns their root directory.
         /// </summary>
         /// <param name="packagePath">Root folder of the package (e.g. SDK package directory).</param>
         /// <param name="ct">Cancellation token.</param>
-        /// <returns>True if customizations exist; false otherwise.</returns>
-        public virtual bool HasCustomizations(string packagePath, CancellationToken ct)
+        /// <returns>Path to customization root directory if customizations exist, null otherwise.</returns>
+        public virtual string? HasCustomizations(string packagePath, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(packagePath) || !Directory.Exists(packagePath))
-            {
-                logger?.LogDebug("Cannot check for customizations - package path does not exist: {PackagePath}", packagePath);
-                return false;
-            }
-            return false;
+            return null;
         }
 
         /// <summary>
-        /// Applies automated patches directly to customization code using intelligent analysis.
+        /// Applies patches to customization files based on build errors.
+        /// This is a mechanical worker - it applies safe patches and returns results.
+        /// The Classifier (Phase A) does the thinking and routing.
         /// </summary>
-        /// <param name="commitSha">The commit SHA from TypeSpec changes for context</param>
         /// <param name="customizationRoot">Path to the customization root directory</param>
         /// <param name="packagePath">Path to the package directory containing generated code</param>
+        /// <param name="buildError">The build error that triggered repair</param>
         /// <param name="ct">Cancellation token</param>
-        /// <returns>True if patches were successfully applied; false otherwise</returns>
-        public virtual Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
+        /// <returns>List of applied patches</returns>
+        public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(
+            string customizationRoot,
+            string packagePath,
+            string buildError,
+            CancellationToken ct)
         {
-            return Task.FromResult(false);
+            return Task.FromResult(new List<AppliedPatch>());
         }
 
         /// <summary>
@@ -434,7 +436,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 // Skip build for Python projects early (Python SDKs don't require compilation)
                 if (Language == SdkLanguage.Python)
                 {
-                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    logger.LogDebug("Python SDK - skipping build");
                     return (true, null, null);
                 }
 
@@ -455,7 +457,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 }
 
                 packagePath = fullPath;
-                logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
                 // Get repository root path from project path
                 string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
@@ -463,8 +464,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 {
                     return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.", null);
                 }
-
-                logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
 
                 PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
 
@@ -474,7 +473,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     return (false, "No build configuration found or failed to prepare the build command.", packageInfo);
                 }
 
-                logger.LogInformation("Found valid configuration for build process. Executing configured script...");
+                logger.LogDebug("Found valid configuration for build process. Executing configured script...");
 
                 // Prepare script parameters
                 var scriptParameters = new Dictionary<string, string>
@@ -496,11 +495,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 if (result.ExitCode != 0)
                 {
                     var errorMessage = $"Build failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}";
-                    logger.LogError("Build failed: {ErrorMessage}", errorMessage);
+                    logger.LogDebug("Build failed: {ErrorMessage}", errorMessage);
                     return (false, errorMessage, packageInfo);
                 }
 
-                logger.LogInformation("Build completed successfully.");
+                logger.LogDebug("Build completed successfully.");
                 return (true, null, packageInfo);
             }
             catch (Exception ex)

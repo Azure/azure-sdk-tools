@@ -16,6 +16,11 @@ on:
 # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
 permissions: {}
 
+# Ensure only one event processor runs at a time for a given PR/Issue to avoid duplicate processing
+concurrency:
+  group: event-processor-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # This event requires the Azure CLI to get the LABEL_SERVICE_API_KEY from the vault.
   # Because the azure/login step adds time costly pre/post Az CLI commands to any every job

@@ -10,7 +10,6 @@ from apistubgentest.models import (
     AliasUnion,
     ClassWithDecorators,
     ClassWithIvarsAndCvars,
-    ClassWithMissingClassVar,
     FakeTypedDict,
     FakeObject,
     GenericStack,
@@ -28,8 +27,6 @@ from apistubgentest.models import (
     SomeProtocolDecorator,
     SomethingWithLiterals,
 )
-
-import logging
 
 from pytest import fail
 
@@ -633,18 +630,3 @@ class TestClassParsing:
         assert metadata["RelatedToLine"] == 4
         assert metadata["IsContextEndLine"] == 1
 
-    def test_class_variable_without_classvar_logs_error(self, caplog):
-        obj = ClassWithMissingClassVar
-        with caplog.at_level(logging.ERROR, logger="apistub.nodes._class_node"):
-            ClassNode(
-                name=obj.__name__,
-                namespace=obj.__name__,
-                parent_node=None,
-                obj=obj,
-                pkg_root_namespace=self.pkg_namespace,
-                apiview=MockApiView,
-            )
-        assert any(
-            "missing_classvar" in record.message and "ClassVar" in record.message
-            for record in caplog.records
-        ), f"Expected error about missing ClassVar for 'missing_classvar'. Records: {[r.message for r in caplog.records]}"

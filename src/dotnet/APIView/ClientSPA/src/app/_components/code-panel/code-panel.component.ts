@@ -1340,8 +1340,8 @@ export class CodePanelComponent implements OnChanges {
     this.initializeDataSource().then(() => {
       this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
         this.isLoading = false;
-        setTimeout(() => {
-          this.scrollToNode(undefined, this.scrollToNodeId);
+        setTimeout(async () => {
+          await this.scrollToNode(undefined, this.scrollToNodeId);
           this.highlightCommentFromFragment();
           const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
           if (viewport) {

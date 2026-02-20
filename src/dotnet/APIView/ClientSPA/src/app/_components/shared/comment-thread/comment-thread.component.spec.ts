@@ -503,14 +503,15 @@ describe('CommentThreadComponent', () => {
 
       component.copyCommentLink(mockEvent);
 
-      await vi.waitFor(() => {
-        expect(mockMessageService.add).toHaveBeenCalledWith(
-          expect.objectContaining({
-            severity: 'success',
-            summary: 'Link copied'
-          })
-        );
-      });
+      // Wait for the clipboard promise to resolve
+      await mockClipboard.writeText.mock.results[0]?.value;
+
+      expect(mockMessageService.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'success',
+          summary: 'Link copied'
+        })
+      );
     });
 
     it('should use comment elementId for nId parameter', () => {

@@ -94,6 +94,16 @@ export function isBetaVersion(stableVersion: string) {
     return stableVersion.includes('beta');
 }
 
+export function isValidComparableVersion(version: string) {
+    // Only accept pure stable versions (no prerelease identifier) or beta versions
+    // Reject alpha, rc, or other prerelease versions
+    const hasPrerelease = version.includes('-');
+    if (!hasPrerelease) {
+        return true; // Pure stable version like "1.0.0"
+    }
+    return version.includes('beta'); // Beta version like "1.0.0-beta.1"
+}
+
 export function bumpMajorVersion(version: string, usedVersions: string[] | undefined) {
     let newVersion = semverInc(version, 'major', 'beta');
     while (usedVersions && usedVersions.includes(newVersion)) {

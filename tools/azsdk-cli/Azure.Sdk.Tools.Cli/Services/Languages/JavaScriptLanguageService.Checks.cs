@@ -14,6 +14,11 @@ public partial class JavaScriptLanguageService : LanguageService
 
     public async Task<PackageCheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for sample validation in JavaScript.");
+        }
+        
         try
         {
             var result = await processHelper.Run(new(
@@ -44,6 +49,11 @@ public partial class JavaScriptLanguageService : LanguageService
     
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for snippet updates in JavaScript.");
+        }
+        
         try
         {
             var result = await processHelper.Run(new(

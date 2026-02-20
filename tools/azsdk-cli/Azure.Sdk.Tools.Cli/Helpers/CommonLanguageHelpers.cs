@@ -94,6 +94,11 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for changelog validation.");
+        }
+        
         try
         {
             var (packageRepoRoot, errorResponse) = await ValidatePackageAndDiscoverRepoAsync(packagePath, ct);
@@ -136,6 +141,11 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for README validation.");
+        }
+        
         try
         {
             var (packageRepoRoot, errorResponse) = await ValidatePackageAndDiscoverRepoAsync(packagePath, ct);

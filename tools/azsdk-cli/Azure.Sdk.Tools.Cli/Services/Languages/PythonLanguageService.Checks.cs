@@ -14,6 +14,11 @@ public partial class PythonLanguageService : LanguageService
 {
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for snippet updates in Python.");
+        }
+        
         try
         {
             logger.LogInformation("Starting snippet update for Python project at: {PackagePath}", packagePath);
@@ -56,6 +61,11 @@ public partial class PythonLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for code linting in Python.");
+        }
+        
         try
         {
             logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
@@ -103,6 +113,11 @@ public partial class PythonLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for code formatting in Python.");
+        }
+        
         try
         {
             logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);

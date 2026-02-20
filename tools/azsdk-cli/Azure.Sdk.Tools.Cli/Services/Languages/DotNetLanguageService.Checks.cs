@@ -12,6 +12,11 @@ public partial class DotnetLanguageService : LanguageService
 { 
     public override async Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for generated code checks.");
+        }
+        
         try
         {
             logger.LogInformation("Starting generated code checks for .NET project at: {PackagePath}", packagePath);
@@ -62,6 +67,11 @@ public partial class DotnetLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for AOT compatibility checks.");
+        }
+        
         try
         {
             logger.LogInformation("Starting AOT compatibility check for .NET project at: {PackagePath}", packagePath);

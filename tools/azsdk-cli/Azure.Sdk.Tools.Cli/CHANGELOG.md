@@ -72,6 +72,8 @@
 - Fixed issue in `azsdk_link_sdk_pull_request_to_release_plan` and `azsdk_get_sdk_pull_request_link` tools where language was set as unknown in response.
 - Fixed issue in `azsdk_get_release_plan_for_spec_pr` where tool call status was set as successful in telemetry but actually failed.
 
+- `noop` for methods where fixCheckErrors isn't fully supported if set to True for clarity
+
 ## 0.5.10 (2025-12-08)
 
 ### Features Added

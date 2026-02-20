@@ -217,6 +217,11 @@ public partial class JavaLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false,  CancellationToken cancellationToken = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for snippet updates in Java.");
+        }
+        
         try
         {
             logger.LogInformation("Starting code snippet update for Java project at: {PackagePath}", packagePath);
@@ -265,6 +270,11 @@ public partial class JavaLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
+        if (fixCheckErrors)
+        {
+            return new PackageCheckResponse(0, "noop", "Fix mode is not supported for dependency analysis in Java.");
+        }
+        
         try
         {
             logger.LogInformation("Starting dependency analysis for Java project at: {PackagePath}", packagePath);

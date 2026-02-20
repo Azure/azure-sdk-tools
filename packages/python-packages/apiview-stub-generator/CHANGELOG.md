@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.3.26 (2-25-02-19)
+## Version 0.3.26 (2025-02-20)
 Fixed a bug where classes with no custom name attribute cause errors.
 Updated .pylintrc disabled rules to match Python repo main.
 

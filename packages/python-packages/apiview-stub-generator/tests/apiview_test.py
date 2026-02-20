@@ -237,9 +237,6 @@ class TestApiView:
         constructor_level = [d for d in violations_diags if d['TargetId'] == 'apistubgentest.PylintCheckerViolationsClient.__init__']
         method_level = [d for d in violations_diags if 'with_too_many_args' in d['TargetId'] or 'list_secrets' in d['TargetId'] or 'set_secret' in d['TargetId'] or 'get_secret' in d['TargetId']]
 
-        # Total should be 16: 2 class-level + 2 constructor-level + 12 method-level
-        # Method-level includes overloads for list_secrets (6 diagnostics), set_secret (6 diagnostics),
-        # get_secret (3 diagnostics), and with_too_many_args (3 diagnostics)
         assert len(violations_diags) == 16, f"Should have 16 total diagnostics, got {len(violations_diags)}"
         assert len(class_level) == 2, f"Should have 2 class-level diagnostics, got {len(class_level)}"
         assert len(constructor_level) == 2, f"Should have 2 constructor-level diagnostics, got {len(constructor_level)}"

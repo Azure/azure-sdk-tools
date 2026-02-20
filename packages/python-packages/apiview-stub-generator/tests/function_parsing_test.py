@@ -40,7 +40,7 @@ class TestTypeHints:
                 "    self, ",
                 "    name: str, ",
                 "    age: int",
-                ") -> str",
+                ") -> str: ...",
                 ""
             ]
             _check(actual, expected, client)
@@ -52,7 +52,7 @@ class TestTypeHints:
         for client in clients:
             node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_complex_typehints)
             actual = _render_lines(_tokenize(node))
-            expected = "def with_complex_typehints(self, value: List[ItemPaged[Union[FakeObject, FakeError]]]) -> None"
+            expected = "def with_complex_typehints(self, value: List[ItemPaged[Union[FakeObject, FakeError]]]) -> None: ..."
             expected = [expected, ""]
             _check(actual, expected, client)
 
@@ -74,7 +74,7 @@ class TestTypeHints:
                 "    self, ",
                 "    *vars: str, ",
                 "    **kwargs: Any",
-                ") -> None",
+                ") -> None: ...",
                 ""
             ]
             _check(actual, expected, client)
@@ -91,7 +91,7 @@ class TestTypeHints:
         for client in clients:
             node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_str_list_return_type)
             actual = _render_lines(_tokenize(node))
-            expected = "def with_str_list_return_type(self) -> List[str]"
+            expected = "def with_str_list_return_type(self) -> List[str]: ..."
             expected = [expected, ""]
             _check(actual, expected, client)
 
@@ -102,7 +102,7 @@ class TestTypeHints:
         for client in clients:
             node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_list_return_type)
             actual = _render_lines(_tokenize(node))
-            expected = "def with_list_return_type(self) -> List[TestClass]"
+            expected = "def with_list_return_type(self) -> List[TestClass]: ..."
             expected = [expected, ""]
             _check(actual, expected, client)
 
@@ -113,7 +113,7 @@ class TestTypeHints:
         for client in clients:
             node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_list_union_return_type)
             actual = _render_lines(_tokenize(node))
-            expected = "def with_list_union_return_type(self) -> List[Union[str, int]]"
+            expected = "def with_list_union_return_type(self) -> List[Union[str, int]]: ..."
             expected = [expected, ""]
             _check(actual, expected, client)
 
@@ -124,7 +124,7 @@ class TestTypeHints:
         for client in clients:
             node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_datetime_typehint)
             actual = _render_lines(_tokenize(node))
-            expected = "def with_datetime_typehint(self, date: datetime) -> datetime"
+            expected = "def with_datetime_typehint(self, date: datetime) -> datetime: ..."
             expected = [expected, ""]
             _check(actual, expected, client)
 
@@ -135,7 +135,7 @@ class TestTypeHints:
         node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_explicit_kwargs_docstring)
         actual = _render_lines(_tokenize(node))
         expected = [
-            "def with_explicit_kwargs_docstring(self, **kwargs: Any) -> str", ""
+            "def with_explicit_kwargs_docstring(self, **kwargs: Any) -> str: ...", ""
         ]
         _check(actual, expected, client)
 
@@ -144,7 +144,7 @@ class TestTypeHints:
         node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_incorrect_param_kwargs_docstring)
         actual = _render_lines(_tokenize(node))
         expected = [
-            "def with_incorrect_param_kwargs_docstring(self, **kwargs: Any) -> str", ""
+            "def with_incorrect_param_kwargs_docstring(self, **kwargs: Any) -> str: ...", ""
         ]
         _check(actual, expected, client)
 
@@ -153,7 +153,7 @@ class TestTypeHints:
         node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_incorrect_dict_kwargs_docstring)
         actual = _render_lines(_tokenize(node))
         expected = [
-            "def with_incorrect_dict_kwargs_docstring(self, **kwargs: Any) -> str", ""
+            "def with_incorrect_dict_kwargs_docstring(self, **kwargs: Any) -> str: ...", ""
         ]
         _check(actual, expected, client)
 
@@ -162,7 +162,7 @@ class TestTypeHints:
         node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_incorrect_dict_kwargs_docstring2)
         actual = _render_lines(_tokenize(node))
         expected = [
-            "def with_incorrect_dict_kwargs_docstring2(self, **kwargs: Any) -> str", ""
+            "def with_incorrect_dict_kwargs_docstring2(self, **kwargs: Any) -> str: ...", ""
         ]
         _check(actual, expected, client)
 
@@ -179,7 +179,7 @@ class TestDefaultValues:
             '    name: str = "Bill", ',
             "    *, ",
             "    age: int = 21",
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, DefaultValuesClient)
@@ -198,7 +198,7 @@ class TestDefaultValues:
             '    name: Optional[str] = "Bill", ',
             "    *, ",
             "    age: Optional[int] = 21",
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, DefaultValuesClient)
@@ -214,7 +214,7 @@ class TestDefaultValues:
             "    bool: Optional[bool] = False, ",
             "    int: Optional[int] = 0, ",
             '    string: Optional[str] = ""',
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, DefaultValuesClient)
@@ -232,7 +232,7 @@ class TestDefaultValues:
             "    bool: Optional[bool] = False, ",
             "    int: Optional[int] = 0, ",
             '    string: Optional[str] = ""',
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, DefaultValuesClient)
@@ -247,7 +247,7 @@ class TestDefaultValues:
             "    name: Optional[str] = None, ",
             "    *, ",
             "    age: Optional[int] = ...",
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, DefaultValuesClient)
@@ -257,7 +257,7 @@ class TestDefaultValues:
     def test_class_default(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_class_default)
         actual = _render_lines(_tokenize(node))
-        expected = "def with_class_default(my_class: Any = FakeObject) -> None"
+        expected = "def with_class_default(my_class: Any = FakeObject) -> None: ..."
         expected = [expected, ""]
         _check(actual, expected, DefaultValuesClient)
 
@@ -271,7 +271,7 @@ class TestDefaultValues:
             '    name: str = "Bill", ',
             "    age: int = 21, ",
             '    some_class: class = ":py:class:`apistubgen.test.models.FakeObject`"',
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, DefaultValuesClient)
@@ -281,7 +281,7 @@ class TestDefaultValues:
     def test_enum_defaults(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=DefaultValuesClient.with_enum_defaults)
         actual = _render_lines(_tokenize(node))
-        expected = 'def with_enum_defaults(enum1: Union[PetEnumPy3Metaclass, str] = "DOG", enum2: Union[PetEnumPy3Metaclass, str] = PetEnumPy3Metaclass.DOG) -> None'
+        expected = 'def with_enum_defaults(enum1: Union[PetEnumPy3Metaclass, str] = "DOG", enum2: Union[PetEnumPy3Metaclass, str] = PetEnumPy3Metaclass.DOG) -> None: ...'
         expected = [expected, ""]
         _check(actual, expected, DefaultValuesClient)
 
@@ -297,7 +297,7 @@ class TestSpecialArguments:
             "    self, ",
             "    *args, ",
             "    **kwargs",
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, SpecialArgsClient)
@@ -312,7 +312,7 @@ class TestSpecialArguments:
             "    self, ",
             "    *vars, ",
             "    **kwds",
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, SpecialArgsClient)
@@ -322,7 +322,7 @@ class TestSpecialArguments:
     def test_no_args(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=SpecialArgsClient.with_no_args)
         actual = _render_lines(_tokenize(node))
-        expected = "def with_no_args() -> None"
+        expected = "def with_no_args() -> None: ..."
         expected = [expected, ""]
         _check(actual, expected, SpecialArgsClient)
 
@@ -331,14 +331,14 @@ class TestSpecialArguments:
     def test_keyword_only_args(self):
         node = FunctionNode("test", None, apiview=MockApiView, obj=SpecialArgsClient.with_keyword_only_args)
         actual = _render_lines(_tokenize(node))
-        expected = "def with_keyword_only_args(self, *, value, **kwargs) -> None"
+        expected = "def with_keyword_only_args(self, *, value, **kwargs) -> None: ..."
         expected = [
             "def with_keyword_only_args(",
             "    self, ",
             "    *, ",
             "    value, ",
             "    **kwargs",
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, SpecialArgsClient)
@@ -355,7 +355,7 @@ class TestSpecialArguments:
             "    b, ",
             "    /, ",
             "    c",
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, SpecialArgsClient)
@@ -374,7 +374,7 @@ class TestSpecialArguments:
             "    c, ",
             "    d, ",
             "    **kwargs",
-            ") -> None",
+            ") -> None: ...",
             ""
         ]
         _check(actual, expected, SpecialArgsClient)

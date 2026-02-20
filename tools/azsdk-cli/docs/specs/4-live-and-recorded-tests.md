@@ -56,6 +56,8 @@ The `azsdk_package_run_tests` tool will be enhanced to support live and recorded
 
 In live and record modes, a dictionary of environment variables will also be provided which should be passed through to the language's test runner. These environment variables will typically come from the New-TestResources.ps1 script.
 
+When tests are run in record mode and all tests pass, the tool will automatically push the recorded test assets to the assets repo. This avoids the need for the user or a separate skill to handle the assets push step.
+
 ```cs
 public enum TestMode
 {
@@ -137,6 +139,7 @@ Run the tests in record mode using the live test deployment specified in #path/t
 **Expected Agent Activity:**
 
 1. Agent should call the run test tool in record mode directly with the provided environment variables instead of attempting to deploy test resources.
+2. If all tests pass, the tool will push the recorded test assets to the assets repo automatically.
 
 ### Deploy Test Resources and Run Live Tests
 
@@ -168,10 +171,26 @@ azsdk package test run --mode <playback|record|live> [--package-path <path>] [--
 - `-p, --package-path <path>`: Path to the package to test (optional)
 - `--test-environment <path>`: Path to a .env file containing deployment environment variables (optional)
 
-**Expected Output:**
+**Expected Output (success):**
 
+```text
+<test runner output; will vary by language>
+
+"Succeeded"
+Package: <package-name>
+Language: <language>
+Version: <version>
+Package Type: <SdkType>
 ```
-[[ a log of the test run; will vary by language. ]]
+
+**Expected Output (failure):**
+
+```text
+<test runner output; will vary by language>
+
+[ERROR] Test run failed with a non-zero exit code
+[NEXT STEPS]
+Inspect the error message and attempt to resolve it
 ```
 
 ---

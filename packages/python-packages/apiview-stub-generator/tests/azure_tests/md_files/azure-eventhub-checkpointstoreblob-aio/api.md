@@ -1,5 +1,5 @@
-```python
-# Package is parsed using apiview-stub-generator(version:0.3.26), Python version: 3.10.12
+```py
+# Package is parsed using apiview-stub-generator(version:0.3.27), Python version: 3.10.12
 
 
 namespace azure.eventhub.extensions.checkpointstoreblobaio
@@ -15,7 +15,7 @@ namespace azure.eventhub.extensions.checkpointstoreblobaio
                 credential: Optional[Union[AsyncTokenCredential, AzureNamedKeyCredential, AzureSasCredential]] = ..., 
                 secondary_hostname: Optional[str] = ..., 
                 **kwargs: Any
-            ) -> None
+            ) -> None: ...
 
         @classmethod
         def from_connection_string(
@@ -27,15 +27,15 @@ namespace azure.eventhub.extensions.checkpointstoreblobaio
                 credential: Optional[Union[AsyncTokenCredential, AzureNamedKeyCredential, AzureSasCredential]] = ..., 
                 secondary_hostname: Optional[str] = ..., 
                 **kwargs: Any
-            ) -> BlobCheckpointStore
+            ) -> BlobCheckpointStore: ...
 
         async def claim_ownership(
                 self, 
                 ownership_list: Iterable[Dict[str, Any]], 
                 **kwargs: Any
-            ) -> Iterable[Dict[str, Any]]
+            ) -> Iterable[Dict[str, Any]]: ...
 
-        async def close(self) -> None
+        async def close(self) -> None: ...
 
         async def list_checkpoints(
                 self, 
@@ -43,7 +43,7 @@ namespace azure.eventhub.extensions.checkpointstoreblobaio
                 eventhub_name: str, 
                 consumer_group: str, 
                 **kwargs: Any
-            ) -> Iterable[Dict[str, Any]]
+            ) -> Iterable[Dict[str, Any]]: ...
 
         async def list_ownership(
                 self, 
@@ -51,13 +51,13 @@ namespace azure.eventhub.extensions.checkpointstoreblobaio
                 eventhub_name: str, 
                 consumer_group: str, 
                 **kwargs: Any
-            ) -> Iterable[Dict[str, Any]]
+            ) -> Iterable[Dict[str, Any]]: ...
 
         async def update_checkpoint(
                 self, 
                 checkpoint: Dict[str, Any], 
                 **kwargs: Any
-            ) -> None
+            ) -> None: ...
 
 
 ```

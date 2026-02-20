@@ -1,5 +1,5 @@
-```python
-# Package is parsed using apiview-stub-generator(version:0.3.26), Python version: 3.10.12
+```py
+# Package is parsed using apiview-stub-generator(version:0.3.27), Python version: 3.10.12
 
 
 namespace azure.healthinsights.radiologyinsights
@@ -14,7 +14,7 @@ namespace azure.healthinsights.radiologyinsights
                 api_version: str = ..., 
                 polling_interval: Optional[int] = ..., 
                 **kwargs: Any
-            ) -> None
+            ) -> None: ...
 
         @overload
         def begin_infer_radiology_insights(
@@ -25,7 +25,7 @@ namespace azure.healthinsights.radiologyinsights
                 content_type: str = "application/json", 
                 expand: Optional[List[str]] = ..., 
                 **kwargs: Any
-            ) -> LROPoller[RadiologyInsightsInferenceResult]
+            ) -> LROPoller[RadiologyInsightsInferenceResult]: ...
 
         @overload
         def begin_infer_radiology_insights(
@@ -36,7 +36,7 @@ namespace azure.healthinsights.radiologyinsights
                 content_type: str = "application/json", 
                 expand: Optional[List[str]] = ..., 
                 **kwargs: Any
-            ) -> LROPoller[RadiologyInsightsInferenceResult]
+            ) -> LROPoller[RadiologyInsightsInferenceResult]: ...
 
         @overload
         def begin_infer_radiology_insights(
@@ -47,9 +47,9 @@ namespace azure.healthinsights.radiologyinsights
                 content_type: str = "application/json", 
                 expand: Optional[List[str]] = ..., 
                 **kwargs: Any
-            ) -> LROPoller[RadiologyInsightsInferenceResult]
+            ) -> LROPoller[RadiologyInsightsInferenceResult]: ...
 
-        def close(self) -> None
+        def close(self) -> None: ...
 
         def send_request(
                 self, 
@@ -57,7 +57,7 @@ namespace azure.healthinsights.radiologyinsights
                 *, 
                 stream: bool = False, 
                 **kwargs: Any
-            ) -> HttpResponse
+            ) -> HttpResponse: ...
 
 
 namespace azure.healthinsights.radiologyinsights.aio
@@ -72,7 +72,7 @@ namespace azure.healthinsights.radiologyinsights.aio
                 api_version: str = ..., 
                 polling_interval: Optional[int] = ..., 
                 **kwargs: Any
-            ) -> None
+            ) -> None: ...
 
         @overload
         async def begin_infer_radiology_insights(
@@ -83,7 +83,7 @@ namespace azure.healthinsights.radiologyinsights.aio
                 content_type: str = "application/json", 
                 expand: Optional[List[str]] = ..., 
                 **kwargs: Any
-            ) -> AsyncLROPoller[RadiologyInsightsInferenceResult]
+            ) -> AsyncLROPoller[RadiologyInsightsInferenceResult]: ...
 
         @overload
         async def begin_infer_radiology_insights(
@@ -94,7 +94,7 @@ namespace azure.healthinsights.radiologyinsights.aio
                 content_type: str = "application/json", 
                 expand: Optional[List[str]] = ..., 
                 **kwargs: Any
-            ) -> AsyncLROPoller[RadiologyInsightsInferenceResult]
+            ) -> AsyncLROPoller[RadiologyInsightsInferenceResult]: ...
 
         @overload
         async def begin_infer_radiology_insights(
@@ -105,9 +105,9 @@ namespace azure.healthinsights.radiologyinsights.aio
                 content_type: str = "application/json", 
                 expand: Optional[List[str]] = ..., 
                 **kwargs: Any
-            ) -> AsyncLROPoller[RadiologyInsightsInferenceResult]
+            ) -> AsyncLROPoller[RadiologyInsightsInferenceResult]: ...
 
-        async def close(self) -> None
+        async def close(self) -> None: ...
 
         def send_request(
                 self, 
@@ -115,24 +115,24 @@ namespace azure.healthinsights.radiologyinsights.aio
                 *, 
                 stream: bool = False, 
                 **kwargs: Any
-            ) -> Awaitable[AsyncHttpResponse]
+            ) -> Awaitable[AsyncHttpResponse]: ...
 
 
 namespace azure.healthinsights.radiologyinsights.models
 
     class azure.healthinsights.radiologyinsights.models.AgeMismatchInference(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.AGE_MISMATCH]
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.AGE_MISMATCH]
 
         @overload
         def __init__(
                 self, 
                 *, 
                 extension: Optional[List[Extension]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -140,18 +140,18 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.Annotation(MutableMapping[str, Any]):
-        ivar author_string: Optional[str]
-        ivar extension: list[Extension]
-        ivar id: str
-        ivar text: str
-        ivar time: Optional[str]
+        author_string: Optional[str]
+        extension: list[Extension]
+        id: str
+        text: str
+        time: Optional[str]
 
         @overload
         def __init__(
@@ -162,10 +162,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 id: Optional[str] = ..., 
                 text: str, 
                 time: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -173,15 +173,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.AssessmentValueRange(MutableMapping[str, Any]):
-        ivar maximum: str
-        ivar minimum: str
+        maximum: str
+        minimum: str
 
         @overload
         def __init__(
@@ -189,10 +189,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 maximum: str, 
                 minimum: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ClinicalDocumentType(str, Enum):
@@ -207,8 +207,8 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.CodeableConcept(MutableMapping[str, Any]):
-        ivar coding: Optional[List[ForwardRef('Coding')]]
-        ivar text: Optional[str]
+        coding: Optional[List[ForwardRef('Coding')]]
+        text: Optional[str]
 
         @overload
         def __init__(
@@ -216,10 +216,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 coding: Optional[List[Coding]] = ..., 
                 text: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -227,19 +227,19 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.Coding(MutableMapping[str, Any]):
-        ivar code: Optional[str]
-        ivar display: Optional[str]
-        ivar extension: list[Extension]
-        ivar id: str
-        ivar system: Optional[str]
-        ivar version: Optional[str]
+        code: Optional[str]
+        display: Optional[str]
+        extension: list[Extension]
+        id: str
+        system: Optional[str]
+        version: Optional[str]
 
         @overload
         def __init__(
@@ -251,10 +251,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 id: Optional[str] = ..., 
                 system: Optional[str] = ..., 
                 version: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -262,18 +262,18 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.CompleteOrderDiscrepancyInference(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.COMPLETE_ORDER_DISCREPANCY]
-        ivar missing_body_part_measurements: Optional[List[ForwardRef('CodeableConcept')]]
-        ivar missing_body_parts: Optional[List[ForwardRef('CodeableConcept')]]
-        ivar order_type: CodeableConcept
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.COMPLETE_ORDER_DISCREPANCY]
+        missing_body_part_measurements: Optional[List[ForwardRef('CodeableConcept')]]
+        missing_body_parts: Optional[List[ForwardRef('CodeableConcept')]]
+        order_type: CodeableConcept
 
         @overload
         def __init__(
@@ -283,10 +283,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 missing_body_part_measurements: Optional[List[CodeableConcept]] = ..., 
                 missing_body_parts: Optional[List[CodeableConcept]] = ..., 
                 order_type: CodeableConcept
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -294,10 +294,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ContactPointSystem(str, Enum):
@@ -319,8 +319,8 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.CriticalResult(MutableMapping[str, Any]):
-        ivar description: str
-        ivar finding: Optional[Observation]
+        description: str
+        finding: Optional[Observation]
 
         @overload
         def __init__(
@@ -328,16 +328,16 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 description: str, 
                 finding: Optional[Observation] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.CriticalResultInference(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.CRITICAL_RESULT]
-        ivar result: CriticalResult
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.CRITICAL_RESULT]
+        result: CriticalResult
 
         @overload
         def __init__(
@@ -345,10 +345,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 result: CriticalResult
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -356,15 +356,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.DocumentAdministrativeMetadata(MutableMapping[str, Any]):
-        ivar encounter_id: Optional[str]
-        ivar ordered_procedures: Optional[List[ForwardRef('OrderedProcedure')]]
+        encounter_id: Optional[str]
+        ordered_procedures: Optional[List[ForwardRef('OrderedProcedure')]]
 
         @overload
         def __init__(
@@ -372,15 +372,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 encounter_id: Optional[str] = ..., 
                 ordered_procedures: Optional[List[OrderedProcedure]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.DocumentAuthor(MutableMapping[str, Any]):
-        ivar full_name: Optional[str]
-        ivar id: Optional[str]
+        full_name: Optional[str]
+        id: Optional[str]
 
         @overload
         def __init__(
@@ -388,15 +388,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 full_name: Optional[str] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.DocumentContent(MutableMapping[str, Any]):
-        ivar source_type: Union[str, DocumentContentSourceType]
-        ivar value: str
+        source_type: Union[str, DocumentContentSourceType]
+        value: str
 
         @overload
         def __init__(
@@ -404,10 +404,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 source_type: Union[str, DocumentContentSourceType], 
                 value: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.DocumentContentSourceType(str, Enum):
@@ -423,15 +423,15 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.DomainResource(MutableMapping[str, Any]):
-        ivar contained: Optional[List[ForwardRef('Resource')]]
-        ivar extension: Optional[List[ForwardRef('Extension')]]
-        ivar id: str
-        ivar implicit_rules: str
-        ivar language: str
-        ivar meta: Meta
-        ivar modifier_extension: Optional[List[ForwardRef('Extension')]]
-        ivar resource_type: str
-        ivar text: Optional[Narrative]
+        contained: Optional[List[ForwardRef('Resource')]]
+        extension: Optional[List[ForwardRef('Extension')]]
+        id: str
+        implicit_rules: str
+        language: str
+        meta: Meta
+        modifier_extension: Optional[List[ForwardRef('Extension')]]
+        resource_type: str
+        text: Optional[Narrative]
 
         @overload
         def __init__(
@@ -446,10 +446,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 modifier_extension: Optional[List[Extension]] = ..., 
                 resource_type: str, 
                 text: Optional[Narrative] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -460,15 +460,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 language: Optional[str] = ..., 
                 meta: Optional[Meta] = ..., 
                 resource_type: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.Element(MutableMapping[str, Any]):
-        ivar extension: Optional[List[ForwardRef('Extension')]]
-        ivar id: Optional[str]
+        extension: Optional[List[ForwardRef('Extension')]]
+        id: Optional[str]
 
         @overload
         def __init__(
@@ -476,10 +476,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.EncounterClass(str, Enum):
@@ -492,19 +492,19 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.Extension(MutableMapping[str, Any]):
-        ivar url: str
-        ivar value_boolean: Optional[bool]
-        ivar value_codeable_concept: Optional[CodeableConcept]
-        ivar value_date_time: Optional[str]
-        ivar value_integer: Optional[int]
-        ivar value_period: Optional[Period]
-        ivar value_quantity: Optional[Quantity]
-        ivar value_range: Optional[Range]
-        ivar value_ratio: Optional[Ratio]
-        ivar value_reference: Optional[Reference]
-        ivar value_sampled_data: Optional[SampledData]
-        ivar value_string: Optional[str]
-        ivar value_time: Optional[time]
+        url: str
+        value_boolean: Optional[bool]
+        value_codeable_concept: Optional[CodeableConcept]
+        value_date_time: Optional[str]
+        value_integer: Optional[int]
+        value_period: Optional[Period]
+        value_quantity: Optional[Quantity]
+        value_range: Optional[Range]
+        value_ratio: Optional[Ratio]
+        value_reference: Optional[Reference]
+        value_sampled_data: Optional[SampledData]
+        value_string: Optional[str]
+        value_time: Optional[time]
 
         @overload
         def __init__(
@@ -523,10 +523,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 value_sampled_data: Optional[SampledData] = ..., 
                 value_string: Optional[str] = ..., 
                 value_time: Optional[time] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -534,16 +534,16 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.FindingInference(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar finding: Observation
-        ivar kind: Literal[RadiologyInsightsInferenceType.FINDING]
+        extension: list[Extension]
+        finding: Observation
+        kind: Literal[RadiologyInsightsInferenceType.FINDING]
 
         @overload
         def __init__(
@@ -551,10 +551,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 finding: Observation
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -562,32 +562,32 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.FindingOptions(MutableMapping[str, Any]):
-        ivar provide_focused_sentence_evidence: Optional[bool]
+        provide_focused_sentence_evidence: Optional[bool]
 
         @overload
         def __init__(
                 self, 
                 *, 
                 provide_focused_sentence_evidence: Optional[bool] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.FollowupCommunicationInference(MutableMapping[str, Any]):
-        ivar communicated_at: Optional[List[datetime]]
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.FOLLOWUP_COMMUNICATION]
-        ivar recipient: Optional[List[Union[str, ForwardRef('MedicalProfessionalType')]]]
-        ivar was_acknowledged: bool
+        communicated_at: Optional[List[datetime]]
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.FOLLOWUP_COMMUNICATION]
+        recipient: Optional[List[Union[str, ForwardRef('MedicalProfessionalType')]]]
+        was_acknowledged: bool
 
         @overload
         def __init__(
@@ -597,10 +597,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 extension: Optional[List[Extension]] = ..., 
                 recipient: Optional[List[Union[str, MedicalProfessionalType]]] = ..., 
                 was_acknowledged: bool
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -608,23 +608,23 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.FollowupRecommendationInference(MutableMapping[str, Any]):
-        ivar effective_at: Optional[str]
-        ivar effective_period: Optional[Period]
-        ivar extension: list[Extension]
-        ivar findings: Optional[List[ForwardRef('RecommendationFinding')]]
-        ivar is_conditional: bool
-        ivar is_guideline: bool
-        ivar is_hedging: bool
-        ivar is_option: bool
-        ivar kind: Literal[RadiologyInsightsInferenceType.FOLLOWUP_RECOMMENDATION]
-        ivar recommended_procedure: ProcedureRecommendation
+        effective_at: Optional[str]
+        effective_period: Optional[Period]
+        extension: list[Extension]
+        findings: Optional[List[ForwardRef('RecommendationFinding')]]
+        is_conditional: bool
+        is_guideline: bool
+        is_hedging: bool
+        is_option: bool
+        kind: Literal[RadiologyInsightsInferenceType.FOLLOWUP_RECOMMENDATION]
+        recommended_procedure: ProcedureRecommendation
 
         @overload
         def __init__(
@@ -639,10 +639,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 is_hedging: bool, 
                 is_option: bool, 
                 recommended_procedure: ProcedureRecommendation
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -650,16 +650,16 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.FollowupRecommendationOptions(MutableMapping[str, Any]):
-        ivar include_recommendations_in_references: Optional[bool]
-        ivar include_recommendations_with_no_specified_modality: Optional[bool]
-        ivar provide_focused_sentence_evidence: Optional[bool]
+        include_recommendations_in_references: Optional[bool]
+        include_recommendations_with_no_specified_modality: Optional[bool]
+        provide_focused_sentence_evidence: Optional[bool]
 
         @overload
         def __init__(
@@ -668,17 +668,17 @@ namespace azure.healthinsights.radiologyinsights.models
                 include_recommendations_in_references: Optional[bool] = ..., 
                 include_recommendations_with_no_specified_modality: Optional[bool] = ..., 
                 provide_focused_sentence_evidence: Optional[bool] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.GenericProcedureRecommendation(MutableMapping[str, Any]):
-        ivar code: CodeableConcept
-        ivar description: Optional[str]
-        ivar extension: list[Extension]
-        ivar kind: Literal["genericProcedureRecommendation"]
+        code: CodeableConcept
+        description: Optional[str]
+        extension: list[Extension]
+        kind: Literal["genericProcedureRecommendation"]
 
         @overload
         def __init__(
@@ -687,10 +687,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 code: CodeableConcept, 
                 description: Optional[str] = ..., 
                 extension: Optional[List[Extension]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -698,21 +698,21 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.GuidanceInference(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar finding: FindingInference
-        ivar identifier: CodeableConcept
-        ivar kind: Literal[RadiologyInsightsInferenceType.GUIDANCE]
-        ivar missing_guidance_information: Optional[List[str]]
-        ivar present_guidance_information: Optional[List[ForwardRef('PresentGuidanceInformation')]]
-        ivar ranking: Union[str, GuidanceRankingType]
-        ivar recommendation_proposals: Optional[List[ForwardRef('FollowupRecommendationInference')]]
+        extension: list[Extension]
+        finding: FindingInference
+        identifier: CodeableConcept
+        kind: Literal[RadiologyInsightsInferenceType.GUIDANCE]
+        missing_guidance_information: Optional[List[str]]
+        present_guidance_information: Optional[List[ForwardRef('PresentGuidanceInformation')]]
+        ranking: Union[str, GuidanceRankingType]
+        recommendation_proposals: Optional[List[ForwardRef('FollowupRecommendationInference')]]
 
         @overload
         def __init__(
@@ -725,10 +725,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 present_guidance_information: Optional[List[PresentGuidanceInformation]] = ..., 
                 ranking: Union[str, GuidanceRankingType], 
                 recommendation_proposals: Optional[List[FollowupRecommendationInference]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -736,24 +736,24 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.GuidanceOptions(MutableMapping[str, Any]):
-        ivar show_guidance_in_history: bool
+        show_guidance_in_history: bool
 
         @overload
         def __init__(
                 self, 
                 *, 
                 show_guidance_in_history: bool
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.GuidanceRankingType(str, Enum):
@@ -762,26 +762,26 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.HealthInsightsErrorResponse(MutableMapping[str, Any]):
-        ivar error: ODataV4Format
+        error: ODataV4Format
 
         @overload
         def __init__(
                 self, 
                 *, 
                 error: ODataV4Format
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.Identifier(MutableMapping[str, Any]):
-        ivar assigner: Optional[Reference]
-        ivar period: Optional[Period]
-        ivar system: Optional[str]
-        ivar type: Optional[CodeableConcept]
-        ivar use: Optional[str]
-        ivar value: Optional[str]
+        assigner: Optional[Reference]
+        period: Optional[Period]
+        system: Optional[str]
+        type: Optional[CodeableConcept]
+        use: Optional[str]
+        value: Optional[str]
 
         @overload
         def __init__(
@@ -793,10 +793,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 type: Optional[CodeableConcept] = ..., 
                 use: Optional[str] = ..., 
                 value: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -804,18 +804,18 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ImagingProcedure(MutableMapping[str, Any]):
-        ivar anatomy: CodeableConcept
-        ivar contrast: Optional[RadiologyCodeWithTypes]
-        ivar laterality: Optional[CodeableConcept]
-        ivar modality: CodeableConcept
-        ivar view: Optional[RadiologyCodeWithTypes]
+        anatomy: CodeableConcept
+        contrast: Optional[RadiologyCodeWithTypes]
+        laterality: Optional[CodeableConcept]
+        modality: CodeableConcept
+        view: Optional[RadiologyCodeWithTypes]
 
         @overload
         def __init__(
@@ -826,17 +826,17 @@ namespace azure.healthinsights.radiologyinsights.models
                 laterality: Optional[CodeableConcept] = ..., 
                 modality: CodeableConcept, 
                 view: Optional[RadiologyCodeWithTypes] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ImagingProcedureRecommendation(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar imaging_procedures: List[ImagingProcedure]
-        ivar kind: Literal["imagingProcedureRecommendation"]
-        ivar procedure_codes: Optional[List[ForwardRef('CodeableConcept')]]
+        extension: list[Extension]
+        imaging_procedures: List[ImagingProcedure]
+        kind: Literal["imagingProcedureRecommendation"]
+        procedure_codes: Optional[List[ForwardRef('CodeableConcept')]]
 
         @overload
         def __init__(
@@ -845,10 +845,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 extension: Optional[List[Extension]] = ..., 
                 imaging_procedures: List[ImagingProcedure], 
                 procedure_codes: Optional[List[CodeableConcept]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -856,10 +856,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.JobStatus(str, Enum):
@@ -871,10 +871,10 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.LateralityDiscrepancyInference(MutableMapping[str, Any]):
-        ivar discrepancy_type: Union[str, LateralityDiscrepancyType]
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.LATERALITY_DISCREPANCY]
-        ivar laterality_indication: Optional[CodeableConcept]
+        discrepancy_type: Union[str, LateralityDiscrepancyType]
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.LATERALITY_DISCREPANCY]
+        laterality_indication: Optional[CodeableConcept]
 
         @overload
         def __init__(
@@ -883,10 +883,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 discrepancy_type: Union[str, LateralityDiscrepancyType], 
                 extension: Optional[List[Extension]] = ..., 
                 laterality_indication: Optional[CodeableConcept] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -894,10 +894,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.LateralityDiscrepancyType(str, Enum):
@@ -907,11 +907,11 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.LimitedOrderDiscrepancyInference(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.LIMITED_ORDER_DISCREPANCY]
-        ivar order_type: CodeableConcept
-        ivar present_body_part_measurements: Optional[List[ForwardRef('CodeableConcept')]]
-        ivar present_body_parts: Optional[List[ForwardRef('CodeableConcept')]]
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.LIMITED_ORDER_DISCREPANCY]
+        order_type: CodeableConcept
+        present_body_part_measurements: Optional[List[ForwardRef('CodeableConcept')]]
+        present_body_parts: Optional[List[ForwardRef('CodeableConcept')]]
 
         @overload
         def __init__(
@@ -921,10 +921,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 order_type: CodeableConcept, 
                 present_body_part_measurements: Optional[List[CodeableConcept]] = ..., 
                 present_body_parts: Optional[List[CodeableConcept]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -932,10 +932,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.MedicalProfessionalType(str, Enum):
@@ -947,12 +947,12 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.Meta(MutableMapping[str, Any]):
-        ivar last_updated: Optional[str]
-        ivar profile: Optional[List[str]]
-        ivar security: Optional[List[ForwardRef('Coding')]]
-        ivar source: Optional[str]
-        ivar tag: Optional[List[ForwardRef('Coding')]]
-        ivar version_id: Optional[str]
+        last_updated: Optional[str]
+        profile: Optional[List[str]]
+        security: Optional[List[ForwardRef('Coding')]]
+        source: Optional[str]
+        tag: Optional[List[ForwardRef('Coding')]]
+        version_id: Optional[str]
 
         @overload
         def __init__(
@@ -964,17 +964,17 @@ namespace azure.healthinsights.radiologyinsights.models
                 source: Optional[str] = ..., 
                 tag: Optional[List[Coding]] = ..., 
                 version_id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.Narrative(MutableMapping[str, Any]):
-        ivar div: str
-        ivar extension: list[Extension]
-        ivar id: str
-        ivar status: str
+        div: str
+        extension: list[Extension]
+        id: str
+        status: str
 
         @overload
         def __init__(
@@ -984,10 +984,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ..., 
                 status: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -995,52 +995,52 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.Observation(MutableMapping[str, Any]):
-        ivar body_site: Optional[CodeableConcept]
-        ivar category: Optional[List[ForwardRef('CodeableConcept')]]
-        ivar code: CodeableConcept
-        ivar component: Optional[List[ForwardRef('ObservationComponent')]]
-        ivar contained: list[Resource]
-        ivar data_absent_reason: Optional[CodeableConcept]
-        ivar derived_from: Optional[List[ForwardRef('Reference')]]
-        ivar effective_date_time: Optional[str]
-        ivar effective_instant: Optional[str]
-        ivar effective_period: Optional[Period]
-        ivar encounter: Optional[Reference]
-        ivar extension: list[Extension]
-        ivar has_member: Optional[List[ForwardRef('Reference')]]
-        ivar id: str
-        ivar identifier: Optional[List[ForwardRef('Identifier')]]
-        ivar implicit_rules: str
-        ivar interpretation: Optional[List[ForwardRef('CodeableConcept')]]
-        ivar issued: Optional[str]
-        ivar language: str
-        ivar meta: Meta
-        ivar method: Optional[CodeableConcept]
-        ivar modifier_extension: list[Extension]
-        ivar note: Optional[List[ForwardRef('Annotation')]]
-        ivar reference_range: Optional[List[ForwardRef('ObservationReferenceRange')]]
-        ivar resource_type: Literal["Observation"]
-        ivar status: Union[str, ObservationStatusCodeType]
-        ivar subject: Optional[Reference]
-        ivar text: Narrative
-        ivar value_boolean: Optional[bool]
-        ivar value_codeable_concept: Optional[CodeableConcept]
-        ivar value_date_time: Optional[str]
-        ivar value_integer: Optional[int]
-        ivar value_period: Optional[Period]
-        ivar value_quantity: Optional[Quantity]
-        ivar value_range: Optional[Range]
-        ivar value_ratio: Optional[Ratio]
-        ivar value_sampled_data: Optional[SampledData]
-        ivar value_string: Optional[str]
-        ivar value_time: Optional[time]
+        body_site: Optional[CodeableConcept]
+        category: Optional[List[ForwardRef('CodeableConcept')]]
+        code: CodeableConcept
+        component: Optional[List[ForwardRef('ObservationComponent')]]
+        contained: list[Resource]
+        data_absent_reason: Optional[CodeableConcept]
+        derived_from: Optional[List[ForwardRef('Reference')]]
+        effective_date_time: Optional[str]
+        effective_instant: Optional[str]
+        effective_period: Optional[Period]
+        encounter: Optional[Reference]
+        extension: list[Extension]
+        has_member: Optional[List[ForwardRef('Reference')]]
+        id: str
+        identifier: Optional[List[ForwardRef('Identifier')]]
+        implicit_rules: str
+        interpretation: Optional[List[ForwardRef('CodeableConcept')]]
+        issued: Optional[str]
+        language: str
+        meta: Meta
+        method: Optional[CodeableConcept]
+        modifier_extension: list[Extension]
+        note: Optional[List[ForwardRef('Annotation')]]
+        reference_range: Optional[List[ForwardRef('ObservationReferenceRange')]]
+        resource_type: Literal["Observation"]
+        status: Union[str, ObservationStatusCodeType]
+        subject: Optional[Reference]
+        text: Narrative
+        value_boolean: Optional[bool]
+        value_codeable_concept: Optional[CodeableConcept]
+        value_date_time: Optional[str]
+        value_integer: Optional[int]
+        value_period: Optional[Period]
+        value_quantity: Optional[Quantity]
+        value_range: Optional[Range]
+        value_ratio: Optional[Ratio]
+        value_sampled_data: Optional[SampledData]
+        value_string: Optional[str]
+        value_time: Optional[time]
 
         @overload
         def __init__(
@@ -1084,10 +1084,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 value_sampled_data: Optional[SampledData] = ..., 
                 value_string: Optional[str] = ..., 
                 value_time: Optional[time] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1102,10 +1102,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 modifier_extension: Optional[List[Extension]] = ..., 
                 resource_type: str, 
                 text: Optional[Narrative] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1116,31 +1116,31 @@ namespace azure.healthinsights.radiologyinsights.models
                 language: Optional[str] = ..., 
                 meta: Optional[Meta] = ..., 
                 resource_type: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ObservationComponent(MutableMapping[str, Any]):
-        ivar code: CodeableConcept
-        ivar data_absent_reason: Optional[CodeableConcept]
-        ivar extension: list[Extension]
-        ivar id: str
-        ivar interpretation: Optional[List[ForwardRef('CodeableConcept')]]
-        ivar reference_range: Optional[List[ForwardRef('ObservationReferenceRange')]]
-        ivar value_boolean: Optional[bool]
-        ivar value_codeable_concept: Optional[CodeableConcept]
-        ivar value_date_time: Optional[str]
-        ivar value_integer: Optional[int]
-        ivar value_period: Optional[Period]
-        ivar value_quantity: Optional[Quantity]
-        ivar value_range: Optional[Range]
-        ivar value_ratio: Optional[Ratio]
-        ivar value_reference: Optional[Reference]
-        ivar value_sampled_data: Optional[SampledData]
-        ivar value_string: Optional[str]
-        ivar value_time: Optional[time]
+        code: CodeableConcept
+        data_absent_reason: Optional[CodeableConcept]
+        extension: list[Extension]
+        id: str
+        interpretation: Optional[List[ForwardRef('CodeableConcept')]]
+        reference_range: Optional[List[ForwardRef('ObservationReferenceRange')]]
+        value_boolean: Optional[bool]
+        value_codeable_concept: Optional[CodeableConcept]
+        value_date_time: Optional[str]
+        value_integer: Optional[int]
+        value_period: Optional[Period]
+        value_quantity: Optional[Quantity]
+        value_range: Optional[Range]
+        value_ratio: Optional[Ratio]
+        value_reference: Optional[Reference]
+        value_sampled_data: Optional[SampledData]
+        value_string: Optional[str]
+        value_time: Optional[time]
 
         @overload
         def __init__(
@@ -1164,10 +1164,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 value_sampled_data: Optional[SampledData] = ..., 
                 value_string: Optional[str] = ..., 
                 value_time: Optional[time] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1175,19 +1175,19 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ObservationReferenceRange(MutableMapping[str, Any]):
-        ivar age: Optional[Range]
-        ivar applies_to: Optional[List[ForwardRef('CodeableConcept')]]
-        ivar high: Optional[Quantity]
-        ivar low: Optional[Quantity]
-        ivar text: Optional[str]
-        ivar type: Optional[CodeableConcept]
+        age: Optional[Range]
+        applies_to: Optional[List[ForwardRef('CodeableConcept')]]
+        high: Optional[Quantity]
+        low: Optional[Quantity]
+        text: Optional[str]
+        type: Optional[CodeableConcept]
 
         @overload
         def __init__(
@@ -1199,10 +1199,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 low: Optional[Quantity] = ..., 
                 text: Optional[str] = ..., 
                 type: Optional[CodeableConcept] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ObservationStatusCodeType(str, Enum):
@@ -1217,9 +1217,9 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.OrderedProcedure(MutableMapping[str, Any]):
-        ivar code: Optional[CodeableConcept]
-        ivar description: Optional[str]
-        ivar extension: Optional[List[ForwardRef('Extension')]]
+        code: Optional[CodeableConcept]
+        description: Optional[str]
+        extension: Optional[List[ForwardRef('Extension')]]
 
         @overload
         def __init__(
@@ -1228,16 +1228,16 @@ namespace azure.healthinsights.radiologyinsights.models
                 code: Optional[CodeableConcept] = ..., 
                 description: Optional[str] = ..., 
                 extension: Optional[List[Extension]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.PatientDetails(MutableMapping[str, Any]):
-        ivar birth_date: Optional[date]
-        ivar clinical_info: Optional[List[ForwardRef('Resource')]]
-        ivar sex: Optional[Union[str, PatientSex]]
+        birth_date: Optional[date]
+        clinical_info: Optional[List[ForwardRef('Resource')]]
+        sex: Optional[Union[str, PatientSex]]
 
         @overload
         def __init__(
@@ -1246,22 +1246,22 @@ namespace azure.healthinsights.radiologyinsights.models
                 birth_date: Optional[date] = ..., 
                 clinical_info: Optional[List[Resource]] = ..., 
                 sex: Optional[Union[str, PatientSex]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.PatientDocument(MutableMapping[str, Any]):
-        ivar administrative_metadata: Optional[DocumentAdministrativeMetadata]
-        ivar authors: Optional[List[ForwardRef('DocumentAuthor')]]
-        ivar clinical_type: Optional[Union[str, ClinicalDocumentType]]
-        ivar content: DocumentContent
-        ivar created_at: Optional[datetime]
-        ivar id: str
-        ivar language: Optional[str]
-        ivar specialty_type: Optional[Union[str, SpecialtyType]]
-        ivar type: Union[str, DocumentType]
+        administrative_metadata: Optional[DocumentAdministrativeMetadata]
+        authors: Optional[List[ForwardRef('DocumentAuthor')]]
+        clinical_type: Optional[Union[str, ClinicalDocumentType]]
+        content: DocumentContent
+        created_at: Optional[datetime]
+        id: str
+        language: Optional[str]
+        specialty_type: Optional[Union[str, SpecialtyType]]
+        type: Union[str, DocumentType]
 
         @overload
         def __init__(
@@ -1276,16 +1276,16 @@ namespace azure.healthinsights.radiologyinsights.models
                 language: Optional[str] = ..., 
                 specialty_type: Optional[Union[str, SpecialtyType]] = ..., 
                 type: Union[str, DocumentType]
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.PatientEncounter(MutableMapping[str, Any]):
-        ivar class_property: Optional[Union[str, EncounterClass]]
-        ivar id: str
-        ivar period: Optional[TimePeriod]
+        class_property: Optional[Union[str, EncounterClass]]
+        id: str
+        period: Optional[TimePeriod]
 
         @overload
         def __init__(
@@ -1294,17 +1294,17 @@ namespace azure.healthinsights.radiologyinsights.models
                 class_property: Optional[Union[str, EncounterClass]] = ..., 
                 id: str, 
                 period: Optional[TimePeriod] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.PatientRecord(MutableMapping[str, Any]):
-        ivar details: Optional[PatientDetails]
-        ivar encounters: Optional[List[ForwardRef('PatientEncounter')]]
-        ivar id: str
-        ivar patient_documents: Optional[List[ForwardRef('PatientDocument')]]
+        details: Optional[PatientDetails]
+        encounters: Optional[List[ForwardRef('PatientEncounter')]]
+        id: str
+        patient_documents: Optional[List[ForwardRef('PatientDocument')]]
 
         @overload
         def __init__(
@@ -1314,10 +1314,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 encounters: Optional[List[PatientEncounter]] = ..., 
                 id: str, 
                 patient_documents: Optional[List[PatientDocument]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.PatientSex(str, Enum):
@@ -1327,8 +1327,8 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.Period(MutableMapping[str, Any]):
-        ivar end: Optional[str]
-        ivar start: Optional[str]
+        end: Optional[str]
+        start: Optional[str]
 
         @overload
         def __init__(
@@ -1336,10 +1336,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 end: Optional[str] = ..., 
                 start: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1347,18 +1347,18 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.PresentGuidanceInformation(MutableMapping[str, Any]):
-        ivar extension: Optional[List[ForwardRef('Extension')]]
-        ivar maximum_diameter_as_in_text: Optional[Quantity]
-        ivar present_guidance_item: str
-        ivar present_guidance_values: Optional[List[str]]
-        ivar sizes: Optional[List[ForwardRef('Observation')]]
+        extension: Optional[List[ForwardRef('Extension')]]
+        maximum_diameter_as_in_text: Optional[Quantity]
+        present_guidance_item: str
+        present_guidance_values: Optional[List[str]]
+        sizes: Optional[List[ForwardRef('Observation')]]
 
         @overload
         def __init__(
@@ -1369,15 +1369,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 present_guidance_item: str, 
                 present_guidance_values: Optional[List[str]] = ..., 
                 sizes: Optional[List[Observation]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ProcedureRecommendation(MutableMapping[str, Any]):
-        ivar extension: Optional[List[ForwardRef('Extension')]]
-        ivar kind: str
+        extension: Optional[List[ForwardRef('Extension')]]
+        kind: str
 
         @overload
         def __init__(
@@ -1385,10 +1385,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.QualityMeasureComplianceType(str, Enum):
@@ -1399,11 +1399,11 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.QualityMeasureInference(MutableMapping[str, Any]):
-        ivar compliance_type: Union[str, QualityMeasureComplianceType]
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.QUALITY_MEASURE]
-        ivar quality_criteria: Optional[List[str]]
-        ivar quality_measure_denominator: str
+        compliance_type: Union[str, QualityMeasureComplianceType]
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.QUALITY_MEASURE]
+        quality_criteria: Optional[List[str]]
+        quality_measure_denominator: str
 
         @overload
         def __init__(
@@ -1413,10 +1413,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 extension: Optional[List[Extension]] = ..., 
                 quality_criteria: Optional[List[str]] = ..., 
                 quality_measure_denominator: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1424,24 +1424,24 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.QualityMeasureOptions(MutableMapping[str, Any]):
-        ivar measure_types: List[Union[str, ForwardRef('QualityMeasureType')]]
+        measure_types: List[Union[str, ForwardRef('QualityMeasureType')]]
 
         @overload
         def __init__(
                 self, 
                 *, 
                 measure_types: List[Union[str, QualityMeasureType]]
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.QualityMeasureType(str, Enum):
@@ -1471,11 +1471,11 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.Quantity(MutableMapping[str, Any]):
-        ivar code: Optional[str]
-        ivar comparator: Optional[str]
-        ivar system: Optional[str]
-        ivar unit: Optional[str]
-        ivar value: Optional[float]
+        code: Optional[str]
+        comparator: Optional[str]
+        system: Optional[str]
+        unit: Optional[str]
+        value: Optional[float]
 
         @overload
         def __init__(
@@ -1486,10 +1486,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 system: Optional[str] = ..., 
                 unit: Optional[str] = ..., 
                 value: Optional[float] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1497,15 +1497,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyCodeWithTypes(MutableMapping[str, Any]):
-        ivar code: CodeableConcept
-        ivar types: List[CodeableConcept]
+        code: CodeableConcept
+        types: List[CodeableConcept]
 
         @overload
         def __init__(
@@ -1513,15 +1513,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 code: CodeableConcept, 
                 types: List[CodeableConcept]
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyInsightsData(MutableMapping[str, Any]):
-        ivar configuration: Optional[RadiologyInsightsModelConfiguration]
-        ivar patients: List[PatientRecord]
+        configuration: Optional[RadiologyInsightsModelConfiguration]
+        patients: List[PatientRecord]
 
         @overload
         def __init__(
@@ -1529,15 +1529,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 configuration: Optional[RadiologyInsightsModelConfiguration] = ..., 
                 patients: List[PatientRecord]
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyInsightsInference(MutableMapping[str, Any]):
-        ivar extension: Optional[List[ForwardRef('Extension')]]
-        ivar kind: str
+        extension: Optional[List[ForwardRef('Extension')]]
+        kind: str
 
         @overload
         def __init__(
@@ -1545,17 +1545,17 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyInsightsInferenceOptions(MutableMapping[str, Any]):
-        ivar finding_options: Optional[FindingOptions]
-        ivar followup_recommendation_options: Optional[FollowupRecommendationOptions]
-        ivar guidance_options: Optional[GuidanceOptions]
-        ivar quality_measure_options: Optional[QualityMeasureOptions]
+        finding_options: Optional[FindingOptions]
+        followup_recommendation_options: Optional[FollowupRecommendationOptions]
+        guidance_options: Optional[GuidanceOptions]
+        quality_measure_options: Optional[QualityMeasureOptions]
 
         @overload
         def __init__(
@@ -1565,15 +1565,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 followup_recommendation_options: Optional[FollowupRecommendationOptions] = ..., 
                 guidance_options: Optional[GuidanceOptions] = ..., 
                 quality_measure_options: Optional[QualityMeasureOptions] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyInsightsInferenceResult(MutableMapping[str, Any]):
-        ivar model_version: str
-        ivar patient_results: List[RadiologyInsightsPatientResult]
+        model_version: str
+        patient_results: List[RadiologyInsightsPatientResult]
 
         @overload
         def __init__(
@@ -1581,10 +1581,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 model_version: str, 
                 patient_results: List[RadiologyInsightsPatientResult]
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyInsightsInferenceType(str, Enum):
@@ -1604,32 +1604,32 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyInsightsJob(MutableMapping[str, Any]):
-        ivar created_at: Optional[datetime]
-        ivar error: Optional[ODataV4Format]
-        ivar expires_at: Optional[datetime]
-        ivar id: str
-        ivar job_data: Optional[RadiologyInsightsData]
-        ivar result: Optional[RadiologyInsightsInferenceResult]
-        ivar status: Union[str, JobStatus]
-        ivar updated_at: Optional[datetime]
+        created_at: Optional[datetime]
+        error: Optional[ODataV4Format]
+        expires_at: Optional[datetime]
+        id: str
+        job_data: Optional[RadiologyInsightsData]
+        result: Optional[RadiologyInsightsInferenceResult]
+        status: Union[str, JobStatus]
+        updated_at: Optional[datetime]
 
         @overload
         def __init__(
                 self, 
                 *, 
                 job_data: Optional[RadiologyInsightsData] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyInsightsModelConfiguration(MutableMapping[str, Any]):
-        ivar include_evidence: Optional[bool]
-        ivar inference_options: Optional[RadiologyInsightsInferenceOptions]
-        ivar inference_types: Optional[List[Union[str, ForwardRef('RadiologyInsightsInferenceType')]]]
-        ivar locale: Optional[str]
-        ivar verbose: Optional[bool]
+        include_evidence: Optional[bool]
+        inference_options: Optional[RadiologyInsightsInferenceOptions]
+        inference_types: Optional[List[Union[str, ForwardRef('RadiologyInsightsInferenceType')]]]
+        locale: Optional[str]
+        verbose: Optional[bool]
 
         @overload
         def __init__(
@@ -1640,15 +1640,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 inference_types: Optional[List[Union[str, RadiologyInsightsInferenceType]]] = ..., 
                 locale: Optional[str] = ..., 
                 verbose: Optional[bool] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyInsightsPatientResult(MutableMapping[str, Any]):
-        ivar inferences: List[RadiologyInsightsInference]
-        ivar patient_id: str
+        inferences: List[RadiologyInsightsInference]
+        patient_id: str
 
         @overload
         def __init__(
@@ -1656,18 +1656,18 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 inferences: List[RadiologyInsightsInference], 
                 patient_id: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RadiologyProcedureInference(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar imaging_procedures: List[ImagingProcedure]
-        ivar kind: Literal[RadiologyInsightsInferenceType.RADIOLOGY_PROCEDURE]
-        ivar ordered_procedure: OrderedProcedure
-        ivar procedure_codes: Optional[List[ForwardRef('CodeableConcept')]]
+        extension: list[Extension]
+        imaging_procedures: List[ImagingProcedure]
+        kind: Literal[RadiologyInsightsInferenceType.RADIOLOGY_PROCEDURE]
+        ordered_procedure: OrderedProcedure
+        procedure_codes: Optional[List[ForwardRef('CodeableConcept')]]
 
         @overload
         def __init__(
@@ -1677,10 +1677,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 imaging_procedures: List[ImagingProcedure], 
                 ordered_procedure: OrderedProcedure, 
                 procedure_codes: Optional[List[CodeableConcept]] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1688,15 +1688,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.Range(MutableMapping[str, Any]):
-        ivar high: Optional[Quantity]
-        ivar low: Optional[Quantity]
+        high: Optional[Quantity]
+        low: Optional[Quantity]
 
         @overload
         def __init__(
@@ -1704,10 +1704,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 high: Optional[Quantity] = ..., 
                 low: Optional[Quantity] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1715,15 +1715,15 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.Ratio(MutableMapping[str, Any]):
-        ivar denominator: Optional[Quantity]
-        ivar numerator: Optional[Quantity]
+        denominator: Optional[Quantity]
+        numerator: Optional[Quantity]
 
         @overload
         def __init__(
@@ -1731,10 +1731,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 denominator: Optional[Quantity] = ..., 
                 numerator: Optional[Quantity] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1742,17 +1742,17 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RecommendationFinding(MutableMapping[str, Any]):
-        ivar critical_finding: Optional[CriticalResult]
-        ivar extension: Optional[List[ForwardRef('Extension')]]
-        ivar finding: Optional[Observation]
-        ivar recommendation_finding_status: Union[str, RecommendationFindingStatusType]
+        critical_finding: Optional[CriticalResult]
+        extension: Optional[List[ForwardRef('Extension')]]
+        finding: Optional[Observation]
+        recommendation_finding_status: Union[str, RecommendationFindingStatusType]
 
         @overload
         def __init__(
@@ -1762,10 +1762,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 extension: Optional[List[Extension]] = ..., 
                 finding: Optional[Observation] = ..., 
                 recommendation_finding_status: Union[str, RecommendationFindingStatusType]
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.RecommendationFindingStatusType(str, Enum):
@@ -1776,10 +1776,10 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.Reference(MutableMapping[str, Any]):
-        ivar display: Optional[str]
-        ivar identifier: Optional[Identifier]
-        ivar reference: Optional[str]
-        ivar type: Optional[str]
+        display: Optional[str]
+        identifier: Optional[Identifier]
+        reference: Optional[str]
+        type: Optional[str]
 
         @overload
         def __init__(
@@ -1789,10 +1789,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 identifier: Optional[Identifier] = ..., 
                 reference: Optional[str] = ..., 
                 type: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1800,10 +1800,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ResearchStudyStatusCodeType(str, Enum):
@@ -1821,11 +1821,11 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.Resource(MutableMapping[str, Any]):
-        ivar id: Optional[str]
-        ivar implicit_rules: Optional[str]
-        ivar language: Optional[str]
-        ivar meta: Optional[Meta]
-        ivar resource_type: str
+        id: Optional[str]
+        implicit_rules: Optional[str]
+        language: Optional[str]
+        meta: Optional[Meta]
+        resource_type: str
 
         @overload
         def __init__(
@@ -1836,20 +1836,20 @@ namespace azure.healthinsights.radiologyinsights.models
                 language: Optional[str] = ..., 
                 meta: Optional[Meta] = ..., 
                 resource_type: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.SampledData(MutableMapping[str, Any]):
-        ivar data: Optional[str]
-        ivar dimensions: int
-        ivar factor: Optional[float]
-        ivar lower_limit: Optional[float]
-        ivar origin: Quantity
-        ivar period: float
-        ivar upper_limit: Optional[float]
+        data: Optional[str]
+        dimensions: int
+        factor: Optional[float]
+        lower_limit: Optional[float]
+        origin: Quantity
+        period: float
+        upper_limit: Optional[float]
 
         @overload
         def __init__(
@@ -1862,10 +1862,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 origin: Quantity, 
                 period: float, 
                 upper_limit: Optional[float] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1873,10 +1873,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 id: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.ScoringAndAssessmentCategoryType(str, Enum):
@@ -1917,12 +1917,12 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.ScoringAndAssessmentInference(MutableMapping[str, Any]):
-        ivar category: Union[str, ScoringAndAssessmentCategoryType]
-        ivar category_description: str
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.SCORING_AND_ASSESSMENT]
-        ivar range_value: Optional[AssessmentValueRange]
-        ivar single_value: Optional[str]
+        category: Union[str, ScoringAndAssessmentCategoryType]
+        category_description: str
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.SCORING_AND_ASSESSMENT]
+        range_value: Optional[AssessmentValueRange]
+        single_value: Optional[str]
 
         @overload
         def __init__(
@@ -1933,10 +1933,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 extension: Optional[List[Extension]] = ..., 
                 range_value: Optional[AssessmentValueRange] = ..., 
                 single_value: Optional[str] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1944,16 +1944,16 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.SexMismatchInference(MutableMapping[str, Any]):
-        ivar extension: list[Extension]
-        ivar kind: Literal[RadiologyInsightsInferenceType.SEX_MISMATCH]
-        ivar sex_indication: CodeableConcept
+        extension: list[Extension]
+        kind: Literal[RadiologyInsightsInferenceType.SEX_MISMATCH]
+        sex_indication: CodeableConcept
 
         @overload
         def __init__(
@@ -1961,10 +1961,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 sex_indication: CodeableConcept
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
         @overload
         def __init__(
@@ -1972,10 +1972,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 extension: Optional[List[Extension]] = ..., 
                 kind: str
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
     class azure.healthinsights.radiologyinsights.models.SpecialtyType(str, Enum):
@@ -1984,8 +1984,8 @@ namespace azure.healthinsights.radiologyinsights.models
 
 
     class azure.healthinsights.radiologyinsights.models.TimePeriod(MutableMapping[str, Any]):
-        ivar end: Optional[datetime]
-        ivar start: Optional[datetime]
+        end: Optional[datetime]
+        start: Optional[datetime]
 
         @overload
         def __init__(
@@ -1993,10 +1993,10 @@ namespace azure.healthinsights.radiologyinsights.models
                 *, 
                 end: Optional[datetime] = ..., 
                 start: Optional[datetime] = ...
-            ) -> None
+            ) -> None: ...
 
         @overload
-        def __init__(self, mapping: Mapping[str, Any]) -> None
+        def __init__(self, mapping: Mapping[str, Any]) -> None: ...
 
 
 ```

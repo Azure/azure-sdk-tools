@@ -58,7 +58,7 @@ public abstract class Requirement
 
     /// <summary>
     /// Command to run to verify the requirement is installed.
-    /// Override RunCheckAsync for custom validation logic.
+    /// Override RunCheck for custom validation logic.
     /// </summary>
     public virtual string[]? CheckCommand => null;
 
@@ -79,7 +79,7 @@ public abstract class Requirement
     /// Subclasses that need custom ProcessOptions (e.g., PythonOptions) can call
     /// processHelper.Run() directly instead.
     /// </summary>
-    protected async Task<ProcessResult> RunCommandAsync(
+    protected async Task<ProcessResult> RunCommand(
         IProcessHelper processHelper,
         string[] command,
         RequirementContext ctx,
@@ -104,7 +104,7 @@ public abstract class Requirement
     /// <param name="ctx">The current environment context.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The result of the requirement check.</returns>
-    public virtual async Task<RequirementCheckOutput> RunCheckAsync(
+    public virtual async Task<RequirementCheckOutput> RunCheck(
         IProcessHelper processHelper,
         RequirementContext ctx,
         CancellationToken ct = default)
@@ -112,10 +112,10 @@ public abstract class Requirement
         if (CheckCommand == null || CheckCommand.Length == 0)
         {
             throw new InvalidOperationException(
-                $"Requirement '{Name}' must define CheckCommand or override RunCheckAsync");
+                $"Requirement '{Name}' must define CheckCommand or override RunCheck");
         }
 
-        var result = await RunCommandAsync(processHelper, CheckCommand, ctx, ct);
+        var result = await RunCommand(processHelper, CheckCommand, ctx, ct);
         return new RequirementCheckOutput
         {
             Success = result.ExitCode == 0,
@@ -128,7 +128,7 @@ public abstract class Requirement
     /// Returns context-aware structured install commands for auto-installation.
     /// Each element is a single command represented as a string array (program + args).
     /// This is the single source of truth for both <see cref="GetInstructions"/> and
-    /// <see cref="RunInstallAsync"/> — override this instead of duplicating logic in both.
+    /// <see cref="RunInstall"/> — override this instead of duplicating logic in both.
     /// Returns null for non-auto-installable requirements.
     /// </summary>
     /// <param name="ctx">The current environment context.</param>
@@ -194,7 +194,7 @@ public abstract class Requirement
     /// <param name="ctx">The current environment context.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The result of the install operation.</returns>
-    public virtual async Task<RequirementCheckOutput> RunInstallAsync(
+    public virtual async Task<RequirementCheckOutput> RunInstall(
         IProcessHelper processHelper,
         RequirementContext ctx,
         CancellationToken ct = default)
@@ -212,12 +212,12 @@ public abstract class Requirement
         if (commands == null || commands.Length == 0)
         {
             throw new InvalidOperationException(
-                $"Requirement '{Name}' must define GetInstallCommands or override RunInstallAsync");
+                $"Requirement '{Name}' must define GetInstallCommands or override RunInstall");
         }
 
         foreach (var command in commands)
         {
-            var result = await RunCommandAsync(processHelper, command, ctx, ct, InstallTimeout, logOutputStream: true);
+            var result = await RunCommand(processHelper, command, ctx, ct, InstallTimeout, logOutputStream: true);
             if (result.ExitCode != 0)
             {
                 return new RequirementCheckOutput

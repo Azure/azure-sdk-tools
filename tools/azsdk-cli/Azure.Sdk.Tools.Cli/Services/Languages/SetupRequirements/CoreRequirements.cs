@@ -55,7 +55,7 @@ public static class CoreRequirements
             return [["npm", "ci", "--prefix", workingDir]];
         }
 
-        public override async Task<RequirementCheckOutput> RunCheckAsync(
+        public override async Task<RequirementCheckOutput> RunCheck(
             IProcessHelper processHelper,
             RequirementContext ctx,
             CancellationToken ct = default)
@@ -67,7 +67,7 @@ public static class CoreRequirements
 
             var command = new[] { "npm", "exec", "--prefix", tspClientPath, "--no", "--", "tsp-client", "--version" };
 
-            var result = await RunCommandAsync(processHelper, command, ctx, ct);
+            var result = await RunCommand(processHelper, command, ctx, ct);
             return new RequirementCheckOutput
             {
                 Success = result.ExitCode == 0,
@@ -94,7 +94,7 @@ public static class CoreRequirements
             return [["npm", "install", "-g", "@typespec/compiler@latest"]];
         }
 
-        public override async Task<RequirementCheckOutput> RunCheckAsync(
+        public override async Task<RequirementCheckOutput> RunCheck(
             IProcessHelper processHelper,
             RequirementContext ctx,
             CancellationToken ct = default)
@@ -112,7 +112,7 @@ public static class CoreRequirements
                 command = CheckCommand;
             }
 
-            var result = await RunCommandAsync(processHelper, command, ctx, ct);
+            var result = await RunCommand(processHelper, command, ctx, ct);
             return new RequirementCheckOutput
             {
                 Success = result.ExitCode == 0,
@@ -161,12 +161,12 @@ public static class CoreRequirements
             return ctx.IsWindows;
         }
 
-        public override async Task<RequirementCheckOutput> RunCheckAsync(
+        public override async Task<RequirementCheckOutput> RunCheck(
             IProcessHelper processHelper,
             RequirementContext ctx,
             CancellationToken ct = default)
         {
-            var result = await RunCommandAsync(processHelper, ["git", "config", "--get", "core.longpaths"], ctx, ct);
+            var result = await RunCommand(processHelper, ["git", "config", "--get", "core.longpaths"], ctx, ct);
             
 
             bool isEnabled = result.ExitCode == 0 && 

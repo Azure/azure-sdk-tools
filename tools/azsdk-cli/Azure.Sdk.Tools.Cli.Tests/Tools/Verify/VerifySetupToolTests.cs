@@ -394,7 +394,7 @@ internal class VerifySetupToolTests
                 OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, "tsp: command not found") }
             });
 
-        // npm install succeeds (so RunInstallAsync returns success)
+        // npm install succeeds (so RunInstall returns success)
         mockProcessHelper
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(opt => opt.Command.Contains("npm") && opt.Args.Any(a => a.Contains("@typespec/compiler"))),

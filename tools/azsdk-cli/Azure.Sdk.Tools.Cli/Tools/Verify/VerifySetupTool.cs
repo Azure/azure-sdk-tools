@@ -433,7 +433,7 @@ public class VerifySetupTool : LanguageMcpMultiCommandTool
 
         try
         {
-            var checkResult = await req.RunCheckAsync(processHelper, ctx, ct);
+            var checkResult = await req.RunCheck(processHelper, ctx, ct);
 
             if (!checkResult.Success)
             {
@@ -475,7 +475,7 @@ public class VerifySetupTool : LanguageMcpMultiCommandTool
     {
         try
         {
-            return await req.RunInstallAsync(processHelper, ctx, ct);
+            return await req.RunInstall(processHelper, ctx, ct);
         }
         catch (Exception ex)
         {

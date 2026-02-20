@@ -86,7 +86,7 @@ public abstract class PythonRequirementBase : Requirement
     /// Uses the same resolution order as install: env var → .venv at repo root.
     /// This ensures checks succeed after auto-install creates a .venv.
     /// </summary>
-    public override async Task<RequirementCheckOutput> RunCheckAsync(
+    public override async Task<RequirementCheckOutput> RunCheck(
         IProcessHelper processHelper,
         RequirementContext ctx,
         CancellationToken ct = default)
@@ -97,7 +97,7 @@ public abstract class PythonRequirementBase : Requirement
             cmd[0] = ResolveVenvExecutable(cmd[0], ctx.RepoRoot);
         }
 
-        var result = await RunCommandAsync(processHelper, cmd, ctx, ct);
+        var result = await RunCommand(processHelper, cmd, ctx, ct);
         return new RequirementCheckOutput
         {
             Success = result.ExitCode == 0,
@@ -156,7 +156,7 @@ public abstract class PythonRequirementBase : Requirement
         }
 
         // 3. Create a new .venv at repo root
-        var createResult = await RunCommandAsync(
+        var createResult = await RunCommand(
             processHelper, ["python", "-m", "venv", repoVenvPath], ctx, ct, InstallTimeout);
         if (createResult.ExitCode != 0)
         {
@@ -177,7 +177,7 @@ public abstract class PythonRequirementBase : Requirement
     /// 2. Resolves the pip install target (validating azure-sdk-for-python repo for relative paths).
     /// 3. Runs pip install for the requirement's PipInstallTarget.
     /// </summary>
-    public override async Task<RequirementCheckOutput> RunInstallAsync(
+    public override async Task<RequirementCheckOutput> RunInstall(
         IProcessHelper processHelper,
         RequirementContext ctx,
         CancellationToken ct = default)

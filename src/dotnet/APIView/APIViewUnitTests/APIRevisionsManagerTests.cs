@@ -80,6 +80,7 @@ public class APIRevisionsManagerTests
     private readonly Mock<INotificationManager> _mockNotificationManager;
     private readonly Mock<IBlobOriginalsRepository> _mockOriginalsRepository;
     private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
+    private readonly Mock<IProjectsManager> _mockProjectsManager;
     private readonly TelemetryClient _telemetryClient;
     private readonly TestLanguageService _testLanguageService;
 
@@ -96,6 +97,7 @@ public class APIRevisionsManagerTests
         _mockDevopsArtifactRepository = new Mock<IDevopsArtifactRepository>();
         _mockNotificationManager = new Mock<INotificationManager>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockProjectsManager = new Mock<IProjectsManager>();
 
         TelemetryConfiguration telemetryConfiguration = new();
         _telemetryClient = new TelemetryClient(telemetryConfiguration);
@@ -117,6 +119,7 @@ public class APIRevisionsManagerTests
             _mockOriginalsRepository.Object,
             _mockNotificationManager.Object,
             _telemetryClient,
+            _mockProjectsManager.Object,
             _mockConfiguration.Object
         );
     }

@@ -1609,6 +1609,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
                 query += $" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
+                query += " ORDER BY [System.Id] DESC"; // In case there are multiple matches, get the most recently created one
 
                 var releasePlanWorkItems = await FetchWorkItemsAsync(query);
                 if (releasePlanWorkItems.Count == 0)

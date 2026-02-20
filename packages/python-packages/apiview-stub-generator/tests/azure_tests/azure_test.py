@@ -296,8 +296,7 @@ class TestApiViewAzure:
             assert old_content == new_content, (
                 f"Generated markdown file does not match the provided markdown file.\n"
                 f"Expected file: {old_file}\n"
-                f"Generated file: {new_file}\n"
-                f"Differences will be shown in the assertion diff below."
+                f"Generated file: {new_file}"
             )
 
     def _write_tokens(self, pkg_path, temp_path, mapping_file):
@@ -348,7 +347,4 @@ class TestApiViewAzure:
         generated_md_file = os.path.join(temp_path, "api.md")
         provided_md_file = os.path.abspath(os.path.join(os.path.dirname(__file__), f"md_files/{pkg_name}/api.md"))
 
-        if os.path.exists(provided_md_file):
-            self._diff_markdown_file(provided_md_file, generated_md_file)
-        else:
-            print(f"Provided markdown file not found: {provided_md_file}. Skipping markdown comparison.")
+        self._diff_markdown_file(provided_md_file, generated_md_file)

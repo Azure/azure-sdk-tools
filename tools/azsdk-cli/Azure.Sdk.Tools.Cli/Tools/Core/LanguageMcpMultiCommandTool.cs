@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
@@ -5,15 +8,20 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Core
 {
-    public abstract class LanguageMcpTool : MCPTool
+    /// <summary>
+    /// Multi-command variant of <see cref="LanguageMcpTool"/>.
+    /// Extends <see cref="MCPMultiCommandTool"/> with language service helpers,
+    /// for tools that need both multi-command CLI support and language detection.
+    /// </summary>
+    public abstract class LanguageMcpMultiCommandTool : MCPMultiCommandTool
     {
         private readonly LanguageToolHelper _languageHelper;
 
         protected IEnumerable<LanguageService> languageServices => _languageHelper.LanguageServices;
-        protected ILogger<LanguageMcpTool> logger;
+        protected ILogger<LanguageMcpMultiCommandTool> logger;
         protected IGitHelper gitHelper => _languageHelper.GitHelper;
 
-        public LanguageMcpTool(IEnumerable<LanguageService> languageServices, IGitHelper gitHelper, ILogger<LanguageMcpTool> logger)
+        public LanguageMcpMultiCommandTool(IEnumerable<LanguageService> languageServices, IGitHelper gitHelper, ILogger<LanguageMcpMultiCommandTool> logger)
         {
             _languageHelper = new LanguageToolHelper(languageServices, gitHelper);
             this.logger = logger;

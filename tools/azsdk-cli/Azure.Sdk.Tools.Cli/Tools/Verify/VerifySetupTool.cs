@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Verify;
 /// This tool verifies that the environment is set up with the required installations to run MCP release tools
 /// </summary>
 [McpServerToolType, Description("This tool verifies that the environment is set up with the required installations to run MCP release tools.")]
-public class VerifySetupTool : LanguageMcpTool
+public class VerifySetupTool : LanguageMcpMultiCommandTool
 {
     private readonly IProcessHelper processHelper;
 
@@ -56,61 +56,68 @@ public class VerifySetupTool : LanguageMcpTool
         AllowMultipleArgumentsPerToken = true
     };
 
-    private readonly Option<List<string>> autoInstallParam = new("--auto-install", "-i")
+    private readonly Option<List<string>> toolsParam = new("--tools", "-t")
     {
-        Description = "Install specific missing requirements by name. Without arguments: interactively prompt for each installable requirement.",
-        Arity = ArgumentArity.ZeroOrMore,
+        Description = "Specific tools to install by name.",
         AllowMultipleArgumentsPerToken = true
     };
 
-    private readonly Option<bool> allowUpgradeParam = new("--allow-upgrade")
+    private readonly Option<bool> yesParam = new("--yes", "-y")
     {
-        Description = "When combined with --auto-install, install all installable requirements without prompting. Intended for CI/automation.",
+        Description = "Install all missing installable tools without prompting.",
     };
 
-    protected override Command GetCommand() =>
-        new McpCommand("setup", "Verify environment setup for MCP release tools", VerifySetupToolName)
+    private const string InstallCommandName = "install";
+
+    protected override List<Command> GetCommands()
+    {
+        var setupCommand = new McpCommand("setup", "Verify environment setup for MCP release tools", VerifySetupToolName);
+        setupCommand.Options.Add(languagesParam);
+        setupCommand.Options.Add(SharedOptions.PackagePath);
+
+        var installCommand = new Command(InstallCommandName, "Install missing environment requirements")
         {
-            languagesParam,
-            autoInstallParam,
-            allowUpgradeParam,
-            SharedOptions.PackagePath
+            toolsParam,
+            yesParam
         };
+        setupCommand.Subcommands.Add(installCommand);
+
+        return [setupCommand];
+    }
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var languages = GetLanguagesFromOption(parseResult);
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-        var autoInstallValues = parseResult.GetValue(autoInstallParam) ?? [];
-        bool autoInstallFlagPresent = parseResult.Tokens.Any(t => t.Value is "--auto-install" or "-i");
-        var allowUpgrade = parseResult.GetValue(allowUpgradeParam);
+        bool isInstall = parseResult.CommandResult.Command.Name == InstallCommandName;
 
-        return await RunVerifyWithInstallPolicy(
-            languages, packagePath, autoInstallFlagPresent, autoInstallValues, allowUpgrade, ct);
-    }
-
-    /// <summary>
-    /// CLI-only orchestration: handles interactive prompts and --allow-upgrade logic
-    /// before delegating to the core VerifySetup method.
-    /// </summary>
-    private async Task<CommandResponse> RunVerifyWithInstallPolicy(
-        HashSet<SdkLanguage> languages, string packagePath,
-        bool autoInstallFlagPresent, List<string> autoInstallValues,
-        bool allowUpgrade, CancellationToken ct)
-    {
-        // No --auto-install flag → check only
-        if (!autoInstallFlagPresent)
+        if (!isInstall)
         {
+            // azsdk verify setup → check only
             return await VerifySetup(languages, packagePath, requirementsToInstall: null, ct);
         }
 
-        // --auto-install with explicit names → pass through
-        if (autoInstallValues.Count > 0)
+        // azsdk verify setup install [--tools ...] [--yes]
+        var tools = parseResult.GetValue(toolsParam) ?? [];
+        var yes = parseResult.GetValue(yesParam);
+        return await HandleInstallCommand(languages, packagePath, tools, yes, ct);
+    }
+
+    /// <summary>
+    /// CLI-only orchestration for the 'install' sub-command: discovers missing requirements,
+    /// handles --tools/--yes flags and interactive prompts, then delegates to VerifySetup.
+    /// </summary>
+    private async Task<CommandResponse> HandleInstallCommand(
+        HashSet<SdkLanguage> languages, string packagePath,
+        List<string> tools, bool yes, CancellationToken ct)
+    {
+        // --tools foo bar → install exactly these
+        if (tools.Count > 0)
         {
-            return await VerifySetup(languages, packagePath, autoInstallValues, ct);
+            return await VerifySetup(languages, packagePath, tools, ct);
         }
 
-        // --auto-install (no names): run check first to discover installable failures
+        // No --tools → discover what's missing first
         var checkResult = await VerifySetup(languages, packagePath, requirementsToInstall: null, ct);
         var installable = GetInstallableNames(checkResult);
 
@@ -119,8 +126,8 @@ public class VerifySetupTool : LanguageMcpTool
             return checkResult;
         }
 
-        // --allow-upgrade → install all installable without prompting
-        if (allowUpgrade)
+        // --yes → install all installable without prompting
+        if (yes)
         {
             return await VerifySetup(languages, packagePath, installable, ct);
         }
@@ -397,7 +404,7 @@ public class VerifySetupTool : LanguageMcpTool
         if (autoInstallableNames.Count > 0)
         {
             response.NextSteps ??= [];
-            response.NextSteps.Add($"Re-run with --auto-install to automatically install: {string.Join(", ", autoInstallableNames)}");
+            response.NextSteps.Add($"Run 'azsdk verify setup install' to auto-install: {string.Join(", ", autoInstallableNames)}");
         }
     }
 

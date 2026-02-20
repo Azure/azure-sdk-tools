@@ -38,7 +38,7 @@ public class VerifySetupResponse : CommandResponse
                     sb.AppendLine($"        - Instructions: {string.Join(", ", result.Instructions)}");
                     if (result.IsAutoInstallable)
                     {
-                        sb.AppendLine($"        - Tip: Re-run with --auto-install to install this automatically");
+                        sb.AppendLine($"        - Tip: Re-run with 'install' sub-command to install this automatically");
                     }
                 }
 

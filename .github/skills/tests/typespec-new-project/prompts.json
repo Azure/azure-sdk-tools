@@ -1,0 +1,23 @@
+{
+  "skillName": "typespec-new-project",
+  "description": "Test prompts for typespec-new-project skill trigger validation",
+  "shouldTrigger": [
+    "Initialize a new TypeSpec project",
+    "Create a new TypeSpec project for my service",
+    "I want to onboard my Azure service to TypeSpec",
+    "Start a new ARM resource provider definition",
+    "Set up TypeSpec for a data plane API",
+    "How do I bootstrap a TypeSpec project for Azure SDK?",
+    "Create azure-arm TypeSpec project",
+    "Initialize azure-core project for my API"
+  ],
+  "shouldNotTrigger": [
+    "Convert my swagger to TypeSpec",
+    "Validate my TypeSpec project",
+    "Generate SDK from TypeSpec",
+    "What TypeSpec projects were modified?",
+    "Run TypeSpec validation",
+    "Build my SDK package",
+    "Create a release plan"
+  ]
+}

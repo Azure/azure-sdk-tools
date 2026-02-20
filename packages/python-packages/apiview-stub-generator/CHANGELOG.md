@@ -1,7 +1,7 @@
 # Release History
 
 ## Version 0.3.27 (Unreleased)
-Removed `ivar`/`cvar` keywords from token file to in favor of the `ClassVar` type annotation to distinguish.
+Removed `ivar`/`cvar` keywords from token file in favor of the `ClassVar` type annotation to distinguish then.
 
 ## Version 0.3.26 (2026-02-20)
 Fixed a bug where classes with no custom name attribute cause errors.

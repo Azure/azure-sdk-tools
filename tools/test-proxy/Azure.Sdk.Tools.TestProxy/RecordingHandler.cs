@@ -1261,9 +1261,12 @@ namespace Azure.Sdk.Tools.TestProxy
                 var rawTarget = feat?.RawTarget ?? string.Empty;
 
                 // If client sent absolute-form to the proxy, we already have the full URL.
+                // Also handle ws:// and wss:// absolute-form for WebSocket proxy requests.
                 if (!string.IsNullOrEmpty(rawTarget) &&
                     (rawTarget.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                     rawTarget.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                     rawTarget.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+                     rawTarget.StartsWith("ws://", StringComparison.OrdinalIgnoreCase) ||
+                     rawTarget.StartsWith("wss://", StringComparison.OrdinalIgnoreCase)))
                 {
                     return new Uri(rawTarget, UriKind.Absolute);
                 }
@@ -1331,6 +1334,27 @@ namespace Azure.Sdk.Tools.TestProxy
                 var rawUri = hostValue.TrimEnd('/') + rawTarget;
                 return new Uri(rawUri);
             }
+        }
+
+        public static Uri GetWebSocketRequestUri(HttpRequest request)
+        {
+            var requestUri = GetRequestUri(request);
+            if (requestUri.Scheme.Equals("ws", StringComparison.OrdinalIgnoreCase) ||
+                requestUri.Scheme.Equals("wss", StringComparison.OrdinalIgnoreCase))
+            {
+                return requestUri;
+            }
+
+            var targetScheme = requestUri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase) ? "wss" : "ws";
+            var builder = new UriBuilder(requestUri)
+            {
+                Scheme = targetScheme,
+                // Use -1 for default ports so UriBuilder doesn't emit an explicit port
+                // (e.g., avoid "wss://host:443/path" when the original was "https://host/path")
+                Port = requestUri.IsDefaultPort ? -1 : requestUri.Port
+            };
+
+            return builder.Uri;
         }
 
         private static bool IncludeHeader(string header)

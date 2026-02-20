@@ -414,6 +414,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     SdkLanguage.JavaScript => new TypeScriptSampleLanguageContext(fileHelper),
                     SdkLanguage.Python => new PythonSampleLanguageContext(fileHelper),
                     SdkLanguage.Go => new GoSampleLanguageContext(fileHelper),
+                    SdkLanguage.Rust => new RustSampleLanguageContext(fileHelper, gitHelper),
                     _ => throw new NotImplementedException($"Sample language context is not implemented for language: {Language}"),
                 };
             }

@@ -70,4 +70,22 @@
     <None Include="CHANGELOG.md" Pack="true" PackagePath="CHANGELOG.md" />
     <None Include="../README.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
+
+  <!-- START Exclude asp net configs from release archives -->
+  <ItemGroup>
+    <Content Update="appsettings*.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+    <IsWebConfigTransformDisabled>true</IsWebConfigTransformDisabled>
+  </PropertyGroup>
+
+  <Target Name="RemoveStaticWebAssetsEndpointsManifest"
+        AfterTargets="Publish">
+  <Delete Files="$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json"
+          Condition="Exists('$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json')" />
+  </Target>
+  <!-- END Exclude asp net configs from release archives -->
+
 </Project>

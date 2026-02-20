@@ -32,7 +32,7 @@
     "node": ">=20.10.0"
   },
   "dependencies": {
-    "ajv": "^6.12.6",
+    "ajv": "^8.18.0",
     "filehound": "^1.17.5",
     "handlebars": "~4.7.7",
     "jsonc-parser": "^2.3.1",

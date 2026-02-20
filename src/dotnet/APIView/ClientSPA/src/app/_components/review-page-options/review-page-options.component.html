@@ -116,7 +116,8 @@
                         Nothing to show
                     </div>
                     <div *ngFor="let approver of filteredApprovers"
-                        class="d-flex align-items-center px-3 py-2 reviewer-item cursor-pointer"
+                        class="d-flex align-items-center px-3 py-2 reviewer-item"
+                        style="cursor: pointer;"
                         [class.selected]="selectedApprovers.includes(approver)"
                         role="checkbox"
                         [attr.aria-checked]="selectedApprovers.includes(approver)"

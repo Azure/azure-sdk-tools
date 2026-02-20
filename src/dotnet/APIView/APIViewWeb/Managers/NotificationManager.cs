@@ -72,7 +72,18 @@ namespace APIViewWeb.Managers
         public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)
         {
             var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
-            await SendEmailsAsync(review, user, GetHtmlContent(comment, review), comment.TaggedUsers);
+            var elementUrl = comment.ElementId == null
+                ? null
+                : ManagerHelpers.ResolveReviewUrl(
+                    reviewId: review.Id,
+                    apiRevisionId: comment.APIRevisionId,
+                    language: review.Language,
+                    configuration: _configuration,
+                    languageServices: _languageServices,
+                    elementId: comment.ElementId);
+
+            var content = await _emailTemplateService.GetSubscriberCommentEmailAsync(comment, elementUrl);
+            await SendSubscriberEmailsAsync(review, user, content, comment.TaggedUsers);
         }
 
         public async Task NotifyUserOnCommentTag(CommentItemModel comment)
@@ -82,28 +93,43 @@ namespace APIViewWeb.Managers
                 if(string.IsNullOrEmpty(username)) continue;
                 var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
                 var user = await _userProfileRepository.TryGetUserProfileAsync(username);
-                await SendUserEmailsAsync(review, user, GetCommentTagHtmlContent(comment, review));
+                var reviewUrl = ManagerHelpers.ResolveReviewUrl(
+                    reviewId: review.Id,
+                    apiRevisionId: comment.APIRevisionId,
+                    language: review.Language,
+                    configuration: _configuration,
+                    languageServices: _languageServices,
+                    elementId: comment.ElementId);
+                var content = await _emailTemplateService.GetCommentTagEmailAsync(comment, review, reviewUrl);
+                await SendUserEmailsAsync(review, user, content);
             } 
         }
 
         public async Task NotifyApproversOfReview(ClaimsPrincipal user, string apiRevisionId, HashSet<string> reviewers)
         {
+            if (reviewers == null || reviewers.Count == 0)
+            {
+                return;
+            }
+
             var userProfile = await _userProfileRepository.TryGetUserProfileAsync(user.GetGitHubLogin());
             var apiRevision = await _apiRevisionRepository.GetAPIRevisionAsync(apiRevisionId);
+
             foreach (var reviewer in reviewers)
             {
                 var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
-                await SendUserEmailsAsync(apiRevision, reviewerProfile,
-                    GetApproverReviewHtmlContent(userProfile, apiRevision));
+                var content = await _emailTemplateService.GetApproverReviewEmailAsync(
+                    userProfile.UserName,
+                    apiRevision.Id,
+                    apiRevision.PackageName);
+                await SendUserEmailsAsync(apiRevision, reviewerProfile, content);
             }
         }
 
         public async Task NotifySubscribersOnNewRevisionAsync(ReviewListItemModel review, APIRevisionListItemModel revision, ClaimsPrincipal user)
         {
-            var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}");
-            var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{PageModelHelpers.ResolveRevisionLabel(revision)}</a>," +
-                $" was uploaded by <b>{revision.CreatedBy}</b>.";
-            await SendEmailsAsync(review, user, htmlContent, null);
+            var htmlContent = await _emailTemplateService.GetNewRevisionEmailAsync(review, revision);
+            await SendSubscriberEmailsAsync(review, user, htmlContent, null);
         }
         /// <summary>
         /// Toggle Subscription to a Review
@@ -171,77 +197,12 @@ namespace APIViewWeb.Managers
         public static string GetUserEmail(ClaimsPrincipal user) =>
             user.FindFirstValue(ClaimConstants.Email);
 
-        private string GetApproverReviewHtmlContent<T>(UserProfileModel user, T model) where T : BaseListitemModel
-        {
-            var reviewName = model.PackageName;
-            var reviewLink = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{model.Id}");
-            var poster = user.UserName;
-            var userLink = new Uri($"{_apiviewEndpoint}/Assemblies/Profile/{poster}");
-            var requestsLink = new Uri($"{_apiviewEndpoint}/Assemblies/RequestedReviews/");
-            var sb = new StringBuilder();
-            sb.Append($"<a href='{userLink.ToString()}'>{poster}</a>");
-            sb.Append($" requested you to review <a href='{reviewLink.ToString()}'><b>{reviewName}</b></a>");
-            sb.Append("<br>");
-            sb.Append($"You can review all your pending APIViews <a href='{requestsLink.ToString()}'><b>here</b></a>");
-            return sb.ToString();
-        }
-
-        private string GetCommentTagHtmlContent(CommentItemModel comment, ReviewListItemModel review)
-        {
-            var reviewName = review.PackageName;
-            var reviewLink = ManagerHelpers.ResolveReviewUrl(
-                reviewId: review.Id,
-                apiRevisionId: comment.APIRevisionId,
-                language: review.Language,
-                configuration: _configuration,
-                languageServices: _languageServices,
-                elementId: comment.ElementId);
-            var commentText = comment.CommentText;
-            var poster = comment.CreatedBy;
-            var userLink = new Uri($"{_apiviewEndpoint}/Assemblies/Profile/{poster}");
-            var sb = new StringBuilder();
-            sb.Append($"<a href='{userLink.ToString()}'>{poster}</a>");
-            sb.Append($" mentioned you in <a href='{reviewLink}'><b>{reviewName}</b></a>");
-            sb.Append("<br>");
-            sb.Append("Their comment was the following:");
-            sb.Append("<br><br><i>");
-            sb.Append(CommentMarkdownExtensions.MarkdownAsHtml(commentText));
-            sb.Append("</i>");
-            return sb.ToString();
-        }
-
-        private string GetHtmlContent(CommentItemModel comment, ReviewListItemModel review)
-        {
-            var sb = new StringBuilder();
-            sb.Append(GetContentHeading(comment, true));
-            sb.Append("<br><br>");
-
-            if (comment.ElementId != null)
-            {
-                var uri = ManagerHelpers.ResolveReviewUrl(
-                    reviewId: review.Id,
-                    apiRevisionId: comment.APIRevisionId,
-                    language: review.Language,
-                    configuration: _configuration,
-                    languageServices: _languageServices,
-                    elementId: comment.ElementId);
-                sb.Append($"In <a href='{uri}'>{WebUtility.HtmlEncode(comment.ElementId)}</a>:");
-                sb.Append("<br><br>");
-            }
-
-            sb.Append(CommentMarkdownExtensions.MarkdownAsHtml(comment.CommentText));
-            return sb.ToString();
-        }
-
-        private static string GetContentHeading(CommentItemModel comment, bool includeHtml) =>
-            $"{(includeHtml ? $"<b>{comment.CreatedBy}</b>" : $"{comment.CreatedBy}")} commented on this review.";
-
         private async Task SendUserEmailsAsync<T>(T model, UserProfileModel user, string htmlContent) where T : BaseListitemModel 
         {
             // SendEmailAsync already handles email validation
             await SendEmailAsync(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
         }
-        private async Task SendEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
+        private async Task SendSubscriberEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
         {
             var initiatingUserEmail = GetUserEmail(user);
             
@@ -371,9 +332,8 @@ namespace APIViewWeb.Managers
                 _logger.LogTrace("Email sender service URL is not configured. Email will not be sent to {EmailToList} with subject: {Subject}", emailToList, subject);
                 return;
             }
-            
-            var emailToAddress = !string.IsNullOrEmpty(_testEmailToAddress) ? _testEmailToAddress : emailToList;
-            var requestBody = new EmailModel(emailToAddress, subject, content);
+
+            var requestBody = CreateEmailModel(emailToList, subject, content);
             var httpClient = new HttpClient();
             
             try
@@ -390,6 +350,25 @@ namespace APIViewWeb.Managers
             {
                 _telemetryClient.TrackException(ex);
             }
+        }
+
+        private EmailModel CreateEmailModel(string emailToList, string subject, string content)
+        {
+            var isTestMode = !string.IsNullOrEmpty(_testEmailToAddress);
+            var emailToAddress = isTestMode ? _testEmailToAddress : emailToList;
+            var emailContent = AppendTestModeFooter(content, emailToList, isTestMode);
+            return new EmailModel(emailToAddress, subject, emailContent);
+        }
+
+        private static string AppendTestModeFooter(string content, string intendedRecipients, bool isTestMode)
+        {
+            if (!isTestMode)
+            {
+                return content;
+            }
+
+            var encodedRecipients = WebUtility.HtmlEncode(intendedRecipients);
+            return content + $"<br><br><hr><div style='font-size: 12px; color: #666;'><b>Test mode:</b> Intended recipients: {encodedRecipients}</div>";
         }
 
         public async Task NotifyStakeholdersOfManualApproval(ReviewListItemModel review, IEnumerable<ReviewListItemModel> associatedReviews)

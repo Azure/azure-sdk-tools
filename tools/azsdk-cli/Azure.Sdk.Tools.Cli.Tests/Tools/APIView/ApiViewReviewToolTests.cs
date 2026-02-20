@@ -118,7 +118,7 @@ public class ApiViewReviewToolTests
     public async Task UrlExtraction_WithValidApiViewUrl_ShouldExtractCorrectRevisionId()
     {
         string apiViewUrl =
-            "https://spa.apiview.org/review/96672963bb5747db9d65d32df5f82d5a?activeApiRevisionId=2668702652604dad92d75feb1321c7a4";
+            "https://spa.apiviewstagingtest.com/review/96672963bb5747db9d65d32df5f82d5a?activeApiRevisionId=2668702652604dad92d75feb1321c7a4";
         string expectedRevisionId = "2668702652604dad92d75feb1321c7a4";
         string expectedComments = "Test comments";
 

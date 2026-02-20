@@ -351,11 +351,11 @@ extends:
 
           variables:
             - name: 'apiUrl'
-              value: 'https://apiview.org/api/'
+              value: 'https://apiviewstagingtest.com/api/'
             - name: 'hubUrl'
-              value: 'https://apiview.org/hubs/'
+              value: 'https://apiviewstagingtest.com/hubs/'
             - name: 'webAppUrl'
-              value: 'https://apiview.org/'
+              value: 'https://apiviewstagingtest.com/'
 
           jobs:
             - job: Publish_to_Staging

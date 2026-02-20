@@ -469,11 +469,11 @@ extends:
 
           variables:
             - name: 'apiUrl'
-              value: 'https://apiview.dev/api/'
+              value: 'https://apiview.org/api/'
             - name: 'hubUrl'
-              value: 'https://apiview.dev/hubs/'
+              value: 'https://apiview.org/hubs/'
             - name: 'webAppUrl'
-              value: 'https://apiview.dev/'
+              value: 'https://apiview.org/'
 
           jobs:
             - deployment: Publish_to_Prod

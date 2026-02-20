@@ -1,10 +1,10 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param (
   [Parameter(Mandatory = $true)]
   [string]$BuildId,
   [string]$RepoName = "azure/azure-sdk-tools",
   [string]$ArtifactName = "apiview",
-  [string]$ApiviewUpdateUrl = "https://apiview.dev/review/UpdateApiReview"
+  [string]$ApiviewUpdateUrl = "https://apiview.org/review/UpdateApiReview"
 )
 
 ####################################################################################################################

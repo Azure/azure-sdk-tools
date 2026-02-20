@@ -260,11 +260,11 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
     {
         ///var powershellHelper = new Mock<IPowershellHelper>();
 
-        SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
-        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
-        SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
-        SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
-        SdkLanguage.Go => new GoLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>()),
+        SdkLanguage.DotNet => new DotnetLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+        SdkLanguage.Java => new JavaLanguageService(processHelper, gitHelper, new Mock<IMavenHelper>().Object, microAgentMock, new TestLogger<JavaLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+        SdkLanguage.Python => new PythonLanguageService(processHelper, pythonHelper, npxHelper, gitHelper, new TestLogger<PythonLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+        SdkLanguage.JavaScript => new JavaScriptLanguageService(processHelper, npxHelper, gitHelper, new TestLogger<JavaScriptLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+        SdkLanguage.Go => new GoLanguageService(processHelper, powershellHelper, gitHelper, new TestLogger<GoLanguageService>(), commonValidationHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
         _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
     };
 }

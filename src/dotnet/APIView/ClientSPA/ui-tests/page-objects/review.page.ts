@@ -207,9 +207,13 @@ export class ReviewPage extends BasePage {
     // Click on the line to select it
     await this.clickCodeLine(lineContent);
 
-    // Click the add comment button (icon that appears on hover/selection)
-    const commentIcon = this.page.locator('.add-comment-icon').first();
-    await commentIcon.click();
+    // Find and hover the code line to reveal the add comment button
+    const codeLine = this.page.locator('.code-line').filter({ hasText: lineContent }).first();
+    await codeLine.hover();
+
+    // Click the add comment button
+    const commentBtn = codeLine.locator('.line-hover-actions .add-comment-btn');
+    await commentBtn.click();
 
     // Wait for comment editor
     const commentEditor = this.page.locator('.comment-editor textarea');

@@ -4,26 +4,36 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SdkLanguage
 {
-    [JsonPropertyName("")]
     Unknown,
-    [JsonPropertyName(".NET")]
+    [JsonStringEnumMemberName(".NET")]
     DotNet,
-    [JsonPropertyName("Java")]
+    [JsonStringEnumMemberName("Java")]
     Java,
-    [JsonPropertyName("JavaScript")]
+    [JsonStringEnumMemberName("JavaScript")]
     JavaScript,
-    [JsonPropertyName("Python")]
+    [JsonStringEnumMemberName("Python")]
     Python,
-    [JsonPropertyName("Go")]
+    [JsonStringEnumMemberName("Go")]
     Go,
-    [JsonPropertyName("Rust")]
+    [JsonStringEnumMemberName("Rust")]
     Rust
 }
 
 public static class SdkLanguageHelpers
 {
+
+    public static string ToWorkItemString(this SdkLanguage value)
+    {
+        var field = value.GetType().GetField(value.ToString())
+            ?? throw new InvalidOperationException($"Unable to find JsonStringEnumMemberName field for SdkLanguage value '{value}'");
+
+        var attribute = field.GetCustomAttributes(typeof(JsonStringEnumMemberNameAttribute), false)
+                             .FirstOrDefault() as JsonStringEnumMemberNameAttribute;
+        return attribute?.Name ?? value.ToString();
+    }
 
     private static readonly ImmutableDictionary<string, SdkLanguage> RepoToLanguageMap = new Dictionary<string, SdkLanguage>()
     {

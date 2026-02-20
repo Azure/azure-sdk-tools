@@ -4,35 +4,29 @@ using System.Diagnostics;
 using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Telemetry;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Core;
 
-public class InstrumentedTool : DelegatingMcpServerTool
+public class InstrumentedTool(
+    ITelemetryService telemetryService,
+    ILogger logger,
+    IMcpServerContextAccessor mcpServerContextAccessor,
+    McpServerTool innerTool
+    ) : DelegatingMcpServerTool(innerTool)
 {
-    private readonly ITelemetryService telemetryService;
-    private readonly ILogger logger;
-    private readonly IMcpServerContextAccessor mcpServerContextAccessor;
-    private readonly McpServerTool innerTool;
+    private readonly ITelemetryService telemetryService = telemetryService;
+    private readonly ILogger logger = logger;
+    private readonly IMcpServerContextAccessor mcpServerContextAccessor = mcpServerContextAccessor;
+    private readonly McpServerTool innerTool = innerTool;
     private readonly JsonSerializerOptions serializerOptions = new()
     {
         WriteIndented = false,
     };
-
-    public InstrumentedTool(
-        ITelemetryService telemetryService,
-        ILogger logger,
-        IMcpServerContextAccessor mcpServerContextAccessor,
-        McpServerTool innerTool
-    ) : base(innerTool)
-    {
-        this.telemetryService = telemetryService;
-        this.mcpServerContextAccessor = mcpServerContextAccessor;
-        this.logger = logger;
-        this.innerTool = innerTool;
-    }
 
     public override IReadOnlyList<object> Metadata => innerTool.Metadata;
 

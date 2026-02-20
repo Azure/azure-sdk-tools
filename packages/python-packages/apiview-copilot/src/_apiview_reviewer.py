@@ -20,16 +20,15 @@ from time import time
 from typing import List, Optional
 
 import yaml
-
-from ._comment_grouper import CommentGrouper
-from ._credential import get_credential
-from ._diff import create_diff_with_line_numbers
-from ._models import Comment, ExistingComment, ReviewResult
-from ._prompt_runner import run_prompt
-from ._search_manager import SearchManager
-from ._sectioned_document import SectionedDocument
-from ._settings import SettingsManager
-from ._utils import get_language_pretty_name
+from src._comment_grouper import CommentGrouper
+from src._credential import get_credential
+from src._diff import create_diff_with_line_numbers
+from src._models import Comment, ExistingComment, ReviewResult
+from src._prompt_runner import run_prompt
+from src._search_manager import SearchManager
+from src._sectioned_document import SectionedDocument
+from src._settings import SettingsManager
+from src._utils import get_language_pretty_name
 
 # Set up package root for log and metadata paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

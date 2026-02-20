@@ -110,7 +110,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (segments.Length > 2)
             {
                 repoOwner = segments[^2].TrimEnd('/');
-                repoName = segments[^1].TrimEnd(".git".ToCharArray());
+                repoName = segments[^1].Replace(".git", "");
             }
 
             if (findUpstreamParent)

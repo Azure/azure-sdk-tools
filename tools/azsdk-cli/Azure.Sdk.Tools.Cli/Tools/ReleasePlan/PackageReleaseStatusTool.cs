@@ -128,6 +128,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 response.ReleasePlanId = releasePlan.ReleasePlanId;
+                response.TypeSpecProject = releasePlan.APISpecProjectPath;
                 logger.LogInformation("Updating release status for package {packageName} in release plan work item {workItemId}", packageName, releasePlan.WorkItemId);
 
                 // Update the release status for the specific language

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Attributes;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 {
@@ -32,5 +33,27 @@ namespace Azure.Sdk.Tools.Cli.Models.AzureDevOps
 
         [FieldName("Custom.PackageRepoPath")]
         public string PackageRepoPath { get; set; } = string.Empty;
+
+        /// <summary>
+        /// IDs of related work items (populated from work item relations).
+        /// </summary>
+        public HashSet<int> RelatedIds { get; set; } = [];
+
+        /// <summary>
+        /// Hydrated Owner references (populated after fetching all work items).
+        /// </summary>
+        public List<OwnerWorkItem> Owners { get; } = [];
+
+        /// <summary>
+        /// Hydrated Label references (populated after fetching all work items).
+        /// </summary>
+        public List<LabelWorkItem> Labels { get; } = [];
+
+        /// <summary>
+        /// Hydrated LabelOwner references (populated after fetching all work items).
+        /// </summary>
+        public List<LabelOwnerWorkItem> LabelOwners { get; } = [];
     }
+
+
 }

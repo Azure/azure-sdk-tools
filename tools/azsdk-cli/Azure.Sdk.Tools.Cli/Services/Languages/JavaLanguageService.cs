@@ -27,8 +27,9 @@ public sealed partial class JavaLanguageService : LanguageService
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
         IFileHelper fileHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+        IChangelogHelper changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.microagentHost = microagentHost;
         this._mavenHelper = mavenHelper;
@@ -361,10 +362,5 @@ public sealed partial class JavaLanguageService : LanguageService
             logger.LogError(ex, "Failed to apply automated patches");
             return false;
         }
-    }
-
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
-    {
-        return categories.TryGetValue("java", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 }

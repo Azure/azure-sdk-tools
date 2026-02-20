@@ -77,8 +77,8 @@ export async function setupReviewPageMocks(
     });
   });
 
-  // Mock preferred approvers - must be BEFORE /api/reviews/*
-  await page.route('**/api/reviews/*/preferredapprovers', async (route) => {
+  // Mock approvers for language
+  await page.route('**/api/permissions/approvers/*', async (route) => {
     await maybeDelay(delay);
     await route.fulfill({
       status: 200,
@@ -87,7 +87,7 @@ export async function setupReviewPageMocks(
     });
   });
 
-  // Mock get review (less specific, so register AFTER content and preferredapprovers)
+  // Mock get review (less specific, so register AFTER content and approvers)
   await page.route('**/api/reviews/*', async (route) => {
     if (route.request().method() !== 'GET') {
       await route.continue();

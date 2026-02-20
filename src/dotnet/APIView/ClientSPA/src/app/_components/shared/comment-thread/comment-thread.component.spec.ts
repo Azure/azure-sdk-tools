@@ -1,28 +1,102 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { CommentThreadComponent } from './comment-thread.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { ReviewPageModule } from 'src/app/_modules/review-page.module';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { MessageService } from 'primeng/api';
+import { vi } from 'vitest';
+import { initializeTestBed } from '../../../../test-setup';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
-import { MessageService } from 'primeng/api';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { WorkerService } from 'src/app/_services/worker/worker.service';
+import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
+import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
+
+// Mock ngx-simplemde before any component imports
+vi.mock('ngx-simplemde', () => {
+  const SimplemdeModuleMock = class SimplemdeModule {
+    static ɵmod = { 
+      id: 'SimplemdeModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+    static forRoot() {
+      return {
+        ngModule: SimplemdeModuleMock,
+        providers: []
+      };
+    }
+  };
+  class SimplemdeOptions {
+    constructor() {}
+  }
+  class SimplemdeComponent {
+    value = '';
+    options = {};
+    delay = 0;
+    valueChange = { emit: vi.fn() };
+  }
+  return {
+    SimplemdeModule: SimplemdeModuleMock,
+    SimplemdeOptions,
+    SimplemdeComponent
+  };
+});
+
+// Mock ngx-ui-scroll to avoid vscroll package dependency
+vi.mock('ngx-ui-scroll', () => {
+  const UiScrollModuleMock = class UiScrollModule {
+    static ɵmod = { 
+      id: 'UiScrollModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+  };
+  return {
+    UiScrollModule: UiScrollModuleMock
+  };
+});
+
+import { CommentThreadComponent } from './comment-thread.component';
 
 describe('CommentThreadComponent', () => {
   let component: CommentThreadComponent;
   let fixture: ComponentFixture<CommentThreadComponent>;
 
+  const mockNotificationsService = createMockNotificationsService();
+  const mockSignalRService = createMockSignalRService();
+  const mockWorkerService = createMockWorkerService();
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
+      schemas: [NO_ERRORS_SCHEMA],
       imports: [
         CommentThreadComponent,
-        HttpClientTestingModule,
-        ReviewPageModule,
-        SharedAppModule,
-        NoopAnimationsModule
+        SharedAppModule
       ],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: WorkerService, useValue: mockWorkerService },
         MessageService
       ]
     });
@@ -146,7 +220,7 @@ describe('CommentThreadComponent', () => {
       component.threadResolvedStateToggleText = 'Hide';
       component.threadResolvedStateToggleIcon = 'bi-arrows-collapse';
 
-      spyOn(component.commentResolutionActionEmitter, 'emit');
+      vi.spyOn(component.commentResolutionActionEmitter, 'emit');
 
       component.handleThreadResolutionButtonClick('Resolve');
 
@@ -156,7 +230,7 @@ describe('CommentThreadComponent', () => {
     });
 
     it('should collapse thread on second resolve after unresolve cycle', () => {
-      spyOn(component.commentResolutionActionEmitter, 'emit');
+      vi.spyOn(component.commentResolutionActionEmitter, 'emit');
 
       // First resolve
       component.handleThreadResolutionButtonClick('Resolve');
@@ -198,7 +272,7 @@ describe('CommentThreadComponent', () => {
     });
 
     it('should emit resolution events for batch resolution', () => {
-      spyOn(component.batchResolutionActionEmitter, 'emit');
+      vi.spyOn(component.batchResolutionActionEmitter, 'emit');
       component.allCodePanelRowData = [
         { nodeId: 'element1', nodeIdHashed: 'hash1', associatedRowPositionInGroup: 0 } as CodePanelRowData
       ];
@@ -207,7 +281,7 @@ describe('CommentThreadComponent', () => {
       component['emitResolutionEvents'](commentIds);
 
       expect(component.batchResolutionActionEmitter.emit).toHaveBeenCalledWith(
-        jasmine.objectContaining({
+        expect.objectContaining({
           commentId: 'comment1',
           resolvedBy: 'test-user'
         })
@@ -277,7 +351,7 @@ describe('CommentThreadComponent', () => {
       component.codePanelRowData!.showReplyTextBox = true;
       component.codePanelRowData!.draftCommentText = 'Draft to be cancelled';
 
-      spyOn(component.cancelCommentActionEmitter, 'emit');
+      vi.spyOn(component.cancelCommentActionEmitter, 'emit');
 
       const mockEvent = {
         target: document.createElement('button')
@@ -290,6 +364,197 @@ describe('CommentThreadComponent', () => {
 
       expect(component.codePanelRowData!.draftCommentText).toBe('');
       expect(component.codePanelRowData!.showReplyTextBox).toBe(false);
+    });
+  });
+
+  describe('getCommentActionMenuContent', () => {
+    beforeEach(() => {
+      component.userProfile = { userName: 'test-user' } as any;
+      component.instanceLocation = 'code-panel';
+    });
+
+    it('should always include Copy link as first menu item', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'other-user';
+      component.codePanelRowData!.comments = [comment];
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      expect(menu.length).toBeGreaterThan(0);
+      expect(menu[0].items).toBeDefined();
+      expect(menu[0].items![0].label).toBe('Copy link');
+      expect(menu[0].items![0].icon).toBe('pi pi-link');
+    });
+
+    it('should include Edit and Delete for comment owner', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'test-user';
+      component.codePanelRowData!.comments = [comment];
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      // Find the group with Edit/Delete
+      const editDeleteGroup = menu.find(item => item.items?.some(i => i.label === 'Edit'));
+      expect(editDeleteGroup).toBeDefined();
+      expect(editDeleteGroup!.items!.some(i => i.label === 'Edit')).toBe(true);
+      expect(editDeleteGroup!.items!.some(i => i.label === 'Delete')).toBe(true);
+    });
+
+    it('should not include Edit/Delete for non-owner users', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'other-user';
+      component.codePanelRowData!.comments = [comment];
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      const editDeleteGroup = menu.find(item => item.items?.some(i => i.label === 'Edit'));
+      expect(editDeleteGroup).toBeUndefined();
+    });
+
+    it('should include GitHub Issue submenu for code-panel location', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'other-user';
+      component.codePanelRowData!.comments = [comment];
+      component.instanceLocation = 'code-panel';
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      const githubIssueGroup = menu.find(item => item.label === 'Create GitHub Issue');
+      expect(githubIssueGroup).toBeDefined();
+    });
+
+    it('should not include GitHub Issue submenu for samples location', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment1';
+      comment.createdBy = 'other-user';
+      component.codePanelRowData!.comments = [comment];
+      component.instanceLocation = 'samples';
+
+      const menu = component.getCommentActionMenuContent('comment1');
+
+      const githubIssueGroup = menu.find(item => item.label === 'Create GitHub Issue');
+      expect(githubIssueGroup).toBeUndefined();
+    });
+  });
+
+  describe('copyCommentLink', () => {
+    let mockClipboard: { writeText: ReturnType<typeof vi.fn> };
+    let originalClipboard: Clipboard;
+    let mockMessageService: MessageService;
+
+    beforeEach(() => {
+      mockClipboard = {
+        writeText: vi.fn().mockResolvedValue(undefined)
+      };
+      originalClipboard = navigator.clipboard;
+      Object.defineProperty(navigator, 'clipboard', {
+        value: mockClipboard,
+        writable: true
+      });
+
+      mockMessageService = TestBed.inject(MessageService);
+      vi.spyOn(mockMessageService, 'add');
+
+      const comment = new CommentItemModel();
+      comment.id = 'test-comment-id';
+      comment.elementId = 'test-element-id';
+      component.codePanelRowData!.comments = [comment];
+      component.codePanelRowData!.nodeId = 'test-node-id';
+    });
+
+    afterEach(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: originalClipboard,
+        writable: true
+      });
+    });
+
+    it('should copy comment link to clipboard with correct URL format', async () => {
+      const mockElement = document.createElement('a');
+      mockElement.setAttribute('data-item-id', 'test-comment-id');
+
+      const mockEvent = {
+        originalEvent: {
+          target: mockElement
+        }
+      } as any;
+
+      component.copyCommentLink(mockEvent);
+
+      expect(mockClipboard.writeText).toHaveBeenCalled();
+      const calledUrl = mockClipboard.writeText.mock.calls[0][0];
+      expect(calledUrl).toContain('nId=test-element-id');
+      expect(calledUrl).toContain('#test-comment-id');
+    });
+
+    it('should show success message after copying link', async () => {
+      const mockElement = document.createElement('a');
+      mockElement.setAttribute('data-item-id', 'test-comment-id');
+
+      const mockEvent = {
+        originalEvent: {
+          target: mockElement
+        }
+      } as any;
+
+      component.copyCommentLink(mockEvent);
+
+      // Wait for the clipboard promise to resolve
+      await mockClipboard.writeText.mock.results[0]?.value;
+
+      expect(mockMessageService.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'success',
+          summary: 'Link copied'
+        })
+      );
+    });
+
+    it('should use comment elementId for nId parameter', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment-with-element';
+      comment.elementId = 'specific-element-id';
+      component.codePanelRowData!.comments = [comment];
+
+      const mockElement = document.createElement('a');
+      mockElement.setAttribute('data-item-id', 'comment-with-element');
+
+      const mockEvent = {
+        originalEvent: {
+          target: mockElement
+        }
+      } as any;
+
+      component.copyCommentLink(mockEvent);
+
+      const calledUrl = mockClipboard.writeText.mock.calls[0][0];
+      expect(calledUrl).toContain('nId=specific-element-id');
+    });
+
+    it('should fallback to nodeId if comment has no elementId', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'comment-no-element';
+      comment.elementId = '';
+      component.codePanelRowData!.comments = [comment];
+      component.codePanelRowData!.nodeId = 'fallback-node-id';
+
+      const mockElement = document.createElement('a');
+      mockElement.setAttribute('data-item-id', 'comment-no-element');
+
+      const mockEvent = {
+        originalEvent: {
+          target: mockElement
+        }
+      } as any;
+
+      component.copyCommentLink(mockEvent);
+
+      const calledUrl = mockClipboard.writeText.mock.calls[0][0];
+      expect(calledUrl).toContain('nId=fallback-node-id');
     });
   });
 });

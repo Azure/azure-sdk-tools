@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -67,7 +68,7 @@ public sealed class McpServerLoggerProvider(IMcpServerContextAccessor contextAcc
         }
 
         provider ??= contextAccessor.Current.AsClientLoggerProvider();
-        logger ??= provider.CreateLogger("azsdk");
+        logger ??= provider.CreateLogger(SharedCommandNames.BaseExecutableName);
         return logger;
     }
 
@@ -124,6 +125,11 @@ public sealed class McpRawOutputHelper(ILogger<McpRawOutputHelper> logger) : IRa
     public void OutputConsole(string output)
     {
         logger.LogInformation("{Output}", output);
+    }
+
+    public void OutputConsoleWarning(string output)
+    {
+        logger.LogWarning("{Output}", output);
     }
 
     public void OutputConsoleError(string output)

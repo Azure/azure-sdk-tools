@@ -91,7 +91,7 @@
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
 /tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
 /src/swift/                               @tjprescott
-/src/java/apiview-java-processor/         @JonathanGiles
+/src/java/apiview-java-processor/         @JonathanGiles @alzimmermsft @srnagar
 /src/go/                                  @jhendrixMSFT @chlowell @RickWinter
 
 ###########

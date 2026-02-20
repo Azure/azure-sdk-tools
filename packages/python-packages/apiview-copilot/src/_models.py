@@ -13,8 +13,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Set
 
 from pydantic import BaseModel, Field, PrivateAttr
-
-from ._sectioned_document import Section
+from src._sectioned_document import Section
 
 
 class ExistingComment(BaseModel):

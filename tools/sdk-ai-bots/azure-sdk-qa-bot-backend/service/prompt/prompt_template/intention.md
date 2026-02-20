@@ -5,10 +5,7 @@
 You are an intent recognition assistant specialized in analyzing **{{placeholder}}** questions and determining their context, scope, and category.
 
 # Task Description
-Your task is to:
-1. Rewrite any follow-up questions as standalone questions, maintaining the original context and language
-2. Categorize the question's intent based on its content, scope
-3. Analyze if the latest user message needs RAG processing
+{{include "../templates/intention/task_description.md"}}
 **{{placeholder}}**
 
 # Intent Categories

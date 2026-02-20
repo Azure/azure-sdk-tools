@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -24,6 +23,8 @@ import (
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/google/uuid"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/shared"
 )
 
 type CompletionService struct {
@@ -48,6 +49,9 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 	if req.TopK == nil {
 		topK := config.AppConfig.AI_SEARCH_TOPK
 		req.TopK = &topK
+	}
+	if req.WithAgenticSearch == nil {
+		req.WithAgenticSearch = to.Ptr(true)
 	}
 	tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID)
 	if hasConfig {
@@ -87,7 +91,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// 2. Handle tenant routing if enabled
 	if tenantConfig.EnableRouting {
-		routedTenantID, routed = s.RouteTenant(req.TenantID, llmMessages)
+		routedTenantID, routed = s.RouteTenant(req.TenantID, req.ModelConfig, llmMessages)
 		if routed {
 			tenantConfig, _ = config.GetTenantConfig(routedTenantID)
 			req.Sources = tenantConfig.Sources
@@ -98,13 +102,16 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	// 3. Recognize intention
 	query := req.Message.Content
 
-	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, llmMessages)
+	intention, err := s.RecognizeIntention(req.TenantID, tenantConfig.IntentionPromptTemplate, req.ModelConfig, llmMessages)
 	if err != nil {
 		log.Printf("Intention recognize failed with error: %s", err)
 		return nil, err
 	}
 	if intention.QuestionScope == nil {
 		intention.QuestionScope = to.Ptr(model.QuestionScope_Branded) // default to branded scope
+	}
+	if len(intention.Question) > 0 {
+		query = fmt.Sprintf("category:%s question:%s", intention.Category, intention.Question)
 	}
 	// Apply intention override if provided
 	if req.Intention != nil {
@@ -130,7 +137,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		promptTemplate = "common/non_technical_question.md"
 	} else {
 		// Run agentic search and vector search in parallel, then merge results
-		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query, intention)
+		knowledges, err = s.runParallelSearchAndMergeResults(ctx, req, query, intention, *req.WithAgenticSearch)
 		if err != nil {
 			log.Printf("Parallel search failed: %v", err)
 			return nil, model.NewSearchFailureError(err)
@@ -145,10 +152,10 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 5. Get answer from LLM
-	llmMessages = append([]azopenai.ChatRequestMessageClassification{
-		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)},
+	llmMessages = append([]openai.ChatCompletionMessageParamUnion{
+		openai.SystemMessage(prompt),
 	}, llmMessages...)
-	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
+	result, err := s.getLLMResult(req.ModelConfig, llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
@@ -169,7 +176,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	return result, nil
 }
 
-func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, messages []azopenai.ChatRequestMessageClassification) (*model.Intention, error) {
+func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTemplate string, modelConfig *model.ModelConfig, messages []openai.ChatCompletionMessageParamUnion) (*model.Intention, error) {
 	start := time.Now()
 	promptParser := prompt.IntentionPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
@@ -182,33 +189,47 @@ func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTe
 		return nil, err
 	}
 
-	messages = append([]azopenai.ChatRequestMessageClassification{
-		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
+	messages = append([]openai.ChatCompletionMessageParamUnion{
+		openai.SystemMessage(promptStr),
 	}, messages...)
 
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		Messages:       messages,
-		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
-		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_REASONING_MODEL_TEMPERATURE)),
-		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-	}, nil)
+	options := openai.ChatCompletionNewParams{
+		Messages: messages,
+		Model:    openai.ChatModel(config.AppConfig.AOAI_CHAT_REASONING_MODEL),
+		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
+		},
+		Seed:            openai.Int(1), // Fixed seed for deterministic output
+		ReasoningEffort: shared.ReasoningEffort(config.AppConfig.AOAI_CHAT_REASONING_MODEL_REASONING_EFFORT),
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.ReasoningModel != nil {
+		options.Model = openai.ChatModel(*modelConfig.ReasoningModel)
+	}
+
+	if modelConfig != nil && modelConfig.ReasoningModelReasoningEffort != nil {
+		options.ReasoningEffort = shared.ReasoningEffort(*modelConfig.ReasoningModelReasoningEffort)
+	}
+
+	resp, err := config.OpenAIClient.Chat.Completions.New(context.TODO(), options)
 
 	if err != nil {
 		log.Printf("LLM intention recognition failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	if len(resp.Choices) > 0 {
-		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
-		if err != nil {
-			respStr, _ := resp.MarshalJSON()
-			log.Printf("Failed to parse intention response: %v, response:%s", err, respStr)
-			return nil, err
-		}
-		return result, nil
+	if len(resp.Choices) == 0 {
+		return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
+	}
+	result, err := promptParser.ParseResponse(resp.Choices[0].Message.Content, promptTemplate)
+	if err != nil {
+		respStr := resp.RawJSON()
+		log.Printf("Failed to parse intention response: %v, response:%s", err, respStr)
+		return nil, err
 	}
 	log.Printf("RecognizeIntention took %f s", time.Since(start).Seconds())
-	return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
+	return result, nil
 }
 
 func processChunk(result model.Index) model.Knowledge {
@@ -322,7 +343,7 @@ func getImageDataURI(url string) (string, error) {
 	}
 }
 
-func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.ChatRequestMessageClassification {
+func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.ChatCompletionMessageParamUnion {
 	// avoid token limit error, we need to limit the number of messages in the history
 	if len(req.Message.Content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
 		log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
@@ -335,7 +356,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.C
 
 	// This is a conversation in progress.
 	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
-	llmMessages := []azopenai.ChatRequestMessageClassification{}
+	llmMessages := []openai.ChatCompletionMessageParamUnion{}
 
 	// process history messages
 	for _, message := range req.History {
@@ -343,12 +364,18 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.C
 		content := preprocessService.PreprocessHTMLContent(message.Content)
 
 		if message.Role == model.Role_Assistant {
-			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(content)}
-			llmMessages = append(llmMessages, msg)
+			llmMessages = append(llmMessages, openai.AssistantMessage(content))
 		}
 		if message.Role == model.Role_User {
-			msg := &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(content), Name: processName(message.Name)}
-			llmMessages = append(llmMessages, msg)
+			userMsg := &openai.ChatCompletionUserMessageParam{
+				Content: openai.ChatCompletionUserMessageParamContentUnion{
+					OfString: openai.String(content),
+				},
+			}
+			if name := processName(message.Name); name != nil {
+				userMsg.Name = openai.String(*name)
+			}
+			llmMessages = append(llmMessages, openai.ChatCompletionMessageParamUnion{OfUser: userMsg})
 		}
 	}
 
@@ -377,15 +404,11 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.C
 					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
 					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 				}
-				var msg *azopenai.ChatRequestUserMessage
+				var msg openai.ChatCompletionMessageParamUnion
 				if strings.Contains(content, "graph.microsoft.com") {
-					msg = &azopenai.ChatRequestUserMessage{
-						Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Image URL: %s\nImage Content: %s", info.Link, content)),
-					}
+					msg = openai.UserMessage(fmt.Sprintf("Image URL: %s\nImage Content: %s", info.Link, content))
 				} else {
-					msg = &azopenai.ChatRequestUserMessage{
-						Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, content)),
-					}
+					msg = openai.UserMessage(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, content))
 				}
 				llmMessages = append(llmMessages, msg)
 			} else if info.Type == model.AdditionalInfoType_Image {
@@ -395,16 +418,20 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.C
 					continue
 				}
 				log.Println("Image link:", utils.SanitizeForLog(link))
-				llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
-					Content: azopenai.NewChatRequestUserMessageContent(
-						[]azopenai.ChatCompletionRequestMessageContentPartClassification{
-							&azopenai.ChatCompletionRequestMessageContentPartImage{
-								ImageURL: to.Ptr(azopenai.ChatCompletionRequestMessageContentPartImageURL{
-									URL: to.Ptr(link),
-								}),
+				llmMessages = append(llmMessages, openai.ChatCompletionMessageParamUnion{
+					OfUser: &openai.ChatCompletionUserMessageParam{
+						Content: openai.ChatCompletionUserMessageParamContentUnion{
+							OfArrayOfContentParts: []openai.ChatCompletionContentPartUnionParam{
+								{
+									OfImageURL: &openai.ChatCompletionContentPartImageParam{
+										ImageURL: openai.ChatCompletionContentPartImageImageURLParam{
+											URL: link,
+										},
+									},
+								},
 							},
 						},
-					),
+					},
 				})
 			} else if info.Type == model.AdditionalInfoType_Text {
 				content := info.Content
@@ -412,21 +439,22 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []azopenai.C
 					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
 					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 				}
-				msg := &azopenai.ChatRequestUserMessage{
-					Content: azopenai.NewChatRequestUserMessageContent(content),
-				}
-				llmMessages = append(llmMessages, msg)
+				llmMessages = append(llmMessages, openai.UserMessage(content))
 			}
 		}
 	}
 
 	// process current user message
 	currentMessage := req.Message.Content
-	msg := &azopenai.ChatRequestUserMessage{
-		Content: azopenai.NewChatRequestUserMessageContent(currentMessage),
-		Name:    processName(req.Message.Name),
+	userMsg := &openai.ChatCompletionUserMessageParam{
+		Content: openai.ChatCompletionUserMessageParamContentUnion{
+			OfString: openai.String(currentMessage),
+		},
 	}
-	llmMessages = append(llmMessages, msg)
+	if name := processName(req.Message.Name); name != nil {
+		userMsg.Name = openai.String(*name)
+	}
+	llmMessages = append(llmMessages, openai.ChatCompletionMessageParamUnion{OfUser: userMsg})
 	return llmMessages
 }
 
@@ -462,16 +490,30 @@ func (s *CompletionService) buildPrompt(tenantID model.TenantID, intention *mode
 	return promptStr, nil
 }
 
-func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageClassification, promptTemplate string) (*model.CompletionResp, error) {
+func (s *CompletionService) getLLMResult(modelConfig *model.ModelConfig, messages []openai.ChatCompletionMessageParamUnion, promptTemplate string) (*model.CompletionResp, error) {
 	completionStart := time.Now()
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		// This is a conversation in progress.
-		// NOTE: all messages count against token usage for this API.
-		Messages:       messages,
-		DeploymentName: &s.model,
-		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-		Temperature:    to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TEMPERATURE)),
-	}, nil)
+
+	options := openai.ChatCompletionNewParams{
+		Messages: messages,
+		Model:    openai.ChatModel(s.model),
+		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
+		},
+		Seed:            openai.Int(1), // Fixed seed for deterministic output
+		ReasoningEffort: shared.ReasoningEffort(config.AppConfig.AOAI_CHAT_COMPLETIONS_REASONING_EFFORT),
+		Verbosity:       openai.ChatCompletionNewParamsVerbosityLow,
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.CompletionModel != nil {
+		options.Model = openai.ChatModel(*modelConfig.CompletionModel)
+	}
+
+	if modelConfig != nil && modelConfig.CompletionModelReasoningEffort != nil {
+		options.ReasoningEffort = shared.ReasoningEffort(*modelConfig.CompletionModelReasoningEffort)
+	}
+
+	resp, err := config.OpenAIClient.Chat.Completions.New(context.TODO(), options)
 	if err != nil {
 		// Check if this is a rate limit error (429)
 		if strings.Contains(err.Error(), "429") || strings.Contains(err.Error(), "Too Many Requests") {
@@ -487,9 +529,9 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	if len(resp.Choices) == 0 {
 		return nil, fmt.Errorf("no choices found in response")
 	}
-	answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
+	answer, err := promptParser.ParseResponse(resp.Choices[0].Message.Content, promptTemplate)
 	if err != nil {
-		respStr, _ := resp.MarshalJSON()
+		respStr := resp.RawJSON()
 		log.Printf("ERROR: %s, response:%s", err, respStr)
 		return nil, err
 	}
@@ -526,7 +568,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 			Sources:       req.Sources,
 			SourceFilter:  sourceFilter,
 			QuestionScope: intention.QuestionScope,
-			ServicePlane:  intention.ServiceType,
+			ServiceType:   intention.ServiceType,
 		},
 		Prompt: agenticSearchPrompt,
 	})
@@ -542,14 +584,13 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 	if resp.Response == nil {
 		return nil, nil
 	}
-	var docKeys []string
+	var chunks []model.Index
 	for _, reference := range resp.References {
-		docKeys = append(docKeys, reference.DocKey)
-	}
-	chunks, err := s.searchClient.BatchGetChunks(ctx, docKeys)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return nil, err
+		if reference.SourceData == nil {
+			continue
+		}
+		reference.SourceData.RerankScore = reference.RerankerScore
+		chunks = append(chunks, *reference.SourceData)
 	}
 	log.Printf("Agentic search took: %v", time.Since(agenticSearchStart))
 	return chunks, nil
@@ -557,7 +598,7 @@ func (s *CompletionService) agenticSearch(ctx context.Context, query string, req
 
 // runParallelSearchAndMergeResults runs agentic search and knowledge search in parallel where possible,
 // then merges and processes their results
-func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string, intention *model.Intention) ([]model.Knowledge, error) {
+func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context, req *model.CompletionReq, query string, intention *model.Intention, withAgenticSearch bool) ([]model.Knowledge, error) {
 	parallelSearchStart := time.Now()
 
 	// Use channels to collect results from parallel operations
@@ -575,11 +616,13 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	vectorCh := make(chan knowledgeResult, 1)
 
 	// Start agentic search in a goroutine
-	go func() {
-		defer close(agenticCh)
-		chunks, err := s.agenticSearch(ctx, req.Message.Content, req, intention)
-		agenticCh <- agenticResult{chunks: chunks, err: err}
-	}()
+	if withAgenticSearch {
+		go func() {
+			defer close(agenticCh)
+			chunks, err := s.agenticSearch(ctx, query, req, intention)
+			agenticCh <- agenticResult{chunks: chunks, err: err}
+		}()
+	}
 
 	// Start vector search in a goroutine
 	go func() {
@@ -589,20 +632,20 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 	}()
 
 	// Wait for both searches to complete
-	agenticRes := <-agenticCh
-	vectorRes := <-vectorCh
-
-	if agenticRes.err != nil && vectorRes.err != nil {
-		return nil, fmt.Errorf("both agentic and knowledge searches failed: agentic error: %v, knowledge error: %v", agenticRes.err, vectorRes.err)
-	}
-
 	var agenticChunks []model.Index
-	if agenticRes.err != nil {
-		log.Printf("Agentic search failed: %v", agenticRes.err)
-		agenticChunks = []model.Index{}
+	if withAgenticSearch {
+		agenticRes := <-agenticCh
+
+		if agenticRes.err != nil {
+			log.Printf("Agentic search failed: %v", agenticRes.err)
+			agenticChunks = []model.Index{}
+		} else {
+			agenticChunks = agenticRes.chunks
+		}
 	} else {
-		agenticChunks = agenticRes.chunks
+		log.Println("Agentic search is disabled.")
 	}
+	vectorRes := <-vectorCh
 
 	if vectorRes.err != nil {
 		return nil, vectorRes.err
@@ -627,7 +670,7 @@ func (s *CompletionService) vectorSearch(req *model.CompletionReq, query string,
 		Sources:       req.Sources,
 		SourceFilter:  sourceFilter,
 		QuestionScope: intention.QuestionScope,
-		ServicePlane:  intention.ServiceType,
+		ServiceType:   intention.ServiceType,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
@@ -671,14 +714,15 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	allChunks := make([]model.ChunkWithExpansion, 0)
 
 	// Add knowledge search results with scoring based on relevance
-	for _, result := range vectorSearchedResults {
+	for _, chunk := range vectorSearchedResults {
 		// Skip low relevance results
-		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
-			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
+		if chunk.RerankScore < model.RerankScoreLowRelevanceThreshold {
+			log.Printf("Skipping result with low score: %s/%s, score: %f", chunk.ContextID, chunk.Title, chunk.RerankScore)
 			continue
 		}
-		log.Printf("Vector searched chunk: %+v, rerankScore: %f", result, result.RerankScore)
-		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(result))
+		log.Printf("Vector searched chunk: %+v, rerankScore: %f", chunk, chunk.RerankScore)
+		chunk.SearchType = model.SearchType_Vector
+		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
 	// Then, add agentic search results after vector search results
@@ -688,6 +732,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	}
 	for _, chunk := range agenticSearchedResults {
 		log.Printf("Agentic searched chunk: %+v", chunk)
+		chunk.SearchType = model.SearchType_Agentic
 		allChunks = append(allChunks, s.searchClient.DetermineChunkExpansion(chunk))
 	}
 
@@ -752,7 +797,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 	for i, chunk := range finalChunks {
 		knowledge := processChunk(chunk)
 		results = append(results, knowledge)
-		log.Printf("[%d] Source: %s, Title: %s", i+1, knowledge.Source, knowledge.Title)
+		log.Printf("[%d] SearchType: %s, Score: %f, Source: %s, Title: %s, Link:%s, Scope:%s, ServiceType:%s", i+1, chunk.SearchType, chunk.RerankScore, knowledge.Source, knowledge.Title, knowledge.Link, chunk.Scope, chunk.ServiceType)
 	}
 	log.Println("=====================================")
 
@@ -764,7 +809,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 
 // RouteTenant attempts to route the request to a specialized tenant based on the question content.
 // Returns the routed tenant config and true if routing occurred, otherwise returns empty config and false.
-func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, messages []azopenai.ChatRequestMessageClassification) (model.TenantID, bool) {
+func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelConfig *model.ModelConfig, messages []openai.ChatCompletionMessageParamUnion) (model.TenantID, bool) {
 	routingStart := time.Now()
 	log.Printf("Starting tenant routing for tenant: %s", originalTenantID)
 
@@ -779,16 +824,31 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, message
 	}
 
 	// Build messages for routing detection
-	routingMessages := append([]azopenai.ChatRequestMessageClassification{
-		&azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(promptStr)},
+	routingMessages := append([]openai.ChatCompletionMessageParamUnion{
+		openai.SystemMessage(promptStr),
 	}, messages...)
 
+	options := openai.ChatCompletionNewParams{
+		Messages: routingMessages,
+		Model:    openai.ChatModel(config.AppConfig.AOAI_CHAT_REASONING_MODEL),
+		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
+		},
+		Seed:            openai.Int(1), // Fixed seed for deterministic output
+		ReasoningEffort: shared.ReasoningEffort(config.AppConfig.AOAI_CHAT_REASONING_MODEL_REASONING_EFFORT),
+	}
+
+	// Override model and temperature if specified in modelConfig
+	if modelConfig != nil && modelConfig.ReasoningModel != nil {
+		options.Model = openai.ChatModel(*modelConfig.ReasoningModel)
+	}
+
+	if modelConfig != nil && modelConfig.ReasoningModelReasoningEffort != nil {
+		options.ReasoningEffort = shared.ReasoningEffort(*modelConfig.ReasoningModelReasoningEffort)
+	}
+
 	// Call LLM for tenant routing
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		Messages:       routingMessages,
-		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
-		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-	}, nil)
+	resp, err := config.OpenAIClient.Chat.Completions.New(context.TODO(), options)
 
 	if err != nil {
 		log.Printf("LLM tenant routing failed: %v", err)
@@ -801,7 +861,7 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, message
 	}
 
 	// Parse the routing result
-	result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "common/tenant_routing.md")
+	result, err := promptParser.ParseResponse(resp.Choices[0].Message.Content, "common/tenant_routing.md")
 	if err != nil {
 		log.Printf("Failed to parse routing response: %v", err)
 		return originalTenantID, false

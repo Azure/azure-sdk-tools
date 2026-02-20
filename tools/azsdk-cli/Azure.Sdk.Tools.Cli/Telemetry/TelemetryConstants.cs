@@ -37,6 +37,7 @@ internal static class TelemetryConstants
         public const string TotalTokens = "total_tokens";
         public const string ModelsUsed = "models_used";
         public const string OperationStatus = "operation_status";
+        public const string SamplesCount = "samples_count";
     }
 
     internal class ActivityName

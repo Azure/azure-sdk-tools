@@ -93,7 +93,7 @@ describe('ChannelConfigManager', () => {
       mockBlobClientManager.downloadBlobContent.mockRejectedValue(new Error('Blob not found'));
 
       // Initialize should throw since config cannot be loaded
-      await expect(manager.initialize()).rejects.toThrow('Failed to load channel configuration');
+      await expect(manager.initialize()).rejects.toThrow('Failed to initialize channel configuration: config could not be loaded from blob storage.');
     });
 
     it('should keep old config when download fails during reload', async () => {

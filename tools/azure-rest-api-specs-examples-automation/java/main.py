@@ -177,10 +177,10 @@ def process_java_example(filepath: str) -> List[JavaExample]:
         lines = f.readlines()
 
     class_name = filename.split(".")[0]
-    return process_java_example_content(lines, class_name)
+    return process_java_example_content(lines, class_name, filepath)
 
 
-def process_java_example_content(lines: List[str], class_name: str) -> List[JavaExample]:
+def process_java_example_content(lines: List[str], class_name: str, filepath: str = None) -> List[JavaExample]:
     java_examples = []
     if is_aggregated_java_example(lines):
         aggregated_java_example = break_down_aggregated_java_example(lines)
@@ -199,8 +199,20 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 example_dir, example_filename = path.split(example_filepath)
 
                 try:
+                    sdk_package_path_updated = sdk_package_path
+                    if filepath and sdk_package_path.endswith("/resourcemanager/azure-resourcemanager"):
+                        # special handling for libs included in azure-resourcemanager, as samples in it are copied
+                        # from other packages.
+                        # this behavior can change, if in automation we no longer do such copy.
+                        sdk_package_name = filepath.replace("\\", "/").split("/")[-3]
+                        sdk_package_path_updated = path.join(
+                            sdk_package_path.rstrip("/resourcemanager/azure-resourcemanager"),
+                            sdk_package_name,
+                            "azure-resourcemanager-" + sdk_package_name,
+                        )
+
                     example_dir = examples_dir.try_find_resource_manager_example(
-                        specs_path, sdk_package_path, example_dir, example_filename
+                        specs_path, sdk_package_path_updated, example_dir, example_filename
                     )
                 except NameError:
                     pass

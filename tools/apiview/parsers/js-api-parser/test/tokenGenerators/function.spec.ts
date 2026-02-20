@@ -111,7 +111,7 @@ describe("functionTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "void" },
       ] as ExcerptToken[]);
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       expect(tokens[0]).toEqual({
         Kind: TokenKind.Keyword,
@@ -144,7 +144,7 @@ describe("functionTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "void" },
       ] as ExcerptToken[]);
 
-      const tokens = functionTokenGenerator.generate(mockFunction, true);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, true);
 
       expect(tokens[0].IsDeprecated).toBe(true);
       expect(tokens[1].IsDeprecated).toBe(true);
@@ -167,7 +167,7 @@ describe("functionTokenGenerator", () => {
         spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
       } as any;
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       expect(tokens.length).toBeGreaterThan(3);
       expect(tokens[0].Value).toBe("export");
@@ -206,7 +206,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const typeNameToken = tokens.find((t) => t.Kind === TokenKind.TypeName && t.Value === "User");
       expect(typeNameToken).toBeDefined();
@@ -243,7 +243,7 @@ describe("functionTokenGenerator", () => {
         ],
       } as any;
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const returnTypeToken = tokens.find(
         (t) => t.Kind === TokenKind.TypeName && t.Value === "Promise<User>",
@@ -260,7 +260,7 @@ describe("functionTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "void" },
       ] as ExcerptToken[]);
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       // Should not include tokens for empty or whitespace-only excerpt text
       const textTokens = tokens.slice(3); // Skip export, function, name
@@ -285,7 +285,7 @@ describe("functionTokenGenerator", () => {
         { kind: ExcerptTokenKind.Content, text: "void" },
       ] as ExcerptToken[]);
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       expect(tokens[0].HasSuffixSpace).toBe(true); // export
       expect(tokens[1].HasSuffixSpace).toBe(true); // function
@@ -308,7 +308,7 @@ describe("functionTokenGenerator", () => {
           { kind: ExcerptTokenKind.Content, text: "void" },
         ] as ExcerptToken[]);
 
-        const tokens = functionTokenGenerator.generate(mockFunction, false);
+        const { tokens } = functionTokenGenerator.generate(mockFunction, false);
         expect(tokens[2].Value).toBe(displayName);
       });
     });
@@ -337,7 +337,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("optional");
@@ -375,7 +375,7 @@ describe("functionTokenGenerator", () => {
         spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "T" }],
       } as any;
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("<");
@@ -414,7 +414,7 @@ describe("functionTokenGenerator", () => {
         spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
       } as any;
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       // Verify the complete token sequence
       expect(tokens[0]).toMatchObject({ Kind: TokenKind.Keyword, Value: "export" });
@@ -423,13 +423,13 @@ describe("functionTokenGenerator", () => {
       expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(" });
       expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "a" });
       expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
-      expect(tokens[6]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
+      expect(tokens[6]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" });
       expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: "," });
       expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "b" });
       expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
-      expect(tokens[10]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
+      expect(tokens[10]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" });
       expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "):" });
-      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
+      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" });
     });
 
     it("generates TypeName tokens for parameter type references", () => {
@@ -472,7 +472,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       // Find parameter type tokens
       const inputDataToken = tokens.find((t) => t.Value === "InputData");
@@ -513,7 +513,7 @@ describe("functionTokenGenerator", () => {
         spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "string" }],
       } as any;
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("...items");
@@ -546,7 +546,7 @@ describe("functionTokenGenerator", () => {
         spannedTokens: [{ kind: ExcerptTokenKind.Content, text: "number" }],
       } as any;
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("{ a, b }");
@@ -577,7 +577,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("x");
@@ -610,7 +610,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const arrayToken = tokens.find((t) => t.Value === "Array<Record<string, unknown>>");
       expect(arrayToken).toBeDefined();
@@ -636,7 +636,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const unionTypeToken = tokens.find((t) => t.Value === "string | number | boolean");
       expect(unionTypeToken).toBeDefined();
@@ -659,7 +659,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const fnTypeToken = tokens.find((t) => t.Value === "(x: number) => string");
       expect(fnTypeToken).toBeDefined();
@@ -698,7 +698,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, true);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, true);
 
       // All tokens should be deprecated
       expect(tokens.every((t) => t.IsDeprecated === true)).toBe(true);
@@ -734,7 +734,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       // Should have: export, function, name, (, input, :, string, ,, count, :, number, ):, void
       expect(tokens[0]).toMatchObject({ Kind: TokenKind.Keyword, Value: "export" });
@@ -743,13 +743,13 @@ describe("functionTokenGenerator", () => {
       expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(" });
       expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "input" });
       expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
-      expect(tokens[6]).toMatchObject({ Kind: TokenKind.Text, Value: "string" });
+      expect(tokens[6]).toMatchObject({ Kind: TokenKind.Keyword, Value: "string" }); // Changed from Text to Keyword
       expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: "," });
       expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "count" });
       expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
-      expect(tokens[10]).toMatchObject({ Kind: TokenKind.Text, Value: "number" });
+      expect(tokens[10]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" }); // Changed from Text to Keyword
       expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "):" });
-      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Text, Value: "void" });
+      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Keyword, Value: "void" }); // Changed from Text to Keyword
     });
 
     it("handles optional parameters with structured approach", () => {
@@ -776,7 +776,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("required");
@@ -814,7 +814,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("<");
@@ -850,7 +850,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const tokenValues = tokens.map((t) => t.Value);
       expect(tokenValues).toContain("T");
@@ -882,7 +882,7 @@ describe("functionTokenGenerator", () => {
         ],
       );
 
-      const tokens = functionTokenGenerator.generate(mockFunction, false);
+      const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
       const userTypeToken = tokens.find((t) => t.Value === "User" && t.Kind === TokenKind.TypeName);
       expect(userTypeToken).toBeDefined();

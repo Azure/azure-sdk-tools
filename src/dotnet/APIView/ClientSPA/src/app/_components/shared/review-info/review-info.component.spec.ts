@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../../test-setup';
 
 import { ReviewInfoComponent } from './review-info.component';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
@@ -8,12 +9,31 @@ import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { RevisionOptionsComponent } from '../../revision-options/revision-options.component';
 import { SelectModule } from 'primeng/select';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { vi } from 'vitest';
 
 describe('ReviewInfoComponent', () => {
   let component: ReviewInfoComponent;
   let fixture: ComponentFixture<ReviewInfoComponent>;
 
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn()
+      }))
+    });
+
     TestBed.configureTestingModule({
       imports: [
         ReviewInfoComponent,

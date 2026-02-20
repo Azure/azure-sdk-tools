@@ -40,7 +40,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 new GitHelper(Mock.Of<IGitHubService>(), new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>()), NullLogger<GitHelper>.Instance),
                 NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
                 Mock.Of<IFileHelper>(),
-                Mock.Of<ISpecGenSdkConfigHelper>());
+                Mock.Of<ISpecGenSdkConfigHelper>(),
+                Mock.Of<IChangelogHelper>());
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {

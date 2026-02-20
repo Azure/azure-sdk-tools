@@ -289,8 +289,8 @@ The TypeSpec authoring workflow follows a streamlined process where the user int
 
 1. **User prompts GitHub Copilot** with a TypeSpec task (e.g., "Add new preview version 2025-12-09 to project widget")
 1. **Agent collect required information** for this task (e.g. the namespace, version, current project structure)
-1. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_consult`) with the user's request and any additional context
-1. The `azsdk_typespec_consult` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
+1. **Agent invokes the TypeSpec Solution Tool** (MCP: `azsdk_typespec_generate_authoring_plan`) with the user's request and any additional context
+1. The `azsdk_typespec_generate_authoring_plan` Tool queries the Azure SDK Knowledge Base with a structured request containing the user's intent and project context
 1. The Knowledge Base returns a RAG-powered solution with step-by-step guidance and documentation references
 1. **Agent applies the solution** to update TypeSpec files and presents the changes to the user with explanations and reference links
 
@@ -298,9 +298,9 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 ##### Component 1: TypeSpec Solution Tool
 
-**Name (CLI)**: `azsdk typespec consult`
+**Name (CLI)**: `azsdk typespec generate-authoring-plan`
 
-**Name (MCP)**: `azsdk_typespec_consult`
+**Name (MCP)**: `azsdk_typespec_generate_authoring_plan`
 
 **Purpose**: Provide a solution to define or edit TypeSpec API specifications for TypeSpec-related tasks.
 
@@ -308,38 +308,97 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `<request>` | string | Yes | N/A | The TypeSpec-related request or task description |
-| `--additional-information` | string | No | "" | Additional context for the request |
-| `--category` | string | No | Auto-detected | Request category (e.g., "versioning", "resource-modeling", "routing") |
+| `--request` | string | Yes | N/A | The TypeSpec-related task or user request sent to an AI agent to produce a proposed solution or execution plan with references |
+| `--additional-information` | string | No | "" | Additional information to consider for the TypeSpec project |
+| `--typespec-project` | string | No | Current directory | The root path of the TypeSpec project |
 
 **Output Format**:
 
 ```json
 {
-  "is_successful":true,
+  "operation_status": "Succeeded",
+  "typespec_project": "./tsp",
   "solution": "<solution-for-the-typespec-task>",
   "references": [
     {
       "title": "How to define a preview version",
       "source": "typespec_azure_docs",
-      "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version"
+      "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version",
+      "snippet": "To define a preview version..."
     }
-  ]
+  ],
+  "full_context": "<full-context-used-to-generate-solution>",
+  "reasoning": "<llm-reasoning-process>",
+  "query_intention": {
+    "question": "<analyzed-question>",
+    "category": "versioning",
+    "question_scope": "branded",
+    "service_type": "management-plane"
+  }
 }
 ```
 
 **Workflow**:
 
-1. **Parse Input**: Extract request details and optional context from parameters
-1. **Query Knowledge Base**: Send request to Azure SDK Knowledge Base completion API
-1. **Process Response**: Format the solution and extract relevant documentation references
-1. **Return Result**: Provide solution with step-by-step guidance and links to official documentation
+1. **Validate Input**: Check that request parameter is not empty
+1. **Build Completion Request**: Create structured request with:
+   - Tenant ID set to `azure_typespec_authoring`
+   - User message containing the request
+   - Optional additional information as text attachment
+1. **Authenticate**: Retrieve access token using MSAL public client authentication with device code flow
+1. **Query Knowledge Base**: Send POST request to Azure SDK Knowledge Base `/completion` endpoint
+1. **Process Response**: Extract solution, references, reasoning, and query intention from response
+1. **Format Output**: Present solution with references and metadata to the user
 
 ##### Component 2: Azure SDK Knowledge Base
 
 **Purpose**: Backend service that provides RAG-powered solutions for Azure SDK and TypeSpec authoring tasks.
 
 **API Endpoint**: `https://<knowledge-base-service-endpoint>/completion`
+
+**Request Structure**:
+
+```json
+{
+  "tenant_id": "azure_typespec_authoring",
+  "message": {
+    "role": "user",
+    "content": "<user-request>"
+  },
+  "additional_infos": [
+    {
+      "type": "text",
+      "content": "<additional-context>"
+    }
+  ]
+}
+```
+
+**Response Structure**:
+
+```json
+{
+  "id": "<completion-id>",
+  "answer": "<generated-solution>",
+  "has_result": true,
+  "references": [
+    {
+      "title": "<document-title>",
+      "source": "<document-source>",
+      "link": "<document-url>",
+      "content": "<relevant-content>"
+    }
+  ],
+  "full_context": "<context-used>",
+  "reasoning": "<llm-reasoning>",
+  "intention": {
+    "question": "<analyzed-question>",
+    "category": "<detected-category>",
+    "question_scope": "<branded|unbranded|unknown>",
+    "service_type": "<management-plane|data-plane|unknown>"
+  }
+}
+```
 
 **Capabilities**:
 - Indexes Azure SDK documentation, guidelines, and best practices
@@ -348,8 +407,13 @@ This design ensures that generated TypeSpec code adheres to Azure Resource Manag
 - Provides authoritative documentation references
 
 **Authentication**:
-- The TypeSpec authoring tool authenticates with the Knowledge Base using Azure Active Directory (AAD) managed identity or service principal credentials
-- Authentication tokens are automatically refreshed to ensure uninterrupted service
+- The TypeSpec authoring tool authenticates with the Knowledge Base using Microsoft Authentication Library (MSAL) public client authentication
+- Uses interactive browser flow for authentication (MSAL `AcquireTokenInteractive`)
+- Access tokens are cached in memory for the lifetime of the process and are not persisted to disk by default
+- The tool uses the Azure Knowledge Base service and is configured with a default service by default. If you want to use a different Azure Knowledge Base service instead of the default one, set following environment variables to override:
+  - `AZURE_SDK_KB_ENDPOINT`: Service endpoint
+  - `AZURE_SDK_KB_CLIENT_ID`: Application (client) ID of the service
+  - `AZURE_SDK_KB_SCOPE`: Authentication scope
 
 **Integration**:
 - TypeSpec authoring tool sends structured queries to the knowledge base
@@ -493,7 +557,7 @@ Instead of building a custom agent, leverage GitHub Copilot's Skills framework t
    - Project structure (presence of `tspconfig.yaml`, `package.json` with TypeSpec dependencies)
    - Active file content and imports
    - Workspace-indexed TypeSpec files
-1. **Skill automatically invokes the appropriate MCP tool** (`azsdk_typespec_consult`) without requiring custom agent routing logic
+1. **Skill automatically invokes the appropriate MCP tool** (`azsdk_typespec_generate_authoring_plan`) without requiring custom agent routing logic
 1. The MCP tool queries the Azure SDK Knowledge Base with the user's request and project context
 1. The Knowledge Base returns a RAG-powered solution with step-by-step guidance
 1. **Agent processes the solution** and applies appropriate file edits, presenting changes to the user with explanations
@@ -574,7 +638,7 @@ add a new ARM resource type named 'Asset' with CRUD operations
    - If child resource, identify the parent resource
    - What properties should the resource have?
    - Should operations be synchronous or asynchronous/LRO?
-1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 1. Apply changes according to the retrieved solution:
    - Create resource model extending appropriate base (`TrackedResource`/`ProxyResource`)
    - Add resource name parameter
@@ -596,7 +660,7 @@ add a new preview API version 2025-10-01-preview for service widget resource man
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 1. Apply version related changes according to the retrieved solution
    - Replace an existing preview with the new preview version if latest version is preview, otherwise, just add the new preview version.
    - Update examples according to API changes
@@ -621,7 +685,7 @@ add a new stable API version 2025-10-01 for service widget resource management
 **Expected Agent Activity:**
 
 1. Analyzes current TypeSpec project to identify namespace and version
-1. Calls `azsdk_typespec_consult` tool with the request and collected information
+1. Calls `azsdk_typespec_generate_authoring_plan` tool with the request and collected information
 1. Apply changes according to the retrieved solution:
    - Remove preview resources, operations, models, unions, or enums that are not carried over to the stable version
    - Update examples according to API changes
@@ -654,38 +718,59 @@ update the TypeSpec code to follow Azure guidelines for service widget resource 
 
 ## CLI Commands
 
-### typespec retrieve solution
+### typespec generate authoring plan
 
 **Command:**
 
 ```bash
-azsdk typespec consult <typespec-request> --additional-information <additional context>
+azsdk typespec generate-authoring-plan --request <typespec-request> [--additional-information <additional context>] [--typespec-project <project-path>]
 ```
-
-**Argument**
-
-- `<request>`: the typespec-related task or request to consult
 
 **Options:**
 
-- `--additional-information <value>`: Set the additional information, such as the context (optional)
+- `--request <value>`: (Required) The TypeSpec-related task or request to generate a solution for
+- `--additional-information <value>`: Additional information, such as context about the TypeSpec project (optional)
+- `--typespec-project <value>`: The root path of the TypeSpec project (optional, defaults to current directory)
 
 **Expected Output:**
 
 ```text
+TypeSpec project: ./tsp
 **Solution:** To add a new API version '2025-10-10' for your service 'widget' in TypeSpec, you need to update your version enum and ensure all changes are tracked with versioning decorators.
+
 **Step-by-step guidance:**
 1. Update the Versions enum in your versioned namespace to include the new version. Each version string should follow the YYYY-MM-DD format, and if it's a preview, use a '-preview' suffix and decorate @previewVersion on the enum.
-1. Add an example folder for this version and copy the relative examples.
+2. Add an example folder for this version and copy the relative examples.
+
+**References:**
+- **How to define a preview version** (typespec_azure_docs)
+  https://azure.github.io/typespec-azure/docs/howtos/versioning/preview-version
+  Snippet: To define a preview version...
+
+**Query Analysis:**
+- Category: versioning
+- Scope: branded
+- Service Type: management-plane
 ```
 
 **Error Cases:**
 
 ```text
+Option '--request' is required.
 
-✗ Error: Required argument missing for command: 'authoring'
-  
-Usage: azsdk typespec consult
+Description:
+  Generate a solution or execution plan for defining and updating a TypeSpec-based API specification for an Azure 
+  service.
+
+Usage:
+  azsdk tsp generate-authoring-plan [options]
+
+Options:
+  --request (REQUIRED)      The TypeSpec‑related task or user request sent to an AI agent to produce a proposed 
+                            solution or execution plan with references.
+  --additional-information  The additional information to consider for the TypeSpec project.
+  --typespec-project        The root path of the TypeSpec project
+  -h, --help                Show help and usage information
 ```
 
 ---

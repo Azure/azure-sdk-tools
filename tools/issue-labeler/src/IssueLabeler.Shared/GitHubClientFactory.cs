@@ -33,7 +33,13 @@ namespace IssueLabeler.Shared
             else
             {
                 var appId = Convert.ToInt32(_configuration["GitHubAppId"]);
-                SecretClient secretClient = new SecretClient(new Uri(_configuration["KeyVaultUri"]), new DefaultAzureCredential());
+                
+                var credential = new ChainedTokenCredential(
+                    new ManagedIdentityCredential(),
+                    new AzureCliCredential()
+                );
+                
+                SecretClient secretClient = new SecretClient(new Uri(_configuration["KeyVaultUri"]), credential);
                 KeyVaultSecret secret = await secretClient.GetSecretAsync(_configuration["AppSecretName"]).ConfigureAwait(false);
                 string privateKey = secret.Value;
 

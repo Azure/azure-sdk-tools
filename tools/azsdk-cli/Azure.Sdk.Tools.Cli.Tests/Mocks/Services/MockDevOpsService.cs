@@ -226,5 +226,30 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 WorkItemUrl = $"https://dev.azure.com/azure-sdk/release/_workitems/edit/1"
             });
         }
+
+        Task<ProductInfo?> IDevOpsService.GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath)
+        {
+            // Return mock data for testing
+            if (typeSpecProjectPath == "specification/testcontoso/Contoso.Management")
+            {
+                return Task.FromResult<ProductInfo?>(new ProductInfo
+                {
+                    WorkItemId = 12345,
+                    Title = "Contoso Management Product",
+                    ProductServiceTreeId = "12345678-1234-5678-9012-123456789012",
+                    ServiceId = "87654321-4321-8765-1234-210987654321",
+                    PackageDisplayName = "Contoso Management",
+                    ProductServiceTreeLink = "https://servicetree.msftcloudes.com/main.html#/ServiceModel/Service/12345678-1234-5678-9012-123456789012"
+                });
+            }
+            
+            // Return null for paths without release plans
+            return Task.FromResult<ProductInfo?>(null);
+        }
+
+        public Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            return Task.FromResult(new List<WorkItem>());
+        }
     }
 }

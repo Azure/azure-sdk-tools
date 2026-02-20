@@ -22,7 +22,7 @@ http_logger.setLevel(logging.WARNING)
 
 COSMOS_SELECT_ID_PARTITIONKEY_QUERY = "select c.id, c.{0} as partitionKey, c._ts from {1} c"
 
-COSMOS_CONTAINERS = ["APIRevisions", "Reviews", "Comments", "PullRequests", "SamplesRevisions"]
+COSMOS_CONTAINERS = ["APIRevisions", "Reviews", "Comments", "PullRequests", "SamplesRevisions", "Permissions", "Projects"]
 BACKUP_CONTAINER = "backups"
 BLOB_NAME_PATTERN ="cosmos/{0}/{1}"
 

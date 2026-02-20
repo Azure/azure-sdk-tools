@@ -1,8 +1,20 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
+vi.mock('ngx-simplemde', () => ({
+  SimplemdeModule: class {
+    static ɵmod = { id: 'SimplemdeModule', type: this, declarations: [], imports: [], exports: [] };
+    static ɵinj = { imports: [], providers: [] };
+    static forRoot() { return { ngModule: this, providers: [] }; }
+  },
+  SimplemdeOptions: class {},
+  SimplemdeComponent: class { value = ''; options = {}; valueChange = { emit: vi.fn() }; }
+}));
 
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReviewPageOptionsComponent } from './review-page-options.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpErrorInterceptorService } from 'src/app/_services/http-error-interceptor/http-error-interceptor.service';
 import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
@@ -10,28 +22,67 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
+import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
+import { EffectivePermissions, GlobalRole, LanguageScopedRole } from 'src/app/_models/permissions';
+import { of } from 'rxjs';
+
+import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
 
 describe('ReviewPageOptionsComponent', () => {
   let component: ReviewPageOptionsComponent;
   let fixture: ComponentFixture<ReviewPageOptionsComponent>;
+  let mockPermissionsService: any;
+  let mockReviewContextService: any;
+
+  const mockSignalRService = createMockSignalRService();
+
+  const mockNotificationsService = createMockNotificationsService();
+
+  const mockApproverPermissions: EffectivePermissions = {
+    userId: 'test-user',
+    roles: [{ kind: 'scoped', role: LanguageScopedRole.Architect, language: 'Python' }]
+  };
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
 
   beforeEach(() => {
+    mockPermissionsService = {
+      isApproverFor: vi.fn().mockReturnValue(false),
+      isAdmin: vi.fn().mockReturnValue(false)
+    };
+
+    mockReviewContextService = {
+      getLanguage: vi.fn().mockReturnValue('Python'),
+      getLanguageApprovers: vi.fn().mockReturnValue([]),
+      getLanguageApprovers$: vi.fn().mockReturnValue(of([]))
+    };
+
     TestBed.configureTestingModule({
       declarations: [
         ReviewPageOptionsComponent
       ],
       imports: [
         PageOptionsSectionComponent,
-        HttpClientTestingModule,
         HttpClientModule,
         BrowserAnimationsModule,
         SharedAppModule,
         ReviewPageModule
       ],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: PermissionsService, useValue: mockPermissionsService },
+        { provide: ReviewContextService, useValue: mockReviewContextService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -46,7 +97,8 @@ describe('ReviewPageOptionsComponent', () => {
           useClass: HttpErrorInterceptorService,
           multi: true
         },
-        MessageService
+        MessageService,
+        ConfirmationService
       ]
     });
     fixture = TestBed.createComponent(ReviewPageOptionsComponent);
@@ -69,10 +121,12 @@ describe('ReviewPageOptionsComponent', () => {
       expect(message.textContent?.startsWith("Approved for first release by:")).toBeTruthy()
     });
     it('should disable first release approval button when review is not approved and user is not an approver', () => {
+      mockPermissionsService.isApproverFor.mockReturnValue(false);
       component.reviewIsApproved = false;
+      component.review = { language: 'Python' } as Review;
       component.userProfile = new UserProfile();
       component.userProfile.userName = "test-user-1";
-      component.preferredApprovers = ["test-user-2"]
+      component.userProfile.permissions = { userId: 'test-user-1', roles: [] };
       component.loadingStatus = "completed";
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
@@ -81,10 +135,12 @@ describe('ReviewPageOptionsComponent', () => {
       expect(message.textContent).toEqual("First release approval pending");
     });
     it('should enable first release approval button when review is not approved and user is an approver', () => {
+      mockPermissionsService.isApproverFor.mockReturnValue(true);
       component.reviewIsApproved = false;
+      component.review = { language: 'Python' } as Review;
       component.userProfile = new UserProfile();
       component.userProfile.userName = "test-user";
-      component.preferredApprovers = ["test-user"]
+      component.userProfile.permissions = mockApproverPermissions;
       component.loadingStatus = "completed";
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
@@ -188,6 +244,7 @@ describe('ReviewPageOptionsComponent', () => {
         component.activeAPIRevision!.approvers = [];
         component.isCopilotReviewSupported = true;
         component.activeAPIRevisionIsApprovedByCurrentUser = false;
+        component.isMissingPackageVersion = false;
       });
 
       // Test cases that should return FALSE (approval NOT disabled)
@@ -266,7 +323,33 @@ describe('ReviewPageOptionsComponent', () => {
 
       it('should handle empty package version - should still disable when copilot required', () => {
         component.activeAPIRevision!.packageVersion = '';
+        component.isMissingPackageVersion = true;
         const isReviewByCopilotRequired = true;
+        const isVersionReviewedByCopilot = false;
+        const result = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
+        expect(result).toBe(true);
+      });
+
+      it('should return true when package version is missing (empty string)', () => {
+        component.isMissingPackageVersion = true;
+        const isReviewByCopilotRequired = false;
+        const isVersionReviewedByCopilot = false;
+        const result = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
+        expect(result).toBe(true);
+      });
+
+      it('should return true when package version is missing even when copilot review is completed', () => {
+        component.isMissingPackageVersion = true;
+        const isReviewByCopilotRequired = true;
+        const isVersionReviewedByCopilot = true;
+        const result = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
+        expect(result).toBe(true);
+      });
+
+      it('should return true when package version is missing even if user already approved', () => {
+        component.isMissingPackageVersion = true;
+        component.activeAPIRevisionIsApprovedByCurrentUser = true;
+        const isReviewByCopilotRequired = false;
         const isVersionReviewedByCopilot = false;
         const result = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
         expect(result).toBe(true);
@@ -309,6 +392,7 @@ describe('ReviewPageOptionsComponent', () => {
       beforeEach(() => {
         // Reset to default state for each test
         component.isCopilotReviewSupported = true;
+        component.isMissingPackageVersion = false;
         component.userProfile = { userName: 'testuser' } as UserProfile;
         component.activeAPIRevision = {
           approvers: [],
@@ -333,7 +417,7 @@ describe('ReviewPageOptionsComponent', () => {
       it('should not disable approval for preview versions', () => {
         component.activeAPIRevision!.packageVersion = '1.0.0-beta.1';
         component.activeAPIRevision!.approvers = [];
-        spyOn(component as any, 'isPreviewVersion').and.returnValue(true);
+        vi.spyOn(component as any, 'isPreviewVersion').mockReturnValue(true);
 
         component['updateApprovalStates'](true, false);
 
@@ -384,7 +468,7 @@ describe('ReviewPageOptionsComponent', () => {
       it('should handle preview version overriding copilot requirement', () => {
         component.activeAPIRevision!.packageVersion = '2.0.0-alpha.3';
         component.activeAPIRevision!.approvers = [];
-        spyOn(component as any, 'isPreviewVersion').and.returnValue(true);
+        vi.spyOn(component as any, 'isPreviewVersion').mockReturnValue(true);
 
         component['updateApprovalStates'](true, false);
 
@@ -400,6 +484,40 @@ describe('ReviewPageOptionsComponent', () => {
         expect(component.apiRevisionApprovalBtnClass).toBe("btn btn-outline-secondary disabled");
         expect(component.apiRevisionApprovalMessage).toBe("To approve the current API revision, it must first be reviewed by Copilot");
       });
+
+      it('should show missing version message when package version is missing', () => {
+        component.activeAPIRevision!.approvers = [];
+        component.isMissingPackageVersion = true;
+
+        component['updateApprovalStates'](false, false);
+
+        expect(component.isAPIRevisionApprovalDisabled).toBe(true);
+        expect(component.apiRevisionApprovalBtnClass).toBe("btn btn-outline-secondary disabled");
+        expect(component.apiRevisionApprovalMessage).toBe("This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.");
+      });
+
+      it('should prioritize missing version message over copilot message', () => {
+        component.activeAPIRevision!.approvers = [];
+        component.isMissingPackageVersion = true;
+
+        component['updateApprovalStates'](true, false);
+
+        expect(component.isAPIRevisionApprovalDisabled).toBe(true);
+        expect(component.apiRevisionApprovalMessage).toBe("This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.");
+      });
+
+      it('should show copilot message when version exists but copilot review needed', () => {
+        component.activeAPIRevision!.approvers = [];
+        component.isMissingPackageVersion = false;
+
+        component['updateApprovalStates'](true, false);
+
+        expect(component.isAPIRevisionApprovalDisabled).toBe(true);
+        expect(component.apiRevisionApprovalMessage).toBe("To approve the current API revision, it must first be reviewed by Copilot");
+      });
     });
   });
 });
+
+
+

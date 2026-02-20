@@ -48,7 +48,7 @@
           },
           "overrides": [
             {
-              "pattern": "**/getstarted/azure-resource-manager/**",
+              "pattern": "**/azure-resource-manager/**",
               "metadata": {
                 "service_type": "management-plane"
               }
@@ -60,7 +60,7 @@
               }
             },
             {
-              "pattern": "**/howtos/arm/**",
+              "pattern": "**/arm/**",
               "metadata": {
                 "service_type": "management-plane"
               }

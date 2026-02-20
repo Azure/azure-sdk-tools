@@ -60,3 +60,13 @@ stages:
               pylint src scripts tests
             workingDirectory: packages/python-packages/apiview-copilot
             displayName: 'Run Pylint'
+
+      - job: CopyrightHeaders
+        displayName: 'Check copyright headers'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              python scripts/check_copyright_headers.py
+            workingDirectory: packages/python-packages/apiview-copilot
+            displayName: 'Check copyright headers'

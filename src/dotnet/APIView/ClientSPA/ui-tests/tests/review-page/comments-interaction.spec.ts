@@ -576,11 +576,10 @@ test.describe('Comments - Scroll Persistence', () => {
     const codeLine = page.locator('.code-line').nth(3);
     await codeLine.scrollIntoViewIfNeeded();
 
-    // Hover over the line-number-container to trigger visibility of add-comment-btn
-    const lineNumberContainer = codeLine.locator('.line-number-container');
-    await lineNumberContainer.hover();
+    // Hover over the code line to trigger visibility of add-comment-btn
+    await codeLine.hover();
 
-    const commentBtn = codeLine.locator('.line-actions .add-comment-btn');
+    const commentBtn = codeLine.locator('.line-hover-actions .add-comment-btn');
     await expect(commentBtn).toBeVisible({ timeout: 5000 });
     await commentBtn.click();
 

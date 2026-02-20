@@ -148,7 +148,7 @@ describe("interfaceTokenGenerator", () => {
         createBasicExcerptTokens("SimpleInterface"),
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       expect(tokens).toHaveLength(3);
       expect(tokens[0]).toEqual({
@@ -183,7 +183,7 @@ describe("interfaceTokenGenerator", () => {
         createBasicExcerptTokens("DeprecatedInterface"),
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, true);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, true);
 
       expect(tokens).toHaveLength(3);
       expect(tokens[0]).toEqual({
@@ -215,7 +215,7 @@ describe("interfaceTokenGenerator", () => {
         createDefaultExportExcerptTokens("DefaultInterface"),
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       expect(tokens).toHaveLength(4);
       expect(tokens[0]).toEqual({
@@ -257,7 +257,7 @@ describe("interfaceTokenGenerator", () => {
         [typeParam],
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // export interface GenericInterface<T>
       expect(tokens.length).toBeGreaterThan(3);
@@ -293,7 +293,7 @@ describe("interfaceTokenGenerator", () => {
         typeParams,
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // export interface MultiGenericInterface<T, U, V>
       const lessThanIndex = tokens.findIndex((t) => t.Value === "<");
@@ -323,7 +323,7 @@ describe("interfaceTokenGenerator", () => {
         [typeParam],
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // export interface ConstrainedInterface<T extends string>
       const extendsKeywordIndex = tokens.findIndex(
@@ -348,7 +348,7 @@ describe("interfaceTokenGenerator", () => {
         [extendsType],
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // export interface ExtendedInterface extends BaseInterface
       const extendsKeywordIndex = tokens.findIndex(
@@ -381,7 +381,7 @@ describe("interfaceTokenGenerator", () => {
         extendsTypes,
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // export interface MultiExtendedInterface extends BaseInterface1, BaseInterface2, BaseInterface3
       const extendsKeywordIndex = tokens.findIndex(
@@ -413,7 +413,7 @@ describe("interfaceTokenGenerator", () => {
         [extendsType],
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // export interface ComplexInterface<T> extends BaseInterface
       // Should have both type parameters and extends clause
@@ -450,7 +450,7 @@ describe("interfaceTokenGenerator", () => {
         [extendsType],
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, true);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, true);
 
       // All tokens should have IsDeprecated: true
       tokens.forEach((token) => {
@@ -464,7 +464,7 @@ describe("interfaceTokenGenerator", () => {
         createBasicExcerptTokens("NavigationInterface"),
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       const nameToken = tokens.find((t) => t.Value === "NavigationInterface");
       expect(nameToken).toBeDefined();
@@ -481,7 +481,7 @@ describe("interfaceTokenGenerator", () => {
         [typeParam],
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // Should have extends keyword
       const extendsKeywordIndex = tokens.findIndex(
@@ -503,7 +503,7 @@ describe("interfaceTokenGenerator", () => {
         [typeParam],
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // Should NOT have extends keyword
       const extendsKeywords = tokens.filter(
@@ -525,7 +525,7 @@ describe("interfaceTokenGenerator", () => {
         typeParams,
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, false);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, false);
 
       // export interface PagedAsyncIterableIterator<TElement, TPage = TElement[], TPageSettings = PageSettings>
       const lessThanIndex = tokens.findIndex((t) => t.Value === "<");
@@ -558,7 +558,7 @@ describe("interfaceTokenGenerator", () => {
         createDefaultExportExcerptTokens("DeprecatedDefaultInterface"),
       );
 
-      const tokens = interfaceTokenGenerator.generate(mockInterface, true);
+      const { tokens } = interfaceTokenGenerator.generate(mockInterface, true);
 
       expect(tokens).toHaveLength(4);
       expect(tokens[0]).toEqual({

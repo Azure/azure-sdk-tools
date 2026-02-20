@@ -145,8 +145,8 @@ namespace SearchIndexCreator
 
         private static async Task DeleteKnowledgeAgent(IConfigurationSection config)
         {
-            var defaultCredential = new AzureCliCredential();
-            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), defaultCredential);
+            var credential = new AzureCliCredential();
+            var indexClient = new SearchIndexClient(new Uri(config["SearchEndpoint"]), credential);
             var issueKnowledgeAgent = new IssueKnowledgeAgent(indexClient, config);
             await issueKnowledgeAgent.DeleteAsync();
         }

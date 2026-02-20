@@ -32,6 +32,7 @@ namespace APIViewWeb.LeanControllers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
         private readonly IEnumerable<LanguageService> _languageServices;
+        private readonly IPermissionsManager _permissionsManager;
 
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, 
@@ -42,7 +43,8 @@ namespace APIViewWeb.LeanControllers
             UserProfileCache userProfileCache,
             IEnumerable<LanguageService> languageServices,
             IHubContext<SignalRHub> signalRHub, 
-            INotificationManager notificationManager)
+            INotificationManager notificationManager,
+            IPermissionsManager permissionsManager)
         {
             _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
@@ -54,6 +56,7 @@ namespace APIViewWeb.LeanControllers
             _languageServices = languageServices;
             _signalRHubContext = signalRHub;
             _notificationManager = notificationManager;
+            _permissionsManager = permissionsManager;
         }
 
         /// <summary>
@@ -71,6 +74,18 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
+        /// Retrieves distinct package names for a language
+        /// </summary>
+        /// <param name="language">The language to filter by</param>
+        /// <returns>A list of distinct package names</returns>
+        [HttpGet("languages/{language}/packagenames", Name = "GetPackageNames")]
+        public async Task<ActionResult<IEnumerable<string>>> GetPackageNamesAsync(string language)
+        {
+            var result = await _reviewManager.GetPackageNamesAsync(language);
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
         /// Retrieves a review by its id
         /// </summary>
         /// <param name="reviewId"></param>
@@ -84,21 +99,6 @@ namespace APIViewWeb.LeanControllers
                 return new LeanJsonResult(review, StatusCodes.Status200OK);
             }
             return StatusCode(StatusCodes.Status404NotFound);
-        }
-
-        [HttpGet("allowedApprovers", Name = "AllowedApprovers")]
-        public ActionResult<HashSet<string>> GetAllowedApproversAsync()
-        {
-            var allowedApprovers = _configuration["approvers"];
-            return new LeanJsonResult(allowedApprovers, StatusCodes.Status200OK);
-        }
-
-        [HttpGet("{reviewId}/preferredApprovers", Name = "PreferredApprovers")]
-        public async Task<ActionResult<HashSet<string>>> GetPreferredApproversAsync(string reviewId)
-        {
-            var review = await _reviewManager.GetReviewAsync(User, reviewId);
-            HashSet<string> preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, User, review);
-            return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
         }
 
         [HttpGet("enableNamespaceReview", Name = "EnableNamespaceReview")]
@@ -220,29 +220,64 @@ namespace APIViewWeb.LeanControllers
 
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
-                IEnumerable<CommentItemModel> comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
-                CodeFile activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
 
+                Task<CodeFile> activeFileTask = _codeFileRepository.GetCodeFileFromStorageAsync(
+                    revisionId: activeAPIRevision.Id, 
+                    codeFileId: activeAPIRevision.Files[0].FileId);
+
+                Task<CodeFile> diffFileTask = null;
+                if (diffAPIRevision != null)
+                {
+                    diffFileTask = _codeFileRepository.GetCodeFileFromStorageAsync(
+                        revisionId: diffAPIRevision.Id, 
+                        codeFileId: diffAPIRevision.Files[0].FileId);
+                }
+
+                CodeFile activeRevisionReviewCodeFile;
+                CodeFile diffRevisionCodeFile = null;
+                
+                if (diffFileTask != null)
+                {
+                    await Task.WhenAll(activeFileTask, diffFileTask);
+                    activeRevisionReviewCodeFile = await activeFileTask;
+                    diffRevisionCodeFile = await diffFileTask;
+                }
+                else
+                {
+                    activeRevisionReviewCodeFile = await activeFileTask;
+                }
+                
                 if (activeRevisionReviewCodeFile.ContentGenerationInProgress)
                 {
                     var languageServices = LanguageServiceHelpers.GetLanguageService(activeAPIRevision.Language, _languageServices);
                     return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
                 }
 
-                List<CommentItemModel> filteredComments = comments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
+                IEnumerable<CommentItemModel> allCommentsFromDb = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
+                List<CommentItemModel> diagnosticComments = await _commentsManager.SyncDiagnosticCommentsAsync(
+                    activeAPIRevision,
+                    activeRevisionReviewCodeFile.Diagnostics,
+                    allCommentsFromDb);
+
+                // Combine non-diagnostic comments with synced diagnostic comments
+                List<CommentItemModel> allComments = allCommentsFromDb
+                    .Where(c => c.CommentSource != CommentSource.Diagnostic)
+                    .Concat(diagnosticComments)
+                    .ToList();
+
+                List<CommentItemModel> filteredComments = allComments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
                 var codePanelRawData = new CodePanelRawData()
                 {
                     activeRevisionCodeFile = activeRevisionReviewCodeFile,
                     Comments = filteredComments
                 };
 
-                if (diffAPIRevision != null)
+                if (diffRevisionCodeFile != null)
                 {
-                    codePanelRawData.diffRevisionCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
+                    codePanelRawData.diffRevisionCodeFile = diffRevisionCodeFile;
                 }
 
-                // Render the code files to generate UI token tree
-                var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+                CodePanelData result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
                 return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
 
@@ -326,6 +361,51 @@ namespace APIViewWeb.LeanControllers
             bool isReviewed = apiRevisions.Any(revision => revision.PackageVersion == packageVersion && revision.HasAutoGeneratedComments);
 
             return Ok(isReviewed);
+        }
+
+        /// <summary>
+        /// Get the count of revisions for a review
+        /// </summary>
+        /// <param name="reviewId">The ID of the review.</param>
+        [HttpGet("{reviewId}/revisionCount")]
+        public async Task<ActionResult<int>> GetReviewRevisionCount(string reviewId)
+        {
+            IEnumerable<APIRevisionListItemModel> apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId, "", APIRevisionType.All);
+            int count = apiRevisions.Count();
+            return Ok(count);
+        }
+
+        /// <summary>
+        /// Soft delete an entire review and all associated revisions (Admin only)
+        /// </summary>
+        /// <param name="reviewId">The ID of the review to delete</param>
+        /// <returns></returns>
+        [HttpDelete("{reviewId}")]
+        public async Task<ActionResult> DeleteReviewAsync(string reviewId)
+        {
+            try
+            {
+                string userName = User.GetGitHubLogin();
+                bool isAdmin = await _permissionsManager.IsAdminAsync(userName);
+                
+                if (!isAdmin)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only administrators can delete reviews.");
+                }
+
+                await _reviewManager.SoftDeleteReviewAsync(User, reviewId, skipOwnerCheck: true);
+                return Ok();
+            }
+            catch (AuthorizationFailedException)
+            {
+                _logger.LogWarning("User not authorized to delete review {ReviewId}", reviewId);
+                return StatusCode(StatusCodes.Status403Forbidden, "You are not authorized to delete this review.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting review {ReviewId}", reviewId);
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while deleting the review.");
+            }
         }
     }
 }

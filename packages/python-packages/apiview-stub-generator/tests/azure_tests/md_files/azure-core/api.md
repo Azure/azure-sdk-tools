@@ -1,5 +1,5 @@
 ```py
-# Package is parsed using apiview-stub-generator(version:0.3.26), Python version: 3.10.12
+# Package is parsed using apiview-stub-generator(version:0.3.27), Python version: 3.10.12
 
 
 namespace azure.core
@@ -275,16 +275,16 @@ namespace azure.core.async_paging
 namespace azure.core.configuration
 
     class azure.core.configuration.Configuration(Generic[HTTPRequestType, HTTPResponseType]):
-        ivar authentication_policy
-        ivar custom_hook_policy
-        ivar headers_policy
-        ivar http_logging_policy
-        ivar logging_policy
-        ivar proxy_policy
-        ivar redirect_policy
-        ivar request_id_policy
-        ivar retry_policy
-        ivar user_agent_policy
+        authentication_policy
+        custom_hook_policy
+        headers_policy
+        http_logging_policy
+        logging_policy
+        proxy_policy
+        redirect_policy
+        request_id_policy
+        retry_policy
+        user_agent_policy
 
         def __init__(
                 self, 
@@ -311,15 +311,15 @@ namespace azure.core.configuration
 namespace azure.core.credentials
 
     class azure.core.credentials.AccessToken(NamedTuple):
-        ivar expires_on: int
-        ivar token: str
+        expires_on: int
+        token: str
 
 
     class azure.core.credentials.AccessTokenInfo:
-        ivar expires_on: int
-        ivar refresh_on: Optional[int]
-        ivar token: str
-        ivar token_type: str
+        expires_on: int
+        refresh_on: Optional[int]
+        token: str
+        token_type: str
 
         def __init__(
                 self, 
@@ -446,13 +446,13 @@ namespace azure.core.credentials_async
 namespace azure.core.exceptions
 
     class azure.core.exceptions.AzureError(Exception):
-        ivar continuation_token: str
-        ivar exc_msg
-        ivar exc_traceback
-        ivar exc_type
-        ivar exc_value
-        ivar inner_exception: Exception
-        ivar message: str
+        continuation_token: str
+        exc_msg
+        exc_traceback
+        exc_type
+        exc_value
+        inner_exception: Exception
+        message: str
 
         def __init__(
                 self, 
@@ -496,11 +496,11 @@ namespace azure.core.exceptions
 
     class azure.core.exceptions.DeserializationError(ValueError):
     class azure.core.exceptions.HttpResponseError(AzureError):
-        ivar error: ODataV4Format
-        ivar model: Model
-        ivar reason: str
-        ivar response: Union[HttpResponse, AsyncHttpResponse]
-        ivar status_code: int
+        error: ODataV4Format
+        model: Model
+        reason: str
+        response: Union[HttpResponse, AsyncHttpResponse]
+        status_code: int
 
         def __init__(
                 self, 
@@ -515,12 +515,12 @@ namespace azure.core.exceptions
 
 
     class azure.core.exceptions.ODataV4Error(HttpResponseError):
-        ivar details: list[ODataV4Format]
-        ivar innererror: dict
-        ivar message: str
-        ivar odata_json: dict
-        ivar target: str
-        ivar ~.code: str
+        details: list[ODataV4Format]
+        innererror: dict
+        message: str
+        odata_json: dict
+        target: str
+        ~.code: str
 
         def __init__(
                 self, 
@@ -535,16 +535,16 @@ namespace azure.core.exceptions
 
     class azure.core.exceptions.ODataV4Format:
         property error: SelfODataV4Format    # Read-only
-        ivar CODE_LABEL = code
-        ivar DETAILS_LABEL = details
-        ivar INNERERROR_LABEL = innererror
-        ivar MESSAGE_LABEL = message
-        ivar TARGET_LABEL = target
-        ivar details: list[ODataV4Format]
-        ivar innererror: dict
-        ivar message: str
-        ivar target: str
-        ivar ~.code: str
+        CODE_LABEL = code
+        DETAILS_LABEL = details
+        INNERERROR_LABEL = innererror
+        MESSAGE_LABEL = message
+        TARGET_LABEL = target
+        details: list[ODataV4Format]
+        innererror: dict
+        message: str
+        target: str
+        ~.code: str
 
         def __init__(self, json_object: Mapping[str, Any]) -> None: ...
 
@@ -672,16 +672,16 @@ namespace azure.core.exceptions
 namespace azure.core.messaging
 
     class azure.core.messaging.CloudEvent(Generic[DataType]):
-        ivar data: Optional
-        ivar datacontenttype: Optional
-        ivar dataschema: Optional
-        ivar extensions: Optional
-        ivar id: str
-        ivar source: str
-        ivar specversion: str = "1.0"
-        ivar subject: Optional
-        ivar time: Optional
-        ivar type: str
+        data: Optional
+        datacontenttype: Optional
+        dataschema: Optional
+        extensions: Optional
+        id: str
+        source: str
+        specversion: str = "1.0"
+        subject: Optional
+        time: Optional
+        type: str
 
         def __init__(
                 self, 
@@ -711,13 +711,13 @@ namespace azure.core.messaging
 namespace azure.core.paging
 
     class azure.core.paging.AzureError(Exception):
-        ivar continuation_token: str
-        ivar exc_msg
-        ivar exc_traceback
-        ivar exc_type
-        ivar exc_value
-        ivar inner_exception: Exception
-        ivar message: str
+        continuation_token: str
+        exc_msg
+        exc_traceback
+        exc_type
+        exc_value
+        inner_exception: Exception
+        message: str
 
         def __init__(
                 self, 
@@ -886,7 +886,7 @@ namespace azure.core.pipeline.policies
 
 
     class azure.core.pipeline.policies.AsyncHTTPPolicy(ABC, Generic[HTTPRequestType, AsyncHTTPResponseType]):
-        ivar next: AsyncHTTPPolicy
+        next: AsyncHTTPPolicy
 
         @abc.abstractmethod
         async def send(self, request: PipelineRequest[HTTPRequestType]) -> PipelineResponse[HTTPRequestType, AsyncHTTPResponseType]: ...
@@ -920,7 +920,7 @@ namespace azure.core.pipeline.policies
 
 
     class azure.core.pipeline.policies.AsyncRetryPolicy(RetryPolicyBase, AsyncHTTPPolicy[HTTPRequestType, AsyncHTTPResponseType]):
-        ivar BACKOFF_MAX = 120
+        BACKOFF_MAX = 120
 
         def __init__(
                 self, 
@@ -1055,7 +1055,7 @@ namespace azure.core.pipeline.policies
 
 
     class azure.core.pipeline.policies.ContentDecodePolicy(SansIOHTTPPolicy[Union[HttpRequest, HttpRequest], Union[_HttpResponseBase, _HttpResponseBase]]):
-        ivar CONTEXT_NAME = deserialized_data
+        CONTEXT_NAME = deserialized_data
 
         def __init__(
                 self, 
@@ -1111,7 +1111,7 @@ namespace azure.core.pipeline.policies
 
 
     class azure.core.pipeline.policies.DistributedTracingPolicy(SansIOHTTPPolicy[HTTPRequestType, HTTPResponseType]):
-        ivar TRACING_CONTEXT = TRACING_CONTEXT
+        TRACING_CONTEXT = TRACING_CONTEXT
 
         def __init__(
                 self, 
@@ -1140,7 +1140,7 @@ namespace azure.core.pipeline.policies
 
 
     class azure.core.pipeline.policies.HTTPPolicy(ABC, Generic[HTTPRequestType, HTTPResponseType]):
-        ivar next: HTTPPolicy
+        next: HTTPPolicy
 
         @abc.abstractmethod
         def send(self, request: PipelineRequest[HTTPRequestType]) -> PipelineResponse[HTTPRequestType, HTTPResponseType]: ...
@@ -1173,9 +1173,9 @@ namespace azure.core.pipeline.policies
 
 
     class azure.core.pipeline.policies.HttpLoggingPolicy(SansIOHTTPPolicy[Union[HttpRequest, HttpRequest], Union[_HttpResponseBase, _HttpResponseBase]]):
-        ivar DEFAULT_HEADERS_ALLOWLIST: Set[str]
-        ivar MULTI_RECORD_LOG: str = "AZURE_SDK_LOGGING_MULTIRECORD"
-        ivar REDACTED_PLACEHOLDER: str = "REDACTED"
+        DEFAULT_HEADERS_ALLOWLIST: Set[str]
+        MULTI_RECORD_LOG: str = "AZURE_SDK_LOGGING_MULTIRECORD"
+        REDACTED_PLACEHOLDER: str = "REDACTED"
 
         def __init__(
                 self, 
@@ -1300,7 +1300,7 @@ namespace azure.core.pipeline.policies
 
 
     class azure.core.pipeline.policies.RetryPolicy(RetryPolicyBase, HTTPPolicy[HTTPRequestType, HTTPResponseType]):
-        ivar BACKOFF_MAX = 120
+        BACKOFF_MAX = 120
 
         def __init__(
                 self, 
@@ -2245,10 +2245,10 @@ namespace azure.core.rest
 
     class azure.core.rest.HttpRequest(HttpRequestBackcompatMixin):
         property content: Any    # Read-only
-        ivar content: any
-        ivar headers: mapping
-        ivar method: str
-        ivar url: str
+        content: any
+        headers: mapping
+        method: str
+        url: str
 
         def __deepcopy__(self, memo: Optional[Dict[int, Any]] = None) -> HttpRequest: ...
 
@@ -2316,8 +2316,8 @@ namespace azure.core.rest
 namespace azure.core.serialization
 
     class azure.core.serialization.AzureJSONEncoder(JSONEncoder):
-        ivar item_separator = , 
-        ivar key_separator = : 
+        item_separator = , 
+        key_separator = : 
 
         def default(self, o: Any) -> Any: ...
 
@@ -2328,10 +2328,10 @@ namespace azure.core.settings
         property current: Tuple[Any, ]    # Read-only
         property defaults: Tuple[Any, ]    # Read-only
         property defaults_only: bool
-        ivar azure_cloud: PrioritizedSetting
-        ivar log_level: PrioritizedSetting
-        ivar tracing_enabled: PrioritizedSetting
-        ivar tracing_implementation: PrioritizedSetting
+        azure_cloud: PrioritizedSetting
+        log_level: PrioritizedSetting
+        tracing_enabled: PrioritizedSetting
+        tracing_implementation: PrioritizedSetting
 
         def __init__(self) -> None: ...
 

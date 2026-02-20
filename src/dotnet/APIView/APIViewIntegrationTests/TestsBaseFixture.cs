@@ -80,19 +80,20 @@ namespace APIViewIntegrationTests
             PackageNameManager = serviceProvider.GetService<PackageNameManager>();
             User = TestUser.GetTestuser();
 
-            _cosmosClient = new CosmosClient(_config["CosmosEndpoint"], new DefaultAzureCredential());
+            var credential = new ChainedTokenCredential(new AzureCliCredential(), new AzureDeveloperCliCredential());
+            _cosmosClient = new CosmosClient(_config["CosmosEndpoint"], credential);
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(_config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("APIRevisions", "/ReviewId").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("PullRe", "/id").Wait();
-            ReviewRepository = new CosmosReviewRepository(_config, _cosmosClient);
-            APIRevisionRepository = new CosmosAPIRevisionsRepository(_config, _cosmosClient);
+            ReviewRepository = new CosmosReviewRepository(_config, _cosmosClient, Mock.Of<ILogger<CosmosReviewRepository>>());
+            APIRevisionRepository = new CosmosAPIRevisionsRepository(_config, _cosmosClient, ReviewRepository);
             CommentRepository = new CosmosCommentsRepository(_config, _cosmosClient);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(_config, _cosmosClient);
 
-            var blobServiceClient = new BlobServiceClient(new Uri(_config["StorageAccountUrl"]), new DefaultAzureCredential());
+            var blobServiceClient = new BlobServiceClient(new Uri(_config["StorageAccountUrl"]), credential);
             _blobCodeFileContainerClient = blobServiceClient.GetBlobContainerClient("codefiles");
             _blobOriginalContainerClient = blobServiceClient.GetBlobContainerClient("originals");
             _ = _blobCodeFileContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
@@ -112,8 +113,10 @@ namespace APIViewIntegrationTests
             var loggerMoq = new Mock<ILogger<NotificationManager>>();
             var userProfileManagerMoq = new Mock<IUserProfileManager>();
             var userProfileCache = new UserProfileCache(memoryCache, userProfileManagerMoq.Object, Mock.Of<ILogger<UserProfileCache>>());
+            var languageServicesMoq = new Mock<IEnumerable<LanguageService>>();
+            var notificationPermissionsManagerMoq = new Mock<IPermissionsManager>();
             
-            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, userProfileCache, telemetryClient.Object, emailTemplateServiceMoq.Object, httpClientFactoryMoq.Object, loggerMoq.Object);
+            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, userProfileCache, telemetryClient.Object, emailTemplateServiceMoq.Object, httpClientFactoryMoq.Object, loggerMoq.Object, languageServicesMoq.Object, notificationPermissionsManagerMoq.Object);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -127,9 +130,14 @@ namespace APIViewIntegrationTests
 
             var backgroundTaskQueueMoq = new Mock<IBackgroundTaskQueue>();
             var commentsLoggerMoq = new Mock<ILogger<CommentsManager>>();
+            var copilotAuthServiceMoq = new Mock<ICopilotAuthenticationService>();
+            var permissionsManagerMoq = new Mock<IPermissionsManager>();
+
+            var diagnosticCommentService = new DiagnosticCommentService(CommentRepository);
             
             CommentsManager = new CommentsManager(
                 apiRevisionsManager: APIRevisionManager,
+                diagnosticCommentService: diagnosticCommentService,
                 authorizationService: authorizationServiceMoq.Object,
                 commentsRepository: CommentRepository,
                 reviewRepository: ReviewRepository,
@@ -141,22 +149,26 @@ namespace APIViewIntegrationTests
                 configuration: _config,
                 options: options.Object,
                 backgroundTaskQueue: backgroundTaskQueueMoq.Object,
+                permissionsManager: permissionsManagerMoq.Object,
+                copilotAuthService: copilotAuthServiceMoq.Object,
                 logger: commentsLoggerMoq.Object);
 
+            var codeFileManagerLoggerMoq = new Mock<ILogger<CodeFileManager>>();
             CodeFileManager = new CodeFileManager(
                 languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
-                originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
+                originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
+                logger: codeFileManagerLoggerMoq.Object);
 
             APIRevisionManager = new APIRevisionsManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
                 codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
+                diagnosticCommentService: diagnosticCommentService,
                 originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
                 telemetryClient: telemetryClient.Object, configuration: _config);
 
             var pollingJobQueueManagerMoq = new Mock<IPollingJobQueueManager>();
             var pullRequestsRepositoryMoq = new Mock<ICosmosPullRequestsRepository>();
-            var copilotAuthServiceMoq = new Mock<ICopilotAuthenticationService>();
             var reviewManagerLoggerMoq = new Mock<ILogger<ReviewManager>>();
             ReviewManager = new ReviewManager(
                 authorizationService: authorizationServiceMoq.Object,

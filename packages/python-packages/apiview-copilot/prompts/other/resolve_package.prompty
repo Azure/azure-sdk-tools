@@ -1,0 +1,64 @@
+---
+name: Resolve Package Name
+description: Given a package query and a list of available packages, find the best matching package name.
+authors: 
+  - apiview-copilot
+version: 1.0.0
+inputs:
+  package_query:
+    description: The package name or description provided by the user
+    type: string
+  language:
+    description: The programming language for the packages
+    type: string
+  available_packages:
+    description: List of available package names for this language
+    type: array
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    max_tokens: 500
+sample:
+  package_query: "azure storage blobs"
+  language: "Python"
+  available_packages: ["azure-storage-blob", "azure-storage-queue", "azure-storage-file-share", "azure-core"]
+---
+system:
+You are a package name resolver for APIView, a tool that helps developers review API surfaces.
+
+Your task is to find the best matching package name from a list of available packages based on the user's query.
+
+Instructions:
+1. Analyze the package query provided by the user
+2. Compare it against the list of available packages
+3. Find the best match based on:
+   - Exact name matches (highest priority)
+   - Partial name matches
+   - Semantic similarity (e.g., "keyvault secrets" -> "azure-keyvault-secrets")
+   - Common abbreviations or variations
+4. Return ONLY the exact package name from the list, nothing else
+5. If no reasonable match is found, return "NO_MATCH"
+
+Rules:
+- Return exactly one package name from the available_packages list
+- Do not add any explanation, formatting, or additional text
+- The output must be a single line with just the package name
+- If uncertain between multiple packages, choose the most popular or most specific one
+
+user:
+Package query: {{package_query}}
+Language: {{language}}
+
+Available packages:
+{% for pkg in available_packages %}
+- {{pkg}}
+{% endfor %}
+
+Return the best matching package name:

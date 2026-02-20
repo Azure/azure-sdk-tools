@@ -5,6 +5,7 @@ using System.CommandLine.Parsing;
 using System.Reflection;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 // Just a lil easter egg :)
 

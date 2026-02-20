@@ -43,7 +43,7 @@ The application uses `config/knowledge-config.json` to define which repositories
 
 ### Prerequisites
 
-- Node.js 18 or higher
+- Node.js 20 or higher
 - TypeScript
 - Access to the configured repositories
 

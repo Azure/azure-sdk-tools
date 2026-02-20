@@ -27,12 +27,12 @@ export function getLanguageCssSafeName(language: string): string {
       return "cplusplus";
     default:
       return language.toLowerCase();
-  }   
+  }
 }
 
 export function mapLanguageAliases(languages: Iterable<string>): string[] {
   const result: Set<string> = new Set<string>();
-  
+
   for (const language of languages) {
     if (language === "TypeSpec" || language === "Cadl") {
       result.add("Cadl");
@@ -86,7 +86,7 @@ export function getSupportedLanguages(): any {
   ];
 }
 
-export function getAIReviewNotifiationInfo(jobInfo : AIReviewJobCompletedDto, origin: string): [SiteNotification, any] | undefined {
+export function getAIReviewNotificationInfo(jobInfo : AIReviewJobCompletedDto, origin: string): [SiteNotification, any] | undefined {
   if (jobInfo.status == 'Success' && jobInfo.noOfGeneratedComments > 0) {
     const messageData : ToastMessageData = {
       action: 'RefreshPage',

@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {

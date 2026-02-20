@@ -68,7 +68,11 @@ namespace Stress.Watcher
 
             var workloadConfig = GetWorkloadConfigValues(options, isLocal);
 
-            var credential = new DefaultAzureCredential();
+            var credential = new ChainedTokenCredential(
+                new AzureCliCredential(),
+                new AzurePowerShellCredential(),
+                new VisualStudioCredential(),
+                new WorkloadIdentityCredential());
             var client = new Kubernetes(k8sConfig);
             var chaosClient = new GenericChaosClient(k8sConfig);
             var armClient = new ArmClient(credential, workloadConfig.SubscriptionId);

@@ -14,6 +14,7 @@ export const CONVERSATION_PAGE_NAME = "Conversation";
 export const REVISION_PAGE_NAME = "Revision";
 export const SAMPLES_PAGE_NAME = "Samples";
 export const PROFILE_PAGE_NAME = "Your Profile";
+export const ADMIN_PERMISSIONS_PAGE_NAME = "Admin Permissions";
 
 export function getQueryParams(route: ActivatedRoute, excludedKeys: string[] = [SCROLL_TO_NODE_QUERY_PARAM]) {
   return route.snapshot.queryParamMap.keys.reduce((params: { [key: string]: any; }, key) => {

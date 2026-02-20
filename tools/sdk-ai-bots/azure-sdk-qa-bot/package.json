@@ -1,6 +1,6 @@
 {
   "name": "azuresdkqabot",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "msteams": {
     "teamsAppId": null
   },
@@ -14,8 +14,8 @@
   "type": "module",
   "scripts": {
     "dev:teamsfx": "env-cmd --silent -f .localConfigs npm run dev",
-    "dev:teamsfx:testtool": "env-cmd --silent -f .localConfigs.testTool npm run dev",
-    "dev:teamsfx:launch-testtool": "env-cmd --silent -f env/.env.testtool teamsapptester start",
+    "dev:teamsfx:testtool": "env-cmd --silent -f env/.env.testtool npm run dev",
+    "dev:teamsfx:launch-teams-testtool": "env-cmd --silent -f env/.env.testtool teamsapptester start",
     "dev": "tsx watch --inspect=9239 ./src/index.ts",
     "build": "tsc --build && shx cp -r ./src/prompts ./lib/src",
     "start": "node ./lib/src/index.js",
@@ -46,7 +46,7 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^18.0.0",
+    "@types/node": "^20.19.0",
     "env-cmd": "^10.1.0",
     "nodemon": "^3.1.7",
     "shx": "^0.3.3",
@@ -55,6 +55,7 @@
     "typescript": "^5.5.4",
     "vite": "^7.2.2",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.0"
+    "vitest": "^3.2.0",
+    "@microsoft/teams-app-test-tool": "^0.2.20"
   }
 }

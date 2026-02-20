@@ -83,30 +83,30 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 if (argument.NameEquals?.Name.Identifier.ValueText == "Name")
                 {
                     hasName = true;
-
-                    // Check if the value is a string literal
-                    if (argument.Expression is LiteralExpressionSyntax literal &&
-                        literal.Token.IsKind(SyntaxKind.StringLiteralToken))
+                    if (!TryGetToolName(argument, context, out var toolName))
                     {
-                        var toolName = literal.Token.ValueText;
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            missingNameRule,
+                            argument.GetLocation()));
+                        break;
+                    }
 
-                        // Enforce azsdk prefix
-                        if (!toolName.StartsWith(AZSDK_PREFIX))
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(
-                                missingPrefixRule,
-                                literal.GetLocation(),
-                                toolName));
-                        }
+                    // Enforce azsdk prefix
+                    if (!toolName.StartsWith(AZSDK_PREFIX))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            missingPrefixRule,
+                            argument.GetLocation(),
+                            toolName));
+                    }
 
-                        // Validate snake_case convention
-                        if (!snakeCasePattern.IsMatch(toolName))
-                        {
-                            context.ReportDiagnostic(Diagnostic.Create(
-                                invalidNamingRule,
-                                literal.GetLocation(),
-                                toolName));
-                        }
+                    // Validate snake_case convention
+                    if (!snakeCasePattern.IsMatch(toolName))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(
+                            invalidNamingRule,
+                            argument.GetLocation(),
+                            toolName));
                     }
                     break;
                 }
@@ -119,6 +119,44 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                     missingNameRule,
                     attribute.GetLocation()));
             }
+        }
+
+        private static bool TryGetToolName(AttributeArgumentSyntax argument, SyntaxNodeAnalysisContext context, out string toolName)
+        {
+            toolName = string.Empty;
+            var expression = argument.Expression;
+
+            if (expression is LiteralExpressionSyntax literal && literal.Token.IsKind(SyntaxKind.StringLiteralToken))
+            {
+                toolName = literal.Token.ValueText;
+                return true;
+            }
+
+            var constantValue = context.SemanticModel.GetConstantValue(expression, context.CancellationToken);
+            if (!constantValue.HasValue || constantValue.Value == null)
+            {
+                return false;
+            }
+            var constantString = constantValue.Value as string;
+            if (constantString == null)
+            {
+                return false;
+            }
+
+            // Ensure the name reference is defined on the same MCP tool type to avoid unrelated values.
+            var containingType = context.ContainingSymbol?.ContainingType;
+            if (containingType != null)
+            {
+                var symbol = context.SemanticModel.GetSymbolInfo(expression, context.CancellationToken).Symbol;
+                if (symbol?.ContainingType != null &&
+                    !SymbolEqualityComparer.Default.Equals(symbol.ContainingType, containingType))
+                {
+                    return false;
+                }
+            }
+
+            toolName = constantString;
+            return true;
         }
     }
 }

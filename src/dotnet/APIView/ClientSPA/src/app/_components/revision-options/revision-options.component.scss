@@ -1,14 +1,87 @@
 :host ::ng-deep {
     display: inline-block;
 
-    .p-dropdown {
-        border: none;
-        .p-inputtext {
-            padding: 0.0rem 0.5rem;
+    p-selectButton {
+        width: 100%;
+    }
+
+    .revision-options-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .diff-label {
+        color: var(--base-text-color);
+    }
+
+    .compact-dropdown {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        border: 1px solid transparent !important;
+        border-radius: 4px;
+        background: transparent !important;
+        padding: 0 !important;
+        position: relative !important;
+        margin-right: 20px !important;
+        z-index: 1000 !important;
+
+        &:hover {
+            border-color: var(--outer-glow) !important;
         }
 
-        .p-dropdown-clear-icon {
-            right: -1rem;
+        &.p-focus {
+            border-color: var(--primary-color) !important;
+            box-shadow: var(--shadow-color-primary) !important;
+        }
+
+        .p-select-label, .p-inputtext {
+            order: -1 !important;
+            flex: 1 1 auto !important;
+            width: auto !important;
+            padding: 0 0.5rem !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            background: transparent !important;
+            border: none !important;
+            color: var(--base-text-color) !important;
+        }
+
+        .p-select-dropdown {
+            order: 1 !important;
+            position: static !important;
+            width: 1.5rem !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: transparent !important;
+            flex: 0 0 auto !important;
+            color: var(--base-text-color) !important;
+
+            .p-select-dropdown-icon {
+                position: static !important;
+                margin: 0 !important;
+                color: var(--base-text-color) !important;
+            }
+        }
+
+        .p-select-clear-icon {
+            position: absolute !important;
+            right: -20px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 1rem !important;
+            height: 1rem !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            color: var(--base-text-color) !important;
+            z-index: 1;
         }
 
         .p-chip .p-chip-text {
@@ -27,28 +100,10 @@
         max-width: 25dvw;
     }
 
-    .api-revision-filter-button .p-selectbutton {
-        display: flex;
-        justify-content: space-between;
-    }
-    
-    .api-revision-filter-button .p-selectbutton .p-button {
-        flex-grow: 1;
-        text-align: center;
-        background-color: transparent;
-        border: 1px solid var(--link-color);
-        color: var(--link-color);
-        font-size: 0.85rem;
-    }
-
-    .api-revision-filter-button .p-selectbutton .p-button.p-highlight {
-        color: var(--primary-btn-color);
-        background-color: var(--link-color);
-    }
-    
     .emphasis-badge {
         border-radius: 5px;
         padding: 0px 5px 2px 5px;
+        margin: 1px;
         font-size: smaller;
         font-weight: bold;
 
@@ -63,7 +118,7 @@
             color: var(--alert-warn-color);
             border: 1px solid var(--alert-warn-border-color);
         }
-        
+
         &.success {
             background-color: var(--alert-success-bg);
             color: var(--alert-success-color);
@@ -75,5 +130,9 @@
             color: var(--alert-secondary-color);
             border: 1px solid var(--alert-secondary-border-color);
         }
+    }
+
+    .revision-option-item {
+        gap: 1px;
     }
 }

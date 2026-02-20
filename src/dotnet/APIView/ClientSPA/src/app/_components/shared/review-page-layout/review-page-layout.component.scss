@@ -1,5 +1,58 @@
 :host ::ng-deep {
-    .p-badge {
-        padding: 0 .4rem;
+
+    .side-menu {
+        width: 3.5rem !important;
+        min-width: unset !important;
+        background-color: var(--base-fg-color) !important;
+
+        .p-menuitem, .p-menuitem-content {
+            background: transparent !important;
+            transition: none !important;
+            border: none !important;
+
+            &:hover {
+                background: transparent !important;
+            }
+        }
+
+        .p-menuitem-link {
+            padding: 0.8rem 0.5rem !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--base-fg-color) !important;
+            transition: none !important;
+
+            &:hover {
+                background-color: var(--base-bg-color) !important;
+            }
+        }
+
+        .icon-wrapper {
+            display: inline-flex;
+            position: relative;
+        }
+
+        .menu-icon {
+            font-size: 1.5rem;
+        }
+
+        .menu-badge {
+            position: absolute !important;
+            top: -0.6rem !important;
+            right: -0.3rem !important;
+            left: auto !important;
+
+            width: 1.5rem !important;
+            height: 1.5rem !important;
+            padding: 0 !important;
+            border-radius: 50%;
+
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+
+            font-size: 0.75rem !important;
+        }
     }
 }

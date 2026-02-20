@@ -58,7 +58,7 @@ public abstract class CommandResponse
     {
         get
         {
-            return string.IsNullOrEmpty(ResponseError) && (ResponseErrors == null || ResponseErrors.Count == 0)? Status.Succeeded : Status.Failed;
+            return string.IsNullOrEmpty(ResponseError) && (ResponseErrors == null || ResponseErrors.Count == 0) ? Status.Succeeded : Status.Failed;
         }
     }
 

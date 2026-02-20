@@ -5,14 +5,14 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Attributes;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.Core;
 
 /// <summary>
 /// This is the base class defining how an MCP enabled tool will interface with the server.
@@ -27,14 +27,15 @@ public abstract class MCPToolBase
     private bool debug = false;
     private IOutputHelper output { get; set; }
     private ITelemetryService telemetryService { get; set; }
-
+    private IUpgradeService upgradeService { get; set; }
     public virtual CommandGroup[] CommandHierarchy { get; set; } = [];
 
-    public void Initialize(IOutputHelper outputHelper, ITelemetryService telemetryService, bool debug = false)
+    public void Initialize(IOutputHelper outputHelper, ITelemetryService telemetryService, IUpgradeService upgradeService, bool debug = false)
     {
         this.debug = debug;
         this.output = outputHelper;
         this.telemetryService = telemetryService;
+        this.upgradeService = upgradeService;
 
         this.initialized = true;
     }
@@ -46,66 +47,86 @@ public abstract class MCPToolBase
             throw new InvalidOperationException("Tool must be initialized with Initialize() before use");
         }
 
-        using var tracer = TelemetryService.RegisterCliTelemetry(debug);
-
-        // TODO: add client info
         using var activity = await telemetryService.StartActivity(ActivityName.CommandExecuted);
-        Activity.Current = activity;
+        Activity.Current = activity;  // Required so things like TokenUsageHelper can add activity properties and tags
 
         try
         {
             var fullCommandName = string.Join('.', command.Parents.Reverse().Select(p => p.Name).Append(command.Name));
             var commandLine = string.Join(" ", parseResult.Tokens.Select(t => t.Value));
-            activity?.AddTag(TagName.CommandName, fullCommandName);
+            activity?.SetTag(TagName.CommandName, fullCommandName);
             activity?.SetTag(TagName.CommandArgs, commandLine);
 
             CommandResponse response = await HandleCommand(parseResult, cancellationToken);
-            var result = output.Format(response);
+            // Pass response.GetType() otherwise we will only serialize CommandResponse base type properties
+            activity?.SetTag(TagName.CommandResponse, JsonSerializer.Serialize(response, response.GetType()));
+            activity?.SetStatus(response.ExitCode == 0 ? ActivityStatusCode.Ok : ActivityStatusCode.Error);
 
-            activity?.SetTag(TagName.CommandResponse, result);
-
-            if (response.ExitCode == 0)
-            {
-                activity?.SetStatus(ActivityStatusCode.Ok);
-            }
-            else
-            {
-                activity?.SetStatus(ActivityStatusCode.Error);
-            }
-
-            if (activity != null)
-            {
-                AddCustomTelemetryFromResponse(activity, response);
-            }
+            AddCustomTelemetryFromResponse(activity, response);
 
             output.OutputCommandResponse(response);
+
+#if !DEBUG
+            // Show update notification after command output (skip for upgrade command itself)
+            if (command.Name != SharedCommandNames.UpgradeCommandName)
+            {
+                try
+                {
+                    await upgradeService.TryShowUpgradeNotification(cancellationToken);
+                }
+                catch
+                {
+                    // Ignore update notification errors - never affect command execution
+                }
+            }
+#endif
 
             return response.ExitCode;
         }
         catch (Exception ex)
         {
-            activity?.AddException(ex);
+            TelemetryExceptionHelper.AddSanitizedException(activity, ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             throw;
         }
+        finally
+        {
+            // Must be called before we manually flush below
+            activity?.Dispose();
+            // Force upload of events since we won't have background batching in CLI mode
+            var flushed = telemetryService.Flush();
+            if (flushed == false && debug)
+            {
+                output.OutputError("Telemetry flush did not complete before timeout");
+            }
+        }
     }
 
-    private static void AddCustomTelemetryFromResponse(Activity activity, CommandResponse response)
+    // Add all properties to the activity's custom bag so we can filter them for well
+    // known fields to be added to the telemetry event in TelemetryProcessor
+    private static void AddCustomTelemetryFromResponse(Activity? activity, CommandResponse response)
     {
+        if (activity == null)
+        {
+            return;
+        }
+
         var responseProperties = response.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
         foreach (var prop in responseProperties)
         {
-            // Check if property is tagged for telemetry
-            var telemetryAttr = prop.GetCustomAttributes<TelemetryAttribute>();
-            if (telemetryAttr != null)
+            var value = prop.GetValue(response);
+            var jsonAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
+            string propertyName = jsonAttr?.Name ?? prop.Name;
+            if (value != null)
             {
-                var value = prop.GetValue(response);
-                var jsonAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
-                string propertyName = jsonAttr?.Name ?? prop.Name;
-                if (value != null)
+                // Avoid string/enum properties appearing like "\"Succeeded\"" from JSON serialization
+                string serialized = value switch
                 {
-                    activity.AddTag(propertyName, JsonSerializer.Serialize(value));
-                }
+                    string s => s,
+                    Enum e => e.ToString(),
+                    _ => JsonSerializer.Serialize(value)
+                };
+                activity.SetCustomProperty(propertyName, serialized);
             }
         }
     }

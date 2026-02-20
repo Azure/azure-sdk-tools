@@ -32,6 +32,7 @@ public class PullRequestManagerTests
     private readonly Mock<ILogger<PullRequestManager>> _mockLogger;
     private readonly Mock<ICosmosPullRequestsRepository> _mockPullRequestsRepository;
     private readonly Mock<IReviewManager> _mockReviewManager;
+    private readonly Mock<IProjectsManager> _mockProjectManager;
     private readonly TelemetryClient _telemetryClient;
 
     public PullRequestManagerTests()
@@ -42,6 +43,7 @@ public class PullRequestManagerTests
         _mockConfiguration = new Mock<IConfiguration>();
         _mockCodeFileManager = new Mock<ICodeFileManager>();
         _mockReviewManager = new Mock<IReviewManager>();
+        _mockProjectManager = new Mock<IProjectsManager>();
         _mockLogger = new Mock<ILogger<PullRequestManager>>();
         _mockGitHubClientFactory = new Mock<IGitHubClientFactory>();
 
@@ -84,7 +86,8 @@ public class PullRequestManagerTests
             _telemetryClient,
             _mockLogger.Object,
             _languageServices,
-            _mockGitHubClientFactory.Object);
+            _mockGitHubClientFactory.Object,
+            _mockProjectManager.Object);
 
         await manager.GetPullRequestModelAsync(123, repoName, "Package", "test.json", "C#");
         _mockGitHubClientFactory.Verify(
@@ -118,7 +121,8 @@ public class PullRequestManagerTests
             _telemetryClient,
             _mockLogger.Object,
             _languageServices,
-            _mockGitHubClientFactory.Object);
+            _mockGitHubClientFactory.Object,
+            _mockProjectManager.Object);
 
 
         PullRequestModel result = await manager.GetPullRequestModelAsync(123, "Azure/azure-sdk-for-net", "Azure.Core", "test.json", "C#");

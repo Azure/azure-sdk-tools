@@ -1,10 +1,17 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { PanelModule } from 'primeng/panel';
 import { CookieService } from 'ngx-cookie-service';
 
 @Component({
-  selector: 'app-page-options-section',
-  templateUrl: './page-options-section.component.html',
-  styleUrls: ['./page-options-section.component.scss']
+    selector: 'app-page-options-section',
+    templateUrl: './page-options-section.component.html',
+    styleUrls: ['./page-options-section.component.scss'],
+    standalone: true,
+    imports: [
+        CommonModule,
+        PanelModule
+    ]
 })
 export class PageOptionsSectionComponent implements OnInit{
   @Input() sectionName : string = '';
@@ -29,8 +36,8 @@ export class PageOptionsSectionComponent implements OnInit{
     }
   }
 
-  onCollapseChange(value: boolean) {
-    this.collapsed = value;
+  onCollapseChange(value: boolean | undefined) {
+    this.collapsed = value ?? false;
     this.cookieService.set(this.sectionStateCookieKey!, this.collapsed.toString());
   }
 }

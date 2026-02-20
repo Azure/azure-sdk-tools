@@ -91,7 +91,13 @@ namespace IssueLabeler.Shared
             {
                 _logger.LogInformation($"! loading {nameof(IssuePredEngine)}.");
                 MLContext mlContext = new MLContext();
-                BlobContainerClient container = new BlobContainerClient(_blobContainerUri, new DefaultAzureCredential());
+                
+                var credential = new ChainedTokenCredential(
+                    new ManagedIdentityCredential(),
+                    new AzureCliCredential()
+                );
+                
+                BlobContainerClient container = new BlobContainerClient(_blobContainerUri, credential);
                 var condition = new BlobRequestConditions();
                 var blockBlob = container.GetBlobClient(_issueModelBlobName);
                 _logger.LogInformation($"Loading model from {_issueModelBlobName} from container {container.Uri}");

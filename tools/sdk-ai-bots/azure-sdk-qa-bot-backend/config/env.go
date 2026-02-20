@@ -23,16 +23,21 @@ const (
 )
 
 type Config struct {
-	AOAI_CHAT_REASONING_MODEL      string
-	AOAI_CHAT_COMPLETIONS_MODEL    string
-	AOAI_CHAT_COMPLETIONS_TOP_P    float32
-	AOAI_CHAT_MAX_TOKENS           int
-	AOAI_CHAT_CONTEXT_MAX_TOKENS   int
-	AOAI_CHAT_COMPLETIONS_ENDPOINT string
+	AOAI_CHAT_REASONING_MODEL                  string
+	AOAI_CHAT_REASONING_MODEL_REASONING_EFFORT string
+	AOAI_CHAT_COMPLETIONS_MODEL                string
+	AOAI_CHAT_COMPLETIONS_REASONING_EFFORT     string
+	AOAI_CHAT_MAX_TOKENS                       int
+	AOAI_CHAT_CONTEXT_MAX_TOKENS               int
+	AOAI_CHAT_COMPLETIONS_ENDPOINT             string
 
-	AI_SEARCH_BASE_URL string
-	AI_SEARCH_INDEX    string
-	AI_SEARCH_AGENT    string
+	AI_SEARCH_BASE_URL           string
+	AI_SEARCH_INDEX              string
+	AI_SEARCH_AGENT              string
+	AI_SEARCH_KNOWLEDGE_BASE     string
+	AI_SEARCH_KNOWLEDGE_SOURCE   string
+	AI_SEARCH_KNOWLEDGE_BASE_API string
+	AI_SEARCH_TOPK               int
 
 	STORAGE_BASE_URL            string
 	STORAGE_KNOWLEDGE_CONTAINER string
@@ -92,29 +97,58 @@ func GetBotTenantID() string {
 }
 
 func initCredential() error {
-	var err error
-	var cred azcore.TokenCredential
-	if os.Getenv("PROD_MODE") == "true" {
-		log.Println("Using ManagedIdentityCredential for production")
-		clientID := os.Getenv("AZURE_CLIENT_ID")
-		if clientID == "" {
-			return fmt.Errorf("AZURE_CLIENT_ID environment variable required when PROD_MODE is true")
-		}
-		cred, err = azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
-			ID: azidentity.ClientID(clientID),
-		})
+	var creds []azcore.TokenCredential
+
+	// 1: Workload Identity
+	workloadCred, err := azidentity.NewWorkloadIdentityCredential(nil)
+	if err == nil {
+		creds = append(creds, workloadCred)
+		log.Printf("Workload Identity credential added")
 	} else {
-		log.Println("Using DefaultAzureCredential for local development")
-		cred, err = azidentity.NewDefaultAzureCredential(nil) // CodeQL [SM05142] This is guarded for local development
+		log.Printf("Workload Identity credential not available: %v", err)
 	}
+
+	// 2: Managed Identity
+	clientID := os.Getenv("AZURE_CLIENT_ID")
+	if len(clientID) > 0 {
+		miOpts := &azidentity.ManagedIdentityCredentialOptions{
+			ID: azidentity.ClientID(clientID),
+		}
+		miCred, miCredErr := azidentity.NewManagedIdentityCredential(miOpts)
+		if miCredErr == nil {
+			creds = append(creds, miCred)
+			log.Printf("Managed Identity credential added")
+		} else {
+			log.Printf("Managed Identity credential not available: %v", miCredErr)
+		}
+	} else {
+		log.Printf("AZURE_CLIENT_ID not set; skipping Managed Identity credential")
+	}
+
+	// 3: Azure CLI
+	azCLI, err := azidentity.NewAzureCLICredential(nil)
+	if err == nil {
+		creds = append(creds, azCLI)
+		log.Printf("Azure CLI credential added")
+	} else {
+		log.Printf("Azure CLI credential not available: %v", err)
+	}
+
+	if len(creds) == 0 {
+		return fmt.Errorf("no valid credentials available")
+	}
+
+	chain, err := azidentity.NewChainedTokenCredential(creds, nil)
 	if err != nil {
 		return err
 	}
-	Credential = cred
+	Credential = chain
 	return nil
 }
 
 func InitConfiguration() {
+	// Try to load environment variables from .env file
+	LoadEnvFile()
 	// Initialize the global credential first
 	if err := initCredential(); err != nil {
 		log.Fatalf("Failed to create credential: %v", err)

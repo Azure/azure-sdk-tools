@@ -1,0 +1,19 @@
+{
+  "name": "azure-sdk-qa-assistant-tsp",
+  "version": "0.0.1",
+  "description": "TypeSpec definition for Azure SDK QA Assistant Service",
+  "type": "module",
+  "scripts": {
+    "build": "tsp compile .",
+    "watch": "tsp compile . --watch",
+    "format": "tsp format **/*.tsp"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "^0.62.0",
+    "@typespec/http": "^0.62.0",
+    "@typespec/rest": "^0.62.0",
+    "@typespec/openapi3": "^0.62.0",
+    "@typespec/openapi": "^0.62.0",
+    "@typespec/versioning": "^0.62.0"
+  }
+}

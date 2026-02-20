@@ -3,11 +3,13 @@
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 public sealed partial class JavaScriptLanguageService : LanguageService
 {
+    private const string GeneratedFolderName = "generated";
     private readonly INpxHelper npxHelper;
 
     public JavaScriptLanguageService(
@@ -16,21 +18,20 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         IGitHelper gitHelper,        
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
-        IFileHelper fileHelper)
+        IFileHelper fileHelper,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+        IChangelogHelper changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.npxHelper = npxHelper;
-        base.processHelper = processHelper;
-        base.gitHelper = gitHelper;
-        base.logger = logger;
-        base.commonValidationHelpers = commonValidationHelpers;
-        base.fileHelper = fileHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.JavaScript;
+    public override bool IsCustomizedCodeUpdateSupported => true;
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving JavaScript package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         var (packageName, packageVersion, sdkType) = await TryGetPackageInfoAsync(fullPath, ct);
         
         if (packageName == null)
@@ -55,7 +56,7 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             PackageVersion = packageVersion,
             SdkType = sdkType,
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
-            Language = Models.SdkLanguage.JavaScript,
+            Language = SdkLanguage.JavaScript,
             SamplesDirectory = Path.Combine(fullPath, "samples-dev")
         };
         
@@ -131,7 +132,7 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             }
             else
             {
-                logger.LogTrace("No sdkType property found in package.json");
+                logger.LogTrace("No sdk-type property found in package.json");
             }
 
             return (name, version, sdkType);
@@ -143,7 +144,7 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         }
     }
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         var result = await processHelper.Run(new ProcessOptions(
                 command: "npm",
@@ -153,11 +154,30 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             ct
         );
 
-        return result.ExitCode == 0;
+        return new TestRunResponse(result);
     }
 
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
-        return categories.TryGetValue("javascript", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
+        // In azure-sdk-for-js, the presence of a "generated" folder at the same level
+        // as package.json indicates the package has customizations (code outside generated/).
+
+        try
+        {
+            var generatedFolder = Path.Combine(packagePath, GeneratedFolderName);
+            if (Directory.Exists(generatedFolder))
+            {
+                logger.LogDebug("Found JavaScript generated folder at {GeneratedFolder}", generatedFolder);
+                return true;
+            }
+
+            logger.LogDebug("No JavaScript generated folder found in {PackagePath}", packagePath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for JavaScript customization files in {PackagePath}", packagePath);
+            return false;
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"When defining which section of a request the regex should target, only values [ {ValidValues} ] are valid.");
             }
 
-            rx = StringSanitizer.GetRegex(regex);
+            rx = GetRegex(regex);
         }
 
         public bool CheckMatch(RecordEntry x)

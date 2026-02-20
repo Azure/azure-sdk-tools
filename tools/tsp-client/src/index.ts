@@ -134,6 +134,11 @@ const parser = yargs(hideBin(process.argv))
         });
     },
     async (argv: any) => {
+      if (argv["output-dir"] !== undefined) {
+        Logger.warn(
+          "'output-dir' option is ignored when 'emitter-output-dir' is specified in emitter options.",
+        );
+      }
       argv["output-dir"] = resolveOutputDir(argv);
       await initCommand(argv);
     },
@@ -218,6 +223,11 @@ const parser = yargs(hideBin(process.argv))
         });
     },
     async (argv: any) => {
+      if (argv["output-dir"] !== undefined) {
+        Logger.warn(
+          "'output-dir' is only used to find directory containing tsp-location.yaml, the value isn't interpolated when 'emitter-output-dir' is specified in emitter options.",
+        );
+      }
       argv["output-dir"] = resolveOutputDir(argv);
       await updateCommand(argv);
     },

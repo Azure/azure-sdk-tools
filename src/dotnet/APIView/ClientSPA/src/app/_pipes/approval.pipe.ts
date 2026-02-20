@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'approval'
+    name: 'approval',
+    standalone: true
 })
 export class ApprovalPipe implements PipeTransform {
 

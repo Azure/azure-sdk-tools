@@ -1,11 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services.Languages;
-using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -21,22 +18,21 @@ public sealed partial class PythonLanguageService : LanguageService
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
-        IFileHelper fileHelper)
+        IFileHelper fileHelper,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+        IChangelogHelper changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.pythonHelper = pythonHelper;
         this.npxHelper = npxHelper;
-        base.processHelper = processHelper;
-        base.gitHelper = gitHelper;
-        base.logger = logger;
-        base.commonValidationHelpers = commonValidationHelpers;
-        base.fileHelper = fileHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.Python;
+    public override bool IsCustomizedCodeUpdateSupported => true;
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Python package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
         
         if (packageName == null)
@@ -83,7 +79,7 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     try
     {
         logger.LogTrace("Calling get_package_properties.py for {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, packagePath);
+        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
         var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "get_package_properties.py");
         
         var result = await pythonHelper.Run(new PythonOptions(
@@ -121,7 +117,40 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
     return (packageName, packageVersion);
 }
 
-    public override async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
+    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    {
+        // Python SDKs can have _patch.py files in multiple locations within the package:
+        // e.g., azure/packagename/_patch.py, azure/packagename/models/_patch.py, azure/packagename/operations/_patch.py
+        //
+        // However, autorest.python generates empty _patch.py templates by default with:
+        //   __all__: List[str] = []
+        //
+        // A _patch.py file only has actual customizations if __all__ is non-empty.
+        // See: https://github.com/Azure/autorest.python/blob/main/docs/customizations.md
+
+        try
+        {
+            var patchFiles = Directory.GetFiles(packagePath, "_patch.py", SearchOption.AllDirectories);
+            foreach (var patchFile in patchFiles)
+            {
+                if (HasNonEmptyAllExport(patchFile))
+                {
+                    logger.LogDebug("Found Python _patch.py with customizations at {PatchFile}", patchFile);
+                    return true;
+                }
+            }
+
+            logger.LogDebug("No Python _patch.py files with customizations found in {PackagePath}", packagePath);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error searching for Python customization files in {PackagePath}", packagePath);
+            return false;
+        }
+    }
+
+    public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         var result = await pythonHelper.Run(new PythonOptions(
                 "pytest",
@@ -131,21 +160,45 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
             ct
         );
 
-        return result.ExitCode == 0;
+        return new TestRunResponse(result);
     }
-    public override List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
+
+    /// <summary>
+    /// Checks if a _patch.py file has a non-empty __all__ export list, indicating actual customizations.
+    /// </summary>
+    private bool HasNonEmptyAllExport(string patchFilePath)
     {
-        var reqs = categories.TryGetValue("python", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
-
-        foreach (var req in reqs)
+        try
         {
-            if (req.check != null && req.check.Length > 0)
+            foreach (var line in File.ReadLines(patchFilePath))
             {
-                var executableName = req.check[0];
-                req.check[0] = PythonOptions.ResolvePythonExecutable(executableName);
+                if (line.Contains("__all__") && line.Contains("="))
+                {
+                    // If line contains quoted strings, there are exports
+                    if (line.Contains('"') || line.Contains('\''))
+                    {
+                        return true;
+                    }
+                    
+                    // If line has [ but not ] on same line, it's multiline = non-empty
+                    if (line.Contains('[') && !line.Contains(']'))
+                    {
+                        return true;
+                    }
+                    
+                    // Single-line empty: __all__ = [] or __all__: List[str] = []
+                    return false;
+                }
             }
+            
+            // No __all__ found - assume no customizations (template file)
+            return false;
         }
-
-        return reqs;
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error reading Python patch file {PatchFile}", patchFilePath);
+            return false;
+        }
     }
+
 }

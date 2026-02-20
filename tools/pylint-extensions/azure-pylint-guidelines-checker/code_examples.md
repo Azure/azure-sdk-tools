@@ -58,6 +58,7 @@ This document contains code examples showing how to fix violations of the Azure 
 - [missing-retry-policy](#missing-retry-policy)
 - [missing-distributed-tracing-policy](#missing-distributed-tracing-policy)
 - [do-not-use-logging-exception](#do-not-use-logging-exception)
+- [remove-deprecated-iscoroutinefunction](#remove-deprecated-iscoroutinefunction)
 
 ## client-method-should-not-use-static-method
 
@@ -1181,4 +1182,40 @@ try:
     # some operation
 except Exception as e:
     logger.debug("An error occurred", exc_info=e)  # Using logger.debug with exc_info
+```
+
+## remove-deprecated-iscoroutinefunction
+❌ **Incorrect**:
+```python
+import asyncio
+
+async def my_async_function():
+    pass
+
+# Using deprecated asyncio.iscoroutinefunction
+if asyncio.iscoroutinefunction(my_async_function):
+    print("This is a coroutine function")
+```
+
+```python
+# Also incorrect - importing directly from asyncio
+from asyncio import iscoroutinefunction
+
+async def my_async_function():
+    pass
+
+if iscoroutinefunction(my_async_function):
+    print("This is a coroutine function")
+```
+
+✅ **Correct**:
+```python
+import inspect
+
+async def my_async_function():
+    pass
+
+# Using inspect.iscoroutinefunction instead
+if inspect.iscoroutinefunction(my_async_function):
+    print("This is a coroutine function")
 ```

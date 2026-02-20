@@ -203,6 +203,8 @@ namespace CSharpAPIParser.TreeToken
             if (nameSpaceToken != null)
             {
                 nameSpaceToken.RenderClasses.Add("namespace");
+                // Always set NavigationDisplayName for namespace, regardless of hidden status
+                // This ensures the namespace appears in the navigation tree
                 nameSpaceToken.NavigationDisplayName = namespaceSymbol.ToDisplayString();
             }
             namespaceLine.Tokens.Last().HasSuffixSpace = true;
@@ -293,8 +295,39 @@ namespace CSharpAPIParser.TreeToken
 
             DisplayName(reviewLine, namedType, namedType);
 
-            // Add navigation short name and render classes to Type name token. Navigation tree is built dynamically based on these properties
-            var typeToken = reviewLine.Tokens.FirstOrDefault(t => t.Kind == TokenKind.TypeName && string.IsNullOrEmpty(t.NavigateToId));
+            // Add navigation short name and render classes to the type name token
+            // Find the token representing the type name - it's the first token after the type keyword that's not a modifier
+            // Look for the token right before punctuation or base type (: or {)
+            var typeKeywordIndex = reviewLine.Tokens.FindIndex(t => 
+                t.Value == "class" || t.Value == "struct" || t.Value == "interface" || t.Value == "enum" || t.Value == "delegate");
+            
+            ReviewToken? typeToken = null;
+            if (typeKeywordIndex >= 0 && typeKeywordIndex < reviewLine.Tokens.Count - 1)
+            {
+                // The type name is typically the first non-generic, non-navigatable token after the type keyword
+                for (int i = typeKeywordIndex + 1; i < reviewLine.Tokens.Count; i++)
+                {
+                    var token = reviewLine.Tokens[i];
+                    // Stop at punctuation that indicates end of type name (: for base class, < for generics, { for body)
+                    if (token.Kind == TokenKind.Punctuation && (token.Value == ":" || token.Value == "{" || token.Value == "<"))
+                        break;
+                    // Skip generic type parameters and other punctuation
+                    if (token.Kind == TokenKind.Punctuation)
+                        continue;
+                    // Found the type name token - prefer one without NavigateToId
+                    if (string.IsNullOrEmpty(token.NavigateToId))
+                    {
+                        typeToken = token;
+                        break;
+                    }
+                    // Fallback: use any non-punctuation token
+                    if (typeToken == null && token.Kind != TokenKind.Punctuation)
+                    {
+                        typeToken = token;
+                    }
+                }
+            }
+            
             if (typeToken != null)
             {
                 typeToken.NavigationDisplayName = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);

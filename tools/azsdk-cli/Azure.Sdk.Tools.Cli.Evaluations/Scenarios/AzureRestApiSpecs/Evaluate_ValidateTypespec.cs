@@ -19,13 +19,18 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 "azsdk_run_typespec_validation",
             ];
 
+            string [] optionalTools =
+            [
+                "azsdk_typespec_check_project_in_public_repo"
+            ];
+
             // Build scenario data from prompt
             var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
 
             // External contexts (no deep input checking for this one)
             bool checkInputs = false;
 
-            var result = await EvaluationHelper.RunScenarioAsync(
+            var result = await EvaluationHelper.RunToolInputScenarioAsync(
                 scenarioName: this.ScenarioName,
                 scenarioData: scenarioData,
                 chatCompletion: s_chatCompletion!,
@@ -38,7 +43,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 additionalContexts: new EvaluationContext[]
                 {
                     new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
-                });
+                },
+                optionalToolNames: optionalTools);
 
             EvaluationHelper.ValidateToolInputsEvaluator(result);
         }

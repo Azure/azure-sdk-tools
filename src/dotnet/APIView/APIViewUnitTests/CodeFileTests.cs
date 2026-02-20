@@ -13,6 +13,7 @@ using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Repositories;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -29,8 +30,9 @@ namespace APIViewUnitTests
             IBlobCodeFileRepository blobCodeFileRepository = new Mock<IBlobCodeFileRepository>().Object;
             IBlobOriginalsRepository blobOriginalRepository = new Mock<IBlobOriginalsRepository>().Object;
 
+            var logger = new Mock<ILogger<CodeFileManager>>().Object;
             _codeFileManager = new CodeFileManager(languageServices, blobCodeFileRepository, blobOriginalRepository,
-                devopsArtifactRepository);
+                devopsArtifactRepository, logger);
         }
 
         [Fact]

@@ -408,7 +408,7 @@ public partial class JavaLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var packageName = Path.GetFileName(packagePath);
+        var packageName = Path.GetFileName(packagePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -19,7 +20,6 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.MiddleWare;
 using APIViewWeb.Repositories;
-using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -37,6 +37,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using APIViewWeb.Services;
+using Microsoft.AspNetCore.ResponseCompression;
 
 namespace APIViewWeb
 {
@@ -71,6 +72,23 @@ namespace APIViewWeb
             services.AddApplicationInsightsTelemetry();
             services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
             services.AddAzureAppConfiguration();
+            services.AddMemoryCache();
+
+            services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = true;
+                options.MimeTypes = new[] { "application/json" };
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+            });
+            services.Configure<BrotliCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
+            services.Configure<GzipCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -111,10 +129,15 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
             services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
+            services.AddSingleton<ICosmosPermissionsRepository, CosmosPermissionsRepository>();
+            services.AddSingleton<ICosmosProjectRepository, CosmosProjectRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
 
+            services.AddSingleton<IDiagnosticCommentService, DiagnosticCommentService>();
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
+            services.AddSingleton<IProjectsManager, ProjectsManager>();
+            services.AddSingleton<IReviewSearch, ReviewSearch>();
             services.AddSingleton<IAutoReviewService, AutoReviewService>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
@@ -124,6 +147,7 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IPermissionsManager, PermissionsManager>();
             services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
             services.AddSingleton<UserProfileCache>();
 
@@ -317,11 +341,11 @@ namespace APIViewWeb
                     }
                 };
                 
-                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential(), cosmosClientOptions);
+                return new CosmosClient(Configuration["CosmosEndpoint"], CredentialProvider.GetAzureCredential(), cosmosClientOptions);
             });
             services.AddSingleton(x =>
             {
-                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), new DefaultAzureCredential());
+                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), CredentialProvider.GetAzureCredential());
             });
 
             services.AddHostedService<ReviewBackgroundHostedService>();
@@ -408,6 +432,7 @@ namespace APIViewWeb
             }
 
             app.UseHttpsRedirection();
+            app.UseResponseCompression();
             app.UseStaticFiles();
 
             app.UseRouting();

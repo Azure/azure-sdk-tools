@@ -348,3 +348,12 @@ class SomethingWithLiterals:
     @property
     def literal_property(self) -> Literal["read", "write", "admin"]:
         pass
+
+class NoPublicNameDict(TypedDict):
+    """A TypedDict with no public "name" attribute.
+    """
+    first: str
+    last: str
+
+class PropertyWithNoNameAttr:
+    schema: TypedDict = NoPublicNameDict

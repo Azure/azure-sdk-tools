@@ -351,41 +351,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(200, playbackContext.Response.StatusCode);
         }
 
-        [Fact]
-        public void MultiPartMatcherMatchesDifferentBoundary()
-        {
-            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
-            var differentBoundaryRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request_diff_boundary.json").Session.Entries[0];
-            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentBoundaryRequest, new RecordMatcher(), sanitizers: new List<RecordedTestSanitizer>(), remove: false);
-        }
 
-        [Fact]
-        public void MultiPartMultiLayerMatcherMatchesDifferentBoundary()
-        {
-            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request_two_layers.json");
-            var differentBoundaryRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request_two_layers_diff_boundary.json").Session.Entries[0];
-            var expectedDiffBodyMatch = sessionForRetrieval.Session.Lookup(differentBoundaryRequest, new RecordMatcher(), sanitizers: new List<RecordedTestSanitizer>(), remove: false);
-        }
-
-        [Fact]
-        public void MultiPartMatcherThrowsOnDiffBody()
-        {
-            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
-            var diffBodyRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request_diff_body.json").Session.Entries[0];
-            diffBodyRequest.Request.Body = Encoding.UTF8.GetBytes("A Different Request Body");
-            Assert.Throws<TestRecordingMismatchException>(() =>
-            {
-                sessionForRetrieval.Session.Lookup(diffBodyRequest, new RecordMatcher(), sanitizers: new List<RecordedTestSanitizer>(), remove: false);
-            });
-        }
-
-        [Fact]
-        public void MultiPartMatcherMatchesIdenticalBoundary()
-        {
-            var sessionForRetrieval = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json");
-            var identicalRequest = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_request.json").Session.Entries[0];
-            var expectedIdenticalMatch = sessionForRetrieval.Session.Lookup(identicalRequest, new RecordMatcher(), sanitizers: new List<RecordedTestSanitizer>(), remove: false);
-        }
     }
 }
 

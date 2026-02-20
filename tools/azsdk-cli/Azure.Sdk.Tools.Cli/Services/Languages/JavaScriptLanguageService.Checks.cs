@@ -181,7 +181,7 @@ public partial class JavaScriptLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
         var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }

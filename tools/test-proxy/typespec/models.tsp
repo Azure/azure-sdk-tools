@@ -51,6 +51,7 @@ namespace Admin {
         BodyKeySanitizer: "BodyKeySanitizer",
         BodyRegexSanitizer: "BodyRegexSanitizer",
         BodyStringSanitizer: "BodyStringSanitizer",
+        ContentDispositionFilePathSanitizer: "ContentDispositionFilePathSanitizer",
         GeneralRegexSanitizer: "GeneralRegexSanitizer",
         GeneralStringSanitizer: "GeneralStringSanitizer",
         HeaderRegexSanitizer: "HeaderRegexSanitizer",
@@ -102,6 +103,10 @@ namespace Admin {
             value?: string;
             condition?: ApplyCondition;
         };
+    }
+
+    model ContentDispositionFilePathSanitizer extends SanitizerAddition {
+        Name: SanitizerType.ContentDispositionFilePathSanitizer;
     }
 
     model GeneralRegexSanitizer extends SanitizerAddition {

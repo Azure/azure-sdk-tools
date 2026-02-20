@@ -49,7 +49,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
                     }
                     description = registeredMcpTool?.ProtocolTool?.Description ?? "";
                 }
-                commandInfoList.Add(new ToolInfo(mcpToolName, $"{parent} {command.Name}", description));
+                var optionInfos = command.Options?.Select(arg => new OptionInfo(arg.Name, arg.Description, arg.ValueType.ToString(), arg.Required)).ToList();
+                commandInfoList.Add(new ToolInfo(mcpToolName, $"{parent} {command.Name}", description, optionInfos));
             }
         }
 

@@ -6,6 +6,7 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Example
 {
@@ -42,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
             return await Task.FromResult<CommandResponse>(result);
         }
 
-        [McpServerTool(Name = HelloWorldFailToolName), Description("Echoes the message back to the client with a failure")]
+        [McpServerTool(Name = HelloWorldFailToolName), Description("Returns an error response for testing failure scenarios")]
         public DefaultCommandResponse EchoFail(string message)
         {
             try
@@ -65,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
             }
         }
 
-        [McpServerTool(Name = HelloWorldToolName), Description("Echoes the message back to the client")]
+        [McpServerTool(Name = HelloWorldToolName), Description("Returns your message with success status")]
         public DefaultCommandResponse EchoSuccess(string message)
         {
             try

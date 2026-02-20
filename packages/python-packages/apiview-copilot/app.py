@@ -16,11 +16,13 @@ import os
 import threading
 import time
 from enum import Enum
+from typing import Literal, Optional
 
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
+from src._apiview import resolve_package
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._auth import AppRole, require_roles
 from src._database_manager import DatabaseManager
@@ -29,7 +31,7 @@ from src._mention import handle_mention_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name, run_prompty
-from src.agent._agent import get_main_agent, invoke_agent
+from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
@@ -171,14 +173,26 @@ class AgentChatResponse(BaseModel):
 @app.post("/agent/chat", response_model=AgentChatResponse)
 async def agent_chat(
     request: AgentChatRequest,
-    _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
+    _claims=Depends(require_roles(AppRole.READER, AppRole.APP_READER, AppRole.WRITER, AppRole.APP_WRITER)),
 ):
     """Handle chat requests to the agent."""
     logger.info("Received /agent/chat request: user_input=%s, thread_id=%s", request.user_input, request.thread_id)
     try:
-        async with get_main_agent() as agent:
+        roles = _claims.get("roles", [])
+        if isinstance(roles, str):
+            roles = roles.split()
+        token_roles = set(roles)
+
+        is_writer = (AppRole.WRITER.value in token_roles) or (AppRole.APP_WRITER.value in token_roles)
+        agent_factory = get_readwrite_agent if is_writer else get_readonly_agent
+
+        with agent_factory() as (client, agent_id):
             response, thread_id_out, messages = await invoke_agent(
-                agent=agent, user_input=request.user_input, thread_id=request.thread_id, messages=request.messages
+                client=client,
+                agent_id=agent_id,
+                user_input=request.user_input,
+                thread_id=request.thread_id,
+                messages=request.messages,
             )
         return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
     except AgentInvokeException as e:
@@ -186,7 +200,7 @@ async def agent_chat(
             logger.warning("Rate limit exceeded: %s", e)
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait and try again.") from e
         logger.error("AgentInvokeException: %s", e)
-        raise HTTPException(status_code=500, detail="Agent error: {e}") from e
+        raise HTTPException(status_code=500, detail=f"Agent error: {e}") from e
     except Exception as e:
         logger.error("Error in /agent/chat: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error") from e
@@ -298,6 +312,73 @@ async def handle_thread_resolution(
         )
     except HTTPException as e:
         logger.error("Error in /api-review/resolve: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
+class ResolvePackageRequest(BaseModel):
+    """Request model for resolving package information."""
+
+    package_query: str = Field(..., alias="packageQuery")
+    language: str
+    version: Optional[str] = None
+    environment: Literal["production", "staging"] = "production"
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+class ResolvePackageResponse(BaseModel):
+    """Response model for resolved package information."""
+
+    package_name: str = Field(..., alias="packageName")
+    review_id: str = Field(..., alias="reviewId")
+    language: str
+    version: Optional[str] = None
+    revision_id: Optional[str] = Field(None, alias="revisionId")
+    revision_label: Optional[str] = Field(None, alias="revisionLabel")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+@app.post("/api-review/resolve-package", response_model=ResolvePackageResponse)
+async def resolve_package_info(
+    request: ResolvePackageRequest,
+    _claims=Depends(require_roles(AppRole.READER, AppRole.APP_READER)),
+):
+    """Resolve package information from a package description and language."""
+    logger.info(
+        "Received /api-review/resolve-package request: package_query=%s, language=%s, version=%s",
+        request.package_query,
+        request.language,
+        request.version,
+    )
+    try:
+        result = await asyncio.to_thread(
+            resolve_package,
+            package_query=request.package_query,
+            language=request.language,
+            version=request.version,
+            environment=request.environment,
+        )
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Package not found")
+
+        if "error" in result:
+            if result["error"] == "no_packages_for_language":
+                raise HTTPException(status_code=404, detail=f"No packages found for language: {result['language']}")
+            raise HTTPException(status_code=404, detail="Package not found")
+
+        return ResolvePackageResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error in /api-review/resolve-package: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 

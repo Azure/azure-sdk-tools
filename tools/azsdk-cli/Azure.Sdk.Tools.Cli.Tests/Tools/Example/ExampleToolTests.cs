@@ -1,18 +1,19 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+#if DEBUG
 using Moq;
 using NUnit.Framework.Internal;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Tools;
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.Example;
 
 internal class ExampleToolTests
 {
@@ -254,3 +255,5 @@ internal class ExampleToolTests
         Assert.That(response.Result as string, Does.Contain("Fibonacci(7) = 13"));
     }
 }
+
+#endif

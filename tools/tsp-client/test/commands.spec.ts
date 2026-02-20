@@ -38,20 +38,17 @@ describe.sequential("Verify commands", () => {
   });
 
   afterAll(async () => {
-    await rm(joinPaths(repoRoot, "eng", "emitter-package.json"));
-
-    // This is generated in the first test using the command
-    const emitterPackageLock = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
-    if (await doesFileExist(emitterPackageLock)) {
-      await rm(emitterPackageLock);
-    }
-
-    await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
-    await rm("./test/examples/initGlobalConfig/", { recursive: true });
-    await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true });
+    await rm(joinPaths(repoRoot, "eng", "emitter-package.json"), { force: true });
+    await rm(joinPaths(repoRoot, "eng", "emitter-package-lock.json"), { force: true });
+    await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", {
+      recursive: true,
+      force: true,
+    });
+    await rm("./test/examples/initGlobalConfig/", { recursive: true, force: true });
+    await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true, force: true });
     await rm(
       "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/TempTypeSpecFiles/",
-      { recursive: true },
+      { recursive: true, force: true },
     );
     await rm(joinPaths(repoRoot, "sdk/keyvault"), { recursive: true, force: true });
   });
@@ -588,7 +585,7 @@ describe.sequential("Verify commands", () => {
         await readFile(joinPaths(repoRoot, "eng", "emitter-package.json"), "utf8"),
       );
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "1.6.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
     } catch (error: any) {
@@ -615,7 +612,7 @@ describe.sequential("Verify commands", () => {
       assert.isTrue(await doesFileExist(packageJsonPath));
       const emitterJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "1.6.0");
       assert.isUndefined(emitterJson["overrides"]);
       assert.isTrue(
         await doesFileExist(
@@ -640,7 +637,7 @@ describe.sequential("Verify commands", () => {
       await generateConfigFilesCommand(args);
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "1.6.0");
       //Check that the manual dependency version remains unchanged
       assert.equal(emitterJson["devDependencies"]["vitest"], "3.1.0");
       assert.isUndefined(emitterJson["overrides"]);
@@ -669,7 +666,7 @@ describe.sequential("Verify commands", () => {
       await generateConfigFilesCommand(args);
       const emitterJson = JSON.parse(await readFile(emitterPackageJsonPath, "utf8"));
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "1.6.0");
       //Check that the manual regular dependency version remains unchanged
       assert.equal(emitterJson["dependencies"]["lodash"], "4.17.21");
       //Check that the manual dev dependency version remains unchanged
@@ -719,7 +716,7 @@ describe.sequential("Verify commands", () => {
       );
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
       assert.equal(Object.keys(emitterJson["devDependencies"]).length, 2);
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "1.6.0");
       assert.isTrue(await doesFileExist(joinPaths(repoRoot, "eng", "emitter-package-lock.json")));
     } catch (error: any) {
       assert.fail("Failed to generate tsp-client config files. Error: " + error);
@@ -746,7 +743,7 @@ describe.sequential("Verify commands", () => {
 
       // Check that dependencies and devDependencies are updated
       assert.equal(emitterJson["dependencies"]["@azure-tools/typespec-ts"], "0.46.1");
-      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "^1.6.0");
+      assert.equal(emitterJson["devDependencies"]["@typespec/compiler"], "1.6.0");
 
       // Check that all other fields are preserved
       assert.equal(emitterJson["name"], "test-emitter");

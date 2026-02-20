@@ -11,7 +11,7 @@
         padding: 0.5rem 0.5rem;
     }
 
-    .p-multiselect-items-wrapper ul, .p-dropdown-items-wrapper ul {
+    .p-multiselect-items-wrapper ul, .p-select-list-container ul {
         margin-bottom: 0px;
     }
 
@@ -39,81 +39,24 @@
         overflow: hidden;
     }
 
-    .p-dropdown, .p-multiselect {
+    .full-width-input {
+        width: 100%;
         .p-inputtext {
             padding: 0.25rem 0.5rem;
         }
     }
 
-    // Dark mode support for dialog components
-    .p-dialog {
-        .p-dialog-header {
-            background-color: var(--base-fg-color);
-            border-bottom: 1px solid var(--border-color);
-            color: var(--base-text-color);
-        }
-        
-        .p-dialog-content {
-            background-color: var(--base-bg-color);
-            color: var(--base-text-color);
-        }
-        
-        .p-dialog-footer {
-            background-color: var(--base-fg-color);
-            border-top: 1px solid var(--border-color);
-        }
+    .reviewer-avatar {
+        width: 30px;
     }
 
-    // Bootstrap list-group dark mode support
-    .list-group {
-        .list-group-item {
-            background-color: var(--base-fg-color);
-            border: 1px solid var(--border-color);
-            color: var(--base-text-color);
-            
-            &:first-child {
-                border-top: 1px solid var(--border-color);
-            }
-            
-            &:last-child {
-                border-bottom: 1px solid var(--border-color);
-            }
-        }
+    .review-search-input {
+        width: 100%;
+        box-sizing: border-box;
     }
 
-    // Input switch dark mode support
-    .p-inputswitch {
-        .p-inputswitch-slider {
-            background-color: var(--border-color);
-            border: 1px solid var(--border-color);
-        }
-        
-        &.p-inputswitch-checked .p-inputswitch-slider {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-    }
-
-    .change-history {
-        .deleted {
-            color: red;
-        }
-    
-        .approval-reverted {
-            color: red;
-        }
-    
-        .created {
-            color: darkorange;
-        }
-    
-        .approved {
-            color: forestgreen;
-        }
-    
-        .undeleted {
-            color: yellow;
-        }
+    input[data-clarity-region="review-search-input"] {
+        background: transparent !important;
     }
 
     .review-search-icon {
@@ -123,5 +66,18 @@
 
     .review-search-info {
         padding-top: 0.55rem;
+    }
+
+    .reviewer-item {
+        &:hover {
+            background-color: var(--surface-hover);
+        }
+        &.selected {
+            font-weight: 500;
+        }
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
     }
 }

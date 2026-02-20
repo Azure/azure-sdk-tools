@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             // This test enables deeper input checking
             bool checkInputs = true;
 
-            var result = await EvaluationHelper.RunScenarioAsync(
+            var result = await EvaluationHelper.RunToolInputScenarioAsync(
                 scenarioName: this.ScenarioName,
                 scenarioData: scenarioData,
                 chatCompletion: s_chatCompletion!,

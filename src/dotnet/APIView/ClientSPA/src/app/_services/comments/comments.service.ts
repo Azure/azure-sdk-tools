@@ -21,7 +21,7 @@ export class CommentsService {
     return this.http.get<any>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { withCredentials: true });
   }
 
-  createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false, severity: CommentSeverity | null = null) : Observable<CommentItemModel> {
+  createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false, severity: CommentSeverity | null = null, threadId?: string) : Observable<CommentItemModel> {
     const formData = new FormData();
     formData.append('reviewId', reviewId);
     if (commentType == CommentType.APIRevision) {
@@ -36,6 +36,9 @@ export class CommentsService {
     formData.append('resolutionLocked', resolutionLocked.toString());
     if (severity !== null) {
       formData.append('severity', severity.toString());
+    }
+    if (threadId) {
+      formData.append('threadId', threadId);
     }
 
     return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
@@ -59,9 +62,12 @@ export class CommentsService {
       withCredentials: true });
   }
 
-  resolveComments(reviewId: string, elementId: string) {
+  resolveComments(reviewId: string, elementId: string, threadId?: string) {
     let params = new HttpParams();
     params = params.append('elementId', elementId);
+    if (threadId) {
+      params = params.append('threadId', threadId);
+    }
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
@@ -74,9 +80,12 @@ export class CommentsService {
       withCredentials: true });
   }
 
-  unresolveComments(reviewId: string, elementId: string) {
+  unresolveComments(reviewId: string, elementId: string, threadId?: string) {
     let params = new HttpParams();
     params = params.append('elementId', elementId);
+    if (threadId) {
+      params = params.append('threadId', threadId);
+    }
 
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',

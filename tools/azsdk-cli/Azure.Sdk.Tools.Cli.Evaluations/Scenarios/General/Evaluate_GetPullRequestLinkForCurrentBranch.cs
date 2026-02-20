@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [Test]
         public async Task Evaluate_GetPullRequestLinkForCurrentBranch()
         {
-            const string prompt = "What's the status of the spec PR in my current branch? Only check the status once. Do not verify my setup, I've already verified it. Path to my repository root: C:\\azure-rest-api-specs";
+            const string prompt = "What's the status of the spec PR in my current branch? Only check the status once. My setup has already been verified, do not run azsdk_verify_setup. Path to my repository root: C:\\azure-rest-api-specs";
             string[] expectedTools =
             [
                 "azsdk_get_pull_request_link_for_current_branch",
@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             // External construction of evaluation context
             bool checkInputs = false;
 
-            var result = await EvaluationHelper.RunScenarioAsync(
+            var result = await EvaluationHelper.RunToolInputScenarioAsync(
                 scenarioName: this.ScenarioName,
                 scenarioData: scenarioData,
                 chatCompletion: s_chatCompletion!,

@@ -43,6 +43,10 @@ Run `dotnet pack` for the required package to generate Nuget file. Upload the re
 1. Generate wheel for the package. pip install build; python -m build --wheel --outdir [dest_folder]
 2. Upload generated whl file
 
+### Rust
+1. In the root of your azure-sdk-for-rust clone, run: `cargo run --manifest-path eng/tools/generate_api_report/Cargo.toml -- --package {package-name}`
+2. Upload `sdk/{service-name}/{package-name}/review/{package-name}.rust.json` using the `Create Review` link.
+
 ### Swagger
 Swagger API revisions can be generated manually by uploading swagger file to APIView if you are trying to generate API revision for a single swagger file. Swagger API revision is automatically generated when swagger files are modified in a pull request and pull request comment shows a link to generated APIView. Automatically generated API revision from pull request creates a diff using existing swagger files in the target branch as baseline to show API level changes in pull request.
 

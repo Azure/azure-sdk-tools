@@ -6,6 +6,7 @@ namespace SearchIndexCreator
     public enum DocumentTypes
     {
         Issue,
-        Document
+        Document,
+        Comment
     }
 }

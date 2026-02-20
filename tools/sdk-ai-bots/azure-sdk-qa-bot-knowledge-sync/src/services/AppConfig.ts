@@ -1,4 +1,4 @@
-import { DefaultAzureCredential } from '@azure/identity';
+import { AzureCliCredential, ChainedTokenCredential, ManagedIdentityCredential, WorkloadIdentityCredential } from '@azure/identity';
 import { AppConfigurationClient } from '@azure/app-configuration';
 import * as dotenv from 'dotenv';
 
@@ -37,8 +37,12 @@ export async function initConfiguration(): Promise<void> {
     try {
         console.log('Loading configuration from Azure App Configuration...');
         
-        // Create a credential using DefaultAzureCredential
-        const credential = new DefaultAzureCredential();
+        // Create a credential
+        const credential = new ChainedTokenCredential(
+            new ManagedIdentityCredential(),
+            new AzureCliCredential(),
+            new WorkloadIdentityCredential()
+        );
 
         // Create the App Configuration client
         const client = new AppConfigurationClient(endpoint, credential);

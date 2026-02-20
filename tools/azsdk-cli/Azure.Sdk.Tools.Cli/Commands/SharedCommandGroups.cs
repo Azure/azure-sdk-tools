@@ -1,5 +1,3 @@
-using System.CommandLine;
-
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups
@@ -51,6 +49,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Verb: "test",
             Description: "Test operations for SDK packages"
         );
+
+        public static readonly CommandGroup ReleasePlan = new(
+           Verb: "release-plan",
+           Description: "Manage release plans in Azure DevOps"
+       );
 
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",

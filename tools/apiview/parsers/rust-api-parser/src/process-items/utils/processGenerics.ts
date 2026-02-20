@@ -8,6 +8,7 @@ import {
 } from "../../../rustdoc-types/output/rustdoc-types";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
 import { typeToReviewTokens } from "./typeToReviewTokens";
+import { getPath } from "./pathUtils";
 
 export function processGenerics(generics: Generics): {
   params: ReviewToken[];
@@ -114,7 +115,7 @@ export function createGenericBoundTokens(bounds: GenericBound[]): ReviewToken[] 
       tokens.push(
         {
           Kind: TokenKind.TypeName,
-          Value: bound.trait_bound.trait.name,
+          Value: getPath(bound.trait_bound.trait),
           NavigateToId: bound.trait_bound.trait.id.toString(),
           HasSuffixSpace: false,
         },

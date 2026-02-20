@@ -8,6 +8,16 @@ public class ApiViewAgentComment
 {
     [JsonPropertyName("lineNo")]
     public int LineNumber { get; set; }
+    /// <summary>
+    /// Preview feature: Line identifier. May change or be removed in future versions.
+    /// </summary>
+    [JsonPropertyName("_lineId")]
+    public string LineId { get; set; }
+    /// <summary>
+    /// Preview feature: Line text content. May change or be removed in future versions.
+    /// </summary>
+    [JsonPropertyName("_lineText")]
+    public string LineText { get; set; }
     [JsonPropertyName("createdOn")]
     public DateTimeOffset CreatedOn { get; set; }
     [JsonPropertyName("upvotes")]
@@ -23,6 +33,9 @@ public class ApiViewAgentComment
 
     [JsonPropertyName("severity")] 
     public string Severity { get; set; }
+
+    [JsonPropertyName("threadId")]
+    public string ThreadId { get; set; }
 }
 
 public class MentionRequest

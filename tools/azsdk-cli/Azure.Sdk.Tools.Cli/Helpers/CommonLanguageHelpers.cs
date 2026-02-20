@@ -58,8 +58,9 @@ public interface ICommonValidationHelpers
     /// Validates package path and discovers repository root.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>Repository root path if successful, or PackageCheckResponse with error if validation fails</returns>
-    (string? repoRoot, PackageCheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath);
+    Task<(string? repoRoot, PackageCheckResponse? errorResponse)> ValidatePackageAndDiscoverRepoAsync(string packagePath, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -95,7 +96,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            var (packageRepoRoot, errorResponse) = await ValidatePackageAndDiscoverRepoAsync(packagePath, ct);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -114,6 +115,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             var timeout = TimeSpan.FromMinutes(5);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
 
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Changelog validation failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.");
+            }
+
             return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
@@ -130,7 +138,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            var (packageRepoRoot, errorResponse) = await ValidatePackageAndDiscoverRepoAsync(packagePath, ct);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -150,15 +158,30 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
             }
 
+            // TODO: investigate doc-warden code, this normalizes package path for Scan Paths
+            var normalizedPackagePath = Path.GetFullPath(packagePath);
+            // Ensure drive letter is uppercase on Windows for consistency
+            if (OperatingSystem.IsWindows() && normalizedPackagePath.Length >= 2)
+            {
+                normalizedPackagePath = char.ToUpperInvariant(normalizedPackagePath[0]) + normalizedPackagePath.Substring(1);
+            }
+            
             var command = "pwsh";
             var args = new[] {
                 "-File", scriptPath,
                 "-SettingsPath", settingsPath,
-                "-ScanPaths", packagePath,
+                "-ScanPaths", normalizedPackagePath,
             };
 
             var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
+
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.");
+            }
 
             return new PackageCheckResponse(processResult);
         }
@@ -177,7 +200,7 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            var (packageRepoRoot, errorResponse) = await ValidatePackageAndDiscoverRepoAsync(packagePath, ct);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -218,6 +241,13 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 }
             }
 
+            if (processResult.ExitCode != 0)
+            {
+                _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}",
+                    processResult.ExitCode, processResult.Output);
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.");
+            }
+
             return new PackageCheckResponse(processResult);
         }
         catch (Exception ex)
@@ -227,14 +257,14 @@ public class CommonValidationHelpers : ICommonValidationHelpers
         }
     }
 
-    public (string? repoRoot, PackageCheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath)
+    public async Task<(string? repoRoot, PackageCheckResponse? errorResponse)> ValidatePackageAndDiscoverRepoAsync(string packagePath, CancellationToken ct = default)
     {
         if (!Directory.Exists(packagePath))
         {
             return (null, new PackageCheckResponse(1, "", $"Package path does not exist: {packagePath}"));
         }
 
-        var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var packageRepoRoot = await _gitHelper.DiscoverRepoRootAsync(packagePath, ct);
         if (string.IsNullOrEmpty(packageRepoRoot))
         {
             return (null, new PackageCheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));

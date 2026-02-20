@@ -1,15 +1,16 @@
-<p-dialog 
-  [(visible)]="visible" 
-  [modal]="true" 
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
   [closable]="true"
   [resizable]="false"
   [draggable]="false"
   [dismissableMask]="false"
   [header]="dialogTitle"
   [style]="{width: '500px'}"
+  styleClass="ai-feedback-dialog"
   appendTo="body"
   (onHide)="onHide()">
-  
+
   <div class="dialog-content">
     <div class="mb-3">
       <p class="feedback-description">
@@ -23,13 +24,14 @@
         Reason <span class="text-danger">*</span>
       </label>
       <div *ngFor="let reason of feedbackReasons" class="reason-item">
-        <p-checkbox 
+        <p-checkbox
           [value]="reason.key"
-          [label]="reason.label"
           [(ngModel)]="selectedReasons"
+          [inputId]="reason.key"
           [binary]="false"
           styleClass="reason-checkbox">
         </p-checkbox>
+        <label [for]="reason.key" class="ms-2">{{ reason.label }}</label>
       </div>
     </div>
 
@@ -38,9 +40,9 @@
       <label for="additionalComments" class="form-label">
         Additional comments (optional)
       </label>
-      <textarea 
+      <textarea
         id="additionalComments"
-        class="form-control" 
+        class="form-control"
         [(ngModel)]="additionalComments"
         rows="4"
         placeholder="Provide additional feedback.">
@@ -56,15 +58,15 @@
 
   <ng-template pTemplate="footer">
     <div class="d-flex justify-content-end gap-2 w-100">
-      <button 
-        type="button" 
-        class="btn btn-outline-secondary" 
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
         (click)="onCancel()">
         Cancel
       </button>
-      <button 
-        type="button" 
-        class="btn btn-primary" 
+      <button
+        type="button"
+        class="btn btn-primary"
         [disabled]="!canSubmit"
         (click)="onSubmit()">
         Submit

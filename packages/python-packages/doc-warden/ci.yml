@@ -1,0 +1,75 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - packages/python-packages/doc-warden
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - packages/python-packages/doc-warden
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
+  parameters:
+    PythonVersion: '3.10'
+    PackagePath: 'packages/python-packages/doc-warden'
+    ArtifactName: 'docwardenpython'
+    PackageName: 'Python Doc Warden'
+    PublishToPyPi: true
+    TestSteps:
+      - task: UsePythonVersion@0
+        displayName: 'Use Python 3.12'
+        inputs:
+          versionSpec: 3.12
+
+      - script: |
+          python -m pip install setuptools
+          python -m pip install wheel twine readme-renderer[md]
+
+          mkdir sdk-for-js
+          mkdir sdk-for-python
+          mkdir sdk-for-java
+          mkdir sdk-for-net
+
+          git clone https://github.com/Azure/azure-sdk-for-java.git sdk-for-java
+          git clone https://github.com/Azure/azure-sdk-for-js.git sdk-for-js
+          git clone https://github.com/Azure/azure-sdk-for-python.git sdk-for-python
+          git clone https://github.com/Azure/azure-sdk-for-net.git sdk-for-net
+        displayName: 'Setup Environment'
+
+      - script: |
+          python -m pip install -e $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
+        displayName: 'Install doc-warden'
+
+      - script: |
+          ward scan -d $(Build.SourcesDirectory)/sdk-for-net  -c $(Build.SourcesDirectory)/sdk-for-net/eng/.docsettings.yml
+        displayName: 'Ensure .NET Backwards Compat'
+        continueOnError: true
+
+      - script: |
+          ward scan -d $(Build.SourcesDirectory)/sdk-for-java  -c $(Build.SourcesDirectory)/sdk-for-java/eng/.docsettings.yml -o
+        displayName: 'Ensure Java Backwards Compat'
+        continueOnError: true
+
+      - script: |
+          ward scan -d $(Build.SourcesDirectory)/sdk-for-python -o -c $(Build.SourcesDirectory)/sdk-for-python/eng/.docsettings.yml
+        displayName: 'Ensure Python Backwards Compat'
+        continueOnError: true
+
+      - script: |
+          ward scan -d $(Build.SourcesDirectory)/sdk-for-js -o -c $(Build.SourcesDirectory)/sdk-for-js/eng/.docsettings.yml
+        displayName: 'Ensure JS Backwards Compat'
+        continueOnError: true

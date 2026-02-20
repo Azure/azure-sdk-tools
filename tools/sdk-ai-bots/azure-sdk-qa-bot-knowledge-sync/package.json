@@ -27,6 +27,7 @@
     "@azure/storage-blob": "^12.21.0",
     "dotenv": "^16.4.5",
     "js-yaml": "^4.1.1",
+    "minimatch": "^10.0.1",
     "openai": "^5.20.0",
     "uuid": "^11.1.0"
   },

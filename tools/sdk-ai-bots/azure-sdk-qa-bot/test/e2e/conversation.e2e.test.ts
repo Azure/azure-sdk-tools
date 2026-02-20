@@ -1,4 +1,17 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+
+// Mock config to avoid validation errors in test environment
+vi.mock('../../src/config/config.js', () => ({
+  default: {
+    azureStorageUrl: process.env.AZURE_STORAGE_URL,
+    azureTableNameForConversation: process.env.AZURE_TABLE_NAME_FOR_CONVERSATION,
+    azureBlobStorageUrl: 'https://test.blob.core.windows.net',
+    blobContainerName: 'bot-configs',
+    channelConfigBlobName: 'channel.yaml',
+    tenantConfigBlobName: 'tenant.yaml',
+  },
+}));
+
 import { ConversationHandler, ConversationMessage } from '../../src/input/ConversationHandler.js';
 import { logger } from '../../src/logging/logger.js';
 

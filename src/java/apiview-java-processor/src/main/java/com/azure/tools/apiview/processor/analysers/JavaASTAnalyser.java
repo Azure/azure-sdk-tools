@@ -1005,6 +1005,22 @@ public class JavaASTAnalyser implements Analyser {
         }
     }
 
+    /**
+     * Visits and processes the constructors or methods of a given type declaration. Depending on the context, it handles
+     * constructors or methods differently, filters them based on access specifiers, and organizes their representation
+     * for further review.
+     *
+     * @param typeDeclaration The type declaration being examined. This specifies the class or interface whose constructors
+     *                        or methods are to be visited.
+     * @param isInterfaceDeclaration Indicates whether the provided type declaration corresponds to an interface. If true,
+     *                                all methods are considered as part of the visit.
+     * @param isConstructor A flag to determine if the processing is specifically for constructors. If true, it analyzes
+     *                      constructors, otherwise, it processes methods.
+     * @param callableDeclarations A list of callable declarations (constructors or methods) associated with the type
+     *                              declaration. These are filtered and sorted based on the processing rules.
+     * @param parentLine The parent review line where tokens or child lines will be added as output during the processing
+     *                   of constructors or methods in the type declaration.
+     */
     private void visitConstructorsOrMethods(final TypeDeclaration<?> typeDeclaration,
                                             final boolean isInterfaceDeclaration,
                                             final boolean isConstructor,
@@ -1045,8 +1061,11 @@ public class JavaASTAnalyser implements Analyser {
                 } else if (isPrivateOrPackagePrivate(callableDeclaration.getAccessSpecifier())) {
                     // Skip if not public API
                     return false;
+                } else {
+                    // Skip serialization methods (fromJson, toJson, fromXml, toXml) as they are implementation
+                    // details of the serialization mechanism, not part of the public API contract.
+                    return !isSerializationMethod(typeDeclaration, callableDeclaration);
                 }
-                return true;
             })
             .sorted(this::sortMethods)
             .collect(collector)
@@ -1058,6 +1077,41 @@ public class JavaASTAnalyser implements Analyser {
                 }
                 group.forEach(callableDeclaration -> visitDefinition(callableDeclaration, parentLine));
             });
+    }
+
+    /**
+     * Checks if a method is a serialization method based on interface implementation and method name.
+     * A method is considered a serialization method if:
+     * <ul>
+     * <li>The class implements JsonSerializable and method name is toJson or fromJson</li>
+     * <li>The class implements XmlSerializable and method name is toXml or fromXml</li>
+     * </ul>
+     *
+     * @param typeDeclaration     The type declaration to check interface implementations
+     * @param callableDeclaration The method declaration to check the name
+     * @return true if the method is a serialization method, false otherwise
+     */
+    private boolean isSerializationMethod(TypeDeclaration<?> typeDeclaration, CallableDeclaration<?> callableDeclaration) {
+        if (!typeDeclaration.isClassOrInterfaceDeclaration()) {
+            return false;
+        }
+        ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
+        if (classOrInterfaceDeclaration.isInterface()) {
+            return false;
+        }
+
+        String methodName = callableDeclaration.getNameAsString();
+        return classOrInterfaceDeclaration.getImplementedTypes()
+                .stream()
+                .anyMatch(implementedType -> {
+                    String interfaceName = implementedType.getNameAsString();
+                    boolean isJsonSerializationMethod = (interfaceName.equals("JsonSerializable") || interfaceName.equals("com.azure.json.JsonSerializable"))
+                            && (methodName.equals("toJson") || methodName.equals("fromJson"));
+                    boolean isXmlSerializationMethod = (interfaceName.equals("XmlSerializable") || interfaceName.equals("com.azure.xml.XmlSerializable"))
+                            && (methodName.equals("toXml") || methodName.equals("fromXml"));
+
+                    return isJsonSerializationMethod || isXmlSerializationMethod;
+                });
     }
 
     private void visitExtendsAndImplements(TypeDeclaration<?> typeDeclaration, ReviewLine definitionLine) {

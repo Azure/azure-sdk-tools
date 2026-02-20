@@ -4,26 +4,37 @@ using System.Diagnostics;
 using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.Core;
 
 public class InstrumentedTool(
     ITelemetryService telemetryService,
     ILogger logger,
+    IMcpServerContextAccessor mcpServerContextAccessor,
     McpServerTool innerTool
-) : DelegatingMcpServerTool(innerTool)
+    ) : DelegatingMcpServerTool(innerTool)
 {
+    private readonly ITelemetryService telemetryService = telemetryService;
+    private readonly ILogger logger = logger;
+    private readonly IMcpServerContextAccessor mcpServerContextAccessor = mcpServerContextAccessor;
+    private readonly McpServerTool innerTool = innerTool;
     private readonly JsonSerializerOptions serializerOptions = new()
     {
         WriteIndented = false,
     };
 
+    public override IReadOnlyList<object> Metadata => innerTool.Metadata;
+
     public override async ValueTask<CallToolResult> InvokeAsync(RequestContext<CallToolRequestParams> request, CancellationToken ct = default)
     {
+        mcpServerContextAccessor.Initialize(request?.Server);
         using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo);
-        Activity.Current = activity;
+        Activity.Current = activity;  // Required so things like TokenUsageHelper can add activity properties and tags
         if (request?.Params == null || string.IsNullOrEmpty(request.Params.Name))
         {
             activity?.SetStatus(ActivityStatusCode.Error)?.AddTag(TagName.ErrorDetails, "Cannot call tool with null parameters");
@@ -34,7 +45,7 @@ public class InstrumentedTool(
         try
         {
             // Add tool name and arg
-            activity?.AddTag(TagName.ToolName, request.Params.Name);
+            activity?.SetTag(TagName.ToolName, request.Params.Name);
             var args = JsonSerializer.Serialize(request.Params.Arguments, serializerOptions);
             activity?.SetTag(TagName.ToolArgs, args);
 
@@ -46,56 +57,68 @@ public class InstrumentedTool(
             activity?.SetTag(TagName.ToolResponse, content);
             activity?.SetStatus(ActivityStatusCode.Ok);
 
-            try
-            {
-                foreach (var c in result.Content)
-                {
-                    // Process only TextContentBlock for custom properties
-                    // Other content types are binary, audiio etc.
-                    if (c is TextContentBlock contentBlock)
-                    {
-                        var responseDict = JsonSerializer.Deserialize<Dictionary<string, object>>(contentBlock.Text);
-                        if (responseDict != null)
-                        {
-                            foreach (var kvp in responseDict)
-                            {
-                                if (kvp.Value is JsonElement value)
-                                {
-                                    switch (value.ValueKind)
-                                    {
-                                        // Add custom properties based on the value kind. Otherwise string type is url escaped in telemetry
-                                        // like \"python\" instead of python
-                                        case JsonValueKind.String:
-                                            activity?.SetCustomProperty(kvp.Key, value.GetString() ?? string.Empty);
-                                            break;
-                                        default:
-                                            activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
-                                            break;
-                                    }                                    
-                                }
-                                else
-                                {
-                                    activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
-                                }
+            AddCustomTelemetryFromResponse(activity, result);
 
-                            }                  
-                        }
-                    }
-                }
-            }
-            catch (JsonException ex)
-            {
-                activity?.AddException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                logger.LogError(ex, "Failed to deserialize contentBlock.Text for telemetry properties");
-            }
             return result;
         }
         catch (Exception ex)
         {
-            activity?.AddException(ex);
+            TelemetryExceptionHelper.AddSanitizedException(activity, ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             throw;
+        }
+    }
+
+    // Add all properties to the activity's custom bag so we can filter them for well
+    // known fields to be added to the telemetry event in TelemetryProcessor
+    private void AddCustomTelemetryFromResponse(Activity? activity, CallToolResult result)
+    {
+        if (activity == null)
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var c in result.Content)
+            {
+                // Process only TextContentBlock for custom properties
+                // Other content types are binary, audiio etc.
+                if (c is TextContentBlock contentBlock)
+                {
+                    var responseDict = JsonSerializer.Deserialize<Dictionary<string, object>>(contentBlock.Text);
+                    if (responseDict != null)
+                    {
+                        foreach (var kvp in responseDict)
+                        {
+                            if (kvp.Value is JsonElement value)
+                            {
+                                switch (value.ValueKind)
+                                {
+                                    // Add custom properties based on the value kind. Otherwise string type is url escaped in telemetry
+                                    // like \"python\" instead of python
+                                    case JsonValueKind.String:
+                                        activity?.SetCustomProperty(kvp.Key, value.GetString() ?? string.Empty);
+                                        break;
+                                    default:
+                                        activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
+                                        break;
+                                }
+                            }
+                            else
+                            {
+                                activity?.SetCustomProperty(kvp.Key, JsonSerializer.Serialize(kvp.Value));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (JsonException ex)
+        {
+            TelemetryExceptionHelper.AddSanitizedException(activity, ex);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            logger.LogError(ex, "Failed to deserialize contentBlock.Text for telemetry properties");
         }
     }
 }

@@ -1,43 +1,43 @@
 env: test
 appInsightsKeySecretName:
-  pg: appInsightsInstrumentationKey-siarlh2glzwze
-  prod: appInsightsInstrumentationKey-2c6jtbqddf52a
+  pg: appInsightsInstrumentationKey-4kuek4dgiq7vo
+  prod: appInsightsInstrumentationKey-tj6foiiklcb3m
   dev: ""
-  storage: appInsightsInstrumentationKey-e27xlxyuvk34k
+  storage: appInsightsInstrumentationKey-lkxxtjuf245tm
 appInsightsConnectionStringSecretName:
-  pg: appInsightsConnectionString-siarlh2glzwze
-  prod: appInsightsConnectionString-2c6jtbqddf52a
+  pg: appInsightsConnectionString-4kuek4dgiq7vo
+  prod: appInsightsConnectionString-tj6foiiklcb3m
   dev: ""
-  storage: appInsightsConnectionString-e27xlxyuvk34k
+  storage: appInsightsConnectionString-lkxxtjuf245tm
 debugStorageKeySecretName:
-  pg: debugStorageKey-siarlh2glzwze
-  prod: debugStorageKey-2c6jtbqddf52a
+  pg: debugStorageKey-4kuek4dgiq7vo
+  prod: debugStorageKey-tj6foiiklcb3m
   dev: ""
-  storage: debugStorageKey-e27xlxyuvk34k
+  storage: debugStorageKey-lkxxtjuf245tm
 debugStorageAccountSecretName:
-  pg: debugStorageAccount-siarlh2glzwze
-  prod: debugStorageAccount-2c6jtbqddf52a
+  pg: debugStorageAccount-4kuek4dgiq7vo
+  prod: debugStorageAccount-tj6foiiklcb3m
   dev: ""
-  storage: debugStorageAccount-e27xlxyuvk34k
+  storage: debugStorageAccount-lkxxtjuf245tm
 debugFileShareName:
-  pg: stressfilessiarlh2glzwze
-  prod: stressfiles2c6jtbqddf52a
+  pg: stressfiles4kuek4dgiq7vo
+  prod: stressfilestj6foiiklcb3m
   dev: ""
-  storage: stressfilese27xlxyuvk34k
+  storage: stressfileslkxxtjuf245tm
 staticTestSecretsKeyvaultName:
   pg: stress-secrets-pg
   prod: stress-secrets-prod
   dev: ""
 clusterTestSecretsKeyvaultName:
-  pg: stress-kv-siarlh2glzwze
-  prod: stress-kv-2c6jtbqddf52a
+  pg: stress-kv-4kuek4dgiq7vo
+  prod: stress-kv-tj6foiiklcb3m
   dev: ""
-  storage: stress-kv-e27xlxyuvk34k
+  storage: stress-kv-lkxxtjuf245tm
 secretProviderIdentity:
-  pg: 7e95466b-59cb-400e-b178-5b10ac90425b
-  prod: d9a57c7a-5f79-4aff-90e7-4ebdb24b81e6
+  pg: 34c8068f-ed92-4406-aeef-6bd22b5c5514
+  prod: 3ecc5fb1-bebc-4a72-8d6e-49597681796d
   dev: ""
-  storage: 991949b1-6b69-4c93-aeb1-ab6fa4c545a0
+  storage: ac866d4a-5c9c-4421-bff9-49c7c977df1a
 provisionerAppId:
   pg: e3fdf864-b936-4279-b787-55adc0f9984a
   prod: 5d3c637e-07b7-4b29-83d9-87eb050dfdfb
@@ -48,30 +48,30 @@ infraWorkloadAppServiceAccountName:
   dev: ""
   storage: workload-svc
 infraWorkloadAppClientId:
-  pg: 85e72b5e-8c1e-46f9-b3f5-347d74638041
-  prod: 1b388c2c-1dc4-4456-a2a5-d5a4a5c7c4df
+  pg: 3f0eb782-ba84-45a5-abfd-be810e109a41
+  prod: 19c8d842-8c93-4646-858b-e75607939368
   dev: ""
-  storage: 99fa1a45-b7b0-40ed-bb97-69cea4326003
+  storage: 2fb25652-3933-45ed-a462-e588b9726b29
 infraWorkloadAppObjectId:
-  pg: 2159eeae-eaef-48fa-bb9e-2f6bd903c9b6
-  prod: 0dea7f23-e8fe-4dbc-9980-400480ca9966
+  pg: 62bfa80b-2b8d-4bcd-b50c-20db05e0ba60
+  prod: 2d1d5aa0-7450-466d-b97c-a74124c43f52
   dev: ""
-  storage: 2a78a33d-851a-4d6f-a4c5-7b9e10248474
+  storage: 6f896977-3bca-43b6-9f77-ac8f647b9dc6
 workloadAppClientNamePool:
   pg: stress-app-workload-pg-0,stress-app-workload-pg-1,stress-app-workload-pg-2,stress-app-workload-pg-3,stress-app-workload-pg-4
   prod: stress-app-workload-prod-0,stress-app-workload-prod-1,stress-app-workload-prod-2,stress-app-workload-prod-3,stress-app-workload-prod-4
   dev: 
   storage: stress-app-workload-storage-0,stress-app-workload-storage-1,stress-app-workload-storage-2,stress-app-workload-storage-3,stress-app-workload-storage-4
 workloadAppIssuer:
-  pg: https://westus3.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/d927d4e7-13f0-414a-8e67-a03c67e0caf9/
-  prod: https://westus2.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/3a180dd0-9ec9-490e-a0b1-03fdbbca5198/
+  pg: https://westus3.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/8aa0bb26-05cc-43b8-a4fc-026f539c94e3/
+  prod: https://westus2.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/11a94e1a-8b07-45e4-87f3-2fccbc96937d/
   dev: 
-  storage: https://southcentralus.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/b5e7dc96-dee7-4765-bccc-c18a50ecfa13/
+  storage: https://southcentralus.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/51ab5b08-e986-4388-a81a-0ab22fed9736/
 clusterGroup:
-  pg: rg-stress-cluster-pg
-  prod: rg-stress-cluster-prod
+  pg: SSS3PT_rg-stress-cluster-pg
+  prod: SSS3PT_rg-stress-cluster-prod
   dev: 
-  storage: rg-stress-cluster-storage
+  storage: SSS3PT_rg-stress-cluster-storage
 subscription:
   pg: public
   prod: public

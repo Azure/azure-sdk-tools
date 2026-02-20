@@ -17,7 +17,7 @@ namespace APIViewWeb
         private readonly TelemetryClient _telemetryClient;
         public override string Name { get; } = "Python";
         public override string[] Extensions { get; } = { ".whl" };
-        public override string VersionString { get; } = "0.3.25";
+        public override string VersionString { get; } = "0.3.26";
         public override string ProcessName => _pythonExecutablePath;
         public override string ReviewGenerationPipelineUrl => _reviewGenerationPipelineUrl;
 

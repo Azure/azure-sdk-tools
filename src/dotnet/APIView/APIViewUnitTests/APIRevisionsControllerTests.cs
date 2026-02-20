@@ -289,7 +289,6 @@ public class APIRevisionsControllerTests
             Files = [new APICodeFileModel { FileId = "1" }],
             ChangeHistory = [],
             Approvers = [],
-            ViewedBy = [],
             AssignedReviewers = [],
             HeadingsOfSectionsWithDiff = new Dictionary<string, HashSet<int>>()
         };

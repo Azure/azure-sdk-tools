@@ -19,9 +19,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void SetUp()
         {
             _tempDir = TempDirectory.Create("FileHelperTests");
-            
-            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            _logger = loggerFactory.CreateLogger<FileHelper>();
+
+            _logger = new TestLogger<FileHelper>();
             _fileHelper = new FileHelper(_logger);
         }
 

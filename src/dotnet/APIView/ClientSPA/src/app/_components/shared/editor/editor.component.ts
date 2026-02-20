@@ -1,15 +1,26 @@
-import { Component, ElementRef, EventEmitter, Input, Output } from '@angular/core';
-import { SimplemdeOptions } from 'ngx-simplemde';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { SimplemdeModule, SimplemdeOptions } from 'ngx-simplemde';
 
 @Component({
-  selector: 'app-editor',
-  templateUrl: './editor.component.html',
-  styleUrls: ['./editor.component.scss']
+    selector: 'app-editor',
+    templateUrl: './editor.component.html',
+    styleUrls: ['./editor.component.scss'],
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        SimplemdeModule
+    ]
 })
 export class EditorComponent {
   @Input() content: string = '';
   @Output() contentChange = new EventEmitter<string>();
   @Input() editorId: string = '';
+
+  private currentContent: string = '';
+
   editorOptions : SimplemdeOptions = {
     autosave: { enabled: false },
     status: false,
@@ -24,6 +35,11 @@ export class EditorComponent {
   };
 
   constructor(private elementRef: ElementRef) {}
+
+  onContentChange(newContent: string) {
+    this.currentContent = newContent;
+    this.contentChange.emit(newContent);
+  }
 
   ngAfterViewInit() {
     setTimeout(() => {
@@ -58,6 +74,7 @@ export class EditorComponent {
   }
 
   getEditorContent() : string {
-    return this.content;
+    // Return the most recently updated content from the editor
+    return this.currentContent || this.content;
   }
 }

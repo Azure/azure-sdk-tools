@@ -7,10 +7,10 @@ parameters:
     default: '1.0.0-dev.20251117.2'
   - name: JavaScriptAPIParser
     type: string
-    default: '@azure-tools/ts-genapi@2.0.5'
+    default: '@azure-tools/ts-genapi@2.0.10'
   - name: RustAPIParser
     type: string
-    default: '@azure-tools/rust-genapi@1.1.0'
+    default: '@azure-tools/rust-genapi@1.2.0'
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
@@ -42,6 +42,7 @@ pr:
     include:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
+      - src/dotnet/Azure.ClientSdk.Analyzers
       - src/java/apiview-java-processor
       - src/go
       - src/swift
@@ -63,7 +64,7 @@ extends:
           - name: WebProjectPath
             value: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
           - name: NodeVersion
-            value: '18.x'
+            value: '22.x'
           - name: BuildConfiguration
             value: 'Release'
           - name: GoParserPackagePath
@@ -109,6 +110,7 @@ extends:
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
+                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
 
               - script: |
                   npm install -g @angular/cli@16.1.8
@@ -144,11 +146,13 @@ extends:
                 inputs:
                   mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
                   goals: 'clean package'
+                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
 
               - script: |
                   go build
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
+                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
 
               - task: UseDotNet@2
                 inputs:
@@ -182,6 +186,7 @@ extends:
                   ArtifactPath: '$(Build.ArtifactStagingDirectory)'
 
           - job: 'Test'
+            condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
 
             pool:
               name: $(WINDOWSPOOL)
@@ -205,9 +210,34 @@ extends:
                 displayName: "Install Client SPA Packages"
 
               - script: |
-                  ng test --no-watch --no-progress --browsers=ChromeHeadless
+                  npm run test:unit
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Run SPA Tests"
+
+              - script: |
+                  npx playwright install --with-deps chromium
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Playwright Browsers for ClientSPA"
+
+              - script: |
+                  npm run e2e
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Run ClientSPA Playwright E2E Tests"
+
+              - task: PublishTestResults@2
+                condition: succeededOrFailed()
+                inputs:
+                  testResultsFiles: '$(SPAClientProjectDirectory)/ui-tests/test-results/**/*.xml'
+                  testRunTitle: 'ClientSPA Playwright E2E Tests'
+                  testResultsFormat: 'JUnit'
+                  mergeTestResults: true
+
+              - task: 1ES.PublishPipelineArtifact@1
+                condition: succeededOrFailed()
+                inputs:
+                  path: '$(Build.SourcesDirectory)/src/dotnet/APIView/ClientSPA/ui-tests/playwright-report'
+                  artifact: 'ClientSPA Playwright Test Report'
+
               #- template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
               #  parameters:
               #    StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
@@ -353,7 +383,7 @@ extends:
                 inputs:
                   folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                   fileType: json
-                  targetFiles: wwwroot/spa/assets/config.json
+                  targetFiles: wwwroot/spa/browser/assets/config.json
 
               - task: AzureRmWebAppDeployment@4
                 displayName: 'Deploy Azure App Service'
@@ -415,7 +445,7 @@ extends:
                       inputs:
                         folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                         fileType: json
-                        targetFiles: wwwroot/spa/assets/config.json
+                        targetFiles: wwwroot/spa/browser/assets/config.json
 
                     - task: AzureRmWebAppDeployment@4
                       displayName: 'Azure App Service Deploy: apiviewuat'
@@ -475,7 +505,7 @@ extends:
                       inputs:
                         folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
                         fileType: json
-                        targetFiles: wwwroot/spa/assets/config.json
+                        targetFiles: wwwroot/spa/browser/assets/config.json
 
                     - task: AzureRmWebAppDeployment@4
                       displayName: 'Deploy Azure App Service'

@@ -34,7 +34,8 @@ namespace APIViewWeb.Managers;
             string originalName,
             MemoryStream memoryStream,
             string packageType,
-            bool compareAllRevisions = false)
+            bool compareAllRevisions = false,
+            string sourceBranch = null)
         {
             // Parse package type once at the beginning
             var parsedPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var result) ? (PackageType?)result : null;
@@ -65,18 +66,25 @@ namespace APIViewWeb.Managers;
                     if (automaticRevisions.Any())
                     {
                         var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
-                        var latestAutomaticAPIRevision = automaticRevisionsQueue.Peek();
                         var comments = await _commentsManager.GetCommentsAsync(review.Id);
+                        APIRevisionListItemModel latestAutomaticAPIRevision = null;
 
-                        while (
-                            automaticRevisionsQueue.Any() &&
-                            !latestAutomaticAPIRevision.IsApproved &&
-                            !latestAutomaticAPIRevision.IsReleased &&
-                            !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
-                            !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
+                        while (automaticRevisionsQueue.Any())
                         {
-                            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
                             latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
+
+                            // Check if we should keep this revision
+                            if (latestAutomaticAPIRevision.IsApproved ||
+                                latestAutomaticAPIRevision.IsReleased ||
+                                await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) ||
+                                comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
+                            {
+                                break;
+                            }
+
+                            // Delete this revision
+                            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
+                            latestAutomaticAPIRevision = null;  // Mark as consumed
                         }
 
                         // We should compare against only latest revision when calling this API from scheduled CI runs
@@ -96,7 +104,9 @@ namespace APIViewWeb.Managers;
                             }
                         }
 
-                        if (await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion))
+                        // Only reuse latestAutomaticAPIRevision if one was kept
+                        if (latestAutomaticAPIRevision != null &&
+                            await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion))
                         {
                             apiRevision = latestAutomaticAPIRevision;
                             createNewRevision = false;
@@ -106,13 +116,15 @@ namespace APIViewWeb.Managers;
             }
             else
             {
-                review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, packageType: parsedPackageType);
+                review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, packageType: parsedPackageType, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
             }
             
             if (createNewRevision)
             {
-                apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName);
+                apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName, sourceBranch: sourceBranch);
             }
+
+            // TODO: await _projectsManager.TryLinkReviewToProjectAsync(user, review);
 
             if (apiRevision != null)
             {
@@ -122,7 +134,7 @@ namespace APIViewWeb.Managers;
                     {
                         if (apiRev.IsApproved && await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
                         {
-                            await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(user: user, id: review.Id, apiRevision: apiRevision, notes: $"Approval Copied over from Revision with Id : {apiRev.Id}", approver: apiRev.Approvers.LastOrDefault());
+                            await _apiRevisionsManager.CopyApprovalFromAsync(targetRevision: apiRevision, sourceRevision: apiRev);
                             break;
                         }    
                     }

@@ -2,14 +2,16 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SdkType
 {
-    [JsonPropertyName("")]
     Unknown,
-    [JsonPropertyName("mgmt")]
+    [JsonStringEnumMemberName("mgmt")]
     Management,
-    [JsonPropertyName("client")]
+    [JsonStringEnumMemberName("client")]
     Dataplane,
-    [JsonPropertyName("spring")]
-    Spring
+    [JsonStringEnumMemberName("spring")]
+    Spring,
+    [JsonStringEnumMemberName("functions")]
+    Functions
 }

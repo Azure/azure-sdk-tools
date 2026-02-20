@@ -4,7 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.Core;
 
 public abstract class MCPNoCommandTool : MCPToolBase
 {

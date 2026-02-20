@@ -1,3 +1,13 @@
+# 1.3.0
+
+- Reverted changes made in 1.2.0 because they are not compatible with previous input.
+  We will instead normalize the input in the preprocessor that runs in the Azure/azure-sdk-for-rust repo.
+
+# 1.2.0
+
+- Updated to `rustdoc-types` 0.41.0 to coincide with Azure SDK for Rust MSRV update to 1.88 (`nightly-2025-05-09`).
+  See [Azure/azure-sdk-for-rust#3692](https://github.com/Azure/azure-sdk-for-rust/issues/3692) for details.
+
 # 1.1.1
 
 - Fixed duplicate line ID generation that was causing Copilot review failures (#11860):

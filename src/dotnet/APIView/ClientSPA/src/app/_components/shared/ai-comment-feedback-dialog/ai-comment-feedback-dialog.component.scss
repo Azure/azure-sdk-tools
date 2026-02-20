@@ -1,142 +1,115 @@
-.primer-text-secondary {
-  color: var(--text-muted-color);
-  font-size: 14px;
-}
+::ng-deep .ai-feedback-dialog {
+    // 3. Border and corners
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
-.primer-fieldset {
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 16px;
-  background-color: var(--base-fg-color);
-}
+    .p-dialog-header {
+        // 1. Header padding
+        padding: 0.75rem 1.5rem;
+        background-color: var(--base-fg-color);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--base-text-color);
 
-.primer-legend {
-  font-weight: 600;
-  color: var(--base-text-color);
-}
+        .p-dialog-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
 
-.primer-label-required {
-  color: #cf222e;
-}
+        // 2. X button styling - High Specificity
+        .p-dialog-header-actions {
+            padding: 0;
 
-.primer-checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+            .p-dialog-close-button {
+                background-color: var(--primary-color) !important;
+                color: var(--primary-btn-color) !important;
+                width: 2rem;
+                height: 2rem;
+                border-radius: 50%;
+                opacity: 1 !important;
+                transition: background-color 0.2s, color 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--primary-color) !important;
 
-.primer-checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+                &:hover {
+                    background-color: var(--primary-color) !important;
+                    color: var(--primary-btn-color) !important;
+                    filter: brightness(0.9);
+                }
 
-.primer-checkbox-label {
-  cursor: pointer;
-}
+                &:focus {
+                    box-shadow: 0 0 0 2px var(--base-bg-color), 0 0 0 4px var(--primary-color) !important;
+                }
 
-.primer-validation-message {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  font-size: 12px;
-  color: #9a6700;
-  background-color: #fff8c5;
-  border: 1px solid #d4a72c;
-  border-radius: 6px;
-  
-  [data-theme="dark"] & {
-    color: #e09b13;
-    background-color: rgba(187, 128, 9, 0.15);
-    border-color: rgba(187, 128, 9, 0.4);
-  }
-}
-
-.primer-label {
-  font-weight: 600;
-}
-
-.primer-label-optional {
-  font-weight: 400;
-  color: var(--text-muted-color);
-}
-
-.primer-textarea {
-  width: 100%;
-  padding: 8px 12px;
-  color: var(--base-text-color);
-  background-color: var(--base-bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  resize: vertical;
-  
-  &:focus {
-    outline: none;
-    border-color: var(--primary-color);
-  }
-}
-
-.primer-dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.primer-btn {
-  padding: 5px 16px;
-  font-weight: 500;
-  border-radius: 6px;
-  
-  &:disabled {
-    opacity: 0.6;
-  }
-}
-
-.primer-btn-primary {
-  color: #ffffff;
-  background-color: #1f883d;
-  border: 1px solid rgba(31, 136, 61, 0.4);
-  
-  &:hover:not(:disabled) {
-    background-color: #1a7f37;
-  }
-  
-  &:disabled {
-    background-color: #94d3a2;
-  }
-}
-
-.primer-btn-invisible {
-  color: var(--base-text-color);
-  background-color: transparent;
-  border: 1px solid transparent;
-  
-  &:hover:not(:disabled) {
-    background-color: var(--base-bg-color);
-  }
-}
-
-::ng-deep .primer-dialog {
-  .p-dialog {
-    border-radius: 12px;
-  }
-  
-  .p-dialog-header {
-    background-color: var(--base-fg-color);
-    border-bottom: 1px solid var(--border-color);
-    
-    .p-dialog-title {
-      font-weight: 600;
+                .p-button-icon {
+                    color: var(--primary-btn-color) !important;
+                }
+            }
+        }
     }
-  }
-  
-  .p-dialog-content {
-    background-color: var(--base-bg-color);
-  }
-  
-  .p-dialog-footer {
-    background-color: var(--base-fg-color);
-    border-top: 1px solid var(--border-color);
-  }
+
+    .p-dialog-content {
+        background-color: var(--base-bg-color);
+        color: var(--base-text-color);
+        padding: 1.5rem;
+
+        label {
+            color: var(--base-text-color);
+            cursor: pointer;
+        }
+
+        .reason-item {
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-control {
+            background-color: var(--base-fg-color);
+            color: var(--base-text-color);
+            border-color: var(--border-color);
+
+            &:focus {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 1px var(--primary-color);
+            }
+        }
+    }
+
+    // 5. Footer buttons padding/alignment
+    .p-dialog-footer {
+        background-color: var(--base-fg-color);
+        border-top: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+
+        .d-flex {
+            align-items: center;
+        }
+
+        button {
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.375rem 0.75rem; // Standard Bootstrap padding
+        }
+
+        .btn-outline-secondary {
+            color: var(--base-text-color);
+            border-color: var(--border-color);
+            background-color: transparent;
+
+            &:hover {
+                background-color: var(--base-fg-color);
+                border-color: var(--base-text-color);
+            }
+
+            &:focus {
+                box-shadow: none;
+            }
+        }
+    }
 }

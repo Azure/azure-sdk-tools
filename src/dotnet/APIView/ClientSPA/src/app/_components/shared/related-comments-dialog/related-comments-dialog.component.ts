@@ -1,7 +1,18 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
+import { CheckboxModule } from 'primeng/checkbox';
+import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { TimeagoModule } from 'ngx-timeago';
+import { CommentSeverityComponent } from 'src/app/_components/shared/comment-severity/comment-severity.component';
+import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { CommentItemModel, CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
+import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
 import { environment } from 'src/environments/environment';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { AI_COMMENT_FEEDBACK_REASONS } from 'src/app/_models/comment-feedback-reasons';
@@ -20,9 +31,21 @@ export interface CommentResolutionData {
 }
 
 @Component({
-  selector: 'app-related-comments-dialog',
-  templateUrl: './related-comments-dialog.component.html',
-  styleUrls: ['./related-comments-dialog.component.scss']
+    selector: 'app-related-comments-dialog',
+    templateUrl: './related-comments-dialog.component.html',
+    styleUrls: ['./related-comments-dialog.component.scss'],
+    standalone: true,
+    imports: [
+        CommonModule,
+        FormsModule,
+        DialogModule,
+        CheckboxModule,
+        SelectModule,
+        MultiSelectModule,
+        TimeagoModule,
+        CommentSeverityComponent,
+        MarkdownToHtmlPipe
+    ]
 })
 export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   @Input() relatedComments: CommentItemModel[] = [];
@@ -30,7 +53,6 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   @Input() selectedCommentId: string = '';
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
   @Input() userProfile: UserProfile | undefined;
-  @Input() preferredApprovers: string[] = [];
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() resolveSelectedComments = new EventEmitter<CommentResolutionData>();
 
@@ -41,16 +63,16 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   resolutionComment: string = '';
   selectedDisposition: ConversationDisposition = 'keepOpen';
   selectedSeverity: CommentSeverity | null = null;
-  
+
   showInlineFeedback: boolean = false;
   feedbackExpanded: boolean = true;
   feedbackReasons: string[] = [];
   feedbackAdditionalComments: string = '';
-  
+
   deletionReason: string = '';
-  
+
   readonly availableFeedbackReasons = AI_COMMENT_FEEDBACK_REASONS;
-  
+
   get feedbackReasonOptions() {
     return this.availableFeedbackReasons.map(r => ({ label: r.label, value: r.key }));
   }
@@ -74,12 +96,15 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
       : this.relatedComments;
 
-    // User can edit if they are the owner of ALL comments, or if they are an architect and ALL comments are from azure-sdk bot
-    return commentsToCheck.every(comment => 
-      comment.createdBy === this.userProfile?.userName || 
-      (comment.createdBy === 'azure-sdk' && this.preferredApprovers.includes(this.userProfile?.userName!))
+    // User can edit if they are the owner of ALL comments, or if they are an approver for this language and ALL comments are from azure-sdk bot
+    const isApprover = this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage());
+    return commentsToCheck.every(comment =>
+      comment.createdBy === this.userProfile?.userName ||
+      (comment.createdBy === 'azure-sdk' && isApprover)
     );
   }
+
+  constructor(private permissionsService: PermissionsService, private reviewContextService: ReviewContextService) { }
 
   // Performance optimization: Cache for code context
   private codeContextCache = new Map<string, string>();
@@ -144,7 +169,7 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
         return 'Add a comment...';
     }
   }
-  
+
   get isDeletionReasonValid(): boolean {
     return this.selectedDisposition !== 'delete' || this.deletionReason.trim().length > 0;
   }
@@ -189,7 +214,7 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       const resolutionData: CommentResolutionData = {
         commentIds: Array.from(this.selectedCommentIds),
         batchVote: this.batchVote || undefined,
-        resolutionComment: this.selectedDisposition !== 'delete' 
+        resolutionComment: this.selectedDisposition !== 'delete'
           ? this.resolutionComment.trim() || undefined
           : undefined,
         disposition: this.selectedDisposition,
@@ -199,9 +224,9 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
           ? this.deletionReason.trim() || undefined
           : this.feedbackAdditionalComments.trim() || undefined
       };
-      
+
       console.log('🔍 Resolution data being emitted:', resolutionData);
-      
+
       this.resolveSelectedComments.emit(resolutionData);
       this.onHide();
     }
@@ -236,23 +261,23 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   hasBatchDownvote(): boolean {
     return this.batchVote === 'down';
   }
-  
+
   get canSubmitFeedback(): boolean {
     return this.feedbackReasons.length > 0;
   }
-  
+
   get hasAIGeneratedComments(): boolean {
     const commentsToCheck = this.selectedCommentIds.size > 0
       ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
       : this.relatedComments;
-    
+
     return commentsToCheck.some(c => c.createdBy === 'azure-sdk');
   }
-  
+
   isFeedbackReasonSelected(reason: string): boolean {
     return this.feedbackReasons.includes(reason);
   }
-  
+
   toggleFeedbackReason(reason: string): void {
     const index = this.feedbackReasons.indexOf(reason);
     if (index > -1) {

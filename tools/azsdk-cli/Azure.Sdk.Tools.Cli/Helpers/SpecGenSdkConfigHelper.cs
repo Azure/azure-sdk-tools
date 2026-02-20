@@ -3,6 +3,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.CommandLine.Parsing;
 using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Models;
@@ -178,7 +179,32 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             foreach (var variable in variables)
             {
                 var placeholder = $"{{{variable.Key}}}";
-                result = result.Replace(placeholder, variable.Value, StringComparison.OrdinalIgnoreCase);
+                var value = variable.Value;
+                
+                // Check if value needs quoting - contains special characters that require quoting in shell commands
+                // Including: spaces, ampersand, pipe, semicolon, less than, greater than, parentheses, backtick, dollar sign, single quote
+                bool needsQuoting = value.IndexOfAny(new[] { ' ', '&', '|', ';', '<', '>', '(', ')', '`', '$', '\'' }) >= 0;
+                
+                if (needsQuoting)
+                {
+                    // Use regex to find placeholder and capture path continuation
+                    // Path continuation stops at common delimiters: whitespace, quotes, =, ;, ,
+                    var pattern = Regex.Escape(placeholder) + @"([^\s""=;,]*)";
+                    var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                    
+                    result = regex.Replace(result, match =>
+                    {
+                        // Extract the path continuation from the match
+                        string pathContinuation = match.Groups[1].Value;
+                        // Build the quoted replacement including the continuation
+                        return $"\"{value}{pathContinuation}\"";
+                    });
+                }
+                else
+                {
+                    // No quoting needed, simple replacement
+                    result = result.Replace(placeholder, value, StringComparison.OrdinalIgnoreCase);
+                }
             }
 
             _logger.LogDebug("Command after variable substitution: {result}", result);

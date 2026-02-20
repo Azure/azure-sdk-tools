@@ -1,5 +1,6 @@
 AAD,,e99695
 ACS,,e99695
+AI,,e99695
 AI Agents,,e99695
 AI Model Inference,,e99695
 AI Projects,,e99695
@@ -27,6 +28,8 @@ Authentication,,e99695
 Authorization,,e99695
 Automation,,e99695
 Azure Arc Enabled Servers,,e99695
+Azure Data Explorer,,e99695
+Azure Load Testing,,e99695
 Azure Projects,,e99695
 Azure Stack,,e99695
 Azure.Core,,e99695
@@ -45,10 +48,12 @@ Cognitive - Anomaly Detector,,e99695
 Cognitive - Bing,,e99695
 Cognitive - Computer Vision,,e99695
 Cognitive - Content Moderator,,e99695
+Cognitive - Content Safety,,e99695
 Cognitive - Content Understanding,,e99695
 Cognitive - Custom Vision,,e99695
 Cognitive - Face,,e99695
 Cognitive - Form Recognizer,,e99695
+Cognitive - Health Insights,,e99695
 Cognitive - Immersive Reader,,e99695
 Cognitive - Ink Recognizer,,e99695
 Cognitive - LUIS,,e99695
@@ -87,6 +92,7 @@ Compute - VM,,e99695
 Compute - VMSS,,e99695
 Confidential Ledger,,e99695
 Connected Kubernetes,,e99695
+Consumption,,e99695
 Consumption - Billing,All issues in consumption where billing/price-related data is shown.,e99695
 Consumption - Budget,"All issues in consumption for Budgets API, Alert API and other Notification scenarios.",e99695
 Consumption - Query,"All issues in consumption associated with tags, dimensions and forecasts.",e99695
@@ -119,8 +125,9 @@ DataBox,,e99695
 DataBox Edge,,e99695
 Database Watcher,,e99695
 Datadog,,e99695
-Defender ESAM,,e99695
+Defender EASM,,e99695
 Dev Spaces,,e99695
+DevCenter,,e99695
 DevOps,,e99695
 DevOps - Infrastructure,,e99695
 Device Update,,e99695
@@ -128,9 +135,11 @@ Devtestlab,,e99695
 Digital Twins,,e99695
 Do Not Merge,,b60205
 Docs,,e99695
+Document Intelligence,,e99695
 Durable Task Scheduler,,e99695
 EngSys,This issue is impacting the engineering system.,e99695
 Epic,,3E4B9E
+Evaluation,,e99695
 Event Grid,,e99695
 Event Hubs,,e99695
 Functions,,e99695
@@ -139,7 +148,9 @@ Graph.Microsoft,,e99695
 Graph.Windows,,e99695
 Guest Configuration,,e99695
 HDInsight,,e99695
+Health Deidentification,,e99695
 HPC Cache,,e99695
+Image Analysis,,e99695
 Import Export,,e99695
 Insights,,e99695
 Intune,,e99695
@@ -215,6 +226,7 @@ Recovery Services Data-Replication,,e99695
 Recovery Services Site-Recovery,,e99695
 Redis Cache,,e99695
 Relay,,e99695
+Remote Rendering,,e99695
 Reservations,,e99695
 Resource Authorization,,e99695
 Resource Graph,,e99695
@@ -253,6 +265,7 @@ Training,Work items that track the work to build training materials for building
 VideoAnalyzer,Azure Video Analyzer,e99695
 Virtual Enclaves,,e99695
 Visual Studio,,e99695
+vFXT,,e99695
 Voice Live,,e99695
 Web Apps,,e99695
 WebPubSub,,e99695

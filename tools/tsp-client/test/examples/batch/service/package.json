@@ -10,6 +10,7 @@
     "@azure-tools/typespec-azure-rulesets": "0.62.0",
     "@azure-tools/typespec-liftr-base": "0.11.0",
     "@typespec/compiler": "1.6.0",
+    "@typespec/openapi": "1.6.0",
     "@typespec/http": "1.6.0",
     "@typespec/rest": "0.76.0",
     "@typespec/versioning": "0.76.0"

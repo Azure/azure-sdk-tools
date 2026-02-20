@@ -14,10 +14,13 @@ namespace APIViewWeb.HostedServices
 {
     public class ReviewBackgroundHostedService : BackgroundService
     {
+        private static readonly TimeSpan BackgroundTaskInterval = TimeSpan.FromHours(6);
+
         private readonly bool _isDisabled;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionManager;
         private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
+        private readonly int _autoPurgeGracePeriodMonths; // This is the period after soft-delete before hard-delete
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
         private readonly int _backgroundBatchProcessCount;
         private readonly TelemetryClient _telemetryClient;
@@ -54,6 +57,13 @@ namespace APIViewWeb.HostedServices
             {
                 _autoArchiveInactiveGracePeriodMonths = 4;
             }
+
+            var purgeGracePeriod = configuration["PurgeReviewGracePeriodInMonths"];
+            if (String.IsNullOrEmpty(purgeGracePeriod) || !int.TryParse(purgeGracePeriod, out _autoPurgeGracePeriodMonths))
+            {
+                _autoPurgeGracePeriodMonths = 6; // Default to 6 months after soft-delete
+            }
+
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
             {
@@ -70,17 +80,28 @@ namespace APIViewWeb.HostedServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (!_isDisabled)
+            if (_isDisabled)
             {
-                try
-                {
-                    await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, _isUpgradeTestEnabled, _packageNameFilterForUpgrade);
-                    await ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
-                }
-                catch (Exception ex)
-                {
-                    _telemetryClient.TrackException(ex);
-                }
+                _telemetryClient.TrackTrace("ReviewBackgroundHostedService is disabled via configuration. Exiting.");
+                return;
+            }
+
+            _telemetryClient.TrackTrace($"ReviewBackgroundHostedService starting. ArchiveGracePeriod={_autoArchiveInactiveGracePeriodMonths} months, PurgeGracePeriod={_autoPurgeGracePeriodMonths} months");
+
+            try
+            {
+                await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount, _isUpgradeTestEnabled, _packageNameFilterForUpgrade);
+                    
+                // Start both archive and purge tasks concurrently
+                var archiveTask = ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                var purgeTask = PurgeDeletedAPIReviews(stoppingToken, _autoPurgeGracePeriodMonths);
+                    
+                await Task.WhenAll(archiveTask, purgeTask);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackTrace($"ReviewBackgroundHostedService encountered a fatal error: {ex.Message}");
+                _telemetryClient.TrackException(ex);
             }
         }
 
@@ -88,18 +109,45 @@ namespace APIViewWeb.HostedServices
         {
             do
             {
+                _telemetryClient.TrackTrace($"AutoArchive cycle starting. ArchiveAfter={archiveAfter} months");
                 try
                 {
                     await _apiRevisionManager.AutoArchiveAPIRevisions(archiveAfter);
+                    _telemetryClient.TrackTrace("AutoArchive cycle completed successfully.");
                 }
                 catch(Exception ex)
                 {
+                    _telemetryClient.TrackTrace($"AutoArchive cycle failed: {ex.Message}");
                     _telemetryClient.TrackException(ex);
                 }
                 finally
                 {
-                    // Wait 6 hours before running archive task again
-                    await Task.Delay(6 * 60 * 60000, stoppingToken);
+                    // Wait before running archive task again
+                    await Task.Delay(BackgroundTaskInterval, stoppingToken);
+                }                
+            }
+            while (!stoppingToken.IsCancellationRequested);
+        }
+
+        private async Task PurgeDeletedAPIReviews(CancellationToken stoppingToken, int purgeAfter)
+        {
+            do
+            {
+                _telemetryClient.TrackTrace($"AutoPurge cycle starting. PurgeAfter={purgeAfter} months");
+                try
+                {
+                    await _apiRevisionManager.AutoPurgeAPIRevisions(purgeAfter);
+                    _telemetryClient.TrackTrace("AutoPurge cycle completed successfully.");
+                }
+                catch(Exception ex)
+                {
+                    _telemetryClient.TrackTrace($"AutoPurge cycle failed: {ex.Message}");
+                    _telemetryClient.TrackException(ex);
+                }
+                finally
+                {
+                    // Wait before running purge task again
+                    await Task.Delay(BackgroundTaskInterval, stoppingToken);
                 }                
             }
             while (!stoppingToken.IsCancellationRequested);

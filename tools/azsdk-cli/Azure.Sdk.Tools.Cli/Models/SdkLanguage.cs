@@ -4,26 +4,36 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SdkLanguage
 {
-    [JsonPropertyName("")]
     Unknown,
-    [JsonPropertyName(".NET")]
+    [JsonStringEnumMemberName(".NET")]
     DotNet,
-    [JsonPropertyName("Java")]
+    [JsonStringEnumMemberName("Java")]
     Java,
-    [JsonPropertyName("JavaScript")]
+    [JsonStringEnumMemberName("JavaScript")]
     JavaScript,
-    [JsonPropertyName("Python")]
+    [JsonStringEnumMemberName("Python")]
     Python,
-    [JsonPropertyName("Go")]
+    [JsonStringEnumMemberName("Go")]
     Go,
-    [JsonPropertyName("Rust")]
+    [JsonStringEnumMemberName("Rust")]
     Rust
 }
 
 public static class SdkLanguageHelpers
 {
+
+    public static string ToWorkItemString(this SdkLanguage value)
+    {
+        var field = value.GetType().GetField(value.ToString())
+            ?? throw new InvalidOperationException($"Unable to find JsonStringEnumMemberName field for SdkLanguage value '{value}'");
+
+        var attribute = field.GetCustomAttributes(typeof(JsonStringEnumMemberNameAttribute), false)
+                             .FirstOrDefault() as JsonStringEnumMemberNameAttribute;
+        return attribute?.Name ?? value.ToString();
+    }
 
     private static readonly ImmutableDictionary<string, SdkLanguage> RepoToLanguageMap = new Dictionary<string, SdkLanguage>()
     {
@@ -35,9 +45,9 @@ public static class SdkLanguageHelpers
         { "azure-sdk-for-rust", SdkLanguage.Rust}
     }.ToImmutableDictionary();
 
-    public static SdkLanguage GetLanguageForRepoPath(IGitHelper gitHelper, string pathInRepo)
+    public static async Task<SdkLanguage> GetLanguageForRepoPathAsync(IGitHelper gitHelper, string pathInRepo, CancellationToken ct = default)
     {
-        string repoName = gitHelper.GetRepoName(pathInRepo);
+        string repoName = await gitHelper.GetRepoNameAsync(pathInRepo, ct);
         return GetLanguageForRepo(repoName);
     }
 
@@ -57,5 +67,31 @@ public static class SdkLanguageHelpers
             return language;
         }
         return SdkLanguage.Unknown;
+    }
+
+    public static SdkLanguage GetSdkLanguage(string language)
+    {
+        switch (language.ToLower())
+        {
+            case ".net":
+            case "dotnet":
+            case "c#":
+            case "csharp":
+                return SdkLanguage.DotNet;
+            case "java":
+                return SdkLanguage.Java;
+            case "javascript":
+            case "js":
+            case "typescript":
+                return SdkLanguage.JavaScript;
+            case "python":
+                return SdkLanguage.Python;
+            case "go":
+                return SdkLanguage.Go;
+            case "rust":
+                return SdkLanguage.Rust;
+            default:
+                return SdkLanguage.Unknown;
+        }
     }
 }

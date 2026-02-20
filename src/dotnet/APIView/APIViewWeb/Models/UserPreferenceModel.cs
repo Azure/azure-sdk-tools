@@ -6,14 +6,6 @@ using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Models
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public enum ScrollBarSizes
-    {
-        Small = 0,
-        Medium,
-        Large
-    }
-
     public class UserPreferenceModel
     {
         public string UserName { get; set; }
@@ -33,8 +25,6 @@ namespace APIViewWeb.Models
         public bool ShowComments { get; set; }
         public bool ShowSystemComments { get; set; }
         public bool DisableCodeLinesLazyLoading { get; set; }
-        public bool UseBetaIndexPage { get; set; }
         public string Theme { get; set; } = "light-theme";
-        public ScrollBarSizes ScrollBarSize { get; set; } = ScrollBarSizes.Small;
     }
 }

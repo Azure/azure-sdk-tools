@@ -58,11 +58,6 @@ namespace APIViewWeb.Pages.Assemblies
         {
             await _userProfileCache.SetUserEmailIfNullOrEmpty(User);
             var userPreference = (await _userProfileCache.GetUserProfileAsync(User.GetGitHubLogin())).Preferences;
-            var spaUrl = "https://spa." + Request.Host.ToString();
-            if (userPreference.UseBetaIndexPage == true)
-            {
-                return Redirect(spaUrl);
-            }
 
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any())
             {
@@ -104,7 +99,17 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var file = Upload.Files?.SingleOrDefault();
-            var review = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
+            ReviewListItemModel review = null;
+
+            if (!string.IsNullOrEmpty(Upload.PackageName))
+            {
+                review = await _reviewManager.GetReviewAsync(language: Upload.Language, packageName: Upload.PackageName);
+            }
+
+            if (review == null)
+            {
+                review = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
+            }
 
             if (review != null)
             {

@@ -1,11 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-
+import { initializeTestBed } from '../../../test-setup';
 import { ConfigService } from './config.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 
 describe('ConfigService', () => {
   let service: ConfigService;
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
 
   beforeEach(() => {
     const configServiceMock = {

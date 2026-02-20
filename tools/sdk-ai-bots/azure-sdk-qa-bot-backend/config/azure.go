@@ -1,21 +1,18 @@
 package config
 
 import (
-	"log"
-
-	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
 )
 
-var OpenAIClient *azopenai.Client
+var OpenAIClient *openai.Client
 
 func InitOpenAIClient() {
 	endpoint := AppConfig.AOAI_CHAT_COMPLETIONS_ENDPOINT
-	keyCredential := azcore.NewKeyCredential(AOAI_CHAT_COMPLETIONS_API_KEY)
-	client, err := azopenai.NewClientWithKeyCredential(endpoint, keyCredential, nil)
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-		return
-	}
-	OpenAIClient = client
+	apiKey := AOAI_CHAT_COMPLETIONS_API_KEY
+	client := openai.NewClient(
+		option.WithBaseURL(endpoint+"/openai/v1/"),
+		option.WithAPIKey(apiKey),
+	)
+	OpenAIClient = &client
 }

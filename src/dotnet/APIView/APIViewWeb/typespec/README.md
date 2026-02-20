@@ -8,15 +8,35 @@ These APIs are designed for external teams to integrate with APIView programmati
 
 ## Documented APIs
 
-### AutoReview APIs (API Key Authentication)
+### AutoReview APIs (No Authentication)
 
-APIs for automated API review creation and status checks, used in CI/CD pipelines:
+API for review status checks, used in CI/CD pipelines:
 
-- `POST /AutoReview/UploadAutoReview` - Upload automatic API review file
-- `GET /AutoReview/GetReviewStatus` - Get review approval status
-- `GET /AutoReview/CreateApiReview` - Create API review from Azure DevOps artifacts
+- `GET /AutoReview/GetReviewStatus` - Get review approval status (returns HTTP status codes)
 
-**Authentication:** API Key via `ApiKey` header
+**Authentication:** None required
+
+### Reviews APIs (Azure AD Token or GitHub Token Authentication)
+
+APIs for resolving and retrieving review/revision information. Used by CLI, MCP, and external agents.
+
+**Pattern:**
+1. Call `/api/reviews/resolve` with flexible inputs to get `revisionId`
+2. Use `revisionId` for all subsequent API calls
+
+- `GET /api/reviews/resolve` - Resolve a review/revision from package+language or APIView URL
+- `GET /api/reviews/metadata` - Get full review and revision metadata (requires revisionId)
+
+**Authentication:** Azure AD or GitHub Bearer token
+
+### AutoReview APIs (Azure AD Token or GitHub Token Authentication)
+
+APIs for automated API review creation, used in CI/CD pipelines:
+
+- `POST /autoreview/upload` - Upload automatic API review file
+- `POST /autoreview/create` - Create API review from Azure DevOps artifacts
+
+**Authentication:** Azure AD or GitHub Bearer token
 
 ### API Revisions APIs (Azure AD Token Authentication)
 
@@ -39,7 +59,8 @@ APIs for retrieving comments on API revisions:
 
 - `main.tsp` - Main TypeSpec entry point with service definition
 - `models.tsp` - Common models, enums, and error responses
-- `autoreview.tsp` - AutoReview API endpoints (API Key auth)
+- `autoreview.tsp` - AutoReview API endpoints (no auth for status, API Key auth for others)
+- `reviews.tsp` - Reviews API endpoints (Azure AD)
 - `apirevisions.tsp` - API Revisions endpoints (Azure AD auth)
 - `comments.tsp` - Comments endpoints (Azure AD auth)
 - `tspconfig.yaml` - TypeSpec compiler configuration
@@ -121,8 +142,8 @@ The compiled OpenAPI specification (`tsp-output/openapi.yaml`) can be:
 ### Using AutoReview API to Upload a Review
 
 ```bash
-curl -X POST "https://apiview.dev/AutoReview/UploadAutoReview?label=v1.0.0" \
-  -H "ApiKey: your-api-key-here" \
+curl -X POST "https://apiview.dev/autoreview/upload?label=v1.0.0" \
+  -H "Authorization: Bearer your-token-here" \
   -F "file=@path/to/api-review-file.json"
 ```
 

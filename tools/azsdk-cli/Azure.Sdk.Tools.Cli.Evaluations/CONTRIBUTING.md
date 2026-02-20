@@ -56,6 +56,7 @@ public async Task Evaluate_MyNewScenario()
 {
     const string prompt = "Your user request here";
     string[] expectedTools = ["tool1", "tool2"]; // Tools you expect to be called
+    string[] optionalTools = ["tool3"]; // Tools that can be called but not necessarily expected.
     
     var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
     // ... rest of evaluation logic
@@ -91,6 +92,11 @@ public async Task Evaluate_YourScenarioName()
         "azsdk_run_sdk_generation"
     ];
 
+    string[] optionalTools = 
+    [
+        "azsdk_verify_setup"
+    ];
+
     // Build scenario data from prompt
     var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
 
@@ -98,7 +104,7 @@ public async Task Evaluate_YourScenarioName()
     bool checkInputs = true;
 
     // Run the evaluation
-    var result = await EvaluationHelper.RunScenarioAsync(
+    var result = await EvaluationHelper.RunToolInputScenarioAsync(
         scenarioName: this.ScenarioName,
         scenarioData: scenarioData,
         chatCompletion: s_chatCompletion!,
@@ -111,7 +117,9 @@ public async Task Evaluate_YourScenarioName()
         additionalContexts: new EvaluationContext[]
         {
             new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames!, checkInputs)
-        });
+        },
+        optionalToolNames: optionalTools
+        );
 
     // Assert the results
     EvaluationHelper.ValidateToolInputsEvaluator(result);
@@ -186,6 +194,8 @@ dotnet test --filter "TestName~YourScenarioName"
 # Run all tests
 dotnet test
 ```
+
+Can also use Visual Studio Test interface to interact with the tests.
 
 ## Repository-Specific Tests
 

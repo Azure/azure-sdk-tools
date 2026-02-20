@@ -31,12 +31,13 @@ internal static class TelemetryConstants
         public const string Language = "language";
         public const string PackageName = "package_name";
         public const string TypeSpecProject = "typespec_project";
-        public const string SdkType = "sdk_type";
+        public const string PackageType = "package_type";
         public const string PromptTokens = "prompt_tokens";
         public const string CompletionTokens = "completion_tokens";
         public const string TotalTokens = "total_tokens";
         public const string ModelsUsed = "models_used";
         public const string OperationStatus = "operation_status";
+        public const string SamplesCount = "samples_count";
     }
 
     internal class ActivityName

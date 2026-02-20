@@ -18,7 +18,7 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogInformation("Starting snippet update for Python project at: {PackagePath}", packagePath);
 
-            var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
             var scriptPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools", "ci_tools", "snippet_update", "python_snippet_updater.py");
 
             if (!File.Exists(scriptPath))
@@ -134,14 +134,14 @@ public partial class PythonLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
         var packageName = Path.GetFileName(packagePath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
     public override async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var repoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
         var relativePath = Path.GetRelativePath(repoRoot, packagePath);
         var spellingCheckPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
         return await commonValidationHelpers.CheckSpelling(spellingCheckPath, packagePath, fixCheckErrors, cancellationToken);

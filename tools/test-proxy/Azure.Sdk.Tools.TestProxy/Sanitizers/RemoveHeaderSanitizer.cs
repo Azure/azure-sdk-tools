@@ -5,7 +5,7 @@ using System.Linq;
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
-    /// A simple sanitizer that should be used to clean out one or multiple headers by their key. As could be determined by the description, this sanitizer only applies to the 
+    /// A simple sanitizer that should be used to clean out one or multiple headers by their key. As could be determined by the description, this sanitizer only applies to the
     /// request/response headers.
     /// </summary>
     public class RemoveHeaderSanitizer : RecordedTestSanitizer
@@ -18,11 +18,12 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         /// <param name="headersForRemoval">A comma separated list. Should look like "Location, Transfer-Encoding" or something along those lines! Don't worry about whitespace
         /// between the commas separating each key. They will be ignored.</param>
         /// <param name="condition">
-        /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys. 
+        /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys.
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
         /// </param>
         public RemoveHeaderSanitizer(string headersForRemoval, ApplyCondition condition = null)
         {
+            _scope = SanitizerScope.Header;
             Condition = condition;
 
             _keysForRemoval = headersForRemoval.Split(",").Select(x => x.Trim()).ToArray();

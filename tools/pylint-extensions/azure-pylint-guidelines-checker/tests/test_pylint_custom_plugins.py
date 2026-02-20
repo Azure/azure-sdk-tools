@@ -4091,3 +4091,230 @@ class TestLoggingException(pylint.testutils.CheckerTestCase):
         
         with self.assertNoMessages():
             self.checker.visit_call(future_exception_call)
+
+
+class TestDoNotStoreSecretsInTestVariables(pylint.testutils.CheckerTestCase):
+    CHECKER_CLASS = checker.DoNotStoreSecretsInTestVariables
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "test_do_not_store_secrets_in_test_variables.py")
+        )
+        node = astroid.parse(file.read())
+        # Set the file attribute to mimic a test file
+        node.file = "test_do_not_store_secrets_in_test_variables.py"
+        file.close()
+        return node
+
+    def test_detects_secret_assignment_and_usage(self, setup):
+        # Test the first bad function
+        function_node = setup.body[18]  # test_bad_secret_usage function (updated index)
+        
+        # Get the assignment node
+        assign_node = function_node.body[0]  # secret_value = my_client.secret
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-store-secrets-in-test-variables",
+                node=assign_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_assign(assign_node)
+
+    def test_detects_multiple_secret_assignments(self, setup):
+        # Test the second bad function with multiple secrets
+        function_node = setup.body[19]  # test_multiple_secrets function (updated index)
+        
+        # Get the assignment nodes
+        assign_node1 = function_node.body[0]  # secret1 = client.secret
+        assign_node2 = function_node.body[1]  # secret2 = auth.secret
+        assign_node3 = function_node.body[2]  # secret3 = config.auth.secret
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-store-secrets-in-test-variables",
+                node=assign_node1,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-store-secrets-in-test-variables",
+                node=assign_node2,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-store-secrets-in-test-variables",
+                node=assign_node3,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_assign(assign_node1)
+            self.checker.visit_assign(assign_node2)
+            self.checker.visit_assign(assign_node3)
+
+    def test_detects_secrets_in_different_contexts(self, setup):
+        # Test the function with secrets in if and for contexts
+        function_node = setup.body[20]  # test_secret_in_contexts function (updated index)
+        
+        # Get the if statement and for loop
+        if_node = function_node.body[0]  # if condition:
+        for_node = function_node.body[1]  # for item in items:
+        
+        # Get the assignment nodes inside contexts
+        if_assign_node = if_node.body[0]    # temp_secret = service.secret
+        for_assign_node = for_node.body[0]  # loop_secret = item.secret
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-store-secrets-in-test-variables",
+                node=if_assign_node,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="do-not-store-secrets-in-test-variables",
+                node=for_assign_node,
+            ),
+            ignore_position=True,
+        ):
+            self.checker.visit_assign(if_assign_node)
+            self.checker.visit_assign(for_assign_node)
+
+    def test_ignores_direct_secret_usage(self, setup):
+        # Test the good function that uses secrets directly
+        function_node = setup.body[21]  # test_good_secret_usage function (updated index)
+        
+        # Get the direct usage calls (these are Expr nodes)
+        call_node1 = function_node.body[0]  # some_function(my_client.secret)
+        call_node2 = function_node.body[1]  # other_function(param=my_client.secret)
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node1.value)
+            self.checker.visit_call(call_node2.value)
+
+    def test_ignores_non_secret_variables(self, setup):
+        # Test the good function with non-secret variables
+        function_node = setup.body[21]  # test_good_secret_usage function (updated index)
+        
+        # Get the non-secret assignment and usage
+        assign_node = function_node.body[2]  # normal_value = my_client.get_data()
+        call_node = function_node.body[3]    # some_function(normal_value)
+        
+        with self.assertNoMessages():
+            self.checker.visit_assign(assign_node)
+            self.checker.visit_call(call_node.value)
+
+    def test_only_applies_to_test_files(self):
+        # Test that the checker only applies to test files
+        # This is tested by the _is_test_file method which checks filename starts with 'test_'
+        
+        # Create a mock node with a non-test filename
+        code = """
+secret_value = client.secret
+use_secret(secret_value)
+"""
+        node = astroid.parse(code)
+        # Simulate non-test file
+        node.file = "/some/path/regular_file.py"
+        
+        assign_node = node.body[0]
+        call_node = node.body[1]
+        
+        # Should not trigger since it's not a test file
+        with self.assertNoMessages():
+            self.checker.visit_assign(assign_node)
+            self.checker.visit_call(call_node)
+
+
+class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(pylint.testutils.CheckerTestCase):
+    """Test that we detect and warn about deprecated asyncio.iscoroutinefunction usage."""
+    CHECKER_CLASS = checker.DoNotUseDeprecatedAsyncioIscoroutinefunction
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "use_inspect_iscoroutinefunction.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        return node
+
+    def test_violation_import_from(self, setup):
+        """Check that importing iscoroutinefunction from asyncio raises a warning"""
+        importfrom_node = setup.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="remove-deprecated-iscoroutinefunction",
+                line=3,
+                node=importfrom_node,
+                col_offset=0,
+                end_line=3,
+                end_col_offset=39,
+            )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_violation_asyncio_call(self, setup):
+        """Check that calling asyncio.iscoroutinefunction raises a warning"""
+        # First, visit the import to set up the checker state
+        import_node = setup.body[1]
+        self.checker.visit_import(import_node)
+        
+        # Get the function that contains the call
+        function_node = setup.body[2]
+        if_node = function_node.body[1]  # The if statement
+        call_node = if_node.test  # The if condition contains the call
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="remove-deprecated-iscoroutinefunction",
+                line=12,
+                node=call_node,
+                col_offset=7,
+                end_line=12,
+                end_col_offset=49,
+            )
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_violation_with_alias(self, setup):
+        """Check that using an alias for asyncio still raises a warning"""
+        # Visit the import with alias to set up the checker state
+        import_node = setup.body[3]
+        self.checker.visit_import(import_node)
+        
+        # Get the function that contains the call with alias
+        function_node = setup.body[4]
+        if_node = function_node.body[1]  # The if statement
+        call_node = if_node.test  # The if condition contains the call
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="remove-deprecated-iscoroutinefunction",
+                line=22,
+                node=call_node,
+                col_offset=7,
+                end_line=22,
+                end_col_offset=45,
+            )
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_acceptable_inspect_usage(self, setup):
+        """Check that using inspect.iscoroutinefunction does not raise a warning"""
+        function_node = setup.body[6]
+        if_node = function_node.body[1]  # The if statement
+        call_node = if_node.test  # The if condition contains the call
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_acceptable_other_asyncio_usage(self, setup):
+        """Check that using other asyncio functions does not raise warnings"""
+        function_node = setup.body[7]
+        
+        # asyncio.run() call
+        call_node1 = function_node.body[1].value
+        # asyncio.sleep() call
+        call_node2 = function_node.body[2].value
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node1)
+            self.checker.visit_call(call_node2)

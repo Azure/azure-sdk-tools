@@ -1,5 +1,4 @@
 using APIViewWeb.LeanModels;
-using APIViewWeb.Models;
 using System.Collections.Generic;
 
 namespace APIViewWeb.DTOs
@@ -22,8 +21,6 @@ namespace APIViewWeb.DTOs
         public bool? ShowComments { get; set; }
         public bool? ShowSystemComments { get; set; }
         public bool? DisableCodeLinesLazyLoading { get; set; }
-        public bool? UseBetaIndexPage { get; set; }
         public string Theme { get; set; }
-        public ScrollBarSizes? ScrollBarSize { get; set; }
     }
 }

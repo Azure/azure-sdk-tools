@@ -1,6 +1,20 @@
+# 2.0.10
+
+- Fix the path in bin/ts-genapi.cjs
+- add `typescript` to runtime dependency
+
+# 2.0.9
+
+- Fix version in the code to point to the current parser version
+
+# 2.0.8
+
+- Code refactoring of token generators for properties and property signatures
+
 # 2.0.7
 
 - Add support for cross-language IDs to correlate APIs across different languages
+- Code refactoring of token generators for enums, classes, functions, interfaces and methods
 
 # 2.0.6
 

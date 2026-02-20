@@ -5,12 +5,13 @@ import { setSdkAutoStatus } from '../utils/runScript';
 import { extractPathFromSpecConfig, mapToObject } from '../utils/utils';
 import { vsoAddAttachment, vsoLogError, vsoLogWarning } from './logging';
 import { ExecutionReport, PackageReport } from '../types/ExecutionReport';
-import { deleteTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
+import { deleteTmpJsonFile, readTmpJsonFile, writeTmpJsonFile } from '../utils/fsUtils';
 import { marked } from "marked";
 import { toolError, toolWarning } from '../utils/messageUtils';
 import { FailureType, WorkflowContext } from '../types/Workflow';
 import { setFailureType } from '../utils/workflowUtils';
 import { commentDetailView, renderHandlebarTemplate } from '../utils/reportStatusUtils';
+import { getGenerateOutput } from '../types/GenerateOutput';
 
 export const generateReport = (context: WorkflowContext) => {
   context.logger.log('section', 'Generate report');
@@ -81,6 +82,20 @@ export const generateReport = (context: WorkflowContext) => {
     );
   }
 
+  // for .NET SDK in spec PR scenario, override generateFromTypeSpec by the value returned from the .NET automation script
+  if (context.config.sdkName.includes('net') &&
+      context.config.runMode === 'spec-pull-request' &&
+      fs.existsSync(path.join(context.tmpFolder, 'generateOutput.json'))) {
+    generateFromTypeSpec = false;
+    const generateOutputJson = readTmpJsonFile(context, 'generateOutput.json');
+    if (generateOutputJson !== undefined) {
+      const generateOutput = getGenerateOutput(generateOutputJson);
+      if (generateOutput?.packages?.[0]?.typespecProject) {
+        generateFromTypeSpec = true;
+      }
+    }
+  }
+ 
   if (context.config.pullNumber && markdownContent) {
     try {
       // Write a markdown file to be rendered by the Azure DevOps pipeline

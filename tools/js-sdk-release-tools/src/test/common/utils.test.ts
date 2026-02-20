@@ -227,7 +227,8 @@ describe("cleanUpPackageDirectory", () => {
     //   * Release/Local mode: Cleanup is skipped (handled by emitter)
     //   * SpecPullRequest/Batch modes: All files are cleaned up
     // - Management Plane (arm-*) HighLevelClient: 
-    //   * All modes: Removes everything
+    //   * Release/Local mode: Preserves test and assets.json, cleans up everything else including src
+    //   * SpecPullRequest/Batch modes: All files are cleaned up
     // - Management Plane (arm-*) Non-HighLevelClient: 
     //   * All modes: Cleanup is skipped (handled by emitter)
     
@@ -407,33 +408,47 @@ describe("cleanUpPackageDirectory", () => {
         }
     });
 
-    test("removes all files for Management Plane HighLevelClient in Release mode", async () => {
+    test("preserves test and assets.json for Management Plane HighLevelClient in Release/Local mode", async () => {
         const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management', true);
         
         try {            
             // Run the function with Release mode
             await cleanUpPackageDirectory(tempPackageDir, RunMode.Release);
             
-            // Verify all files and directories are removed
-            const finalEntries = await readdir(tempPackageDir);
-            expect(finalEntries.length).toBe(0);
+            // Verify that only test and assets.json are preserved, others are removed
+            const srcDirExists = await pathExists(path.join(tempPackageDir, "src"));
+            const packageJsonExists = await pathExists(path.join(tempPackageDir, "package.json"));
+            const testDirExists = await pathExists(path.join(tempPackageDir, "test"));
+            const assetsFileExists = await pathExists(path.join(tempPackageDir, "assets.json"));
+            const distDirExists = await pathExists(path.join(tempPackageDir, "dist"));
+            
+            expect(srcDirExists).toBe(false);
+            expect(packageJsonExists).toBe(false);
+            expect(distDirExists).toBe(false);
+            expect(testDirExists).toBe(true);
+            expect(assetsFileExists).toBe(true);
         } finally {
             await remove(tempPackageDir);
         }
     });
 
-    test("removes all files for Management Plane HighLevelClient in SpecPullRequest mode", async () => {
-        const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management', true);
+    test("removes all files for Management Plane HighLevelClient in SpecPullRequest and Batch mode", async () => {
+        // Test both SpecPullRequest and Batch modes that have the same behavior
+        const runModes = [RunMode.SpecPullRequest, RunMode.Batch];
         
-        try {
-            // Run the function with SpecPullRequest mode
-            await cleanUpPackageDirectory(tempPackageDir, RunMode.SpecPullRequest);
+        for (const runMode of runModes) {
+            const tempPackageDir = await createTestDirectoryStructure(__dirname, 'management', true);
+            
+            try {
+                // Run the function
+                await cleanUpPackageDirectory(tempPackageDir, runMode);
 
-            // Verify all files and directories are removed
-            const finalEntries = await readdir(tempPackageDir);
-            expect(finalEntries.length).toBe(0);
-        } finally {
-            await remove(tempPackageDir);
+                // Verify all files and directories are removed
+                const finalEntries = await readdir(tempPackageDir);
+                expect(finalEntries.length).toBe(0);
+            } finally {
+                await remove(tempPackageDir);
+            }
         }
     });
 });

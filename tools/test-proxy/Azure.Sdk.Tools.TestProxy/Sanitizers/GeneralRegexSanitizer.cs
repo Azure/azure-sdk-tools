@@ -1,40 +1,41 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {
     /// <summary>
     /// This sanitizer operates on a RecordSession entry and applies itself to the Request and Response bodies contained therein. This "general" sanitizer applies the configured regex replacement
-    /// to headers, body, and URI. 
+    /// to headers, body, and URI.
     /// </summary>
     public class GeneralRegexSanitizer : RecordedTestSanitizer
     {
         private string _newValue;
-        private string _regexValue = null;
+        private readonly Regex _regex;
         private string _groupForReplace = null;
 
         private BodyRegexSanitizer _bodySanitizer;
         private UriRegexSanitizer _uriSanitizer;
 
         /// <summary>
-        /// This sanitizer offers a general regex replace across request/response Body, Headers, and URI. For the body, this means regex applying to the raw JSON. 
-        /// to 
+        /// This sanitizer offers a general regex replace across request/response Body, Headers, and URI. For the body, this means regex applying to the raw JSON.
+        /// to
         /// </summary>
         /// <param name="value">The substitution value.</param>
         /// <param name="regex">A regex. Can be defined as a simple regex replace OR if groupForReplace is set, a subsitution operation.</param>
         /// <param name="groupForReplace">The capture group that needs to be operated upon. Do not set if you're invoking a simple replacement operation.</param>
         /// <param name="condition">
-        /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys. 
+        /// A condition that dictates when this sanitizer applies to a request/response pair. The content of this key should be a JSON object that contains configuration keys.
         /// Currently, that only includes the key "uriRegex". This translates to an object that looks like '{ "uriRegex": "when this regex matches, apply the sanitizer" }'. Defaults to "apply always."
         /// </param>
         public GeneralRegexSanitizer(string value = "Sanitized", string regex = ".+", string groupForReplace = null, ApplyCondition condition = null)
         {
+            _scope = SanitizerScope.All;
             _newValue = value;
-            _regexValue = regex;
             _groupForReplace = groupForReplace;
             Condition = condition;
 
-            StringSanitizer.ConfirmValidRegex(regex);
+            _regex = GetRegex(regex);
 
             _bodySanitizer = new BodyRegexSanitizer(value, regex, groupForReplace);
             _uriSanitizer = new UriRegexSanitizer(value, regex, groupForReplace);
@@ -44,13 +45,13 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
         {
             foreach (var headerKey in headers.Keys)
             {
-                // Accessing 0th key safe due to the fact that we force header values in without splitting them on ;. 
+                // Accessing 0th key safe due to the fact that we force header values in without splitting them on ;.
                 // We do this because letting .NET split and then reassemble header values introduces a space into the header itself
                 // Ex: "application/json;odata=minimalmetadata" with .NET default header parsing becomes "application/json; odata=minimalmetadata"
                 // Given this breaks signature verification, we have to avoid it.
                 var originalValue = headers[headerKey][0];
 
-                var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);
+                var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regex, _groupForReplace);
 
                 headers[headerKey][0] = replacement;
             }

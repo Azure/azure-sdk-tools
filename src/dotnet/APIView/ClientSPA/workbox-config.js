@@ -9,9 +9,9 @@ const globPatterns = [
 ];
 
 module.exports = {
-  globDirectory: '../APIViewWeb/wwwroot/spa',
+  globDirectory: '../APIViewWeb/wwwroot/spa/browser',
   globPatterns: globPatterns,
-  swDest: '../APIViewWeb/wwwroot/spa/sw.js',
+  swDest: '../APIViewWeb/wwwroot/spa/browser/sw.js',
   skipWaiting: true,
   clientsClaim: true,
   cleanupOutdatedCaches: true,

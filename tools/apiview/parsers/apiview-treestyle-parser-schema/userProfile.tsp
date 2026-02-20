@@ -38,12 +38,4 @@ model UserPreferences {
     useBetaIndexPage: boolean;
     /** Disables lazy loading of code lines. */
     disableCodeLinesLazyLoading: boolean;
-    /** Sets the size of various scrollbars in APIView */
-    scrollBarSize: ScrollBarSize;
-}
-
-enum ScrollBarSize {
-    Small,
-    Medium,
-    Large
 }

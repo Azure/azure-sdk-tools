@@ -27,6 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.ToolMocks
                 new CreatePullRequest(),
                 new CreateReleasePlan(),
                 new VerifySetup(),
+                new LinkNamespaceApprovalIssue(),
             };
 
             foreach (var mock in mockInstances)

@@ -6,6 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 public interface IRawOutputHelper
 {
     void OutputConsole(string output);
+    void OutputConsoleWarning(string output);
     void OutputConsoleError(string output);
 }
 
@@ -145,6 +146,22 @@ public class OutputHelper : IOutputHelper, IRawOutputHelper
         if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
         {
             Console.WriteLine(output);
+        }
+    }
+
+    public virtual void OutputConsoleWarning(string output)
+    {
+        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
+        {
+            lock (outputLock)
+            {
+                var original = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Yellow;
+
+                Console.Error.WriteLine(output);
+
+                Console.ForegroundColor = original;
+            }
         }
     }
 

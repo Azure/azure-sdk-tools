@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
 using Azure.Identity;
+using Microsoft.Extensions.Logging;
+using Moq;
 
 namespace APIViewIntegrationTests.RepositoryTests
 {
@@ -28,11 +30,12 @@ namespace APIViewIntegrationTests.RepositoryTests
             _cosmosDBname = "CosmosReviewRepositoryTestsDB";
             config["CosmosDBName"] = _cosmosDBname;
 
-            _cosmosClient = new CosmosClient(config["CosmosEndpoint"], new DefaultAzureCredential());
+            var credential = new ChainedTokenCredential(new AzureCliCredential(), new AzureDeveloperCliCredential());
+            _cosmosClient = new CosmosClient(config["CosmosEndpoint"], credential);
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
 
-            ReviewRepository = new CosmosReviewRepository(config, _cosmosClient);
+            ReviewRepository = new CosmosReviewRepository(config, _cosmosClient, Mock.Of<ILogger<CosmosReviewRepository>>());
             PopulateDBWithDummyReviewData().Wait();
         }
 

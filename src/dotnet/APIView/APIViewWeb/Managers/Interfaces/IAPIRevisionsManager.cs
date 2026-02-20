@@ -21,8 +21,9 @@ namespace APIViewWeb.Managers.Interfaces
         public Task<APIRevisionListItemModel> GetAPIRevisionAsync(ClaimsPrincipal user, string apiRevisionId);
         public Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId);
         public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType, string reviewId = null, string packageName = null, string language = null,
-            string label = null, int? prNumber = null, string createdBy = ApiViewConstants.AzureSdkBotName);
+            string label = null, int? prNumber = null, string createdBy = ApiViewConstants.AzureSdkBotName, string sourceBranch = null);
         public Task<(bool updateReview, APIRevisionListItemModel apiRevision)> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string revisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "");
+        public Task CopyApprovalFromAsync(APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision);
         public Task<APIRevisionListItemModel> AddAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string name, string label, Stream fileStream, string language = "", bool awaitComputeDiff = false);
         public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, IFormFile file, string filePath, string language, string label);
         public Task<APIRevisionListItemModel> AddAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, APIRevisionType apiRevisionType, string name, string label, Stream fileStream, string language, bool awaitComputeDiff = false);
@@ -37,10 +38,11 @@ namespace APIViewWeb.Managers.Interfaces
         public Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, APIRevisionListItemModel apiRevision, IEnumerable<APIRevisionListItemModel> apiRevisions = null);
         public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile);
         public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
-            MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null);
+            MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null, string sourceBranch = null);
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, bool verifyUpgradabilityOnly);
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision);
         public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
+        public Task AutoPurgeAPIRevisions(int purgeAfterMonths);
         public Task AssignReviewersToAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers);
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName);
         public Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false);

@@ -4,9 +4,9 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4767
+Pylint custom checkers for SDK guidelines: C4717 - C4773
 """
-
+import os
 import logging
 import astroid
 from pylint.checkers import BaseChecker
@@ -3034,6 +3034,61 @@ class InvalidUseOfOverload(BaseChecker):
             return False
 
 
+class DoNotUseDeprecatedAsyncioIscoroutinefunction(BaseChecker):
+    """Rule to check that we use inspect.iscoroutinefunction instead of deprecated asyncio.iscoroutinefunction."""
+
+    name = "remove-deprecated-iscoroutinefunction"
+    priority = -1
+    msgs = {
+        "C4774": (
+            "Use 'inspect.iscoroutinefunction()' instead of deprecated 'asyncio.iscoroutinefunction()'. "
+            "The asyncio version was deprecated in Python 3.12 and will be removed in Python 3.16.",
+            "remove-deprecated-iscoroutinefunction",
+            "Replace asyncio.iscoroutinefunction with inspect.iscoroutinefunction.",
+        ),
+    }
+
+    def __init__(self, linter=None):
+        super(DoNotUseDeprecatedAsyncioIscoroutinefunction, self).__init__(linter)
+        self._has_asyncio_import = False
+        self._asyncio_alias = None
+
+    def visit_import(self, node):
+        """Track imports of asyncio module."""
+        for name, alias in node.names:
+            if name == "asyncio":
+                self._has_asyncio_import = True
+                self._asyncio_alias = alias if alias else "asyncio"
+
+    def visit_importfrom(self, node):
+        """Check for 'from asyncio import iscoroutinefunction' and flag it."""
+        if node.modname == "asyncio":
+            for name, alias in node.names:
+                if name == "iscoroutinefunction":
+                    self.add_message(
+                        msgid="remove-deprecated-iscoroutinefunction",
+                        node=node,
+                        confidence=None,
+                    )
+
+    def visit_call(self, node):
+        """Check for calls to asyncio.iscoroutinefunction."""
+        try:
+            # Check if this is a call like asyncio.iscoroutinefunction(...)
+            if hasattr(node.func, 'attrname') and node.func.attrname == "iscoroutinefunction":
+                if hasattr(node.func, 'expr') and hasattr(node.func.expr, 'name'):
+                    module_name = node.func.expr.name
+                    # Check if it's asyncio or an alias for asyncio
+                    if module_name == "asyncio" or (self._asyncio_alias and module_name == self._asyncio_alias):
+                        self.add_message(
+                            msgid="remove-deprecated-iscoroutinefunction",
+                            node=node,
+                            confidence=None,
+                        )
+        except AttributeError:
+            pass
+
+
 class DoNotLogExceptions(BaseChecker):
 
     """Rule to check that exceptions aren't logged"""
@@ -3266,6 +3321,101 @@ class DoNotDedentDocstring(BaseChecker):
     # this line makes it work for async functions
     visit_asyncfunctiondef = visit_functiondef
 
+
+class DoNotStoreSecretsInTestVariables(BaseChecker):
+    """Rule to check that secrets are not assigned to variables in test files."""
+
+    name = "do-not-store-secrets-in-test-variables"
+    priority = -1
+    msgs = {
+        "C4773": (
+            "Do not assign secrets to local variables in test files. They will be exposed if the test fails. Use the secret directly in the function call instead i.e foo(credential=bar.secret).",
+            "do-not-store-secrets-in-test-variables",
+            "Do not assign secrets to local variables in test files. They will be exposed if the test fails. Use the secret directly in the function call instead i.e foo(credential=bar.secret).",
+        ),
+    }
+
+    def __init__(self, linter=None):
+        super(DoNotStoreSecretsInTestVariables, self).__init__(linter)
+        self.secret_variables = set()  # Track variables that hold secrets
+
+    def _is_test_file(self, node):
+        """Check if the current file is a test file."""
+        try:
+            filename = node.root().file
+            if not filename:
+                return False
+            
+            # Get just the basename (filename without path) for testing
+            basename = os.path.basename(filename).lower()
+            
+            # Check if it's a test file - specifically files that start with test_
+            is_test = basename.startswith('test_')
+            return is_test
+        except (AttributeError, TypeError, ImportError):
+            return False
+
+    def _is_secret_access(self, node):
+        """Check if a node accesses a .secret attribute."""
+        try:
+            if hasattr(node, 'attrname') and node.attrname == 'secret':
+                return True
+        except:
+            logging.info("Failed to determine if node accesses a secret attribute.")
+        return False
+
+    def visit_assign(self, node):
+        """Check for variable assignments that store secrets."""
+        if not self._is_test_file(node):
+            return
+            
+        try:
+            # Check if we're assigning a secret to a variable
+            if self._is_secret_access(node.value):
+                # Get the variable name being assigned to
+                for target in node.targets:
+                    if hasattr(target, 'name'):
+                        var_name = target.name
+                        self.secret_variables.add(var_name)
+                        self.add_message(
+                            msgid="do-not-store-secrets-in-test-variables",
+                            node=node,
+                            confidence=None,
+                        )
+        except:
+            logging.info("Failed to check for secret variable assignment.")
+
+    def visit_call(self, node):
+        """Check for usage of secret variables in function calls."""
+        if not self._is_test_file(node):
+            return
+            
+        try:
+            # Check function arguments for secret variables
+            for arg in node.args:
+                if hasattr(arg, 'name') and arg.name in self.secret_variables:
+                    self.add_message(
+                        msgid="do-not-store-secrets-in-test-variables", 
+                        node=arg,
+                        confidence=None,
+                    )
+            
+            # Check keyword arguments
+            for keyword in node.keywords:
+                if hasattr(keyword.value, 'name') and keyword.value.name in self.secret_variables:
+                    self.add_message(
+                        msgid="do-not-store-secrets-in-test-variables",
+                        node=keyword.value,
+                        confidence=None,
+                    )
+        except AttributeError:
+            logging.info("Failed to check for secret variable usage in function.")
+
+    def leave_module(self, node):
+        """Reset secret variables when leaving a module."""
+        self.secret_variables.clear()
+
+
 class DoNotUseLoggingException(BaseChecker):
     """Rule to check that exceptions aren't logged using exception method"""
 
@@ -3396,6 +3546,7 @@ def register(linter):
     linter.register_checker(DoNotLogExceptions(linter))
     linter.register_checker(DoNotHardcodeConnectionVerify(linter))
     linter.register_checker(DoNotDedentDocstring(linter))
+    linter.register_checker(DoNotUseDeprecatedAsyncioIscoroutinefunction(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))
@@ -3408,3 +3559,4 @@ def register(linter):
     # linter.register_checker(ClientLROMethodsUseCorePolling(linter))
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
     linter.register_checker(DoNotUseLoggingException(linter))
+    linter.register_checker(DoNotStoreSecretsInTestVariables(linter))

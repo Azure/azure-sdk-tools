@@ -3,9 +3,10 @@ import { ConfigService } from 'src/app/_services/config/config.service';
 
 
 @Component({
-  selector: 'app-code-editor',
-  templateUrl: './code-editor.component.html',
-  styleUrls: ['./code-editor.component.scss']
+    selector: 'app-code-editor',
+    templateUrl: './code-editor.component.html',
+    styleUrls: ['./code-editor.component.scss'],
+    standalone: false
 })
 export class CodeEditorComponent {
   @Input() language: string | undefined = undefined;

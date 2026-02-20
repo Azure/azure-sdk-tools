@@ -67,8 +67,13 @@ public abstract class CommandResponse
     public override string ToString()
     {
         var value = Format();
+        List<string> messages = [];
 
-        List<string> messages = string.IsNullOrWhiteSpace(value) ? [] : [value];
+        if (OperationStatus == Status.Succeeded && !string.IsNullOrWhiteSpace(value))
+        {
+            messages.Add(value);
+        }
+        
         if (!string.IsNullOrEmpty(ResponseError))
         {
             messages.Add("[ERROR] " + ResponseError);

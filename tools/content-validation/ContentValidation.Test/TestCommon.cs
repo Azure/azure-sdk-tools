@@ -23,9 +23,12 @@ namespace ContentValidation.Test
         public static ConcurrentQueue<TResult> TestCommonResults = new ConcurrentQueue<TResult>();
 
         public static IPlaywright playwright;
+        public static IBrowser browser;
         static TestCommon()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
+            // Create a shared browser instance for all tests
+            browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
             TestLinksOfEmptyTagsValidation = new List<string>()
             {
                 "https://learn.microsoft.com/en-us/dotnet/api/azure.ai.metricsadvisor.administration.azureblobdatafeedsource?view=azure-dotnet"
@@ -64,13 +67,20 @@ namespace ContentValidation.Test
             };
         }
 
+        [OneTimeTearDown]
+        public void Cleanup()
+        {
+            browser?.CloseAsync().GetAwaiter().GetResult();
+            playwright?.Dispose();
+        }
+
         [Test]
         [Category("CommonTest")]
         [TestCaseSource(nameof(TestLinksOfEmptyTagsValidation))]
         public async Task TestEmptyTagsValidation(string testLink)
         {
 
-            IValidation Validation = new EmptyTagsValidation(playwright);
+            IValidation Validation = new EmptyTagsValidation(browser);
 
             var res = new TResult();
 
@@ -98,7 +108,7 @@ namespace ContentValidation.Test
         public async Task TestErrorDisplayValidation(string testLink)
         {
 
-            IValidation Validation = new ErrorDisplayValidation(playwright);
+            IValidation Validation = new ErrorDisplayValidation(browser);
 
             var res = new TResult();
 
@@ -126,7 +136,7 @@ namespace ContentValidation.Test
         public async Task TestExtraLabelValidation(string testLink)
         {
 
-            IValidation Validation = new ExtraLabelValidation(playwright);
+            IValidation Validation = new ExtraLabelValidation(browser);
 
             var res = new TResult();
 
@@ -154,7 +164,7 @@ namespace ContentValidation.Test
         public async Task TestGarbledTextValidation(string testLink)
         {
 
-            IValidation Validation = new GarbledTextValidation(playwright);
+            IValidation Validation = new GarbledTextValidation(browser);
 
             var res = new TResult();
 
@@ -182,7 +192,7 @@ namespace ContentValidation.Test
         public async Task TestInconsistentTextFormatValidation(string testLink)
         {
 
-            IValidation Validation = new InconsistentTextFormatValidation(playwright);
+            IValidation Validation = new InconsistentTextFormatValidation(browser);
 
             var res = new TResult();
 
@@ -210,7 +220,7 @@ namespace ContentValidation.Test
         public async Task TestMissingGenericsValidation(string testLink)
         {
 
-            IValidation Validation = new MissingGenericsValidation(playwright);
+            IValidation Validation = new MissingGenericsValidation(browser);
 
             var res = new TResult();
 
@@ -238,7 +248,7 @@ namespace ContentValidation.Test
         public async Task TestMissingContentValidation(string testLink)
         {
 
-            IValidation Validation = new MissingContentValidation(playwright);
+            IValidation Validation = new MissingContentValidation(browser);
 
             var res = new TResult();
 
@@ -263,10 +273,10 @@ namespace ContentValidation.Test
         [Test]
         [Category("CommonTest")]
         [TestCaseSource(nameof(TestLinksOfTypeAnnotationValidation))]
-        public async Task TestMissingTypeAnnotationValidation(string testLink)
+        public async Task TestTypeAnnotationValidation(string testLink)
         {
 
-            IValidation Validation = new TypeAnnotationValidation(playwright);
+            IValidation Validation = new TypeAnnotationValidation(browser);
 
             var res = new TResult();
 
@@ -294,7 +304,7 @@ namespace ContentValidation.Test
         public async Task TestUnnecessarySymbolsValidation(string testLink)
         {
 
-            IValidation Validation = new UnnecessarySymbolsValidation(playwright);
+            IValidation Validation = new UnnecessarySymbolsValidation(browser);
 
             var res = new TResult();
 

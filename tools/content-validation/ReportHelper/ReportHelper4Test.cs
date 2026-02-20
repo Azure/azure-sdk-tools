@@ -540,7 +540,8 @@ public class GithubHelper
             var issueData = new
             {
                 title = title,
-                body = body
+                body = body,
+                labels = new[] { "ContentValidation" }
             };
  
             StringContent content = new StringContent(JsonSerializer.Serialize(issueData), Encoding.UTF8, "application/json");

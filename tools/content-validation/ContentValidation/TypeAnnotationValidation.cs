@@ -5,11 +5,11 @@ namespace UtilityLibraries;
 
 public class TypeAnnotationValidation : IValidation
 {
-    private IPlaywright _playwright;
+    private IBrowser _browser;
 
-    public TypeAnnotationValidation(IPlaywright playwright)
+    public TypeAnnotationValidation(IBrowser browser)
     {
-        _playwright = playwright ?? throw new ArgumentNullException(nameof(playwright));
+        _browser = browser ?? throw new ArgumentNullException(nameof(browser));
     }
 
     public List<IgnoreItem> equalList = IgnoreData.GetIgnoreList("TypeAnnotationValidation", "equal");
@@ -26,8 +26,7 @@ public class TypeAnnotationValidation : IValidation
         var res = new TResult();
         List<string> errorList = new List<string>();
         // Launch browser and new page
-        var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
-        var page = await browser.NewPageAsync();
+        var page = await _browser.NewPageAsync();
         await PlaywrightHelper.GotoageWithRetriesAsync(page, testLink);
 
         // Get parameter maps with elements
@@ -115,7 +114,7 @@ public class TypeAnnotationValidation : IValidation
             res.Result = true;
         }
 
-        await browser.CloseAsync();
+        await page.CloseAsync();
 
         return res;
     }

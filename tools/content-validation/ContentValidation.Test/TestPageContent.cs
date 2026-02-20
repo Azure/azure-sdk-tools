@@ -10,9 +10,6 @@ namespace ContentValidation.Test
     [Parallelizable(ParallelScope.All)]
     public class TestPageContent
     {
-        public static List<string> TestLinks { get; set; }
-        public static List<string> DuplicateTestLink { get; set; }
-
         public static ConcurrentQueue<TResult> TestTableMissingContentResults = new ConcurrentQueue<TResult>();
 
         public static ConcurrentQueue<TResult> TestGarbledTextResults = new ConcurrentQueue<TResult>();
@@ -26,23 +23,60 @@ namespace ContentValidation.Test
         public static ConcurrentQueue<TResult> TestEmptyTagsResults = new ConcurrentQueue<TResult>();
 
         public static IPlaywright playwright;
+        public static IBrowser browser;
+
+        public static IEnumerable<string> MissingContentTestLinks()
+        {
+            return LoadLinks("tablemissingcontent");
+        }
+
+        public static IEnumerable<string> GarbledTextTestLinks()
+        {
+            return LoadLinks("garbledtext");
+        }
+
+        public static IEnumerable<string> InconsistentTextFormatTestLinks()
+        {
+            return LoadLinks("inconsistenttextformat");
+        }
+
+        public static IEnumerable<string> ErrorDisplayTestLinks()
+        {
+            return LoadLinks("errordisplay");
+        }
+
+        public static IEnumerable<string> EmptyTagsTestLinks()
+        {
+            return LoadLinks("emptytags");
+        }
+
+        public static IEnumerable<string> DuplicateTestLink()
+        {
+            return new List<string>
+            {
+                "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python"
+            };
+        }
+
+        private static IEnumerable<string> LoadLinks(string suffix)
+        {
+            return JsonSerializer.Deserialize<List<string>>(
+                File.ReadAllText($"../../../../../tools/content-validation/ContentValidation.Test/appsettings-{suffix}.json")
+            ) ?? new List<string>();
+        }
 
         static TestPageContent()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
-            TestLinks = JsonSerializer.Deserialize<List<string>>(File.ReadAllText("../../../../../tools/content-validation/ContentValidation.Test/appsettings.json")) ?? new List<string>();
-
-            //This list is for testing duplicate services.
-            DuplicateTestLink = new List<string>
-            {
-                "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python"
-            };
+            // Create a shared browser instance for all tests
+            browser = playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).GetAwaiter().GetResult();
         }
 
 
         [OneTimeTearDown]
         public void SaveTestData()
         {
+            browser?.CloseAsync().GetAwaiter().GetResult();
             playwright?.Dispose();
             string excelFilePath = ConstData.TotalIssuesExcelFileName;
             string sheetName = "TotalIssues";
@@ -63,14 +97,10 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("PythonTest")]
-        [Category("JavaTest")]
-        [Category("JsTest")]
-        [Category("DotNetTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(MissingContentTestLinks))]
         public async Task TestTableMissingContent(string testLink)
         {
-            IValidation Validation = new MissingContentValidation(playwright);
+            IValidation Validation = new MissingContentValidation(browser);
 
             var res = new TResult();
             try
@@ -93,13 +123,10 @@ namespace ContentValidation.Test
         }
 
         [Test]
-        [Category("PythonTest")]
-        [Category("JavaTest")]
-        [Category("JsTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(GarbledTextTestLinks))]
         public async Task TestGarbledText(string testLink)
         {
-            IValidation Validation = new GarbledTextValidation(playwright);
+            IValidation Validation = new GarbledTextValidation(browser);
 
             var res = new TResult();
             try
@@ -123,12 +150,10 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("JavaTest")]
-        [Category("JsTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(InconsistentTextFormatTestLinks))]
         public async Task TestInconsistentTextFormat(string testLink)
         {
-            IValidation Validation = new InconsistentTextFormatValidation(playwright);
+            IValidation Validation = new InconsistentTextFormatValidation(browser);
 
             var res = new TResult();
             try
@@ -152,11 +177,10 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("JsTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(ErrorDisplayTestLinks))]
         public async Task TestErrorDisplay(string testLink)
         {
-            IValidation Validation = new ErrorDisplayValidation(playwright);
+            IValidation Validation = new ErrorDisplayValidation(browser);
 
             var res = new TResult();
             try
@@ -180,15 +204,15 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("DotNetTest")]
-        [TestCaseSource(nameof(TestLinks))]
+        [TestCaseSource(nameof(EmptyTagsTestLinks))]
         public async Task TestEmptyTags(string testLink)
         {
-            IValidation Validation = new EmptyTagsValidation(playwright);
+            IValidation Validation = new EmptyTagsValidation(browser);
 
             var res = new TResult();
             try
             {
+                Console.WriteLine($"Starting EmptyTagsValidation for {testLink}");
                 res = await Validation.Validate(testLink);
                 res.TestCase = "TestEmptyTags";
                 if (!res.Result)
@@ -196,6 +220,7 @@ namespace ContentValidation.Test
                     TestEmptyTagsResults.Enqueue(res);
                 }
                 pipelineStatusHelper.SavePipelineFailedStatus("EmptyTagsValidation", "succeed");
+                Console.WriteLine($"Completed EmptyTagsValidation for {testLink}");
             }
             catch
             {
@@ -208,11 +233,10 @@ namespace ContentValidation.Test
 
 
         [Test]
-        [Category("SpecialTest")]
         [TestCaseSource(nameof(DuplicateTestLink))]
         public async Task TestDuplicateService(string testLink)
         {
-            IValidation Validation = new DuplicateServiceValidation(playwright);
+            IValidation Validation = new DuplicateServiceValidation(browser);
 
             var res = new TResult();
             try

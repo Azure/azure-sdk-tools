@@ -25,7 +25,7 @@ namespace PendingTestingPackagesThisMonth
             using IHost host = Host.CreateApplicationBuilder(args).Build();
             IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
             string? language = config["Language"];
-            string packagesListFilePath = "../" + config["PackagesListFilePath"];
+            string packagesListFilePath = "../../../../../tools/content-validation/" + config["PackagesListFilePath"];
 
             // Initialize Playwright instance.
             if (string.IsNullOrEmpty(language))
@@ -126,7 +126,7 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", result);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
+            var outputPath = Path.Combine(AppContext.BaseDirectory, packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
@@ -144,6 +144,7 @@ namespace PendingTestingPackagesThisMonth
                 var packages = configJson?.FirstOrDefault()?["packages"] ?? new List<string>();
 
                 result.RemoveWhere(packageName => packageName.StartsWith("azure-resourcemanager-"));
+                result.RemoveWhere(packageName => packageName.StartsWith("spring-"));
                 foreach (var pkg in packages)
                 {
                     result.Remove(pkg);
@@ -155,8 +156,7 @@ namespace PendingTestingPackagesThisMonth
             }
 
             var joinedResult = string.Join(",", result);
-
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
+            var outputPath = Path.Combine(AppContext.BaseDirectory, packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
@@ -189,7 +189,7 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", updatedPackages);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
+            var outputPath = Path.Combine(AppContext.BaseDirectory, packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
@@ -223,7 +223,7 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", updatedPackages);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
+            var outputPath = Path.Combine(AppContext.BaseDirectory, packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;

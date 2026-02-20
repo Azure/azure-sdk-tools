@@ -48,6 +48,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 Assert.Equal("wss", uri.Scheme);
                 Assert.Equal("example.com", uri.Host);
+                Assert.Equal(443, uri.Port);
                 Assert.Equal("/socket?a=b", uri.PathAndQuery);
             }
             finally

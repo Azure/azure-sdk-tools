@@ -139,6 +139,11 @@ class ClassNode(NodeEntityBase):
         if var_match:
             if value:
                 var_match[0].value = value
+                if var_match[0].type and "ClassVar" not in var_match[0].type:
+                    logging.error(
+                        f"Class variable '{name}' should use 'ClassVar' type annotation. "
+                        f"Found type '{var_match[0].type}'."
+                    )
             if type_string:
                 var_match[0].type = type_string
         else:

@@ -357,3 +357,9 @@ class NoPublicNameDict(TypedDict):
 
 class PropertyWithNoNameAttr:
     schema: TypedDict = NoPublicNameDict
+
+
+class ClassWithMissingClassVar:
+    """A class that has a class variable without ClassVar annotation."""
+
+    missing_classvar: int = 42

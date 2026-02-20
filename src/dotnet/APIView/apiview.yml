@@ -110,6 +110,7 @@ extends:
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
+                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
 
               - script: |
                   npm install -g @angular/cli@16.1.8
@@ -145,11 +146,13 @@ extends:
                 inputs:
                   mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
                   goals: 'clean package'
+                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
 
               - script: |
                   go build
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
+                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
 
               - task: UseDotNet@2
                 inputs:
@@ -183,6 +186,7 @@ extends:
                   ArtifactPath: '$(Build.ArtifactStagingDirectory)'
 
           - job: 'Test'
+            condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
 
             pool:
               name: $(WINDOWSPOOL)

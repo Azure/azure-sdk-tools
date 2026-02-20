@@ -94,9 +94,7 @@ export class CommentThreadComponent {
 
   assetsPath : string = environment.assetsPath;
   currentAIInfoStructured: AICommentInfo | null = null;
-  menuItemAllUsers: MenuItem[] = [];
-  menuItemsLoggedInUsers: MenuItem[] = [];
-  menuItemsLoggedInArchitects: MenuItem[] = [];
+  menuItemsGitHubIssue: MenuItem[] = [];
   allowAnyOneToResolve : boolean = false; // Default to false since default severity is "Should fix"
 
   threadResolvedBy : string | undefined = '';
@@ -148,65 +146,17 @@ export class CommentThreadComponent {
   constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService, private commentsService: CommentsService, private permissionsService: PermissionsService, private reviewContextService: ReviewContextService) { }
 
   ngOnInit(): void {
-    this.menuItemsLoggedInUsers.push({
-      label: '',
+    this.menuItemsGitHubIssue.push({
+      label: 'Create GitHub Issue',
       items: [
-        { label: 'Edit', icon: 'bi bi-pencil-square', command: (event) => this.showEditEditor(event) },
-        { label: 'Delete', icon: 'bi bi-trash', command: (event) => this.deleteComment(event) },
-        { separator: true }
-      ]
-    });
-
-    this.menuItemsLoggedInArchitects.push({
-      label: '',
-      items: [
-        { label: 'Delete', icon: 'bi bi-trash', command: (event) => this.deleteComment(event) },
-        { separator: true }
-      ]
-    });
-
-    this.menuItemAllUsers.push({
-      label: 'Create Github Issue',
-      items: [{
-          title: "c",
-          label: "C",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "cplusplus",
-          label: "C++",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "go",
-          label: "Go",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "java",
-          label: "Java",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "javascript",
-          label: "JavaScript",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "csharp",
-          label: ".NET",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "python",
-          label: "Python",
-          command: (event) => this.createGitHubIssue(event),
-        },
-        {
-          title: "rust",
-          label: "Rust",
-          command: (event) => this.createGitHubIssue(event),
-        },
+        { title: "c", label: "C", command: (event) => this.createGitHubIssue(event) },
+        { title: "cplusplus", label: "C++", command: (event) => this.createGitHubIssue(event) },
+        { title: "go", label: "Go", command: (event) => this.createGitHubIssue(event) },
+        { title: "java", label: "Java", command: (event) => this.createGitHubIssue(event) },
+        { title: "javascript", label: "JavaScript", command: (event) => this.createGitHubIssue(event) },
+        { title: "csharp", label: ".NET", command: (event) => this.createGitHubIssue(event) },
+        { title: "python", label: "Python", command: (event) => this.createGitHubIssue(event) },
+        { title: "rust", label: "Rust", command: (event) => this.createGitHubIssue(event) },
       ]
     });
   }
@@ -251,15 +201,35 @@ export class CommentThreadComponent {
 
   getCommentActionMenuContent(commentId: string) {
     const comment = this.codePanelRowData!.comments?.find(comment => comment.id === commentId);
-    const menu : MenuItem[] = [];
+    const menu: MenuItem[] = [];
+
+    // Copy link in its own section
+    menu.push({ items: [
+      { label: 'Copy link', icon: 'pi pi-link', command: (event) => this.copyCommentLink(event) },
+    ]});
+
+    // Add edit/delete for comment owners (non-system-generated comments)
     if (comment && this.userProfile?.userName === comment.createdBy && !this.isSystemGenerated(comment)) {
-      menu.push(...this.menuItemsLoggedInUsers);
-    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
-      menu.push(...this.menuItemsLoggedInArchitects);
+      menu.push({ separator: true });
+      menu.push({ items: [
+        { label: 'Edit', icon: 'pi pi-pencil', command: (event) => this.showEditEditor(event) },
+        { label: 'Delete', icon: 'pi pi-trash', styleClass: 'menu-item-danger', command: (event) => this.deleteComment(event) }
+      ]});
     }
+    // Add delete for architects on AI-generated comments
+    else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
+      menu.push({ separator: true });
+      menu.push({ items: [
+        { label: 'Delete', icon: 'pi pi-trash', styleClass: 'menu-item-danger', command: (event) => this.deleteComment(event) }
+      ]});
+    }
+
+    // Add GitHub Issue submenu (except for samples)
     if (this.instanceLocation !== "samples") {
-      menu.push(...this.menuItemAllUsers);
+      menu.push({ separator: true });
+      menu.push(...this.menuItemsGitHubIssue);
     }
+
     return menu;
   }
 
@@ -330,6 +300,31 @@ export class CommentThreadComponent {
     const issueBody = encodeURIComponent(`\`\`\`${event.item?.title}\n${codeLineContent}\n\`\`\`\n#\n${commentData}\n#\n[Created from ApiView comment](${apiViewUrl})`);
 
     window.open(`https://github.com/Azure/${repo}/issues/new?body=${issueBody}`, '_blank');
+  }
+
+  copyCommentLink(event: MenuItemCommandEvent) {
+    const target = (event.originalEvent?.target as Element)?.closest("a");
+    if (!target) {
+      return;
+    }
+    
+    const commentId = target.getAttribute("data-item-id");
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    
+    const nodeId: string = comment?.elementId || this.codePanelRowData?.nodeId || '';
+
+    const baseUrl = window.location.href.split("#")[0].split("?")[0];
+    const queryParams = new URLSearchParams(window.location.search);
+    if (nodeId) {
+      queryParams.set("nId", nodeId);
+    }
+    const commentUrl = `${baseUrl}?${queryParams.toString()}#${commentId}`;
+
+    navigator.clipboard.writeText(commentUrl).then(() => {
+      this.messageService.add({ severity: 'success', summary: 'Link copied', detail: 'Comment link copied to clipboard', life: 3000 });
+    }).catch(() => {
+      this.messageService.add({ severity: 'error', summary: 'Copy failed', detail: 'Unable to copy link to clipboard', life: 3000 });
+    });
   }
 
   showReplyEditor(event: Event) {

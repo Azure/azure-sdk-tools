@@ -633,7 +633,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
-    return `${window.location.protocol}//${window.location.host}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
+    return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**

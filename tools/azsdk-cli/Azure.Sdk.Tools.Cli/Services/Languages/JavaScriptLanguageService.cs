@@ -157,6 +157,100 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         return new TestRunResponse(result);
     }
 
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing JavaScript SDK project at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}", null, null);
+            }
+
+            var packageInfo = await GetPackageInfo(fullPath, ct);
+
+            var args = new List<string> { "pack" };
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.AddRange(["--pack-destination", outputPath]);
+            }
+
+            var result = await processHelper.Run(new ProcessOptions(
+                    command: "pnpm",
+                    args: args.ToArray(),
+                    workingDirectory: fullPath,
+                    timeout: TimeSpan.FromMinutes(timeoutMinutes)
+                ),
+                ct
+            );
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"pnpm pack failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            // pnpm pack outputs the tarball filename to stdout
+            var artifactPath = ExtractTarballPath(result.Output, fullPath, outputPath);
+            logger.LogInformation("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing JavaScript SDK");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to extract the .tgz file path from pnpm pack output.
+    /// </summary>
+    private static string? ExtractTarballPath(string output, string packagePath, string? outputPath)
+    {
+        // pnpm pack typically outputs the tarball filename
+        var lines = output.Split('\n');
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (trimmed.EndsWith(".tgz", StringComparison.OrdinalIgnoreCase))
+            {
+                var dir = outputPath ?? packagePath;
+                var candidatePath = Path.Combine(dir, trimmed);
+                if (File.Exists(candidatePath))
+                {
+                    return candidatePath;
+                }
+                // The line itself might be a full path
+                if (File.Exists(trimmed))
+                {
+                    return trimmed;
+                }
+            }
+        }
+
+        // Fallback: look for .tgz files in the directory
+        var searchDir = outputPath ?? packagePath;
+        if (Directory.Exists(searchDir))
+        {
+            var tgzFiles = Directory.GetFiles(searchDir, "*.tgz", SearchOption.TopDirectoryOnly);
+            if (tgzFiles.Length > 0)
+            {
+                return tgzFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+            }
+        }
+
+        return null;
+    }
+
     public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
         // In azure-sdk-for-js, the presence of a "generated" folder at the same level

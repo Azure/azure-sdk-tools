@@ -239,6 +239,77 @@ public sealed partial class JavaLanguageService : LanguageService
 
     }
 
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing Java SDK project at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}", null, null);
+            }
+
+            var packageInfo = await GetPackageInfo(fullPath, ct);
+
+            var pomPath = Path.Combine(fullPath, "pom.xml");
+            var args = new List<string>
+            {
+                "package",
+                "-Dgpg.skip",
+                "-DskipTestCompile",
+                "-Djacoco.skip",
+                "-Drevapi.skip",
+            };
+
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.Add($"-DpackageOutputDirectory={outputPath}");
+            }
+
+            var result = await _mavenHelper.Run(
+                new("clean", args.ToArray(), pomPath, workingDirectory: fullPath, timeout: TimeSpan.FromMinutes(timeoutMinutes)),
+                ct
+            );
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"mvn clean package failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            // Try to find artifact path in the output directory
+            var artifactDir = outputPath ?? Path.Combine(fullPath, "target");
+            string? artifactPath = null;
+            if (Directory.Exists(artifactDir))
+            {
+                var jarFiles = Directory.GetFiles(artifactDir, "*.jar", SearchOption.TopDirectoryOnly)
+                    .Where(f => !f.EndsWith("-sources.jar") && !f.EndsWith("-javadoc.jar") && !f.EndsWith("-tests.jar"))
+                    .ToArray();
+                if (jarFiles.Length > 0)
+                {
+                    artifactPath = jarFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+                }
+            }
+
+            logger.LogInformation("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing Java SDK");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
+    }
+
     public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
     {
         // TODO: implement file-level diff between oldGenerationPath and newGenerationPath.

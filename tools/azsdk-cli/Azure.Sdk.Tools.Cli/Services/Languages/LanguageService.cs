@@ -509,5 +509,20 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 return (false, $"An error occurred: {ex.Message}", null);
             }
         }
+
+        /// <summary>
+        /// Creates a distributable artifact (package) for the specified SDK package.
+        /// For example, this produces a .nupkg for .NET, a .jar for Java, a .tgz for JavaScript, or a wheel/sdist for Python.
+        /// </summary>
+        /// <param name="packagePath">Absolute path to the SDK package directory.</param>
+        /// <param name="outputPath">Optional output directory for the artifact. If null, a default location is used.</param>
+        /// <param name="timeoutMinutes">Maximum time to wait for the pack process to complete.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>A tuple containing: Success (bool), ErrorMessage (string? - null if successful), PackageInfo (PackageInfo? - package metadata if available), ArtifactPath (string? - path to the generated artifact).</returns>
+        public virtual Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+            string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+        {
+            return Task.FromResult<(bool, string?, PackageInfo?, string?)>((false, $"Pack is not supported for {Language}.", null, null));
+        }
     }
 }

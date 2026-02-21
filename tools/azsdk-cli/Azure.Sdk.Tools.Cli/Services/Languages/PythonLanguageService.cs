@@ -163,6 +163,79 @@ private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(strin
         return new TestRunResponse(result);
     }
 
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing Python SDK project at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}", null, null);
+            }
+
+            var packageInfo = await GetPackageInfo(fullPath, ct);
+
+            var args = new List<string> { "-m", "build" };
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.AddRange(["--outdir", outputPath]);
+            }
+
+            var result = await pythonHelper.Run(new PythonOptions(
+                    "python",
+                    args.ToArray(),
+                    workingDirectory: fullPath,
+                    timeout: TimeSpan.FromMinutes(timeoutMinutes)
+                ),
+                ct
+            );
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"python -m build failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            // Python build typically outputs to dist/
+            var distDir = outputPath ?? Path.Combine(fullPath, "dist");
+            string? artifactPath = null;
+            if (Directory.Exists(distDir))
+            {
+                // Prefer .whl over .tar.gz
+                var whlFiles = Directory.GetFiles(distDir, "*.whl", SearchOption.TopDirectoryOnly);
+                if (whlFiles.Length > 0)
+                {
+                    artifactPath = whlFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+                }
+                else
+                {
+                    var tarFiles = Directory.GetFiles(distDir, "*.tar.gz", SearchOption.TopDirectoryOnly);
+                    if (tarFiles.Length > 0)
+                    {
+                        artifactPath = tarFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+                    }
+                }
+            }
+
+            logger.LogInformation("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing Python SDK");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
+    }
+
     /// <summary>
     /// Checks if a _patch.py file has a non-empty __all__ export list, indicating actual customizations.
     /// </summary>

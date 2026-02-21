@@ -231,6 +231,97 @@ public sealed partial class DotnetLanguageService: LanguageService
         return new TestRunResponse(result);
     }
 
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing .NET SDK project at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}", null, null);
+            }
+
+            var packageInfo = await GetPackageInfo(fullPath, ct);
+
+            var args = new List<string> { "pack", "--no-build" };
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.AddRange(["--output", outputPath]);
+            }
+
+            var result = await processHelper.Run(new ProcessOptions(
+                    command: DotNetCommand,
+                    args: args.ToArray(),
+                    workingDirectory: fullPath,
+                    timeout: TimeSpan.FromMinutes(timeoutMinutes)
+                ),
+                ct
+            );
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"dotnet pack failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            // Try to find the generated .nupkg path from the output
+            var artifactPath = ExtractNupkgPath(result.Output, fullPath, outputPath);
+            logger.LogInformation("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing .NET SDK");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to extract the .nupkg file path from dotnet pack output.
+    /// </summary>
+    private static string? ExtractNupkgPath(string output, string packagePath, string? outputPath)
+    {
+        // dotnet pack typically outputs a line like:
+        // Successfully created package '/path/to/Package.1.0.0.nupkg'.
+        var lines = output.Split('\n');
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (trimmed.Contains(".nupkg", StringComparison.OrdinalIgnoreCase))
+            {
+                // Try to extract the path between single quotes
+                var startIdx = trimmed.IndexOf('\'');
+                var endIdx = trimmed.LastIndexOf('\'');
+                if (startIdx >= 0 && endIdx > startIdx)
+                {
+                    return trimmed.Substring(startIdx + 1, endIdx - startIdx - 1);
+                }
+            }
+        }
+
+        // Fallback: look in the output directory for .nupkg files
+        var searchDir = outputPath ?? Path.Combine(packagePath, "bin", "Release");
+        if (Directory.Exists(searchDir))
+        {
+            var nupkgFiles = Directory.GetFiles(searchDir, "*.nupkg", SearchOption.TopDirectoryOnly);
+            if (nupkgFiles.Length > 0)
+            {
+                return nupkgFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+            }
+        }
+
+        return null;
+    }
+
     public override bool HasCustomizations(string packagePath, CancellationToken ct)
     {
         // In azure-sdk-for-net, generated code lives in the Generated folder.

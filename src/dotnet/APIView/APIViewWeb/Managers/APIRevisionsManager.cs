@@ -37,6 +37,7 @@ namespace APIViewWeb.Managers
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
+        private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly TelemetryClient _telemetryClient;
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
@@ -52,6 +53,7 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
             INotificationManager notificationManager,
+            ICosmosCommentsRepository commentsRepository,
             TelemetryClient telemetryClient,
             IConfiguration configuration)
         {
@@ -66,6 +68,7 @@ namespace APIViewWeb.Managers
             _devopsArtifactRepository = devopsArtifactRepository;
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
+            _commentsRepository = commentsRepository;
             _telemetryClient = telemetryClient;
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
@@ -1396,6 +1399,139 @@ namespace APIViewWeb.Managers
                 }
             }
             return revisionModel;
+        }
+
+        /// <summary>
+        /// Computes the quality score for an API revision based on unresolved comments.
+        /// Score starts at 100 and is degraded by severity-weighted comment counts.
+        /// AI-generated comment penalties are scaled by their individual confidence scores.
+        /// Penalties are also scaled relative to the size of the review (number of code lines).
+        /// </summary>
+        /// <param name="apiRevisionId">The API revision ID to calculate the score for.</param>
+        /// <returns>A ReviewQualityScore containing the calculated score and comment counts.</returns>
+        public async Task<ReviewQualityScore> GetReviewQualityScoreAsync(string apiRevisionId)
+        {
+            if (string.IsNullOrWhiteSpace(apiRevisionId))
+            {
+                throw new ArgumentException("API Revision ID cannot be null or empty.", nameof(apiRevisionId));
+            }
+
+            var revision = await GetAPIRevisionAsync(apiRevisionId);
+            if (revision == null)
+            {
+                throw new ArgumentException($"API Revision with ID '{apiRevisionId}' not found.", nameof(apiRevisionId));
+            }
+
+            // Get the code file to determine review size
+            var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+            
+            // Count total reviewable lines (excluding documentation, whitespace, etc.)
+            int totalReviewableLines = 0;
+            if (codeFile != null)
+            {
+                var renderedLines = codeFile.Render(showDocumentation: false);
+                if (renderedLines != null)
+                {
+                    totalReviewableLines = renderedLines.Count(line =>
+                        !line.IsDocumentation &&
+                        !string.IsNullOrWhiteSpace(line.DisplayString));
+                }
+            }
+
+            // Default to 100 lines if we can't determine size (prevents division by zero and overly harsh penalties)
+            if (totalReviewableLines == 0)
+            {
+                totalReviewableLines = 100;
+            }
+
+            // Get all comments for the revision's review
+            var allComments = await _commentsRepository.GetCommentsAsync(revision.ReviewId);
+            
+            // Filter to only APIRevision comments for this specific revision that are not deleted and not resolved
+            var unresolvedComments = allComments
+                .Where(c => c.CommentType == CommentType.APIRevision 
+                    && c.APIRevisionId == apiRevisionId 
+                    && !c.IsResolved 
+                    && !c.IsDeleted)
+                .ToList();
+
+            // Group comments by conversation thread. Only the thread-starting comment's severity
+            // should be counted — replies within a thread do not carry their own severity and must
+            // not inflate the score. Use ThreadId when available, falling back to ElementId for
+            // legacy comments that predate thread support.
+            var threads = unresolvedComments
+                .GroupBy(c => !string.IsNullOrEmpty(c.ThreadId) ? c.ThreadId : c.ElementId)
+                .ToList();
+
+            // For each thread, pick the first comment (by creation date) as the representative.
+            // Its severity determines the thread's severity for scoring purposes.
+            var threadRepresentatives = threads
+                .Select(g => g.OrderBy(c => c.CreatedOn).First())
+                .ToList();
+
+            var score = new ReviewQualityScore();
+            double totalPenalty = 0.0;
+
+            // Calculate base scale factor: penalties are relative to review size
+            // For a 100-line review, use base penalties
+            // For larger reviews, penalties are proportionally smaller per comment
+            double scaleFactor = 100.0 / totalReviewableLines;
+
+            foreach (var comment in threadRepresentatives)
+            {
+                // Questions don't degrade the score
+                if (comment.Severity == CommentSeverity.Question || comment.Severity == null)
+                {
+                    if (comment.Severity == CommentSeverity.Question)
+                    {
+                        score.UnresolvedQuestionCount++;
+                    }
+                    continue;
+                }
+
+                // Calculate the penalty for this comment based on severity
+                double basePenalty = comment.Severity switch
+                {
+                    CommentSeverity.MustFix => ReviewQualityScore.MustFixPenalty,
+                    CommentSeverity.ShouldFix => ReviewQualityScore.ShouldFixPenalty,
+                    CommentSeverity.Suggestion => ReviewQualityScore.SuggestionPenalty,
+                    _ => 0.0
+                };
+
+                // Scale penalty by review size
+                double scaledPenalty = basePenalty * scaleFactor;
+
+                // For AI-generated comments, further scale the penalty by confidence score
+                if (comment.CommentSource == CommentSource.AIGenerated)
+                {
+                    // Confidence score ranges from 0.0 to 1.0
+                    scaledPenalty *= comment.ConfidenceScore;
+                }
+
+                totalPenalty += scaledPenalty;
+
+                // Track counts by severity
+                switch (comment.Severity)
+                {
+                    case CommentSeverity.MustFix:
+                        score.UnresolvedMustFixCount++;
+                        break;
+                    case CommentSeverity.ShouldFix:
+                        score.UnresolvedShouldFixCount++;
+                        break;
+                    case CommentSeverity.Suggestion:
+                        score.UnresolvedSuggestionCount++;
+                        break;
+                }
+            }
+
+            // Total unresolved count includes ALL unresolved threads (questions and null-severity included)
+            score.TotalUnresolvedCount = threadRepresentatives.Count;
+
+            // Calculate final score: start at 100 and subtract penalty, but never go below 0
+            score.Score = Math.Max(0, 100.0 - totalPenalty);
+
+            return score;
         }
     }
 }

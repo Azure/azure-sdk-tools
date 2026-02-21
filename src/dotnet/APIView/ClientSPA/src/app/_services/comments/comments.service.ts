@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ConfigService } from '../config/config.service';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { CommentItemModel, CommentType, CommentSeverity } from 'src/app/_models/commentItemModel';
 
 @Injectable({
@@ -9,6 +9,20 @@ import { CommentItemModel, CommentType, CommentSeverity } from 'src/app/_models/
 })
 export class CommentsService {
   baseUrl : string = this.configService.apiUrl + "comments";
+
+  private _qualityScoreRefreshNeeded = new Subject<void>();
+  qualityScoreRefreshNeeded$ = this._qualityScoreRefreshNeeded.asObservable();
+
+  private _severityChanged = new Subject<{ commentId: string, newSeverity: CommentSeverity }>();
+  severityChanged$ = this._severityChanged.asObservable();
+
+  notifyQualityScoreRefresh() {
+    this._qualityScoreRefreshNeeded.next();
+  }
+
+  notifySeverityChanged(commentId: string, newSeverity: CommentSeverity) {
+    this._severityChanged.next({ commentId, newSeverity });
+  }
 
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
@@ -21,6 +35,19 @@ export class CommentsService {
     return this.http.get<any>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { withCredentials: true });
   }
 
+  // Map numeric enum values to the string names expected by C# JsonStringEnumConverter
+  private readonly commentTypeNames: Record<number, string> = {
+    [CommentType.APIRevision]: 'APIRevision',
+    [CommentType.SampleRevision]: 'SampleRevision',
+  };
+
+  private readonly severityNames: Record<number, string> = {
+    [CommentSeverity.Question]: 'Question',
+    [CommentSeverity.Suggestion]: 'Suggestion',
+    [CommentSeverity.ShouldFix]: 'ShouldFix',
+    [CommentSeverity.MustFix]: 'MustFix',
+  };
+
   createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false, severity: CommentSeverity | null = null, threadId?: string) : Observable<CommentItemModel> {
     const formData = new FormData();
     formData.append('reviewId', reviewId);
@@ -32,14 +59,16 @@ export class CommentsService {
     }
     formData.append('elementId', elementId);
     formData.append('commentText', commentText);
-    formData.append('commentType', commentType.toString());
+    formData.append('commentType', this.commentTypeNames[commentType] ?? commentType.toString());
     formData.append('resolutionLocked', resolutionLocked.toString());
     if (severity !== null) {
-      formData.append('severity', severity.toString());
+      formData.append('severity', this.severityNames[severity] ?? severity.toString());
     }
     if (threadId) {
       formData.append('threadId', threadId);
     }
+
+    return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
 
     return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
   }
@@ -48,16 +77,16 @@ export class CommentsService {
     const formData = new FormData();
     formData.append('commentText', commentText);
 
-    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/updateCommentText`, formData, { 
+    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/updateCommentText`, formData, {
       observe: 'response',
       withCredentials: true });
   }
 
   updateCommentSeverity(reviewId: string, commentId: string, severity: CommentSeverity) {
     const formData = new FormData();
-    formData.append('severity', severity.toString());
+    formData.append('severity', this.severityNames[severity] ?? severity.toString());
 
-    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/updateCommentSeverity`, formData, { 
+    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/updateCommentSeverity`, formData, {
       observe: 'response',
       withCredentials: true });
   }
@@ -73,7 +102,7 @@ export class CommentsService {
       'Content-Type': 'application/json',
     })
 
-    return this.http.patch(this.baseUrl + `/${reviewId}/resolveComments`, {}, { 
+    return this.http.patch(this.baseUrl + `/${reviewId}/resolveComments`, {}, {
       headers: headers,
       observe: 'response',
       params: params,
@@ -91,7 +120,7 @@ export class CommentsService {
       'Content-Type': 'application/json',
     })
 
-    return this.http.patch(this.baseUrl + `/${reviewId}/unResolveComments`, {}, { 
+    return this.http.patch(this.baseUrl + `/${reviewId}/unResolveComments`, {}, {
       headers: headers,
       observe: 'response',
       params: params,
@@ -114,10 +143,10 @@ export class CommentsService {
       'Content-Type': 'application/json',
     });
 
-    return this.http.patch<CommentItemModel[]>(this.baseUrl + `/${reviewId}/commentsBatchOperation`, data, { 
+    return this.http.patch<CommentItemModel[]>(this.baseUrl + `/${reviewId}/commentsBatchOperation`, data, {
       headers: headers,
       observe: 'response',
-      withCredentials: true 
+      withCredentials: true
     });
   }
 
@@ -126,7 +155,7 @@ export class CommentsService {
       'Content-Type': 'application/json',
     })
 
-    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/toggleCommentUpVote`, {}, { 
+    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/toggleCommentUpVote`, {}, {
       headers: headers,
       observe: 'response',
       withCredentials: true
@@ -138,7 +167,7 @@ export class CommentsService {
       'Content-Type': 'application/json',
     })
 
-    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/toggleCommentDownVote`, {}, { 
+    return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/toggleCommentDownVote`, {}, {
       headers: headers,
       observe: 'response',
       withCredentials: true
@@ -156,7 +185,7 @@ export class CommentsService {
       isDelete: isDelete
     };
 
-    return this.http.post(this.baseUrl + `/${reviewId}/${commentId}/feedback`, body, { 
+    return this.http.post(this.baseUrl + `/${reviewId}/${commentId}/feedback`, body, {
       headers: headers,
       observe: 'response',
       withCredentials: true
@@ -168,7 +197,7 @@ export class CommentsService {
       'Content-Type': 'application/json',
     })
 
-    return this.http.delete(this.baseUrl + `/${reviewId}/${commentId}`, { 
+    return this.http.delete(this.baseUrl + `/${reviewId}/${commentId}`, {
       headers: headers,
       observe: 'response',
       withCredentials: true });
@@ -178,7 +207,7 @@ export class CommentsService {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     })
-    return this.http.delete(this.baseUrl + `/${apiRevisionId}/clearAutoComments`, { 
+    return this.http.delete(this.baseUrl + `/${apiRevisionId}/clearAutoComments`, {
       headers: headers,
       observe: 'response',
       withCredentials: true });

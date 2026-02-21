@@ -4,8 +4,12 @@ using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
@@ -16,6 +20,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 public class CustomizedCodeUpdateTool: LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
+    private readonly ITypeSpecHelper typeSpecHelper;
+    private readonly IAPIViewFeedbackService feedbackService;
+    private readonly ILoggerFactory loggerFactory;
+    private readonly ICopilotAgentRunner _agentRunner;
     
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
@@ -24,14 +32,26 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     /// <param name="languageServices">The collection of available language services.</param>
     /// <param name="gitHelper">The Git helper for repository operations.</param>
     /// <param name="tspClientHelper">The TypeSpec client helper for regeneration operations.</param>
+    /// <param name="typeSpecHelper">The TypeSpec helper for spec repo path resolution.</param>
+    /// <param name="feedbackService">The feedback service for extracting feedback from various sources.</param>
+    /// <param name="loggerFactory">The logger factory for creating loggers.</param>
+    /// <param name="agentRunner">The copilot agent runner for LLM-powered classification.</param>
     public CustomizedCodeUpdateTool(
         ILogger<CustomizedCodeUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
         IGitHelper gitHelper,
-        ITspClientHelper tspClientHelper
+        ITspClientHelper tspClientHelper,
+        ITypeSpecHelper typeSpecHelper,
+        IAPIViewFeedbackService feedbackService,
+        ILoggerFactory loggerFactory,
+        ICopilotAgentRunner agentRunner
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper;
+        this.typeSpecHelper = typeSpecHelper;
+        this.feedbackService = feedbackService;
+        this.loggerFactory = loggerFactory;
+        _agentRunner = agentRunner;
     }
 
     // MCP Tool Names
@@ -133,8 +153,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 return new CustomizedCodeUpdateResponse 
                 { 
                     Message = $"Package path does not exist: {packagePath}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
-                    ResponseError = $"Package path does not exist: {packagePath}" 
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    ResponseError = $"Package path does not exist: {packagePath}"
                 };
             }
             if (string.IsNullOrWhiteSpace(commitSha))
@@ -142,7 +162,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 return new CustomizedCodeUpdateResponse 
                 { 
                     Message = "Commit SHA is required.",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput, 
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                     ResponseError = "Commit SHA is required." 
                 };
             }
@@ -152,8 +172,8 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 return new CustomizedCodeUpdateResponse 
                 { 
                     Message = "Could not resolve a language service to perform SDK update.",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService, 
-                    ResponseError = "Could not resolve a language service to perform SDK update." 
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
+                    ResponseError = "Could not resolve a language service to perform SDK update."
                 };
             }
 
@@ -265,6 +285,82 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 ResponseError = ex.Message, 
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError 
             };
+        }
+    }
+
+    /// <summary>
+    /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE
+    /// (can be resolved with TSP customizations), SUCCESS (no action needed), or FAILURE (requires manual code customizations).
+    /// </summary>
+    private async Task<FeedbackClassificationResponse> Classify(
+        string tspProjectPath,
+        string? apiViewUrl,
+        string? plainTextFeedback,
+        string? plainTextFeedbackFile,
+        string? language,
+        CancellationToken ct)
+    {
+        try
+        {
+            // Read feedback from file if provided
+            if (!string.IsNullOrWhiteSpace(plainTextFeedbackFile))
+            {
+                if (!File.Exists(plainTextFeedbackFile))
+                {
+                    throw new FileNotFoundException($"Plain text feedback file does not exist: {plainTextFeedbackFile}");
+                }
+
+                plainTextFeedback = await File.ReadAllTextAsync(plainTextFeedbackFile, ct);
+                logger.LogInformation("Read {length} characters from feedback file: {file}", plainTextFeedback.Length, plainTextFeedbackFile);
+            }
+
+            if (string.IsNullOrEmpty(tspProjectPath) || !Directory.Exists(tspProjectPath))
+            {
+                throw new DirectoryNotFoundException($"TypeSpec project path does not exist: {tspProjectPath}");
+            }
+
+            var classifier = new FeedbackClassifierService(
+                _agentRunner,
+                loggerFactory,
+                typeSpecHelper,
+                tspProjectPath
+            );
+
+            FeedbackBatch feedbackBatch;
+            if (!string.IsNullOrWhiteSpace(apiViewUrl))
+            {
+                feedbackBatch = await new APIViewFeedbackItem(apiViewUrl, feedbackService, loggerFactory.CreateLogger<APIViewFeedbackItem>()).PreprocessAsync(ct);
+            }
+            else if (!string.IsNullOrWhiteSpace(plainTextFeedback))
+            {
+                feedbackBatch = await new PlainTextFeedbackItem(plainTextFeedback, loggerFactory.CreateLogger<PlainTextFeedbackItem>()).PreprocessAsync(ct);
+            }
+            else
+            {
+                throw new ArgumentException("Either --apiview-url or --plain-text-feedback (or --plain-text-feedback-file) must be provided.");
+            }
+
+            if (feedbackBatch.Items.Count == 0)
+            {
+                return new FeedbackClassificationResponse
+                {
+                    Message = "No valid feedback items found.",
+                    Classifications = []
+                };
+            }
+
+            language ??= feedbackBatch.Language;
+            if (string.IsNullOrEmpty(language))
+            {
+                throw new ArgumentException("Language is required but could not be determined from the feedback source. Please specify --language (e.g. python, java, dotnet, go, javascript).");
+            }
+
+            return await classifier.ClassifyItemsAsync(feedbackBatch.Items, globalContext: "", language, serviceName: null, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Classification failed");
+            throw;
         }
     }
 

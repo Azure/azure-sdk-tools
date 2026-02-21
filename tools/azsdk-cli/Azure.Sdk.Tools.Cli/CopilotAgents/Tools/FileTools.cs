@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Microsoft.Extensions.AI;
 
@@ -116,6 +117,83 @@ public static class FileTools
                 return entries;
             },
             "ListFiles",
+            description);
+    }
+
+    /// <summary>
+    /// Creates a GrepSearch tool that searches for patterns in files within a base directory.
+    /// </summary>
+    /// <param name="baseDir">The base directory for relative path resolution.</param>
+    /// <param name="description">Optional custom description for the tool.</param>
+    /// <returns>An AIFunction that searches files for patterns.</returns>
+    public static AIFunction CreateGrepSearchTool(
+        string baseDir,
+        string description = "Search for patterns in files within the project")
+    {
+        return AIFunctionFactory.Create(
+            ([Description("The search pattern (can be text or regex depending on isRegex parameter)")] string pattern,
+             [Description("The relative file path or directory to search in")] string path,
+             [Description("Whether the pattern is a regular expression (default: false)")] bool isRegex = false,
+             [Description("Maximum number of results to return (default: 50)")] int maxResults = 50) =>
+            {
+                if (string.IsNullOrWhiteSpace(pattern))
+                {
+                    throw new ArgumentException("Search pattern cannot be empty", nameof(pattern));
+                }
+                if (!ToolHelpers.TryGetSafeFullPath(baseDir, path, out var searchPath))
+                {
+                    throw new ArgumentException("The provided path is invalid or outside the allowed base directory.");
+                }
+                if (!Path.Exists(searchPath))
+                {
+                    throw new ArgumentException($"Path {path} does not exist", nameof(path));
+                }
+
+                var regex = isRegex ? new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled) : null;
+                var files = File.Exists(searchPath)
+                    ? [searchPath]
+                    : Directory.GetFiles(searchPath, "*", SearchOption.AllDirectories).Take(2000).ToArray();
+
+                var matches = new List<object>();
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        // Skip files > 2MB (use ReadFile for large files)
+                        if (new FileInfo(file).Length > 2 * 1024 * 1024)
+                        {
+                            continue;
+                        }
+
+                        int lineNum = 0;
+                        foreach (var line in File.ReadLines(file))
+                        {
+                            lineNum++;
+                            if (isRegex ? regex!.IsMatch(line) : line.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                            {
+                                matches.Add(new
+                                {
+                                    FilePath = Path.GetRelativePath(baseDir, file),
+                                    LineNumber = lineNum,
+                                    Content = line.Trim()
+                                });
+                                if (matches.Count >= maxResults)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        if (matches.Count >= maxResults)
+                        {
+                            break;
+                        }
+                    }
+                    catch { /* Skip unreadable files */ }
+                }
+
+                return new { Matches = matches, TotalMatches = matches.Count };
+            },
+            "GrepSearch",
             description);
     }
 }

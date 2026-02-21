@@ -37,7 +37,7 @@
     "fs-extra": "^11.3.0",
     "glob": "11.1.0",
     "js-yaml": "^4.1.0",
-    "minimatch": "10.0.1",
+    "minimatch": "10.2.1",
     "npm-registry-fetch": "^18.0.2",
     "parse-ts-to-ast": "^0.1.4",
     "semver": "^7.7.1",

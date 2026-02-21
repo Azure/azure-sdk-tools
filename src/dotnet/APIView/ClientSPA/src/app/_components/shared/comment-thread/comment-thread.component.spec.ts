@@ -604,6 +604,7 @@ describe('CommentThreadComponent', () => {
       expect(emittedDto).toBeDefined();
       expect(emittedDto!.severity).toBe(CommentSeverity.MustFix);
       expect(emittedDto!.allowAnyOneToResolve).toBe(true);
+      expect(emittedDto!.isReply).toBe(false);
     });
 
     it('should force severity to null when replying to an existing thread', () => {
@@ -623,6 +624,7 @@ describe('CommentThreadComponent', () => {
 
       expect(emittedDto).toBeDefined();
       expect(emittedDto!.severity).toBeNull();
+      expect(emittedDto!.isReply).toBe(true);
     });
 
     it('should not send allowAnyOneToResolve when replying to an existing thread', () => {
@@ -641,6 +643,7 @@ describe('CommentThreadComponent', () => {
 
       expect(emittedDto).toBeDefined();
       expect(emittedDto!.allowAnyOneToResolve).toBeUndefined();
+      expect(emittedDto!.isReply).toBe(true);
     });
 
     it('should not show Allow Anyone to Resolve button for replies', () => {

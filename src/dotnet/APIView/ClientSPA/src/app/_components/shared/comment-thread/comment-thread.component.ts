@@ -451,7 +451,8 @@ export class CommentThreadComponent {
             associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
             elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup,
-            severity: isReply ? null : this.selectedSeverity
+            severity: isReply ? null : this.selectedSeverity,
+            isReply: isReply
           } as CommentUpdatesDto
         );
         this.selectedSeverity = null;

@@ -219,6 +219,48 @@ describe('ConversationComponent', () => {
       // Now only 1 active thread
       expect(component.numberOfActiveThreads).toBe(1);
     });
+
+    it('should only resolve the target thread when multiple threads share the same elementId', () => {
+      const apiRevisions = [
+        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' }
+      ] as APIRevision[];
+
+      const comments = [
+        // Thread A on elem-1: 2 comments
+        { id: 'c1', elementId: 'elem-1', threadId: 'thread-A', apiRevisionId: 'rev-1', isResolved: false },
+        { id: 'c2', elementId: 'elem-1', threadId: 'thread-A', apiRevisionId: 'rev-1', isResolved: false },
+        // Thread B on same elem-1: 1 comment
+        { id: 'c3', elementId: 'elem-1', threadId: 'thread-B', apiRevisionId: 'rev-1', isResolved: false },
+        // Thread C on different elem-2
+        { id: 'c4', elementId: 'elem-2', threadId: 'thread-C', apiRevisionId: 'rev-1', isResolved: false }
+      ] as CommentItemModel[];
+
+      component.apiRevisions = apiRevisions;
+      component.comments = comments;
+      component.createCommentThreads();
+
+      // Initially 3 unresolved threads
+      expect(component.numberOfActiveThreads).toBe(3);
+
+      // Resolve thread-A only
+      (component as any).applyCommentResolutionUpdate({
+        elementId: 'elem-1',
+        threadId: 'thread-A',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved
+      });
+
+      // thread-A should be resolved
+      expect(component.comments.filter(c => c.threadId === 'thread-A').every(c => c.isResolved)).toBe(true);
+
+      // thread-B (same elementId) should NOT be resolved
+      expect(component.comments.filter(c => c.threadId === 'thread-B').every(c => !c.isResolved)).toBe(true);
+
+      // thread-C should NOT be resolved
+      expect(component.comments.filter(c => c.threadId === 'thread-C').every(c => !c.isResolved)).toBe(true);
+
+      // Badge should decrease by 1 only: 3 → 2
+      expect(component.numberOfActiveThreads).toBe(2);
+    });
   });
 
   describe('Quality score refresh on comment actions', () => {
@@ -289,6 +331,7 @@ describe('ConversationComponent', () => {
         commentText: 'new comment',
         allowAnyOneToResolve: false,
         severity: undefined,
+        isReply: false,
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
       } as CommentUpdatesDto);
 
@@ -307,6 +350,7 @@ describe('ConversationComponent', () => {
         threadId: 'existing-thread',
         allowAnyOneToResolve: undefined,
         severity: null,
+        isReply: true,
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
       } as CommentUpdatesDto);
 

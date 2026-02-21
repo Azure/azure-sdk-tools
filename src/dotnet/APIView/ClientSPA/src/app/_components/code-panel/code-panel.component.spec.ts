@@ -373,6 +373,7 @@ describe('CodePanelComponent', () => {
         commentText: 'new comment',
         allowAnyOneToResolve: false,
         severity: undefined,
+        isReply: false,
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
       } as CommentUpdatesDto);
 
@@ -390,6 +391,7 @@ describe('CodePanelComponent', () => {
         threadId: 'existing-thread',
         allowAnyOneToResolve: undefined,
         severity: null,
+        isReply: true,
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
       } as CommentUpdatesDto);
 

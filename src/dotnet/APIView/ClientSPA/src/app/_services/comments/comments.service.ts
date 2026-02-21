@@ -35,6 +35,19 @@ export class CommentsService {
     return this.http.get<any>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { withCredentials: true });
   }
 
+  // Map numeric enum values to the string names expected by C# JsonStringEnumConverter
+  private readonly commentTypeNames: Record<number, string> = {
+    [CommentType.APIRevision]: 'APIRevision',
+    [CommentType.SampleRevision]: 'SampleRevision',
+  };
+
+  private readonly severityNames: Record<number, string> = {
+    [CommentSeverity.Question]: 'Question',
+    [CommentSeverity.Suggestion]: 'Suggestion',
+    [CommentSeverity.ShouldFix]: 'ShouldFix',
+    [CommentSeverity.MustFix]: 'MustFix',
+  };
+
   createComment(reviewId: string, revisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false, severity: CommentSeverity | null = null, threadId?: string) : Observable<CommentItemModel> {
     const formData = new FormData();
     formData.append('reviewId', reviewId);
@@ -46,14 +59,16 @@ export class CommentsService {
     }
     formData.append('elementId', elementId);
     formData.append('commentText', commentText);
-    formData.append('commentType', commentType.toString());
+    formData.append('commentType', this.commentTypeNames[commentType] ?? commentType.toString());
     formData.append('resolutionLocked', resolutionLocked.toString());
     if (severity !== null) {
-      formData.append('severity', severity.toString());
+      formData.append('severity', this.severityNames[severity] ?? severity.toString());
     }
     if (threadId) {
       formData.append('threadId', threadId);
     }
+
+    return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
 
     return this.http.post<CommentItemModel>(this.baseUrl, formData, { withCredentials: true });
   }
@@ -69,7 +84,7 @@ export class CommentsService {
 
   updateCommentSeverity(reviewId: string, commentId: string, severity: CommentSeverity) {
     const formData = new FormData();
-    formData.append('severity', severity.toString());
+    formData.append('severity', this.severityNames[severity] ?? severity.toString());
 
     return this.http.patch(this.baseUrl + `/${reviewId}/${commentId}/updateCommentSeverity`, formData, {
       observe: 'response',

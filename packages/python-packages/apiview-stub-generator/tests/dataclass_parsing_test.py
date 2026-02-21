@@ -50,7 +50,7 @@ class TestDataClassParsing:
             "    name: str, ",
             "    unit_price: float, ",
             "    quantity_on_hand: int",
-            ")",
+            "): ...",
         ]
         # TODO: quantity_on_hand actually has a default value that should be displayed
         # assert init_string == "def __init__(name: str, unit_price: float, quantity_on_hand: int = 0)"
@@ -93,7 +93,7 @@ class TestDataClassParsing:
             "    myint_field: int, ",
             "    myint_field_default: int, ",
             "    mylist: list[int]",
-            ")"
+            "): ..."
         ]
         _check(actual, expected, obj)
 
@@ -136,7 +136,7 @@ class TestDataClassParsing:
             "    x: float, ",
             "    y: float, ",
             "    z: float",
-            ")",
+            "): ...",
         ]
         # TODO: init should display keyword only marker '*'
         # assert init_string == "def __init__(x: float, *, y: float, z: float)"
@@ -168,4 +168,4 @@ class TestDataClassParsing:
         )
 
         init_string = lines[8].lstrip()
-        assert init_string == "def __init__(a: float, b: float)"
+        assert init_string == "def __init__(a: float, b: float): ..."

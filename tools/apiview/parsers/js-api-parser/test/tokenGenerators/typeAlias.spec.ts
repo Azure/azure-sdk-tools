@@ -414,6 +414,36 @@ describe("typeAliasTokenGenerator", () => {
       });
     });
 
+    it("generates full method signatures inside intersection type literals", () => {
+      const typeText =
+        "Pick<BlobClient, \"abortCopyFromURL\" | \"getProperties\"> & { startCopyFromURL(copySource: string, options?: BlobStartCopyFromURLOptions): Promise<BlobBeginCopyFromURLResponse>; }";
+
+      const mockTypeAlias = createMockTypeAlias(
+        "CopyPollerBlobClient",
+        typeText,
+        createBasicExcerptTokens("CopyPollerBlobClient", typeText),
+      );
+
+      const result = typeAliasTokenGenerator.generate(mockTypeAlias, false);
+
+      const methodLine = result.children?.find((line) =>
+        line.Tokens.some((token) => token.Value === "startCopyFromURL"),
+      );
+
+      expect(methodLine).toBeDefined();
+
+      const methodValues = methodLine!.Tokens.map((token) => token.Value);
+      expect(methodValues).toContain("startCopyFromURL");
+      expect(methodValues).toContain("(");
+      expect(methodValues).toContain("copySource");
+      expect(methodValues).toContain("string");
+      expect(methodValues).toContain("options");
+      expect(methodValues).toContain("?");
+      expect(methodValues).toContain("BlobStartCopyFromURLOptions");
+      expect(methodValues).toContain("Promise");
+      expect(methodValues).toContain("BlobBeginCopyFromURLResponse");
+      expect(methodValues).toContain(";");
+    });
     it("generates correct tokens for a type literal alias", () => {
       const mockTypeAlias = createMockTypeAlias(
         "ObjectType",

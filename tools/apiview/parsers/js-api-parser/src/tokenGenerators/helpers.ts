@@ -693,12 +693,100 @@ export function buildTypeElementTokens(
       return children;
     }
   } else if (ts.isMethodSignature(member)) {
-    // Handle method signatures if needed
+    const methodChildren: ReviewLine[] = [];
+
     const name = member.name.getText();
     tokens.push(createToken(TokenKind.MemberName, name, { deprecated }));
-    // Add method signature handling as needed...
-    tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
-    return undefined;
+
+    if (member.questionToken) {
+      tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+    }
+
+    if (member.typeParameters?.length) {
+      tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+      member.typeParameters.forEach((typeParameter, index) => {
+        tokens.push(createToken(TokenKind.TypeName, typeParameter.name.getText(), { deprecated }));
+
+        if (typeParameter.constraint) {
+          tokens.push(
+            createToken(TokenKind.Keyword, "extends", {
+              hasPrefixSpace: true,
+              hasSuffixSpace: true,
+              deprecated,
+            }),
+          );
+          addTypeNodeTokensOrInlineLiteral(
+            typeParameter.constraint,
+            tokens,
+            methodChildren,
+            deprecated,
+            depth,
+          );
+        }
+
+        if (typeParameter.default) {
+          tokens.push(
+            createToken(TokenKind.Punctuation, "=", {
+              hasPrefixSpace: true,
+              hasSuffixSpace: true,
+              deprecated,
+            }),
+          );
+          addTypeNodeTokensOrInlineLiteral(
+            typeParameter.default,
+            tokens,
+            methodChildren,
+            deprecated,
+            depth,
+          );
+        }
+
+        if (index < member.typeParameters.length - 1) {
+          tokens.push(
+            createToken(TokenKind.Punctuation, ",", {
+              hasSuffixSpace: true,
+              deprecated,
+            }),
+          );
+        }
+      });
+      tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+    }
+
+    tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
+    member.parameters.forEach((param, index) => {
+      if (index > 0) {
+        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+      }
+
+      if (param.dotDotDotToken) {
+        tokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
+      }
+
+      tokens.push(createToken(TokenKind.MemberName, param.name.getText(), { deprecated }));
+
+      if (param.questionToken) {
+        tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+      }
+
+      if (param.type) {
+        tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+        addTypeNodeTokensOrInlineLiteral(param.type, tokens, methodChildren, deprecated, depth);
+      }
+    });
+    tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+
+    if (member.type) {
+      tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+      addTypeNodeTokensOrInlineLiteral(member.type, tokens, methodChildren, deprecated, depth);
+    }
+
+    if (!methodChildren.length) {
+      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+      return undefined;
+    }
+
+    return methodChildren;
   }
 
   tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));

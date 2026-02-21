@@ -336,7 +336,7 @@ class TestApiView:
             md_content = render_markdown(apiview)
             
             # Verify markdown structure
-            assert md_content.startswith("```python")
+            assert md_content.startswith("```py")
             assert md_content.endswith("```")
             assert "namespace apistubgentest" in md_content
             

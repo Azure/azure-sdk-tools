@@ -731,11 +731,16 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
         }
 
-        private static async Task<TypeSpecMetadata> ExtractTypeSpecMetadataForReviewAsync(ZipArchive archive, string targetReviewId, string metadataFileName)
+        private static async Task<TypeSpecMetadata> ExtractTypeSpecMetadataForReviewAsync(
+            ZipArchive archive,
+            string targetReviewId,
+            string targetApiRevisionId,
+            string metadataFileName)
         {
             var metadataEntry = archive.Entries.FirstOrDefault(e =>
                 e.FullName.Split("/") is { Length: >= 4 } parts &&
                 parts[1].Equals(targetReviewId, StringComparison.OrdinalIgnoreCase) &&
+                parts[2].Equals(targetApiRevisionId, StringComparison.OrdinalIgnoreCase) &&
                 Path.GetFileName(e.FullName).Equals(metadataFileName, StringComparison.OrdinalIgnoreCase));
 
             if (metadataEntry == null)
@@ -744,7 +749,11 @@ namespace APIViewWeb.Managers
             try
             {
                 await using var metadataStream = metadataEntry.Open();
-                return await JsonSerializer.DeserializeAsync<TypeSpecMetadata>(metadataStream);
+                var jsonSerializerOptions = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                return await JsonSerializer.DeserializeAsync<TypeSpecMetadata>(metadataStream, jsonSerializerOptions);
             }
             catch (JsonException)
             {
@@ -812,7 +821,7 @@ namespace APIViewWeb.Managers
                         // Process TypeSpec metadata if available for this review (lazy load only for TypeSpec)
                         if (!string.IsNullOrEmpty(metadataFileName) && !string.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.TypeSpecLanguage)
                         {
-                            var typeSpecMetadata = await ExtractTypeSpecMetadataForReviewAsync(archive, reviewId, metadataFileName);
+                            var typeSpecMetadata = await ExtractTypeSpecMetadataForReviewAsync(archive, reviewId, apiRevisionId, metadataFileName);
                             if (typeSpecMetadata != null)
                             {
                                 await _projectsManager.UpsertProjectFromMetadataAsync(ApiViewConstants.AzureSdkBotName, typeSpecMetadata, review);

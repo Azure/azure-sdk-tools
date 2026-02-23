@@ -65,8 +65,8 @@
         </div>
     </div>
 
-    <hr class="my-2">
-    <div class="px-1 py-2">
+    <hr *ngIf="isAdmin" class="my-2">
+    <div *ngIf="isAdmin" class="px-1 py-2">
         <h6 class="mb-2 fw-semibold">Quality Score</h6>
         <div *ngIf="qualityScoreLoading" class="text-center py-2">
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>

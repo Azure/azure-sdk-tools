@@ -130,18 +130,10 @@ namespace APIViewWeb.Managers;
             {
                 foreach (var apiRev in apiRevisions)
                 {
-                    if (!await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
+                    if (await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
                     {
-                        continue;
+                        await _apiRevisionsManager.CarryForwardRevisionDataAsync(targetRevision: apiRevision, sourceRevision: apiRev);
                     }
-
-                    if (!apiRevision.IsApproved && apiRev.IsApproved)
-                    {
-                        await _apiRevisionsManager.CopyApprovalFromAsync(targetRevision: apiRevision, sourceRevision: apiRev);
-                    }
-
-                    await _apiRevisionsManager.CarryForwardRevisionDataAsync(targetRevision: apiRevision, sourceRevision: apiRev);
-                    break;
                 }
             }
             return (review, apiRevision);

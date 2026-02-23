@@ -530,12 +530,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
                         };
                     }
-                }            
+                }
 
                 // Get service and product id from previous release plan
                 if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
                 {
-                    logger.LogInformation("Service and product id are not available. Checking for previous release plan for the TypeSpec project {specProject}", specProject);
+                    logger.LogInformation("Service and product id are not available. Checking for a previous release plan with same TypeSpec project {specProject}", specProject);
                     // Get product and service tree Id from existing release plan.
                     var productDetails = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specProject);
                     if (productDetails != null)

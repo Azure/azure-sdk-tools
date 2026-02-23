@@ -126,20 +126,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.True(releaseplan.ResponseError.Contains("Invalid API version"));
         }
 
-        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta")]
-        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "stable")]
-        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35448", "Preview")]
-        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35449", "GA")]
-        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management", "January 2026", "2025-03-21", "https://github.com/Azure/azure-rest-api-specs/pull/39310", "stable")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", "", "")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35447", "stable", "", "")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35448", "Preview", "", "")]
+        [TestCase("TypeSpecTestData/specification/testcontoso/Contoso.Management", "July 2025", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35449", "GA", "", "")]
+        [TestCase("https://github.com/Azure/azure-rest-api-specs/blob/main/specification/dell/Dell.Storage.Management", "January 2026", "2025-03-21", "https://github.com/Azure/azure-rest-api-specs/pull/39310", "stable", "12345678-1234-5678-9012-123456789012", "87654321-4321-8765-1234-210987654321")]
         [Test]
-        public async Task Test_Create_releasePlan_with_valid_inputs(string typeSpecPath, string targetMonth, string apiVersion, string prUrl, string sdkType)
+        public async Task Test_Create_releasePlan_with_valid_inputs(string typeSpecPath, string targetMonth, string apiVersion, string prUrl, string sdkType, string serviceId, string productId)
         {
             var result = await releasePlanTool.CreateReleasePlan(
                 typeSpecPath, 
                 targetMonth,
                 apiVersion, 
                 prUrl, 
-                sdkType, 
+                sdkType,
+                serviceTreeId: serviceId,
+                productTreeId: productId,
                 isTestReleasePlan: true);
 
             Assert.IsNull(result.ResponseError, $"Unexpected error: {result.ResponseError}");

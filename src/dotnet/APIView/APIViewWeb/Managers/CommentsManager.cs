@@ -32,6 +32,7 @@ namespace APIViewWeb.Managers
     public class CommentsManager : ICommentsManager
     {
         private readonly IAPIRevisionsManager _apiRevisionsManager;
+        private readonly IDiagnosticCommentService _diagnosticCommentService;
         private readonly IAuthorizationService _authorizationService;
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly ICosmosReviewRepository _reviewRepository;
@@ -43,6 +44,7 @@ namespace APIViewWeb.Managers
         private readonly ILogger<CommentsManager> _logger;
         private readonly IBackgroundTaskQueue _backgroundTaskQueue;
         private readonly ICopilotAuthenticationService _copilotAuthService;
+        private readonly IPermissionsManager _permissionsManager;
 
         public readonly UserProfileCache _userProfileCache;
         private readonly OrganizationOptions _Options;
@@ -50,6 +52,7 @@ namespace APIViewWeb.Managers
         public HashSet<GithubUser> TaggableUsers;
 
         public CommentsManager(IAPIRevisionsManager apiRevisionsManager,
+            IDiagnosticCommentService diagnosticCommentService,
             IAuthorizationService authorizationService,
             ICosmosCommentsRepository commentsRepository,
             ICosmosReviewRepository reviewRepository,
@@ -61,10 +64,12 @@ namespace APIViewWeb.Managers
             IConfiguration configuration,
             IOptions<OrganizationOptions> options,
             IBackgroundTaskQueue backgroundTaskQueue,
+            IPermissionsManager permissionsManager,
             ICopilotAuthenticationService copilotAuthService,
             ILogger<CommentsManager> logger)
         {
             _apiRevisionsManager = apiRevisionsManager;
+            _diagnosticCommentService = diagnosticCommentService;
             _authorizationService = authorizationService;
             _commentsRepository = commentsRepository;
             _reviewRepository = reviewRepository;
@@ -77,6 +82,7 @@ namespace APIViewWeb.Managers
             _Options = options.Value;
             _backgroundTaskQueue = backgroundTaskQueue;
             _copilotAuthService = copilotAuthService;
+            _permissionsManager = permissionsManager;
             _logger = logger;
 
             TaggableUsers = new HashSet<GithubUser>();
@@ -359,17 +365,9 @@ namespace APIViewWeb.Managers
 
         private async Task<bool> IsUserAllowedToChatWithAgentAsync(ClaimsPrincipal user, ReviewListItemModel review)
         {
-            return await IsUserLanguageArchitectAsync(user, review);
-        }
-
-        private async Task<bool> IsUserLanguageArchitectAsync(ClaimsPrincipal user, ReviewListItemModel review)
-        {
-            if (user == null || review == null)
-                return false;
-
-            string githubUser = user.GetGitHubLogin();
-            HashSet<string> approvers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, user, review);
-            return approvers != null && approvers.Contains(githubUser);
+            string userId = user.GetGitHubLogin();
+            EffectivePermissions permissions = await _permissionsManager.GetEffectivePermissionsAsync(userId);
+            return permissions != null && permissions.IsApproverFor(review.Language);
         }
 
         /// <summary>
@@ -837,169 +835,21 @@ namespace APIViewWeb.Managers
             CodeDiagnostic[] diagnostics,
             IEnumerable<CommentItemModel> existingComments)
         {
-            diagnostics ??= [];
-            string reviewId = apiRevision.ReviewId;
-            string apiRevisionId = apiRevision.Id;
+            DiagnosticSyncResult result = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                apiRevision.ReviewId,
+                apiRevision.Id,
+                apiRevision.DiagnosticsHash,
+                diagnostics,
+                existingComments);
 
-            string currentHash = ComputeDiagnosticsHash(diagnostics);
-            if (apiRevision.DiagnosticsHash == currentHash)
+            // Update the revision's hash if sync occurred
+            if (result.WasSynced)
             {
-                return existingComments
-                    .Where(c => c.CommentSource == CommentSource.Diagnostic && c.APIRevisionId == apiRevisionId)
-                    .ToList();
+                apiRevision.DiagnosticsHash = result.DiagnosticsHash;
+                await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
             }
 
-            Dictionary<string, CommentItemModel> existingDiagnosticComments = existingComments
-                .Where(c => c.CommentSource == CommentSource.Diagnostic && c.APIRevisionId == apiRevisionId)
-                .ToDictionary(c => c.Id, c => c);
-
-            var result = new List<CommentItemModel>();
-            var expectedDiagnosticIds = new HashSet<string>();
-            foreach (var diagnostic in diagnostics)
-            {
-                string diagnosticHash = GenerateDiagnosticHash(diagnostic.TargetId, diagnostic.Text);
-                string commentId = $"diag-{apiRevisionId}-{diagnosticHash}";
-                string threadId = $"diag-thread-{apiRevisionId}-{diagnosticHash}";
-                expectedDiagnosticIds.Add(commentId);
-
-                CommentSeverity newSeverity = MapDiagnosticLevelToSeverity(diagnostic.Level);
-                string newCommentText = BuildDiagnosticCommentText(diagnostic.Text, diagnostic.HelpLinkUri);
-
-                if (existingDiagnosticComments.TryGetValue(commentId, out var existingComment))
-                {
-                    bool needsUpdate = false;
-                    if (existingComment.IsResolved)
-                    {
-                        var lastResolveAction = existingComment.ChangeHistory
-                            .LastOrDefault(h => h.ChangeAction == CommentChangeAction.Resolved);
-
-                        if (lastResolveAction?.ChangedBy == ApiViewConstants.AzureSdkBotName)
-                        {
-                            existingComment.IsResolved = false;
-                            existingComment.ChangeHistory.Add(new CommentChangeHistoryModel
-                            {
-                                ChangeAction = CommentChangeAction.UnResolved,
-                                ChangedBy = ApiViewConstants.AzureSdkBotName,
-                                ChangedOn = DateTime.UtcNow
-                            });
-                            needsUpdate = true;
-                        }
-                    }
-
-                    if (existingComment.Severity != newSeverity)
-                    {
-                        existingComment.Severity = newSeverity;
-                        needsUpdate = true;
-                    }
-
-                    if (existingComment.CommentText != newCommentText)
-                    {
-                        existingComment.CommentText = newCommentText;
-                        needsUpdate = true;
-                    }
-
-                    if (needsUpdate)
-                    {
-                        await _commentsRepository.UpsertCommentAsync(existingComment);
-                    }
-
-                    result.Add(existingComment);
-                    continue;
-                }
-
-                // New diagnostic - create comment
-                var comment = new CommentItemModel
-                {
-                    Id = commentId,
-                    ReviewId = reviewId,
-                    APIRevisionId = apiRevisionId,
-                    ElementId = diagnostic.TargetId,
-                    ThreadId = threadId,
-                    CommentText = newCommentText,
-                    CommentSource = CommentSource.Diagnostic,
-                    Severity = newSeverity,
-                    CreatedBy = ApiViewConstants.AzureSdkBotName,
-                    CreatedOn = DateTime.UtcNow,
-                    IsResolved = false,
-                    ResolutionLocked = false,
-                    CommentType = CommentType.APIRevision
-                };
-
-                await _commentsRepository.UpsertCommentAsync(comment);
-                result.Add(comment);
-            }
-
-            foreach (var existingComment in existingDiagnosticComments.Values.Where(existingComment =>
-                         !expectedDiagnosticIds.Contains(existingComment.Id) && !existingComment.IsResolved))
-            {
-                existingComment.IsResolved = true;
-                existingComment.ChangeHistory.Add(new CommentChangeHistoryModel
-                {
-                    ChangeAction = CommentChangeAction.Resolved,
-                    ChangedBy = ApiViewConstants.AzureSdkBotName,
-                    ChangedOn = DateTime.UtcNow
-                });
-                await _commentsRepository.UpsertCommentAsync(existingComment);
-            }
-
-            apiRevision.DiagnosticsHash = currentHash;
-            await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
-
-            return result;
-        }
-
-        private static string ComputeDiagnosticsHash(CodeDiagnostic[] diagnostics)
-        {
-            if (diagnostics == null || diagnostics.Length == 0)
-            {
-                return string.Empty;
-            }
-
-            var sortedDiagnostics = diagnostics
-                .OrderBy(d => d.TargetId)
-                .ThenBy(d => d.Text)
-                .ThenBy(d => d.Level);
-
-            var sb = new StringBuilder();
-            foreach (var d in sortedDiagnostics)
-            {
-                sb.Append(d.TargetId).Append('|').Append(d.Text).Append('|').Append((int)d.Level).Append(';');
-            }
-
-            using var sha256 = SHA256.Create();
-            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString()));
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-        }
-
-        private static string GenerateDiagnosticHash(string targetId, string text)
-        {
-            string compositeKey = $"{targetId}|{text}";
-
-            using var sha256 = SHA256.Create();
-            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(compositeKey));
-            var hashString = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-
-            return hashString[..16];
-        }
-
-        /// <summary>
-        /// Builds the comment text for a diagnostic, including the help link if available.
-        /// </summary>
-        private static string BuildDiagnosticCommentText(string diagnosticText, string helpLinkUri)
-        {
-            return string.IsNullOrEmpty(helpLinkUri) ? diagnosticText : $"{diagnosticText}\n\n[Details]({helpLinkUri})";
-        }
-
-        private static CommentSeverity MapDiagnosticLevelToSeverity(CodeDiagnosticLevel level)
-        {
-            return level switch
-            {
-                CodeDiagnosticLevel.Fatal => CommentSeverity.MustFix,
-                CodeDiagnosticLevel.Error => CommentSeverity.MustFix,
-                CodeDiagnosticLevel.Warning => CommentSeverity.ShouldFix,
-                CodeDiagnosticLevel.Info => CommentSeverity.Suggestion,
-                _ => CommentSeverity.ShouldFix
-            };
+            return result.Comments;
         }
     }
 }

@@ -230,6 +230,7 @@ namespace APIViewWeb.Helpers
         /// <param name="commentManager"></param>
         /// <param name="codeFileRepository"></param>
         /// <param name="signalRHubContext"></param>
+        /// <param name="permissionsManager"></param>
         /// <param name="user"></param>
         /// <param name="review"></param>
         /// <param name="reviewId"></param>
@@ -243,7 +244,7 @@ namespace APIViewWeb.Helpers
         public static async Task<ReviewContentModel> GetReviewContentAsync(
             IConfiguration configuration, IReviewManager reviewManager, UserProfileCache userProfileCache,
             IAPIRevisionsManager reviewRevisionsManager, ICommentsManager commentManager,
-            IBlobCodeFileRepository codeFileRepository, IHubContext<SignalRHub> signalRHubContext, ClaimsPrincipal user, ReviewListItemModel review = null, string reviewId = null,
+            IBlobCodeFileRepository codeFileRepository, IHubContext<SignalRHub> signalRHubContext, IPermissionsManager permissionsManager, ClaimsPrincipal user, ReviewListItemModel review = null, string reviewId = null,
             string revisionId = null, string diffRevisionId = null, bool showDocumentation = false, bool showDiffOnly = false, int diffContextSize = 3,
             string diffContextSeperator = "<br><span>.....</span><br>")
         {
@@ -354,7 +355,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.codeLines = codeLines;
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
 
-            HashSet<string> preferredApprovers = await GetPreferredApproversAsync(configuration, userProfileCache, user, review);
+            HashSet<string> preferredApprovers = await permissionsManager.GetApproversForLanguageAsync(review.Language);
 
             reviewPageContent.Review = review;
             reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
@@ -607,54 +608,6 @@ namespace APIViewWeb.Helpers
             }
 
             return (modalId, issueList, issueDict);
-        }
-
-        /// <summary>
-        /// GetPreferred Approvers
-        /// </summary>
-        /// <param name="configuration"></param>
-        /// <param name="userProfileCache"></param>
-        /// <param name="user"></param>
-        /// <param name="review"></param>
-        /// <returns></returns>
-        public static async Task<HashSet<string>> GetPreferredApproversAsync(IConfiguration configuration,
-            UserProfileCache userProfileCache, ClaimsPrincipal user, ReviewListItemModel review)
-        {
-            string approverConfig = configuration["approvers"];
-            if (string.IsNullOrEmpty(approverConfig))
-            {
-                return new HashSet<string>();
-            }
-
-            string[] usernames = approverConfig.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            // Fetch all user profiles in parallel instead of sequentially
-            var profileTasks = usernames.Select(async username =>
-            {
-                try
-                {
-                    UserProfileModel userProfile = await userProfileCache.GetUserProfileAsync(username, false);
-                    return (username, userProfile, success: true);
-                }
-                catch
-                {
-                    return (username, userProfile: null, success: false);
-                }
-            });
-
-            var preferredApprovers = new HashSet<string>();
-            var results = await Task.WhenAll(profileTasks);
-            foreach (var (username, userProfile, success) in results)
-            {
-                if (!success || userProfile == null ||
-                    !userProfile.Preferences.ApprovedLanguages.Any() ||
-                    userProfile.Preferences.ApprovedLanguages.Contains(review.Language))
-                {
-                    preferredApprovers.Add(username);
-                }
-            }
-
-            return preferredApprovers;
         }
     }
 }

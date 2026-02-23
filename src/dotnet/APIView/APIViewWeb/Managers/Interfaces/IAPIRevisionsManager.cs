@@ -42,6 +42,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, bool verifyUpgradabilityOnly);
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision);
         public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
+        public Task AutoPurgeAPIRevisions(int purgeAfterMonths);
         public Task AssignReviewersToAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers);
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName);
         public Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false);

@@ -30,6 +30,7 @@ namespace APIViewWeb.Managers
         private readonly ICosmosReviewRepository _reviewsRepository;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICosmosAPIRevisionsRepository _apiRevisionsRepository;
+        private readonly IDiagnosticCommentService _diagnosticCommentService;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly ICodeFileManager _codeFileManager;
@@ -43,6 +44,7 @@ namespace APIViewWeb.Managers
             IAuthorizationService authorizationService,
             ICosmosReviewRepository reviewsRepository,
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
+            IDiagnosticCommentService diagnosticCommentService,
             IHubContext<SignalRHub> signalRHubContext,
             IEnumerable<LanguageService> languageServices,
             IDevopsArtifactRepository devopsArtifactRepository,
@@ -55,6 +57,7 @@ namespace APIViewWeb.Managers
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
+            _diagnosticCommentService = diagnosticCommentService;
             _authorizationService = authorizationService;
             _signalRHubContext = signalRHubContext;
             _codeFileManager = codeFileManager;
@@ -582,21 +585,38 @@ namespace APIViewWeb.Managers
                 createdBy: user.GetGitHubLogin(),
                 label: label);
 
-            var codeFile = await _codeFileManager.CreateCodeFileAsync(
+            APICodeFileModel codeFileModel = await _codeFileManager.CreateCodeFileAsync(
                 apiRevision.Id,
                 name,
                 true,
                 fileStream,
                 language);
 
-            apiRevision.Files.Add(codeFile);
+            apiRevision.Files.Add(codeFileModel);
 
             var languageService = language != null ? _languageServices.FirstOrDefault(l => l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
+            bool isPipelineGenerated = languageService != null && languageService.IsReviewGenByPipeline;
+            
             // Run pipeline to generate the review if sandbox is enabled
-            if (languageService != null && languageService.IsReviewGenByPipeline)
+            if (isPipelineGenerated)
             {
                 // Run offline review gen for review and reviewCodeFileModel
-                await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFile.FileId, name, language);
+                await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFileModel.FileId, name, language);
+            }
+            else
+            {
+                CodeFile codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevision.Id, codeFileModel.FileId);
+                if (codeFile?.Diagnostics != null && codeFile.Diagnostics.Length > 0)
+                {
+                    DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                        review.Id,
+                        apiRevision.Id,
+                        null, // No existing hash for new revisions
+                        codeFile.Diagnostics,
+                        []);
+                    
+                    apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
+                }
             }
 
             // auto subscribe revision creation user
@@ -703,6 +723,8 @@ namespace APIViewWeb.Managers
         {
             if (!apiRevision.IsDeleted)
             {
+                _telemetryClient.TrackTrace($"Soft-deleting API revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}, User={userName}, Notes={notes}");
+
                 var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
                      changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
 
@@ -885,6 +907,8 @@ namespace APIViewWeb.Managers
             var lastUpdatedDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
             var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
 
+            _telemetryClient.TrackTrace($"AutoArchive: Found {manualRevisions.Count()} manual revisions not updated since {lastUpdatedDate}");
+
             // Group revisions by ReviewId to identify which revisions to preserve
             var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId).ToList();
             var revisionsToPreserve = new HashSet<string>();
@@ -929,6 +953,8 @@ namespace APIViewWeb.Managers
                 }
             }
 
+            _telemetryClient.TrackTrace($"AutoArchive: Preserving {revisionsToPreserve.Count} revisions (last stable/preview per review)");
+
             // Archive inactive revisions, excluding preserved ones
             int preservedCount = 0;
             int archivedCount = 0;
@@ -951,7 +977,12 @@ namespace APIViewWeb.Managers
                 }
                 catch (Exception e)
                 {
-                    _telemetryClient.TrackException(e);
+                    _telemetryClient.TrackException(e, new Dictionary<string, string>
+                    {
+                        { "RevisionId", apiRevision.Id },
+                        { "ReviewId", apiRevision.ReviewId },
+                        { "ErrorType", "AutoArchiveFailure" }
+                    });
                 }
                 finally
                 {
@@ -959,12 +990,132 @@ namespace APIViewWeb.Managers
                 }
             }
             
+            _telemetryClient.TrackTrace($"AutoArchive: Completed. Archived={archivedCount}, Preserved={preservedCount}, TotalProcessed={manualRevisions.Count()}");
+
             // Log summary telemetry once per run instead of per revision
             _telemetryClient.TrackEvent("AutoArchiveAPIRevisions", new Dictionary<string, string>
             {
                 { "PreservedCount", preservedCount.ToString() },
                 { "ArchivedCount", archivedCount.ToString() },
                 { "TotalProcessed", manualRevisions.Count().ToString() }
+            });
+        }
+
+        /// <summary>
+        /// Permanently deletes (hard deletes) API revisions that have been soft-deleted for a specified period.
+        /// Only removes Manual and PullRequest revision types to preserve Automatic revisions for history.
+        /// Deletes both Cosmos DB entries and associated blob storage (code files and originals).
+        /// </summary>
+        /// <param name="purgeAfterMonths">Number of months a revision must be soft-deleted before being purged</param>
+        public async Task AutoPurgeAPIRevisions(int purgeAfterMonths)
+        {
+            const int DelayBetweenDeletionsMs = 500; // Rate limiting to avoid overwhelming services
+            
+            // AddMonths handles month-end edge cases correctly (e.g., Jan 31 minus 1 month = Dec 31)
+            // This ensures accurate grace period calculation regardless of month lengths
+            var deletedBeforeDate = DateTime.UtcNow.AddMonths(-purgeAfterMonths);
+
+            _telemetryClient.TrackTrace($"AutoPurge: Starting. Looking for revisions soft-deleted before {deletedBeforeDate} (purgeAfterMonths={purgeAfterMonths})");
+            
+            // Query for soft-deleted Manual revisions
+            var manualRevisions = await _apiRevisionsRepository.GetSoftDeletedAPIRevisionsAsync(
+                deletedBefore: deletedBeforeDate, 
+                apiRevisionType: APIRevisionType.Manual);
+            
+            // Query for soft-deleted PullRequest revisions
+            var pullRequestRevisions = await _apiRevisionsRepository.GetSoftDeletedAPIRevisionsAsync(
+                deletedBefore: deletedBeforeDate, 
+                apiRevisionType: APIRevisionType.PullRequest);
+            
+            // Combine both types
+            var revisionsToDelete = manualRevisions.Concat(pullRequestRevisions).ToList();
+
+            _telemetryClient.TrackTrace($"AutoPurge: Found {revisionsToDelete.Count} revisions to purge (Manual={manualRevisions.Count()}, PullRequest={pullRequestRevisions.Count()})");
+            
+            int successCount = 0;
+            int errorCount = 0;
+            
+            foreach (var apiRevision in revisionsToDelete)
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Purging Revision " + apiRevision.Id };
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    _telemetryClient.TrackTrace($"AutoPurge: Purging revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}, FileCount={apiRevision.Files?.Count ?? 0}");
+
+                    // Delete associated blobs (code files and originals)
+                    foreach (var file in apiRevision.Files ?? new List<APICodeFileModel>())
+                    {
+                        try
+                        {
+                            // Delete code file blob
+                            await _codeFileRepository.DeleteCodeFileAsync(apiRevision.Id, file.FileId);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log but continue - blob may not exist
+                            _telemetryClient.TrackException(ex, new Dictionary<string, string>
+                            {
+                                { "RevisionId", apiRevision.Id },
+                                { "FileId", file.FileId },
+                                { "ErrorType", "CodeFileDeletion" }
+                            });
+                        }
+                        
+                        // Delete original file blob if it exists
+                        if (file.HasOriginal)
+                        {
+                            try
+                            {
+                                await _originalsRepository.DeleteOriginalAsync(file.FileId);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log but continue - blob may not exist
+                                _telemetryClient.TrackException(ex, new Dictionary<string, string>
+                                {
+                                    { "RevisionId", apiRevision.Id },
+                                    { "FileId", file.FileId },
+                                    { "ErrorType", "OriginalFileDeletion" }
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Delete Cosmos DB entry
+                    await _apiRevisionsRepository.DeleteAPIRevisionAsync(apiRevision.Id, apiRevision.ReviewId);
+                    
+                    successCount++;
+                    _telemetryClient.TrackTrace($"AutoPurge: Successfully purged revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}");
+                    
+                    // Small delay to avoid overwhelming services
+                    await Task.Delay(DelayBetweenDeletionsMs);
+                }
+                catch (Exception e)
+                {
+                    errorCount++;
+                    _telemetryClient.TrackException(e, new Dictionary<string, string>
+                    {
+                        { "RevisionId", apiRevision.Id },
+                        { "ReviewId", apiRevision.ReviewId },
+                        { "ErrorType", "PurgeFailure" }
+                    });
+                }
+                finally
+                {
+                    _telemetryClient.StopOperation(operation);
+                }
+            }
+            
+            _telemetryClient.TrackTrace($"AutoPurge: Completed. Success={successCount}, Errors={errorCount}, TotalProcessed={revisionsToDelete.Count}");
+
+            // Log summary telemetry
+            _telemetryClient.TrackEvent("AutoPurgeAPIRevisions", new Dictionary<string, string>
+            {
+                { "SuccessCount", successCount.ToString() },
+                { "ErrorCount", errorCount.ToString() },
+                { "TotalProcessed", revisionsToDelete.Count.ToString() },
+                { "PurgeAfterMonths", purgeAfterMonths.ToString() }
             });
         }
 
@@ -1042,6 +1193,15 @@ namespace APIViewWeb.Managers
             {
                 apiRevisionCodeFile.FileName = originalName;
             }
+
+            DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                reviewId,
+                apiRevision.Id,
+                null, 
+                codeFile.Diagnostics,
+                []);
+            
+            apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
 
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;

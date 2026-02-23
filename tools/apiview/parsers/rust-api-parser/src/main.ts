@@ -70,6 +70,8 @@ function buildCodeFile(): CodeFile {
   const codeFile: CodeFile = {
     PackageName: apiJson.index[apiJson.root].name || "unknown_root_package_name",
     PackageVersion: apiJson["crate_version"] || "unknown_crate_version",
+    // This should not be changed unless you're changing the base rustdoc-types (see its README for details)
+    // or only processing code in this package. JSON format v37 is our current baseline because of how APIView migration works.
     ParserVersion: "1.1.1",
     Language: "Rust",
     ReviewLines: [],
@@ -100,7 +102,10 @@ function readApiJson(inputFilePath: string): void {
   const data = fs.readFileSync(inputFilePath, "utf8");
   apiJson = JSON.parse(data);
 
-  if (apiJson.format_version !== FORMAT_VERSION) {
+  if (apiJson.format_version === 45) {
+    // `Path::name` in v37 changed to `Path::path` in v45 and we'll handle that with a separate utility.
+    // No reason to warn since that we'll handle.
+  } else if (apiJson.format_version !== FORMAT_VERSION) {
     console.warn(
       `Warning: Different format version detected: ${apiJson.format_version}, parser supports ${FORMAT_VERSION}. This may cause errors or unexpected results.`,
     );

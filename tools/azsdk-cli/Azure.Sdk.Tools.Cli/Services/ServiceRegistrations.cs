@@ -60,6 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
+            services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
             if (outputMode == OutputHelper.OutputModes.Mcp)

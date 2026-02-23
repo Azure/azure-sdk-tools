@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -14,6 +14,7 @@ import { PullRequestsService } from 'src/app/_services/pull-requests/pull-reques
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
 import { FormControl } from '@angular/forms';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
+import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { environment } from 'src/environments/environment';
 import { MessageService, ConfirmationService } from 'primeng/api';
@@ -38,7 +39,7 @@ const AI_REVIEW_BUTTON_TEXT = {
     styleUrls: ['./review-page-options.component.scss'],
     standalone: false
 })
-export class ReviewPageOptionsComponent implements OnInit, OnChanges {
+export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy {
   @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
@@ -47,7 +48,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
-  @Input() preferredApprovers: string[] = [];
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
@@ -92,6 +92,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   overrideActiveConversationforApproval : boolean = false;
   overrideFatalDiagnosticsforApproval : boolean = false;
 
+  get canApproveForReviewLanguage(): boolean {
+    if (!this.userProfile?.permissions || !this.review?.language) {
+      return false;
+    }
+    return this.permissionsService.isApproverFor(this.userProfile.permissions, this.review.language);
+  }
+
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
@@ -118,6 +125,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   selectedApprovers: string[] = [];
   filteredApprovers: string[] = [];
   reviewerSearchText: string = '';
+  private languageApprovers: string[] = [];
 
   diffStyleOptions : any[] = [
     { label: 'Changed types only', value: TREE_DIFF_STYLE },
@@ -130,10 +138,17 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
     private signalRService: SignalRService, private notificationsService: NotificationsService,
-    private permissionsService: PermissionsService, private confirmationService: ConfirmationService) { }
+    private permissionsService: PermissionsService, private reviewContextService: ReviewContextService, private confirmationService: ConfirmationService) { }
 
   async ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
+
+    // Subscribe to language approvers from context service
+    this.reviewContextService.getLanguageApprovers$().pipe(takeUntil(this.destroy$)).subscribe(approvers => {
+      this.languageApprovers = approvers;
+      this.filteredApprovers = [...approvers];
+      this.reviewerSearchText = '';
+    });
 
     // Load EnableNamespaceReview feature flag from Azure App Configuration
     this.reviewsService.getEnableNamespaceReview().pipe(take(1)).subscribe({
@@ -168,11 +183,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.setSubscribeSwitch();
       this.setPageOptionValues();
       this.isAdmin = this.permissionsService.isAdmin(this.userProfile?.permissions);
-    }
-
-    if (changes['preferredApprovers']) {
-      this.filteredApprovers = [...this.preferredApprovers];
-      this.reviewerSearchText = '';
     }
 
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
@@ -292,10 +302,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   filterReviewers() {
     if (!this.reviewerSearchText) {
-      this.filteredApprovers = [...this.preferredApprovers];
+      this.filteredApprovers = [...this.languageApprovers];
     } else {
       const searchLower = this.reviewerSearchText.toLowerCase();
-      this.filteredApprovers = this.preferredApprovers.filter(approver =>
+      this.filteredApprovers = this.languageApprovers.filter(approver =>
         approver.toLowerCase().includes(searchLower)
       );
     }
@@ -303,7 +313,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   resetReviewerSearch() {
     this.reviewerSearchText = '';
-    this.filteredApprovers = [...this.preferredApprovers];
+    this.filteredApprovers = [...this.languageApprovers];
   }
 
   toggleReviewer(approver: string) {
@@ -633,9 +643,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
-    // Determine base path - use /spa/browser/ if we're on spa.* hostname, otherwise use /
-    const basePath = window.location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
-    return `${window.location.protocol}//${window.location.host}${basePath}review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
+    return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**

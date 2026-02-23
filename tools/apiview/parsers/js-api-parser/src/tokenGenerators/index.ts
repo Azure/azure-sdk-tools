@@ -6,6 +6,8 @@ import { interfaceTokenGenerator } from "./interfaces";
 import { classTokenGenerator } from "./class";
 import { methodTokenGenerator } from "./method";
 import { propertyTokenGenerator } from "./property";
+import { typeAliasTokenGenerator } from "./typeAlias";
+import { variableTokenGenerator } from "./variable";
 
 export interface GeneratorResult {
   tokens: ReviewToken[];
@@ -24,4 +26,6 @@ export const generators: TokenGenerator[] = [
   interfaceTokenGenerator,
   methodTokenGenerator,
   propertyTokenGenerator,
+  typeAliasTokenGenerator,
+  variableTokenGenerator,
 ];

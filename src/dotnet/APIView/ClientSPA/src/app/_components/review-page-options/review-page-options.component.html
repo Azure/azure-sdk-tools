@@ -2,7 +2,7 @@
     <div class="px-1 pt-4">
         <h6 class="mb-2 fw-semibold">Approval</h6>
         <div class="text-center py-2">
-            <ng-container *ngIf="userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)">
+            <ng-container *ngIf="canApproveForReviewLanguage">
                 <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
                     <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
                     <div class="d-grid gap-2">
@@ -33,7 +33,7 @@
                 <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
             <ng-template #reviewIsNotApproved>
-                <div *ngIf="userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName); else userIsNotAPreferedApprover">
+                <div *ngIf="canApproveForReviewLanguage; else userIsNotAPreferredApprover">
                     <span class="small text-muted">Approves first release of the package</span>
                     <div class="d-grid gap-2">
                         <button class="btn btn-success" type="button" id="first-release-approval-button"
@@ -47,7 +47,7 @@
                     <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
                 </div>
             </ng-template>
-            <ng-template #userIsNotAPreferedApprover>
+            <ng-template #userIsNotAPreferredApprover>
                 <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
         </div>

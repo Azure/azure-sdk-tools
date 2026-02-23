@@ -517,6 +517,7 @@ namespace CSharpAPIParser.TreeToken
         private void BuildAttributes(List<ReviewLine> reviewLines, ImmutableArray<AttributeData> attributes, bool isHidden, string relatedTo)
         {
             const string attributeSuffix = "Attribute";
+            var seenLineIds = new HashSet<string>();
             foreach (var attribute in attributes)
             {
                 if (attribute.AttributeClass != null)
@@ -531,11 +532,19 @@ namespace CSharpAPIParser.TreeToken
 
                     string args = String.Join(", ", attribute.ConstructorArguments.Select(a => GetTypedConstantValue(a)));
 
+                    var lineId = $"{attribute.AttributeClass.GetId()}({args}).{relatedTo}";
+                    // Skip duplicate identical attributes (e.g. same attribute declared on multiple partial class parts).
+                    // These are codegen artifacts and carry no additional API surface information.
+                    if (!seenLineIds.Add(lineId))
+                    {
+                        continue;
+                    }
+
                     var attributeLine = new ReviewLine()
                     {
                         // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
                         // So, using a unique id for attribute line
-                        LineId = $"{attribute.AttributeClass.GetId()}({args}).{relatedTo}",
+                        LineId = lineId,
                         IsHidden = isHidden
                     };
 

@@ -92,13 +92,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private readonly Option<string> serviceTreeIdOpt = new("--service-tree")
         {
             Description = "Service tree ID",
-            Required = true,
+            Required = false,
         };
 
         private readonly Option<string> productTreeIdOpt = new("--product")
         {
             Description = "Product service tree ID",
-            Required = true,
+            Required = false,
         };
 
         private readonly Option<string> apiVersionOpt = new("--api-version")
@@ -252,11 +252,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return await CreateReleasePlan(
                         typeSpecProjectPath,
                         targetReleaseMonthYear,
-                        serviceTreeId,
-                        productTreeId,
                         specApiVersion,
                         specPullRequestUrl,
                         sdkReleaseType,
+                        serviceTreeId: serviceTreeId,
+                        productTreeId: productTreeId,
                         userEmail: userEmail,
                         isTestReleasePlan: isTestReleasePlan,
                         forceCreateReleasePlan: forceCreateReleasePlan

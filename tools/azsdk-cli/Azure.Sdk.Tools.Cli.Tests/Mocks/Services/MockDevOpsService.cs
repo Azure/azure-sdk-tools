@@ -230,7 +230,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         Task<ProductInfo?> IDevOpsService.GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath)
         {
             // Return mock data for testing
-            if (typeSpecProjectPath == "TypeSpecTestData/specification/testcontoso/Contoso.Management")
+            if (typeSpecProjectPath == "specification/testcontoso/Contoso.Management")
             {
                 return Task.FromResult<ProductInfo?>(new ProductInfo
                 {

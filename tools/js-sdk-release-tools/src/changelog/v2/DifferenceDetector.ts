@@ -174,7 +174,9 @@ export class DifferenceDetector {
       })
       .forEach((g) => {
         const methodSigs = g.getMembers().filter((m) => m.getKind() === SyntaxKind.MethodSignature);
-        g.rename(g.getName() + 'Operations');
+        if (!g.getName().endsWith('Operations')) {
+          g.rename(g.getName() + 'Operations');
+        }
         for (const method of methodSigs) {
           const methodSig = method.asKindOrThrow(SyntaxKind.MethodSignature);
           const name = methodSig.getName();

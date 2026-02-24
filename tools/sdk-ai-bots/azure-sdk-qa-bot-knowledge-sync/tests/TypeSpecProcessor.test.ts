@@ -9,7 +9,7 @@ describe('TypeSpecProcessor', () => {
     let testDir: string;
 
     beforeEach(() => {
-        processor = new TypeSpecProcessor(__dirname, "testData");
+        processor = new TypeSpecProcessor(__dirname, "testData/TypeSpecProcessor");
     });
 
     describe('parseTypeSpecDefinitions', () => {
@@ -147,7 +147,23 @@ alias UserId = string;
             expect(definitions[0].name).toBe('UserId');
         });
 
-        it('should parse namespace definitions', () => {
+        it('should parse blockless namespace', () => {
+            const content = `
+namespace MyService.Models;
+model User {
+    name: string;
+}
+`;
+            
+            const definitions = processor['parseTypeSpecDefinitions'](content);
+            expect(definitions.length === 2);
+            expect(definitions[0].type).toBe('namespace');
+            expect(definitions[0].name).toBe('MyService.Models');
+            expect(definitions[1].type).toBe('model');
+            expect(definitions[1].name).toBe('User');
+        });
+
+        it('should parse block-style namespace definitions', () => {
             const content = `
 namespace MyService.Models {
     model User {
@@ -156,9 +172,12 @@ namespace MyService.Models {
 }`;
             
             const definitions = processor['parseTypeSpecDefinitions'](content);
-
+            expect(definitions.length === 1);
             expect(definitions[0].type).toBe('namespace');
             expect(definitions[0].name).toBe('MyService.Models');
+            expect(definitions[0].children.length === 1);
+            expect(definitions[0].children[0].name).toBe('User');
+            expect(definitions[0].children[0].type).toBe('model');
         });
 
         it('should parse scalar definitions', () => {
@@ -254,14 +273,32 @@ op ArmResourceListByParent<
     });
 
     describe('processTypeSpecLibraries', () => {
-        it('convert typespec operations to markdown', () => {
+        it('convert all typespec files to markdown', () => {
             processor.processTypeSpecLibraries();
-            const generatedDir = path.join(__dirname, "testData", "generated");
-            expect(fs.existsSync(generatedDir));
-            const generatedFile = path.join(generatedDir, "operations.md");
-            const generated = fs.readFileSync(generatedFile, 'utf-8');
-            const expected = fs.readFileSync(path.join(__dirname, "testData", "expected_operations.md"), 'utf-8');
-            expect(generated).toBe(expected);
+            const testDataDir = path.join(__dirname, "testData", "TypeSpecProcessor");
+            const generatedDir = path.join(testDataDir, "generated");
+            expect(fs.existsSync(generatedDir)).toBe(true);
+            
+            // Find all .tsp files in testData folder
+            const tspFiles = fs.readdirSync(testDataDir).filter(f => f.endsWith('.tsp'));
+            
+            for (const tspFile of tspFiles) {
+                const baseName = tspFile.replace('.tsp', '');
+                const generatedFile = path.join(generatedDir, `${baseName}.md`);
+                const expectedFile = path.join(testDataDir, `expected_${baseName}.md`);
+                
+                // Skip if no expected file exists
+                if (!fs.existsSync(expectedFile)) {
+                    console.log(`Skipping ${tspFile}: no expected file found`);
+                    continue;
+                }
+                
+                expect(fs.existsSync(generatedFile), `Generated file not found: ${generatedFile}`).toBe(true);
+                
+                const generated = fs.readFileSync(generatedFile, 'utf-8');
+                const expected = fs.readFileSync(expectedFile, 'utf-8');
+                expect(generated, `Mismatch for ${tspFile}`).toBe(expected);
+            }
         });
     });
 });

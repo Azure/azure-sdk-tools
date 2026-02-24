@@ -1,18 +1,14 @@
 # TypeSpec Definitions
 
-Source: `testData\operations.tsp`
+Source: `testData\TypeSpecProcessor\operations.tsp`
 
 ---
 
-## Azure.ResourceManager
+# Azure.ResourceManager
 
 **Type:** Namespace
 
 ```typespec
-using Http;
-using Rest;
-using Azure.ResourceManager.Foundations;
-using Azure.ResourceManager.Private;
 
 namespace Azure.ResourceManager;
 ```

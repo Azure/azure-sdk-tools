@@ -298,6 +298,7 @@ public sealed partial class JavaLanguageService : LanguageService
                 customizationFiles,
                 patchFilePaths).BuildPrompt();
 
+<<<<<<< HEAD
             // Single-pass agent: applies all patches it can in one run
             var agentDefinition = new CopilotAgent<string>
             {
@@ -309,13 +310,39 @@ public sealed partial class JavaLanguageService : LanguageService
                         description: "Read files from the package directory (generated code, customization files, etc.)"),
                     CodePatchTools.CreateCodePatchTool(customizationRoot,
                         description: "Apply code patches to customization files only (never generated code)")
+=======
+            // Create patch tool so we can retrieve applied patches after microagent completes
+            var patchTool = new ClientCustomizationCodePatchTool(customizationRoot)
+            {
+                Name = "ClientCustomizationCodePatch",
+                Description = "Apply code patches to customization files only (never generated code)"
+            };
+
+            // Single-pass agent: applies all patches it can in one run
+            var agentDefinition = new Microagent<string>
+            {
+                Instructions = prompt,
+                MaxToolCalls = 25,
+                Tools =
+                [
+                    new ReadFileTool(packagePath, logger)
+                    {
+                        Name = "ReadFile",
+                        Description = "Read files from the package directory (generated code, customization files, etc.)"
+                    },
+                    patchTool
+>>>>>>> 66f2edd1eaf4cfc0f466195769aafaa910fbe79e
                 ]
             };
 
             // Run the agent to apply patches
             try
             {
+<<<<<<< HEAD
                 await copilotAgentRunner.RunAsync(agentDefinition, ct);
+=======
+                await microagentHost.RunAgentToCompletion(agentDefinition, ct);
+>>>>>>> 66f2edd1eaf4cfc0f466195769aafaa910fbe79e
             }
             catch (OperationCanceledException)
             {
@@ -324,6 +351,7 @@ public sealed partial class JavaLanguageService : LanguageService
             }
             catch (Exception agentEx)
             {
+<<<<<<< HEAD
                 // Agent exhausted its iteration budget without completing.
                 logger.LogDebug(agentEx, "CopilotAgent terminated early");
             }
@@ -342,6 +370,14 @@ public sealed partial class JavaLanguageService : LanguageService
 
             logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
             return appliedPatches;
+=======
+                // Agent exhausted its tool budget (MaxToolCalls) without calling Exit.
+                logger.LogDebug(agentEx, "Microagent terminated early (applied {PatchCount} patches)", patchTool.AppliedPatches.Count);
+            }
+            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", patchTool.AppliedPatches.Count);
+
+            return patchTool.AppliedPatches;
+>>>>>>> 66f2edd1eaf4cfc0f466195769aafaa910fbe79e
         }
         catch (Exception ex)
         {

@@ -69,7 +69,7 @@ namespace APIViewWeb.Managers
             _permissionsManager = permissionsManager;
         }
 
-        public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)
+        public async Task NotifySubscribersOnCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
             var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
             var elementUrl = comment.ElementId == null
@@ -86,7 +86,7 @@ namespace APIViewWeb.Managers
             await SendSubscriberEmailsAsync(review, user, content, comment.TaggedUsers);
         }
 
-        public async Task NotifyUserOnCommentTag(CommentItemModel comment)
+        public async Task NotifyUserOnCommentTagAsync(CommentItemModel comment)
         {
             foreach (string username in comment.TaggedUsers)
             {
@@ -105,7 +105,7 @@ namespace APIViewWeb.Managers
             } 
         }
 
-        public async Task NotifyApproversOfReview(ClaimsPrincipal user, string apiRevisionId, HashSet<string> reviewers)
+        public async Task NotifyAssignedReviewersAsync(ClaimsPrincipal user, string apiRevisionId, HashSet<string> reviewers)
         {
             if (reviewers == null || reviewers.Count == 0)
             {
@@ -118,7 +118,7 @@ namespace APIViewWeb.Managers
             foreach (var reviewer in reviewers)
             {
                 var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
-                var content = await _emailTemplateService.GetApproverReviewEmailAsync(
+                var content = await _emailTemplateService.GetReviewerAssignedEmailAsync(
                     userProfile.UserName,
                     apiRevision.Id,
                     apiRevision.PackageName);
@@ -291,7 +291,7 @@ namespace APIViewWeb.Managers
             return emailAddresses;
         }
 
-        public async Task NotifyApproversOnNamespaceReviewRequest(ClaimsPrincipal user, ReviewListItemModel review, IEnumerable<ReviewListItemModel> languageReviews = null, string notes = "")
+        public async Task NotifyApproversOnNamespaceReviewRequestAsync(ClaimsPrincipal user, ReviewListItemModel review, IEnumerable<ReviewListItemModel> languageReviews = null, string notes = "")
         {
             try
             {
@@ -371,7 +371,7 @@ namespace APIViewWeb.Managers
             return content + $"<br><br><hr><div style='font-size: 12px; color: #666;'><b>Test mode:</b> Intended recipients: {encodedRecipients}</div>";
         }
 
-        public async Task NotifyStakeholdersOfManualApproval(ReviewListItemModel review, IEnumerable<ReviewListItemModel> associatedReviews)
+        public async Task NotifyStakeholdersOfManualApprovalAsync(ReviewListItemModel review, IEnumerable<ReviewListItemModel> associatedReviews)
         {
             try
             {

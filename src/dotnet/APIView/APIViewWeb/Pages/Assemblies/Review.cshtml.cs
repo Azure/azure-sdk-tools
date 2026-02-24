@@ -336,7 +336,7 @@ namespace APIViewWeb.Pages.Assemblies
                 .Where(reviewer => !existingReviewers.Contains(reviewer))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, newlyAddedReviewers);
+            await _notificationManager.NotifyAssignedReviewersAsync(User, apiRevisionId, newlyAddedReviewers);
             return RedirectToPage(new { id = id, revisionId = apiRevisionId });
         }
 

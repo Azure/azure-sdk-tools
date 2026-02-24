@@ -108,9 +108,9 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public async Task GetApproverReviewEmailAsync_RendersApproverLinks()
+        public async Task GetReviewerAssignedEmailAsync_RendersReviewerLinks()
         {
-            var content = await _service.GetApproverReviewEmailAsync("requester-user", "review-id", "Azure.AI.Test");
+            var content = await _service.GetReviewerAssignedEmailAsync("requester-user", "review-id", "Azure.AI.Test");
 
             content.Should().Contain("requester-user");
             content.Should().Contain("https://apiview.test/Assemblies/Profile/requester-user");

@@ -18,7 +18,7 @@ namespace APIViewWeb.Services
             string typeSpecUrl,
             IEnumerable<ReviewListItemModel> languageReviews);
 
-        Task<string> GetApproverReviewEmailAsync(string requesterUserName, string reviewId, string reviewName);
+        Task<string> GetReviewerAssignedEmailAsync(string requesterUserName, string reviewId, string reviewName);
 
         Task<string> GetCommentTagEmailAsync(CommentItemModel comment, ReviewListItemModel review, string reviewUrl);
 

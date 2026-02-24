@@ -75,9 +75,9 @@ namespace APIViewWeb.Services
             });
         }
 
-        public async Task<string> GetApproverReviewEmailAsync(string requesterUserName, string reviewId, string reviewName)
+        public async Task<string> GetReviewerAssignedEmailAsync(string requesterUserName, string reviewId, string reviewName)
         {
-            var template = await LoadEmbeddedTemplateAsync("ApproverReviewRequestEmail.html");
+            var template = await LoadEmbeddedTemplateAsync("ReviewerAssignedEmail.html");
             return RenderTemplate(template, new Dictionary<string, string>
             {
                 ["{{RequesterProfileUrl}}"] = Encode($"{_apiviewEndpoint}/Assemblies/Profile/{requesterUserName}"),

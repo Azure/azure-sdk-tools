@@ -208,7 +208,7 @@ namespace APIViewWeb.LeanControllers
                 .Where(reviewer => !existingReviewers.Contains(reviewer))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, newlyAddedReviewers);
+            await _notificationManager.NotifyAssignedReviewersAsync(User, apiRevisionId, newlyAddedReviewers);
 
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }

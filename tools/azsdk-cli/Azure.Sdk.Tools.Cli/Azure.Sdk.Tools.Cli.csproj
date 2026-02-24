@@ -13,7 +13,7 @@
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
-    <VersionPrefix>0.5.18</VersionPrefix>
+    <VersionPrefix>0.5.19</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Package metadata -->

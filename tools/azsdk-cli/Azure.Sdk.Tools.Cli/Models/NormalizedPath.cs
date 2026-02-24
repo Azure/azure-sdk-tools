@@ -71,10 +71,15 @@ public readonly struct NormalizedPath(string? path) : IEquatable<NormalizedPath>
 
     public override string ToString() => value;
     public override int GetHashCode() => value.GetHashCode();
-    public override bool Equals(object? obj) => obj is NormalizedPath other && Equals(other);
+    public override bool Equals(object? obj) => obj switch
+    {
+        NormalizedPath other => Equals(other),
+        string s => Equals(s),
+        _ => false
+    };
     public bool Equals(NormalizedPath other) => value == other.value;
 
-    public bool Equals(string? other) => value == other;
+    public bool Equals(string? other) => value == other?.Replace("\\", "/");
 
     public static bool operator ==(NormalizedPath left, NormalizedPath right) => left.Equals(right);
     public static bool operator !=(NormalizedPath left, NormalizedPath right) => !left.Equals(right);

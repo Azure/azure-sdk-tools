@@ -40,6 +40,5 @@ namespace APIViewWeb.LeanModels
         // Severity penalty weights (points deducted per unresolved comment)
         internal const double MustFixPenalty = 20.0;
         internal const double ShouldFixPenalty = 10.0;
-        internal const double SuggestionPenalty = 5.0;
     }
 }

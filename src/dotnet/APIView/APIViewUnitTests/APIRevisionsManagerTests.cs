@@ -1325,7 +1325,7 @@ public class APIRevisionsManagerTests
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
 
-        Assert.Equal(95, result.Score); // 100 - 5
+        Assert.Equal(100, result.Score); // Suggestions have no penalty
         Assert.Equal(1, result.UnresolvedSuggestionCount);
     }
 
@@ -1346,8 +1346,8 @@ public class APIRevisionsManagerTests
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
 
-        // 100 - 20 (MustFix) - 10 (ShouldFix) - 5 (Suggestion) - 0 (Question) = 65
-        Assert.Equal(65, result.Score);
+        // 100 - 20 (MustFix) - 10 (ShouldFix) - 0 (Suggestion) - 0 (Question) = 70
+        Assert.Equal(70, result.Score);
         Assert.Equal(1, result.UnresolvedMustFixCount);
         Assert.Equal(1, result.UnresolvedShouldFixCount);
         Assert.Equal(1, result.UnresolvedSuggestionCount);

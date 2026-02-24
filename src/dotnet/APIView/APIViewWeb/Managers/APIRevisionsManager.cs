@@ -1548,12 +1548,16 @@ namespace APIViewWeb.Managers
 
             foreach (var comment in threadRepresentatives)
             {
-                // Questions don't degrade the score
-                if (comment.Severity == CommentSeverity.Question || comment.Severity == null)
+                // Questions and Suggestions don't degrade the score
+                if (comment.Severity == CommentSeverity.Question || comment.Severity == CommentSeverity.Suggestion || comment.Severity == null)
                 {
                     if (comment.Severity == CommentSeverity.Question)
                     {
                         score.UnresolvedQuestionCount++;
+                    }
+                    else if (comment.Severity == CommentSeverity.Suggestion)
+                    {
+                        score.UnresolvedSuggestionCount++;
                     }
                     continue;
                 }
@@ -1563,7 +1567,6 @@ namespace APIViewWeb.Managers
                 {
                     CommentSeverity.MustFix => ReviewQualityScore.MustFixPenalty,
                     CommentSeverity.ShouldFix => ReviewQualityScore.ShouldFixPenalty,
-                    CommentSeverity.Suggestion => ReviewQualityScore.SuggestionPenalty,
                     _ => 0.0
                 };
 
@@ -1587,9 +1590,6 @@ namespace APIViewWeb.Managers
                         break;
                     case CommentSeverity.ShouldFix:
                         score.UnresolvedShouldFixCount++;
-                        break;
-                    case CommentSeverity.Suggestion:
-                        score.UnresolvedSuggestionCount++;
                         break;
                 }
             }

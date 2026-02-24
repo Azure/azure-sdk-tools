@@ -349,7 +349,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     const isResolved = commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved;
     this.comments.filter(c => {
       if (commentUpdates.threadId) {
-        return c.threadId === commentUpdates.threadId || c.elementId === commentUpdates.elementId;
+        return c.threadId === commentUpdates.threadId || 
+               (!c.threadId && c.elementId === commentUpdates.threadId);
       }
       return c.elementId === commentUpdates.elementId;
     }).forEach(c => {

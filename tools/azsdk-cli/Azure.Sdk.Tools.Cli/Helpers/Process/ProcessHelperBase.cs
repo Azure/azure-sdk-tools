@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -20,9 +21,11 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
         using var timeoutCts = new CancellationTokenSource(options.Timeout);
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
+        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
         var processStartInfo = new ProcessStartInfo
         {
-            FileName = options.Command,
+            FileName = isWindows? "cmd.exe": options.Command,
             WorkingDirectory = options.WorkingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -31,6 +34,11 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
             CreateNoWindow = true
         };
 
+        if (isWindows)
+        {
+            processStartInfo.ArgumentList.Add("/c");
+            processStartInfo.ArgumentList.Add(options.Command);
+        }
         foreach (var arg in options.Args)
         {
             processStartInfo.ArgumentList.Add(arg);

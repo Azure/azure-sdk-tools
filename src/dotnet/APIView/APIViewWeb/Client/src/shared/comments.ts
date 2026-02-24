@@ -9,11 +9,11 @@ $(() => {
   const SHOW_COMMENTS_CHECK = "#show-comments-checkbox";
   const SHOW_SYS_COMMENTS_CHECK = "#show-system-comments-checkbox";
 
-  let CurrentUserSuggestionElements: HTMLElement[] = [];
+  let CurrentUserSuggestionElements: HTMLElement[] = [];	
   let CurrentUserSuggestionIndex = -1;
   let CurrentCommentToggle = false;
 
-  // simple github username match
+  // simple github username match	
   const githubLoginTagMatch = /(\s|^)@([a-zA-Z\d-]+)/g;
 
   $(document).on("click", ".commentable", e => {
@@ -119,11 +119,11 @@ $(() => {
       serializedForm.push({ name: "revisionId", value: revisionId });
       serializedForm.push({ name: "sectionClass", value: rowSectionClasses });
       serializedForm.push({ name: "taggedUsers", value: getTaggedUsers(e.target) });
-
+      
       if (crossLangId) {
         serializedForm.push({ name: "crossLangId", value: crossLangId });
       }
-
+      
       $.ajax({
         type: "POST",
         url: $(form).prop("action"),
@@ -131,7 +131,6 @@ $(() => {
       }).done(partialViewResult => {
         hp.updateCommentThread(commentRow, partialViewResult);
         hp.addCommentThreadNavigation();
-        hp.updateConversationsBadge();
         hp.removeCommentIconIfEmptyCommentBox(lineId);
         PushComment(reviewId, lineId, partialViewResult);
       });
@@ -218,135 +217,135 @@ $(() => {
           form.submit();
       }
       e.preventDefault();
-      return;
+      return;	
     }
 
-    // current value of form not including key currently pressed
-    let currentVal: string = e.target.value;
-    // system keys should allow the list to be updated, but should not be added as a key
-    // currentVal doesn't include the key to be added, though, so we need to add it manually
-    if(!(e.key === "Enter" || e.key === "Backspace" || e.key === "Tab" || e.key === "Alt" || e.key === "Control" || e.key === "Shift" || e.key === "Tab" || e.key === "ArrowDown" || e.key === "ArrowUp")) {
-      currentVal += e.key;
-      CurrentUserSuggestionElements = [];
-      CurrentUserSuggestionIndex = -1;
-    } else if(e.key === "Backspace") {
-      currentVal = currentVal.substring(0, currentVal.length - 1); // remove last char
-    }
-    // current caret position in textarea
-    const caretPosition = (<HTMLInputElement>e.target).selectionStart;
-    // returned value from regex exec
-    // index 0 is the entire match, index 1 and 2 are capture groups
-    let matchArray;
-    // gh username without @
-    let matchName;
-    // list of suggested users container
-    const suggestionBox = $(e.target).parent().find(".tag-user-suggestion");
-    // mirror box helps calculate x and y to place suggestion box at
-    const mirrorBox = $(e.target).parent().find(".new-thread-comment-text-mirror");
-    if(!suggestionBox.hasClass("d-none")) {
-      // if suggestion box is visible and user pressed tab or enter
-      if(e.key === "Tab" || e.key === "Enter") {
-        // trigger click event (adds to box)
-        CurrentUserSuggestionElements[CurrentUserSuggestionIndex].click();
-        e.preventDefault();
-        e.target.focus();
-        return;
-      } else if(e.key === "ArrowDown") {
-        if(CurrentUserSuggestionIndex + 1 < CurrentUserSuggestionElements.length) {
-          $(CurrentUserSuggestionElements[CurrentUserSuggestionIndex]).removeClass("tag-user-suggestion-username-targetted");
-          CurrentUserSuggestionIndex++;
-          $(CurrentUserSuggestionElements[CurrentUserSuggestionIndex]).addClass("tag-user-suggestion-username-targetted");
-        }
-        e.preventDefault();
-        return;
-      } else if(e.key === "ArrowUp") {
-        if(CurrentUserSuggestionIndex > 0) {
-          $(CurrentUserSuggestionElements[CurrentUserSuggestionIndex]).removeClass("tag-user-suggestion-username-targetted");
-          CurrentUserSuggestionIndex--;
-          $(CurrentUserSuggestionElements[CurrentUserSuggestionIndex]).addClass("tag-user-suggestion-username-targetted");
-        }
-        e.preventDefault();
-        return;
-      }
-    }
-    if(caretPosition !== null) {
-      let changed = false;
-      // get y position to place suggestion box
-      mirrorBox.css('width', (<HTMLTextAreaElement>e.target).offsetWidth + "px");
-      const upToCurrent = currentVal.substring(0, caretPosition + 1);
-      mirrorBox.get(0).innerText = upToCurrent;
-      const boxHeight = <number>mirrorBox.outerHeight();
-      let top = boxHeight;
-      // account for vertical offset from padding and overflow handling
-      if(top < (<HTMLTextAreaElement>e.target).offsetHeight) {
-        top -= 12;
-      } else {
-        top = (<HTMLTextAreaElement>e.target).offsetHeight;
-        top += 6;
-      }
-      mirrorBox.css({'width': 'auto'});
-      mirrorBox.get(0).innerText = upToCurrent.split('\n')[upToCurrent.split('\n').length - 1];
-      const left = (<number>mirrorBox.innerWidth()) % ((<HTMLTextAreaElement>e.target).clientWidth - 24);
-      // reset regex last checked index
-      githubLoginTagMatch.lastIndex = 0;
-      while ((matchArray = githubLoginTagMatch.exec(currentVal)) !== null) {
-        // matchArray[0] = whole matched item
-        // matchArray[1] = empty or whitespace (matched to start of string or single whitespace before tag)
-        // matchArray[2] = tag excluding @ symbol
-        const end = githubLoginTagMatch.lastIndex; // last index = end of string
-        const stringLength = matchArray[2].length + 1; // add length of @ char
-        const start = end - stringLength;
-        // if caret is inside tagging user area
-        if(caretPosition >= start && caretPosition < end) {
-          changed = true;
-          matchName = matchArray[2];
-          suggestionBox.removeClass("d-none");
-          suggestionBox.css({top: `${top}px`, left: `${left}px`});
-          $(".tag-user-suggestion-username").addClass("d-none");
-          $(".tag-user-suggestion-username").removeClass("tag-user-suggestion-username-targetted");
-          let shownCount = 0;
-          const children = suggestionBox.children();
-          for(let child of children) {
-            if($(child).text().toLowerCase().includes(matchName.toLowerCase())) {
-              // display child
-              $(child).removeClass("d-none");
-              // add child to current list
-              CurrentUserSuggestionElements.push(child);
-              if(CurrentUserSuggestionElements.length === 1) {
-                CurrentUserSuggestionIndex = 0;
-                $(child).addClass("tag-user-suggestion-username-targetted");
-              }
-              // remove any other click handlers button might have
-              $(child).off('click');
-              $(child).on('click', (ev) => {
-                let currentValue = (<HTMLInputElement>e.target).value;
-                const newValue = currentValue.substring(0, start) + $(ev.target).text() + currentValue.substring(end, currentValue.length);
-                (<HTMLInputElement>e.target).value = newValue;
-                suggestionBox.addClass("d-none");
-                e.target.focus();
-              });
-              // load user image if image hasn't been loaded already
-              const imgChild = $(child).find('img')[0];
-              if($(imgChild).attr('src') === undefined) {
-                $(imgChild).attr('src', $(imgChild).data('src'));
-              }
-              shownCount++;
-              // show a maximum of 5 suggestions
-              if(shownCount === 5) {
-                break;
-              }
-            }
-          }
-          if(shownCount === 0) {
-            suggestionBox.addClass("d-none");
-          }
-          break;
-        }
-      }
-      if(changed === false && !suggestionBox.hasClass("d-none")) {
-        suggestionBox.addClass("d-none");
-        CurrentUserSuggestionElements = [];
-        CurrentUserSuggestionIndex = -1;
+    // current value of form not including key currently pressed	
+    let currentVal: string = e.target.value;	
+    // system keys should allow the list to be updated, but should not be added as a key	
+    // currentVal doesn't include the key to be added, though, so we need to add it manually	
+    if(!(e.key === "Enter" || e.key === "Backspace" || e.key === "Tab" || e.key === "Alt" || e.key === "Control" || e.key === "Shift" || e.key === "Tab" || e.key === "ArrowDown" || e.key === "ArrowUp")) {	
+      currentVal += e.key;	
+      CurrentUserSuggestionElements = [];	
+      CurrentUserSuggestionIndex = -1;	
+    } else if(e.key === "Backspace") {	
+      currentVal = currentVal.substring(0, currentVal.length - 1); // remove last char	
+    }	
+    // current caret position in textarea	
+    const caretPosition = (<HTMLInputElement>e.target).selectionStart;	
+    // returned value from regex exec	
+    // index 0 is the entire match, index 1 and 2 are capture groups	
+    let matchArray;	
+    // gh username without @	
+    let matchName;	
+    // list of suggested users container	
+    const suggestionBox = $(e.target).parent().find(".tag-user-suggestion");	
+    // mirror box helps calculate x and y to place suggestion box at	
+    const mirrorBox = $(e.target).parent().find(".new-thread-comment-text-mirror");	
+    if(!suggestionBox.hasClass("d-none")) {	
+      // if suggestion box is visible and user pressed tab or enter	
+      if(e.key === "Tab" || e.key === "Enter") {	
+        // trigger click event (adds to box)	
+        CurrentUserSuggestionElements[CurrentUserSuggestionIndex].click();	
+        e.preventDefault();	
+        e.target.focus();	
+        return;	
+      } else if(e.key === "ArrowDown") {	
+        if(CurrentUserSuggestionIndex + 1 < CurrentUserSuggestionElements.length) {	
+          $(CurrentUserSuggestionElements[CurrentUserSuggestionIndex]).removeClass("tag-user-suggestion-username-targetted");	
+          CurrentUserSuggestionIndex++;	
+          $(CurrentUserSuggestionElements[CurrentUserSuggestionIndex]).addClass("tag-user-suggestion-username-targetted");	
+        }	
+        e.preventDefault();	
+        return;	
+      } else if(e.key === "ArrowUp") {	
+        if(CurrentUserSuggestionIndex > 0) {	
+          $(CurrentUserSuggestionElements[CurrentUserSuggestionIndex]).removeClass("tag-user-suggestion-username-targetted");	
+          CurrentUserSuggestionIndex--;	
+          $(CurrentUserSuggestionElements[CurrentUserSuggestionIndex]).addClass("tag-user-suggestion-username-targetted");	
+        }	
+        e.preventDefault();	
+        return;	
+      }	
+    }	
+    if(caretPosition !== null) {	
+      let changed = false;	
+      // get y position to place suggestion box	
+      mirrorBox.css('width', (<HTMLTextAreaElement>e.target).offsetWidth + "px");	
+      const upToCurrent = currentVal.substring(0, caretPosition + 1);	
+      mirrorBox.get(0).innerText = upToCurrent;	
+      const boxHeight = <number>mirrorBox.outerHeight();	
+      let top = boxHeight;	
+      // account for vertical offset from padding and overflow handling	
+      if(top < (<HTMLTextAreaElement>e.target).offsetHeight) {	
+        top -= 12;	
+      } else {	
+        top = (<HTMLTextAreaElement>e.target).offsetHeight;	
+        top += 6;	
+      }	
+      mirrorBox.css({'width': 'auto'});	
+      mirrorBox.get(0).innerText = upToCurrent.split('\n')[upToCurrent.split('\n').length - 1];	
+      const left = (<number>mirrorBox.innerWidth()) % ((<HTMLTextAreaElement>e.target).clientWidth - 24);	
+      // reset regex last checked index	
+      githubLoginTagMatch.lastIndex = 0;	
+      while ((matchArray = githubLoginTagMatch.exec(currentVal)) !== null) {	
+        // matchArray[0] = whole matched item	
+        // matchArray[1] = empty or whitespace (matched to start of string or single whitespace before tag)	
+        // matchArray[2] = tag excluding @ symbol	
+        const end = githubLoginTagMatch.lastIndex; // last index = end of string	
+        const stringLength = matchArray[2].length + 1; // add length of @ char	
+        const start = end - stringLength;	
+        // if caret is inside tagging user area	
+        if(caretPosition >= start && caretPosition < end) {	
+          changed = true;	
+          matchName = matchArray[2];	
+          suggestionBox.removeClass("d-none");	
+          suggestionBox.css({top: `${top}px`, left: `${left}px`});	
+          $(".tag-user-suggestion-username").addClass("d-none");	
+          $(".tag-user-suggestion-username").removeClass("tag-user-suggestion-username-targetted");	
+          let shownCount = 0;	
+          const children = suggestionBox.children();	
+          for(let child of children) {	
+            if($(child).text().toLowerCase().includes(matchName.toLowerCase())) {	
+              // display child	
+              $(child).removeClass("d-none");	
+              // add child to current list	
+              CurrentUserSuggestionElements.push(child);	
+              if(CurrentUserSuggestionElements.length === 1) {	
+                CurrentUserSuggestionIndex = 0;	
+                $(child).addClass("tag-user-suggestion-username-targetted");	
+              }	
+              // remove any other click handlers button might have	
+              $(child).off('click');	
+              $(child).on('click', (ev) => {	
+                let currentValue = (<HTMLInputElement>e.target).value;	
+                const newValue = currentValue.substring(0, start) + $(ev.target).text() + currentValue.substring(end, currentValue.length);	
+                (<HTMLInputElement>e.target).value = newValue;	
+                suggestionBox.addClass("d-none");	
+                e.target.focus();	
+              });	
+              // load user image if image hasn't been loaded already	
+              const imgChild = $(child).find('img')[0];	
+              if($(imgChild).attr('src') === undefined) {	
+                $(imgChild).attr('src', $(imgChild).data('src'));	
+              }	
+              shownCount++;	
+              // show a maximum of 5 suggestions	
+              if(shownCount === 5) {	
+                break;	
+              }	
+            }	
+          }	
+          if(shownCount === 0) {	
+            suggestionBox.addClass("d-none");	
+          }	
+          break;	
+        }	
+      }	
+      if(changed === false && !suggestionBox.hasClass("d-none")) {	
+        suggestionBox.addClass("d-none");	
+        CurrentUserSuggestionElements = [];	
+        CurrentUserSuggestionIndex = -1;	
       }
     }
   });
@@ -407,15 +406,15 @@ $(() => {
     return hp.getParentData(element, "data-revision-id");
   }
 
-  function getTaggedUsers(element: HTMLFormElement): string[] {
-    githubLoginTagMatch.lastIndex = 0;
-    let matchArray;
-    const taggedUsers: string[] = [];
-    const currentValue = new FormData(element).get("commentText") as string;
-    while((matchArray = githubLoginTagMatch.exec(currentValue)) !== null) {
-      taggedUsers.push(matchArray[2]);
-    }
-    return taggedUsers;
+  function getTaggedUsers(element: HTMLFormElement): string[] {	
+    githubLoginTagMatch.lastIndex = 0;	
+    let matchArray;	
+    const taggedUsers: string[] = [];	
+    const currentValue = new FormData(element).get("commentText") as string;	
+    while((matchArray = githubLoginTagMatch.exec(currentValue)) !== null) {	
+      taggedUsers.push(matchArray[2]);	
+    }	
+    return taggedUsers;	
   }
 
   function getCommentId(element: HTMLElement) {
@@ -443,7 +442,6 @@ $(() => {
     }).done(partialViewResult => {
       hp.updateCommentThread(commentRow, partialViewResult);
       hp.addCommentThreadNavigation();
-      hp.updateConversationsBadge();
       hp.removeCommentIconIfEmptyCommentBox(lineId);
       PushComment(reviewId, lineId, partialViewResult);
     });

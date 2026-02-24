@@ -98,7 +98,7 @@ export function getCookieValue (cookies: string, cookieName: string)
       ch = ch.substring(1, ch.length);
     }
     if (ch.indexOf(nameEQ) === 0)
-      return ch.substring(nameEQ.length, ch.length);
+      return ch.substring(nameEQ.length, ch.length);    
   }
   return null;
 }
@@ -131,7 +131,7 @@ export function addToastNotification(notification : Notification, id : string = 
   {
     newtoast.attr("id", id);
   }
-
+  
   switch (notification.level) {
     case 0:
       newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-info text-info me-1" ></i>`);
@@ -161,33 +161,12 @@ export function updateCommentThread(commentBox, commentThreadHTML) {
 
 /**
  * remove comment icon if the comment box is empty (has no comments)
- * @param id lineid of the comment box
+ * @param id lineid of the comment box 
  */
 export function removeCommentIconIfEmptyCommentBox(id) {
   var commentRows = getCommentsRow(id);
   if (commentRows.length == 0 && !($("#show-comments-checkbox").prop("checked"))) {
     toggleCommentIcon(id, false);
-  }
-}
-
-/**
- * Recalculates the conversations badge count from the current DOM state
- * and updates the badge visibility and text accordingly.
- * Called after resolve/unresolve/add/delete comment actions.
- */
-export function updateConversationsBadge() {
-  const activeCount = $('.comment-row').filter(function () {
-    if ($(this).hasClass('d-none')) return false;
-    const holder = $(this).find('.comment-holder').first();
-    return holder.length > 0 && !holder.hasClass('comments-resolved');
-  }).length;
-
-  const badge = $('#jump-to-first-comment');
-  if (activeCount > 0) {
-    badge.contents().filter(function () { return this.nodeType === 3; }).first().replaceWith(document.createTextNode(`${activeCount}`));
-    badge.show();
-  } else {
-    badge.hide();
   }
 }
 
@@ -261,7 +240,7 @@ export function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearC
 
 /**
  * gets the review and revision id of review from given uri, if they exist
- * @param uri uri of api view page
+ * @param uri uri of api view page 
  * @returns result dictionary of "reviewId" and "revisionId", if they exist; undefined otherwise
  */
 export function getReviewAndRevisionIdFromUrl(uri) {
@@ -276,7 +255,7 @@ export function getReviewAndRevisionIdFromUrl(uri) {
     if (!result["revisionId"]) {
       result["revisionId"] = match[5];
     }
-  }
+  } 
 
   return result;
 }

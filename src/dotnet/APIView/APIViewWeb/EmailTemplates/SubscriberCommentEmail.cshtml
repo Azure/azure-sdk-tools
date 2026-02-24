@@ -1,0 +1,8 @@
+@model APIViewWeb.Models.SubscriberCommentEmailModel
+
+<b>@Model.CommentedBy</b> commented on this review.<br><br>
+@if (Model.HasElementLink)
+{
+	<text>In <a href='@Model.ElementUrl'>@Model.ElementId</a>:<br><br></text>
+}
+@Model.CommentBodyHtml

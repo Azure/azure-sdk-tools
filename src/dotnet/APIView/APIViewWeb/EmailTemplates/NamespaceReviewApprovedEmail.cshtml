@@ -1,3 +1,5 @@
+@model APIViewWeb.Models.NamespaceReviewApprovedEmailModel
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -83,17 +85,29 @@
         </div>
         
         <div class="main-content">
-            Since no further objections were raised, the namespace review for <strong>{{PackageName}}</strong> is now considered approved.
+            Since no further objections were raised, the namespace review for <strong>@Model.PackageName</strong> is now considered approved.
         </div>
         
         <div class="main-content">
-            <strong>TypeSpec API View:</strong> <a href="{{TypeSpecUrl}}" style="color: #0078d4; text-decoration: none; font-weight: 500;">{{PackageName}}</a>
+            <strong>TypeSpec API View:</strong> <a href="@Model.TypeSpecUrl" style="color: #0078d4; text-decoration: none; font-weight: 500;">@Model.PackageName</a>
         </div>
         
         <div class="package-names">
             <h3>Final Package Names:</h3>
             <ul class="package-list">
-                {{LanguagePackages}}
+                @if (Model.LanguageReviews.Count == 0)
+                {
+                    <li class="package-item">No language-specific package names available yet.</li>
+                }
+                else
+                {
+                    @foreach (var review in Model.LanguageReviews)
+                    {
+                        <li class="package-item">
+                            <span class="language-name">@review.LanguageName:</span>@review.PackageName
+                        </li>
+                    }
+                }
             </ul>
         </div>
 

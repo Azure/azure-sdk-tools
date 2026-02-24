@@ -1,0 +1,3 @@
+@model APIViewWeb.Models.CommentTagEmailModel
+
+<a href='@Model.PosterProfileUrl'>@Model.PosterUserName</a> mentioned you in <a href='@Model.ReviewUrl'><b>@Model.ReviewName</b></a><br>Their comment was the following:<br><br><i>@Model.CommentBodyHtml</i>

@@ -405,7 +405,7 @@ extends:
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
-      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
@@ -420,9 +420,8 @@ extends:
               value: 'https://apiviewuxtest.com/'
 
           jobs:
-            - deployment: Publish_Test_UI
+            - job: Publish_Test_UI
               displayName: Publish Test UI
-              environment: 'package-publish'
               templateContext:
                 type: releaseJob
                 isProduction: false
@@ -435,35 +434,32 @@ extends:
                 image: ubuntu-24.04
                 os: linux
 
-              strategy:
-                runOnce:
-                  deploy:
-                    steps:
+              steps:
 
-                    - task: FileTransform@1
-                      displayName: 'Update Angular Config for Environment'
-                      inputs:
-                        folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
-                        fileType: json
-                        targetFiles: wwwroot/spa/browser/assets/config.json
+              - task: FileTransform@1
+                displayName: 'Update Angular Config for Environment'
+                inputs:
+                  folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
+                  fileType: json
+                  targetFiles: wwwroot/spa/browser/assets/config.json
 
-                    - task: AzureRmWebAppDeployment@4
-                      displayName: 'Azure App Service Deploy: apiviewuat'
-                      inputs:
-                        azureSubscription: 'APIViewUI-Instance-deployment-connection'
-                        WebAppName: apiviewuat
-                        packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
-                        InlineScript: |
-                          @echo off
-                          echo Installing .NET tool
-                          call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                          call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                          echo Installing JavaScript parser
-                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
-                          echo Installing Rust parser
-                          call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
-                        enableCustomDeployment: true
-                        DeploymentType: zipDeploy
+              - task: AzureRmWebAppDeployment@4
+                displayName: 'Azure App Service Deploy: apiviewuat'
+                inputs:
+                  azureSubscription: 'APIViewUI-Instance-deployment-connection'
+                  WebAppName: apiviewuat
+                  packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+                  InlineScript: |
+                    @echo off
+                    echo Installing .NET tool
+                    call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                    call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                    echo Installing JavaScript parser
+                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                    echo Installing Rust parser
+                    call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                  enableCustomDeployment: true
+                  DeploymentType: zipDeploy
 
       - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Production_Publish

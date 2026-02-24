@@ -105,14 +105,12 @@ export class TypeSpecProcessor {
      */
     private parseTypeSpecDefinitionsHelper(lines: string[], level: number = 1): TypeSpecDefinition[] {
         const definitions: TypeSpecDefinition[] = [];
-        // const lines = content.split('\n');
         let currentDefinitionStart = -1;
         let currentDefinitionBodyStart = -1;
         let currentType: TypeSpecDefinitionType | undefined = undefined;
         let currentName = '';
         let currentLevel = level;
         let braceCount = 0;
-        let inDefinition = false;
         let hasGlobalNamespace = false;
 
         for (let i = 0; i < lines.length; i++) {
@@ -120,17 +118,7 @@ export class TypeSpecProcessor {
             const trimmedLine = line.trim();
             const definitionMatch = this.matchDefinitionStart(trimmedLine);
             if (definitionMatch && braceCount === 0) {
-                // if (!inDefinition) {
-                //     inDefinition = true;
-                //     currentLevel++;
-                // } else if (braceCount === 0) {
-                //     inDefinition = false;
-                //     currentLevel--;
-                // }
                 braceCount = (trimmedLine.match(/\{/g) || []).length - (trimmedLine.match(/\}/g) || []).length;
-                if (braceCount === 0) {
-                    inDefinition = false;
-                }
                 if (definitionMatch.type === 'namespace') {
                     if (trimmedLine.endsWith(';')) {
                         // global namespace
@@ -272,11 +260,6 @@ export class TypeSpecProcessor {
             level: level,
             children: children.length > 0 ? children:  undefined
         };
-    }
-
-    private parseOperationsInInterface(): TypeSpecDefinition[] {
-        const operations: TypeSpecDefinition[] = [];
-        return operations;
     }
 
     /**
@@ -670,28 +653,6 @@ export class TypeSpecProcessor {
 
         // Generate chapters for each definition
         for (const def of definitions) {
-            // if (excluded && excluded.includes(def.type)) continue;
-            // let chapterHead: string = "";
-            // for (let i = 0; i < def.level; i++) {
-            //     chapterHead += "#";
-            // }
-            // lines.push(`${chapterHead} ${def.fullName ?? def.name}`);
-            // lines.push('');
-            // if (def.type) lines.push(`**Type:** ${this.capitalizeType(def.type)}`);
-            // lines.push('');
-            
-            // // Add description as chapter body if available
-            // if (def.description) {
-            //     lines.push(def.description);
-            //     lines.push('');
-            // }
-            
-            // lines.push('```typespec');
-            // lines.push(def.code);
-            // lines.push('```');
-            // lines.push('');
-            // lines.push('---');
-            // lines.push('');
             this.generateDefinition(def, excluded, lines);
             if (def.children) {
                 for (const child of def.children) {

@@ -405,11 +405,11 @@ extends:
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
-      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
-          condition: and(succeeded(), eq(coalesce(variables['runTestUIPublish'], 'true'), 'true'))
+          condition: and(succeeded(), eq(coalesce(variables['runTestUIPublish'], 'false'), 'true'))
 
           variables:
             - name: 'apiUrl'

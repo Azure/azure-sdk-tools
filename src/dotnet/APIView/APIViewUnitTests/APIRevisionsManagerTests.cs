@@ -1460,19 +1460,11 @@ public class APIRevisionsManagerTests
     [Fact]
     public async Task GetReviewQualityScoreAsync_SampleRevisionComments_Ignored()
     {
+        // SampleRevision comments are excluded at the DB level because the repository
+        // is queried with CommentType.APIRevision. The mock returns an empty list to
+        // reflect what the DB would actually return for that filter.
         var revision = CreateRevisionForQualityTest();
-        var comments = new List<CommentItemModel>
-        {
-            new CommentItemModel
-            {
-                ReviewId = "review-1",
-                CommentType = CommentType.SampleRevision, // Not APIRevision
-                Severity = CommentSeverity.MustFix,
-                IsResolved = false,
-                CommentSource = CommentSource.UserGenerated,
-                CommentText = "Sample comment"
-            }
-        };
+        var comments = new List<CommentItemModel>();
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
         _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);

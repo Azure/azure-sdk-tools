@@ -19,12 +19,13 @@ import { ConversationsComponent } from './conversations.component';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { APIRevision } from 'src/app/_models/revision';
-import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSource } from 'src/app/_models/commentItemModel';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { CommentThreadUpdateAction } from 'src/app/_dtos/commentThreadUpdateDto';
 
 describe('ConversationComponent', () => {
   let component: ConversationsComponent;
@@ -147,6 +148,73 @@ describe('ConversationComponent', () => {
       expect(keys).toEqual(['2', '4']);
       expect(component.numberOfActiveThreads).toBe(1);
     });
+
+    it('should count total unresolved threads correctly with mixed resolved/unresolved', () => {
+      const apiRevisions = [
+        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' },
+        { id: 'rev-2', createdOn: '2022-10-01T00:00:00Z' },
+        { id: 'rev-3', createdOn: '2023-10-01T00:00:00Z' }
+      ] as APIRevision[];
+
+      const comments = [
+        // Thread 1: unresolved (2 comments, same elementId)
+        { id: 'c1', elementId: 'elem-1', apiRevisionId: 'rev-1', isResolved: false },
+        { id: 'c2', elementId: 'elem-1', apiRevisionId: 'rev-2', isResolved: false },
+        // Thread 2: resolved (has isResolved=true)
+        { id: 'c3', elementId: 'elem-2', apiRevisionId: 'rev-1', isResolved: true },
+        // Thread 3: unresolved
+        { id: 'c4', elementId: 'elem-3', apiRevisionId: 'rev-2', isResolved: false },
+        // Thread 4: resolved
+        { id: 'c5', elementId: 'elem-4', apiRevisionId: 'rev-3', isResolved: true }
+      ] as CommentItemModel[];
+
+      component.apiRevisions = apiRevisions;
+      component.comments = comments;
+      component.createCommentThreads();
+
+      // Should count only unresolved threads: elem-1 and elem-3
+      expect(component.numberOfActiveThreads).toBe(2);
+    });
+
+    it('should resolve all comments in a thread when using threadId', () => {
+      const apiRevisions = [
+        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' },
+        { id: 'rev-2', createdOn: '2022-10-01T00:00:00Z' }
+      ] as APIRevision[];
+
+      const comments = [
+        // Thread with same threadId but different elementIds
+        { id: 'c1', elementId: 'elem-1', threadId: 'thread-1', apiRevisionId: 'rev-1', isResolved: false },
+        { id: 'c2', elementId: 'elem-1', threadId: 'thread-1', apiRevisionId: 'rev-1', isResolved: false },
+        { id: 'c3', elementId: 'elem-1', threadId: 'thread-1', apiRevisionId: 'rev-2', isResolved: false },
+        // Separate thread
+        { id: 'c4', elementId: 'elem-2', threadId: 'thread-2', apiRevisionId: 'rev-1', isResolved: false }
+      ] as CommentItemModel[];
+
+      component.apiRevisions = apiRevisions;
+      component.comments = comments;
+      component.createCommentThreads();
+
+      // Initially 2 unresolved threads
+      expect(component.numberOfActiveThreads).toBe(2);
+
+      // Resolve thread-1
+      (component as any).applyCommentResolutionUpdate({
+        elementId: 'elem-1',
+        threadId: 'thread-1',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved
+      });
+
+      // All 3 comments in thread-1 should be resolved
+      const thread1Comments = component.comments.filter(c => c.threadId === 'thread-1');
+      expect(thread1Comments.every(c => c.isResolved)).toBe(true);
+
+      // thread-2 should still be unresolved
+      const thread2Comments = component.comments.filter(c => c.threadId === 'thread-2');
+      expect(thread2Comments.every(c => !c.isResolved)).toBe(true);
+
+      // Now only 1 active thread
+      expect(component.numberOfActiveThreads).toBe(1);
+    });
   });
 });
-

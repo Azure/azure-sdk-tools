@@ -87,8 +87,8 @@ public class UnauthorizedPageModelTests
     [Fact]
     public async Task OnGetAsync_WhenAuthorized_WithAllowedOrigin_RedirectsToReturnUrl()
     {
-        _pageModel.ReturnUrl = "https://spa.apiview.dev/Reviews";
-        _mockUrlHelper.Setup(u => u.IsLocalUrl("https://spa.apiview.dev/Reviews")).Returns(false);
+        _pageModel.ReturnUrl = "https://spa.apiview.org/Reviews";
+        _mockUrlHelper.Setup(u => u.IsLocalUrl("https://spa.apiview.org/Reviews")).Returns(false);
         _mockEnvironment.SetupGet(e => e.EnvironmentName).Returns(Environments.Development);
         _mockAuthorizationService
             .Setup(a => a.AuthorizeAsync(_testUser, null, Startup.RequireOrganizationPolicy))
@@ -97,7 +97,7 @@ public class UnauthorizedPageModelTests
         IActionResult result = await _pageModel.OnGetAsync();
         result.Should().BeOfType<RedirectResult>();
         RedirectResult redirectResult = result as RedirectResult;
-        redirectResult!.Url.Should().Be("https://spa.apiview.dev/Reviews");
+        redirectResult!.Url.Should().Be("https://spa.apiview.org/Reviews");
     }
 
     [Fact]

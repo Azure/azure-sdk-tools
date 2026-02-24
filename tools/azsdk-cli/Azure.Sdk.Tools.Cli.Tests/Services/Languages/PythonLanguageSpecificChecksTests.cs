@@ -100,4 +100,126 @@ internal class PythonLanguageSpecificChecksTests
     }
 
     #endregion
+
+    #region AnalyzeDependencies Tests
+
+    [Test]
+    public async Task AnalyzeDependencies_ReturnsSuccess_WhenNoDependencyIssuesFound()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-dep-success-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        var processResult = new ProcessResult
+        {
+            ExitCode = 0,
+            OutputDetails = [(StdioLevel.StandardOutput, "All dependencies are compatible")]
+        };
+        _pythonHelperMock.Setup(p => p.Run(
+            It.IsAny<PythonOptions>(),
+            It.IsAny<CancellationToken>()))
+        .ReturnsAsync(processResult);
+
+        // Act
+        var result = await _languageService.AnalyzeDependencies(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.CheckStatusDetails, Does.Contain("Dependency analysis completed successfully - all minimum dependencies are compatible"));
+            Assert.That(result.ResponseError, Is.Null.Or.Empty);
+        });
+
+        // Verify correct Python command was called
+        _pythonHelperMock.Verify(x => x.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task AnalyzeDependencies_ReturnsFailure_WhenDependencyIssuesFound()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-dep-failure-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        var processResult = new ProcessResult
+        {
+            ExitCode = 1,
+            OutputDetails = [(StdioLevel.StandardOutput, "Dependency conflicts detected"), (StdioLevel.StandardOutput, "Conflict in package version requirements")]
+        };
+        
+        _pythonHelperMock.Setup(p => p.Run(
+            It.IsAny<PythonOptions>(),
+            It.IsAny<CancellationToken>()))
+        .ReturnsAsync(processResult);
+
+        // Act
+        var result = await _languageService.AnalyzeDependencies(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.CheckStatusDetails, Does.Contain("Dependency conflicts detected"));
+            Assert.That(result.ResponseError, Does.Contain("Dependency analysis found issues with minimum dependency versions"));
+        });
+
+        // Verify Python helper was called
+        _pythonHelperMock.Verify(x => x.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task AnalyzeDependencies_ReturnsError_WhenExceptionThrown()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-dep-exception-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        _pythonHelperMock.Setup(p => p.Run(
+            It.IsAny<PythonOptions>(),
+            It.IsAny<CancellationToken>()))
+        .ThrowsAsync(new InvalidOperationException("Python execution failed"));
+
+        // Act
+        var result = await _languageService.AnalyzeDependencies(packagePath, false, CancellationToken.None);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Error running dependency analysis: Python execution failed"));
+            Assert.That(result.CheckStatusDetails, Is.Empty);
+        });
+
+        // Verify Python command was attempted
+        _pythonHelperMock.Verify(x => x.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task AnalyzeDependencies_UsesCorrectTimeout_WhenCalled()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-dep-timeout-test");
+        var packagePath = tempDir.DirectoryPath;
+
+        var processResult = new ProcessResult
+        {
+            ExitCode = 0,
+            OutputDetails = [(StdioLevel.StandardOutput, "Success")]
+        };
+        _pythonHelperMock.Setup(p => p.Run(
+            It.IsAny<PythonOptions>(),
+            It.IsAny<CancellationToken>()))
+        .ReturnsAsync(processResult);
+
+        // Act
+        await _languageService.AnalyzeDependencies(packagePath, false, CancellationToken.None);
+
+        // Assert - Verify timeout is exactly 5 minutes
+        _pythonHelperMock.Verify(x => x.Run(It.Is<PythonOptions>(p => 
+            p.Timeout == TimeSpan.FromMinutes(5)), 
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
 }

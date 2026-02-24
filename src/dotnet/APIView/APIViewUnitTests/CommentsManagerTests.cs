@@ -46,6 +46,7 @@ public class CommentsManagerTests
         commentsRepoMock = new Mock<ICosmosCommentsRepository>();
         hubContextMock = new Mock<IHubContext<SignalRHub>>();
         apiRevisionsManagerMock = new Mock<IAPIRevisionsManager>();
+        var diagnosticCommentServiceMock = new Mock<IDiagnosticCommentService>();
 
         var mockClients = new Mock<IHubClients>();
         var mockClientProxy = new Mock<IClientProxy>();
@@ -55,7 +56,6 @@ public class CommentsManagerTests
             .Returns(Task.CompletedTask);
 
         Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["approvers"]).Returns("architect1");
         configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
@@ -85,6 +85,12 @@ public class CommentsManagerTests
         Mock<INotificationManager> notificationManagerMock = new();
         Mock<IHttpClientFactory> httpClientFactoryMock = new();
         Mock<ILogger<CommentsManager>> logger = new();
+        Mock<IPermissionsManager> permissionsManagerMock = new();
+        permissionsManagerMock.Setup(p => p.GetEffectivePermissionsAsync("architect1")).ReturnsAsync(
+            new EffectivePermissions()
+            {
+                Roles = [new GlobalRoleAssignment() { Role = GlobalRole.Admin }]
+            });
 
         Mock<HttpMessageHandler> handlerMock = new();
         handlerMock
@@ -118,6 +124,7 @@ public class CommentsManagerTests
 
         return new CommentsManager(
             apiRevisionsManagerMock.Object,
+            diagnosticCommentServiceMock.Object,
             authServiceMock.Object,
             commentsRepoMock.Object,
             reviewRepoMock.Object,
@@ -129,6 +136,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            permissionsManagerMock.Object,
             copilotAuthService.Object,
             logger.Object
         );
@@ -1032,6 +1040,7 @@ public class CommentsManagerTests
         Mock<IAuthorizationService> authServiceMock = new();
         Mock<INotificationManager> notificationManagerMock = new();
         Mock<IHttpClientFactory> httpClientFactoryMock = new();
+        Mock<IPermissionsManager> permissionsManagerMock = new();
         Mock<ILogger<CommentsManager>> logger = new();
 
         Mock<HttpMessageHandler> handlerMock = new();
@@ -1068,6 +1077,7 @@ public class CommentsManagerTests
 
         var manager = new CommentsManager(
             apiRevisionsManagerMock.Object,
+            new Mock<IDiagnosticCommentService>().Object,
             authServiceMock.Object,
             commentsRepoMock.Object,
             reviewRepoMock.Object,
@@ -1079,6 +1089,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            permissionsManagerMock.Object,
             copilotAuthServiceMock.Object,
             logger.Object
         );
@@ -1139,6 +1150,7 @@ public class CommentsManagerTests
 
         var manager = new CommentsManager(
             new Mock<IAPIRevisionsManager>().Object,
+            new Mock<IDiagnosticCommentService>().Object,
             new Mock<IAuthorizationService>().Object,
             commentsRepoMock.Object,
             new Mock<ICosmosReviewRepository>().Object,
@@ -1150,6 +1162,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
             new Mock<ICopilotAuthenticationService>().Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
@@ -1204,6 +1217,7 @@ public class CommentsManagerTests
 
         var manager = new CommentsManager(
             new Mock<IAPIRevisionsManager>().Object,
+            new Mock<IDiagnosticCommentService>().Object,
             new Mock<IAuthorizationService>().Object,
             commentsRepoMock.Object,
             new Mock<ICosmosReviewRepository>().Object,
@@ -1215,6 +1229,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
             new Mock<ICopilotAuthenticationService>().Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
@@ -1317,6 +1332,7 @@ public class CommentsManagerTests
 
         var manager = new CommentsManager(
             apiRevisionsManagerMock.Object,
+            new Mock<IDiagnosticCommentService>().Object,
             new Mock<IAuthorizationService>().Object,
             commentsRepoMock.Object,
             reviewRepoMock.Object,
@@ -1328,6 +1344,7 @@ public class CommentsManagerTests
             configMock.Object,
             orgOptionsMock.Object,
             backgroundTaskQueueMock.Object,
+            new Mock<IPermissionsManager>().Object,
             copilotAuthServiceMock.Object,
             new Mock<ILogger<CommentsManager>>().Object
         );
@@ -1650,587 +1667,5 @@ public class CommentsManagerTests
     }
 
     #endregion
-
-    #region SyncDiagnosticCommentsAsync Tests
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_WithNewDiagnostics_CreatesNewComments()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var apiRevision = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        var diagnostics = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "First diagnostic message", "https://help.com/diag001"),
-            new CodeDiagnostic("DIAG002", "target2", "Second diagnostic message", null, CodeDiagnosticLevel.Warning)
-        };
-
-        var upsertedComments = new List<CommentItemModel>();
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => upsertedComments.Add(c))
-            .Returns(Task.CompletedTask);
-
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision, diagnostics, new List<CommentItemModel>());
-
-        Assert.Equal(2, result.Count);
-        Assert.Equal(2, upsertedComments.Count);
-        Assert.All(upsertedComments, c =>
-        {
-            Assert.Equal(CommentSource.Diagnostic, c.CommentSource);
-            Assert.Equal("review1", c.ReviewId);
-            Assert.Equal("rev1", c.APIRevisionId);
-            Assert.StartsWith("diag-rev1-", c.Id);
-            Assert.False(c.IsResolved);
-        });
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_WithExistingUnchangedDiagnostics_SkipsSyncWhenHashMatches()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var diagnostics = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic message", null)
-        };
-
-        var apiRevision1 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        // First sync to establish hash
-        await manager.SyncDiagnosticCommentsAsync(apiRevision1, diagnostics, new List<CommentItemModel>());
-        string establishedHash = apiRevision1.DiagnosticsHash;
-
-        // Reset mocks for second call
-        commentsRepoMock.Invocations.Clear();
-        apiRevisionsManagerMock.Invocations.Clear();
-
-        // Second call with same hash - should skip
-        var apiRevision2 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = establishedHash
-        };
-
-        var existingComment = new CommentItemModel
-        {
-            Id = "diag-rev1-existing",
-            ReviewId = "review1",
-            APIRevisionId = "rev1",
-            CommentSource = CommentSource.Diagnostic
-        };
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision2, diagnostics, new List<CommentItemModel> { existingComment });
-
-        Assert.Single(result);
-        commentsRepoMock.Verify(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
-        apiRevisionsManagerMock.Verify(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_WhenDiagnosticDisappears_ResolvesComment()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var apiRevision = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = "old-hash"
-        };
-
-        var existingDiagnosticComment = new CommentItemModel
-        {
-            Id = "diag-rev1-abc123",
-            ReviewId = "review1",
-            APIRevisionId = "rev1",
-            ElementId = "target1",
-            CommentSource = CommentSource.Diagnostic,
-            IsResolved = false,
-            ChangeHistory = new List<CommentChangeHistoryModel>()
-        };
-
-        CommentItemModel resolvedComment = null;
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => resolvedComment = c)
-            .Returns(Task.CompletedTask);
-
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision, Array.Empty<CodeDiagnostic>(), new List<CommentItemModel> { existingDiagnosticComment });
-
-        Assert.Empty(result);
-        Assert.NotNull(resolvedComment);
-        Assert.True(resolvedComment.IsResolved);
-        Assert.Contains(resolvedComment.ChangeHistory, h => h.ChangeAction == CommentChangeAction.Resolved);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_WhenDiagnosticReappears_UnresolvesIfBotResolved()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var diagnostics = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic message", null)
-        };
-
-        // First, create the diagnostic to get the correct ID
-        var apiRevision1 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        string createdCommentId = null;
-        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", false, null))
-            .ReturnsAsync(new List<CommentItemModel>());
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => createdCommentId = c.Id)
-            .Returns(Task.CompletedTask);
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        await manager.SyncDiagnosticCommentsAsync(apiRevision1, diagnostics, new List<CommentItemModel>());
-
-        // Now test unresolve - reset and set up bot-resolved comment with correct ID
-        commentsRepoMock.Invocations.Clear();
-
-        var apiRevision2 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = "old-hash"
-        };
-
-        var botResolvedComment = new CommentItemModel
-        {
-            Id = createdCommentId,
-            ReviewId = "review1",
-            APIRevisionId = "rev1",
-            ElementId = "target1",
-            CommentSource = CommentSource.Diagnostic,
-            IsResolved = true,
-            Severity = CommentSeverity.ShouldFix,
-            ChangeHistory = [new() { ChangeAction = CommentChangeAction.Resolved, ChangedBy = "azure-sdk" }]
-        };
-
-        CommentItemModel updatedComment = null;
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => updatedComment = c)
-            .Returns(Task.CompletedTask);
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision2, diagnostics, new List<CommentItemModel> { botResolvedComment });
-
-        Assert.Single(result);
-        Assert.NotNull(updatedComment);
-        Assert.False(updatedComment.IsResolved);
-        Assert.Contains(updatedComment.ChangeHistory, h => h.ChangeAction == CommentChangeAction.UnResolved);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_WhenDiagnosticReappears_DoesNotUnresolveIfUserResolved()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var diagnostics = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic message", null)
-        };
-
-        var apiRevision1 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        string createdCommentId = null;
-        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", false, null))
-            .ReturnsAsync(new List<CommentItemModel>());
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => createdCommentId = c.Id)
-            .Returns(Task.CompletedTask);
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        await manager.SyncDiagnosticCommentsAsync(apiRevision1, diagnostics, new List<CommentItemModel>());
-
-        commentsRepoMock.Invocations.Clear();
-
-        var apiRevision2 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = "old-hash"
-        };
-
-        // Simulate a user-resolved diagnostic comment with correct ID
-        var userResolvedComment = new CommentItemModel
-        {
-            Id = createdCommentId,
-            ReviewId = "review1",
-            APIRevisionId = "rev1",
-            ElementId = "target1",
-            CommentSource = CommentSource.Diagnostic,
-            IsResolved = true,
-            Severity = CommentSeverity.ShouldFix,
-            ChangeHistory = new List<CommentChangeHistoryModel>
-            {
-                new() { ChangeAction = CommentChangeAction.Resolved, ChangedBy = "human-user" }
-            }
-        };
-
-        commentsRepoMock.Setup(r => r.GetCommentsAsync("review1", false, null))
-            .ReturnsAsync(new List<CommentItemModel> { userResolvedComment });
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision2, diagnostics, new List<CommentItemModel> { userResolvedComment });
-
-        Assert.Single(result);
-        Assert.True(result[0].IsResolved);
-        Assert.DoesNotContain(result[0].ChangeHistory, h => h.ChangeAction == CommentChangeAction.UnResolved);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_WhenSeverityChanges_UpdatesCommentSeverity()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var diagnosticsWarning = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic message", null, CodeDiagnosticLevel.Warning)
-        };
-
-        var apiRevision1 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        string createdCommentId = null;
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => createdCommentId = c.Id)
-            .Returns(Task.CompletedTask);
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        await manager.SyncDiagnosticCommentsAsync(apiRevision1, diagnosticsWarning, new List<CommentItemModel>());
-
-        commentsRepoMock.Invocations.Clear();
-        var apiRevision2 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = "old-hash"
-        };
-
-        var existingComment = new CommentItemModel
-        {
-            Id = createdCommentId,
-            ReviewId = "review1",
-            APIRevisionId = "rev1",
-            ElementId = "target1",
-            CommentSource = CommentSource.Diagnostic,
-            Severity = CommentSeverity.ShouldFix, // Was Warning
-            IsResolved = false,
-            ChangeHistory = new List<CommentChangeHistoryModel>()
-        };
-
-        CommentItemModel updatedComment = null;
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => updatedComment = c)
-            .Returns(Task.CompletedTask);
-
-        var diagnosticsFatal = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic message", null, CodeDiagnosticLevel.Fatal)
-        };
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision2, diagnosticsFatal, new List<CommentItemModel> { existingComment });
-
-        Assert.Single(result);
-        Assert.NotNull(updatedComment);
-        Assert.Equal(CommentSeverity.MustFix, updatedComment.Severity);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_MapsLevelsToSeveritiesCorrectly()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var apiRevision = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        var diagnostics = new[]
-        {
-            new CodeDiagnostic("D1", "t1", "Fatal diag", null, CodeDiagnosticLevel.Fatal),
-            new CodeDiagnostic("D2", "t2", "Error diag", null, CodeDiagnosticLevel.Error),
-            new CodeDiagnostic("D3", "t3", "Warning diag", null, CodeDiagnosticLevel.Warning),
-            new CodeDiagnostic("D4", "t4", "Info diag", null, CodeDiagnosticLevel.Info)
-        };
-
-        var upsertedComments = new List<CommentItemModel>();
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => upsertedComments.Add(c))
-            .Returns(Task.CompletedTask);
-
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        await manager.SyncDiagnosticCommentsAsync(apiRevision, diagnostics, new List<CommentItemModel>());
-
-        Assert.Equal(4, upsertedComments.Count);
-        Assert.Equal(CommentSeverity.MustFix, upsertedComments.First(c => c.ElementId == "t1").Severity);
-        Assert.Equal(CommentSeverity.MustFix, upsertedComments.First(c => c.ElementId == "t2").Severity);
-        Assert.Equal(CommentSeverity.ShouldFix, upsertedComments.First(c => c.ElementId == "t3").Severity);
-        Assert.Equal(CommentSeverity.Suggestion, upsertedComments.First(c => c.ElementId == "t4").Severity);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_WithNullDiagnostics_HandlesGracefully()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var apiRevision = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision, null, new List<CommentItemModel>());
-
-        Assert.Empty(result);
-        Assert.Equal(string.Empty, apiRevision.DiagnosticsHash);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_UpdatesRevisionHashAfterSync()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var apiRevision = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        var diagnostics = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Test diagnostic", null)
-        };
-
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        APIRevisionListItemModel updatedRevision = null;
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Callback<APIRevisionListItemModel>(r => updatedRevision = r)
-            .Returns(Task.CompletedTask);
-
-        await manager.SyncDiagnosticCommentsAsync(apiRevision, diagnostics, new List<CommentItemModel>());
-
-        Assert.NotNull(updatedRevision);
-        Assert.NotNull(updatedRevision.DiagnosticsHash);
-        Assert.NotEmpty(updatedRevision.DiagnosticsHash);
-        apiRevisionsManagerMock.Verify(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_SameDiagnosticIdAcrossPageLoads_NoDuplicates()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var diagnostics = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic message", null)
-        };
-
-        var apiRevision1 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        string firstSyncCommentId = null;
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => firstSyncCommentId = c.Id)
-            .Returns(Task.CompletedTask);
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        await manager.SyncDiagnosticCommentsAsync(apiRevision1, diagnostics, new List<CommentItemModel>());
-
-        commentsRepoMock.Invocations.Clear();
-
-        var apiRevision2 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = "different-hash"
-        };
-
-        var existingComment = new CommentItemModel
-        {
-            Id = firstSyncCommentId,
-            ReviewId = "review1",
-            APIRevisionId = "rev1",
-            ElementId = "target1",
-            CommentSource = CommentSource.Diagnostic,
-            Severity = CommentSeverity.ShouldFix,
-            IsResolved = false,
-            ChangeHistory = new List<CommentChangeHistoryModel>()
-        };
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision2, diagnostics, new List<CommentItemModel>());
-
-        Assert.Single(result);
-        Assert.Equal(existingComment.Id, result[0].Id);
-        Assert.Equal(1, result.Count);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_IncludesHelpLinkInCommentText()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        var apiRevision = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        var diagnostics = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic with help link", "https://docs.microsoft.com/help/diag001")
-        };
-
-        CommentItemModel createdComment = null;
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => createdComment = c)
-            .Returns(Task.CompletedTask);
-
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        await manager.SyncDiagnosticCommentsAsync(apiRevision, diagnostics, new List<CommentItemModel>());
-
-        Assert.NotNull(createdComment);
-        Assert.Contains("Diagnostic with help link", createdComment.CommentText);
-        Assert.Contains("[Details](https://docs.microsoft.com/help/diag001)", createdComment.CommentText);
-    }
-
-    [Fact]
-    public async Task SyncDiagnosticCommentsAsync_WhenHelpLinkChanges_UpdatesCommentText()
-    {
-        CommentsManager manager = CreateManager(out Mock<ICosmosCommentsRepository> commentsRepoMock, out _, out Mock<IAPIRevisionsManager> apiRevisionsManagerMock);
-
-        // First, create a diagnostic with an old help link
-        var diagnosticsOldLink = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic message", "https://old-docs.com/help")
-        };
-
-        var apiRevision1 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = null
-        };
-
-        string createdCommentId = null;
-        string originalCommentText = null;
-
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c =>
-            {
-                createdCommentId = c.Id;
-                originalCommentText = c.CommentText;
-            })
-            .Returns(Task.CompletedTask);
-        apiRevisionsManagerMock.Setup(m => m.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-            .Returns(Task.CompletedTask);
-
-        await manager.SyncDiagnosticCommentsAsync(apiRevision1, diagnosticsOldLink, new List<CommentItemModel>());
-
-        // Verify original comment has old link
-        Assert.Contains("[Details](https://old-docs.com/help)", originalCommentText);
-
-        // Reset mocks
-        commentsRepoMock.Invocations.Clear();
-
-        var apiRevision2 = new APIRevisionListItemModel
-        {
-            Id = "rev1",
-            ReviewId = "review1",
-            DiagnosticsHash = "old-hash"
-        };
-
-        // Existing comment with old help link
-        var existingComment = new CommentItemModel
-        {
-            Id = createdCommentId,
-            ReviewId = "review1",
-            APIRevisionId = "rev1",
-            ElementId = "target1",
-            CommentSource = CommentSource.Diagnostic,
-            CommentText = originalCommentText,
-            Severity = CommentSeverity.ShouldFix,
-            IsResolved = false,
-            ChangeHistory = new List<CommentChangeHistoryModel>()
-        };
-
-        CommentItemModel updatedComment = null;
-        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-            .Callback<CommentItemModel>(c => updatedComment = c)
-            .Returns(Task.CompletedTask);
-
-        // Same diagnostic text but with a new help link URL
-        var diagnosticsNewLink = new[]
-        {
-            new CodeDiagnostic("DIAG001", "target1", "Diagnostic message", "https://new-docs.com/updated-help")
-        };
-
-        var result = await manager.SyncDiagnosticCommentsAsync(apiRevision2, diagnosticsNewLink, new List<CommentItemModel> { existingComment });
-
-        Assert.Single(result);
-        Assert.NotNull(updatedComment);
-        Assert.Contains("[Details](https://new-docs.com/updated-help)", updatedComment.CommentText);
-        Assert.DoesNotContain("old-docs.com", updatedComment.CommentText);
-    }
-
-    #endregion
 }
+

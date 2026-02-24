@@ -17,7 +17,7 @@ export function createDocsReviewLines(item: Item, contentBasedLineId: string): R
   const docLines = item.docs.split("\n");
 
   // Create a ReviewLine for each doc line
-  const reviewLines: ReviewLine[] = docLines.map((line) => ({
+  const reviewLines: ReviewLine[] = docLines.map((line, index) => ({
     Tokens: [
       {
         Kind: TokenKind.Comment,

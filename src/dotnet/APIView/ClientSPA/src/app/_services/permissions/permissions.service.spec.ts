@@ -98,13 +98,13 @@ describe('PermissionsService', () => {
         });
     });
 
-    describe('canApprove', () => {
+    describe('isApproverFor', () => {
         it('should return true for Admin regardless of language', () => {
             const permissions: EffectivePermissions = {
                 userId: 'testuser',
                 roles: [{ kind: 'global', role: GlobalRole.Admin }]
             };
-            expect(service.canApprove(permissions, 'AnyLanguage')).toBe(true);
+            expect(service.isApproverFor(permissions, 'AnyLanguage')).toBe(true);
         });
 
         it('should return true for Architect with matching language', () => {
@@ -112,7 +112,7 @@ describe('PermissionsService', () => {
                 userId: 'testuser',
                 roles: [{ kind: 'scoped', role: LanguageScopedRole.Architect, language: 'Python' }]
             };
-            expect(service.canApprove(permissions, 'Python')).toBe(true);
+            expect(service.isApproverFor(permissions, 'Python')).toBe(true);
         });
 
         it('should return true for DeputyArchitect with matching language', () => {
@@ -120,7 +120,7 @@ describe('PermissionsService', () => {
                 userId: 'testuser',
                 roles: [{ kind: 'scoped', role: LanguageScopedRole.DeputyArchitect, language: 'Java' }]
             };
-            expect(service.canApprove(permissions, 'Java')).toBe(true);
+            expect(service.isApproverFor(permissions, 'Java')).toBe(true);
         });
 
         it('should return false for Architect with non-matching language', () => {
@@ -128,7 +128,7 @@ describe('PermissionsService', () => {
                 userId: 'testuser',
                 roles: [{ kind: 'scoped', role: LanguageScopedRole.Architect, language: 'Python' }]
             };
-            expect(service.canApprove(permissions, 'Java')).toBe(false);
+            expect(service.isApproverFor(permissions, 'Java')).toBe(false);
         });
 
         it('should return false for SdkTeam without architect role', () => {
@@ -136,7 +136,7 @@ describe('PermissionsService', () => {
                 userId: 'testuser',
                 roles: [{ kind: 'global', role: GlobalRole.SdkTeam }]
             };
-            expect(service.canApprove(permissions, 'Python')).toBe(false);
+            expect(service.isApproverFor(permissions, 'Python')).toBe(false);
         });
     });
 
@@ -155,64 +155,6 @@ describe('PermissionsService', () => {
                 roles: [{ kind: 'global', role: GlobalRole.SdkTeam }]
             };
             expect(service.isAdmin(permissions)).toBe(false);
-        });
-    });
-
-    describe('hasElevatedAccess', () => {
-        it('should return true for Admin', () => {
-            const permissions: EffectivePermissions = {
-                userId: 'testuser',
-                roles: [{ kind: 'global', role: GlobalRole.Admin }]
-            };
-            expect(service.hasElevatedAccess(permissions)).toBe(true);
-        });
-
-        it('should return true for SdkTeam', () => {
-            const permissions: EffectivePermissions = {
-                userId: 'testuser',
-                roles: [{ kind: 'global', role: GlobalRole.SdkTeam }]
-            };
-            expect(service.hasElevatedAccess(permissions)).toBe(true);
-        });
-
-        it('should return false for ServiceTeam', () => {
-            const permissions: EffectivePermissions = {
-                userId: 'testuser',
-                roles: [{ kind: 'global', role: GlobalRole.ServiceTeam }]
-            };
-            expect(service.hasElevatedAccess(permissions)).toBe(false);
-        });
-    });
-
-    describe('getApprovalLanguages', () => {
-        it('should return ["*"] for Admin', () => {
-            const permissions: EffectivePermissions = {
-                userId: 'testuser',
-                roles: [{ kind: 'global', role: GlobalRole.Admin }]
-            };
-            expect(service.getApprovalLanguages(permissions)).toEqual(['*']);
-        });
-
-        it('should return list of languages for Architect roles', () => {
-            const permissions: EffectivePermissions = {
-                userId: 'testuser',
-                roles: [
-                    { kind: 'scoped', role: LanguageScopedRole.Architect, language: 'Python' },
-                    { kind: 'scoped', role: LanguageScopedRole.DeputyArchitect, language: 'Java' }
-                ]
-            };
-            const languages = service.getApprovalLanguages(permissions);
-            expect(languages).toContain('Python');
-            expect(languages).toContain('Java');
-            expect(languages.length).toBe(2);
-        });
-
-        it('should return empty array for no approval roles', () => {
-            const permissions: EffectivePermissions = {
-                userId: 'testuser',
-                roles: [{ kind: 'global', role: GlobalRole.SdkTeam }]
-            };
-            expect(service.getApprovalLanguages(permissions)).toEqual([]);
         });
     });
 });

@@ -377,7 +377,13 @@ export function buildTypeNodeTokens(
       const indent = createIndentation(depth + 1, deprecated);
       if (indent) memberTokens.push(indent);
 
-      const memberChildren = buildTypeElementTokens(member, memberTokens, deprecated, depth + 1);
+      const memberChildren = buildTypeElementTokens(
+        member,
+        memberTokens,
+        deprecated,
+        depth + 1,
+        referenceMap,
+      );
 
       const childLine: ReviewLine = { Tokens: memberTokens };
       if (memberChildren?.length) {
@@ -684,6 +690,7 @@ export function buildTypeElementTokens(
   tokens: ReviewToken[],
   deprecated?: boolean,
   depth: number = 0,
+  referenceMap?: ReferenceMap,
 ): ReviewLine[] | undefined {
   // Handle modifiers (readonly, static, etc.)
   const modifiers = ts.canHaveModifiers(member) ? ts.getModifiers(member) : undefined;
@@ -707,7 +714,7 @@ export function buildTypeElementTokens(
     tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
 
     if (member.type) {
-      const children = buildTypeNodeTokens(member.type, tokens, deprecated, depth);
+      const children = buildTypeNodeTokens(member.type, tokens, deprecated, depth, referenceMap);
       if (!children) {
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
       }
@@ -730,7 +737,7 @@ export function buildTypeElementTokens(
     tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
 
     if (member.type) {
-      const children = buildTypeNodeTokens(member.type, tokens, deprecated, depth);
+      const children = buildTypeNodeTokens(member.type, tokens, deprecated, depth, referenceMap);
       if (!children) {
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
       }
@@ -765,6 +772,7 @@ export function buildTypeElementTokens(
             methodChildren,
             deprecated,
             depth,
+            referenceMap,
           );
         }
 
@@ -782,6 +790,7 @@ export function buildTypeElementTokens(
             methodChildren,
             deprecated,
             depth,
+            referenceMap,
           );
         }
 
@@ -815,14 +824,28 @@ export function buildTypeElementTokens(
 
       if (param.type) {
         tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-        addTypeNodeTokensOrInlineLiteral(param.type, tokens, methodChildren, deprecated, depth);
+        addTypeNodeTokensOrInlineLiteral(
+          param.type,
+          tokens,
+          methodChildren,
+          deprecated,
+          depth,
+          referenceMap,
+        );
       }
     });
     tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
 
     if (member.type) {
       tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-      addTypeNodeTokensOrInlineLiteral(member.type, tokens, methodChildren, deprecated, depth);
+      addTypeNodeTokensOrInlineLiteral(
+        member.type,
+        tokens,
+        methodChildren,
+        deprecated,
+        depth,
+        referenceMap,
+      );
     }
 
     if (!methodChildren.length) {
@@ -835,17 +858,6 @@ export function buildTypeElementTokens(
 
   tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
   return undefined;
-}
-
-/**
- * Checks if a type text string contains an inline type literal (object type).
- * Used to determine whether to use processExcerptTokens (for simple types) or
- * parseTypeText (for types that need children structure).
- */
-export function typeTextContainsTypeLiteral(typeText: string): boolean {
-  // A simple heuristic: if it contains '{', it likely has an inline type literal
-  // This covers cases like: { name: string }, { a: number } | string, etc.
-  return typeText.includes("{");
 }
 
 /**

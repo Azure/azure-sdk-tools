@@ -4,11 +4,13 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -148,7 +150,7 @@ public class SampleGeneratorToolTests
         });
         var testServiceLogger = new TestLogger<SampleGeneratorTool>();
         tool = new SampleGeneratorTool(microagentHostServiceMock.Object, testServiceLogger, mockGitHelper.Object, _languageServices);
-        tool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        tool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
         var command = tool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Do thing", "--package-path", packagePath]);
         int exitCode = await parseResult.InvokeAsync();
@@ -294,7 +296,7 @@ public class SampleGeneratorToolTests
 
         var emptyToolLogger = new TestLogger<SampleGeneratorTool>();
         var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, emptyToolLogger, _mockGitHelper.Object, []);
-        errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        errorTool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
         var command = errorTool.GetCommandInstances().First();
         var parseResult = command.Parse(["generate", "--prompt", "Anything", "--package-path", pkgPath]);
         int exitCode = await parseResult.InvokeAsync();
@@ -380,7 +382,7 @@ public class SampleGeneratorToolTests
             _languageServices
         );
 
-        tool.Initialize(_outputHelper, telemetryServiceMock.Object);
+        tool.Initialize(_outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
     }
 
     private async Task<(string repoRoot, string packagePath)> CreateFakeGoPackageAsync()
@@ -544,5 +546,38 @@ public class SampleGeneratorToolTests
 
         // Assert: parser/tool should fail with non-zero exit code
         Assert.That(parseResult.Errors, Is.Not.Empty, "Expected parse errors when required --prompt option is missing");
+    }
+
+    [Test]
+    public async Task GenerateSamples_PopulatesTelemetryFields()
+    {
+        // Arrange
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
+        var generatedSamples = new List<GeneratedSample>
+        {
+            new("sample_one", "package main\nfunc main(){}"),
+            new("sample_two", "package main\nfunc main(){}")
+        };
+
+        microagentHostServiceMock
+            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(generatedSamples);
+
+        // Act
+        var response = await tool.GenerateSamplesAsync(packagePath, "Generate samples", overwrite: false);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Language, Is.EqualTo(SdkLanguage.Go), "Language should be set");
+            Assert.That(response.PackageName, Is.EqualTo("sdk/security/keyvault/azkeys"), "Package name should be set");
+            Assert.That(response.PackageType, Is.EqualTo(SdkType.Dataplane), "Package type should be set");
+            Assert.That(response.Version, Is.EqualTo("1.5.0"), "Version should be set");
+            
+            // Verify samples_count is in Result as an anonymous type
+            Assert.That(response.Result, Is.Not.Null, "Result should not be null");
+            var json = System.Text.Json.JsonSerializer.Serialize(response.Result);
+            Assert.That(json, Does.Contain("\"samples_count\":2"), "Result should contain samples_count with value 2");
+        });
     }
 }

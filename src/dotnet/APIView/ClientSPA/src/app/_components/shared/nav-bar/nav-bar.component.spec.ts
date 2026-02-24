@@ -22,6 +22,7 @@ import { createMockSignalRService, createMockNotificationsService, createMockWor
 interface MockPermissionsService {
   getMyPermissions: Mock;
   isAdmin: Mock;
+  isLanguageApprover: Mock;
 }
 
 interface MockAuthService {
@@ -80,7 +81,8 @@ describe('NavBarComponent', () => {
   beforeEach(() => {
     mockPermissionsService = {
       getMyPermissions: vi.fn(),
-      isAdmin: vi.fn()
+      isAdmin: vi.fn(),
+      isLanguageApprover: vi.fn()
     };
     mockAuthService = {
       isLoggedIn: vi.fn()
@@ -103,6 +105,7 @@ describe('NavBarComponent', () => {
     mockUserProfileService.getUserProfile.mockReturnValue(of(mockUserProfile));
     mockPermissionsService.getMyPermissions.mockReturnValue(of(mockPermissions));
     mockPermissionsService.isAdmin.mockReturnValue(false);
+    mockPermissionsService.isLanguageApprover.mockReturnValue(false);
 
     TestBed.configureTestingModule({
       imports: [

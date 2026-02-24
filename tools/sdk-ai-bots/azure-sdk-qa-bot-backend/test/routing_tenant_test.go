@@ -11,7 +11,6 @@ import (
 
 // TestRoutingTenant_General validates routing tenant for all general channel testcases
 func TestRoutingTenant_General(t *testing.T) {
-	config.LoadEnvFile()
 	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()
@@ -68,6 +67,26 @@ func TestRoutingTenant_General(t *testing.T) {
 		{
 			"API Spec onboarding",
 			"I am from a  service team and need to work on the SDKs. Here is the API spec. what should I do? ",
+			model.TenantID_AzureSDKOnboarding,
+		},
+		{
+			"LRO header return 200",
+			"Hi, I'm from the servicefabric RP team working with [azure-rest-api-specs/specification/servicefabricmanagedclusters/resource-manager/Microsoft.ServiceF…](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/servicefabricmanagedclusters/resource-manager/Microsoft.ServiceFabric/ServiceFabricManagedClusters/preview/2025-06-01-preview/servicefabricmanagedclusters.json)\nOn our operations for ManagedClusters_CreateOrUpdate, NodeTypes_CreateOrUpdate, and ApplicationTypeVersions_CreateOrUpdate, we have both a 200 and 202 response defined.\nA 200 response is returned when the customer sends the initial request to create the resource. A 202 is returned on every subsequent PUT.\nI recently noticed that our service code returns an async operation URI in the 200 response for the above operations. https://msazure.visualstudio.com/One/_git/winfab-RP?path=/src/sfmc/SfmcBackendService/Service/Controllers/ClustersController.cs&version=GBdevelop&line=294&lineEnd=295&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents\n```\nHTTP/1.1 200 OK\nContent-length: 2131\nContent-Type: application/json; charset=utf-8\nServer: Microsoft-HTTPAPI/2.0\nAzure-AsyncOperation: http://localhost:8080/subscriptions/b36cdf46-b75d-4dc2-9fe1-1296ee8c623d/providers/Microsoft.ServiceFabric/locations/southcentralus/managedclusteroperations/c39cd8e1-18a0-41fc-a778-6a4ad6adbd653?api-version=2024-02-01\nDate: Thu, 23 Oct 2025 22:57:10 GMT\nConnection: close\n```\nShould I specify this in the spec? If so, what is the recommendation for doing so? I couldn't find an example for a 200 response with an async operation header.",
+			model.TenantID_AzureSDKQaBot,
+		},
+		{
+			"Typespec Validation Failing on PR",
+			"Hi TypeSpec Discussion,\nCI has been failing constantly for our PR ([Azure Load Testing\\] Add 2025-03-01-preview Data-Plane APIs by Harshan01 · Pull Request #32585 · Azure/azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs/pull/32585)) for Typespec Validation step. The logs show that we are missing the Go SDK configuration and I am able to produce this error locally as well. However, our service doesnt have a Go SDK and we are not planning to put it in scope right now. This check has suddenly started failing for our PRs, what should we do?\n```\nExecuting rule：SdkTspConfigVa1idation\n[SdkTspconfigVa1idation]：validation failed．\n- Failed to find \"options.@azure-tools/typespec-go.generate-fakes\"．Please add \"options.@azure-tools/typespec-go.generate-fakes\".\n- Failed to find \"options.@azure-tools/typespec-go.inject一spans“．Please add \"options.@azure-tools/typespec-go.inject一spans.\n- Failed to find \"options.@azure-tools/typespec-go.service-dir\"．Please add \"options.@azure-tools/typespec-go.service-dir\".\n- Failed to find \"options.@azure-tools/typespec-go.package-dir\"．Please add\"options.@azure-tools/typespec-go.package-dir\".\nPlease See https://aka.ms/azsdk/spec-gen-sdk-config for more info．\nFor additional information on TypeSpec validation, please refer to https://aka.ms/azsdk/specs/typespec-validation.\n```",
+			model.TenantID_AzureSDKQaBot,
+		},
+		{
+			"ArmResourcePatchAsync & discriminator",
+			"title: ArmResourcePatchAsync & discriminator\n\nquestion: I was trying to figure out the best way to allow an update for a Host resource. I tried ArmResourcePatchAsync, but the resource has a discriminator. oav fails with OBJECT_MISSING_REQUIRED_PROPERTY_DEFINITION .  [Windows Server AHB for VMware via PATCH by cataggar · Pull Request #25538 · Azure/azure-rest-api-sp…](https://github.com/Azure/azure-rest-api-specs-pr/pull/25538)",
+			model.TenantID_AzureSDKQaBot,
+		},
+		{
+			"Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?",
+			"title: Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?\n\nquestion: Right now, after pushing my commit, I’m unable to see the error details for the validation checks, it just says “at least one review required to see the workflow.” This makes it difficult to verify if my changes are passing validation before the final review.\nWould it be possible to enable workflow visibility for me so I can debug and ensure everything is in order ahead of time? PR link: [Stable version 2025-09-01 with prevalidation and autoscale changes by prachinandi · Pull Request #3…](https://github.com/Azure/azure-rest-api-specs/pull/37218)",
 			model.TenantID_AzureSDKOnboarding,
 		},
 	}

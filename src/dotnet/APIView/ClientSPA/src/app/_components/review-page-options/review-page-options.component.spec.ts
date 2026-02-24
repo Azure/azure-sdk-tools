@@ -27,22 +27,44 @@ import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
+import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
+import { EffectivePermissions, GlobalRole, LanguageScopedRole } from 'src/app/_models/permissions';
+import { of } from 'rxjs';
 
 import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
 
 describe('ReviewPageOptionsComponent', () => {
   let component: ReviewPageOptionsComponent;
   let fixture: ComponentFixture<ReviewPageOptionsComponent>;
+  let mockPermissionsService: any;
+  let mockReviewContextService: any;
 
   const mockSignalRService = createMockSignalRService();
 
   const mockNotificationsService = createMockNotificationsService();
+
+  const mockApproverPermissions: EffectivePermissions = {
+    userId: 'test-user',
+    roles: [{ kind: 'scoped', role: LanguageScopedRole.Architect, language: 'Python' }]
+  };
 
   beforeAll(() => {
     initializeTestBed();
   });
 
   beforeEach(() => {
+    mockPermissionsService = {
+      isApproverFor: vi.fn().mockReturnValue(false),
+      isAdmin: vi.fn().mockReturnValue(false)
+    };
+
+    mockReviewContextService = {
+      getLanguage: vi.fn().mockReturnValue('Python'),
+      getLanguageApprovers: vi.fn().mockReturnValue([]),
+      getLanguageApprovers$: vi.fn().mockReturnValue(of([]))
+    };
+
     TestBed.configureTestingModule({
       declarations: [
         ReviewPageOptionsComponent
@@ -59,6 +81,8 @@ describe('ReviewPageOptionsComponent', () => {
         provideHttpClientTesting(),
         { provide: SignalRService, useValue: mockSignalRService },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: PermissionsService, useValue: mockPermissionsService },
+        { provide: ReviewContextService, useValue: mockReviewContextService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -97,10 +121,12 @@ describe('ReviewPageOptionsComponent', () => {
       expect(message.textContent?.startsWith("Approved for first release by:")).toBeTruthy()
     });
     it('should disable first release approval button when review is not approved and user is not an approver', () => {
+      mockPermissionsService.isApproverFor.mockReturnValue(false);
       component.reviewIsApproved = false;
+      component.review = { language: 'Python' } as Review;
       component.userProfile = new UserProfile();
       component.userProfile.userName = "test-user-1";
-      component.preferredApprovers = ["test-user-2"]
+      component.userProfile.permissions = { userId: 'test-user-1', roles: [] };
       component.loadingStatus = "completed";
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');
@@ -109,10 +135,12 @@ describe('ReviewPageOptionsComponent', () => {
       expect(message.textContent).toEqual("First release approval pending");
     });
     it('should enable first release approval button when review is not approved and user is an approver', () => {
+      mockPermissionsService.isApproverFor.mockReturnValue(true);
       component.reviewIsApproved = false;
+      component.review = { language: 'Python' } as Review;
       component.userProfile = new UserProfile();
       component.userProfile.userName = "test-user";
-      component.preferredApprovers = ["test-user"]
+      component.userProfile.permissions = mockApproverPermissions;
       component.loadingStatus = "completed";
       fixture.detectChanges();
       const button = fixture.nativeElement.querySelector('#first-release-approval-button');

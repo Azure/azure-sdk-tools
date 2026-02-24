@@ -246,5 +246,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             // Return null for paths without release plans
             return Task.FromResult<ProductInfo?>(null);
         }
+
+        public Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            return Task.FromResult(new List<WorkItem>());
+        }
     }
 }

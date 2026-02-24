@@ -31,7 +31,7 @@ class OpenGuidelinesIssueWorkflow(MentionWorkflow):
             client=client,
             plan=plan,
             owner=owner,
-            repo="azure-rest-api-specs",
+            repo="azure-sdk",
             workflow_tag="guidelines-issue",
             source_tag="APIView Copilot",
             dedup_prompt_file=self.deduplication_prompt_file,

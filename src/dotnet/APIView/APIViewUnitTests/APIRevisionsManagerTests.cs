@@ -70,6 +70,7 @@ public class APIRevisionsManagerTests
 {
     private readonly APIRevisionsManager _manager;
     private readonly Mock<ICosmosAPIRevisionsRepository> _mockAPIRevisionsRepository;
+    private readonly Mock<IDiagnosticCommentService> _mockDiagnosticCommentService;
     private readonly Mock<IAuthorizationService> _mockAuthorizationService;
     private readonly Mock<ICodeFileManager> _mockCodeFileManager;
     private readonly Mock<IBlobCodeFileRepository> _mockCodeFileRepository;
@@ -87,6 +88,7 @@ public class APIRevisionsManagerTests
         _mockReviewsRepository = new Mock<ICosmosReviewRepository>();
         _mockCodeFileRepository = new Mock<IBlobCodeFileRepository>();
         _mockAPIRevisionsRepository = new Mock<ICosmosAPIRevisionsRepository>();
+        _mockDiagnosticCommentService = new Mock<IDiagnosticCommentService>();
         _mockOriginalsRepository = new Mock<IBlobOriginalsRepository>();
         _mockAuthorizationService = new Mock<IAuthorizationService>();
         _mockHubContext = new Mock<IHubContext<SignalRHub>>();
@@ -106,6 +108,7 @@ public class APIRevisionsManagerTests
             _mockAuthorizationService.Object,
             _mockReviewsRepository.Object,
             _mockAPIRevisionsRepository.Object,
+            _mockDiagnosticCommentService.Object,
             _mockHubContext.Object,
             languageServices,
             _mockDevopsArtifactRepository.Object,
@@ -614,6 +617,228 @@ public class APIRevisionsManagerTests
                     PackageName = "test-package",
                     PackageVersion = packageVersion,
                     VersionString = "1.0.0"
+                }
+            }
+        };
+    }
+
+    #endregion
+
+    #region AutoPurgeAPIRevisions Tests
+
+    [Fact]
+    public async Task AutoPurgeAPIRevisions_DeletesOnlyManualAndPullRequestRevisions()
+    {
+        // Arrange
+        var purgeBeforeDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(180)); // 6 months ago
+        
+        var manualRevision1 = CreateSoftDeletedRevision("manual-rev-1", "review-1", APIRevisionType.Manual, purgeBeforeDate);
+        var manualRevision2 = CreateSoftDeletedRevision("manual-rev-2", "review-2", APIRevisionType.Manual, purgeBeforeDate);
+        var prRevision1 = CreateSoftDeletedRevision("pr-rev-1", "review-3", APIRevisionType.PullRequest, purgeBeforeDate);
+        
+        var manualRevisions = new List<APIRevisionListItemModel> { manualRevision1, manualRevision2 };
+        var prRevisions = new List<APIRevisionListItemModel> { prRevision1 };
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(manualRevisions);
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.PullRequest))
+            .ReturnsAsync(prRevisions);
+        
+        // Act
+        await _manager.AutoPurgeAPIRevisions(6);
+        
+        // Assert - verify all revisions were deleted
+        _mockAPIRevisionsRepository.Verify(
+            x => x.DeleteAPIRevisionAsync(manualRevision1.Id, manualRevision1.ReviewId),
+            Times.Once);
+        
+        _mockAPIRevisionsRepository.Verify(
+            x => x.DeleteAPIRevisionAsync(manualRevision2.Id, manualRevision2.ReviewId),
+            Times.Once);
+        
+        _mockAPIRevisionsRepository.Verify(
+            x => x.DeleteAPIRevisionAsync(prRevision1.Id, prRevision1.ReviewId),
+            Times.Once);
+        
+        // Verify code files and originals were deleted
+        _mockCodeFileRepository.Verify(
+            x => x.DeleteCodeFileAsync(It.IsAny<string>(), It.IsAny<string>()),
+            Times.Exactly(3)); // One per revision
+        
+        _mockOriginalsRepository.Verify(
+            x => x.DeleteOriginalAsync(It.IsAny<string>()),
+            Times.Exactly(3)); // Each revision has HasOriginal = true
+    }
+
+    [Fact]
+    public async Task AutoPurgeAPIRevisions_DeletesAssociatedBlobs()
+    {
+        // Arrange
+        var purgeBeforeDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(180));
+        var revisionId = "test-revision-1";
+        var fileId = "test-file-1";
+        
+        var revision = CreateSoftDeletedRevision(revisionId, "review-1", APIRevisionType.Manual, purgeBeforeDate);
+        revision.Files[0].FileId = fileId;
+        revision.Files[0].HasOriginal = true;
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(new List<APIRevisionListItemModel> { revision });
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.PullRequest))
+            .ReturnsAsync(new List<APIRevisionListItemModel>());
+        
+        // Act
+        await _manager.AutoPurgeAPIRevisions(6);
+        
+        // Assert - verify code file blob was deleted
+        _mockCodeFileRepository.Verify(
+            x => x.DeleteCodeFileAsync(revisionId, fileId),
+            Times.Once);
+        
+        // Verify original blob was deleted
+        _mockOriginalsRepository.Verify(
+            x => x.DeleteOriginalAsync(fileId),
+            Times.Once);
+        
+        // Verify cosmos entry was deleted
+        _mockAPIRevisionsRepository.Verify(
+            x => x.DeleteAPIRevisionAsync(revisionId, "review-1"),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task AutoPurgeAPIRevisions_ContinuesOnBlobDeletionError()
+    {
+        // Arrange
+        var purgeBeforeDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(180));
+        var revision = CreateSoftDeletedRevision("test-revision-1", "review-1", APIRevisionType.Manual, purgeBeforeDate);
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(new List<APIRevisionListItemModel> { revision });
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.PullRequest))
+            .ReturnsAsync(new List<APIRevisionListItemModel>());
+        
+        // Setup blob deletion to throw exception
+        _mockCodeFileRepository
+            .Setup(x => x.DeleteCodeFileAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Blob not found"));
+        
+        // Act - should not throw
+        await _manager.AutoPurgeAPIRevisions(6);
+        
+        // Assert - cosmos entry should still be deleted even if blob deletion failed
+        _mockAPIRevisionsRepository.Verify(
+            x => x.DeleteAPIRevisionAsync(revision.Id, revision.ReviewId),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task AutoPurgeAPIRevisions_HandlesMultipleFiles()
+    {
+        // Arrange
+        var purgeBeforeDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(180));
+        var revision = CreateSoftDeletedRevision("test-revision-1", "review-1", APIRevisionType.Manual, purgeBeforeDate);
+        
+        // Add multiple files
+        revision.Files.Add(new APICodeFileModel
+        {
+            FileId = "file-2",
+            FileName = "test2.whl",
+            PackageName = "test-package",
+            PackageVersion = "1.0.0",
+            HasOriginal = true
+        });
+        revision.Files.Add(new APICodeFileModel
+        {
+            FileId = "file-3",
+            FileName = "test3.whl",
+            PackageName = "test-package",
+            PackageVersion = "1.0.0",
+            HasOriginal = false // No original for this one
+        });
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(new List<APIRevisionListItemModel> { revision });
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.PullRequest))
+            .ReturnsAsync(new List<APIRevisionListItemModel>());
+        
+        // Act
+        await _manager.AutoPurgeAPIRevisions(6);
+        
+        // Assert - verify all code files were deleted
+        _mockCodeFileRepository.Verify(
+            x => x.DeleteCodeFileAsync(It.IsAny<string>(), It.IsAny<string>()),
+            Times.Exactly(3)); // Three files
+        
+        // Verify originals were deleted only for files with HasOriginal = true
+        _mockOriginalsRepository.Verify(
+            x => x.DeleteOriginalAsync(It.IsAny<string>()),
+            Times.Exactly(2)); // Only two files have originals
+    }
+
+    [Fact]
+    public async Task AutoPurgeAPIRevisions_DoesNotDeleteRecentSoftDeletedRevisions()
+    {
+        // Arrange - revision soft-deleted recently (1 month ago)
+        var recentDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(30));
+        var recentRevision = CreateSoftDeletedRevision("recent-rev-1", "review-1", APIRevisionType.Manual, recentDate);
+        
+        // Setup mock to return empty list (recent revisions won't be returned by the query)
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.Manual))
+            .ReturnsAsync(new List<APIRevisionListItemModel>());
+        
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetSoftDeletedAPIRevisionsAsync(It.IsAny<DateTime>(), APIRevisionType.PullRequest))
+            .ReturnsAsync(new List<APIRevisionListItemModel>());
+        
+        // Act
+        await _manager.AutoPurgeAPIRevisions(6);
+        
+        // Assert - verify nothing was deleted
+        _mockAPIRevisionsRepository.Verify(
+            x => x.DeleteAPIRevisionAsync(It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    private APIRevisionListItemModel CreateSoftDeletedRevision(
+        string revisionId, 
+        string reviewId, 
+        APIRevisionType revisionType,
+        DateTime lastUpdatedOn)
+    {
+        return new APIRevisionListItemModel
+        {
+            Id = revisionId,
+            ReviewId = reviewId,
+            Language = "Python",
+            PackageName = "test-package",
+            IsDeleted = true,
+            LastUpdatedOn = lastUpdatedOn,
+            CreatedOn = lastUpdatedOn.Subtract(TimeSpan.FromDays(7)),
+            APIRevisionType = revisionType,
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>(),
+            Files = new List<APICodeFileModel>
+            {
+                new APICodeFileModel
+                {
+                    FileId = $"{revisionId}-file",
+                    FileName = "test.whl",
+                    PackageName = "test-package",
+                    PackageVersion = "1.0.0",
+                    HasOriginal = true
                 }
             }
         };

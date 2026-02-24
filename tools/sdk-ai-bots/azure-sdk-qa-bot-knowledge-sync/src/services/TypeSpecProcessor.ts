@@ -257,7 +257,7 @@ export class TypeSpecProcessor {
         }
 
         if (definitionType === 'interface') {
-            children = this.parseInterface(definitionType, definitionName, lines, definitionBodyStart, definitionEnd, level + 1);
+            children = this.parseInterfaceOperations(definitionType, definitionName, lines, definitionBodyStart, definitionEnd, level + 1);
             
         }
         const description = this.extractDescription(currentDecorators, blockCommentLines);
@@ -289,7 +289,7 @@ export class TypeSpecProcessor {
      * - Template operations: createOrUpdate is ArmResourceCreateOrReplaceAsync<Employee>;
      * - Complex template operations with multi-line generics
      */
-    private parseInterface(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionEnd: number, level: number): TypeSpecDefinition[] {
+    private parseInterfaceOperations(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionEnd: number, level: number): TypeSpecDefinition[] {
         const operations: TypeSpecDefinition[] = [];
         if (definitionType !== 'interface') {
             return [];
@@ -384,7 +384,8 @@ export class TypeSpecProcessor {
                         opStartMatch[1],
                         operationLines,
                         currentDecorators,
-                        currentComments
+                        currentComments,
+                        level
                     );
                     operations.push(operation);
                     
@@ -414,7 +415,8 @@ export class TypeSpecProcessor {
                         opName,
                         operationLines,
                         currentDecorators,
-                        currentComments
+                        currentComments,
+                        level
                     );
                     operations.push(operation);
                     
@@ -473,7 +475,8 @@ export class TypeSpecProcessor {
         name: string,
         operationLines: string[],
         decorators: string[],
-        comments: string[]
+        comments: string[],
+        level: number
     ): TypeSpecDefinition {
         const code = [...comments, ...decorators, ...operationLines].join('\n');
         const description = this.extractDescription(decorators, comments);
@@ -487,7 +490,7 @@ export class TypeSpecProcessor {
             decorators,
             description,
             comments,
-            level: 2, //TODO: need to refine the level
+            level: level,
         };
     }
     /**

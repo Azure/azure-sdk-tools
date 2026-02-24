@@ -258,6 +258,35 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(subPath, Is.EqualTo("sdk/template/aztemplate"));
         }
 
+        [Test]
+        public async Task TestCheckSpelling_CallsCommonValidationHelpersWithCorrectPath()
+        {
+            var mockCommonValidationHelpers = new Mock<ICommonValidationHelpers>();
+            mockCommonValidationHelpers
+                .Setup(x => x.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new PackageCheckResponse(0, "spelling check passed"));
+
+            var processHelper = new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>());
+            var langService = new GoLanguageService(
+                processHelper,
+                new PowershellHelper(NullLogger<PowershellHelper>.Instance, Mock.Of<IRawOutputHelper>()),
+                new GitHelper(Mock.Of<IGitHubService>(), new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>()), NullLogger<GitHelper>.Instance),
+                NullLogger<GoLanguageService>.Instance,
+                mockCommonValidationHelpers.Object,
+                Mock.Of<IFileHelper>(),
+                Mock.Of<ISpecGenSdkConfigHelper>(),
+                Mock.Of<IChangelogHelper>());
+
+            var result = await langService.CheckSpelling(packagePath, false, CancellationToken.None);
+
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+
+            var expectedRelativePath = Path.Combine(".", "sdk", "template", "aztemplate", "**");
+            mockCommonValidationHelpers.Verify(
+                x => x.CheckSpelling(expectedRelativePath, packagePath, false, It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
         /// <summary>
         /// Ignores the test if you don't have a path to a real Go repo configured.
         /// </summary>

@@ -1,31 +1,7 @@
-import {
-  ApiTypeAlias,
-  ApiItem,
-  ApiItemKind,
-  ExcerptToken,
-  ExcerptTokenKind,
-} from "@microsoft/api-extractor-model";
+import { ApiTypeAlias, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { ReviewToken, ReviewLine, TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import {
-  createToken,
-  processExcerptTokens,
-  parseTypeText,
-  typeTextContainsTypeLiteral,
-} from "./helpers";
-
-/**
- * Checks if the spanned tokens contain any Reference tokens with canonical references.
- * If so, we should use processExcerptTokens to preserve navigation links.
- */
-function hasTypeReferences(spannedTokens: readonly ExcerptToken[] | undefined): boolean {
-  if (!spannedTokens || spannedTokens.length === 0) {
-    return false;
-  }
-  return spannedTokens.some(
-    (token) => token.kind === ExcerptTokenKind.Reference && token.canonicalReference,
-  );
-}
+import { createToken, processExcerptTokens, parseTypeText, buildReferenceMap } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiTypeAlias {
   return item.kind === ApiItemKind.TypeAlias;
@@ -110,30 +86,18 @@ function generate(item: ApiTypeAlias, deprecated?: boolean): GeneratorResult {
   );
 
   // Process the type definition
-  // Use processExcerptTokens when spanned tokens contain type references (for navigation),
-  // but use parseTypeText for inline type literals or types without references (for better tokenization)
+  // Use parseTypeText with a reference map for both type structure and navigation
   const typeText = item.typeExcerpt?.text?.trim();
   if (typeText) {
-    if (typeTextContainsTypeLiteral(typeText)) {
-      // Inline type literals need parseTypeText for proper children structure
-      const typeChildren = parseTypeText(typeText, tokens, deprecated);
-      if (typeChildren?.length) {
-        children.push(...typeChildren);
-      } else {
-        tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
-      }
-    } else if (hasTypeReferences(item.typeExcerpt.spannedTokens)) {
-      // Types with reference tokens - use processExcerptTokens for navigation
-      processExcerptTokens(item.typeExcerpt.spannedTokens, tokens, deprecated);
-      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+    // Build a reference map from spanned tokens for navigation
+    const referenceMap = item.typeExcerpt.spannedTokens
+      ? buildReferenceMap(item.typeExcerpt.spannedTokens)
+      : undefined;
+    const typeChildren = parseTypeText(typeText, tokens, deprecated, 0, referenceMap);
+    if (typeChildren?.length) {
+      children.push(...typeChildren);
     } else {
-      // No type references - use parseTypeText for better tokenization
-      const typeChildren = parseTypeText(typeText, tokens, deprecated);
-      if (typeChildren?.length) {
-        children.push(...typeChildren);
-      } else {
-        tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
-      }
+      tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
     }
   } else {
     // Fallback: process excerpt tokens directly

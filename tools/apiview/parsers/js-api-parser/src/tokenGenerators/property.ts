@@ -5,37 +5,18 @@ import {
   ApiProperty,
   ApiPropertyItem,
   ExcerptToken,
-  ExcerptTokenKind,
 } from "@microsoft/api-extractor-model";
 import { ReviewLine, ReviewToken, TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import {
-  createToken,
-  parseTypeText,
-  processExcerptTokens,
-  typeTextContainsTypeLiteral,
-} from "./helpers";
+import { createToken, parseTypeText, buildReferenceMap } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiPropertyItem {
   return item.kind === ApiItemKind.Property || item.kind === ApiItemKind.PropertySignature;
 }
 
 /**
- * Checks if the spanned tokens contain any Reference tokens with canonical references.
- * If so, we should use processExcerptTokens to preserve navigation links.
- */
-function hasTypeReferences(spannedTokens: readonly ExcerptToken[] | undefined): boolean {
-  if (!spannedTokens || spannedTokens.length === 0) {
-    return false;
-  }
-  return spannedTokens.some(
-    (token) => token.kind === ExcerptTokenKind.Reference && token.canonicalReference,
-  );
-}
-
-/**
- * Processes the property type, using excerpt tokens for navigation when available,
- * but falling back to parseTypeText for inline type literals that need children structure.
+ * Processes the property type using parseTypeText with a reference map for navigation.
+ * This handles both simple types (with navigation links) and inline type literals (with children structure).
  */
 function processPropertyType(
   typeText: string,
@@ -43,20 +24,10 @@ function processPropertyType(
   tokens: ReviewToken[],
   deprecated?: boolean,
 ): ReviewLine[] | undefined {
-  // If the type contains inline type literals (objects), we need to use parseTypeText
-  // to properly generate children structure
-  if (typeTextContainsTypeLiteral(typeText)) {
-    return parseTypeText(typeText, tokens, deprecated);
-  }
-
-  // If spanned tokens contain type references, use processExcerptTokens for navigation links
-  if (hasTypeReferences(spannedTokens)) {
-    processExcerptTokens(spannedTokens!, tokens, deprecated);
-    return undefined;
-  }
-
-  // No type references - use parseTypeText for better tokenization
-  return parseTypeText(typeText, tokens, deprecated);
+  // Build a reference map from spanned tokens for navigation
+  const referenceMap = spannedTokens ? buildReferenceMap(spannedTokens) : undefined;
+  // Use parseTypeText which now handles both type structure and navigation via the reference map
+  return parseTypeText(typeText, tokens, deprecated, 0, referenceMap);
 }
 
 /**

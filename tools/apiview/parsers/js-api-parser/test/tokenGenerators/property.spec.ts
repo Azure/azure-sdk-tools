@@ -1053,5 +1053,113 @@ describe("Property Token Generator", () => {
       expect(customTypeToken?.Kind).to.equal(TokenKind.TypeName);
       expect(customTypeToken?.NavigateToId).to.equal("@azure/test!CustomType:interface");
     });
+
+    it("should generate navigateToId for type reference combined with inline type literal", () => {
+      // This is the edge case where a type has BOTH inline literals AND type references
+      // e.g., `Foo | { bar: string }`
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "combined",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "Foo | { bar: string }",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Foo",
+              canonicalReference: {
+                toString: () => "@azure/test!Foo:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: " | { bar: string }",
+            },
+          ],
+        },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      // Find the Foo type token - should have navigation
+      const fooToken = tokens.find((t) => t.Value === "Foo");
+      expect(fooToken).to.exist;
+      expect(fooToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(fooToken?.NavigateToId).to.equal("@azure/test!Foo:interface");
+
+      // Should have children for the inline type literal
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+
+      // Find the bar member in children
+      const flattenTokens = (lines: typeof children): typeof tokens => {
+        const result: typeof tokens = [];
+        for (const line of lines ?? []) {
+          if (line.Tokens) result.push(...line.Tokens);
+          if (line.Children) result.push(...flattenTokens(line.Children));
+        }
+        return result;
+      };
+      const childTokens = flattenTokens(children);
+      const barToken = childTokens.find((t) => t.Value === "bar");
+      expect(barToken).to.exist;
+      expect(barToken?.Kind).to.equal(TokenKind.MemberName);
+    });
+
+    it("should generate navigateToId for multiple type references combined with inline type literal", () => {
+      // More complex case: `Foo | Bar | { baz: number }`
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "multiCombined",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "Foo | Bar | { baz: number }",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Foo",
+              canonicalReference: {
+                toString: () => "@azure/test!Foo:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: " | ",
+            },
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Bar",
+              canonicalReference: {
+                toString: () => "@azure/test!Bar:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: " | { baz: number }",
+            },
+          ],
+        },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens, children } = propertyTokenGenerator.generate(mockItem);
+
+      // Find the Foo type token - should have navigation
+      const fooToken = tokens.find((t) => t.Value === "Foo");
+      expect(fooToken).to.exist;
+      expect(fooToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(fooToken?.NavigateToId).to.equal("@azure/test!Foo:interface");
+
+      // Find the Bar type token - should have navigation
+      const barToken = tokens.find((t) => t.Value === "Bar");
+      expect(barToken).to.exist;
+      expect(barToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(barToken?.NavigateToId).to.equal("@azure/test!Bar:interface");
+
+      // Should have children for the inline type literal
+      expect(children).to.exist;
+      expect(children).to.have.length.greaterThan(0);
+    });
   });
 });

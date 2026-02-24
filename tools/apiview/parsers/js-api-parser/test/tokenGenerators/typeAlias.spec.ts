@@ -8,7 +8,7 @@ import {
   ExcerptTokenKind,
   TypeParameter,
 } from "@microsoft/api-extractor-model";
-import { TokenKind } from "../../src/models";
+import { TokenKind, ReviewToken } from "../../src/models";
 
 // Helper function to create a mock ApiTypeAlias with all required properties
 function createMockTypeAlias(
@@ -1087,6 +1087,126 @@ describe("typeAliasTokenGenerator", () => {
       const { tokens, children } = typeAliasTokenGenerator.generate(mock as ApiTypeAlias, false);
 
       // Should have children for the inline object type
+      expect(children).toBeDefined();
+      expect(children!.length).toBeGreaterThan(0);
+    });
+
+    it("should generate navigateToId for type reference combined with inline type literal", () => {
+      // This is the edge case where a type has BOTH inline literals AND type references
+      // e.g., `Foo | { bar: string }`
+      const mock: any = {
+        kind: ApiItemKind.TypeAlias,
+        displayName: "CombinedAlias",
+        excerptTokens: createBasicExcerptTokens("CombinedAlias", "Foo | { bar: string }"),
+        typeParameters: [],
+        canonicalReference: {
+          toString: () => "@test!CombinedAlias:type",
+        },
+        typeExcerpt: {
+          text: "Foo | { bar: string }",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Foo",
+              canonicalReference: {
+                toString: () => "@azure/test!Foo:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: " | { bar: string }",
+            },
+          ],
+        },
+      };
+
+      const { tokens, children } = typeAliasTokenGenerator.generate(mock as ApiTypeAlias, false);
+
+      // Find the Foo type token - should have navigation
+      const fooToken = tokens.find(
+        (t) => t.Value === "Foo" && t.NavigateToId === "@azure/test!Foo:interface",
+      );
+      expect(fooToken).toBeDefined();
+      expect(fooToken?.Kind).toBe(TokenKind.TypeName);
+
+      // Should have children for the inline type literal
+      expect(children).toBeDefined();
+      expect(children!.length).toBeGreaterThan(0);
+
+      // Find the bar member in children
+      const flattenTokens = (lines: typeof children): ReviewToken[] => {
+        const result: ReviewToken[] = [];
+        for (const line of lines ?? []) {
+          if (line.Tokens) result.push(...line.Tokens);
+          if (line.Children) result.push(...flattenTokens(line.Children));
+        }
+        return result;
+      };
+      const childTokens = flattenTokens(children);
+      const barToken = childTokens.find((t) => t.Value === "bar");
+      expect(barToken).toBeDefined();
+      expect(barToken?.Kind).toBe(TokenKind.MemberName);
+    });
+
+    it("should generate navigateToId for multiple type references combined with inline type literal", () => {
+      // More complex case: `Foo | Bar | { baz: number }`
+      const mock: any = {
+        kind: ApiItemKind.TypeAlias,
+        displayName: "MultiCombinedAlias",
+        excerptTokens: createBasicExcerptTokens(
+          "MultiCombinedAlias",
+          "Foo | Bar | { baz: number }",
+        ),
+        typeParameters: [],
+        canonicalReference: {
+          toString: () => "@test!MultiCombinedAlias:type",
+        },
+        typeExcerpt: {
+          text: "Foo | Bar | { baz: number }",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Foo",
+              canonicalReference: {
+                toString: () => "@azure/test!Foo:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: " | ",
+            },
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Bar",
+              canonicalReference: {
+                toString: () => "@azure/test!Bar:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: " | { baz: number }",
+            },
+          ],
+        },
+      };
+
+      const { tokens, children } = typeAliasTokenGenerator.generate(mock as ApiTypeAlias, false);
+
+      // Find the Foo type token - should have navigation
+      const fooToken = tokens.find(
+        (t) => t.Value === "Foo" && t.NavigateToId === "@azure/test!Foo:interface",
+      );
+      expect(fooToken).toBeDefined();
+      expect(fooToken?.Kind).toBe(TokenKind.TypeName);
+
+      // Find the Bar type token - should have navigation
+      const barToken = tokens.find(
+        (t) => t.Value === "Bar" && t.NavigateToId === "@azure/test!Bar:interface",
+      );
+      expect(barToken).toBeDefined();
+      expect(barToken?.Kind).toBe(TokenKind.TypeName);
+
+      // Should have children for the inline type literal
       expect(children).toBeDefined();
       expect(children!.length).toBeGreaterThan(0);
     });

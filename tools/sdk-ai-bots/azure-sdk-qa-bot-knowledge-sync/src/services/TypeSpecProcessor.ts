@@ -1,14 +1,18 @@
 import * as fs from 'fs';
 import path from 'path';
 
-type TypeSpecDefinitionType = 'model' | 'operation' | 'interface' | 'enum' | 'union' | 'alias' | 'namespace' | 'scalar';
+type TypeSpecDefinitionType = 'model' | 'operation' | 'interface' | 'enum' | 'union' | 'alias' | 'namespace' | 'scalar' | 'decorator';
 interface TypeSpecDefinition {
     type: TypeSpecDefinitionType;
     name: string;
+    fullName: string;
     code: string;
     decorators: string[];
     description: string;
     comments: string[];
+    parent?: string;
+    children?: TypeSpecDefinition[];
+    level: number;
 }
 
 export class TypeSpecProcessor {
@@ -74,6 +78,10 @@ export class TypeSpecProcessor {
         fs.writeFileSync(mdFile, markdown, 'utf-8');
     }
 
+    private parseTypeSpecDefinitions(content: string): TypeSpecDefinition[] {
+        const lines = content.split('\n');
+        return this.parseTypeSpecDefinitionsHelper(lines);
+    }
     /**
      * Parse TypeSpec content and extract all definitions.
      */
@@ -95,21 +103,51 @@ export class TypeSpecProcessor {
      *          including its type, name, full code (with preceding comments), decorators,
      *          extracted description, and associated comments.
      */
-    private parseTypeSpecDefinitions(content: string): TypeSpecDefinition[] {
+    private parseTypeSpecDefinitionsHelper(lines: string[], level: number = 1): TypeSpecDefinition[] {
         const definitions: TypeSpecDefinition[] = [];
-        const lines = content.split('\n');
+        // const lines = content.split('\n');
         let currentDefinitionStart = -1;
         let currentDefinitionBodyStart = -1;
         let currentType: TypeSpecDefinitionType | undefined = undefined;
         let currentName = '';
+        let currentLevel = level;
+        let braceCount = 0;
+        let inDefinition = false;
+        let hasGlobalNamespace = false;
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
             const trimmedLine = line.trim();
             const definitionMatch = this.matchDefinitionStart(trimmedLine);
-            if (definitionMatch) {
+            if (definitionMatch && braceCount === 0) {
+                // if (!inDefinition) {
+                //     inDefinition = true;
+                //     currentLevel++;
+                // } else if (braceCount === 0) {
+                //     inDefinition = false;
+                //     currentLevel--;
+                // }
+                braceCount = (trimmedLine.match(/\{/g) || []).length - (trimmedLine.match(/\}/g) || []).length;
+                if (braceCount === 0) {
+                    inDefinition = false;
+                }
+                if (definitionMatch.type === 'namespace') {
+                    if (trimmedLine.endsWith(';')) {
+                        // global namespace
+                        hasGlobalNamespace = true;
+                        currentLevel++;
+                    }
+                }
                 if (currentDefinitionStart == -1) {
-                    currentDefinitionStart = 0;
+                    // calculate the start of the first definition
+                    for (let l = i -1; l > 0; l--) {
+                        let trim = lines[l].trim();
+                        if (trim.endsWith(';') || trim.endsWith('}')) {
+                            currentDefinitionStart = l + 1;
+                            break;
+                        }
+                    }
+                    if (currentDefinitionStart == -1) currentDefinitionStart = 0;
                     currentDefinitionBodyStart = i;
                     currentType = definitionMatch.type;
                     currentName = definitionMatch.name;
@@ -122,7 +160,8 @@ export class TypeSpecProcessor {
                             break;
                         }
                     }
-                    const definition = this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, i);
+                    
+                    const definition = this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, i, currentLevel);
                     definitions.push(definition);
                     
                     currentDefinitionStart = l + 1;
@@ -130,18 +169,26 @@ export class TypeSpecProcessor {
                     currentType = definitionMatch.type;
                     currentName = definitionMatch.name;
                 }
+                
+            } else {
+                braceCount = (trimmedLine.match(/\{/g) || []).length - (trimmedLine.match(/\}/g) || []).length;
             }
         }
 
         //handle the last definition
         if (currentDefinitionStart !== -1 && currentType && currentName) {
-            definitions.push(this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length -1));
+            const definition = this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length -1, currentLevel);
+            definitions.push(definition);
+        }
+        // correct first global namespace level
+        if(hasGlobalNamespace) {
+            definitions[0].level = definitions[0].level - 1;
         }
         return definitions;
     }
 
 
-    private parseDefinition(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionBodyStart: number, nextDefinitionStart: number): TypeSpecDefinition {
+    private parseDefinition(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionBodyStart: number, nextDefinitionStart: number, level: number): TypeSpecDefinition {
         let definitionEnd = -1;
         for (let l = nextDefinitionStart; l > definitionStart; l--) {
             let trim = lines[l].trim();
@@ -203,14 +250,236 @@ export class TypeSpecProcessor {
                 }
             }
         }
+        // parse out children
+        let children: TypeSpecDefinition[] = [];
+        if (definitionType === 'namespace' /*|| definitionType === 'interface'*/) {
+            children = this.parseTypeSpecDefinitionsHelper(lines.slice(definitionBodyStart + 1, definitionEnd), level + 1);
+        }
+
+        if (definitionType === 'interface') {
+            children = this.parseInterface(definitionType, definitionName, lines, definitionBodyStart, definitionEnd, level + 1);
+            
+        }
         const description = this.extractDescription(currentDecorators, blockCommentLines);
         return {
             type: definitionType,
             name: definitionName,
+            fullName: definitionName, //TODO: need to append interface name
             code: lines.slice(definitionStart, definitionEnd + 1).join('\n'),
             decorators: currentDecorators,
             description,
-            comments: blockCommentLines
+            comments: blockCommentLines,
+            level: level,
+            children: children.length > 0 ? children:  undefined
+        };
+    }
+
+    private parseOperationsInInterface(): TypeSpecDefinition[] {
+        const operations: TypeSpecDefinition[] = [];
+        return operations;
+    }
+
+    /**
+     * Parse operations from an interface definition.
+     * Extracts individual operations including:
+     * - Standard operations: @get op list(): Widget[];
+     * - Operations with parameters: @get read(@path id: Widget.id): Widget | Error;
+     * - Operations with body: @post create(@body widget: Widget): Widget | Error;
+     * - Operations with custom routes: @route("{id}/analyze") @post analyze(@path id: Widget.id): string | Error;
+     * - Template operations: createOrUpdate is ArmResourceCreateOrReplaceAsync<Employee>;
+     * - Complex template operations with multi-line generics
+     */
+    private parseInterface(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionEnd: number, level: number): TypeSpecDefinition[] {
+        const operations: TypeSpecDefinition[] = [];
+        if (definitionType !== 'interface') {
+            return [];
+        }
+        
+        
+        let currentComments: string[] = [];
+        let currentDecorators: string[] = [];
+        let operationLines: string[] = [];
+        let inBlockComment = false;
+        let inDecoratorBlock = false;
+        let inOperationBlock = false;
+        let braceCount = 0;
+        let angleCount = 0;
+        let parenCount = 0;
+        
+        for (let i = definitionStart; i <= definitionEnd; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+            
+            // Skip empty lines when not collecting operation
+            if (!trimmed && !inOperationBlock && !inBlockComment && !inDecoratorBlock) {
+                continue;
+            }
+            
+            // Handle block comments /** ... */
+            if (trimmed.startsWith('/**') && !inBlockComment) {
+                inBlockComment = true;
+                currentComments.push(trimmed);
+                if (trimmed.endsWith('*/')) {
+                    inBlockComment = false;
+                }
+                continue;
+            }
+            
+            if (inBlockComment) {
+                currentComments.push(trimmed);
+                if (trimmed.endsWith('*/')) {
+                    inBlockComment = false;
+                }
+                continue;
+            }
+            
+            // Handle single-line comments
+            if (trimmed.startsWith('//')) {
+                currentComments.push(trimmed);
+                continue;
+            }
+            
+            // Handle decorators
+            if (trimmed.startsWith('@') && !inOperationBlock) {
+                inDecoratorBlock = true;
+                currentDecorators.push(trimmed);
+                parenCount = (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+                if (parenCount <= 0) {
+                    inDecoratorBlock = false;
+                }
+                continue;
+            }
+            
+            if (inDecoratorBlock) {
+                currentDecorators[currentDecorators.length - 1] += '\n' + trimmed;
+                parenCount += (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+                if (parenCount <= 0) {
+                    inDecoratorBlock = false;
+                }
+                continue;
+            }
+            
+            // Detect operation start patterns:
+            // 1. "op <name>" - standard operation with op keyword
+            // 2. "<name> is <TemplateName>" - template operation
+            // 3. "<name>(" - operation without op keyword (shorthand in interfaces)
+            const opStartMatch = trimmed.match(/^op\s+(\w+)/) || 
+                                 trimmed.match(/^(\w+)\s+is\s+/) ||
+                                 trimmed.match(/^(\w+)\s*\(/);
+            
+            if (opStartMatch && !inOperationBlock) {
+                inOperationBlock = true;
+                operationLines = [line];
+                
+                // Count brackets to handle multi-line operations
+                braceCount = (trimmed.match(/\{/g) || []).length - (trimmed.match(/\}/g) || []).length;
+                angleCount = (trimmed.match(/</g) || []).length - (trimmed.match(/>/g) || []).length;
+                parenCount = (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+                
+                // Check if operation is complete on single line
+                if (trimmed.endsWith(';') && braceCount <= 0 && angleCount <= 0 && parenCount <= 0) {
+                    const operation = this.buildOperationDefinition(
+                        opStartMatch[1],
+                        operationLines,
+                        currentDecorators,
+                        currentComments
+                    );
+                    operations.push(operation);
+                    
+                    // Reset state
+                    currentComments = [];
+                    currentDecorators = [];
+                    operationLines = [];
+                    inOperationBlock = false;
+                    braceCount = 0;
+                    angleCount = 0;
+                    parenCount = 0;
+                }
+                continue;
+            }
+            
+            // Continue collecting multi-line operation
+            if (inOperationBlock) {
+                operationLines.push(line);
+                braceCount += (trimmed.match(/\{/g) || []).length - (trimmed.match(/\}/g) || []).length;
+                angleCount += (trimmed.match(/</g) || []).length - (trimmed.match(/>/g) || []).length;
+                parenCount += (trimmed.match(/\(/g) || []).length - (trimmed.match(/\)/g) || []).length;
+                
+                // Operation complete when semicolon found and all brackets balanced
+                if (trimmed.endsWith(';') && braceCount <= 0 && angleCount <= 0 && parenCount <= 0) {
+                    const opName = this.extractOperationName(operationLines[0]);
+                    const operation = this.buildOperationDefinition(
+                        opName,
+                        operationLines,
+                        currentDecorators,
+                        currentComments
+                    );
+                    operations.push(operation);
+                    
+                    // Reset state
+                    currentComments = [];
+                    currentDecorators = [];
+                    operationLines = [];
+                    inOperationBlock = false;
+                    braceCount = 0;
+                    angleCount = 0;
+                    parenCount = 0;
+                }
+            }
+        }
+        
+        return operations;
+    }
+    
+    /**
+     * Extract operation name from the first line of an operation definition.
+     */
+    private extractOperationName(line: string): string {
+        const trimmed = line.trim();
+        
+        // Match "op <name>" pattern
+        const opMatch = trimmed.match(/^op\s+(\w+)/);
+        if (opMatch) {
+            return opMatch[1];
+        }
+        
+        // Match "<name> is" pattern (template operations)
+        const templateMatch = trimmed.match(/^(\w+)\s+is\s+/);
+        if (templateMatch) {
+            return templateMatch[1];
+        }
+        
+        // Match "<name>(" pattern (shorthand operations without op keyword)
+        const shorthandMatch = trimmed.match(/^(\w+)\s*\(/);
+        if (shorthandMatch) {
+            return shorthandMatch[1];
+        }
+        
+        return 'unknown';
+    }
+    
+    /**
+     * Build a TypeSpecDefinition object for an operation.
+     */
+    private buildOperationDefinition(
+        name: string,
+        operationLines: string[],
+        decorators: string[],
+        comments: string[]
+    ): TypeSpecDefinition {
+        const code = [...comments, ...decorators, ...operationLines].join('\n');
+        const description = this.extractDescription(decorators, comments);
+        const fullName = name; //TODO: need to combine namespace
+        
+        return {
+            type: 'operation',
+            name,
+            fullName,
+            code,
+            decorators,
+            description,
+            comments,
+            level: 2, //TODO: need to refine the level
         };
     }
     /**
@@ -365,13 +634,19 @@ export class TypeSpecProcessor {
             return { type: 'scalar', name: scalarMatch[1] };
         }
 
+        // Decorator definition: extern dec name ... or dec name ...
+        const decoratorMatch = line.match(/^(?:extern\s+)?dec\s+(\w+)/);
+        if (decoratorMatch) {
+            return { type: 'decorator', name: decoratorMatch[1] };
+        }
+
         return null;
     }
 
     /**
      * Generate Markdown content from parsed definitions.
      */
-    private generateMarkdown(definitions: TypeSpecDefinition[], sourceFile: string): string {
+    private generateMarkdown(definitions: TypeSpecDefinition[], sourceFile: string, excluded: TypeSpecDefinitionType[]|undefined = undefined): string {
         const lines: string[] = [];
         
         // Add header
@@ -384,26 +659,62 @@ export class TypeSpecProcessor {
 
         // Generate chapters for each definition
         for (const def of definitions) {
-            lines.push(`## ${def.name}`);
-            lines.push('');
-            if (def.type) lines.push(`**Type:** ${this.capitalizeType(def.type)}`);
-            lines.push('');
+            // if (excluded && excluded.includes(def.type)) continue;
+            // let chapterHead: string = "";
+            // for (let i = 0; i < def.level; i++) {
+            //     chapterHead += "#";
+            // }
+            // lines.push(`${chapterHead} ${def.fullName ?? def.name}`);
+            // lines.push('');
+            // if (def.type) lines.push(`**Type:** ${this.capitalizeType(def.type)}`);
+            // lines.push('');
             
-            // Add description as chapter body if available
-            if (def.description) {
-                lines.push(def.description);
-                lines.push('');
+            // // Add description as chapter body if available
+            // if (def.description) {
+            //     lines.push(def.description);
+            //     lines.push('');
+            // }
+            
+            // lines.push('```typespec');
+            // lines.push(def.code);
+            // lines.push('```');
+            // lines.push('');
+            // lines.push('---');
+            // lines.push('');
+            this.generateDefinition(def, excluded, lines);
+            if (def.children) {
+                for (const child of def.children) {
+                    this.generateDefinition(child, excluded, lines);
+                }
             }
-            
-            lines.push('```typespec');
-            lines.push(def.code);
-            lines.push('```');
-            lines.push('');
-            lines.push('---');
-            lines.push('');
         }
 
         return lines.join('\n');
+    }
+
+    private generateDefinition(definition: TypeSpecDefinition, excluded: TypeSpecDefinitionType[]|undefined = undefined, output: string[]): void {
+        if (excluded && excluded.includes(definition.type)) return;
+            let chapterHead: string = "";
+            for (let i = 0; i < definition.level; i++) {
+                chapterHead += "#";
+            }
+            output.push(`${chapterHead} ${definition.fullName ?? definition.name}`);
+            output.push('');
+            if (definition.type) output.push(`**Type:** ${this.capitalizeType(definition.type)}`);
+            output.push('');
+            
+            // Add description as chapter body if available
+            if (definition.description) {
+                output.push(definition.description);
+                output.push('');
+            }
+            
+            output.push('```typespec');
+            output.push(definition.code);
+            output.push('```');
+            output.push('');
+            output.push('---');
+            output.push('');
     }
 
     /**

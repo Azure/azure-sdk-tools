@@ -656,12 +656,12 @@ export class TypeSpecProcessor {
         const lines: string[] = [];
         
         // Add header
-        lines.push(`# TypeSpec Definitions`);
-        lines.push('');
-        lines.push(`Source: \`${sourceFile}\``);
-        lines.push('');
-        lines.push('---');
-        lines.push('');
+        // lines.push(`# TypeSpec Definitions`);
+        // lines.push('');
+        // lines.push(`Source: \`${sourceFile}\``);
+        // lines.push('');
+        // lines.push('---');
+        // lines.push('');
 
         // Generate chapters for each definition
         for (const def of definitions) {

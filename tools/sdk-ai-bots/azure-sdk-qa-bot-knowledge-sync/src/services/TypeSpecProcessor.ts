@@ -171,7 +171,7 @@ export class TypeSpecProcessor {
                 }
                 
             } else {
-                braceCount = (trimmedLine.match(/\{/g) || []).length - (trimmedLine.match(/\}/g) || []).length;
+                braceCount += (trimmedLine.match(/\{/g) || []).length - (trimmedLine.match(/\}/g) || []).length;
             }
         }
 
@@ -363,8 +363,10 @@ export class TypeSpecProcessor {
             // 1. "op <name>" - standard operation with op keyword
             // 2. "<name> is <TemplateName>" - template operation
             // 3. "<name>(" - operation without op keyword (shorthand in interfaces)
+            // 4. "<name><...>(" - operation template with generic parameters
             const opStartMatch = trimmed.match(/^op\s+(\w+)/) || 
                                  trimmed.match(/^(\w+)\s+is\s+/) ||
+                                 trimmed.match(/^(\w+)\s*</) ||
                                  trimmed.match(/^(\w+)\s*\(/);
             
             if (opStartMatch && !inOperationBlock) {
@@ -447,6 +449,12 @@ export class TypeSpecProcessor {
         const templateMatch = trimmed.match(/^(\w+)\s+is\s+/);
         if (templateMatch) {
             return templateMatch[1];
+        }
+        
+        // Match "<name><" pattern (operation templates with generic parameters)
+        const genericMatch = trimmed.match(/^(\w+)\s*</);
+        if (genericMatch) {
+            return genericMatch[1];
         }
         
         // Match "<name>(" pattern (shorthand operations without op keyword)

@@ -1513,13 +1513,14 @@ namespace APIViewWeb.Managers
                 totalReviewableLines = 100;
             }
 
-            // Get all comments for the revision's review
+            // Get all comments for the revision's review.
+            // Use the same visibility rule as the review page (ReviewsController):
+            // unresolved comments from ANY revision are "visible" on the active revision,
+            // because comments attach to stable ElementIds that persist across revisions.
             var allComments = await _commentsRepository.GetCommentsAsync(revision.ReviewId);
             
-            // Filter to only APIRevision comments for this specific revision that are not deleted and not resolved
             var unresolvedComments = allComments
                 .Where(c => c.CommentType == CommentType.APIRevision 
-                    && c.APIRevisionId == apiRevisionId 
                     && !c.IsResolved 
                     && !c.IsDeleted)
                 .ToList();

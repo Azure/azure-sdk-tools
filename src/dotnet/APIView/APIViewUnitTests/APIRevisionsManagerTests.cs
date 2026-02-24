@@ -1422,7 +1422,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.MustFix),
             // AI ShouldFix with 0.8 confidence: -10 * 0.8 = -8
             CreateComment(CommentSeverity.ShouldFix, source: CommentSource.AIGenerated, confidenceScore: 0.8f),
-            // User Suggestion: -5
+            // User Suggestion: no penalty
             CreateComment(CommentSeverity.Suggestion)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
@@ -1431,8 +1431,8 @@ public class APIRevisionsManagerTests
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
 
-        // 100 - 20 - 8 - 5 = 67
-        Assert.Equal(67, result.Score, precision: 2);
+        // 100 - 20 - 8 = 72
+        Assert.Equal(72, result.Score, precision: 2);
         Assert.Equal(3, result.TotalUnresolvedCount);
     }
 
@@ -1611,8 +1611,8 @@ public class APIRevisionsManagerTests
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
 
-        // 2 threads: MustFix(-20) and Suggestion(-5)
-        Assert.Equal(75, result.Score); // 100 - 20 - 5
+        // 2 threads: MustFix(-20) and Suggestion(0)
+        Assert.Equal(80, result.Score); // 100 - 20
         Assert.Equal(1, result.UnresolvedMustFixCount);
         Assert.Equal(1, result.UnresolvedSuggestionCount);
         Assert.Equal(2, result.TotalUnresolvedCount);
@@ -1638,6 +1638,33 @@ public class APIRevisionsManagerTests
 
         // 2 threads: ShouldFix(-10) and MustFix(-20)
         Assert.Equal(70, result.Score); // 100 - 10 - 20
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+        Assert.Equal(2, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_CrossRevisionComments_IncludedInScore()
+    {
+        var revision = CreateRevisionForQualityTest(revisionId: "rev-2");
+        var comments = new List<CommentItemModel>
+        {
+            // Comment from the current revision
+            CreateComment(CommentSeverity.MustFix, apiRevisionId: "rev-2"),
+            // Unresolved comment from a different revision — should still count (visible)
+            CreateComment(CommentSeverity.ShouldFix, apiRevisionId: "rev-1"),
+            // Resolved comment from a different revision — should NOT count
+            CreateComment(CommentSeverity.MustFix, apiRevisionId: "rev-1", isResolved: true)
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // Both unresolved comments count regardless of which revision they were created on
+        // 100 - 20 (MustFix) - 10 (ShouldFix) = 70
+        Assert.Equal(70, result.Score);
         Assert.Equal(1, result.UnresolvedMustFixCount);
         Assert.Equal(1, result.UnresolvedShouldFixCount);
         Assert.Equal(2, result.TotalUnresolvedCount);

@@ -224,6 +224,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         { label: "Json", data: "Json" },
         { label: "Kotlin", data: "Kotlin" },
         { label: "Python", data: "Python" },
+        { label: "Rust", data: "Rust" },
         { label: "Swagger", data: "Swagger" },
         { label: "Swift", data: "Swift" },
         { label: "TypeSpec", data: "TypeSpec" },
@@ -583,6 +584,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
           `Upload the resulting archive.`
         ];
         this.acceptedFilesForReviewUpload = ".gosource";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "Rust":
+        this.createRevisionInstruction = [
+          `In the root of your azure-sdk-for-rust clone, run: <code>cargo run --manifest-path eng/tools/generate_api_report/Cargo.toml -- --package {package-name}</code>`,
+          `Upload <code>sdk/{service-name}/{package-name}/review/{package-name}.rust.json</code> using the Create Review link.`
+        ];
+        this.acceptedFilesForReviewUpload = ".rust.json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;

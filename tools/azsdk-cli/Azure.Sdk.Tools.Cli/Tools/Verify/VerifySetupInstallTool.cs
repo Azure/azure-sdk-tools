@@ -62,7 +62,7 @@ public class VerifySetupInstallTool : MCPTool
     /// handles --tools/--yes flags and interactive prompts, then delegates to VerifySetupService.
     /// </summary>
     private async Task<CommandResponse> HandleInstallCommand(
-        HashSet<SdkLanguage> languages, string packagePath,
+        HashSet<SdkLanguage> languages, string? packagePath,
         List<string> tools, bool yes, CancellationToken ct)
     {
         // --tools foo bar → install exactly these

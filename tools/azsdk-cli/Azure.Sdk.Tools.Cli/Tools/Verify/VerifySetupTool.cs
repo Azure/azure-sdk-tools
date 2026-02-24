@@ -81,6 +81,7 @@ public class VerifySetupTool : LanguageMcpTool
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Error verifying setup");
             return new VerifySetupResponse
             {
                 ResponseError = $"Error processing request: {ex.Message}"

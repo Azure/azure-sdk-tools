@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 
@@ -17,18 +16,15 @@ public class VerifySetupService : IVerifySetupService
     private readonly IProcessHelper processHelper;
     private readonly ILogger<VerifySetupService> logger;
     private readonly IGitHelper gitHelper;
-    private readonly IEnumerable<LanguageService> languageServices;
 
     public VerifySetupService(
         IProcessHelper processHelper,
         ILogger<VerifySetupService> logger,
-        IGitHelper gitHelper,
-        IEnumerable<LanguageService> languageServices)
+        IGitHelper gitHelper)
     {
         this.processHelper = processHelper;
         this.logger = logger;
         this.gitHelper = gitHelper;
-        this.languageServices = languageServices;
     }
 
     /// <summary>

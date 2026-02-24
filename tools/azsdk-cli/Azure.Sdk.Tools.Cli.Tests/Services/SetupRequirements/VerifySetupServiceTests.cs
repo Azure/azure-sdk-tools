@@ -1,10 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Moq;
@@ -20,28 +17,15 @@ internal class VerifySetupServiceTests
     private Mock<IProcessHelper> mockProcessHelper;
     private TestLogger<VerifySetupService> serviceLogger;
     private VerifySetupService verifySetupService;
-    private List<LanguageService> languageServices;
-    private Mock<INpxHelper> _mockNpxHelper;
-    private Mock<IPowershellHelper> _mockPowerShellHelper;
-    private TestLogger<LanguageService> _languageLogger;
-    private Mock<IMicroagentHostService> _mockMicrohostAgent;
     private Mock<IGitHelper> _mockGitHelper;
-    private Mock<ICommonValidationHelpers> _commonValidationHelpers;
-    private Mock<IPythonHelper> mockPythonHelper;
 
     [SetUp]
     public void Setup()
     {
         mockProcessHelper = new Mock<IProcessHelper>();
-        mockPythonHelper = new Mock<IPythonHelper>();
         serviceLogger = new TestLogger<VerifySetupService>();
 
-        _languageLogger = new TestLogger<LanguageService>();
-        _mockMicrohostAgent = new Mock<IMicroagentHostService>();
-        _mockNpxHelper = new Mock<INpxHelper>();
-        _mockPowerShellHelper = new Mock<IPowershellHelper>();
         _mockGitHelper = new Mock<IGitHelper>();
-        _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
         _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync((string path, CancellationToken _) =>
@@ -64,20 +48,11 @@ internal class VerifySetupServiceTests
         _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync((string path, CancellationToken _) => path ?? "/test/repo");
 
-        languageServices = [
-            new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new GoLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new DotnetLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>())
-        ];
-
         SetupSuccessfulProcessMocks();
         verifySetupService = new VerifySetupService(
             mockProcessHelper.Object,
             serviceLogger,
-            _mockGitHelper.Object,
-            languageServices
+            _mockGitHelper.Object
         );
     }
 
@@ -167,8 +142,7 @@ internal class VerifySetupServiceTests
         verifySetupService = new VerifySetupService(
             mockProcessHelper.Object,
             serviceLogger,
-            _mockGitHelper.Object,
-            languageServices
+            _mockGitHelper.Object
         );
     }
 

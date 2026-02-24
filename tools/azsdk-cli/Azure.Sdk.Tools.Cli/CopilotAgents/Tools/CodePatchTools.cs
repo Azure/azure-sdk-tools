@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
@@ -36,7 +37,8 @@ public static partial class CodePatchTools
     /// </remarks>
     public static AIFunction CreateCodePatchTool(
         string baseDir,
-        string description = "Code patch: finds OldText within lines StartLine-EndLine and replaces with NewText. Use for precise edits that preserve surrounding syntax.")
+        string description = "Code patch: finds OldText within lines StartLine-EndLine and replaces with NewText. Use for precise edits that preserve surrounding syntax.",
+        Action<AppliedPatch>? onPatchApplied = null)
     {
         return AIFunctionFactory.Create(
             async (
@@ -53,9 +55,16 @@ public static partial class CodePatchTools
                 string oldText,
 
                 [Description("The replacement text. Only oldText is replaced, preserving surrounding code.")]
-                string newText) =>
+                string newText,
+
+                CancellationToken cancellationToken) =>
             {
-                return await ApplyPatchAsync(baseDir, filePath, startLine, endLine, oldText, newText, CancellationToken.None);
+                var result = await ApplyPatchAsync(baseDir, filePath, startLine, endLine, oldText, newText, cancellationToken);
+                if (result.Success && onPatchApplied is not null)
+                {
+                    onPatchApplied(new AppliedPatch(filePath, result.Message, 1));
+                }
+                return result;
             },
             "ClientCustomizationCodePatch",
             description);
@@ -64,7 +73,7 @@ public static partial class CodePatchTools
     /// <summary>
     /// Applies a code patch to a file.
     /// </summary>
-    internal static async Task<CodePatchResult> ApplyPatchAsync(
+    public static async Task<CodePatchResult> ApplyPatchAsync(
         string baseDir,
         string filePath,
         int startLine,
@@ -153,6 +162,8 @@ public static partial class CodePatchTools
 
             // Try exact match first
             int matchIndex = targetRegion.IndexOf(cleanOldText, StringComparison.Ordinal);
+            int matchLength = cleanOldText.Length;
+            bool usedFuzzyMatch = false;
 
             // If exact match fails, try with normalized whitespace
             if (matchIndex < 0)
@@ -162,8 +173,11 @@ public static partial class CodePatchTools
 
                 if (normalizedRegion.Contains(normalizedOldText, StringComparison.Ordinal))
                 {
-                    // Find actual position using fuzzy matching
-                    matchIndex = FindFuzzyMatch(targetRegion, cleanOldText);
+                    // Find actual position and span using fuzzy matching
+                    var fuzzyResult = FindFuzzyMatch(targetRegion, cleanOldText);
+                    matchIndex = fuzzyResult.Start;
+                    matchLength = fuzzyResult.Length;
+                    usedFuzzyMatch = true;
                 }
             }
 
@@ -178,8 +192,20 @@ public static partial class CodePatchTools
                     $"Region content: \"{TruncateForDisplay(regionPreview, 300)}\"");
             }
 
-            // Check for multiple matches 
-            var secondMatch = targetRegion.IndexOf(cleanOldText, matchIndex + 1, StringComparison.Ordinal);
+            // Check for multiple matches (re-check with fuzzy match if that's how we found it)
+            int secondMatch;
+            if (usedFuzzyMatch)
+            {
+                // Fuzzy match was used — check for a second fuzzy match after the first span
+                var remainder = targetRegion[(matchIndex + matchLength)..];
+                var secondFuzzy = FindFuzzyMatch(remainder, cleanOldText);
+                secondMatch = secondFuzzy.Start;
+            }
+            else
+            {
+                secondMatch = targetRegion.IndexOf(cleanOldText, matchIndex + 1, StringComparison.Ordinal);
+            }
+
             if (secondMatch >= 0)
             {
                 return new CodePatchResult(false,
@@ -190,8 +216,8 @@ public static partial class CodePatchTools
             // Auto-preserve escaping: if OldText has escaped quotes but NewText lost them, restore them
             var preservedNewText = PreserveEscaping(cleanOldText, cleanNewText);
 
-            // Perform the replacement
-            var updatedRegion = targetRegion[..matchIndex] + preservedNewText + targetRegion[(matchIndex + cleanOldText.Length)..];
+            // Perform the replacement using the actual matched span length
+            var updatedRegion = targetRegion[..matchIndex] + preservedNewText + targetRegion[(matchIndex + matchLength)..];
 
             // Split back into lines and reconstruct the file
             var updatedLines = updatedRegion.Split('\n');
@@ -257,26 +283,89 @@ public static partial class CodePatchTools
     }
 
     /// <summary>
-    /// Finds the position of oldText in targetRegion using fuzzy whitespace matching.
+    /// Finds the position and actual span of oldText in targetRegion using fuzzy whitespace matching.
+    /// Returns the start index and length of the actual text in targetRegion that corresponds
+    /// to the normalized match, so the correct span is replaced.
     /// </summary>
-    private static int FindFuzzyMatch(string targetRegion, string oldText)
+    private static (int Start, int Length) FindFuzzyMatch(string targetRegion, string oldText)
     {
         var normalizedOld = NormalizeWhitespace(oldText);
 
         // Sliding window search
         for (int i = 0; i <= targetRegion.Length - oldText.Length / 2; i++)
         {
-            var candidateEnd = Math.Min(i + oldText.Length * 2, targetRegion.Length);
-            var candidate = targetRegion[i..candidateEnd];
-            var normalizedCandidate = NormalizeWhitespace(candidate);
-
-            if (normalizedCandidate.StartsWith(normalizedOld, StringComparison.Ordinal))
+            // Find the actual end of the match in the original text by expanding
+            // character-by-character until we've consumed all normalized content.
+            int actualLength = FindActualMatchLength(targetRegion, i, normalizedOld);
+            if (actualLength > 0)
             {
-                return i;
+                return (i, actualLength);
             }
         }
 
-        return -1;
+        return (-1, 0);
+    }
+
+    /// <summary>
+    /// Given a start position in the source text and a normalized target string,
+    /// determines how many characters in the source text correspond to the full
+    /// normalized match. Returns 0 if no match.
+    /// </summary>
+    private static int FindActualMatchLength(string source, int startPos, string normalizedTarget)
+    {
+        int sourceIdx = startPos;
+        int targetIdx = 0;
+
+        // Skip leading whitespace in source at the start position
+        while (sourceIdx < source.Length && char.IsWhiteSpace(source[sourceIdx]))
+        {
+            sourceIdx++;
+        }
+
+        int matchStart = sourceIdx;
+
+        while (targetIdx < normalizedTarget.Length && sourceIdx < source.Length)
+        {
+            if (normalizedTarget[targetIdx] == ' ')
+            {
+                // Normalized space: consume one or more whitespace chars in source
+                if (!char.IsWhiteSpace(source[sourceIdx]))
+                {
+                    return 0; // expected whitespace but got non-whitespace
+                }
+
+                while (sourceIdx < source.Length && char.IsWhiteSpace(source[sourceIdx]))
+                {
+                    sourceIdx++;
+                }
+
+                targetIdx++;
+            }
+            else
+            {
+                // Non-space character: must match exactly
+                if (source[sourceIdx] != normalizedTarget[targetIdx])
+                {
+                    return 0;
+                }
+
+                sourceIdx++;
+                targetIdx++;
+            }
+        }
+
+        if (targetIdx < normalizedTarget.Length)
+        {
+            return 0; // didn't consume the entire target
+        }
+
+        // Trim trailing whitespace from the matched span
+        while (sourceIdx > matchStart && char.IsWhiteSpace(source[sourceIdx - 1]))
+        {
+            sourceIdx--;
+        }
+
+        return sourceIdx - startPos;
     }
 
     /// <summary>

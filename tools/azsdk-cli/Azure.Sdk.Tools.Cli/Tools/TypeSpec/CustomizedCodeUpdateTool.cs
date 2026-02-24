@@ -79,7 +79,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
-    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Phase B worker: applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
+    [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(string packagePath, CancellationToken ct = default)
         => RunUpdateAsync(packagePath, ct);
 

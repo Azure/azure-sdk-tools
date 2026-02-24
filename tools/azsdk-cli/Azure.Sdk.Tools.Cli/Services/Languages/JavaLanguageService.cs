@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
@@ -274,10 +275,8 @@ public sealed partial class JavaLanguageService : LanguageService
             // Get the list of customization files
             var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
             
-            // Record file modification times before patching (to detect what changed)
-            var fileModTimes = javaFiles.ToDictionary(
-                f => f,
-                f => File.GetLastWriteTimeUtc(f));
+            // Collect patches directly from the tool as they succeed
+            var patchLog = new ConcurrentBag<AppliedPatch>();
             
             // Provide FULL paths so the LLM doesn't get confused about where files are
             // The ReadFile tool base is packagePath, so we give paths relative to that
@@ -290,7 +289,7 @@ public sealed partial class JavaLanguageService : LanguageService
                 .Select(f => Path.GetRelativePath(customizationRoot, f))
                 .ToList();
 
-            // Build error-driven prompt - simplified for Phase B mechanical work
+            // Build error-driven prompt for patch agent
             var prompt = new JavaErrorDrivenPatchTemplate(
                 buildError,
                 packagePath,
@@ -308,7 +307,8 @@ public sealed partial class JavaLanguageService : LanguageService
                     FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,
                         description: "Read files from the package directory (generated code, customization files, etc.)"),
                     CodePatchTools.CreateCodePatchTool(customizationRoot,
-                        description: "Apply code patches to customization files only (never generated code)")
+                        description: "Apply code patches to customization files only (never generated code)",
+                        onPatchApplied: patchLog.Add)
                 ]
             };
 
@@ -328,17 +328,8 @@ public sealed partial class JavaLanguageService : LanguageService
                 logger.LogDebug(agentEx, "CopilotAgent terminated early");
             }
 
-            // Detect which files were modified by comparing timestamps
-            var appliedPatches = new List<AppliedPatch>();
-            foreach (var (filePath, originalModTime) in fileModTimes)
-            {
-                var currentModTime = File.GetLastWriteTimeUtc(filePath);
-                if (currentModTime > originalModTime)
-                {
-                    var relativePath = Path.GetRelativePath(customizationRoot, filePath);
-                    appliedPatches.Add(new AppliedPatch(relativePath, "File modified by patch agent", 1));
-                }
-            }
+            // The patchLog was populated directly by the tool on each successful patch
+            var appliedPatches = patchLog.ToList();
 
             logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
             return appliedPatches;

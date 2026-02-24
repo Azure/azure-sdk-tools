@@ -1,4 +1,9 @@
-import { ApiItemKind, ApiProperty, ApiPropertySignature } from "@microsoft/api-extractor-model";
+import {
+  ApiItemKind,
+  ApiProperty,
+  ApiPropertySignature,
+  ExcerptTokenKind,
+} from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 import { propertyTokenGenerator } from "../../src/tokenGenerators/property";
 import { TokenKind } from "../../src/models";
@@ -763,6 +768,290 @@ describe("Property Token Generator", () => {
       });
       expect(children).to.exist;
       expect(children).to.have.length.greaterThan(0);
+    });
+  });
+
+  describe("generate - Type Reference Navigation", () => {
+    it("should generate navigateToId for property with type reference", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "foo",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "Foo",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Foo",
+              canonicalReference: {
+                toString: () => "@azure/test!Foo:interface",
+              },
+            },
+          ],
+        },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem);
+
+      // Find the type token
+      const fooTypeToken = tokens.find((t) => t.Value === "Foo");
+      expect(fooTypeToken).to.exist;
+      expect(fooTypeToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(fooTypeToken?.NavigateToId).to.equal("@azure/test!Foo:interface");
+    });
+
+    it("should generate navigateToId for property with generic type reference", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "data",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "Promise<User>",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Promise",
+              canonicalReference: {
+                toString: () => "!Promise:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: "<",
+            },
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "User",
+              canonicalReference: {
+                toString: () => "@azure/test!User:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: ">",
+            },
+          ],
+        },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem);
+
+      // Find the Promise type token
+      const promiseToken = tokens.find((t) => t.Value === "Promise");
+      expect(promiseToken).to.exist;
+      expect(promiseToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(promiseToken?.NavigateToId).to.equal("!Promise:interface");
+
+      // Find the User type token
+      const userToken = tokens.find((t) => t.Value === "User");
+      expect(userToken).to.exist;
+      expect(userToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(userToken?.NavigateToId).to.equal("@azure/test!User:interface");
+    });
+
+    it("should generate navigateToId for readonly property with type reference", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "config",
+        isReadonly: true,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "Configuration",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Configuration",
+              canonicalReference: {
+                toString: () => "@azure/test!Configuration:interface",
+              },
+            },
+          ],
+        },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem);
+
+      // Verify readonly is present
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "readonly" });
+
+      // Find the type token
+      const configToken = tokens.find((t) => t.Value === "Configuration");
+      expect(configToken).to.exist;
+      expect(configToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(configToken?.NavigateToId).to.equal("@azure/test!Configuration:interface");
+    });
+
+    it("should generate navigateToId for optional property with type reference", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "handler",
+        isReadonly: false,
+        isOptional: true,
+        propertyTypeExcerpt: {
+          text: "EventHandler",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "EventHandler",
+              canonicalReference: {
+                toString: () => "@azure/test!EventHandler:type",
+              },
+            },
+          ],
+        },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem);
+
+      // Verify optional marker is present
+      const questionToken = tokens.find((t) => t.Value === "?");
+      expect(questionToken).to.exist;
+
+      // Find the type token
+      const handlerToken = tokens.find((t) => t.Value === "EventHandler");
+      expect(handlerToken).to.exist;
+      expect(handlerToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(handlerToken?.NavigateToId).to.equal("@azure/test!EventHandler:type");
+    });
+
+    it("should handle property with union type containing references", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "value",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "Foo | Bar",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Foo",
+              canonicalReference: {
+                toString: () => "@azure/test!Foo:interface",
+              },
+            },
+            {
+              kind: ExcerptTokenKind.Content,
+              text: " | ",
+            },
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "Bar",
+              canonicalReference: {
+                toString: () => "@azure/test!Bar:interface",
+              },
+            },
+          ],
+        },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem);
+
+      // Find the Foo type token
+      const fooToken = tokens.find((t) => t.Value === "Foo");
+      expect(fooToken).to.exist;
+      expect(fooToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(fooToken?.NavigateToId).to.equal("@azure/test!Foo:interface");
+
+      // Find the Bar type token
+      const barToken = tokens.find((t) => t.Value === "Bar");
+      expect(barToken).to.exist;
+      expect(barToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(barToken?.NavigateToId).to.equal("@azure/test!Bar:interface");
+    });
+
+    it("should not generate navigateToId for primitive types", () => {
+      const mockItem = {
+        kind: ApiItemKind.PropertySignature,
+        displayName: "count",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "number",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Content,
+              text: "number",
+            },
+          ],
+        },
+      } as unknown as ApiPropertySignature;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem);
+
+      // Find the number type token
+      const numberToken = tokens.find((t) => t.Value === "number");
+      expect(numberToken).to.exist;
+      // Primitive types should not have NavigateToId
+      expect(numberToken?.NavigateToId).to.be.undefined;
+    });
+
+    it("should generate navigateToId for getter property with type reference", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "myGetter",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "CustomType",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "CustomType",
+              canonicalReference: {
+                toString: () => "@azure/test!CustomType:interface",
+              },
+            },
+          ],
+        },
+        excerptTokens: [{ text: "get myGetter(): " }],
+      } as unknown as ApiProperty;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem);
+
+      // Verify it's a getter
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "get" });
+
+      // Find the type token
+      const customTypeToken = tokens.find((t) => t.Value === "CustomType");
+      expect(customTypeToken).to.exist;
+      expect(customTypeToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(customTypeToken?.NavigateToId).to.equal("@azure/test!CustomType:interface");
+    });
+
+    it("should generate navigateToId for setter property with type reference", () => {
+      const mockItem = {
+        kind: ApiItemKind.Property,
+        displayName: "mySetter",
+        isReadonly: false,
+        isOptional: false,
+        propertyTypeExcerpt: {
+          text: "CustomType",
+          spannedTokens: [
+            {
+              kind: ExcerptTokenKind.Reference,
+              text: "CustomType",
+              canonicalReference: {
+                toString: () => "@azure/test!CustomType:interface",
+              },
+            },
+          ],
+        },
+        excerptTokens: [{ text: "set mySetter(value: CustomType)" }],
+      } as unknown as ApiProperty;
+
+      const { tokens } = propertyTokenGenerator.generate(mockItem);
+
+      // Verify it's a setter
+      expect(tokens[0]).to.deep.include({ Kind: TokenKind.Keyword, Value: "set" });
+
+      // Find the type token
+      const customTypeToken = tokens.find((t) => t.Value === "CustomType");
+      expect(customTypeToken).to.exist;
+      expect(customTypeToken?.Kind).to.equal(TokenKind.TypeName);
+      expect(customTypeToken?.NavigateToId).to.equal("@azure/test!CustomType:interface");
     });
   });
 });

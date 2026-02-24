@@ -90,7 +90,6 @@ function getTokenKind(text: string): TokenKind {
   return TokenKind.Text;
 }
 
-
 function containsTypeLiteral(node: ts.Node): boolean {
   if (ts.isTypeLiteralNode(node)) {
     return true;
@@ -106,11 +105,9 @@ function containsTypeLiteral(node: ts.Node): boolean {
   return foundTypeLiteral;
 }
 
-
 function normalizeInlineTypeText(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
-
 
 function isKeywordSyntaxKind(kind: ts.SyntaxKind): boolean {
   return kind >= ts.SyntaxKind.FirstKeyword && kind <= ts.SyntaxKind.LastKeyword;
@@ -153,12 +150,19 @@ function isInlinePropertyNameLhs(tokens: InlineScannedToken[], index: number): b
   return previousText === "{" || previousText === ";" || previousText === ",";
 }
 
-function getInlineTypeTokenKind(kind: ts.SyntaxKind, value: string, isPropertyLhs: boolean): TokenKind {
+function getInlineTypeTokenKind(
+  kind: ts.SyntaxKind,
+  value: string,
+  isPropertyLhs: boolean,
+): TokenKind {
   if (isPropertyLhs) {
     return TokenKind.MemberName;
   }
 
-  if (kind === ts.SyntaxKind.StringLiteral || kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral) {
+  if (
+    kind === ts.SyntaxKind.StringLiteral ||
+    kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral
+  ) {
     return TokenKind.StringLiteral;
   }
 
@@ -200,7 +204,10 @@ function addInlineTypeTextTokens(text: string, tokens: ReviewToken[], deprecated
       continue;
     }
 
-    if (token === ts.SyntaxKind.SingleLineCommentTrivia || token === ts.SyntaxKind.MultiLineCommentTrivia) {
+    if (
+      token === ts.SyntaxKind.SingleLineCommentTrivia ||
+      token === ts.SyntaxKind.MultiLineCommentTrivia
+    ) {
       token = scanner.scan();
       continue;
     }
@@ -247,7 +254,11 @@ function shouldInlineTypeNode(node: ts.TypeNode): boolean {
     return true;
   }
 
-  if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node) || ts.isConditionalTypeNode(node)) {
+  if (
+    ts.isUnionTypeNode(node) ||
+    ts.isIntersectionTypeNode(node) ||
+    ts.isConditionalTypeNode(node)
+  ) {
     return containsTypeLiteral(node);
   }
 
@@ -483,8 +494,6 @@ export function buildTypeNodeTokens(
     return children.length > 0 ? children : undefined;
   }
 
-
-
   if (ts.isFunctionTypeNode(node)) {
     tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
 
@@ -541,7 +550,9 @@ export function buildTypeNodeTokens(
       tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
       node.typeArguments.forEach((arg, index) => {
         if (index > 0) {
-          tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+          tokens.push(
+            createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
+          );
         }
         const nestedChildren = buildTypeNodeTokens(arg, tokens, deprecated, depth);
         if (nestedChildren?.length) {
@@ -553,7 +564,6 @@ export function buildTypeNodeTokens(
 
     return children.length > 0 ? children : undefined;
   }
-
 
   if (ts.isConditionalTypeNode(node)) {
     const addConditionalOperandTokens = (operand: ts.TypeNode): void => {
@@ -794,6 +804,17 @@ export function buildTypeElementTokens(
 }
 
 /**
+ * Checks if a type text string contains an inline type literal (object type).
+ * Used to determine whether to use processExcerptTokens (for simple types) or
+ * parseTypeText (for types that need children structure).
+ */
+export function typeTextContainsTypeLiteral(typeText: string): boolean {
+  // A simple heuristic: if it contains '{', it likely has an inline type literal
+  // This covers cases like: { name: string }, { a: number } | string, etc.
+  return typeText.includes("{");
+}
+
+/**
  * Parses type text using TypeScript compiler and builds tokens with proper children structure
  */
 export function parseTypeText(
@@ -821,4 +842,3 @@ export function parseTypeText(
   tokens.push(createToken(tokenKind, typeText.trim(), { deprecated }));
   return undefined;
 }
-

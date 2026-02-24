@@ -1,9 +1,3 @@
-# TypeSpec Definitions
-
-Source: `testData\TypeSpecProcessor\blockStyleNamespace.tsp`
-
----
-
 # Azure.ResourceManager
 
 **Type:** Namespace

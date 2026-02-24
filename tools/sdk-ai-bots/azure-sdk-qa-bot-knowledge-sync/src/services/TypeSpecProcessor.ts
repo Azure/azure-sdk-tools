@@ -145,7 +145,7 @@ export class TypeSpecProcessor {
                     currentName = definitionMatch.name;
                 }
                 else {
-                    let l = i;
+                    let l = i - 1;
                     let inCommentBlock = false;
                     for (; l > currentDefinitionStart; l--) {
                         let trim = lines[l].trim();
@@ -173,7 +173,7 @@ export class TypeSpecProcessor {
 
         //handle the last definition
         if (currentDefinitionStart !== -1 && currentType && currentName) {
-            const definition = this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length -1, currentLevel);
+            const definition = this.parseDefinition(currentType, currentName, lines, currentDefinitionStart, currentDefinitionBodyStart, lines.length, currentLevel);
             definitions.push(definition);
         }
         // correct first global namespace level
@@ -184,10 +184,11 @@ export class TypeSpecProcessor {
     }
 
 
-    private parseDefinition(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionBodyStart: number, nextDefinitionStart: number, level: number): TypeSpecDefinition {
+    private parseDefinition(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionBodyStart: number, nextDefinitionBodyStart: number, level: number): TypeSpecDefinition {
         let definitionEnd = -1;
         let inCommentBlock = false;
-        for (let l = nextDefinitionStart; l > definitionStart; l--) {
+        /* skip the comments for the next definition if any. */
+        for (let l = nextDefinitionBodyStart - 1; l > definitionStart; l--) {
             let trim = lines[l].trim();
             if (trim.endsWith('*/')) inCommentBlock = true;
             if (trim.startsWith('/*')) inCommentBlock = false;
@@ -199,7 +200,7 @@ export class TypeSpecProcessor {
         }
 
         if (definitionEnd === -1) {
-            const clampedNext = Math.min(nextDefinitionStart, lines.length - 1);
+            const clampedNext = Math.min(nextDefinitionBodyStart -1, lines.length - 1);
             definitionEnd = Math.max(definitionStart, clampedNext);
         }
 

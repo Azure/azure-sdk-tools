@@ -1,9 +1,3 @@
-# TypeSpec Definitions
-
-Source: `testData\TypeSpecProcessor\interface.tsp`
-
----
-
 # UserOperations
 
 **Type:** Interface

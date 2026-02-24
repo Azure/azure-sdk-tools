@@ -3,12 +3,12 @@ description: 'Verify Setup'
 ---
 
 ## Goal
-This tool verifies the developer's environment for SDK development and release tasks. It returns what requirements are missing for the specified languages and repo, or success if all requirements are satisfied. It can help install some supported requirements.
+This tool verifies the developer's environment for SDK development and release tasks. It returns what requirements are missing for the specified languages and repo, or success if all requirements are satisfied. It can help install supported requirements.
 
 Your goal is to identify the project repo root, and pass in the `packagePath` to the Verify Setup tool. For a language repo, pass in the language of the repo.
 
 ## Instructions
-1. Check what's missing by calling verify setup with just language and package path parameters. The tool will respond with missing requirements, and if any are installable by the tool itself.
+1. Check what's missing by calling verify setup with just language and package path parameters. The tool responds with missing requirements, and if any are installable by the tool itself.
 2. Ask the user if they want help installing any missing requirements that the tool can install. On approval, **use the tool again WITH THE EXACT PARAMETERS (langs=<language(s)>, packagePath=<path>, requirementsToInstall=["req", "req2", ...])**.
 
 ## Examples

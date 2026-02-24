@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Microsoft.VisualStudio.Services.Common;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -48,12 +47,7 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
             CreateNoWindow = true
         };
 
-        if (processArgs.Count > 0)
-        {
-            processStartInfo.ArgumentList.AddRange(processArgs);
-        }
-
-        foreach (var arg in options.Args)
+        foreach(var arg in processArgs.Concat(options.Args))
         {
             processStartInfo.ArgumentList.Add(arg);
         }

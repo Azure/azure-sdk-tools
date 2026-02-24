@@ -2,11 +2,14 @@
 // Licensed under the MIT License.
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.Services.Common;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper outputHelper)
 {
+    private List<string> WindowsDefaultProcess = ["pwsh", "powershell", ProcessOptions.CMD];
+
     /// <summary>
     /// Runs a process with the specified command and arguments in the given working directory.
     /// </summary>
@@ -21,11 +24,22 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
         using var timeoutCts = new CancellationTokenSource(options.Timeout);
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
+        var cmdName = options.Command;
+
+        // Update process command as CMD.exe on Windows
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        List<string> processArgs = [];
+        // Check if command is supported without cmd
+        if (isWindows && !WindowsDefaultProcess.Contains(cmdName))
+        {
+            cmdName = ProcessOptions.CMD;
+            processArgs.Add("/c");
+            processArgs.Add(options.Command);
+        }
 
         var processStartInfo = new ProcessStartInfo
         {
-            FileName = isWindows? "cmd.exe": options.Command,
+            FileName = cmdName,
             WorkingDirectory = options.WorkingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -34,11 +48,11 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
             CreateNoWindow = true
         };
 
-        if (isWindows)
+        if (processArgs.Count > 0)
         {
-            processStartInfo.ArgumentList.Add("/c");
-            processStartInfo.ArgumentList.Add(options.Command);
+            processStartInfo.ArgumentList.AddRange(processArgs);
         }
+
         foreach (var arg in options.Args)
         {
             processStartInfo.ArgumentList.Add(arg);

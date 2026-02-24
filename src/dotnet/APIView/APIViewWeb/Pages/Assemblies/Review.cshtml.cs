@@ -423,21 +423,21 @@ namespace APIViewWeb.Pages.Assemblies
         /// </summary>
         /// <param name="hasActiveConversations"></param>
         /// <param name="hasFatalDiagnostics"></param>
-        /// <param name="userInApprovers"></param>
+        /// <param name="userIsLanguageApprover"></param>
         /// <param name="isActiveRevisionAhead"></param>
         /// <returns></returns>
 
-        public string GetDataBSTarget(bool hasActiveConversations, bool hasFatalDiagnostics, bool userInApprovers, bool isActiveRevisionAhead)
+        public string GetDataBSTarget(bool hasActiveConversations, bool hasFatalDiagnostics, bool userIsLanguageApprover, bool isActiveRevisionAhead)
         {
-            if (hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            if (hasActiveConversations && hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#convoFatalModel";
             }
-            else if (hasActiveConversations && !hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            else if (hasActiveConversations && !hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#openConversationModel";
             }
-            else if (!hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            else if (!hasActiveConversations && hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#fatalErrorModel";
             }

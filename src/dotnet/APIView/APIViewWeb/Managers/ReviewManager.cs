@@ -432,7 +432,7 @@ namespace APIViewWeb.Managers
             // Update the reviews identified by review IDs with namespace approval fields
             await MarkAssociatedReviewsForNamespaceReview(relatedReviews, userId, requestedOn, reviewGroupId);
 
-            // Send email notifications to preferred approvers with the actual language review data
+            // Send email notifications to language approvers with the actual language review data
             await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, sdkLanguageReviews);            return typeSpecReview;
         }
 

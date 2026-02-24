@@ -63,7 +63,7 @@
                     var isDiffRevisionNullOrHasApprovers = Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Approvers.Any();
                     var isUserAnApprover = Model.ReviewContent.ActiveAPIRevision.Approvers.Contains(User.GetGitHubLogin());
                     var isActiveRevisionAhead = Model.ReviewContent.DiffAPIRevision == null ? true : Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
-                    var userInApprovers = Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin());
+                    var userIsLanguageApprover = Model.ReviewContent.LanguageApprovers.Contains(User.GetGitHubLogin());
                     var hasActiveConversations = Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0;
                     var hasFatalDiagnostics = Model.ReviewContent.HasFatalDiagnostics;
                 }
@@ -80,7 +80,7 @@
                         }
                         else
                         {
-                            var dataBSTarget = Model.GetDataBSTarget(hasActiveConversations, hasFatalDiagnostics, userInApprovers, isActiveRevisionAhead);
+                            var dataBSTarget = Model.GetDataBSTarget(hasActiveConversations, hasFatalDiagnostics, userIsLanguageApprover, isActiveRevisionAhead);
                             if (!string.IsNullOrWhiteSpace(dataBSTarget))
                             {
                                 <span class="small text-muted">Approves the current revision of the API</span>
@@ -231,7 +231,7 @@
                 <input type="hidden" name="apiRevisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
                 <li class="list-group-item">
                         <ul class="list-group list-group-flush">
-                            @foreach (var approver in Model.ReviewContent.PreferredApprovers)
+                            @foreach (var approver in Model.ReviewContent.LanguageApprovers)
                             {
                                 <li class="list-group-item">
                                     <div class="form-check">

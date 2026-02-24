@@ -50,6 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(APIViewReviewTool),
             typeof(DelegateAPIViewFeedbackTool),
             typeof(VerifySetupTool),
+            typeof(VerifySetupInstallTool),
             typeof(TestTool),
             typeof(ListCommandTool),
             typeof(UpgradeTool),

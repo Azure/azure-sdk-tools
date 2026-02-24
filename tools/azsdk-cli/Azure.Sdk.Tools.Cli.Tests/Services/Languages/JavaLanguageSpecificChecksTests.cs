@@ -1,5 +1,5 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -32,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 MockProcessHelper.Object,
                 gitHelperMock.Object,
                 MockMavenHelper.Object,
-                new Mock<IMicroagentHostService>().Object,
+                new Mock<ICopilotAgentRunner>().Object,
                 NullLogger<JavaLanguageService>.Instance,
                 new Mock<ICommonValidationHelpers>().Object,
                 Mock.Of<IFileHelper>(),
@@ -972,7 +972,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IProcessHelper>().Object,
                     gitHelperMock.Object,
                     new Mock<IMavenHelper>().Object,
-                    new Mock<IMicroagentHostService>().Object,
+                    new Mock<ICopilotAgentRunner>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
@@ -1028,7 +1028,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IProcessHelper>().Object,
                     gitHelperMock.Object,
                     new Mock<IMavenHelper>().Object,
-                    new Mock<IMicroagentHostService>().Object,
+                    new Mock<ICopilotAgentRunner>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
@@ -1084,7 +1084,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IProcessHelper>().Object,
                     gitHelperMock.Object,
                     new Mock<IMavenHelper>().Object,
-                    new Mock<IMicroagentHostService>().Object,
+                    new Mock<ICopilotAgentRunner>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),
@@ -1140,7 +1140,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<IProcessHelper>().Object,
                     gitHelperMock.Object,
                     new Mock<IMavenHelper>().Object,
-                    new Mock<IMicroagentHostService>().Object,
+                    new Mock<ICopilotAgentRunner>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
                     Mock.Of<IFileHelper>(),

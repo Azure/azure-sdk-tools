@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -24,7 +24,7 @@ internal class VerifySetupToolTests
     private Mock<INpxHelper> _mockNpxHelper;
     private Mock<IPowershellHelper> _mockPowerShellHelper;
     private TestLogger<LanguageService> _languageLogger;
-    private Mock<IMicroagentHostService> _mockMicrohostAgent;
+    private Mock<ICopilotAgentRunner> _mockMicrohostAgent;
     private Mock<IGitHelper> _mockGitHelper;
     private Mock<ICommonValidationHelpers> _commonValidationHelpers;
 
@@ -36,7 +36,7 @@ internal class VerifySetupToolTests
         logger = new TestLogger<VerifySetupTool>();
 
         _languageLogger = new TestLogger<LanguageService>();
-        _mockMicrohostAgent = new Mock<IMicroagentHostService>();
+        _mockMicrohostAgent = new Mock<ICopilotAgentRunner>();
         _mockNpxHelper = new Mock<INpxHelper>();
         _mockPowerShellHelper = new Mock<IPowershellHelper>();
         _mockGitHelper = new Mock<IGitHelper>();

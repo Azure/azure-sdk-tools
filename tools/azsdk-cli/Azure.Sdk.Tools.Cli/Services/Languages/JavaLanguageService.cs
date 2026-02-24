@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
@@ -15,7 +15,7 @@ public sealed partial class JavaLanguageService : LanguageService
 {
     public override SdkLanguage Language { get; } = SdkLanguage.Java;
     public override bool IsCustomizedCodeUpdateSupported => true;
-    private readonly IMicroagentHostService microagentHost;
+    private readonly ICopilotAgentRunner copilotAgentRunner;
     private readonly IMavenHelper _mavenHelper;
     private const string CustomizationDirName = "customization";
 
@@ -23,7 +23,7 @@ public sealed partial class JavaLanguageService : LanguageService
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         IMavenHelper mavenHelper,
-        IMicroagentHostService microagentHost,
+        ICopilotAgentRunner copilotAgentRunner,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
         IFileHelper fileHelper,
@@ -31,7 +31,7 @@ public sealed partial class JavaLanguageService : LanguageService
         IChangelogHelper changelogHelper)
         : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
-        this.microagentHost = microagentHost;
+        this.copilotAgentRunner = copilotAgentRunner;
         this._mavenHelper = mavenHelper;
     }
 
@@ -271,8 +271,13 @@ public sealed partial class JavaLanguageService : LanguageService
                 return [];
             }
 
-            // Just get the list of files - microagent will read content as needed
+            // Get the list of customization files
             var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
+            
+            // Record file modification times before patching (to detect what changed)
+            var fileModTimes = javaFiles.ToDictionary(
+                f => f,
+                f => File.GetLastWriteTimeUtc(f));
             
             // Provide FULL paths so the LLM doesn't get confused about where files are
             // The ReadFile tool base is packagePath, so we give paths relative to that
@@ -293,33 +298,24 @@ public sealed partial class JavaLanguageService : LanguageService
                 customizationFiles,
                 patchFilePaths).BuildPrompt();
 
-            // Create patch tool so we can retrieve applied patches after microagent completes
-            var patchTool = new ClientCustomizationCodePatchTool(customizationRoot)
-            {
-                Name = "ClientCustomizationCodePatch",
-                Description = "Apply code patches to customization files only (never generated code)"
-            };
-
             // Single-pass agent: applies all patches it can in one run
-            var agentDefinition = new Microagent<string>
+            var agentDefinition = new CopilotAgent<string>
             {
                 Instructions = prompt,
-                MaxToolCalls = 25,
+                MaxIterations = 25,
                 Tools =
                 [
-                    new ReadFileTool(packagePath, logger)
-                    {
-                        Name = "ReadFile",
-                        Description = "Read files from the package directory (generated code, customization files, etc.)"
-                    },
-                    patchTool
+                    FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,
+                        description: "Read files from the package directory (generated code, customization files, etc.)"),
+                    CodePatchTools.CreateCodePatchTool(customizationRoot,
+                        description: "Apply code patches to customization files only (never generated code)")
                 ]
             };
 
             // Run the agent to apply patches
             try
             {
-                await microagentHost.RunAgentToCompletion(agentDefinition, ct);
+                await copilotAgentRunner.RunAsync(agentDefinition, ct);
             }
             catch (OperationCanceledException)
             {
@@ -328,12 +324,24 @@ public sealed partial class JavaLanguageService : LanguageService
             }
             catch (Exception agentEx)
             {
-                // Agent exhausted its tool budget (MaxToolCalls) without calling Exit.
-                logger.LogDebug(agentEx, "Microagent terminated early (applied {PatchCount} patches)", patchTool.AppliedPatches.Count);
+                // Agent exhausted its iteration budget without completing.
+                logger.LogDebug(agentEx, "CopilotAgent terminated early");
             }
-            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", patchTool.AppliedPatches.Count);
 
-            return patchTool.AppliedPatches;
+            // Detect which files were modified by comparing timestamps
+            var appliedPatches = new List<AppliedPatch>();
+            foreach (var (filePath, originalModTime) in fileModTimes)
+            {
+                var currentModTime = File.GetLastWriteTimeUtc(filePath);
+                if (currentModTime > originalModTime)
+                {
+                    var relativePath = Path.GetRelativePath(customizationRoot, filePath);
+                    appliedPatches.Add(new AppliedPatch(relativePath, "File modified by patch agent", 1));
+                }
+            }
+
+            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
+            return appliedPatches;
         }
         catch (Exception ex)
         {

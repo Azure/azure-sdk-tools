@@ -128,9 +128,13 @@ export class TypeSpecProcessor {
                 }
                 if (currentDefinitionStart == -1) {
                     // calculate the start of the first definition
+                    let inCommentBlock = false;
                     for (let l = i -1; l > 0; l--) {
                         let trim = lines[l].trim();
-                        if (trim.endsWith(';') || trim.endsWith('}')) {
+                        if (trim.endsWith('*/')) inCommentBlock = true;
+                        if (trim.startsWith('/*')) inCommentBlock = false;
+                        let isComment = inCommentBlock || trim.startsWith("//");
+                        if (!isComment && (trim.endsWith(';') || trim.endsWith('}'))) {
                             currentDefinitionStart = l + 1;
                             break;
                         }
@@ -142,9 +146,13 @@ export class TypeSpecProcessor {
                 }
                 else {
                     let l = i;
+                    let inCommentBlock = false;
                     for (; l > currentDefinitionStart; l--) {
                         let trim = lines[l].trim();
-                        if (trim.endsWith(';') || trim.endsWith('}')) {
+                        if (trim.endsWith('*/')) inCommentBlock = true;
+                        if (trim.startsWith('/*')) inCommentBlock = false;
+                        let isComment = inCommentBlock || trim.startsWith("//");
+                        if (!isComment && (trim.endsWith(';') || trim.endsWith('}'))) {
                             break;
                         }
                     }
@@ -178,9 +186,13 @@ export class TypeSpecProcessor {
 
     private parseDefinition(definitionType: TypeSpecDefinitionType, definitionName: string, lines: string[], definitionStart: number, definitionBodyStart: number, nextDefinitionStart: number, level: number): TypeSpecDefinition {
         let definitionEnd = -1;
+        let inCommentBlock = false;
         for (let l = nextDefinitionStart; l > definitionStart; l--) {
             let trim = lines[l].trim();
-            if (trim.endsWith(';') || trim.endsWith('}')) {
+            if (trim.endsWith('*/')) inCommentBlock = true;
+            if (trim.startsWith('/*')) inCommentBlock = false;
+            let isComment = inCommentBlock || trim.startsWith("//");
+            if (!isComment && (trim.endsWith(';') || trim.endsWith('}'))) {
                 definitionEnd = l;
                 break;
             }

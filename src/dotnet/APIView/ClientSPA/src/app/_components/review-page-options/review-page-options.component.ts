@@ -730,7 +730,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     if(this.activeAPIRevision?.isApproved) return false;
     if (!this.isCopilotReviewSupported) return false;
     if (this.isPreviewVersion()) return false;
-    if (this.activeAPIRevisionIsApprovedByCurrentUser) return false;
 
     return isReviewByCopilotRequired && !isVersionReviewedByCopilot;
   }

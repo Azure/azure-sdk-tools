@@ -8,6 +8,7 @@ import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePane
 import { CommentItemModel, CommentType, CommentSource } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';
 import { getTypeClass } from 'src/app/_helpers/common-helpers';
+import { getVisibleComments } from 'src/app/_helpers/comment-visibility.helper';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { Subject, take, takeUntil } from 'rxjs';
 import { Review } from 'src/app/_models/review';
@@ -96,32 +97,22 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.numberOfActiveThreads = 0;
       this.diagnosticsTruncated = false;
 
-      // Categorize comments:
-      // 1. User comments (anything that's not diagnostic or AI-generated)
-      // 2. AI Generated comments (show all)
-      // 3. Diagnostic comments (limit to 250 from active revision)
-
-      const userComments = this.comments.filter(comment =>
-        comment.commentSource !== CommentSource.Diagnostic && comment.commentSource !== CommentSource.AIGenerated
-      );
-
-      const aiGeneratedComments = this.comments.filter(comment =>
-        comment.commentSource === CommentSource.AIGenerated
-      );
-
-      const diagnosticCommentsForRevision = this.comments.filter(comment =>
-        comment.commentSource === CommentSource.Diagnostic && comment.apiRevisionId === this.activeApiRevisionId
-      );
+      // Use shared visibility logic — single source of truth for which comments are relevant
+      const { allVisibleComments, diagnosticCommentsForRevision } = getVisibleComments(this.comments, this.activeApiRevisionId);
 
       this.totalDiagnosticsInRevision = diagnosticCommentsForRevision.length;
-
-      const limitedDiagnostics = diagnosticCommentsForRevision.slice(0, this.MAX_DIAGNOSTICS_DISPLAY);
       this.diagnosticsTruncated = diagnosticCommentsForRevision.length > this.MAX_DIAGNOSTICS_DISPLAY;
 
-      const filteredComments = [...userComments, ...aiGeneratedComments, ...limitedDiagnostics];
+      // For display, cap diagnostics at MAX_DIAGNOSTICS_DISPLAY; for badge counts, use the full set
+      const limitedDiagnostics = diagnosticCommentsForRevision.slice(0, this.MAX_DIAGNOSTICS_DISPLAY);
+      const filteredComments = [
+        ...allVisibleComments.filter(c => c.commentSource !== CommentSource.Diagnostic),
+        ...limitedDiagnostics
+      ];
 
-      const allCommentsForCount = [...userComments, ...aiGeneratedComments, ...diagnosticCommentsForRevision];
-      const allThreadGroups = allCommentsForCount.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
+      // Count ALL visible unresolved threads for the badge — this must match what
+      // the quality score counts so the numbers stay consistent across the UI.
+      const allThreadGroups = allVisibleComments.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
         const threadKey = comment.threadId || comment.elementId;
         if (!acc[threadKey]) {
           acc[threadKey] = [];
@@ -140,9 +131,8 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
         }
       }
 
-      // Emit total count - this is always needed for the badge
-      this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
-
+      // Build the display-only thread groups (capped diagnostics, mapped to loaded revisions).
+      // This does NOT affect the badge count above.
       const threadGroups = filteredComments.reduce((acc: { [key: string]: CommentItemModel[] }, comment) => {
         const threadKey = comment.threadId || comment.elementId;
         if (!acc[threadKey]) {
@@ -158,9 +148,6 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       apiRevisionInOrder.forEach((rev, index) => {
         apiRevisionPositionMap.set(rev.id, index);
       });
-
-      // Reset count - only count threads that can actually be displayed
-      this.numberOfActiveThreads = 0;
 
       for (const threadId in threadGroups) {
         if (threadGroups.hasOwnProperty(threadId)) {
@@ -183,11 +170,6 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
             codePanelRowData.comments = comments;
             codePanelRowData.threadId = threadId;
             codePanelRowData.isResolvedCommentThread = comments.some(c => c.isResolved);
-
-            // Only count active threads that will actually be displayed
-            if (!codePanelRowData.isResolvedCommentThread) {
-              this.numberOfActiveThreads++;
-            }
 
             if (this.commentThreads.has(apiRevisionIdForThread)) {
               this.commentThreads.get(apiRevisionIdForThread)?.push(codePanelRowData);

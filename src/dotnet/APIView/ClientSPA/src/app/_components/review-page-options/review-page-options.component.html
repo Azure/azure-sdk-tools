@@ -94,6 +94,10 @@
                     <span><i class="bi bi-question-circle-fill text-secondary me-1"></i>Question</span>
                     <span>{{qualityScore.unresolvedQuestionCount}}</span>
                 </div>
+                <div *ngIf="qualityScore.unresolvedUnknownCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-dash-circle-fill text-secondary me-1"></i>Unknown</span>
+                    <span>{{qualityScore.unresolvedUnknownCount}}</span>
+                </div>
             </div>
             <div *ngIf="qualityScore.totalUnresolvedCount === 0" class="small text-muted text-center mt-1">
                 No unresolved comments

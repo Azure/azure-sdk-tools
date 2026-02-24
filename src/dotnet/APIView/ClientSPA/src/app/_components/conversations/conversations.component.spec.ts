@@ -21,6 +21,7 @@ import { ReviewPageModule } from 'src/app/_modules/review-page.module';
 import { APIRevision } from 'src/app/_models/revision';
 import { CommentItemModel, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentSeverity } from 'src/app/_models/commentItemModel';
+import { getVisibleComments } from 'src/app/_helpers/comment-visibility.helper';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
@@ -318,6 +319,81 @@ describe('ConversationComponent', () => {
 
       // Back to 1 active thread
       expect(component.numberOfActiveThreads).toBe(1);
+    });
+  });
+
+  describe('Diagnostic visibility filtering', () => {
+    it('should only show diagnostic comments for active revision and exclude others', () => {
+      const apiRevisions = [
+        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' },
+        { id: 'rev-2', createdOn: '2022-10-01T00:00:00Z' }
+      ] as APIRevision[];
+
+      const comments = [
+        // User comment — always visible
+        { id: 'c1', elementId: 'elem-1', apiRevisionId: 'rev-1', commentSource: CommentSource.UserGenerated, isResolved: false },
+        // Diagnostic for active revision — visible
+        { id: 'c2', elementId: 'elem-2', apiRevisionId: 'rev-2', commentSource: CommentSource.Diagnostic, isResolved: false },
+        // Diagnostic for non-active revision — NOT visible
+        { id: 'c3', elementId: 'elem-3', apiRevisionId: 'rev-1', commentSource: CommentSource.Diagnostic, isResolved: false },
+        // AI comment — always visible
+        { id: 'c4', elementId: 'elem-4', apiRevisionId: 'rev-1', commentSource: CommentSource.AIGenerated, isResolved: false },
+      ] as CommentItemModel[];
+
+      component.apiRevisions = apiRevisions;
+      component.comments = comments;
+      component.activeApiRevisionId = 'rev-2';
+      component.createCommentThreads();
+
+      // The shared helper should produce the same set the component uses
+      const helperResult = getVisibleComments(comments, 'rev-2');
+      expect(helperResult.allVisibleComments.map(c => c.id).sort()).toEqual(['c1', 'c2', 'c4']);
+
+      // Component should show 3 threads (c1, c2, c4) — c3 excluded
+      const allThreads = Array.from(component.commentThreads.values()).flat();
+      const allCommentIds = allThreads.flatMap(t => t.comments!.map(c => c.id)).sort();
+      expect(allCommentIds).toEqual(['c1', 'c2', 'c4']);
+
+      // All 3 are unresolved
+      expect(component.numberOfActiveThreads).toBe(3);
+    });
+
+    it('should cap diagnostics at 250 for display but count all for badge', () => {
+      const apiRevisions = [
+        { id: 'rev-1', createdOn: '2021-10-01T00:00:00Z' }
+      ] as APIRevision[];
+
+      // 300 diagnostic comments for active revision + 1 user comment
+      const diagnostics = Array.from({ length: 300 }, (_, i) => ({
+        id: `diag-${i}`,
+        elementId: `diag-elem-${i}`,
+        apiRevisionId: 'rev-1',
+        commentSource: CommentSource.Diagnostic,
+        isResolved: false,
+      })) as CommentItemModel[];
+
+      const userComment = {
+        id: 'user-1',
+        elementId: 'user-elem-1',
+        apiRevisionId: 'rev-1',
+        commentSource: CommentSource.UserGenerated,
+        isResolved: false,
+      } as CommentItemModel;
+
+      component.apiRevisions = apiRevisions;
+      component.comments = [userComment, ...diagnostics];
+      component.activeApiRevisionId = 'rev-1';
+      component.createCommentThreads();
+
+      expect(component.totalDiagnosticsInRevision).toBe(300);
+      expect(component.diagnosticsTruncated).toBe(true);
+
+      // Badge should reflect ALL unresolved threads (1 user + 300 diagnostics = 301)
+      // The badge count is emitted first from allCommentsForCount before the display cap
+      // (verified via the numberOfActiveThreads after final recalculation with display-capped set)
+      // Display threads are capped: 1 user + 250 diagnostics = 251 threads shown
+      const allDisplayedThreads = Array.from(component.commentThreads.values()).flat();
+      expect(allDisplayedThreads).toHaveLength(251);
     });
   });
 

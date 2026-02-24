@@ -33,6 +33,12 @@ namespace APIViewWeb.LeanModels
         public int UnresolvedQuestionCount { get; set; }
 
         /// <summary>
+        /// Number of unresolved comments with no severity set (Unknown).
+        /// These receive a ShouldFix-equivalent penalty to incentivize setting severity.
+        /// </summary>
+        public int UnresolvedUnknownCount { get; set; }
+
+        /// <summary>
         /// Total number of unresolved comments considered in the score calculation.
         /// </summary>
         public int TotalUnresolvedCount { get; set; }
@@ -40,5 +46,6 @@ namespace APIViewWeb.LeanModels
         // Severity penalty weights (points deducted per unresolved comment)
         internal const double MustFixPenalty = 20.0;
         internal const double ShouldFixPenalty = 10.0;
+        internal const double UnknownPenalty = 10.0;
     }
 }

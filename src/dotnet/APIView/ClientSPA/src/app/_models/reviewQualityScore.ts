@@ -4,5 +4,6 @@ export interface ReviewQualityScore {
   unresolvedShouldFixCount: number;
   unresolvedSuggestionCount: number;
   unresolvedQuestionCount: number;
+  unresolvedUnknownCount: number;
   totalUnresolvedCount: number;
 }

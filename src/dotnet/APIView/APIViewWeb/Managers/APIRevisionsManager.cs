@@ -1513,16 +1513,37 @@ namespace APIViewWeb.Managers
                 totalReviewableLines = 100;
             }
 
-            // Get all comments for the revision's review.
-            // Use the same visibility rule as the review page (ReviewsController):
-            // unresolved comments from ANY revision are "visible" on the active revision,
-            // because comments attach to stable ElementIds that persist across revisions.
-            var allComments = await _commentsRepository.GetCommentsAsync(revision.ReviewId);
+            // Sync diagnostic comments if necessary so the DB is up-to-date before scoring.
+            // This mirrors the sync that happens when the review page loads.
+            var allComments = (await _commentsRepository.GetCommentsAsync(revision.ReviewId, isDeleted: false, commentType: CommentType.APIRevision)).ToList();
+            if (codeFile != null && codeFile.CodeFile.Diagnostics != null && codeFile.CodeFile.Diagnostics.Length > 0)
+            {
+                var diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                    revision.ReviewId,
+                    apiRevisionId,
+                    revision.DiagnosticsHash,
+                    codeFile.CodeFile.Diagnostics,
+                    allComments);
+
+                if (diagnosticResult.WasSynced)
+                {
+                    revision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
+                    await UpdateAPIRevisionAsync(revision);
+
+                    // Replace stale diagnostic comments with freshly synced ones
+                    allComments = allComments
+                        .Where(c => c.CommentSource != CommentSource.Diagnostic || c.APIRevisionId != apiRevisionId)
+                        .Concat(diagnosticResult.Comments)
+                        .ToList();
+                }
+            }
+
+            // Apply the shared visibility filter so that only comments relevant to this
+            // revision are considered. Same rules as the Conversations panel and code panel.
+            var visibleComments = CommentVisibilityHelper.GetVisibleComments(allComments, apiRevisionId);
             
-            var unresolvedComments = allComments
-                .Where(c => c.CommentType == CommentType.APIRevision 
-                    && !c.IsResolved 
-                    && !c.IsDeleted)
+            var unresolvedComments = visibleComments
+                .Where(c => !c.IsResolved)
                 .ToList();
 
             // Group comments by conversation thread. Only the thread-starting comment's severity
@@ -1550,24 +1571,27 @@ namespace APIViewWeb.Managers
             foreach (var comment in threadRepresentatives)
             {
                 // Questions and Suggestions don't degrade the score
-                if (comment.Severity == CommentSeverity.Question || comment.Severity == CommentSeverity.Suggestion || comment.Severity == null)
+                if (comment.Severity == CommentSeverity.Question || comment.Severity == CommentSeverity.Suggestion)
                 {
                     if (comment.Severity == CommentSeverity.Question)
                     {
                         score.UnresolvedQuestionCount++;
                     }
-                    else if (comment.Severity == CommentSeverity.Suggestion)
+                    else
                     {
                         score.UnresolvedSuggestionCount++;
                     }
                     continue;
                 }
 
-                // Calculate the penalty for this comment based on severity
+                // Calculate the penalty for this comment based on severity.
+                // Null (unknown) severity receives a ShouldFix-equivalent penalty to
+                // incentivize authors to set a proper severity on their comments.
                 double basePenalty = comment.Severity switch
                 {
                     CommentSeverity.MustFix => ReviewQualityScore.MustFixPenalty,
                     CommentSeverity.ShouldFix => ReviewQualityScore.ShouldFixPenalty,
+                    null => ReviewQualityScore.UnknownPenalty,
                     _ => 0.0
                 };
 
@@ -1591,6 +1615,9 @@ namespace APIViewWeb.Managers
                         break;
                     case CommentSeverity.ShouldFix:
                         score.UnresolvedShouldFixCount++;
+                        break;
+                    case null:
+                        score.UnresolvedUnknownCount++;
                         break;
                 }
             }

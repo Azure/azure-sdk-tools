@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
+using APIView;
 using APIView.Model;
 using APIViewWeb;
 using APIViewWeb.Helpers;
@@ -1226,7 +1227,7 @@ public class APIRevisionsManagerTests
     {
         var revision = CreateRevisionForQualityTest();
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(new List<CommentItemModel>());
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1245,7 +1246,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.ShouldFix, isResolved: true)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1265,7 +1266,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.Question)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1284,7 +1285,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.MustFix)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1302,7 +1303,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.ShouldFix)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1320,7 +1321,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.Suggestion)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1341,7 +1342,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.Question)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1366,7 +1367,7 @@ public class APIRevisionsManagerTests
             comments.Add(CreateComment(CommentSeverity.MustFix));
         }
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1385,7 +1386,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.MustFix, source: CommentSource.AIGenerated, confidenceScore: 0.5f)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1403,7 +1404,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.MustFix, source: CommentSource.AIGenerated, confidenceScore: 0f)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1426,7 +1427,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.Suggestion)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1437,7 +1438,7 @@ public class APIRevisionsManagerTests
     }
 
     [Fact]
-    public async Task GetReviewQualityScoreAsync_NullSeverity_NoPenalty()
+    public async Task GetReviewQualityScoreAsync_NullSeverity_UnknownPenalty()
     {
         var revision = CreateRevisionForQualityTest();
         var comments = new List<CommentItemModel>
@@ -1445,13 +1446,14 @@ public class APIRevisionsManagerTests
             CreateComment(severity: null)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
 
-        Assert.Equal(100, result.Score);
-        // null severity comments are counted but not penalized
+        // null severity comments receive a ShouldFix-equivalent penalty and are counted as Unknown
+        Assert.Equal(90, result.Score); // 100 - 10
+        Assert.Equal(1, result.UnresolvedUnknownCount);
         Assert.Equal(1, result.TotalUnresolvedCount);
     }
 
@@ -1472,7 +1474,7 @@ public class APIRevisionsManagerTests
             }
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1490,7 +1492,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.ShouldFix, source: CommentSource.Diagnostic)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1523,7 +1525,7 @@ public class APIRevisionsManagerTests
             CreateComment(severity: null, elementId: threadElement, createdOn: baseTime.AddMinutes(10))
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1549,7 +1551,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.MustFix, elementId: threadElement, createdOn: baseTime.AddMinutes(5))
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1579,7 +1581,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.Question, elementId: "elem-3", createdOn: baseTime)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1606,7 +1608,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.Suggestion, elementId: "elem-C", threadId: "thread-2", createdOn: baseTime)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1631,7 +1633,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.MustFix, elementId: "legacy-elem-2", threadId: null, createdOn: baseTime)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1657,7 +1659,7 @@ public class APIRevisionsManagerTests
             CreateComment(CommentSeverity.MustFix, apiRevisionId: "rev-1", isResolved: true)
         };
         _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
-        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, null))
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
             .ReturnsAsync(comments);
 
         var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
@@ -1668,6 +1670,48 @@ public class APIRevisionsManagerTests
         Assert.Equal(1, result.UnresolvedMustFixCount);
         Assert.Equal(1, result.UnresolvedShouldFixCount);
         Assert.Equal(2, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_SyncsDiagnosticsBeforeScoring()
+    {
+        var revision = CreateRevisionForQualityTest();
+        revision.DiagnosticsHash = null;
+        var diagnostics = new[] { new CodeDiagnostic { TargetId = "elem-1", Text = "Missing docs", Level = CodeDiagnosticLevel.Warning } };
+        var codeFile = new CodeFile
+        {
+            Name = "test",
+            Language = "Python",
+            PackageName = "test-package",
+            PackageVersion = "1.0.0",
+            Diagnostics = diagnostics
+        };
+        var renderedCodeFile = new RenderedCodeFile(codeFile);
+
+        var syncedComment = CreateComment(CommentSeverity.ShouldFix, source: CommentSource.Diagnostic);
+        var syncResult = new DiagnosticSyncResult
+        {
+            Comments = new List<CommentItemModel> { syncedComment },
+            DiagnosticsHash = "new-hash",
+            WasSynced = true
+        };
+
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCodeFileRepository.Setup(x => x.GetCodeFileAsync(revision, false)).ReturnsAsync(renderedCodeFile);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(new List<CommentItemModel>());
+        _mockDiagnosticCommentService.Setup(x => x.SyncDiagnosticCommentsAsync(
+            revision.ReviewId, revision.Id, revision.DiagnosticsHash, diagnostics, It.IsAny<IEnumerable<CommentItemModel>>()))
+            .ReturnsAsync(syncResult);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // Synced diagnostic (ShouldFix) should be scored
+        Assert.Equal(90, result.Score); // 100 - 10
+        Assert.Equal(1, result.UnresolvedShouldFixCount);
+        _mockDiagnosticCommentService.Verify(x => x.SyncDiagnosticCommentsAsync(
+            revision.ReviewId, revision.Id, null, diagnostics, It.IsAny<IEnumerable<CommentItemModel>>()), Times.Once);
+        _mockAPIRevisionsRepository.Verify(x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.DiagnosticsHash == "new-hash")), Times.Once);
     }
 
     #endregion

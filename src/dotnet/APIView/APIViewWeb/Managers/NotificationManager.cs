@@ -82,7 +82,9 @@ namespace APIViewWeb.Managers
                     languageServices: _languageServices,
                     elementId: comment.ElementId);
 
-            var content = await _emailTemplateService.GetSubscriberCommentEmailAsync(comment, elementUrl);
+            var content = await _emailTemplateService.RenderAsync(
+                EmailTemplateKey.SubscriberComment,
+                SubscriberCommentEmailModel.Create(comment, elementUrl));
             await SendSubscriberEmailsAsync(review, user, content, comment.TaggedUsers);
         }
 
@@ -100,7 +102,9 @@ namespace APIViewWeb.Managers
                     configuration: _configuration,
                     languageServices: _languageServices,
                     elementId: comment.ElementId);
-                var content = await _emailTemplateService.GetCommentTagEmailAsync(comment, review, reviewUrl);
+                var content = await _emailTemplateService.RenderAsync(
+                    EmailTemplateKey.CommentTag,
+                    CommentTagEmailModel.Create(_apiviewEndpoint, comment, review, reviewUrl));
                 await SendUserEmailsAsync(review, user, content);
             } 
         }
@@ -118,17 +122,18 @@ namespace APIViewWeb.Managers
             foreach (var reviewer in reviewers)
             {
                 var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
-                var content = await _emailTemplateService.GetReviewerAssignedEmailAsync(
-                    userProfile.UserName,
-                    apiRevision.Id,
-                    apiRevision.PackageName);
+                var content = await _emailTemplateService.RenderAsync(
+                    EmailTemplateKey.ReviewerAssigned,
+                    ReviewerAssignedEmailModel.Create(_apiviewEndpoint, userProfile.UserName, apiRevision.Id, apiRevision.PackageName));
                 await SendUserEmailsAsync(apiRevision, reviewerProfile, content);
             }
         }
 
         public async Task NotifySubscribersOnNewRevisionAsync(ReviewListItemModel review, APIRevisionListItemModel revision, ClaimsPrincipal user)
         {
-            var htmlContent = await _emailTemplateService.GetNewRevisionEmailAsync(review, revision);
+            var htmlContent = await _emailTemplateService.RenderAsync(
+                EmailTemplateKey.NewRevision,
+                NewRevisionEmailModel.Create(_apiviewEndpoint, review, revision));
             await SendSubscriberEmailsAsync(review, user, htmlContent, null);
         }
         /// <summary>
@@ -309,11 +314,14 @@ namespace APIViewWeb.Managers
                 var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
                 
                 // Generate email content using template with actual language review data
-                var emailContent = await _emailTemplateService.GetNamespaceReviewRequestEmailAsync(
-                    review.PackageName,
-                    typeSpecUrl,
-                    languageReviews ?? Enumerable.Empty<ReviewListItemModel>(),
-                    notes);
+                var emailContent = await _emailTemplateService.RenderAsync(
+                    EmailTemplateKey.NamespaceReviewRequest,
+                    NamespaceReviewRequestEmailModel.Create(
+                        review.PackageName,
+                        typeSpecUrl,
+                        languageReviews ?? Enumerable.Empty<ReviewListItemModel>(),
+                        notes,
+                        _apiviewEndpoint));
                 
                 var emailToList = string.Join("; ", emailAddresses);
                 
@@ -389,10 +397,13 @@ namespace APIViewWeb.Managers
                 var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
                 
                 // Use the unified approval email template for manual approval
-                var emailContent = await _emailTemplateService.GetNamespaceReviewApprovedEmailAsync(
-                    review.PackageName,
-                    typeSpecUrl,
-                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>());
+                var emailContent = await _emailTemplateService.RenderAsync(
+                    EmailTemplateKey.NamespaceReviewApproved,
+                    NamespaceReviewApprovedEmailModel.Create(
+                        review.PackageName,
+                        typeSpecUrl,
+                        associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
+                        _apiviewEndpoint));
                 
                 var emailToList = string.Join("; ", emailAddresses);
                 

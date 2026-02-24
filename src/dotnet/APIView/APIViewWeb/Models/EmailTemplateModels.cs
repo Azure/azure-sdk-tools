@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
+using APIViewWeb.Helpers;
+using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Html;
 
 namespace APIViewWeb.Models
@@ -9,6 +12,22 @@ namespace APIViewWeb.Models
         public string TypeSpecUrl { get; set; } = string.Empty;
         public IReadOnlyList<EmailLanguageReviewModel> LanguageReviews { get; set; } = [];
         public string Notes { get; set; } = string.Empty;
+
+        public static NamespaceReviewRequestEmailModel Create(
+            string packageName,
+            string typeSpecUrl,
+            IEnumerable<ReviewListItemModel> languageReviews,
+            string notes,
+            string apiviewEndpoint)
+        {
+            return new NamespaceReviewRequestEmailModel
+            {
+                PackageName = packageName,
+                TypeSpecUrl = typeSpecUrl,
+                LanguageReviews = EmailLanguageReviewModel.From(languageReviews, apiviewEndpoint),
+                Notes = notes ?? string.Empty,
+            };
+        }
     }
 
     public class NamespaceReviewApprovedEmailModel
@@ -16,6 +35,20 @@ namespace APIViewWeb.Models
         public string PackageName { get; set; } = string.Empty;
         public string TypeSpecUrl { get; set; } = string.Empty;
         public IReadOnlyList<EmailLanguageReviewModel> LanguageReviews { get; set; } = [];
+
+        public static NamespaceReviewApprovedEmailModel Create(
+            string packageName,
+            string typeSpecUrl,
+            IEnumerable<ReviewListItemModel> languageReviews,
+            string apiviewEndpoint)
+        {
+            return new NamespaceReviewApprovedEmailModel
+            {
+                PackageName = packageName,
+                TypeSpecUrl = typeSpecUrl,
+                LanguageReviews = EmailLanguageReviewModel.From(languageReviews, apiviewEndpoint),
+            };
+        }
     }
 
     public class EmailLanguageReviewModel
@@ -23,6 +56,18 @@ namespace APIViewWeb.Models
         public string LanguageName { get; set; } = string.Empty;
         public string PackageName { get; set; } = string.Empty;
         public string ReviewUrl { get; set; } = string.Empty;
+
+        public static IReadOnlyList<EmailLanguageReviewModel> From(
+            IEnumerable<ReviewListItemModel> languageReviews,
+            string apiviewEndpoint)
+        {
+            return languageReviews?.Select(review => new EmailLanguageReviewModel
+            {
+                LanguageName = review.Language,
+                PackageName = review.PackageName,
+                ReviewUrl = $"{apiviewEndpoint}/Assemblies/Review/{review.Id}",
+            }).ToList() ?? [];
+        }
     }
 
     public class ReviewerAssignedEmailModel
@@ -32,6 +77,22 @@ namespace APIViewWeb.Models
         public string ReviewUrl { get; set; } = string.Empty;
         public string ReviewName { get; set; } = string.Empty;
         public string RequestedReviewsUrl { get; set; } = string.Empty;
+
+        public static ReviewerAssignedEmailModel Create(
+            string apiviewEndpoint,
+            string requesterUserName,
+            string reviewId,
+            string reviewName)
+        {
+            return new ReviewerAssignedEmailModel
+            {
+                RequesterProfileUrl = $"{apiviewEndpoint}/Assemblies/Profile/{requesterUserName}",
+                RequesterUserName = requesterUserName,
+                ReviewUrl = $"{apiviewEndpoint}/Assemblies/Review/{reviewId}",
+                ReviewName = reviewName,
+                RequestedReviewsUrl = $"{apiviewEndpoint}/Assemblies/RequestedReviews/",
+            };
+        }
     }
 
     public class CommentTagEmailModel
@@ -41,6 +102,22 @@ namespace APIViewWeb.Models
         public string ReviewUrl { get; set; } = string.Empty;
         public string ReviewName { get; set; } = string.Empty;
         public IHtmlContent CommentBodyHtml { get; set; } = HtmlString.Empty;
+
+        public static CommentTagEmailModel Create(
+            string apiviewEndpoint,
+            CommentItemModel comment,
+            ReviewListItemModel review,
+            string reviewUrl)
+        {
+            return new CommentTagEmailModel
+            {
+                PosterProfileUrl = $"{apiviewEndpoint}/Assemblies/Profile/{comment.CreatedBy}",
+                PosterUserName = comment.CreatedBy,
+                ReviewUrl = reviewUrl,
+                ReviewName = review.PackageName,
+                CommentBodyHtml = new HtmlString(CommentMarkdownExtensions.MarkdownAsHtml(comment.CommentText)),
+            };
+        }
     }
 
     public class SubscriberCommentEmailModel
@@ -50,6 +127,18 @@ namespace APIViewWeb.Models
         public string ElementId { get; set; } = string.Empty;
         public bool HasElementLink { get; set; }
         public IHtmlContent CommentBodyHtml { get; set; } = HtmlString.Empty;
+
+        public static SubscriberCommentEmailModel Create(CommentItemModel comment, string elementUrl)
+        {
+            return new SubscriberCommentEmailModel
+            {
+                CommentedBy = comment.CreatedBy,
+                ElementUrl = elementUrl ?? string.Empty,
+                ElementId = comment.ElementId ?? string.Empty,
+                HasElementLink = !string.IsNullOrEmpty(comment.ElementId) && !string.IsNullOrEmpty(elementUrl),
+                CommentBodyHtml = new HtmlString(CommentMarkdownExtensions.MarkdownAsHtml(comment.CommentText)),
+            };
+        }
     }
 
     public class NewRevisionEmailModel
@@ -57,5 +146,18 @@ namespace APIViewWeb.Models
         public string RevisionUrl { get; set; } = string.Empty;
         public string RevisionLabel { get; set; } = string.Empty;
         public string CreatedBy { get; set; } = string.Empty;
+
+        public static NewRevisionEmailModel Create(
+            string apiviewEndpoint,
+            ReviewListItemModel review,
+            APIRevisionListItemModel revision)
+        {
+            return new NewRevisionEmailModel
+            {
+                RevisionUrl = $"{apiviewEndpoint}/Assemblies/Review/{review.Id}",
+                RevisionLabel = PageModelHelpers.ResolveRevisionLabel(revision),
+                CreatedBy = revision.CreatedBy,
+            };
+        }
     }
 }

@@ -1,14 +1,10 @@
 # Release History
 
-## 0.5.18 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.5.18 (2026-02-24)
 
 ### Bugs Fixed
 
-### Other Changes
+- Fix process running issues on Windows when MCP server is used in copilot CLI
 
 ## 0.5.17 (2026-02-18)
 

@@ -12,13 +12,25 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
-[McpServerToolType, Description("Updates SDK code from TypeSpec, applies patches to customization files, regenerates code, builds, and returns result.")]
+/// <summary>
+/// MCP tool that updates SDK code from TypeSpec, applies patches to customization files,
+/// regenerates code, builds, and provides intelligent analysis and recommendations for updating customization code.
+/// </summary>
+[McpServerToolType, Description("Updates SDK code from TypeSpec, applies patches to customization files, regenerates code, builds, provides intelligent analysis and recommendations for updating customization code.")]
 public class CustomizedCodeUpdateTool : LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
+    /// </summary>
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="languageServices">Available language services for SDK operations.</param>
+    /// <param name="gitHelper">Helper for git operations.</param>
+    /// <param name="tspClientHelper">Helper for TypeSpec client generation operations.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="tspClientHelper"/> is null.</exception>
     public CustomizedCodeUpdateTool(
         ILogger<CustomizedCodeUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
@@ -26,7 +38,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         ITspClientHelper tspClientHelper
     ) : base(languageServices, gitHelper, logger)
     {
-        this.tspClientHelper = tspClientHelper;
+        this.tspClientHelper = tspClientHelper ?? throw new ArgumentNullException(nameof(tspClientHelper));
     }
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
@@ -37,12 +49,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             SharedOptions.PackagePath,
         };
 
+    /// <inheritdoc />
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(packagePath, nameof(packagePath));
         try
         {
-            logger.LogInformation("Starting customized code update for {packagePath}", packagePath);
+            logger.LogInformation("Starting customized code update for {PackagePath}", packagePath);
             return await RunUpdateAsync(packagePath, ct);
         }
         catch (Exception ex)
@@ -59,12 +73,22 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     }
 
     /// <summary>
-    /// MCP tool entry point, applies patches, regenerates (for Java), builds.
+    /// MCP tool entry point — applies patches to customization files based on build errors,
+    /// regenerates code if needed (Java), builds, and returns success/failure with build result.
     /// </summary>
+    /// <param name="packagePath">Absolute path to the SDK package directory.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Phase B worker: applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
     public Task<CustomizedCodeUpdateResponse> UpdateAsync(string packagePath, CancellationToken ct = default)
         => RunUpdateAsync(packagePath, ct);
 
+    /// <summary>
+    /// Executes the update pipeline: classify → patch customizations → regen → build.
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the SDK package directory.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
     private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, CancellationToken ct)
     {
         // Validate input

@@ -244,4 +244,12 @@ public partial class DotnetLanguageService : LanguageService
         var packageName = GetPackageNameFromPath(packagePath);
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
+
+    public override async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
+        var relativePath = Path.GetRelativePath(repoRoot, packagePath);
+        var spellingCheckPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
+        return await commonValidationHelpers.CheckSpelling(spellingCheckPath, packagePath, fixCheckErrors, cancellationToken);
+    }
 }

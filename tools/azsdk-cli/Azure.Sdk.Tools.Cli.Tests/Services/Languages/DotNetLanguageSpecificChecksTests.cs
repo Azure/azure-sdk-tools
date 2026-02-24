@@ -593,6 +593,66 @@ public partial class TestClient
 
     #endregion
 
+    #region CheckSpelling Tests
+
+    [Test]
+    public async Task TestCheckSpellingSuccess()
+    {
+        SetupGitRepoDiscovery();
+
+        var successResponse = new PackageCheckResponse(0, "No spelling errors found");
+        _commonValidationHelperMock
+            .Setup(x => x.CheckSpelling(It.IsAny<string>(), _packagePath, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(successResponse);
+
+        var result = await _languageChecks.CheckSpelling(_packagePath, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(0));
+            Assert.That(result.CheckStatusDetails, Does.Contain("No spelling errors found"));
+        });
+    }
+
+    [Test]
+    public async Task TestCheckSpellingFailure()
+    {
+        SetupGitRepoDiscovery();
+
+        var failureResponse = new PackageCheckResponse(1, "Spelling errors found", "Spelling check failed.");
+        _commonValidationHelperMock
+            .Setup(x => x.CheckSpelling(It.IsAny<string>(), _packagePath, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failureResponse);
+
+        var result = await _languageChecks.CheckSpelling(_packagePath, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain("Spelling check failed"));
+        });
+    }
+
+    [Test]
+    public async Task TestCheckSpellingPassesCorrectPath()
+    {
+        SetupGitRepoDiscovery();
+
+        string? capturedSpellingCheckPath = null;
+        _commonValidationHelperMock
+            .Setup(x => x.CheckSpelling(It.IsAny<string>(), _packagePath, false, It.IsAny<CancellationToken>()))
+            .Callback<string, string, bool, CancellationToken>((path, _, _, _) => capturedSpellingCheckPath = path)
+            .ReturnsAsync(new PackageCheckResponse(0, "No spelling errors found"));
+
+        await _languageChecks.CheckSpelling(_packagePath, ct: CancellationToken.None);
+
+        var relativePath = Path.GetRelativePath(_repoRoot, _packagePath);
+        var expectedPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
+        Assert.That(capturedSpellingCheckPath, Is.EqualTo(expectedPath));
+    }
+
+    #endregion
+
     #region RunAllTests Tests
 
     [Test]

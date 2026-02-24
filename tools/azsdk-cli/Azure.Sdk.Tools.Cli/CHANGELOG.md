@@ -1,5 +1,12 @@
 # Release History
 
+## 0.5.19 (Unreleased)
+
+### Features Added
+
+- Added auto-install to `azsdk verify setup` MCP and CLI tool, enabling auto-installing of supported missing requirements
+- Changed the CLI interface for verifying setup to `azsdk verify setup check` for non-install mode, and `azsdk verify setup install`
+
 ## 0.5.18 (2026-02-24)
 
 ### Bugs Fixed

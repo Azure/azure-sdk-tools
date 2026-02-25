@@ -277,17 +277,17 @@ public sealed partial class JavaLanguageService : LanguageService
             
             // Collect patches directly from the tool as they succeed
             var patchLog = new ConcurrentBag<AppliedPatch>();
-            
-            // Provide FULL paths so the LLM doesn't get confused about where files are
-            // The ReadFile tool base is packagePath, so we give paths relative to that
-            var customizationFiles = javaFiles
-                .Select(f => Path.GetRelativePath(packagePath, f))
-                .ToList();
-            
-            // Also provide the relative-to-customization-root paths for the patch tool
-            var patchFilePaths = javaFiles
-                .Select(f => Path.GetRelativePath(customizationRoot, f))
-                .ToList();
+
+            // Build both relative-path lists in a single pass over javaFiles:
+            //  - customizationFiles: relative to packagePath (for the ReadFile tool)
+            //  - patchFilePaths:     relative to customizationRoot (for the CodePatch tool)
+            var customizationFiles = new List<string>(javaFiles.Length);
+            var patchFilePaths = new List<string>(javaFiles.Length);
+            foreach (var f in javaFiles)
+            {
+                customizationFiles.Add(Path.GetRelativePath(packagePath, f));
+                patchFilePaths.Add(Path.GetRelativePath(customizationRoot, f));
+            }
 
             // Build error-driven prompt for patch agent
             var prompt = new JavaErrorDrivenPatchTemplate(

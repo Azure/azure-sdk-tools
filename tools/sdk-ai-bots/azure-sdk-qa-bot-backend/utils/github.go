@@ -399,21 +399,6 @@ func fetchCheckRunDetails(link *gitHubCheckLink) (string, error) {
 		sb.WriteString(fmt.Sprintf("**Details**:\n%s\n\n", text))
 	}
 
-	if len(checkRun.Output.Annotations) > 0 {
-		sb.WriteString("### Annotations\n")
-		for _, a := range checkRun.Output.Annotations {
-			sb.WriteString(fmt.Sprintf("- **[%s]** %s (line %d", a.AnnotationLevel, a.Path, a.StartLine))
-			if a.EndLine != a.StartLine {
-				sb.WriteString(fmt.Sprintf("-%d", a.EndLine))
-			}
-			sb.WriteString(fmt.Sprintf("): %s", a.Message))
-			if a.Title != "" {
-				sb.WriteString(fmt.Sprintf(" — %s", a.Title))
-			}
-			sb.WriteString("\n")
-		}
-	}
-
 	// Fetch annotations via dedicated endpoint (the check-run response may not include them)
 	annotations := fetchCheckRunAnnotations(link.Owner, link.Repo, checkRun.ID)
 	if len(annotations) > 0 {

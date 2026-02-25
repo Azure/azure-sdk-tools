@@ -95,3 +95,10 @@ stages:
       inputs:
         targetPath: /tmp/daily-sync-work/docs/typespec-azure/packages/typespec-azure-resource-manager/lib/generated
         artifact: typespecLibrary
+    - task: PublishPipelineArtifact@1
+      displayName: 'Publish processed typespecLibrary Artifact'
+      condition: always()
+      inputs:
+        targetPath: /tmp/daily-sync-work/temp_docs
+        artifact: processed
+    

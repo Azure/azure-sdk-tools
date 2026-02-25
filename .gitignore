@@ -559,3 +559,4 @@ tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generat
 
 # sdk-sample-generator artifacts
 .artifacts/
+tools/tsp-client/test/examples/sdk/alternate-entrypoint/test-results.browser.xml

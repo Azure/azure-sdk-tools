@@ -1,3 +1,8 @@
+# 1.3.0
+
+- Reverted changes made in 1.2.0 because they are not compatible with previous input.
+  We will instead normalize the input in the preprocessor that runs in the Azure/azure-sdk-for-rust repo.
+
 # 1.2.0
 
 - Updated to `rustdoc-types` 0.41.0 to coincide with Azure SDK for Rust MSRV update to 1.88 (`nightly-2025-05-09`).

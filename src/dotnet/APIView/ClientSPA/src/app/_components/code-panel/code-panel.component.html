@@ -1,6 +1,9 @@
 
-<div *ngIf="isLoading" class="spinner-border m-3" role="status">
-    <span class="visually-hidden">Loading...</span>
+<div *ngIf="isLoading" class="d-flex flex-column align-items-center m-3">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <span *ngIf="loadingMessage" class="mt-2 text-muted">{{ loadingMessage }}</span>
 </div>
 <div *ngIf="codePanelRowSource;" id="viewport" tabindex="0" class="{{languageSafeName!}}" role="region" aria-label="Scrollable code panel" (click)="onCodePanelItemClick($event)" (keydown)="onKeyDown($event)">
   <p-message class="sticky-top" *ngIf="showNoDiffInContentMessage()" severity="info" icon="bi bi-info-circle" text="There are no differences between the two API revisions"></p-message>
@@ -44,7 +47,6 @@
         [associatedCodeLine]="getAssociatedCodeLine(item)"
         [actualLineNumber]="getAssociatedCodeLine(item)?.lineNumber || 0"
         [userProfile]="userProfile"
-        [preferredApprovers]="preferredApprovers"
         [reviewId]="reviewId || ''"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
         (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"

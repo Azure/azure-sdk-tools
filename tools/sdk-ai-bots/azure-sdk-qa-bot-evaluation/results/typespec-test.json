@@ -1695,11 +1695,78 @@
         "overall_score": NaN
     },
     {
+        "testcase": "LRO header return 200",
+        "expected": {
+            "answer": "Based on ARM RPC guidelines and the TypeSpec ARM templates:\n1.You generally should NOT model \u201csubsequent PUT returns 202\u201d for a resource PUT.\nFor ARM resource PUT, the required pattern is: return `201` for create and `200` for update, and if the operation is long-running you still use `x-ms-long-running-operation: true` and include the appropriate LRO headers.\nReturning `202` for PUT is explicitly called out as an old model and is no longer supported for new resource types/patterns.\n2.If your service returns an async polling header on the `200` response, it\u2019s OK (and often desirable) to specify it \u2014 but only if the operation is actually long-running in that case.\nIn ARM, the LRO \u201cpolling\u201d header is typically `Azure-AsyncOperation` (required for greenfield starting Jan 2025 per RPC contract) and/or `Location` (required for 202 patterns; also commonly used).\nFor PUT LROs, the standard ARM templates already model the correct behavior: `200` and `201` responses with the resource body, and LRO headers on the create response (and depending on template/pattern, can be present when the operation is async).\n3.Recommended way to model this in TypeSpec (preferred over hand-authoring swagger)\nUse the ARM operation template for async PUT, and let the emitter generate the correct OpenAPI, including `x-ms-long-running-operation-options.final-state-via`.\nIf you need `Azure-AsyncOperation` to be the final-state mechanism, use the template that emits that (e.g. `ArmResourceCreateOrUpdateAsync` / `ArmResourceCreateOrReplaceAsync` depending on your chosen semantics).\nExample (management-plane, ARM):\n```\nimport \"@azure-tools/typespec-azure-resource-manager\";\nusing Azure.ResourceManager;\n@armResourceOperations\ninterface ManagedClusters {\n// Pick the template that matches your service\u2019s LRO header behavior.\n// This produces 200/201 + x-ms-long-running-operation and final-state-via azure-async-operation.\ncreateOrUpdate is ArmResourceCreateOrReplaceAsync<ManagedCluster>;\n}\n```\n4.If you truly must keep a 202-on-PUT behavior (brownfield), align it to ARM guidance rather than just documenting the current behavior.\nThe guidance is to fix the service to return `200/201` for PUT (even when async) and rely on LRO headers + provisioningState.\nIf you cannot change runtime behavior immediately, you should discuss with ARM/API review because it conflicts with the current ARM contract guidance for PUT.\n5.About \u201c200 response with async operation header\u201d specifically\nIn OpenAPI/Swagger, you can absolutely define headers on the `200` response. There\u2019s nothing structurally preventing it.\nHowever, the recommended ARM modeling is to use the standard templates so the LRO metadata is consistent (headers + `x-ms-long-running-operation` + `final-state-via`). Don\u2019t invent a one-off pattern unless you have to.\nIf you paste the relevant snippet of your current swagger responses for one of these PUTs (the `responses` block), I can tell you exactly what to change and which TypeSpec template/parameters best match your service behavior (including whether you should be using `ArmResourceCreateOrReplaceAsync` vs `ArmResourceCreateOrUpdateAsync`, and whether you need `Location` and/or `Azure-AsyncOperation`).",
+            "references": [
+                {
+                    "title": "Asynchronous API Reference",
+                    "link": "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/async-api-reference.md"
+                },
+                {
+                    "title": "put-operation-response-codes",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/put-operation-response-codes"
+                },
+                {
+                    "title": "TypeSpec Definitions | ArmResourceCreateOrUpdateAsync",
+                    "link": ""
+                },
+                {
+                    "title": "LRO Header Data Type",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "I can\u2019t access the GitHub/ADO links you included, but based on the behavior you described and ARM LRO guidance:\n\nYes\u2014if your service returns `Azure-AsyncOperation` on the initial `200` response, you should model that header in the spec. Otherwise, generated clients/tools won\u2019t know they can (or should) poll, and you\u2019ll also be out of alignment with the ARM async contract that expects `Azure-AsyncOperation` to be the operation-resource URL.\n\nThat said, the bigger issue is the *status-code pattern*: for ARM resource PUT create/replace, the recommended LRO pattern is `201` (create) / `200` (update) with the resource body including `provisioningState` while in progress. Returning `202` for \u201csubsequent PUTs\u201d is the legacy pattern and is no longer recommended for new resource types. If you must keep it for backward compatibility, you can still model it, but consider aligning the service behavior over time.\n\nRecommended TypeSpec modeling pattern (ARM):\n\n1) Use the ARM operation template for async PUT (`ArmResourceCreateOrUpdateAsync` or `ArmResourceCreateOrReplaceAsync`) so the emitter/linter understands it\u2019s an LRO.\n2) Override the success `Response` union to include a `200` response variant that carries `Azure-AsyncOperation` (and `Retry-After` if you return it).\n3) Ensure the LRO metadata has a final result schema (so `x-ms-long-running-operation-options.final-state-schema` can be emitted when applicable).\n\nExample (pattern for \u201c200 with Azure-AsyncOperation header\u201d):\n\n```typespec\nimport \"@azure-tools/typespec-azure-core\";\nimport \"@azure-tools/typespec-azure-resource-manager\";\n\nusing Azure.Core;\nusing Azure.ResourceManager;\n\n// Reusable header set: Azure-AsyncOperation (+ optional Location) + Retry-After\nalias PutLroHeaders = {\n  ...ArmAsyncOperationHeader<FinalResult = ManagedCluster>;\n  ...Azure.Core.Foundations.RetryAfterHeader;\n};\n\n// If you also return Location sometimes, prefer combined headers:\n// alias PutLroHeaders = {\n//   ...ArmCombinedLroHeaders<FinalResult = ManagedCluster>;\n//   ...Azure.Core.Foundations.RetryAfterHeader;\n// };\n\n// A 200 response that includes the resource body AND the async header.\nalias ManagedClusterPut200 = ArmResponse<ManagedCluster> & {\n  @header(\"Azure-AsyncOperation\")\n  @Azure.Core.pollingLocation(Azure.Core.StatusMonitorPollingOptions<PollingModel = ArmOperationStatus>)\n  @Azure.Core.finalLocation(ManagedCluster)\n  azureAsyncOperation?: string;\n\n  // If you already defined PutLroHeaders above, you can instead do:\n  // ...PutLroHeaders;\n};\n\n@armResourceOperations\ninterface ManagedClusters {\n  @put\n  @Azure.Core.useFinalStateVia(\"azure-async-operation\")\n  createOrUpdate is ArmResourceCreateOrUpdateAsync<\n    ManagedCluster,\n    // Override the success responses to include your 200-with-header shape.\n    Response = ManagedClusterPut200 |\n      ArmResourceCreatedResponse<ManagedCluster, PutLroHeaders> |\n      ArmAcceptedLroResponse<LroHeaders = PutLroHeaders>\n  >;\n}\n```\n\nNotes:\n- If your initial create really returns `200` (not `201`) and you need to preserve that, the key is: define a `200` response type that includes the header(s) and the body, and include it in the operation\u2019s `Response` union.\n- If you return `202`, ARM linter rules also require a `Location` header on `202` responses. If you\u2019re returning `202` without `Location`, you should fix the service and/or model `ArmCombinedLroHeaders` so both headers are present.\n- Prefer using the provided ARM header models (`ArmAsyncOperationHeader`, `ArmLroLocationHeader`, `ArmCombinedLroHeaders`) rather than hand-rolling headers, because they carry the right `@pollingLocation`/`@finalLocation` metadata.\n\nIf you paste the current TypeSpec (or Swagger) response shapes for those PUTs (200/202/201), I can suggest the smallest change that both matches your wire behavior and satisfies the ARM linter rules.",
+            "references": [
+                {
+                    "title": "Asynchronous API Reference | Creating or Replacing using Put",
+                    "link": "https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/v1.0/async-api-reference.md"
+                },
+                {
+                    "title": "Data types | Azure.ResourceManager | `ArmAsyncOperationHeader`",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types"
+                },
+                {
+                    "title": "Data types | Azure.ResourceManager | `ArmCombinedLroHeaders`",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types"
+                },
+                {
+                    "title": "missing final result for lro | answer",
+                    "link": "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+                },
+                {
+                    "title": "lro-location-header",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/lro-location-header"
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3,
+        "response_completeness": 4.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains most of the necessary and relevant information from the ground truth, with only minor omissions or paraphrasing. It covers the ARM guidance, recommended modeling patterns, legacy 202-on-PUT, header modeling, and offers to review code for precise changes.",
+        "reference_match": 0.0,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.5,
+        "knowledge_match_result": "fail",
+        "overall_score": 7.1
+    },
+    {
         "average_score": NaN,
         "total_evals": 33,
-        "similarity_pass_rate": 32,
-        "groundedness_pass_rate": 22,
-        "response_completeness_pass_rate": 31,
+        "similarity_pass_rate": 33,
+        "groundedness_pass_rate": 23,
+        "response_completeness_pass_rate": 32,
         "reference_match_pass_rate": 17,
         "knowledge_match_pass_rate": 25,
         "similarity_fail_rate": 1,

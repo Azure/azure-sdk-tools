@@ -27,6 +27,7 @@ Core of the APIView tool is the web app developed using ASP.NET and TypeScript. 
 | JS/TS                         | https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/js-api-parser                                          |
 | Python                        | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/apiview-stub-generator                              |
 | Go                            | https://github.com/Azure/azure-sdk-tools/tree/main/src/go                                                                       |
+| Rust                          | https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/rust-api-parser                                        |
 | Swift                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/swift                                                                    |
 
 

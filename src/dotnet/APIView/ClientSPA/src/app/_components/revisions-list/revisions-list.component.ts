@@ -22,6 +22,7 @@ import { ConfigService } from 'src/app/_services/config/config.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { environment } from 'src/environments/environment';
+import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
 
 @Component({
     selector: 'app-revisions-list',
@@ -214,21 +215,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   }
 
   createLanguageFilters() {
-    this.crLanguages = [
-        { label: "C", data: "C" },
-        { label: "C#", data: "C#" },
-        { label: "C++", data: "C++" },
-        { label: "Go", data: "Go" },
-        { label: "Java", data: "Java" },
-        { label: "JavaScript", data: "JavaScript" },
-        { label: "Json", data: "Json" },
-        { label: "Kotlin", data: "Kotlin" },
-        { label: "Python", data: "Python" },
-        { label: "Swagger", data: "Swagger" },
-        { label: "Swift", data: "Swift" },
-        { label: "TypeSpec", data: "TypeSpec" },
-        { label: "Xml", data: "Xml" }
-    ];
+    this.crLanguages = getSupportedLanguages();
   }
 
   createRevisionFilters() {
@@ -583,6 +570,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
           `Upload the resulting archive.`
         ];
         this.acceptedFilesForReviewUpload = ".gosource";
+        this.createRevisionForm.get('selectedFile')?.enable();
+        this.createRevisionForm.get('filePath')?.disable();
+        break;
+      case "Rust":
+        this.createRevisionInstruction = [
+          `In the root of your azure-sdk-for-rust clone, run: <code>cargo run --manifest-path eng/tools/generate_api_report/Cargo.toml -- --package {package-name}</code>`,
+          `Upload <code>sdk/{service-name}/{package-name}/review/{package-name}.rust.json</code> using the file picker in this drawer.`
+        ];
+        this.acceptedFilesForReviewUpload = ".rust.json";
         this.createRevisionForm.get('selectedFile')?.enable();
         this.createRevisionForm.get('filePath')?.disable();
         break;

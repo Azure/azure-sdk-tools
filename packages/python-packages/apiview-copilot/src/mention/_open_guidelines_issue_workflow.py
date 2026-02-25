@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 import os
 
 from dotenv import load_dotenv
@@ -25,7 +31,7 @@ class OpenGuidelinesIssueWorkflow(MentionWorkflow):
             client=client,
             plan=plan,
             owner=owner,
-            repo="azure-rest-api-specs",
+            repo="azure-sdk",
             workflow_tag="guidelines-issue",
             source_tag="APIView Copilot",
             dedup_prompt_file=self.deduplication_prompt_file,

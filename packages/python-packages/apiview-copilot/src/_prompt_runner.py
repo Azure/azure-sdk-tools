@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 import json
 from typing import Optional
 
@@ -27,10 +33,10 @@ def run_prompt(
     Raises:
         Exception: If all retry attempts fail
     """
-    from ._credential import in_ci
-    from ._retry import retry_with_backoff
-    from ._settings import SettingsManager
-    from ._utils import run_prompty
+    from src._credential import in_ci
+    from src._retry import retry_with_backoff
+    from src._settings import SettingsManager
+    from src._utils import run_prompty
 
     def execute_prompt() -> str:
         if in_ci():

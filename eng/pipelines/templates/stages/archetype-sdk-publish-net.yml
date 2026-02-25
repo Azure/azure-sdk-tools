@@ -37,6 +37,7 @@ stages:
       ArtifactName: packages
       Feed: ${{ parameters.Feed }}
       VerifyChangelog: ${{ parameters.VerifyChangelog }}
+      RequireStrongNames: ${{ parameters.RequireStrongNames }}
       ${{ if parameters.PublishEnvironment }}:
         PublishEnvironment: ${{ parameters.PublishEnvironment }}
 

@@ -69,14 +69,6 @@ export class ReviewsService {
     return this.http.get<Review>(this.baseUrl + `/${reviewId}`, { withCredentials: true });
   }
 
-  getAllowedApprovers() : Observable<string[]> {
-    return this.http.get<string[]>(this.baseUrl + `/allowedApprovers`, { withCredentials: true });
-  }
-
-  getPreferredApprovers(reviewId: string) : Observable<string[]> {
-    return this.http.get<string[]>(this.baseUrl + `/${reviewId}/preferredApprovers`, { withCredentials: true });
-  }
-
   getEnableNamespaceReview() : Observable<boolean> {
     return this.http.get<boolean>(this.baseUrl + `/enableNamespaceReview`, { withCredentials: true });
   }
@@ -180,5 +172,13 @@ export class ReviewsService {
       url += `?packageVersion=${encodeURIComponent(packageVersion)}`;
     }
     return this.http.get<boolean>(url, { withCredentials: true });
+  }
+
+  getReviewRevisionCount(reviewId: string): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/${reviewId}/revisionCount`, { withCredentials: true });
+  }
+
+  deleteReview(reviewId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${reviewId}`, { withCredentials: true });
   }
 }

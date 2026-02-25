@@ -202,124 +202,137 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             }
         }
 
-        public string FormatCodeownersEntry()
+        /// <summary>
+        /// Formats a CodeownersEntry following the CODEOWNERS metadata block rules.
+        ///
+        /// There are three valid block types:
+        /// 1. Source path block: AzureSdkOwners (optional) → ServiceLabel (optional) → PRLabel (optional) → path/owners
+        /// 2. ServiceLabel/ServiceOwners block (no path): AzureSdkOwners (optional) → ServiceLabel → ServiceOwners
+        /// 3. AzureSdkOwners/ServiceLabel block (no path, no ServiceOwners): AzureSdkOwners → ServiceLabel
+        ///
+        /// Key rules:
+        /// - PRLabel must be part of a block that ends in a source path/owner line
+        /// - ServiceOwners cannot be part of a source path/owner block (service owners are inferred from source owners)
+        /// - AzureSdkOwners must be part of a block containing ServiceLabel
+        /// - A block ends with a blank line or a single source path/owner line
+        /// </summary>
+        public string FormatCodeownersEntry(bool useOriginalOwners = false)
         {
             var lines = new List<string>();
-
-            bool addSeparationLine = false;
 
             string path = this.PathExpression ?? string.Empty;
             List<string> serviceLabels = this.ServiceLabels ?? new List<string>();
             List<string> prLabels = this.PRLabels ?? new List<string>();
-            List<string> serviceOwners = this.ServiceOwners ?? new List<string>();
-            List<string> sourceOwners = this.SourceOwners ?? new List<string>();
-            List<string> azureSDKOwners = this.AzureSdkOwners ?? new List<string>();
+            List<string> serviceOwners = useOriginalOwners
+                ? (this.OriginalServiceOwners ?? new List<string>())
+                : (this.ServiceOwners ?? new List<string>());
+            List<string> sourceOwners = useOriginalOwners
+                ? (this.OriginalSourceOwners ?? new List<string>())
+                : (this.SourceOwners ?? new List<string>());
+            List<string> azureSdkOwners = useOriginalOwners
+                ? (this.OriginalAzureSdkOwners ?? new List<string>())
+                : (this.AzureSdkOwners ?? new List<string>());
 
-            // Helper to compute pad width: start at basePad and if the left content length exceeds it,
-            // round up to the next multiple of 5.
-            int basePad = 67;
-            int ComputePad(int leftLength)
-            {
-                int candidate = ((leftLength + 5) / 5) * 5; // next multiple of 5 >= leftLength+? small margin
-                return Math.Max(basePad, candidate);
-            }
+            bool hasPath = !string.IsNullOrEmpty(path) && sourceOwners != null && sourceOwners.Count > 0;
+            bool hasServiceLabels = serviceLabels.Any(lbl => !string.IsNullOrWhiteSpace(lbl));
+            bool hasPRLabels = prLabels.Any(lbl => !string.IsNullOrWhiteSpace(lbl));
+            bool hasServiceOwners = serviceOwners != null && serviceOwners.Any(o => !string.IsNullOrWhiteSpace(o));
+            bool hasAzureSdkOwners = azureSdkOwners != null && azureSdkOwners.Any(o => !string.IsNullOrWhiteSpace(o));
 
-            // Add all PRLabels first (each on its own line) - derived from service labels
-            if (prLabels.Any())
+            const string OWNER_PADDING = "    ";
+
+            // Helper to format labels with % prefix
+            IEnumerable<string> FormatLabels(List<string> labels)
             {
-                // ensure label is prefixed without duplicate %
-                var formattedPRLabels = prLabels
+                return labels
                     .Where(lbl => !string.IsNullOrWhiteSpace(lbl))
                     .Select(lbl => lbl.StartsWith("%") ? lbl : $"%{lbl}");
-                lines.Add($"# PRLabel: {string.Join(" ", formattedPRLabels)}");
-                addSeparationLine = true;
             }
 
-            // Add the path and source owners line
-            if (!string.IsNullOrEmpty(path) && sourceOwners != null && sourceOwners.Count > 0)
+            // Helper to normalize and deduplicate owners
+            List<string> NormalizeOwners(List<string> owners)
             {
-                addSeparationLine = true;
-                // Normalize and deduplicate source owners while preserving original casing
-                var normalizedSourceOwners = sourceOwners
+                var normalized = owners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
                     .Select(o => o.Trim().TrimStart('@').Trim())
                     .ToList();
 
-                var uniqueSourceOwners = new List<string>();
-                var seenSource = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var owner in normalizedSourceOwners)
+                var uniqueOwners = new List<string>();
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var owner in normalized)
                 {
-                    if (seenSource.Add(owner))
+                    if (seen.Add(owner))
                     {
-                        uniqueSourceOwners.Add("@" + owner);
+                        uniqueOwners.Add("@" + owner);
                     }
                 }
+                return uniqueOwners;
+            }
 
-                // Compute pad width based on the path length (start at basePad and increase in steps of 5)
-                int padWidth = ComputePad(path.Length);
-                var pathLine = $"{path}".PadRight(padWidth) + $"{string.Join(" ", uniqueSourceOwners)}";
+            // Determine which block type we're formatting
+            if (hasPath)
+            {
+                // Block Type 1: Source path block
+                // Order: AzureSdkOwners (optional) → ServiceLabel (optional) → PRLabel (optional) → path/owners
+                // Note: ServiceOwners is NOT included in source path blocks (service owners are inferred from source owners)
+
+                // Add AzureSdkOwners if present (must have ServiceLabel to be valid, but we format what we have)
+                if (hasAzureSdkOwners)
+                {
+                    var uniqueAzureSdkOwners = NormalizeOwners(azureSdkOwners);
+                    var azureSdkOwnersLine = "# AzureSdkOwners: " + string.Join(" ", uniqueAzureSdkOwners);
+                    lines.Add(azureSdkOwnersLine);
+                }
+
+                // Add ServiceLabel if present
+                if (hasServiceLabels)
+                {
+                    lines.Add($"# ServiceLabel: {string.Join(" ", FormatLabels(serviceLabels))}");
+                }
+
+                // Add PRLabel if present
+                if (hasPRLabels)
+                {
+                    lines.Add($"# PRLabel: {string.Join(" ", FormatLabels(prLabels))}");
+                }
+
+                // Add the path and source owners line
+                var uniqueSourceOwners = NormalizeOwners(sourceOwners);
+                var pathLine = path + OWNER_PADDING + string.Join(" ", uniqueSourceOwners);
                 lines.Add(pathLine);
             }
-
-            if (addSeparationLine)
+            else if (hasServiceLabels && hasServiceOwners)
             {
-                lines.Add("");
-            }
+                // Block Type 2: ServiceLabel/ServiceOwners block (no source path)
+                // Order: AzureSdkOwners (optional) → ServiceLabel → ServiceOwners
 
-            // Add ServiceLabel(s) on a single line if provided
-            if (serviceLabels.Any())
-            {
-                var formattedServiceLabels = serviceLabels
-                    .Where(lbl => !string.IsNullOrWhiteSpace(lbl))
-                    .Select(lbl => lbl.StartsWith("%") ? lbl : $"%{lbl}");
-                lines.Add($"# ServiceLabel: {string.Join(" ", formattedServiceLabels)}");
-            }
-
-            // Add AzureSDKOwners if provided (normalize/dedupe)
-            if (azureSDKOwners != null && azureSDKOwners.Count > 0)
-            {
-                var normalizedAzureSdkOwners = azureSDKOwners
-                    .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.Trim().TrimStart('@').Trim())
-                    .ToList();
-
-                var uniqueAzureSdkOwnersList = new List<string>();
-                var seenAzure = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var owner in normalizedAzureSdkOwners)
+                // Add AzureSdkOwners if present
+                if (hasAzureSdkOwners)
                 {
-                    if (seenAzure.Add(owner))
-                    {
-                        uniqueAzureSdkOwnersList.Add("@" + owner);
-                    }
+                    var uniqueAzureSdkOwners = NormalizeOwners(azureSdkOwners);
+                    var azureSdkOwnersLine = "# AzureSdkOwners: " + string.Join(" ", uniqueAzureSdkOwners);
+                    lines.Add(azureSdkOwnersLine);
                 }
 
-                // Use computed pad width so owners align even when the path is long
-                int padForAzure = ComputePad(Math.Max(path.Length, "# AzureSdkOwners: ".Length));
-                var azureSDKOwnersLine = $"# AzureSdkOwners: ".PadRight(padForAzure) + $"{string.Join(" ", uniqueAzureSdkOwnersList)}";
-                lines.Add(azureSDKOwnersLine);
-            }
+                // Add ServiceLabel
+                lines.Add($"# ServiceLabel: {string.Join(" ", FormatLabels(serviceLabels))}");
 
-            // Add ServiceOwners if provided (normalize/dedupe)
-            if (serviceOwners != null && serviceOwners.Count > 0)
-            {
-                var normalizedServiceOwners = serviceOwners
-                    .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.Trim().TrimStart('@').Trim())
-                    .ToList();
-
-                var uniqueServiceOwners = new List<string>();
-                var seenService = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var owner in normalizedServiceOwners)
-                {
-                    if (seenService.Add(owner))
-                    {
-                        uniqueServiceOwners.Add("@" + owner);
-                    }
-                }
-
-                int padForService = ComputePad(Math.Max(path.Length, "# ServiceOwners: ".Length));
-                var serviceOwnersLine = $"# ServiceOwners: ".PadRight(padForService) + $"{string.Join(" ", uniqueServiceOwners)}";
+                // Add ServiceOwners
+                var uniqueServiceOwners = NormalizeOwners(serviceOwners);
+                var serviceOwnersLine = "# ServiceOwners: " + string.Join(" ", uniqueServiceOwners);
                 lines.Add(serviceOwnersLine);
+            }
+            else if (hasAzureSdkOwners && hasServiceLabels)
+            {
+                // Block Type 3: AzureSdkOwners/ServiceLabel block (no path, no ServiceOwners)
+                // Order: AzureSdkOwners → ServiceLabel
+
+                var uniqueAzureSdkOwners = NormalizeOwners(azureSdkOwners);
+                var azureSdkOwnersLine = "# AzureSdkOwners: " + string.Join(" ", uniqueAzureSdkOwners);
+                lines.Add(azureSdkOwnersLine);
+
+                // Add ServiceLabel
+                lines.Add($"# ServiceLabel: {string.Join(" ", FormatLabels(serviceLabels))}");
             }
 
             var formattedCodeownersEntry = string.Join("\n", lines);

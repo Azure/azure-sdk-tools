@@ -1,26 +1,40 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { ReviewPageComponent } from './review-page.component';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
-import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { CodePanelComponent } from '../code-panel/code-panel.component';
-import { ReviewsListComponent } from '../reviews-list/reviews-list.component';
-import { RevisionsListComponent } from '../revisions-list/revisions-list.component';
-import { of } from 'rxjs';
-import { ApprovalPipe } from 'src/app/_pipes/approval.pipe';
-import { ReviewNavComponent } from '../review-nav/review-nav.component';
-import { ReviewPageOptionsComponent } from '../review-page-options/review-page-options.component';
-import { PageOptionsSectionComponent } from '../shared/page-options-section/page-options-section.component';
-import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
-import { ReviewPageModule } from 'src/app/_modules/review-page.module';
-import { MessageService } from 'primeng/api';
-import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { HttpResponse } from '@angular/common/http';
-import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { of } from 'rxjs';
+import { vi } from 'vitest';
+import { initializeTestBed } from '../../../test-setup';
 import { Review } from 'src/app/_models/review';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { WorkerService } from 'src/app/_services/worker/worker.service';
+import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
+import { ReviewPageComponent } from './review-page.component';
+
+// Mock ngx-ui-scroll to avoid vscroll dependency error
+vi.mock('ngx-ui-scroll', () => {
+  const UiScrollModuleMock = class UiScrollModule {
+    static ɵmod = { 
+      id: 'UiScrollModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+  };
+  return {
+    UiScrollModule: UiScrollModuleMock
+  };
+});
 
 describe('ReviewPageComponent', () => {
   let component: ReviewPageComponent;
@@ -29,27 +43,24 @@ describe('ReviewPageComponent', () => {
   let apiRevisionsService: APIRevisionsService;
   let httpMock: HttpTestingController;
 
+  const mockNotificationsService = createMockNotificationsService();
+  const mockSignalRService = createMockSignalRService();
+  const mockWorkerService = createMockWorkerService();
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        ReviewPageComponent,
-        ReviewNavComponent,
-        ReviewPageOptionsComponent,
-        CodePanelComponent,
-        ReviewsListComponent
-      ],
-      imports: [
-        PageOptionsSectionComponent,
-        NavBarComponent,
-        ReviewInfoComponent,
-        RevisionsListComponent,
-        ApprovalPipe,
-        HttpClientTestingModule,
-        BrowserAnimationsModule,
-        SharedAppModule,
-        ReviewPageModule
-      ],
+      schemas: [NO_ERRORS_SCHEMA],
+      declarations: [ReviewPageComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: WorkerService, useValue: mockWorkerService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -82,12 +93,12 @@ describe('ReviewPageComponent', () => {
       const activeApiRevisionId = 'test-active-api-revision-id';
       const diffApiRevisionId = 'test-diff-api-revision-id';
 
-      spyOn(reviewsService, 'getReviewContent').and.returnValue(
+      vi.spyOn(reviewsService, 'getReviewContent').mockReturnValue(
         of(new HttpResponse<ArrayBuffer>({ status: 204 }))
       );
       component.loadReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId);
 
-      expect(component.loadFailed).toBeTrue();
+      expect(component.loadFailed).toBeTruthy();
       expect(component.loadFailedMessage).toContain('API-Revision Content Not Found. The');
       expect(component.loadFailedMessage).toContain('active and/or diff API-Revision(s) may have been deleted.');
     });
@@ -95,10 +106,10 @@ describe('ReviewPageComponent', () => {
     it('should set loadFailed and loadFailedMessage when Review is deleted', () => {
       var review = new Review();
       review.isDeleted = true;
-      spyOn(reviewsService, 'getReview').and.returnValue(of(review));
+      vi.spyOn(reviewsService, 'getReview').mockReturnValue(of(review));
       component.loadReview('testReviewId');
 
-      expect(component.loadFailed).toBeTrue();
+      expect(component.loadFailed).toBeTruthy();
       expect(component.loadFailedMessage).toContain('Review has been deleted.');
     });
   });
@@ -112,7 +123,7 @@ describe('ReviewPageComponent', () => {
     component.diffApiRevisionId = diffApiRevisionId;
     component.reviewId = reviewId;
 
-    spyOn(apiRevisionsService, 'getAPIRevisions').and.returnValue(of({ result: [] }));
+    vi.spyOn(apiRevisionsService, 'getAPIRevisions').mockReturnValue(of({ result: [] }));
     component.loadAPIRevisions(0, component.apiRevisionPageSize);
     expect(apiRevisionsService.getAPIRevisions).toHaveBeenCalledWith(
       0,

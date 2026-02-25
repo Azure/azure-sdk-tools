@@ -1,10 +1,33 @@
-import { ApiItem, ApiItemKind, ApiProperty, ApiPropertyItem } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import {
+  ApiDeclaredItem,
+  ApiItem,
+  ApiItemKind,
+  ApiProperty,
+  ApiPropertyItem,
+  ExcerptToken,
+} from "@microsoft/api-extractor-model";
+import { ReviewLine, ReviewToken, TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import { createToken, parseTypeText } from "./helpers";
+import { createToken, parseTypeText, buildReferenceMap } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiPropertyItem {
   return item.kind === ApiItemKind.Property || item.kind === ApiItemKind.PropertySignature;
+}
+
+/**
+ * Processes the property type using parseTypeText with a reference map for navigation.
+ * This handles both simple types (with navigation links) and inline type literals (with children structure).
+ */
+function processPropertyType(
+  typeText: string,
+  spannedTokens: readonly ExcerptToken[] | undefined,
+  tokens: ReviewToken[],
+  deprecated?: boolean,
+): ReviewLine[] | undefined {
+  // Build a reference map from spanned tokens for navigation
+  const referenceMap = spannedTokens ? buildReferenceMap(spannedTokens) : undefined;
+  // Use parseTypeText which now handles both type structure and navigation via the reference map
+  return parseTypeText(typeText, tokens, deprecated, 0, referenceMap);
 }
 
 /**
@@ -12,7 +35,7 @@ function isValid(item: ApiItem): item is ApiPropertyItem {
  */
 function isGetter(item: ApiPropertyItem): boolean {
   if ("excerptTokens" in item) {
-    const excerptTokens = (item as any).excerptTokens;
+    const excerptTokens = (item as ApiDeclaredItem).excerptTokens;
     if (excerptTokens?.length > 0) {
       const firstTokenText = excerptTokens[0]?.text;
       if (firstTokenText) {
@@ -32,7 +55,7 @@ function isGetter(item: ApiPropertyItem): boolean {
  */
 function isSetter(item: ApiPropertyItem): boolean {
   if ("excerptTokens" in item) {
-    const excerptTokens = (item as any).excerptTokens;
+    const excerptTokens = (item as ApiDeclaredItem).excerptTokens;
     if (excerptTokens?.length > 0) {
       const firstTokenText = excerptTokens[0]?.text;
       if (firstTokenText) {
@@ -53,9 +76,9 @@ function isSetter(item: ApiPropertyItem): boolean {
  */
 function getSetterParameterInfo(item: ApiPropertyItem): { paramName: string; paramType: string } {
   if ("excerptTokens" in item) {
-    const excerptTokens = (item as any).excerptTokens;
+    const excerptTokens = (item as ApiDeclaredItem).excerptTokens;
     // Join all excerpt token texts to get the full signature
-    const fullText = excerptTokens.map((t: any) => t.text).join("");
+    const fullText = excerptTokens.map((t) => t.text).join("");
     // Pattern: set name(paramName: ParamType)
     const match = fullText.match(/set\s+\w+\s*\(\s*(\w+)\s*:\s*(.+?)\s*\)/);
     if (match) {
@@ -86,7 +109,12 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult 
     let children;
 
     if (typeText) {
-      children = parseTypeText(typeText, tokens, deprecated);
+      children = processPropertyType(
+        typeText,
+        item.propertyTypeExcerpt.spannedTokens,
+        tokens,
+        deprecated,
+      );
       if (!children) {
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
       }
@@ -109,7 +137,13 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult 
 
     let children;
     if (paramType) {
-      children = parseTypeText(paramType, tokens, deprecated);
+      // For setters, use the spannedTokens from propertyTypeExcerpt for navigation
+      children = processPropertyType(
+        paramType,
+        item.propertyTypeExcerpt.spannedTokens,
+        tokens,
+        deprecated,
+      );
       if (!children) {
         tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
@@ -147,7 +181,12 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult 
   let children;
 
   if (typeText) {
-    children = parseTypeText(typeText, tokens, deprecated);
+    children = processPropertyType(
+      typeText,
+      item.propertyTypeExcerpt.spannedTokens,
+      tokens,
+      deprecated,
+    );
     if (!children) {
       tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
     }

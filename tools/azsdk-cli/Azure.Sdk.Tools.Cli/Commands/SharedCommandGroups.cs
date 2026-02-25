@@ -1,5 +1,3 @@
-using System.CommandLine;
-
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups

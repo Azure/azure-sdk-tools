@@ -3,6 +3,7 @@ using System.CommandLine.Help;
 using OpenTelemetry.Trace;
 using Azure.Sdk.Tools.Cli.Commands.HostServer;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 
@@ -66,6 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     _tool.Initialize(
                         scopedProvider.GetRequiredService<IOutputHelper>(),
                         scopedProvider.GetRequiredService<ITelemetryService>(),
+                        scopedProvider.GetRequiredService<IUpgradeService>(),
                         debug);
                     return _tool;
                 })

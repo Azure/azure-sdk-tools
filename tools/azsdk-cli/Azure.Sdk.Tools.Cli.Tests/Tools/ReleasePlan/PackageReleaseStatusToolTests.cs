@@ -143,7 +143,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                         PackageName = "azure-test-package",
                         PullRequestStatus = "InProgress"
                     }
-                }
+                },
+                APISpecProjectPath = "specification/test/project"
             };
 
             mockDevOpsService
@@ -161,6 +162,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(result.ResponseError, Is.Null);
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
             Assert.That(result.PackageName, Is.EqualTo("azure-test-package"));
+            Assert.That(result.TypeSpecProject, Is.EqualTo("specification/test/project"));
 
             mockDevOpsService.Verify(
                 x => x.UpdateWorkItemAsync(12345, It.Is<Dictionary<string, string>>(d => 

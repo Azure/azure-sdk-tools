@@ -16,6 +16,8 @@ public interface IPermissionsManager
     Task RemoveMemberFromGroupAsync(string groupId, string userId, string removedBy);
     Task<bool> CanApproveAsync(string userId, string language);
     Task<bool> IsAdminAsync(string userId);
-    Task<bool> HasElevatedAccessAsync(string userId);
     Task<IEnumerable<string>> GetAllUsernamesAsync();
+    Task<HashSet<string>> GetApproversForLanguageAsync(string language);
+    Task<IEnumerable<GroupPermissionsModel>> GetGroupsForUserAsync(string userId);
+    Task<IEnumerable<string>> GetAdminUsernamesAsync();
 }

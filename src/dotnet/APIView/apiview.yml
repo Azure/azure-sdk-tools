@@ -4,7 +4,7 @@ parameters:
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
   - name: CSharpAPIParserVersion
     type: string
-    default: '1.0.0-dev.20251117.2'
+    default: '1.0.0-dev.20260223.3'
   - name: JavaScriptAPIParser
     type: string
     default: '@azure-tools/ts-genapi@2.0.10'

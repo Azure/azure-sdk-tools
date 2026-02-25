@@ -4,8 +4,11 @@ import logging
 import os
 from sys import stderr
 import re
-from typing import List
+from typing import List, Union, TYPE_CHECKING
 from pylint.lint import Run
+
+if TYPE_CHECKING:
+    from ._base_node import NodeEntityBase
 
 _HELP_LINK_REGEX = re.compile(r"(.+) See details: *([^\s]+)")
 
@@ -91,8 +94,11 @@ class PylintParser:
                     item.owner = str(obj)
 
     @classmethod
-    def get_items(cls, obj) -> List[PylintError]:
-        items = [x for x in cls.items if x.owner == str(obj)]
+    def get_items(cls, node: Union["NodeEntityBase", str]) -> List[PylintError]:
+        if isinstance(node, str): # "GLOBAL"
+            items = [x for x in cls.items if x.owner == str(node)]
+        else:
+            items = [x for x in cls.items if node.is_pylint_error_owner(x)]
         return items
 
     @classmethod

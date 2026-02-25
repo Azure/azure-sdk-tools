@@ -521,6 +521,8 @@ tools/apiview/emitters/typespec-apiview/temp/
 
 # ApiView Spa
 src/dotnet/APIView/APIViewWeb/wwwroot/spa
+src/dotnet/APIView/ClientSPA/**/playwright-report/**
+src/dotnet/APIView/ClientSPA/**/test-results/**
 
 # Issue Labeler Deploy
 tools/issue-labeler/src/IssueLabeler/Properties/*Zip Deploy.json
@@ -546,7 +548,14 @@ tools/sdk-ai-bots/azure-sdk-qa-bot/appPackage/build
 tools/sdk-ai-bots/azure-sdk-qa-bot/.deployment
 tools/sdk-ai-bots/azure-sdk-qa-bot/devTools
 tools/sdk-ai-bots/azure-sdk-qa-bot/azsdk-cli
+tools/sdk-ai-bots/azure-sdk-qa-bot/codeowners-utils
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/*env
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/output
 tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/data
 tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared/infra/azure.parameters.generated.json
+
+# Azure SDK CLI Tool logs
+*.logs
+
+# sdk-sample-generator artifacts
+.artifacts/

@@ -23,6 +23,9 @@ parameters:
   - name: VerifyChangelog
     type: boolean
     default: false
+  - name: RequireStrongNames
+    type: boolean
+    default: true
 
 jobs:
   - job: PrePackagePublish
@@ -70,6 +73,7 @@ jobs:
           parameters:
             PackagesPath: $(Artifacts)
             BuildToolsPath: $(BuildToolPath)
+            RequireStrongNames: ${{ parameters.RequireStrongNames }}
 
       - ${{ if eq(parameters.ShouldPublishSymbols, true) }}:
         - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools

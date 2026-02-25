@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Octokit;
 
@@ -37,10 +34,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             // Set the return value for the permission check. In the case where the commenter is not the author, the label
             // will only be removed if they have write or admin collaborator permissions.
             mockGitHubEventClient.UserHasPermissionsReturn = commenterHasPermissionOrIsAuthor;
-            await PullRequestCommentProcessing.ResetPullRequestActivity(mockGitHubEventClient, prCommentPayload);
+            var pullRequestCommentProcessing = CreatePullRequestCommentInstance();
+            await pullRequestCommentProcessing.ResetPullRequestActivity(mockGitHubEventClient, prCommentPayload);
 
             // Verify the RuleCheck 
-            Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
+            Assert.That(mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), Is.EqualTo(ruleState == RuleState.On), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prCommentPayload.Repository.Id, prCommentPayload.Issue.Number);
             if (RuleState.On == ruleState)
@@ -48,18 +46,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 if (commenterHasPermissionOrIsAuthor)
                 {
                     // There should be one update, the no-recent-activity label removed
-                    Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
+                    Assert.That(totalUpdates, Is.EqualTo(1), $"The number of updates should have been 1 but was instead, {totalUpdates}");
                     // Verify that NeedsAuthorFeedback was removed
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
+                    Assert.That(mockGitHubEventClient.GetLabelsToRemove(), Does.Contain(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
                 }
                 else
                 {
-                    Assert.AreEqual(0, totalUpdates, $"Without Admin or Write permissions the number of updaes should have been 0 but was instead, {totalUpdates}");
+                    Assert.That(totalUpdates, Is.EqualTo(0), $"Without Admin or Write permissions the number of updates should have been 0 but was instead, {totalUpdates}");
                 }
             }
             else
             {
-                Assert.AreEqual(0, totalUpdates, $"The number of updates should have been 0 but was instead, {totalUpdates}");
+                Assert.That(totalUpdates, Is.EqualTo(0), $"The number of updates should have been 0 but was instead, {totalUpdates}");
             }
         }
 
@@ -85,10 +83,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             // Set the return value for the permission check. In the case where the commenter is not the author, the label
             // will only be removed if they have write or admin collaborator permissions and, if not, a comment will be created.
             mockGitHubEventClient.UserHasPermissionsReturn = commenterHasPermissionOrIsAuthor;
-            await PullRequestCommentProcessing.ReopenPullRequest(mockGitHubEventClient, prCommentPayload);
+            var pullRequestCommentProcessing = CreatePullRequestCommentInstance();
+            await pullRequestCommentProcessing.ReopenPullRequest(mockGitHubEventClient, prCommentPayload);
 
             // Verify the RuleCheck 
-            Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
+            Assert.That(mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), Is.EqualTo(ruleState == RuleState.On), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prCommentPayload.Repository.Id, prCommentPayload.Issue.Number);
             if (RuleState.On == ruleState)
@@ -96,30 +95,37 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 if (commenterHasPermissionOrIsAuthor)
                 {
                     // There should be two updates, an IssueUpdate with the State set to ItemState.Open and the no-recent-activity label removed
-                    Assert.AreEqual(2, totalUpdates, $"If the commenter has permissions or is the author, the number of updates should have been 2 but was instead, {totalUpdates}");
+                    Assert.That(totalUpdates, Is.EqualTo(2), $"If the commenter has permissions or is the author, the number of updates should have been 2 but was instead, {totalUpdates}");
 
                     var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
                     // Verify the IssueUpdate is not null
                     Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate.");
                     // Verify the IssueUpdate contains the following changes:
                     // State = ItemState.Open
-                    Assert.AreEqual(issueUpdate.State, ItemState.Open, $"IssueUpdate's state should be {ItemState.Open} and was not.");
+                    Assert.That(issueUpdate.State, Is.EqualTo(ItemState.Open), $"IssueUpdate's state should be {ItemState.Open} and was not.");
                     // Verify that NoRecentActivity was removed
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
+                    Assert.That(mockGitHubEventClient.GetLabelsToRemove(), Does.Contain(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
                 }
                 else
                 {
                     // If the commenter isn't the author and doesn't have permissions then there should be 1 comment created
-                    Assert.AreEqual(1, totalUpdates, $"If the commenter has permissions or is the author, there should be have been 1 update, a comment, but was instead {totalUpdates}");
+                    Assert.That(totalUpdates, Is.EqualTo(1), $"If the commenter has permissions or is the author, there should be have been 1 update, a comment, but was instead {totalUpdates}");
                     // There should be a single comment created
                     int numComments = mockGitHubEventClient.GetComments().Count;
-                    Assert.AreEqual(1, numComments, $"There should have been a single comment created but instead {numComments} were created.");
+                    Assert.That(numComments, Is.EqualTo(1), $"There should have been a single comment created but instead {numComments} were created.");
                 }
             }
             else
             {
-                Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
+                Assert.That(totalUpdates, Is.EqualTo(0), $"{rule} is {ruleState} and should not have produced any updates.");
             }
+        }
+
+        private static PullRequestCommentProcessing CreatePullRequestCommentInstance()
+        {
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            var logger = loggerFactory.CreateLogger<PullRequestCommentProcessing>();
+            return new PullRequestCommentProcessing(logger);
         }
     }
 }

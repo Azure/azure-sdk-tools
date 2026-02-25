@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PromptGenerator } from '../src/input/PromptGeneratorV2.js';
+import { PromptGenerator } from '../src/input/PromptGenerator.js';
 import { Prompt, ConversationMessage, RAGReply } from '../src/input/ConversationHandler.js';
 
 // Mock ImageTextExtractor

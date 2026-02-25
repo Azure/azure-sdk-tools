@@ -53,16 +53,10 @@ class TestModuleParsing:
         assert lines[6].lstrip() == "@overload"
         actual2 = lines[7]
         expected2 = "def apistubgentest.another_func(*, b: int) -> bool"
-
         _check(actual2, expected2, obj)
 
-        actual3 = lines[10]
-        expected3 = "def apistubgentest.another_func(*, b: Union[int, str]) -> bool"
-
-        _check(actual3, expected3, obj)
-
-        assert lines[13].lstrip() == "@overload"
-        actual4 = lines[14:20]
+        assert lines[10].lstrip() == "@overload"
+        actual4 = lines[11:17]
         expected4 = [
             "def apistubgentest.module_func(",
             "    a: int, ",
@@ -73,8 +67,8 @@ class TestModuleParsing:
         ]
         _check(actual4, expected4, obj)
 
-        assert lines[22].lstrip() == "@overload"
-        actual5 = lines[23:29]
+        assert lines[19].lstrip() == "@overload"
+        actual5 = lines[20:26]
         expected5 = [
             "def apistubgentest.module_func(",
             "    a: int, ",
@@ -84,9 +78,5 @@ class TestModuleParsing:
             ") -> bool"
         ]
         _check(actual5, expected5, obj)
-
-        actual6 = lines[31]
-        expected6 = "def apistubgentest.module_func(*args, **kwargs) -> bool"
-        _check(actual6, expected6, obj)
 
         self._validate_line_ids(tokens)

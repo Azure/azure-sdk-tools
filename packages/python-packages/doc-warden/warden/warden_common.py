@@ -164,11 +164,24 @@ def walk_directory_for_pattern(
     normalized_target_patterns = [
         os.path.normpath(pattern) for pattern in target_patterns
     ]
+
+    # if an omitted path is a directory with a ** we should not scan that path at all, since we
+    # don't care about ANY files in that directory. This prevents us from going deep into heavily
+    #  nested folders e.g node_modules.
+    directory_exclusions = [
+        os.path.normpath(pattern[0:-2])
+        for pattern in (configuration.omitted_paths or []) if pattern.endswith("**")
+    ]
+
     return_true = lambda x: True
     check_function = lambda_check or return_true
 
     # walk the folders, filter to the patterns established
     for folder, subfolders, files in os.walk(target_directory):
+        # skip any subfolders that match the directory exclusions
+        # modifying subfolders in place ensures os.walk will skip them entirely
+        subfolders[:] = [f for f in subfolders if not check_match(os.path.join(folder, f), directory_exclusions)]
+
         for file in files:
             file_path = os.path.join(folder, file)
 

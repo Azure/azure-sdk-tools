@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -10,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         IMicroagentHostService microAgentHostService
     ) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Generators];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageReadme];
 
         private readonly Option<string> packagePathOption = new("--package-path")
         {
@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             DefaultValueFactory = _ => "gpt-4.1",
         };
 
-        protected override Command GetCommand() => new("readme", "README generator tool")
+        protected override Command GetCommand() => new("generate", "Generate README content for a package")
         {
             modelOption,
             outputPathOption,

@@ -1,4 +1,6 @@
 steps:
+  # Need to authenticate so our pipeline can update packages in the feed.
+  - task: NuGetAuthenticate@1
 
   # We aim to keep .NET SDK coming from global.json to bethe newest, to enable us to use the latest & greatest,
   # and allow us to gradually migrate our .NET sources to such version.

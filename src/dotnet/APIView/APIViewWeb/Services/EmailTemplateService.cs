@@ -20,17 +20,12 @@ namespace APIViewWeb.Services
         Task<string> GetNamespaceReviewApprovedEmailAsync(
             string packageName,
             string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews,
-            bool isAutoApproved = false,
-            DateTime? originalRequestDate = null,
-            DateTime? autoApprovedDate = null);
+            IEnumerable<ReviewListItemModel> languageReviews);
     }
 
     public class EmailTemplateService : IEmailTemplateService
     {
         private readonly string _apiviewEndpoint;
-        // TODO: 3 days auto-approval feature is temporarily disabled
-        // private const int BusinessDaysForDeadline = 3;
 
         public EmailTemplateService(IConfiguration configuration)
         {
@@ -62,18 +57,6 @@ namespace APIViewWeb.Services
         {
             var template = await LoadEmbeddedTemplateAsync("NamespaceReviewRequestEmail.html");
 
-            // TODO: 3 days auto-approval feature is temporarily disabled
-            // Uncomment the code below to re-enable deadline calculation
-            
-            /*
-            // Calculate deadline (3 business days from now using centralized utility)
-            var deadline = DateTimeHelper.CalculateBusinessDays(DateTime.Now, BusinessDaysForDeadline);
-            */
-            
-            // TODO: Auto-approval feature is disabled - commenting out deadline text
-            // var deadlineText = "Manual review required - no automatic approval";
-            var deadlineText = "";
-
             // Generate language links HTML like the pending namespace approval tab
             var languageLinksHtml = GenerateLanguageLinksHtml(languageReviews);
 
@@ -90,47 +73,24 @@ namespace APIViewWeb.Services
                 .Replace("{{PackageName}}", packageName)
                 .Replace("{{TypeSpecUrl}}", typeSpecUrl)
                 .Replace("{{LanguageLinks}}", languageLinksHtml)
-                .Replace("{{NotesSection}}", notesSectionHtml)
-                .Replace("{{ApprovalDeadline}}", deadlineText);
+                .Replace("{{NotesSection}}", notesSectionHtml);
         }
 
         public async Task<string> GetNamespaceReviewApprovedEmailAsync(
             string packageName,
             string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews,
-            bool isAutoApproved = false,
-            DateTime? originalRequestDate = null,
-            DateTime? autoApprovedDate = null)
+            IEnumerable<ReviewListItemModel> languageReviews)
         {
             var template = await LoadEmbeddedTemplateAsync("NamespaceReviewApprovedEmail.html");
 
             // Generate language package names in the simple format
             var languagePackagesHtml = GenerateLanguagePackagesHtml(languageReviews);
 
-            // Generate auto-approval section if needed
-            // TODO: Auto-approval feature is currently disabled - commenting out for future use
-            var autoApprovalSectionHtml = "";
-            /*
-            if (isAutoApproved)
-            {
-                autoApprovalSectionHtml = $@"
-                    <div class=""auto-approval-section"">
-                        <div class=""auto-approval-title"">✅ Auto-Approved</div>
-                        <div>This namespace review was automatically approved after 3 business days with no comments raised.</div>
-                        <div class=""auto-approval-dates"">
-                            <strong>Original Request Date:</strong> {originalRequestDate?.ToString("MMMM dd, yyyy") ?? "N/A"}<br/>
-                            <strong>Auto-Approved Date:</strong> {autoApprovedDate?.ToString("MMMM dd, yyyy") ?? DateTime.UtcNow.ToString("MMMM dd, yyyy")}
-                        </div>
-                    </div>";
-            }
-            */
-
             // Replace all placeholders
             return template
                 .Replace("{{PackageName}}", packageName)
                 .Replace("{{TypeSpecUrl}}", typeSpecUrl)
-                .Replace("{{LanguageViews}}", languagePackagesHtml)
-                .Replace("{{AutoApprovalSection}}", autoApprovalSectionHtml);
+                .Replace("{{LanguageViews}}", languagePackagesHtml);
         }
 
         private string GenerateLanguagePackagesHtml(IEnumerable<ReviewListItemModel> languageReviews)

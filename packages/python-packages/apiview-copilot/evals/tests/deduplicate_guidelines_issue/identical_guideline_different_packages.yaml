@@ -1,0 +1,39 @@
+testcase: identical_guideline_different_packages
+language: python
+package_name: azure.storage
+code: "class StorageClientObject:"
+issue_context: |
+  Python naming conventions guideline is outdated
+  
+  The guideline at https://azure.github.io/azure-sdk/python_design.html#naming-conventions 
+  states that class names can use suffixes like "Object", but this is no longer recommended.
+  
+  **Bad code:**
+  ```python
+  class StorageClientObject:
+  ```
+  
+  **Should be:**
+  ```python
+  class StorageClient:
+  ```
+existing_issues: |
+  [
+    {
+      "number": 123,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/123",
+      "title": "Update Python naming conventions guideline for class suffixes",
+      "body": "The guideline at https://azure.github.io/azure-sdk/python_design.html#naming-conventions allows unnecessary class name suffixes.\n\n**Package:** azure.widget\n**Code:** `class WidgetObject:`\n\nThe suffix 'Object' adds no value and should be removed from guidelines.",
+      "created_at": "2025-10-15T10:00:00Z"
+    },
+    {
+      "number": 456,
+      "url": "https://github.com/Azure/azure-rest-api-specs/issues/456",
+      "title": "Async context manager guidelines incomplete",
+      "body": "The async/await guidelines don't cover edge cases for async context managers.",
+      "created_at": "2025-10-12T15:30:00Z"
+    }
+  ]
+response:
+  action: no-op
+  issue: 123

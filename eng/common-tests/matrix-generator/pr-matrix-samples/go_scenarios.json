@@ -35,12 +35,13 @@
           ]
         },
         "CIParameters": {
+          "LicenseCheck": true,
           "CIMatrixConfigs": [],
           "UsePipelineProxy": true,
-          "IsSdkLibrary": true,
           "NonShipping": false,
-          "LicenseCheck": true
-        }
+          "IsSdkLibrary": true
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -81,12 +82,13 @@
           ]
         },
         "CIParameters": {
+          "LicenseCheck": true,
           "CIMatrixConfigs": [],
           "UsePipelineProxy": true,
-          "IsSdkLibrary": true,
           "NonShipping": false,
-          "LicenseCheck": true
-        }
+          "IsSdkLibrary": true
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "sdk/resourcemanager/dashboard/armdashboard",
@@ -109,12 +111,13 @@
           ]
         },
         "CIParameters": {
+          "LicenseCheck": true,
           "CIMatrixConfigs": [],
           "UsePipelineProxy": true,
-          "IsSdkLibrary": true,
           "NonShipping": false,
-          "LicenseCheck": true
-        }
+          "IsSdkLibrary": true
+        },
+        "SpecProjectPath": null
       },
       {
         "Name": "sdk/resourcemanager/storage/armstorage",
@@ -137,11 +140,12 @@
           ]
         },
         "CIParameters": {
+          "LicenseCheck": true,
           "CIMatrixConfigs": [],
           "NonShipping": false,
-          "IsSdkLibrary": true,
-          "LicenseCheck": true
-        }
+          "IsSdkLibrary": true
+        },
+        "SpecProjectPath": null
       }
     ]
   },
@@ -157,35 +161,6 @@
       "PRNumber": "33362"
     },
     "expected_package_output": [
-      {
-        "Name": "sdk/template/aztemplate",
-        "Version": "0.6.1",
-        "DevVersion": null,
-        "DirectoryPath": "sdk/template/aztemplate",
-        "ServiceDirectory": "template/aztemplate",
-        "ReadMePath": "sdk/template/aztemplate/README.md",
-        "ChangeLogPath": "sdk/template/aztemplate/CHANGELOG.md",
-        "Group": null,
-        "SdkType": "client",
-        "IsNewSdk": true,
-        "ArtifactName": "sdk/template/aztemplate",
-        "ReleaseStatus": "2025-03-06",
-        "IncludedForValidation": false,
-        "AdditionalValidationPackages": null,
-        "ArtifactDetails": {
-          "triggeringPaths": [
-            "/eng",
-            "/sdk/template/aztemplate/ci.yml"
-          ]
-        },
-        "CIParameters": {
-          "CIMatrixConfigs": [],
-          "UsePipelineProxy": true,
-          "IsSdkLibrary": true,
-          "NonShipping": false,
-          "LicenseCheck": true
-        }
-      },
       {
         "Name": "sdk/azcore",
         "Version": "1.18.0-beta.1",
@@ -208,12 +183,43 @@
           ]
         },
         "CIParameters": {
+          "LicenseCheck": true,
           "CIMatrixConfigs": [],
           "UsePipelineProxy": true,
-          "IsSdkLibrary": true,
           "NonShipping": false,
-          "LicenseCheck": true
-        }
+          "IsSdkLibrary": true
+        },
+        "SpecProjectPath": null
+      },
+      {
+        "Name": "sdk/template/aztemplate",
+        "Version": "0.6.1",
+        "DevVersion": null,
+        "DirectoryPath": "sdk/template/aztemplate",
+        "ServiceDirectory": "template/aztemplate",
+        "ReadMePath": "sdk/template/aztemplate/README.md",
+        "ChangeLogPath": "sdk/template/aztemplate/CHANGELOG.md",
+        "Group": null,
+        "SdkType": "client",
+        "IsNewSdk": true,
+        "ArtifactName": "sdk/template/aztemplate",
+        "ReleaseStatus": "2025-03-06",
+        "IncludedForValidation": false,
+        "AdditionalValidationPackages": null,
+        "ArtifactDetails": {
+          "triggeringPaths": [
+            "/eng",
+            "/sdk/template/aztemplate/ci.yml"
+          ]
+        },
+        "CIParameters": {
+          "LicenseCheck": true,
+          "CIMatrixConfigs": [],
+          "UsePipelineProxy": true,
+          "NonShipping": false,
+          "IsSdkLibrary": true
+        },
+        "SpecProjectPath": null
       }
     ]
   }

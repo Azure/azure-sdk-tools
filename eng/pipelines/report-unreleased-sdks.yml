@@ -1,0 +1,31 @@
+trigger: none
+pr: none 
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
+pool:
+  name: $(LINUXPOOL)
+  demands: ImageOverride -equals $(LINUXVMIMAGE)
+
+jobs:
+  - job: ReportUnreleasedSdks
+    steps:
+      - checkout: self
+
+      - task: PowerShell@2
+        displayName: 'Install Azure SDK MCP'
+        inputs:
+          targetType: 'inline'
+          script: './eng/common/mcp/azure-sdk-mcp.ps1 -InstallDirectory $(System.DefaultWorkingDirectory)'
+          pwsh: true
+          workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+      - task: AzureCLI@2
+        displayName: Email product owners about overdue SDK release plans
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            & "$(System.DefaultWorkingDirectory)/azsdk" release-plan list-overdue --notify-owners true --emailer-uri "$(AzureSDKEmailerSasURL)"

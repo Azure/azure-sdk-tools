@@ -23,7 +23,7 @@ from azure.search.documents.models import (
     VectorizableTextQuery,
 )
 from src._credential import get_credential
-from src._database_manager import ContainerNames, get_database_manager
+from src._database_manager import ContainerNames, DatabaseManager
 from src._models import Example, Guideline, Memory
 from src._settings import SettingsManager
 
@@ -377,13 +377,14 @@ class SearchManager:
         """Searches for items by their IDs in the Azure Search index."""
         if not ids:
             return []
-        escaped = ",".join(id.replace("'", "''") for id in ids)
-        filter = f"search.in(id, '{escaped}', ',')"
-        if self.filter_expression:
-            filter = f"({filter}) and ({self.filter_expression})"
+        # Convert IDs from web format (with .html#) to search format (with =html=)
+        search_ids = [id.replace(".html#", "=html=") for id in ids]
+        escaped = ",".join(id.replace("'", "''") for id in search_ids)
+        filter_expr = f"search.in(id, '{escaped}', ',')"
+        # Note: Don't apply language filter when searching by explicit IDs
         result = self.client.search(
             search_text="*",
-            filter=filter,
+            filter=filter_expr,
             query_type=QueryType.SIMPLE,
             top=len(ids),
         )
@@ -395,7 +396,7 @@ class SearchManager:
         all related links (related_examples, related_memories, guideline_ids, memory_ids, etc.) using
         breadth-first traversal. Ensures the final context contains all linked guidelines, examples, and memories.
         """
-        database = get_database_manager()
+        database = DatabaseManager.get_instance()
 
         # Partition input items by kind using SearchItem attributes
         guidelines = {}

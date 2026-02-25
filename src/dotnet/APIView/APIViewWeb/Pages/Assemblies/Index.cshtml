@@ -14,7 +14,7 @@
     <div class="row mx-5 py-2">
         <div class="col-md-10 px-0 d-sm-flex flex-row justify-content-sm-start">
             <div class="input-group" id="reviews-table-search-container">
-                <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.. e.g pr:<Pull-Request Number>, package:<Package Name>, author:<Github UserName>" />
+                <input type="search" class="form-control" id="reviews-table-search-box" placeholder="Search.. e.g pr:<Pull-Request Number>, package:<Package Name>, author:<Github UserName>" value="@Model.SearchQuery" />
                 <button class="btn btn-outline-primary" id="reviews-search-button" aria-labelledby="reviews-table-search-box" type="button"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
         </div>
@@ -92,6 +92,13 @@
                                             <option value=@lang data-content=@lang>@lang</option>
                                         }
                                     </select>
+                                </div>
+                                <div class="form-group mb-3 d-none" id="package-name-group">
+                                    <p class="small mb-0">Associate with an existing package (Optional)</p>
+                                    <select asp-for="Upload.PackageName" id="review-package-select" class="form-control">
+                                        <option value="">-- Select a package (optional) --</option>
+                                    </select>
+                                    <small class="text-muted" id="package-loading" style="display: none;">Loading packages...</small>
                                 </div>
                                 <div class="input-group mb-3 custom-file-label" id="create-review-via-upload">
                                     <label for="uploadReviewFile" class="input-group-text small mb-0">Select File to Include in API Review</label>

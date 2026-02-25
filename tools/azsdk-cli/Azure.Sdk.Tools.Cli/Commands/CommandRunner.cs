@@ -1,9 +1,11 @@
 using System.CommandLine;
 using System.CommandLine.Help;
+using OpenTelemetry.Trace;
 using Azure.Sdk.Tools.Cli.Commands.HostServer;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
-using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -25,7 +27,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             help.Aliases.Clear();  // get rid of stuff like '-?' which just doesn't even work in some shells
             help.Aliases.Add("-h");
 
-            rootCommand.Options.Add(SharedOptions.ToolOption);
             rootCommand.Options.Add(SharedOptions.Debug);
 
             SharedOptions.Format.Validators.Add(result =>
@@ -43,7 +44,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
             // singletons within WithStdioServerTransport() and will not run
             // within the DI scope we create for CLI commands.
             var hostServer = ActivatorUtilities.CreateInstance<HostServerCommand>(serviceProvider);
-            rootCommand.Subcommands.Add(hostServer.GetCommand());
+            foreach (var cmd in hostServer.GetCommands())
+            {
+                rootCommand.Subcommands.Add(cmd);
+            }
 
             var toolTypes = SharedOptions.ToolsList.Where(t => t.Name != nameof(HostServerCommand));
 
@@ -52,6 +56,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
             // here so we can resolve those services in CLI mode as well.
             using var scope = serviceProvider.CreateAsyncScope();
             var scopedProvider = scope.ServiceProvider;
+
+            // Force TracerProvider instantiation so that it registers a listener for activity events
+            _ = scopedProvider.GetRequiredService<TracerProvider>();
+
             var toolInstances = toolTypes
                 .Select(t =>
                 {
@@ -59,6 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     _tool.Initialize(
                         scopedProvider.GetRequiredService<IOutputHelper>(),
                         scopedProvider.GetRequiredService<ITelemetryService>(),
+                        scopedProvider.GetRequiredService<IUpgradeService>(),
                         debug);
                     return _tool;
                 })
@@ -66,7 +75,17 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
             PopulateToolHierarchy(rootCommand, toolInstances);
 
-            var parseResult = rootCommand.Parse(args);
+#if DEBUG
+            ValidateCommandTree(rootCommand);
+#endif
+            // Disable response file support as it led to unexpected behaviour when cli command takes package name with '@' symbol as value.
+            // @azure/template package name causes the parser to look for a response file named 'azure/template' which is not the intended behaviour.
+            var parseConfig = new CommandLineConfiguration(rootCommand)
+            {
+                ResponseFileTokenReplacer = null
+            };
+
+            var parseResult = rootCommand.Parse(args, parseConfig);
             return await parseResult.InvokeAsync();
         }
 
@@ -107,6 +126,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
                             }
                         }
 
+                        if (segment.Aliases != null)
+                        {
+                            foreach (var alias in segment.Aliases)
+                            {
+                                groupCommand.Aliases.Add(alias);
+                            }
+                        }
+
                         parentMap[segment.Verb] = groupCommand;
                     }
 
@@ -137,5 +164,24 @@ namespace Azure.Sdk.Tools.Cli.Commands
                 }
             }
         }
+
+#if DEBUG
+        private static void ValidateCommandTree(Command command)
+        {
+            var nameSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var sub in command.Subcommands)
+            {
+                if (!nameSet.Add(sub.Name))
+                {
+                    Console.WriteLine($"Duplicate command '{sub.Name}' under '{command.Name}'. Current children: {string.Join(", ", command.Subcommands.Select(c => c.Name))}");
+                }
+            }
+
+            foreach (var sub in command.Subcommands)
+            {
+                ValidateCommandTree(sub);
+            }
+        }
+#endif
     }
 }

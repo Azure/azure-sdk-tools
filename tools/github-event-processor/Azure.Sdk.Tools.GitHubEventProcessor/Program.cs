@@ -1,13 +1,18 @@
 using System;
 using System.IO;
-using Octokit;
-using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
-using System.Text.Json;
-using Octokit.Internal;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
-using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Azure.Core;
+using Azure.Identity;
+using Azure.Sdk.Tools.GitHubEventProcessor.Configuration;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
+using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Octokit;
+using Octokit.Internal;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
@@ -15,6 +20,31 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
     {
         static async Task Main(string[] args)
         {
+            var host = Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddSimpleConsole(options =>
+                    {
+                        options.SingleLine = true;
+                        options.TimestampFormat = "[HH:mm:ss] ";
+                    });
+                    logging.SetMinimumLevel(LogLevel.Information);
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddSingleton<McpConfiguration>(sp => CreateMcpConfiguration());
+                    services.AddSingleton<McpIssueProcessing>();
+                    services.AddSingleton<IssueProcessing>();
+                    services.AddSingleton<IssueCommentProcessing>();
+                    services.AddSingleton<PullRequestProcessing>();
+                    services.AddSingleton<PullRequestCommentProcessing>();
+                    services.AddSingleton<ScheduledEventProcessing>();
+                })
+                .Build();
+
+            var serviceProvider = host.Services;
+
             // "dotnet run --" the "--" says don't count dotnet run as arguments
             if (args.Length < 2)
             {
@@ -22,13 +52,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 Console.WriteLine(" 1. The github.event_name");
                 Console.WriteLine(" 2. The GITHUB_PAYLOAD json file.");
                 Environment.Exit(1);
-		        return;
+                return;
             }
             if (!File.Exists(args[1]))
             {
                 Console.WriteLine($"Error: The GITHUB_PAYLOAD file {args[1]} does not exist.");
                 Environment.Exit(1);
-		        return;
+                return;
             }
 
             string eventName = args[0];
@@ -42,7 +72,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     {
                         IssueEventGitHubPayload issueEventPayload = serializer.Deserialize<IssueEventGitHubPayload>(rawJson);
                         gitHubEventClient.SetConfigEntryOverrides(issueEventPayload.Repository);
-                        await IssueProcessing.ProcessIssueEvent(gitHubEventClient, issueEventPayload);
+                        var issueProcessor = GetIssueProcessor(issueEventPayload.Repository, serviceProvider);
+                        await issueProcessor.ProcessIssueEvent(gitHubEventClient, issueEventPayload);
                         break;
                     }
                 case EventConstants.IssueComment:
@@ -53,11 +84,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         // then Issue's PullRequest object in the payload will be non-null
                         if (issueCommentPayload.Issue.PullRequest != null)
                         {
-                            await PullRequestCommentProcessing.ProcessPullRequestCommentEvent(gitHubEventClient, issueCommentPayload);
+                            await serviceProvider.GetRequiredService<PullRequestCommentProcessing>().ProcessPullRequestCommentEvent(gitHubEventClient, issueCommentPayload);
                         }
                         else
                         {
-                            await IssueCommentProcessing.ProcessIssueCommentEvent(gitHubEventClient, issueCommentPayload);
+                            await serviceProvider.GetRequiredService<IssueCommentProcessing>().ProcessIssueCommentEvent(gitHubEventClient, issueCommentPayload);
                         }
 
                         break;
@@ -66,9 +97,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     {
                         // The pull_request, because of the auto_merge processing, requires more than just deserialization of the
                         // the rawJson.
-                        PullRequestEventGitHubPayload prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, serializer);
+                        PullRequestEventGitHubPayload prEventPayload = serviceProvider.GetRequiredService<PullRequestProcessing>().DeserializePullRequest(rawJson, serializer);
                         gitHubEventClient.SetConfigEntryOverrides(prEventPayload.Repository);
-                        await PullRequestProcessing.ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
+                        await serviceProvider.GetRequiredService<PullRequestProcessing>().ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
                         break;
                     }
                 case EventConstants.Schedule:
@@ -86,7 +117,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
                         gitHubEventClient.SetConfigEntryOverrides(scheduledEventPayload.Repository);
                         string cronTaskToRun = args[2];
-                        await ScheduledEventProcessing.ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun);
+                        await serviceProvider.GetRequiredService<ScheduledEventProcessing>().ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun);
                         break;
                     }
                 default:
@@ -96,6 +127,67 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     }
             }
             await gitHubEventClient.WriteRateLimits("RateLimit at end of execution:");
+        }
+
+        /// <summary>
+        /// Creates an McpConfiguration instance by connecting to Azure App Configuration.
+        /// </summary>
+        private static McpConfiguration CreateMcpConfiguration()
+        {
+            string configEndpoint = Environment.GetEnvironmentVariable("APP_CONFIG_ENDPOINT");
+            if (string.IsNullOrEmpty(configEndpoint))
+            {
+                Console.WriteLine("Warning: APP_CONFIG_ENDPOINT environment variable not set. Using empty config for MCP.");
+                return new McpConfiguration(new ConfigurationBuilder().Build());
+            }
+
+            bool isRunningInGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS"));
+            TokenCredential credential = isRunningInGitHubActions
+                ? new ManagedIdentityCredential()
+                : new ChainedTokenCredential(
+                    new AzureCliCredential(),
+                    new VisualStudioCredential(),
+                    new VisualStudioCodeCredential()
+                );
+
+            IConfiguration mcpConfig;
+            try
+            {
+                var builder = new ConfigurationBuilder();
+                builder.AddAzureAppConfiguration(options =>
+                {
+                    options.Connect(new Uri(configEndpoint), credential);
+                });
+                mcpConfig = builder.Build();
+                Console.WriteLine($"Connected to Azure App Configuration: {configEndpoint}");
+            }
+            catch (AuthenticationFailedException ex)
+            {
+                Console.WriteLine($"Warning: Authentication failed for Azure App Configuration. Using empty config. Error: {ex.Message}");
+                mcpConfig = new ConfigurationBuilder().Build();
+            }
+            catch (RequestFailedException ex)
+            {
+                Console.WriteLine($"Warning: Failed to connect to Azure App Configuration. Using empty config. Error: {ex.Message}");
+                mcpConfig = new ConfigurationBuilder().Build();
+            }
+
+            return new McpConfiguration(mcpConfig);
+        }
+
+        /// <summary>
+        /// Factory method to get the appropriate IssueProcessing instance for a repository.
+        /// Returns McpIssueProcessing for Microsoft MCP repository, otherwise returns base IssueProcessing.
+        /// </summary>
+        private static IssueProcessing GetIssueProcessor(Repository repository, IServiceProvider serviceProvider)
+        {
+            if (repository.Owner.Login.Equals("Microsoft", StringComparison.OrdinalIgnoreCase) &&
+                repository.Name.Equals("mcp", StringComparison.OrdinalIgnoreCase))
+            {
+                return serviceProvider.GetRequiredService<McpIssueProcessing>();
+            }
+
+            return serviceProvider.GetRequiredService<IssueProcessing>();
         }
     }
 }

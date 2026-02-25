@@ -30,7 +30,6 @@ parameters:
 - name: SDKPrivate
   type: object
   default:
-    - Azure/azure-powershell-pr
     - Azure/azure-sdk-for-go-pr
     - Azure/azure-sdk-for-java-pr
     - Azure/azure-sdk-for-js-pr

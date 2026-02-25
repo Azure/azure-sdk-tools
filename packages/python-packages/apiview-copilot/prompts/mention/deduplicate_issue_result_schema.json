@@ -1,0 +1,26 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "deduplicate_parser_issue_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "Workflow decision.",
+          "enum": ["no-op", "create"]
+        },
+        "issue": {
+          "type": "number",
+          "description": "Number of the existing GitHub issue when the action is 'no-op'."
+        }
+      },
+      "required": [
+        "action",
+        "issue"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

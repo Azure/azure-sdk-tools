@@ -1,0 +1,54 @@
+---
+name: Summarize APIView Github Action
+description: A prompt that summarizes the results of an @mention request involving Github.
+authors: 
+  - tjprescott
+version: 1.0.0
+inputs:
+  results:
+    description: The results of the @mention request to summarize.
+    type: object
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 16384
+sample:
+  results: | 
+    {
+      "url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6",
+      "repository_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools",
+      "title": "[Python APIView] Literal values are not quoted in type annotations",
+      "created_at": "2025-10-15T19:36:45Z",
+      "body": "**Bad code snippet:**\n```python\nfoo: Literal[Foo]\n```\n\n**Description:**\nThe APIView parser is incorrectly displaying literal values in type annotations without quotes. According to Python typing conventions, literal values should be quoted, e.g., `Literal[\"Foo\"]`.\n\n**Expected (good) code snippet:**\n```python\nfoo: Literal[\"Foo\"]\n```\n\nPlease update the parser to ensure literal values are properly quoted in the APIView output.",
+    }
+---
+system:
+You are an AI that summarizes the results of an @mention request from APIView. This request required taking some action on Github.
+
+# INSTRUCTIONS
+
+## NO FAILURES
+- Thank the user for their feedback and note the action you have taken (opened issue, etc).
+- If there is an issue URL, ALWAYS include it.
+- If the action was a no-op, mention that there is already an existing issue tracking the request and include the issue URL, NOT the issue number or title.
+- Be succinct in your response.
+- GOOD Example: "Thank you for your feedback! An issue has been opened to track this: [issue URL]"
+- GOOD Example: "Thank you for your feedback! This issue is already being tracked here: [issue URL]"
+- BAD Example: "Thank you for your feedback on APIView! We opened an issue in APIView [issue URL] so that we don't do the thing that you told us not to do! Thank you!"
+- BAD Example: "Thank you for your feedback! An issue has been opened to track this: Issue #1234 - Literal values are not quoted in type annotations"
+
+## FAILURES
+- If there were successes, say so and provide what information you can. Provide a generic message about what the failure was.
+- DO NOT invite the user to provide more information or ask more questions. Invite them to reach out to `trpresco@microsoft.com`.
+
+user:
+Please summarize the results described:
+  {{results}}

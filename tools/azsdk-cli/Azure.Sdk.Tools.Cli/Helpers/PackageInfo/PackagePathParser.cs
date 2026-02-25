@@ -15,11 +15,12 @@ internal static class PackagePathParser
     /// </summary>
     /// <param name="gitHelper">Git helper used to discover repository root.</param>
     /// <param name="realPackagePath">Real (fully resolved) package path.</param>
+    /// <param name="ct">Cancellation token.</param>
     /// <returns>Tuple of (RepoRoot, RelativePath, FullPath).</returns>
-    public static (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
+    public static async Task<(string RepoRoot, string RelativePath, string FullPath)> ParseAsync(IGitHelper gitHelper, string realPackagePath, CancellationToken ct = default)
     {
         var full = RealPath.GetRealPath(realPackagePath);
-        var repoRoot = gitHelper.DiscoverRepoRoot(full);
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(full, ct);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
         var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
         return (repoRoot, relativePath, full);

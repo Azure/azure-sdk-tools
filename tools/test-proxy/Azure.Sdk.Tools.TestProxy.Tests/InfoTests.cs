@@ -86,14 +86,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             int defaultExtensionCount = await GetDefaultExtensionCount();
 
-            // we should have exactly DefaultExtensionCount + 2 if we're counting all the customizations appropriately
+            // we should have exactly DefaultExtensionCount + 3 if we're counting all the customizations appropriately
             Assert.True(descriptions.Count == defaultExtensionCount + 3);
             Assert.True(model.Matchers.Count() == 1);
             Assert.True(model.Sanitizers.Count() == defaultExtensionCount + 2);
 
             // confirm that the overridden matcher is showing up
-            Assert.True(descriptions[defaultExtensionCount].ConstructorDetails.Arguments[1].Item2 == "\"ABC123\"");
-            Assert.True(descriptions[defaultExtensionCount + 1].ConstructorDetails.Arguments[1].Item2 == "\".+?\"");
+            Assert.Equal("\"ABC123\"", descriptions[defaultExtensionCount].ConstructorDetails.Arguments[2].Item2);
+            Assert.Equal("\".+?\"", descriptions[defaultExtensionCount + 1].ConstructorDetails.Arguments[2].Item2);
 
             // and finally confirm our sanitizers are what we expect
             Assert.True(descriptions[defaultExtensionCount + 2].Name == "CustomDefaultMatcher");

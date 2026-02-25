@@ -145,3 +145,166 @@ def test_iter_and_len_methods():
     # __iter__
     sections = [sec for sec in doc]
     assert isinstance(sections[0], Section)
+
+
+def test_decorator_included_in_all_chunks_when_class_is_subdivided():
+    """
+    Validates the hypothesis that when a class is split into multiple chunks,
+    decorators above the class declaration should be included in all chunks,
+    not just the first one.
+
+    Given a class like:
+        @Fluent
+        public class MyFoo {
+            public func bigFunc1(...)
+            public func bigFunc2(...)
+        }
+
+    When split, both chunks should include the @Fluent decorator:
+        Chunk 1: @Fluent, public class MyFoo { public func bigFunc1(...) }
+        Chunk 2: @Fluent, public class MyFoo { public func bigFunc2(...) }
+
+    Currently, the bug is that chunk 2 only gets the class declaration, missing @Fluent.
+    """
+    # Simulate a class with a decorator that needs to be split
+    # Using max_chunk_size=3 to force subdivision
+    raw = [
+        "1: @Fluent",
+        "2: public class MyFoo {",
+        "3:   public func bigFunc1(...)",
+        "4:   public func bigFunc2(...)",
+        "5: }",
+    ]
+
+    doc = SectionedDocument(lines=raw, base_indent=0, max_chunk_size=3)
+
+    # We expect multiple sections due to the size
+    assert len(doc) > 1, "Expected the document to be split into multiple sections"
+
+    # The key assertion: ALL sections that contain class content should include the decorator
+    # This is the hypothesis we're testing
+    for i, section in enumerate(doc.sections):
+        section_text = str(section)
+
+        # If this section contains the class declaration, it should also have the decorator
+        if "public class MyFoo" in section_text:
+            assert "@Fluent" in section_text, (
+                f"Section {i + 1} contains 'public class MyFoo' but is missing '@Fluent' decorator.\n"
+                f"Section content:\n{section_text}\n\n"
+                "This validates the hypothesis that decorators are not being included "
+                "when a class is split into chunks."
+            )
+
+
+def test_decorator_included_when_class_fits_in_single_chunk():
+    """
+    When a class with a decorator fits entirely in one chunk,
+    the decorator should be included with the class.
+    """
+    raw = [
+        "1: @Fluent",
+        "2: public class MyFoo {",
+        "3:   public func smallFunc(...)",
+        "4: }",
+    ]
+
+    # max_chunk_size=10 ensures everything fits in one chunk
+    doc = SectionedDocument(lines=raw, base_indent=0, max_chunk_size=10)
+
+    assert len(doc) == 1, "Expected the document to fit in a single section"
+
+    section_text = str(doc.sections[0])
+    assert "@Fluent" in section_text, "Decorator should be included in the section"
+    assert "public class MyFoo" in section_text, "Class declaration should be included"
+    assert "smallFunc" in section_text, "Method should be included"
+
+
+def test_class_without_decorator_subdivision():
+    """
+    When a class without decorators is split into multiple chunks,
+    each chunk should correctly include the class declaration.
+    This tests the baseline behavior without decorators.
+    """
+    raw = [
+        "1: public class MyFoo {",
+        "2:   public func bigFunc1(...)",
+        "3:   public func bigFunc2(...)",
+        "4:   public func bigFunc3(...)",
+        "5: }",
+    ]
+
+    doc = SectionedDocument(lines=raw, base_indent=0, max_chunk_size=3)
+
+    # Should be split into multiple sections
+    assert len(doc) > 1, "Expected the document to be split into multiple sections"
+
+    # Each section that has methods should also have the class declaration
+    for i, section in enumerate(doc.sections):
+        section_text = str(section)
+        if "bigFunc" in section_text:
+            assert "public class MyFoo" in section_text, (
+                f"Section {i + 1} contains methods but is missing class declaration.\n"
+                f"Section content:\n{section_text}"
+            )
+
+
+def test_multiple_decorators_included_when_class_is_subdivided():
+    """
+    When a class has multiple decorators and is split into chunks,
+    ALL decorators should be included in each chunk.
+
+    This is an extension of the single-decorator hypothesis test.
+    """
+    raw = [
+        "1: @Fluent",
+        "2: @ServiceClient",
+        "3: public class MyFoo {",
+        "4:   public func bigFunc1(...)",
+        "5:   public func bigFunc2(...)",
+        "6: }",
+    ]
+
+    doc = SectionedDocument(lines=raw, base_indent=0, max_chunk_size=3)
+
+    assert len(doc) > 1, "Expected the document to be split into multiple sections"
+
+    for i, section in enumerate(doc.sections):
+        section_text = str(section)
+
+        if "public class MyFoo" in section_text:
+            assert "@Fluent" in section_text, (
+                f"Section {i + 1} is missing '@Fluent' decorator.\n" f"Section content:\n{section_text}"
+            )
+            assert "@ServiceClient" in section_text, (
+                f"Section {i + 1} is missing '@ServiceClient' decorator.\n" f"Section content:\n{section_text}"
+            )
+
+
+def test_multiple_classes_with_decorators():
+    """
+    When multiple classes each have decorators not all fitting in one chunk,
+    each class's chunks should include their respective decorators.
+    """
+    raw = [
+        "1: @Fluent",
+        "2: public class Foo {",
+        "3:   public func fooFunc(...)",
+        "4: }",
+        "5: @Builder",
+        "6: public class Bar {",
+        "7:   public func barFunc(...)",
+        "8: }",
+    ]
+
+    # Large enough to keep each class together
+    doc = SectionedDocument(lines=raw, base_indent=0, max_chunk_size=10)
+
+    # Verify decorators are associated with their classes
+    for section in doc.sections:
+        section_text = str(section)
+
+        if "public class Foo" in section_text:
+            assert "@Fluent" in section_text, f"Foo class section should include @Fluent.\nSection:\n{section_text}"
+
+        if "public class Bar" in section_text:
+            assert "@Builder" in section_text, f"Bar class section should include @Builder.\nSection:\n{section_text}"

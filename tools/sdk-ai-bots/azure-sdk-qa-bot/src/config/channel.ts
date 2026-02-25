@@ -1,15 +1,14 @@
 import { parse } from 'yaml';
-import { BlobServiceClient } from '@azure/storage-blob';
 import { setTimeout } from 'timers/promises';
 import { logger } from '../logging/logger.js';
+import { BlobClientManager } from './blobClient.js';
 import config from './config.js';
-import { getAzureCredential } from '../common/shared.js';
 
 export interface ChannelItem {
   name: string;
   id: string;
-  tenant: string;
-  endpoint: string;
+  tenant?: string;
+  endpoint?: string;
 }
 
 export interface ChannelConfig {
@@ -20,90 +19,57 @@ export interface ChannelConfig {
   channels: ChannelItem[];
 }
 
-// Azure Blob Storage configuration
-const CONTAINER_NAME = 'bot-configs';
-const BLOB_NAME = 'channel.yaml';
-const FALLBACK_RAG_ENDPOINT = 'https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net';
-const FALLBACK_RAG_TENANT = 'azure_sdk_qa_bot';
-
 class ChannelConfigManager {
   private config: ChannelConfig | null = null;
   private lastModified: Date | null = null;
   private isWatching: boolean = false;
   private loadPromise: Promise<void> | null = null;
-  private blobServiceClient: BlobServiceClient | null = null;
-  private readonly maxRetry = 6;
+  private readonly blobClientManager: BlobClientManager;
   private readonly watchInterval: number = 5000; // 5 seconds for blob storage
-  private readonly botId: string;
 
   constructor() {
-    this.botId = config.MicrosoftAppId;
-  }
-
-  /**
-   * Initialize the blob service client
-   */
-  private async initializeBlobClient(): Promise<void> {
-    if (this.blobServiceClient) {
-      return;
-    }
-
-    try {
-      // Extract storage account name from the storage URL
-      const storageUrl = config.azureStorageUrl;
-      if (!storageUrl) {
-        throw new Error('AZURE_STORAGE_URL environment variable is not set');
-      }
-
-      // Convert table storage URL to blob storage URL
-      // From: https://account.table.core.windows.net/
-      // To: https://account.blob.core.windows.net/
-      // TODO: update env file in the future
-      const blobStorageUrl = storageUrl.replace('.table.core.windows.net', '.blob.core.windows.net');
-
-      const credential = await getAzureCredential(this.botId);
-
-      this.blobServiceClient = new BlobServiceClient(blobStorageUrl, credential);
-
-      logger.info('Blob service client initialized', { storageUrl: blobStorageUrl });
-    } catch (error) {
-      logger.error('Failed to initialize blob service client', { error: error.message });
-      throw error;
-    }
+    this.blobClientManager = BlobClientManager.getInstance();
   }
 
   public async initialize(): Promise<void> {
-    await this.initializeBlobClient();
     await this.loadConfig();
+    if (!this.config) {
+      throw new Error('Failed to initialize channel configuration: config could not be loaded from blob storage.');
+    }
     this.startWatching();
   }
 
   /**
-   * Get the current channel configuration
-   * Automatically reloads if file has changed
+   * Get the current channel configuration.
    */
-  public async getConfig(): Promise<ChannelConfig> {
-    await this.checkAndReload();
-    if (!this.config) {
-      throw new Error('Channel configuration is not loaded');
-    }
+  public getConfig(): ChannelConfig {
     return this.config;
   }
 
   /**
-   * Get channel configuration by channel ID
+   * Get channel configuration by channel ID.
    */
-  public async getChannelConfig(channelId: string): Promise<ChannelItem> {
-    const config = await this.getConfig();
+  public getChannelConfig(channelId: string): ChannelItem {
+    // In local environment, return local settings directly if configured
+    if (config.isLocal && config.localRagTenant && config.localBackendEndpoint) {
+      return {
+        name: 'local',
+        id: channelId,
+        tenant: config.localRagTenant,
+        endpoint: config.localBackendEndpoint,
+      };
+    }
+
+    const channelConfig = this.getConfig();
 
     // Find matching channel
-    const channel = config.channels.find((ch) => ch.id === channelId);
+    const channel = channelConfig.channels.find((ch) => ch.id === channelId);
     if (channel) {
       return {
         name: channel.name,
         id: channel.id,
-        tenant: channel.tenant || config.default.tenant,
-        endpoint: channel.endpoint || config.default.endpoint,
+        tenant: channel.tenant ?? channelConfig.default.tenant,
+        endpoint: channel.endpoint ?? channelConfig.default.endpoint,
       };
     }
 
@@ -111,41 +77,25 @@ class ChannelConfigManager {
     return {
       name: 'default',
       id: channelId, // Use the requested channelId
-      tenant: config.default.tenant,
-      endpoint: config.default.endpoint,
+      tenant: channelConfig.default.tenant,
+      endpoint: channelConfig.default.endpoint,
     };
   }
 
   /**
    * Get RAG tenant for a specific channel ID
    */
-  public async getRagTenant(channelId: string): Promise<string> {
-    try {
-      const channelConfig = await this.getChannelConfig(channelId);
-      return channelConfig.tenant;
-    } catch (error) {
-      logger.error(`Failed to get RAG tenant for channel, fallback to ${FALLBACK_RAG_TENANT}`, {
-        channelId,
-        error: error.message,
-      });
-      return FALLBACK_RAG_TENANT;
-    }
+  public getRagTenant(channelId: string): string {
+    const channelConfig = this.getChannelConfig(channelId);
+    return channelConfig.tenant;
   }
 
   /**
    * Get RAG endpoint for a specific channel ID
    */
-  public async getRagEndpoint(channelId: string): Promise<string> {
-    try {
-      const channelConfig = await this.getChannelConfig(channelId);
-      return channelConfig.endpoint;
-    } catch (error) {
-      logger.error(`Failed to get RAG endpoint for channel, fallback to ${FALLBACK_RAG_ENDPOINT}`, {
-        channelId,
-        error: error.message,
-      });
-      return FALLBACK_RAG_ENDPOINT;
-    }
+  public getRagEndpoint(channelId: string): string {
+    const channelConfig = this.getChannelConfig(channelId);
+    return channelConfig.endpoint;
   }
 
   /**
@@ -159,21 +109,11 @@ class ChannelConfigManager {
     }
 
     try {
-      // Blob client should already be initialized during initialize()
-      if (!this.blobServiceClient) {
-        throw new Error('Blob service client not initialized');
-      }
-
-      const containerClient = this.blobServiceClient.getContainerClient(CONTAINER_NAME);
-      const blobClient = containerClient.getBlobClient(BLOB_NAME);
-
-      const properties = await blobClient.getProperties();
-      const currentModified = properties.lastModified;
+      const currentModified = await this.blobClientManager.getBlobLastModifiedTime(config.channelConfigBlobName);
 
       if (!this.lastModified || (currentModified && currentModified > this.lastModified)) {
         logger.info('Channel config blob changed, reloading...', {
-          container: CONTAINER_NAME,
-          blob: BLOB_NAME,
+          blob: config.channelConfigBlobName,
           lastModified: this.lastModified?.toISOString(),
           currentModified: currentModified?.toISOString(),
         });
@@ -182,8 +122,7 @@ class ChannelConfigManager {
     } catch (error) {
       logger.error('Failed to check channel config blob modification time', {
         error: error.message,
-        container: CONTAINER_NAME,
-        blob: BLOB_NAME,
+        blob: config.channelConfigBlobName,
       });
     }
   }
@@ -209,33 +148,18 @@ class ChannelConfigManager {
 
   private async loadConfigCore(): Promise<void> {
     try {
-      // Blob client should already be initialized during initialize()
-      if (!this.blobServiceClient) {
-        throw new Error('Blob service client not initialized');
-      }
-
-      const containerClient = this.blobServiceClient.getContainerClient(CONTAINER_NAME);
-      const blobClient = containerClient.getBlobClient(BLOB_NAME);
-
-      // Download blob content
-      let fileContent: string | undefined;
-      for (let retry = 0; retry < this.maxRetry; retry++) {
-        try {
-          const downloadBlockBlobResponse = await blobClient.download();
-          fileContent = await this.streamToString(downloadBlockBlobResponse.readableStreamBody!);
-          break;
-        } catch (error) {
-          logger.warn(`Failed to download channel configs in ${retry} times.`, { error: error.message });
-          continue;
-        }
-      }
+      // Download blob content using shared blob client
+      const fileContent = await this.blobClientManager.downloadBlobContent(config.channelConfigBlobName);
 
       if (!fileContent) {
-        logger.warn(`Failed to download channel config blob after ${this.maxRetry} attempts, still use old config.`);
+        // If we already have a config, keep using it
+        if (this.config) {
+          logger.warn('Failed to download channel config blob, still use old config.');
+        } else {
+          logger.error('Failed to download channel config blob and no existing config available.');
+        }
         return;
       }
-
-      logger.info('Channel configuration loaded successfully from blob storage', { fileContent });
 
       // Parse YAML content using yaml library with type assertion
       const parsedConfig = parse(fileContent, {
@@ -247,77 +171,29 @@ class ChannelConfigManager {
       this.config = parsedConfig;
 
       // Get blob properties for last modified time
-      const properties = await blobClient.getProperties();
-      this.lastModified = properties.lastModified || new Date();
+      try {
+        const lastModified = await this.blobClientManager.getBlobLastModifiedTime(config.channelConfigBlobName);
+        if (lastModified) {
+          this.lastModified = lastModified;
+        }
+      } catch (metadataError) {
+        logger.warn('Failed to get blob last modified time, will reload on next check', {
+          blob: config.channelConfigBlobName,
+          error: metadataError.message,
+        });
+      }
 
       logger.info('Channel configuration loaded successfully from blob storage', {
-        container: CONTAINER_NAME,
-        blob: BLOB_NAME,
+        blob: config.channelConfigBlobName,
         channelCount: this.config.channels.length,
         defaultTenant: this.config.default.tenant,
       });
-
-      // Validate configuration
-      this.ensureConfig();
     } catch (error) {
       logger.error('Failed to load channel configuration from blob storage', {
         error: error.message,
-        container: CONTAINER_NAME,
-        blob: BLOB_NAME,
+        blob: config.channelConfigBlobName,
       });
-      throw new Error(`Failed to load channel configuration: ${error.message}`);
     }
-  }
-
-  /**
-   * Convert readable stream to string using async/await
-   */
-  private async streamToString(readableStream: NodeJS.ReadableStream): Promise<string> {
-    const chunks: Buffer[] = [];
-
-    for await (const chunk of readableStream) {
-      if (chunk instanceof Buffer) {
-        chunks.push(chunk);
-      } else if (typeof chunk === 'string') {
-        chunks.push(Buffer.from(chunk, 'utf8'));
-      } else {
-        chunks.push(Buffer.from(chunk));
-      }
-    }
-
-    return Buffer.concat(chunks).toString('utf8');
-  }
-
-  /**
-   * Ensure the loaded configuration is valid
-   */
-  private ensureConfig(): void {
-    if (!this.config) {
-      throw new Error('Configuration is null');
-    }
-
-    if (!this.config.default || !this.config.default.tenant || !this.config.default.endpoint) {
-      throw new Error('Default configuration is missing or incomplete');
-    }
-
-    if (!Array.isArray(this.config.channels)) {
-      throw new Error('Channels configuration must be an array');
-    }
-
-    for (const channel of this.config.channels) {
-      if (!channel.id || !channel.name || !channel.tenant || !channel.endpoint) {
-        throw new Error(`Channel configuration is incomplete: ${JSON.stringify(channel)}`);
-      }
-    }
-
-    logger.debug('Channel configuration validation passed');
-  }
-
-  /**
-   * Promise-based delay function using async/await
-   */
-  private async delay(ms: number): Promise<void> {
-    await setTimeout(ms);
   }
 
   /**
@@ -334,8 +210,7 @@ class ChannelConfigManager {
     this.startWatchLoop();
 
     logger.info('Started watching channel config blob', {
-      container: CONTAINER_NAME,
-      blob: BLOB_NAME,
+      blob: config.channelConfigBlobName,
       interval: this.watchInterval,
     });
   }
@@ -358,12 +233,10 @@ class ChannelConfigManager {
     while (this.isWatching) {
       try {
         await this.checkAndReload();
-        await this.delay(this.watchInterval);
       } catch (error) {
         logger.error('Failed to check for config changes', { error: error.message });
-        // Continue watching even if there's an error
-        await this.delay(this.watchInterval);
       }
+      await setTimeout(this.watchInterval);
     }
   }
 

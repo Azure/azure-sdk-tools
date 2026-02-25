@@ -1,4 +1,4 @@
-@import "../shared/mixins.scss";
+@use "../shared/mixins.scss" as *;
 
 #conversation-main-container {
     @include main-content-container;
@@ -7,5 +7,5 @@
 .conversiation-center {
     overflow: auto;
     color: var(--base-text-color);
-    height: calc(100vh - 145px);
+    height: calc(100vh - 115px);
 }

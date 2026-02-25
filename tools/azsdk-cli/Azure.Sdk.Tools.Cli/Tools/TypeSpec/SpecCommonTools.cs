@@ -8,6 +8,7 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
@@ -16,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class SpecCommonTools(IGitHelper gitHelper, ILogger<SpecCommonTools> logger) : MCPTool
     {
         // Even though it's only one command, creating a command group to keep it consistent and easier to add more tools in the future.
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("spec-tool", "TypeSpec project tools for Azure REST API Specs")];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecProject];
 
         // Options
         private readonly Option<string> repoRootOpt = new("--repo-root")
@@ -35,14 +36,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         static readonly string GET_CHANGED_TYPESPEC_PROJECT_SCRIPT = "eng/scripts/Get-TypeSpec-Folders.ps1";
 
         // Commands
-        private const string getModifiedProjectsCommandName = "get-modified-projects";
+        private const string getModifiedProjectsCommandName = "modified-projects";
+        private const string GetModifiedTypeSpecProjectsToolName = "azsdk_get_modified_typespec_projects";
 
         protected override Command GetCommand() =>
-            new(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects") { repoRootOpt, targetBranchOpt };
+            new McpCommand(getModifiedProjectsCommandName, "Get list of modified TypeSpec projects", GetModifiedTypeSpecProjectsToolName) { repoRootOpt, targetBranchOpt };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            await Task.CompletedTask;
             var command = parseResult.CommandResult.Command.Name;
 
             switch (command)
@@ -50,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 case getModifiedProjectsCommandName:
                     var repoRootPath = parseResult.GetValue(repoRootOpt);
                     var targetBranch = parseResult.GetValue(targetBranchOpt);
-                    var modifiedProjects = GetModifiedTypeSpecProjects(repoRootPath, targetBranch);
+                    var modifiedProjects = await GetModifiedTypeSpecProjectsAsync(repoRootPath, targetBranch, ct);
                     modifiedProjects.Message = "Modified TypeSpec projects:";
                     return modifiedProjects;
 
@@ -59,12 +60,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        [McpServerTool(Name = "azsdk_get_modified_typespec_projects"), Description("This tool returns list of TypeSpec projects modified in current branch")]
-        public ObjectCommandResponse GetModifiedTypeSpecProjects(string repoRootPath, string targetBranch = "main")
+        [McpServerTool(Name = GetModifiedTypeSpecProjectsToolName), Description("This tool returns list of TypeSpec projects modified in current branch")]
+        public async Task<ObjectCommandResponse> GetModifiedTypeSpecProjectsAsync(string repoRootPath, string targetBranch = "main", CancellationToken ct = default)
         {
             try
             {
-                var baseCommitSha = gitHelper.GetMergeBaseCommitSha(repoRootPath, targetBranch);
+                var baseCommitSha = await gitHelper.GetMergeBaseCommitShaAsync(repoRootPath, targetBranch, ct);
                 if (string.IsNullOrEmpty(baseCommitSha))
                 {
                     List<string> _out = [$"Failed to get merge base commit SHA for {repoRootPath}"];

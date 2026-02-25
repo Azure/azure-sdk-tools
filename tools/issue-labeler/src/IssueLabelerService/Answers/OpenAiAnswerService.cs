@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Azure.Identity;
+using Azure.Core;
 using Azure.Search.Documents.Agents;
 using Azure.Search.Documents.Agents.Models;
 using IssueLabeler.Shared;
@@ -20,7 +20,7 @@ namespace IssueLabelerService
         private ILogger<AnswerFactory> _logger;
         private readonly KnowledgeAgentRetrievalClient _retrievalClient;
 
-        public OpenAiAnswerService(ILogger<AnswerFactory> logger, RepositoryConfiguration config, TriageRag ragService)
+        public OpenAiAnswerService(ILogger<AnswerFactory> logger, RepositoryConfiguration config, TriageRag ragService, TokenCredential credential)
         {
             _config = config;
             _ragService = ragService;
@@ -28,7 +28,7 @@ namespace IssueLabelerService
             _retrievalClient = new KnowledgeAgentRetrievalClient(
                 endpoint: new Uri(_config.SearchEndpoint),
                 agentName: _config.KnowledgeAgentName,
-                tokenCredential: new DefaultAzureCredential()
+                tokenCredential: credential
             );
         }
 

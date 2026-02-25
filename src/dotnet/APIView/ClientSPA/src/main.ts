@@ -10,6 +10,6 @@ platformBrowserDynamic().bootstrapModule(AppModule)
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/spa/sw.js');
+    navigator.serviceWorker.register('sw.js');
   });
 }

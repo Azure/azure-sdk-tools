@@ -9,12 +9,13 @@ import { readFile, readdir, realpath, stat } from "fs/promises";
 import { pathToFileURL } from "url";
 
 export interface TspLocation {
-  directory: string;
-  commit: string;
-  repo: string;
+  directory?: string;
+  commit?: string;
+  repo?: string;
   additionalDirectories?: string[];
   entrypointFile?: string;
   emitterPackageJsonPath?: string;
+  batch?: string[];
 }
 
 export function resolveTspConfigUrl(configUrl: string): {

@@ -53,6 +53,67 @@ For example, resources in the production East Asia environment would be prefixed
 
 This naming convention ensures consistency and makes it easy to identify which environment and region each resource belongs to.
 
+## Debug in local
+
+we can debug/test bot frontend and backend service locally.
+> **Prerequisites**
+>
+> - Install [Teams Toolkit VS Code Extension](https://marketplace.visualstudio.com/items?itemName=TeamsDevApp.ms-teams-vscode-extension)
+
+### Start Backend Service
+
+```bash
+cd ../azure-sdk-qa-bot-backend
+go mod download
+go run main.go
+```
+
+### Start Bot app
+
+1. Click 'Debug in Microsoft 365 Agents Playground' button in ENVIRONMENT 'testtool'
+   ![debug-local](doc\images\debug-local.png)
+2. choose 'Node.js' -> Run Script: dev:teamsfx:testtool
+
+### Start Microsoft 365 Agents Playground - Simulate Teams Channel
+
+1. Click 'Debug in Microsoft 365 Agents Playground' button in ENVIRONMENT 'testtool'
+2. choose 'Node.js' -> Run Script: dev:teamsfx:launch-teams-testtool
+
+### Test
+
+Type question in Microsoft 365 Agents Playground
+
+## Deploy to Azure
+
+## Environments
+
+`<env>` mentioned below sections can be found in `env/.env.*` as the last part, which indicate the environments for the bot.
+
+- prod: Production environment for Azure SDK team
+- preprod: Pre-production environment for Azure SDK Q&A Bot Testing team
+- dev: Dev environment for Azure SDK QA Bot team
+
+## Deployment
+
+This section describes how to update bot service logic in Azure web app
+
+> **Prerequisites**
+>
+> - Install [Teams Toolkit VS Code Extension](https://marketplace.visualstudio.com/items?itemName=TeamsDevApp.ms-teams-vscode-extension)
+>   - Make sure accounts are logged in in `ACCOUNTS` tab
+>
+> - acr-name-for-env: use the name of the ACR in the same resource group
+> - make sure the required azure resources are deployed:
+>   - resource group
+>   - storage account: store the conversation and feedback
+>   - ACR: Azure container register for docker image
+>   - azure sdk backend service
+
+1. Run `az login`
+2. Run `./scripts/setup-docker-image.ps1 -Tag <env>-<version> -Push -AcrName <acr-name-for-env>` to build and push docker image
+3. Update `DOCKER_IMAGE_TAG` in `.env.<env>`
+4. Click `Provision` button in the extension to update the docker tag.
+
 ## Troubleshooting
 
 The troubleshooting process involves identifying the root cause through logs, fixing issues when necessary by submitting Pull Requests, and using the Teams Toolkit Visual Studio Code Extension for provisioning or deployment. In rare cases, you may need to uninstall and reinstall the bot in Teams.

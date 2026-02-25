@@ -22,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using System.Net.Http;
+using APIViewWeb.Services;
 using Moq;
 using Xunit;
 
@@ -87,6 +88,7 @@ namespace APIViewUnitTests
             var mockCodeFileManager = new Mock<ICodeFileManager>();
             var mockHttpClientFactory = new Mock<IHttpClientFactory>();
             var mockPollingJobQueueManager = new Mock<IPollingJobQueueManager>();
+            var mockCopilotAuth = new Mock<ICopilotAuthenticationService>();
 
             // Initialize ReviewManager with required dependencies
             // SignalR hub is mocked for testing but notifications are handled separately
@@ -108,6 +110,7 @@ namespace APIViewUnitTests
                 mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
+                mockCopilotAuth.Object,
                 _mockLogger.Object);
 
             _testTimestamp = DateTime.UtcNow;
@@ -512,6 +515,7 @@ namespace APIViewUnitTests
             var mockCodeFileManager = new Mock<ICodeFileManager>();
             var mockHttpClientFactory = new Mock<IHttpClientFactory>();
             var mockPollingJobQueueManager = new Mock<IPollingJobQueueManager>();
+            var mockCopilotAuth = new Mock<ICopilotAuthenticationService>();
 
             var disabledReviewManager = new ReviewManager(
                 _mockAuthorizationService.Object,
@@ -530,6 +534,7 @@ namespace APIViewUnitTests
                 mockPollingJobQueueManager.Object,
                 _mockNotificationManager.Object,
                 _mockPullRequestsRepository.Object,
+                mockCopilotAuth.Object,
                 _mockLogger.Object);
 
             var reviewId = "feature-disabled-test";

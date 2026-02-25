@@ -1,10 +1,10 @@
 import path from "path";
-import { SDKType, RunMode } from "../common/types.js";
-import { loadTspConfig, isMgmtPackage } from "../common/utils.js";
+import { SDKType, RunMode, ModularSDKType } from "../common/types.js";
+import { loadTspConfig } from "../common/utils.js";
 import { RunningEnvironment } from "./runningEnvironment.js";
 import { exists } from "fs-extra";
 
-async function isManagementPlaneModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {
+async function isModularClient(specFolder: string, typespecProjectFolder: string[] | string | undefined) {
     if (!typespecProjectFolder) {
         return false;
     }
@@ -16,28 +16,21 @@ async function isManagementPlaneModularClient(specFolder: string, typespecProjec
     const resolvedRelativeTspFolder = Array.isArray(typespecProjectFolder) ? typespecProjectFolder[0] : typespecProjectFolder as string;
     const tspFolderFromSpecRoot = path.join(specFolder, resolvedRelativeTspFolder);
     const tspConfigPath = path.join(tspFolderFromSpecRoot, 'tspconfig.yaml');
-    const mainTspFliePath = path.join(tspFolderFromSpecRoot, 'main.tsp');
     if (!(await exists(tspConfigPath))) {
         return false;
     }
     const tspConfig = await loadTspConfig(tspFolderFromSpecRoot);
-    const isMgmtPackageResult = await exists(mainTspFliePath)? await isMgmtPackage(tspFolderFromSpecRoot): false;
     const isModularLibrary = tspConfig?.options?.['@azure-tools/typespec-ts']?.['is-modular-library'];
-    if (isMgmtPackageResult) {
-        return isModularLibrary?? true;
-    }
-    if (isModularLibrary !== true) {
-        return false;
-    }
-    return true;
+
+    return isModularLibrary !== false;
 }
 
 // TODO: consider add stricter rules for RLC in when update SDK automation for RLC
-function getSDKType(isMgmtWithHLC: boolean, isMgmtWithModular: boolean) {    
+function getSDKType(isMgmtWithHLC: boolean, isModular: boolean) {    
     if (isMgmtWithHLC) {
         return SDKType.HighLevelClient;
     }
-    if (isMgmtWithModular) {
+    if (isModular) {
         return SDKType.ModularClient;
     }
     return SDKType.RestLevelClient;
@@ -80,8 +73,8 @@ export async function parseInputJson(inputJson: any) {
     const runningEnvironment = typeof readmeFiles === 'string' || typeof typespecProjectFolder === 'string' ? RunningEnvironment.SdkGeneration : RunningEnvironment.SwaggerSdkAutomation;
     
     const isMgmtWithHLC = isTypeSpecProject ? false : readmeMd!.includes('resource-manager');
-    const isMgmtWithModular = await isManagementPlaneModularClient(specFolder, typespecProjectFolder);
-    const sdkType = getSDKType(isMgmtWithHLC, isMgmtWithModular);
+    const isModular = await isModularClient(specFolder, typespecProjectFolder);
+    const sdkType = getSDKType(isMgmtWithHLC, isModular);
 
     if (runMode === RunMode.Release || runMode === RunMode.Local) {
         apiVersion = inputJson['apiVersion'];
@@ -108,4 +101,11 @@ export async function parseInputJson(inputJson: any) {
         runMode,
         sdkReleaseType,
     };
+}
+
+export function getModularSDKType(packageDirectory: string) {
+    if (packageDirectory.includes("arm-")) {
+        return ModularSDKType.ManagementPlane;
+    }
+    return ModularSDKType.DataPlane;
 }

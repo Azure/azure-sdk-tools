@@ -387,6 +387,16 @@ class FunctionNode(NodeEntityBase):
         def_line.add_line_marker(self.namespace_id)
         review_lines.append(def_line)
 
+    def is_pylint_error_owner(self, err) -> bool:
+        """Check if this function node is the owner of a pylint error.
+
+        :param PylintError err: The pylint error to check
+        :return: True if this node owns the error, False otherwise
+        :rtype: bool
+        """
+        return err.obj and err.obj.endswith(f".{self.name}")
+
+
     def generate_tokens(self, review_lines):
         """Generates token for function signature
         :param ApiView: apiview

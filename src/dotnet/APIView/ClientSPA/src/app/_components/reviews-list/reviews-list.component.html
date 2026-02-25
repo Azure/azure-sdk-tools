@@ -74,21 +74,21 @@
         </div>
     </ng-template>
 </p-table>
-<p-sidebar [(visible)]="filterSideBarVisible" position="right" [showCloseIcon]="false" styleClass="filters-sidebar">
+<p-drawer [(visible)]="filterSideBarVisible" position="right" [showCloseIcon]="false" styleClass="filters-sidebar">
     <h4>Filter Reviews</h4>
     <ul class="list-group list-group-flush">
         <li class="list-group-item">
             <div class="me-auto">
                 <div class="fw-medium">First Release Aprroval</div>
                 <p-selectButton
-                    class="first-release-approval-filter-button"
+                    styleClass="apiview-toggle-button-group"
                     [options]="firstReleaseApprovalOptions"
                     [(ngModel)]="firstReleaseApproval"
                     (onChange)="updateFirstReleaseApproval($event)"
-                    optionLabel="label" 
+                    optionLabel="label"
                     optionValue="value"
                     [style]="{'margin-top':'8px'}" />
             </div>
         </li>
     </ul>
-</p-sidebar>
+</p-drawer>

@@ -1,0 +1,93 @@
+---
+name: Deduplicate Guidelines Issue
+description: A prompt that determines if a new guidelines issue is a duplicate of existing issues.
+authors: 
+  - marcarro
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 4096
+    response_format: ${file:deduplicate_issue_result_schema.json}
+sample:
+  language: python
+  package_name: azure.widget
+  code: "class WidgetObject:"
+  issue_context: "Guideline about naming conventions is outdated"
+  existing_issues: |
+    [
+      {
+        "number": 123,
+        "title": "Update Python naming conventions guideline",
+        "body": "The guideline at https://azure.github.io/azure-sdk/python_design.html#naming-conventions needs to be updated to reflect new standards for class naming.\n\n**Package:** azure.storage\n**Code:** `class StorageClient:`",
+        "created_at": "2025-10-15"
+      },
+      {
+        "number": 456,
+        "title": "Async guidelines are incomplete",
+        "body": "The async/await guidelines don't cover edge cases for context managers.\n\n**Package:** azure.keyvault\n**Code:** async context manager example",
+        "created_at": "2025-10-20"
+      },
+      {
+        "number": 789,
+        "title": "Error handling guideline conflicts with Azure SDK standards",
+        "body": "The guideline about exception types contradicts the overall Azure SDK error handling patterns.\n\n**Package:** azure.compute\n**Code:** exception handling code",
+        "created_at": "2025-09-12"
+      }
+    ]
+---
+system:
+You are a deduplication agent for Azure SDK guideline issues. Your ONLY job is determining if two issues request changes to the EXACT SAME guideline section.
+
+# CRITICAL RULE: Guideline Identity
+
+Two issues are duplicates if and only if they target the EXACT SAME:
+1. Guideline URL (e.g., `python_design.html#naming-conventions`)
+2. Language scope (Python vs Java vs cross-language)
+
+# Examples
+
+## Duplicates
+
+NEW: "Error handling guideline has wrong exception class"
+     URL: `python_design.html#error-handling`
+EXISTING: "Error handling guideline missing exception hierarchy"
+          URL: `python_design.html#error-handling`
+RESULT: no-op
+
+## NOT Duplicates
+
+NEW: "Async naming conventions unclear"
+     URL: `python_design.html#async-support`
+EXISTING: "Naming conventions allow bad suffixes"
+          URL: `python_design.html#naming-conventions`
+RESULT: create
+
+# Decision Algorithm
+
+For each existing issue (stop at first match):
+  1. Extract guideline URL from NEW issue context (look for patterns like `python_design.html#section-name`)
+  2. Extract guideline URL from EXISTING issue body
+  3. If URLs match exactly AND languages match → return no-op with that issue number
+
+If all existing issues checked with no URL match → compare semantically, if still no match return create
+
+user:
+**NEW ISSUE:**
+language: {{language}}
+package: {{package_name}}
+code: `{{code}}`
+issue context: {{issue_context}}
+
+**EXISTING ISSUES:**
+{{existing_issues}}
+
+Is this new issue a duplicate of any existing issue?

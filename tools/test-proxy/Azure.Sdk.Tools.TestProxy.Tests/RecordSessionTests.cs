@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Xunit;
@@ -749,7 +750,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         private void ContentLengthUpdatedCorrectlyOnEmptyBody(bool isHeadRequest)
         {
-            var sanitizer = new RecordedTestSanitizer();
+            var sanitizer = new BodyKeySanitizer("$..id");
             var entry = new RecordEntry()
             {
                 RequestUri = "http://localhost/",

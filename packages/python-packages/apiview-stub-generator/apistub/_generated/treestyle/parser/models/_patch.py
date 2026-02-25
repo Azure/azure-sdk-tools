@@ -116,14 +116,15 @@ class ApiView(CodeFile):
 
     def add_diagnostic(self, *, err, target_id):
         text = f"{err.message} [{err.symbol}]"
-        self.diagnostics.append(
-            Diagnostic(
-                level=err.level,
-                text=text,
-                help_link_uri=err.help_link,
-                target_id=target_id,
-            )
+        diagnostic = Diagnostic(
+            level=err.level,
+            text=text,
+            help_link_uri=err.help_link,
+            target_id=target_id,
         )
+        # Avoid duplicate diagnostics with the same text and target
+        if not any(d.text == diagnostic.text and d.target_id == diagnostic.target_id for d in self.diagnostics):
+            self.diagnostics.append(diagnostic)
 
     def add_navigation(self, navigation):
         self.navigation.append(navigation)

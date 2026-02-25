@@ -177,10 +177,10 @@ def process_java_example(filepath: str) -> List[JavaExample]:
         lines = f.readlines()
 
     class_name = filename.split(".")[0]
-    return process_java_example_content(lines, class_name)
+    return process_java_example_content(lines, class_name, filepath)
 
 
-def process_java_example_content(lines: List[str], class_name: str) -> List[JavaExample]:
+def process_java_example_content(lines: List[str], class_name: str, filepath: str = None) -> List[JavaExample]:
     java_examples = []
     if is_aggregated_java_example(lines):
         aggregated_java_example = break_down_aggregated_java_example(lines)
@@ -199,8 +199,20 @@ def process_java_example_content(lines: List[str], class_name: str) -> List[Java
                 example_dir, example_filename = path.split(example_filepath)
 
                 try:
+                    sdk_package_path_updated = sdk_package_path
+                    if filepath and sdk_package_path.endswith("/resourcemanager/azure-resourcemanager"):
+                        # special handling for libs included in azure-resourcemanager, as samples in it are copied
+                        # from other packages.
+                        # this behavior can change, if in automation we no longer do such copy.
+                        sdk_package_name = filepath.replace("\\", "/").split("/")[-3]
+                        sdk_package_path_updated = path.join(
+                            sdk_package_path.rstrip("/resourcemanager/azure-resourcemanager"),
+                            sdk_package_name,
+                            "azure-resourcemanager-" + sdk_package_name,
+                        )
+
                     example_dir = examples_dir.try_find_resource_manager_example(
-                        specs_path, sdk_package_path, example_dir, example_filename
+                        specs_path, sdk_package_path_updated, example_dir, example_filename
                     )
                 except NameError:
                     pass
@@ -318,6 +330,15 @@ def create_java_examples(release: Release, sdk_examples_path: str, java_examples
         return True, files
 
 
+def get_package_name(sdk_package: str) -> str:
+    # new release tag would be "com.azure.resourcemanager+azure-resourcemanager-storage_1.0.1-beta.1", while older be "azure-resourcemanager-storage_1.0.1-beta.1"
+    sdk_group_id_prefix = "com.azure.resourcemanager+"
+    if sdk_package.startswith(sdk_group_id_prefix):
+        # remove groupId "com.azure.resourcemanager+" of management-plane lib
+        sdk_package = sdk_package.replace(sdk_group_id_prefix, "", 1)
+    return sdk_package
+
+
 def main():
     global script_path
     global tmp_path
@@ -341,11 +362,13 @@ def main():
     sdk_examples_path = config["sdkExamplesPath"]
     tmp_path = config["tempPath"]
 
+    sdk_package = get_package_name(config["release"]["package"])
+
     release = Release(
         config["release"]["tag"],
-        config["release"]["package"],
+        sdk_package,
         config["release"]["version"],
-        get_sdk_name_from_package(config["release"]["package"]),
+        get_sdk_name_from_package(sdk_package),
     )
 
     java_examples_relative_path = path.join("sdk", release.sdk_name, release.package, "src", "samples")

@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 import os
 
 import dotenv
@@ -31,6 +37,9 @@ VARIABLES_SHARED = {
     "FOUNDRY_API_VERSION",
     "FOUNDRY_KERNEL_MODEL",
     "FOUNDRY_PROJECT_NAME",
+    "GITHUB_APP_KEYVAULT_URL",
+    "GITHUB_APP_KEY_NAME",
+    "GITHUB_APP_ID",
     "OPENAI_EMBEDDING_DIMENSIONS",
     "OPENAI_EMBEDDING_MODEL",
     "OPENAI_NAME",
@@ -69,9 +78,8 @@ class Variables:
         self.keyvault_endpoint = f"https://{self.keyvault_name}.vault.azure.net/"
         self.app_configuration_endpoint = f"https://{self.app_configuration_name}.azconfig.io"
         self.webapp_endpoint = f"https://{self.webapp_name}.azurewebsites.net/"
-        self.foundry_endpoint = (
-            f"https://{self.foundry_account_name}.services.ai.azure.com/api/projects/{self.foundry_project_name}"
-        )
+        self.foundry_endpoint = f"https://{self.foundry_account_name}.services.ai.azure.com"
+        self.foundry_project = self.foundry_project_name
         self.assignee_object_id = os.getenv("ASSIGNEE_OBJECT_ID")
         self.is_staging = is_staging
 

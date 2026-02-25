@@ -1,0 +1,56 @@
+.severity-container {
+  display: inline-block;
+}
+
+.severity-edit-container {
+  display: inline-block;
+}
+
+.severity-badge-editable {
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  transition: opacity 0.2s;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.severity-text {
+  font-weight: 500;
+}
+
+.severity-edit-icon {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.severity-badge {
+  display: inline-block;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+}
+
+// Severity badge colors
+.severity-question {
+  background-color: var(--severity-question-bg);
+  color: var(--severity-question-text);
+}
+
+.severity-suggestion {
+  background-color: var(--severity-suggestion-bg);
+  color: var(--severity-suggestion-text);
+}
+
+.severity-should-fix {
+  background-color: var(--severity-should-fix-bg);
+  color: var(--severity-should-fix-text);
+}
+
+.severity-must-fix {
+  background-color: var(--severity-must-fix-bg);
+  color: var(--severity-must-fix-text);
+}

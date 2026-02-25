@@ -16,166 +16,291 @@ Evals runs can be triggered by the [tools - apiview-copilot - tests](https://dev
 
 ### Locally
 
-Running evaluations will run evals on test files for the language given and give the choice to record the baseline (aka write the results to `evals/results/language`). 
-
 The main evaluation script is `run.py`. Here are the common ways to use it:
 
-1. Run a test workflow file:
+1. **Run all evaluations** (discovers all workflows automatically):
 ```bash
-# APIView workflow
-python run.py --language python --test-file workflows/apiview.yaml
-
-# Mention action workflow
-python run.py --language python --test-file workflows/mention-action.yaml
+python run.py
 ```
 
-2. Change the number of evaluation runs (default is 1):
+2. **Run specific workflow**:
 ```bash
-python run.py --language python --test-file workflows/filter-comment-metadata.yaml --n 5
+python run.py --test-paths tests/mention_action
+```
+
+3. **Run a single test file**:
+```bash
+python run.py --test-paths tests/filter_existing_comment/discard_azure_sdk_repeat_comment.yaml
+```
+
+4. **Change number of evaluation runs** (default is 1):
+```bash
+python run.py --num-runs 5 --test-paths tests/filter_comment_metadata
+```
+
+5. **Use recordings** to speed up runs without making LLM calls:
+```bash
+python run.py --use-recording
 ```
 
 > Note: Due to variability in AI model responses, the number of runs can be increased to get a more stable result (the median of the results is chosen as the final result).
 
-## Workflow Types
+## Evaluation Recordings
 
-- **APIView Review**: Tests the main code review functionality
-- **Prompt Workflows**: Tests specific prompts in isolation
+The `--use-recording` flag records LLM responses to speed up repeated runs and reduce API costs.
 
-The evaluation framework supports different types of workflows
+### How to Use
 
-## Prompt Workflows
-For testing specific prompts with structured inputs and outputs. Examples:
-- `filter-comment-metadata.yaml` - Tests comment filtering based on exceptions and context
-- `mention-action.yaml` - Tests conversation action parsing  
-- `thread-resolution-action.yaml` - Tests thread resolution actions
+```bash
+# First run: makes LLM calls and saves responses to record
+python run.py --use-recording --test-paths tests/mention_action
 
-Workflow YAML structure:
-```yaml
-name: workflow-name
-kind: prompt
+# Subsequent runs: uses recorded responses (no LLM calls)
+python run.py --use-recording --test-paths tests/mention_action
 ```
 
-## Workflow vs Test File Relationship
+### How It Works
 
-- **Workflow YAML files** (`workflows/`) define how to run evaluations and which prompts to test
-- **Test JSONL files** (`tests/python/`) contain the actual test case data  
-- **Prompty files** (`prompts/`) contain the prompts being evaluated
+- **Recordings location**: `evals/recordings/` (automatically created, gitignored)
+- **Fresh vs recorded**: If a test's recording exists, it's loaded; otherwise LLM is called
+- **Modifying tests**: If you change a test file, delete its recording in `evals/recordings/` to force a fresh LLM call on next run, or don't use `--use-recording` to always get fresh results.
 
-The workflow YAML orchestrates the relationship between these components.
+### Benefits
 
+- Speed up debugging iterations (no waiting for LLM calls)
+- Reduce Azure OpenAI API costs during development
+- Get consistent results for unchanged tests
+
+## Workflow Structure
+
+```
 evals/
-├── workflows/          # YAML files defining what to test
-├── tests/python/       # JSONL files with test cases
-├── results/            # Test outputs
-prompts/                # Prompty files being tested
+├── tests/                      # All test workflows
+│   ├── <workflow_name>/        # Each workflow has its own directory
+│   │   ├── test-config.yaml    # Workflow configuration (name, kind)
+│   │   └── *.yaml              # Individual test case files
+│   ├── mention_action/
+│   ├── filter_comment_metadata/
+│   ├── deduplicate_parser_issue/
+│   └── ...
+├── recordings/                 # Recorded LLM responses (when using --use-recording)
+├── run.py                      # Main entry point
+└── _custom.py                  # Target functions for workflows
+prompts/                        # Prompty files being tested (in parent dir)
+```
+
+### Test File Organization
+
+- **`test-config.yaml`**: Defines the workflow name and kind. Kind will usually be `prompt` as `apiview` kind is deprecated.
+- **Individual test files**: Each `.yaml` file contains one test case
+- **Discovery**: The runner automatically finds all tests in workflow directories
+
+Examples:
+- `filter-comment-metadata` - Tests comment filtering based on exceptions and context
+- `mention-action` - Tests conversation action parsing  
+- `thread-resolution-action` - Tests thread resolution actions
 
 
 ## Create New Evals
 
-For each test, the structure varies based on the specific workflow. For example, filter-comment-metadata tests use:
+### Test File Format
 
-```json
-{
-    "testcase": "filter_missing_async_client",
-    "language": "Python", 
-    "exceptions": "1. DO NOT make comments...\n2. DO NOT comment...",
-    "outline": "## namespace azure.widget\n- WidgetClient\n...",
-    "content": "{\"line_no\": 4, \"bad_code\": \"...\", \"comment\": \"...\"}",
-    "response": "{\"action\": \"DISCARD\", \"rationale\": \"...\"}"
-}
+Each test case is stored in its own YAML file. The runner automatically discovers and loads all test files in a workflow directory.
+
+**Example test file** (`tests/mention_action/update_kb_no_guideline.yaml`):
+```yaml
+testcase: mention_action_update_kb_no_guideline
+language: python
+package_name: azure.widgets
+code: "class WidgetObject:"
+other_comments: |
+  [
+    {
+      "CreatedBy": "azure-sdk",
+      "CommentText": "This name is unnecessarily verbose.\n\nSuggestion: `Widget`.",
+      "Downvotes": ["tjprescott"],
+      "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
+    },
+    {
+      "CreatedBy": "noodle",
+      "CommentText": "We discussed it internally and want to keep it as is because we used that name in the JS SDK and we want to keep them the same.",
+      "CreatedOn": "2025-03-18T13:15:19.1494832-04:00"
+    },
+    {
+      "CreatedBy": "tjprescott",
+      "CommentText": "@noodle, sorry, that's not a valid reason. If you wanted the names to be consistent you should have had them reviewed at the same time. The suffix `Object` adds no useful information and just results in a longer name.",
+      "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+    }
+  ]
+trigger_comment: |
+  {
+    "CreatedBy": "tjprescott",
+    "CommentText": "@azure-sdk, your comment is correct, but your suggestion was bad because it was actually more verbose! The name should be `Widget`.",
+    "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+  }
+response:
+  action: update_kb
+  reasoning: |
+    The architect indicates that while the copilot's comment about verbosity was correct, the suggestion itself was flawed and more verbose than needed.
+    This suggests the copilot's suggestion logic needs improvement and should be recorded in the Knowledge Base.
 ```
 
-The fields should match the parameters expected by the target function in `_custom.py`.
+**Required fields:**
+- `testcase`: Unique identifier for the test (used for recording and reporting)
+- `response`: Expected output (can be YAML object or JSON string)
+- Other fields: Must match parameters in your target function in `_custom.py`
 
-`testcase` is the name of the test case and ideally says something about what's being tested.
+The `testcase` field is used for:
+- Identifying tests in output
+- Caching results (when using `--use-recording`)
+- Organizing test results
 
-`language` is the programming language being tested (e.g., "Python").
+**Another example** (`tests/filter_comment_metadata/filter_comment_metadata.yaml`):
 
-`exceptions` contains the list of exception rules that should not be violated when making comments.
+```yaml
+testcase: filter_missing_async_client
+language: Python
+exceptions: |
+  1. DO NOT make comments that don't actually identify a problem
+  2. DO NOT comment on the `send_request` method
+  ...
+outline: |
+  ## namespace azure.widget
+  - WidgetClient
+    - get
+    - create
+    - update
+    - delete
+    - list
 
-`outline` provides the API structure outline that shows what elements exist in the codebase.
+  ## namespace azure.widget.aio
+  - WidgetClient
+    - get
+    - create
+    - update
+    - delete
+    - list
+content: |
+  {
+    "line_no": 4,
+    "bad_code": "class azure.widget.WidgetClient():",
+    "suggestion": "",
+    "comment": "You must have an async client named `WidgetClient` in the azure.widget.aio namespace.",
+    "source": "guideline"
+  }
+response:
+  action: DISCARD
+  rationale: The comment asserts that an async client named 'WidgetClient' is missing in the azure.widget.aio namespace, but the outline clearly shows that WidgetClient exists in that namespace.
+```
 
-`content` is the JSON string containing the proposed comment to be evaluated (with fields like line_no, bad_code, comment, etc.).
+All fields must match the parameters expected by the target function in `_custom.py`.
 
-`response` contains the expected JSON output with the action (KEEP/DISCARD) and rationale.
+### Creating Tests
 
-### Creating APIView Review Tests
-
-To add a new APIView review test case, the following workflow is recommended:
-
-1. Use the "Copy review text" button in the APIview UI to copy the text code.
-2. Apply the desired guideline violations that you want to test to the code.
-3. Run the CLI to generate an expected output: `python cli.py review generate --language <language> --path <path-apiview-text> --model <model-name>`
-4. Once happy with the expected output, you can write the new test case by running the following command:
-
+1. **Create a workflow directory** in `evals/tests/`:
 ```bash
-python cli.py eval create --language python --apiview-path path/to/apiview.txt --expected-path path/to/expected.json --test-file path/to/test.jsonl --name testcase_name
+mkdir evals/tests/your_workflow_name
 ```
 
-### Creating Workflow Tests
+2. **Create `test-config.yaml`**:
+```yaml
+name: your-workflow-name 
+kind: prompt
+```
 
-For workflow-based evaluations:
+3. **Create test case files** (one YAML file per test case):
+```yaml
+testcase: descriptive_test_name
+param1: value1
+param2: value2
+response: '{"expected": "output"}'
+```
 
-1. First create your test case data in the appropriate JSONL format for your workflow
-2. Ensure your workflow YAML points to the correct test file and prompty
-3. Create a target function for your workflow in `_custom.py`:
+4. **Create a target function** in `evals/_custom.py`:
 
 ```python
-def _your_workflow_name(param1: str, param2: str, ...):
-    """Target function for your workflow."""
+def _your_workflow_name(testcase: str, param1: str, param2: str, response: str):
+    """Target function for your-workflow-name."""
     prompty_path = Path(__file__).parent.parent / "prompts" / "your_folder" / "your_prompt.prompty"
     prompty_kwargs = {
         "param1": param1,
         "param2": param2,
-        # Map all parameters from JSONL test data
+        # Map parameters to prompty (exclude testcase and response as they're for evaluation framework)
     }
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 ```
 
-4. Register your function in the `workflow_targets` dictionary in the `PromptWorkflowEvaluator.target_function` property:
-
+5. **Add your target function** to the registry in `evals/_custom.py` under an evaluator's `target_function` callable.
 ```python
-workflow_targets = {
-    "your-workflow-name": _your_workflow_name,
-    # existing workflows...
-}
+# Under PromptyEvaluator, PromptySummaryEvaluator, or similar
+@property
+def target_function(self) -> callable:
+    workflow_targets = {
+        "mention_action": _mention_action_workflow,
+        "thread_resolution_action": _thread_resolution_action_workflow,
+        "filter_comment_metadata": _filter_comment_metadata,
+        "filter_existing_comment": _filter_existing_comment,
+        "deduplicate_parser_issue": _deduplicate_parser_issue,
+        "deduplicate_guidelines_issue": _deduplicate_guidelines_issue,
+        # Add more workflows as needed
+    }
 ```
 
-5. Test the workflow using: `python run.py --test-file workflows/your-workflow.yaml`
+**Important:** All test file fields must match the target function parameters exactly.
+
+5. **Run your workflow**:
+```bash
+python run.py --test-paths tests/your_workflow_name
+```
 
 **Pattern Notes:**
-- Function name should start with `_`
-- Parameters must match the fields in your JSONL test data
+- Function name starts with `_` and uses underscores
+- Parameters must match test file fields exactly
 - Use `prompty.execute()` to run the prompt with mapped parameters
 
 ## Editing Test Cases
 
-You may want to edit a test case after it has been created. This can be done by running the `deconstruct` command, which will break down the test case into separate files for easier editing.
+To edit a test case, simply open the YAML file directly in your editor and make changes:
 
 ```bash
-python cli.py eval deconstruct --language python --test-file path/to/test.jsonl --test-case testcase_name
+# Open and edit the test file
+code evals/tests/mention_action/update_kb_no_guideline.yaml
+
+# Run the test to verify your changes
+python run.py --test-paths tests/mention_action/update_kb_no_guideline.yaml
 ```
 
-This will create:
-- `tests/python/testcase_name.txt` - containing the APIview txt code
-- `tests/python/testcase_name.json` - containing the expected JSON results
-
-Edit the test files accordingly and then add the test case back by running the `eval create` command again, this time adding the `--overwrite` argument.
+The YAML format makes it easy to update test inputs, expected responses, and other parameters without using additional tools.
+Remember, if you change fields in the test file, they must be consistent with the target function parameters in `_custom.py`.
 
 ## Results and Baselines
 
-- Test results are stored in `results/<language>/`
-- Overall coverage is calculated when all tests are ran and stored in `results/<language>/coverage.json`
-- After running evals, you can choose to establish a new baseline by answering `y` after the evals finish.
+- Test results are displayed in the console after each run
+- Results include overall accuracy score and per-test results with visual indicators (✅/❌)
 
 ## Evaluation Metrics
 
-Current measures:
-- Exact matches (right rule, right line)
-- Fuzzy matches (right rule, wrong line (but close))
-- False positives
-- Groundedness (adherence to guidelines)
-- Similarity to expected responses
+Evaluations measure the correctness and quality of prompt outputs:
 
-Weights are applied to each metric to calculate the overall score.
+### For Action-Based Workflows
+(e.g., `mention_action`, `thread_resolution_action`, `filter_comment_metadata`)
+
+- **Action Correctness**: Whether the model selected the correct action (e.g., `update_kb`, `DISCARD`, `KEEP`)
+- **Rationale Similarity**: Semantic similarity score (0-100%) between the expected and actual reasoning, using Azure AI's `SimilarityEvaluator`
+- **Final Score**: 
+  - If action is correct: similarity score (0-100%)
+  - If action is incorrect: 0%
+
+### For Summarization Workflows
+(e.g., `mention_summarize`)
+
+- **Similarity Score**: Semantic similarity between expected and actual summaries (0-100%)
+- **Success Threshold**: Scores above 70% are considered successful
+
+### Overall Scoring
+
+For each workflow run:
+- Each test case is scored individually (0-100%)
+- Overall accuracy is the average of all test case scores
+- When multiple runs are performed (`--num-runs > 1`), the **median** run by accuracy is selected as the final result

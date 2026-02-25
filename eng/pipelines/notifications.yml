@@ -30,6 +30,8 @@ stages:
           PathPrefix: 'cpp'
         Go:
           PathPrefix: 'go'
+        Rust:
+          PathPrefix: 'rust'
         AzDev:
           PathPrefix: 'azure-dev'
         Public:

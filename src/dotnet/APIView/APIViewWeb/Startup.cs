@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -19,7 +20,6 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.MiddleWare;
 using APIViewWeb.Repositories;
-using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -36,8 +36,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
-using Newtonsoft.Json.Linq;
 using APIViewWeb.Services;
+using Microsoft.AspNetCore.ResponseCompression;
 
 namespace APIViewWeb
 {
@@ -72,6 +72,23 @@ namespace APIViewWeb
             services.AddApplicationInsightsTelemetry();
             services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
             services.AddAzureAppConfiguration();
+            services.AddMemoryCache();
+
+            services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = true;
+                options.MimeTypes = new[] { "application/json" };
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+            });
+            services.Configure<BrotliCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
+            services.Configure<GzipCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -99,6 +116,7 @@ namespace APIViewWeb
             });
 
             services.AddHttpClient();
+            services.AddSingleton<ICopilotAuthenticationService, CopilotAuthenticationService>();
             services.AddSingleton<IPollingJobQueueManager, PollingJobQueueManager>();
             services.AddSingleton<ICopilotJobProcessor, CopilotJobProcessor>();
             services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
@@ -111,10 +129,16 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
             services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
+            services.AddSingleton<ICosmosPermissionsRepository, CosmosPermissionsRepository>();
+            services.AddSingleton<ICosmosProjectRepository, CosmosProjectRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
 
+            services.AddSingleton<IDiagnosticCommentService, DiagnosticCommentService>();
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
+            services.AddSingleton<IProjectsManager, ProjectsManager>();
+            services.AddSingleton<IReviewSearch, ReviewSearch>();
+            services.AddSingleton<IAutoReviewService, AutoReviewService>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
             services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
@@ -123,11 +147,9 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
+            services.AddSingleton<IPermissionsManager, PermissionsManager>();
+            services.AddSingleton<IGitHubClientFactory, GitHubClientFactory>();
             services.AddSingleton<UserProfileCache>();
-
-            // Background services
-            // TODO: Re-enable when auto-approval feature is needed
-            // services.AddHostedService<NamespaceAutoApprovalService>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
@@ -249,11 +271,12 @@ namespace APIViewWeb
                                 response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
                                 response.EnsureSuccessStatusCode();
 
-                                var orgs = JArray.Parse(await response.Content.ReadAsStringAsync());
+                                var orgsJson = await response.Content.ReadAsStringAsync();
+                                using var orgsDoc = JsonDocument.Parse(orgsJson);
                                 var orgNames = new StringBuilder();
 
                                 bool isFirst = true;
-                                foreach (var org in orgs)
+                                foreach (var org in orgsDoc.RootElement.EnumerateArray())
                                 {
                                     if (isFirst)
                                     {
@@ -263,7 +286,10 @@ namespace APIViewWeb
                                     {
                                         orgNames.Append(",");
                                     }
-                                    orgNames.Append(org["login"]);
+                                    if (org.TryGetProperty("login", out var loginProperty))
+                                    {
+                                        orgNames.Append(loginProperty.GetString());
+                                    }
                                 }
 
                                 string msEmail = await GetMicrosoftEmailAsync(context);
@@ -305,11 +331,21 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
             services.AddSingleton(x =>
             {
-                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential());
+                var cosmosClientOptions = new CosmosClientOptions
+                {
+                    UseSystemTextJsonSerializerWithOptions = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                        Converters = { new JsonStringEnumConverter() }
+                    }
+                };
+                
+                return new CosmosClient(Configuration["CosmosEndpoint"], CredentialProvider.GetAzureCredential(), cosmosClientOptions);
             });
             services.AddSingleton(x =>
             {
-                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), new DefaultAzureCredential());
+                return new BlobServiceClient(new Uri(Configuration["StorageAccountUrl"]), CredentialProvider.GetAzureCredential());
             });
 
             services.AddHostedService<ReviewBackgroundHostedService>();
@@ -326,6 +362,8 @@ namespace APIViewWeb
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
                 options.MaximumReceiveMessageSize =  1024 * 1024;
+            }).AddJsonProtocol(options => {
+                options.PayloadSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
             services.AddSwaggerGen(options =>
             {
@@ -359,13 +397,16 @@ namespace APIViewWeb
             var respString = await response.Content.ReadAsStringAsync();
             try
             {
-                var emails = JArray.Parse(respString);
-                foreach (var email in emails)
+                using var emailsDoc = JsonDocument.Parse(respString);
+                foreach (var email in emailsDoc.RootElement.EnumerateArray())
                 {
-                    var address = email["email"]?.Value<string>();
-                    if (address != null && address.EndsWith("@microsoft.com", StringComparison.OrdinalIgnoreCase))
+                    if (email.TryGetProperty("email", out var emailProperty))
                     {
-                        return address;
+                        var address = emailProperty.GetString();
+                        if (address != null && address.EndsWith("@microsoft.com", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return address;
+                        }
                     }
                 }
                 return null;
@@ -391,6 +432,7 @@ namespace APIViewWeb
             }
 
             app.UseHttpsRedirection();
+            app.UseResponseCompression();
             app.UseStaticFiles();
 
             app.UseRouting();

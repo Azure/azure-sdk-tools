@@ -6,7 +6,6 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.WebApi;
-using Newtonsoft.Json;
 using Polly;
 using System;
 using System.Collections.Generic;
@@ -14,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -87,8 +87,8 @@ namespace APIViewWeb.Repositories
         private async Task<string> getAccessToken()
         {
             // APIView deployed instances uses managed identity to authenticate requests to Azure DevOps.
-            // For local testing, VS will use developer credentials to create token
-            var credential = new DefaultAzureCredential();
+            // For local testing, CLI-based credentials are used to create token
+            var credential = Helpers.CredentialProvider.GetAzureCredential();
             var tokenRequestContext = new TokenRequestContext(VssAadSettings.DefaultScopes);
             var token = await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
             return token.Token;
@@ -139,7 +139,7 @@ namespace APIViewWeb.Repositories
             {
                 Definition = definition,
                 Project = project,
-                Parameters = JsonConvert.SerializeObject(reviewDetailsDict)
+                Parameters = JsonSerializer.Serialize(reviewDetailsDict)
             });
         }
 

@@ -1,8 +1,11 @@
 // Azure Table
 @secure()
-param azureStorageUrl string
-@secure()
 param azureTableNameForConversation string
+
+// Azure Blob
+param blobContainerName string
+param channelConfigBlobName string
+param tenantConfigBlobName string
 
 // RAG
 @secure()
@@ -137,14 +140,28 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'RAG_SERVICE_SCOPE'
           value: ragScope
         }
-        // Azure Table
+        // Azure Storage Account
         {
-          name: 'AZURE_STORAGE_URL'
-          value: azureStorageUrl
+          name: 'STORAGE_ACCOUNT_NAME'
+          value: storageAccountName
         }
+        // Azure Table
         {
           name: 'AZURE_TABLE_NAME_FOR_CONVERSATION'
           value: azureTableNameForConversation
+        }
+        // Azure Blob
+        {
+          name: 'BLOB_CONTAINER_NAME'
+          value: blobContainerName
+        }
+        {
+          name: 'CHANNEL_CONFIG_BLOB_NAME'
+          value: channelConfigBlobName
+        }
+        {
+          name: 'TENANT_CONFIG_BLOB_NAME'
+          value: tenantConfigBlobName
         }
         {
           name: 'AZURE_CLIENT_ID'
@@ -283,7 +300,7 @@ resource serverErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   location: 'Global'
   properties: {
     description: 'Alert when server returns 5xx HTTP errors'
-    severity: 0  // Critical - because 5xx errors indicate server failure
+    severity: 3
     enabled: true
     scopes: [
       webApp.id
@@ -358,7 +375,7 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   location: 'Global'
   properties: {
     description: 'Alert when health check fails (server is down or not responding)'
-    severity: 0
+    severity: 3
     enabled: true
     scopes: [
       healthCheckWebTest.id

@@ -4,31 +4,61 @@
 # license information.
 # --------------------------------------------------------------------------
 
+
 """
 Module for handling @mention requests in APIView Copilot.
+Refactored to use modular workflow registry and base class pattern.
 """
 
 import json
-import os
-import uuid
 
-import prompty
-import prompty.azure
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from src._database_manager import get_database_manager
-from src._models import Example, Guideline, Memory
-from src._search_manager import SearchManager
-from src._utils import get_prompt_path
+from src._utils import run_prompty
+from src.mention._open_guidelines_issue_workflow import OpenGuidelinesIssueWorkflow
+from src.mention._open_parser_issue_workflow import OpenParserIssueWorkflow
+from src.mention._update_kb_workflow import UpdateKnowledgeBaseWorkflow
+
+# Add any new workflows here
+WORKFLOW_REGISTRY = {
+    "update_kb": UpdateKnowledgeBaseWorkflow,
+    "open_parser_issue": OpenParserIssueWorkflow,
+    "open_guidelines_issue": OpenGuidelinesIssueWorkflow,
+}
+
+
+def _parse_conversation_action(
+    *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str]
+):
+    inputs = {
+        "language": language,
+        "code": code,
+        "package_name": package_name,
+        "trigger_comment": trigger_comment,
+        "other_comments": other_comments,
+    }
+    raw_results = run_prompty(folder="mention", filename="parse_conversation_action", inputs=inputs)
+    try:
+        results = json.loads(raw_results)
+        return results
+    except Exception:
+        return {}
+
+
+def _run_workflow(workflow_name, **kwargs):
+    workflow_cls = WORKFLOW_REGISTRY.get(workflow_name)
+    if not workflow_cls:
+        raise ValueError(f"Unknown workflow: {workflow_name}")
+    workflow = workflow_cls(**kwargs)
+    return workflow.run()
 
 
 def handle_mention_request(*, comments: list[str], language: str, package_name: str, code: str) -> str:
     """
-    Handles the @mention request by parsing the comments and executing the plan.
+    Central entry point for @mention requests. Parses the action and dispatches to the appropriate workflow.
     """
     if not comments:
         return "No comments provided."
 
-    trigger_comment = comments[-1:]  # Get the last comment to trigger the mention
+    trigger_comment = comments[-1]  # Get the last comment to trigger the mention
     other_comments = comments[:-1]  # All other comments
     action_results = _parse_conversation_action(
         language=language,
@@ -38,150 +68,17 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
         other_comments=other_comments,
     )
     action = action_results.get("action")
-    if action == "update_kb":
-        plan = _parse_conversation_plan(
+    reasoning = action_results.get("reasoning", "")
+    if action == "no_action":
+        return f"No action required: {reasoning}"
+    if action in WORKFLOW_REGISTRY:
+        return _run_workflow(
+            action,
             language=language,
             code=code,
             package_name=package_name,
             trigger_comment=trigger_comment,
             other_comments=other_comments,
-            reasoning=action_results.get("reasoning", ""),
+            reasoning=reasoning,
         )
-        results = _execute_plan(plan=plan)
-        return _summarize_results(results)
-    elif action == "no_action":
-        return f"No action required: {action_results.get('reasoning')}"
-    else:
-        return "Something went wrong!"
-
-
-def _parse_conversation_action(
-    *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str]
-):
-    prompty_file = "parse_conversation_action.prompty"
-    prompt_path = get_prompt_path(folder="mention", filename=prompty_file)
-    inputs = {
-        "language": language,
-        "code": code,
-        "package_name": package_name,
-        "trigger_comment": trigger_comment,
-        "other_comments": other_comments,
-    }
-    raw_results = prompty.execute(prompt_path, inputs=inputs)
-    try:
-        results = json.loads(raw_results)
-        return results
-    except json.JSONDecodeError:
-        return raw_results
-
-
-def _parse_conversation_plan(
-    *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str], reasoning: str
-):
-    prompty_file = "parse_conversation_to_memory.prompty"
-    prompt_path = get_prompt_path(folder="mention", filename=prompty_file)
-    if not os.path.exists(prompt_path):
-        print(f"Prompt file {prompt_path} does not exist.")
-        return
-    inputs = {
-        "language": language,
-        "code": code,
-        "package_name": package_name,
-        "trigger_comment": trigger_comment,
-        "other_comments": other_comments,
-        "reasoning": reasoning,
-    }
-    raw_results = prompty.execute(prompt_path, inputs=inputs)
-    try:
-        results = json.loads(raw_results)
-        return results
-    except json.JSONDecodeError:
-        return raw_results
-
-
-def _execute_plan(*, plan: dict):
-    """
-    Executes the plan generated by the agent.
-    """
-    db_manager = get_database_manager()
-    guideline_ids = plan.get("guideline_ids", [])
-    raw_memory = plan.get("memory", {})
-    raw_memory["source"] = "mention_agent"
-    # TODO: remove once we implement service silos
-    raw_memory["service"] = None
-    raw_examples = raw_memory.pop("related_examples", [])
-
-    memory = Memory(**raw_memory)
-    old_memory_id = memory.id
-    memory.id = str(uuid.uuid4())  # Generate a new UUID for the memory
-    memory_id = memory.id
-    examples = [Example(**ex) for ex in raw_examples]
-    # TODO: Remove once we implement service silos
-    for ex in examples:
-        ex.service = None
-    for example in examples:
-        # ensure the new memory ID is propagated to the example IDs
-        example.id = example.id.replace(old_memory_id, memory_id)
-        example.memory_ids = [memory_id]
-        memory.related_examples.append(example.id)  # pylint: disable=no-member
-
-    guidelines = []
-    for guideline_id in guideline_ids:
-        try:
-            # strip the prefix from the guideline ID if it exists
-            prefix = "https://azure.github.io/azure-sdk/"
-            if guideline_id.startswith(prefix):
-                guideline_id = guideline_id[len(prefix) :]
-            guideline = Guideline(**db_manager.guidelines.get(guideline_id))
-            guideline.related_memories.append(memory_id)  # pylint: disable=no-member
-            memory.related_guidelines.append(guideline_id)  # pylint: disable=no-member
-            guidelines.append(guideline)
-        except CosmosResourceNotFoundError:
-            continue  # Guideline not found, skip it
-        except Exception as e:
-            print(f"Error retrieving guideline {guideline_id}: {e}")
-            continue
-
-    success = []
-    failures = {}
-
-    # now update all modified objects in the database
-    for guideline in guidelines:
-        try:
-            success.append(db_manager.guidelines.upsert(guideline.id, data=guideline, run_indexer=False))
-        except Exception as e:
-            print(f"Error updating guideline {guideline.id}: {e}")
-            failures[guideline.id] = str(e)
-    for example in examples:
-        try:
-            success.append(db_manager.examples.upsert(example.id, data=example, run_indexer=False))
-        except Exception as e:
-            print(f"Error updating example {example.id}: {e}")
-            failures[example.id] = str(e)
-    try:
-        success.append(db_manager.memories.upsert(memory.id, data=memory, run_indexer=False))
-    except Exception as e:
-        print(f"Error updating memory {memory.id}: {e}")
-        failures[memory.id] = str(e)
-    SearchManager.run_indexers()
-    return {"success": success, "failures": failures}
-
-
-def _summarize_results(results: dict):
-    """
-    Summarizes the results of the plan execution.
-    """
-    prompt_file = "summarize_actions.prompty"
-    prompt_path = get_prompt_path(folder="mention", filename=prompt_file)
-    if not os.path.exists(prompt_path):
-        print(f"Prompt file {prompt_path} does not exist.")
-        return "No prompt file found."
-    inputs = {
-        "results": results,
-    }
-    try:
-        summary = prompty.execute(prompt_path, inputs=inputs)
-        return summary
-    except Exception as e:
-        print(f"Error summarizing results: {e}")
-        return "Error summarizing results."
+    return f"Unknown or unsupported action: {action}"

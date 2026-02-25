@@ -1,4 +1,4 @@
-@import "../shared/mixins.scss";
+@use "../shared/mixins.scss" as *;
 
 .offcanvas-menu {
     height: 100vh;

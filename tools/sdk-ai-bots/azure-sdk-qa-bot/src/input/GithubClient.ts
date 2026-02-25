@@ -19,6 +19,14 @@ export interface PRDetails {
   diff: string;
 }
 
+export interface IssueDetails {
+  title: string;
+  body: string;
+  state: string;
+  labels: string[];
+  comments: CommentEx[];
+}
+
 type User = components['schemas']['nullable-simple-user'];
 
 interface CommentEx {
@@ -37,12 +45,12 @@ export class GithubClient {
     this.octokit = new Octokit({ auth: this.authToken });
   }
 
-  public async getPullRequestDetails(prUrl: string, meta: object): Promise<PRDetails> {
+  public async getPullRequestDetails(prUrl: string, meta: object): Promise<PRDetails | undefined> {
     // 1. Parse owner, repo, pull_number from URL
     const match = prUrl.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
     if (!match) {
       logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, { meta });
-      return { comments: { review: [], issue: [] }, reviews: [], basic: { labels: [], title: '' }, diff: '' };
+      return undefined;
     }
 
     const [, owner, repo, pullNumberStr] = match;
@@ -56,11 +64,44 @@ export class GithubClient {
       this.tryGetPullDiff(owner, repo, pullNumber, prUrl),
     ]);
 
+    if (!basicInfo && !issueComments && !reviewComments && !reviews && !diff) {
+      return undefined;
+    }
+
     return {
       comments: { review: reviewComments, issue: issueComments },
       reviews,
       basic: basicInfo,
       diff,
+    };
+  }
+
+  public async getIssueDetails(issueUrl: string, meta: object): Promise<IssueDetails | undefined> {
+    // Parse owner, repo, issue_number from URL
+    const match = issueUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/);
+    if (!match) {
+      logger.warn(`Invalid Issue URL: ${issueUrl}. Ignore`, { meta });
+      return undefined;
+    }
+
+    const [, owner, repo, issueNumberStr] = match;
+    const issueNumber = Number(issueNumberStr);
+
+    const [basicInfo, comments] = await Promise.all([
+      this.tryGetIssueBasicInfo(owner, repo, issueNumber, issueUrl),
+      this.tryListIssueComments(owner, repo, issueNumber, issueUrl),
+    ]);
+
+    if (!basicInfo && !comments) {
+      return undefined;
+    }
+
+    return {
+      title: basicInfo?.title ?? '',
+      body: basicInfo?.body ?? '',
+      state: basicInfo?.state ?? '',
+      labels: basicInfo?.labels ?? [],
+      comments: comments ?? [],
     };
   }
 
@@ -79,12 +120,36 @@ export class GithubClient {
       const parameters = { owner, repo, pull_number: id };
       const response = await this.octokit.pulls.get(parameters);
       const pr = response.data;
-      const labels = pr.labels.map((lbl) => lbl.name);
+      const labels = pr.labels.map((lbl) => lbl.name).filter((lbl) => !!lbl);
       const title = pr.title;
       return { labels, title };
     } catch (error) {
-      // TODO: use logger instead
-      console.error(`Failed to get basic info for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to get basic info for pull request ${prUrl}: ${error}`);
+      return undefined;
+    }
+  }
+
+  private async tryGetIssueBasicInfo(
+    owner: string,
+    repo: string,
+    id: number,
+    issueUrl: string
+  ): Promise<{ title: string; body: string; state: string; labels: string[] } | undefined> {
+    try {
+      const parameters = { owner, repo, issue_number: id };
+      const response = await this.octokit.issues.get(parameters);
+      const issue = response.data;
+      const labels = issue.labels
+        .map((lbl) => (typeof lbl === 'string' ? lbl : lbl.name))
+        .filter((lbl) => !!lbl);
+      return {
+        title: issue.title,
+        body: issue.body ?? '',
+        state: issue.state,
+        labels,
+      };
+    } catch (error) {
+      logger.error(`Failed to get basic info for issue ${issueUrl}: ${error}`);
       return undefined;
     }
   }
@@ -104,7 +169,7 @@ export class GithubClient {
         .map((d) => this.getCommentWithUser(d.user, d.body));
       return comments;
     } catch (error) {
-      console.error(`Failed to list comments for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to list comments for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }
@@ -124,7 +189,7 @@ export class GithubClient {
         .map((d) => this.getCommentWithUser(d.user, d.body));
       return comments;
     } catch (error) {
-      console.error(`Failed to list review comments for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to list review comments for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }
@@ -144,7 +209,7 @@ export class GithubClient {
       }));
       return reviews;
     } catch (error) {
-      console.error(`Failed to list reviews for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to list reviews for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }
@@ -157,7 +222,7 @@ export class GithubClient {
       const diff = response.data as unknown as string;
       return diff;
     } catch (error) {
-      console.error(`Failed to get diff for pull request ${prUrl}: ${error}`);
+      logger.error(`Failed to get diff for pull request ${prUrl}: ${error}`);
       return undefined;
     }
   }

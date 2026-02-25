@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ApiView;
+using APIView;
 using APIView.Model.V2;
 using APIView.TreeToken;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Managers;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -190,9 +192,7 @@ namespace APIViewUnitTests
             result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
             Assert.NotNull(result);
             Assert.False(result.HasDiff);
-
-            //Verify system generated comments
-            Assert.Equal(15, result.NodeMetaData.Values.Select(v => v.DiagnosticsObj.Count).Sum());
+            Assert.Equal(15, codeFile.Diagnostics.Length);
         }
 
         [Fact]
@@ -393,11 +393,10 @@ namespace APIViewUnitTests
             var method = typeof(CodeFileHelpers).GetMethod("CollectUserCommentsForRow",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
-            var result = (CodePanelRowData)method.Invoke(null, new object[]
-            {
+            var result = (CodePanelRowData)method?.Invoke(null, [
                 codePanelRawData, "regular-element", // This should match the regular comment's ElementId
                 "test-node-hash", codePanelRowData
-            });
+            ]);
 
             Assert.NotNull(result);
 
@@ -405,5 +404,160 @@ namespace APIViewUnitTests
             Assert.NotNull(regularCommentResult);
         }
 
+        [Fact]
+        public void FindDiff_DecoratorOnlyInDiff_ShouldAppearBeforeRelatedClass()
+        {
+            var activeLines = new List<ReviewLine>
+            {
+                new()
+                {
+                    LineId = "MyClass",
+                    Tokens =
+                    [
+                        new ReviewToken("class", TokenKind.Keyword),
+                        new ReviewToken("MyClass", TokenKind.Text)
+                    ]
+                }
+            };
+
+            var diffLines = new List<ReviewLine>
+            {
+                new()
+                {
+                    LineId = "", // Decorators typically don't have LineId
+                    RelatedToLine = "MyClass",
+                    Tokens = [new ReviewToken("@experimental", TokenKind.Text)]
+                },
+                new()
+                {
+                    LineId = "MyClass",
+                    Tokens =
+                    [
+                        new ReviewToken("class", TokenKind.Keyword),
+                        new ReviewToken("MyClass", TokenKind.Text)
+                    ]
+                }
+            };
+
+            List<ReviewLine> result = CodeFileHelpers.FindDiff(activeLines, diffLines);
+            Assert.Equal(2, result.Count);
+
+            ReviewLine decoratorLine = result.FirstOrDefault(l => l.Tokens.Any(t => t.Value == "@experimental"));
+            ReviewLine classLine = result.FirstOrDefault(l => l.LineId == "MyClass"); 
+            Assert.NotNull(decoratorLine);
+            Assert.NotNull(classLine);
+            
+            int decoratorIndex = result.IndexOf(decoratorLine);
+            int classIndex = result.IndexOf(classLine);
+            Assert.True(decoratorIndex < classIndex, 
+                $"Decorator should appear before class. Decorator at index {decoratorIndex}, class at index {classIndex}");
+            Assert.Equal(DiffKind.Removed, decoratorLine.DiffKind);
+        }
+
+        [Fact]
+        public void FindDiff_DecoratorOnlyInActive_ShouldAppearBeforeRelatedClass()
+        {
+            var activeLines = new List<ReviewLine>
+            {
+                new()
+                {
+                    LineId = "",
+                    RelatedToLine = "MyClass",
+                    Tokens = [new ReviewToken("@experimental", TokenKind.Text)]
+                },
+                new()
+                {
+                    LineId = "MyClass",
+                    Tokens =
+                    [
+                        new ReviewToken("class", TokenKind.Keyword),
+                        new ReviewToken("MyClass", TokenKind.Text)
+                    ]
+                }
+            };
+
+            var diffLines = new List<ReviewLine>
+            {
+                new()
+                {
+                    LineId = "MyClass",
+                    Tokens =
+                    [
+                        new ReviewToken("class", TokenKind.Keyword),
+                        new ReviewToken("MyClass", TokenKind.Text)
+                    ]
+                }
+            };
+
+            List<ReviewLine> result = CodeFileHelpers.FindDiff(activeLines, diffLines);
+            Assert.Equal(2, result.Count);
+
+            ReviewLine decoratorLine = result.FirstOrDefault(l => l.Tokens.Any(t => t.Value == "@experimental"));
+            ReviewLine classLine = result.FirstOrDefault(l => l.LineId == "MyClass");
+            Assert.NotNull(decoratorLine);
+            Assert.NotNull(classLine);
+            
+            int decoratorIndex = result.IndexOf(decoratorLine);
+            int classIndex = result.IndexOf(classLine);
+            Assert.True(decoratorIndex < classIndex, 
+                $"Decorator should appear before class. Decorator at index {decoratorIndex}, class at index {classIndex}");
+            Assert.Equal(DiffKind.Added, decoratorLine.DiffKind);
+        }
+
+        [Fact]
+        public void MapDiagnosticLevelToSeverity_Fatal_ReturnsMustFix()
+        {
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CommentSeverity)method?.Invoke(null, [CodeDiagnosticLevel.Fatal]);
+
+            Assert.Equal(CommentSeverity.MustFix, result);
+        }
+
+        [Fact]
+        public void MapDiagnosticLevelToSeverity_Error_ReturnsMustFix()
+        {
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Error]);
+
+            Assert.Equal(CommentSeverity.MustFix, result);
+        }
+
+        [Fact]
+        public void MapDiagnosticLevelToSeverity_Warning_ReturnsShouldFix()
+        {
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Warning]);
+
+            Assert.Equal(CommentSeverity.ShouldFix, result);
+        }
+
+        [Fact]
+        public void MapDiagnosticLevelToSeverity_Info_ReturnsSuggestion()
+        {
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Info]);
+
+            Assert.Equal(CommentSeverity.Suggestion, result);
+        }
+
+        [Fact]
+        public void MapDiagnosticLevelToSeverity_Default_ReturnsShouldFix()
+        {
+            var method = typeof(DiagnosticCommentService).GetMethod("MapDiagnosticLevelToSeverity",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CommentSeverity)method.Invoke(null, [CodeDiagnosticLevel.Default]);
+
+            Assert.Equal(CommentSeverity.ShouldFix, result);
+        }
+      
     }
 }

@@ -1,0 +1,62 @@
+name: Bug Bash Feedback
+description: Provide feedback from the Bug Bash for Azure SDK Tools
+title: "[Bug Bash] Brief summary of the issue"
+labels:
+  - Bug Bash
+  - dev inner loop
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for participating in the Bug Bash!
+        Please include the requested details below.
+
+  - type: textarea
+    id: prompts
+    attributes:
+      label: Prompts Used
+      description: The exact prompts you used with the agent that led to the behavior you are reporting.
+      placeholder: |
+        Example:
+        - "Help me generate the Python SDK for this TypeSpec: <path to spec>"
+    validations:
+      required: false
+
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: The language you are trying to generate an SDK for.
+      placeholder: e.g., .NET, Java, JS, Python, Go
+    validations:
+      required: false
+
+  - type: input
+    id: service
+    attributes:
+      label: Service or Resource Provider
+      description: The service or resource provider you attempted to generate.
+      placeholder: e.g., Microsoft.KeyVault/vaults, Storage, Cosmos DB
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, Traces, or Screenshots
+      description: Any logs, traces, or screenshots that help show what happened.
+      placeholder: |
+        Paste logs/traces here or drag screenshots into this box.
+    validations:
+      required: false
+
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Feedback
+      description: Your feedback, observations, suggestions, or anything else you'd like us to know.
+      placeholder: |
+        Share your feedback here.
+    validations:
+      required: true

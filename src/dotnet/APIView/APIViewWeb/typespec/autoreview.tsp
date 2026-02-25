@@ -6,11 +6,39 @@ using TypeSpec.Http;
 namespace APIView;
 
 /**
- * Automatic API Review endpoints
- * These endpoints require API Key authentication via the 'ApiKey' header.
+ * Automatic API Review endpoints (Legacy)
+ * These endpoints do not require authentication.
  */
 @route("/AutoReview")
-@useAuth(ApiKeyAuth<ApiKeyLocation.header, "ApiKey">)
+namespace AutoReviewLegacy {
+    /**
+     * Get the approval status of an API review revision
+     * @param language Language of the package
+     * @param packageName Name of the package
+     * @param reviewId Optional review ID
+     * @param firstReleaseStatusOnly Whether to check first release status only
+     * @param packageVersion Optional package version
+     * @returns Status code indicating approval state: 200 (APIs approved), 201 (package name approved), 202 (package name not approved)
+     */
+    @get
+    @route("/GetReviewStatus")
+    op GetReviewStatus(
+        @query language: string,
+        @query packageName: string,
+        @query reviewId?: string,
+        @query firstReleaseStatusOnly?: boolean,
+        @query packageVersion?: string
+    ): {
+        @statusCode statusCode: 200 | 201 | 202;
+    } | NotFoundErrorResponse | InternalServerErrorResponse;
+}
+
+/**
+ * Automatic API Review endpoints
+ * These endpoints require Azure AD Token or GitHub Token authentication via the 'Authorization: Bearer' header.
+ */
+@route("/autoreview")
+@useAuth(BearerAuth)
 namespace AutoReview {
     /**
      * Upload an automatic API review file
@@ -23,7 +51,7 @@ namespace AutoReview {
      * @returns URL of the created/updated review
      */
     @post
-    @route("/UploadAutoReview")
+    @route("/upload")
     op UploadAutoReview(
         @header contentType: "multipart/form-data",
         @multipartBody body: {
@@ -38,27 +66,6 @@ namespace AutoReview {
         @statusCode statusCode: 200 | 201 | 202;
         @body reviewUrl: string;
     } | UnauthorizedErrorResponse | InternalServerErrorResponse;
-
-    /**
-     * Get the approval status of an API review revision
-     * @param language Language of the package
-     * @param packageName Name of the package
-     * @param reviewId Optional review ID
-     * @param firstReleaseStatusOnly Whether to check first release status only
-     * @param packageVersion Optional package version
-     * @returns Status code indicating approval state: 200 (approved), 201 (package approved), 202 (not approved)
-     */
-    @get
-    @route("/GetReviewStatus")
-    op GetReviewStatus(
-        @query language: string,
-        @query packageName: string,
-        @query reviewId?: string,
-        @query firstReleaseStatusOnly?: boolean,
-        @query packageVersion?: string
-    ): {
-        @statusCode statusCode: 200 | 201 | 202;
-    } | NotFoundErrorResponse | UnauthorizedErrorResponse | InternalServerErrorResponse;
 
     /**
      * Create an API review from Azure DevOps pipeline artifacts
@@ -76,8 +83,8 @@ namespace AutoReview {
      * @param packageType Type of the package
      * @returns URL of the created/updated review
      */
-    @get
-    @route("/CreateApiReview")
+    @post
+    @route("/create")
     op CreateApiReview(
         @query buildId: string,
         @query artifactName: string,

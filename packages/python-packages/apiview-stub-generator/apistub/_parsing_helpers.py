@@ -50,4 +50,7 @@ def add_overload_nodes(
         overload.namespace_id = overload.namespace_id + f"_{x+1}"
         overload.is_handwritten = func_node.is_handwritten
         node.child_nodes.append(overload)
+    # If function has overloads, hide the implementation.
+    if func_overloads:
+        func_node.hidden = True
     node.child_nodes.append(func_node)

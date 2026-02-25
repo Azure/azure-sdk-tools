@@ -15,11 +15,15 @@ namespace Azure.ClientSdk.Analyzers
         {
             Descriptors.AZC0005,
             Descriptors.AZC0006,
-            Descriptors.AZC0007
+            Descriptors.AZC0007,
+            Descriptors.AZC0021
         });
 
         private bool IsClientOptionsParameter(IParameterSymbol symbol) 
             => symbol != null && IsClientOptionsType(symbol.Type);
+
+        private bool IsClientSettingsParameter(IParameterSymbol symbol) 
+            => symbol != null && IsClientSettingsType(symbol.Type);
 
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
@@ -35,6 +39,13 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     var lastParameter = constructor.Parameters.LastOrDefault();
 
+                    // Check if any parameter is ClientSettings - it should only be used alone
+                    if (constructor.Parameters.Any(IsClientSettingsParameter) && constructor.Parameters.Length > 1)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0021, constructor.Locations.First()), constructor);
+                        continue;
+                    }
+
                     if (IsClientOptionsParameter(lastParameter))
                     {
                         // Allow optional options parameters
@@ -48,6 +59,13 @@ namespace Azure.ClientSdk.Analyzers
                         {
                             context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0006, constructor.Locations.First()), constructor);
                         }
+                    }
+                    else if (IsClientSettingsParameter(lastParameter))
+                    {
+                        // Allow constructors ending with ClientSettings parameter without requiring a ClientOptions overload
+                        // This is the new pattern for System.ClientModel.ClientSettings
+                        // Note: AZC0021 already checked for multiple parameters above
+                        continue;
                     }
                     else
                     {

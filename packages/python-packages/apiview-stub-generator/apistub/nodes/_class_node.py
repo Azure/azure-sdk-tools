@@ -252,7 +252,7 @@ class ClassNode(NodeEntityBase):
             elif inspect.isclass(child_obj):
                 self.child_nodes.append(
                     ClassNode(
-                        name=child_obj.name,
+                        name=getattr(child_obj, "name", child_obj.__name__),
                         namespace=self.namespace,
                         parent_node=self,
                         obj=child_obj,
@@ -314,6 +314,22 @@ class ClassNode(NodeEntityBase):
         for cl in [c for c in bases or [] if c is not object]:
             base_classes.append(get_qualified_name(cl, self.namespace))
         return base_classes
+
+    def is_pylint_error_owner(self, err) -> bool:
+        """Check if this class node is the owner of a pylint error.
+
+        For enum classes, exclude errors with column > 0 since those belong to enum values.
+
+        :param PylintError err: The pylint error to check
+        :return: True if this node owns the error, False otherwise
+        :rtype: bool
+        """
+        # Check if this is an enum class and the error has column > 0 (enum value error)
+        if self.is_enum and err.column > 0:
+            # This error belongs to an enum value, not the class
+            return False
+        # Use default behavior for other cases
+        return super().is_pylint_error_owner(err)
 
     def generate_tokens(self, review_lines: "ReviewLines"):
         """Generates token for the node and it's children recursively and add it to apiview

@@ -7,7 +7,10 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Services.Tests;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -17,15 +20,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [Description("Run tests for the specified SDK package")]
     [McpServerToolType]
     public class TestTool(
-        ILogger<TestTool> logger,
-        ILanguageSpecificResolver<ITestRunner> testRunnerResolver
-    ) : MCPTool
+        ILogger<TestTool> _logger,
+        IGitHelper gitHelper,
+        IEnumerable<LanguageService> _languageServices
+    ) : LanguageMcpTool(_languageServices, gitHelper, _logger)
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageTest];
 
-        private const string TestCommandName = "test";
+        private const string RunCommandName = "run";
+        private const string RunPackageTestsToolName = "azsdk_package_run_tests";
 
-        protected override Command GetCommand() => new(TestCommandName, "Run tests for SDK packages")
+        protected override Command GetCommand() => new McpCommand(RunCommandName, "Run tests for SDK packages", RunPackageTestsToolName)
         {
             SharedOptions.PackagePath,
         };
@@ -37,52 +42,58 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await RunPackageTests(packagePath, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_tests"), Description("Run tests for the specified SDK package. Provide package path.")]
-        public async Task<DefaultCommandResponse> RunPackageTests(string packagePath, CancellationToken ct = default)
+        [McpServerTool(Name = RunPackageTestsToolName), Description("Run tests for the specified SDK package. Provide package path.")]
+        public async Task<TestRunResponse> RunPackageTests(string packagePath, CancellationToken ct = default)
         {
             try
             {
                 logger.LogInformation("Starting tests for package at: {packagePath}", packagePath);
-                var testRunner = await testRunnerResolver.Resolve(packagePath, ct);
-
-                if(testRunner == null)
+                var languageService = await GetLanguageServiceAsync(packagePath, ct);
+                if (languageService == null)
                 {
-                    logger.LogError("No test runner found for package at: {packagePath}", packagePath);
-                    return new DefaultCommandResponse
+                    logger.LogError("No language service found for package at: {packagePath}", packagePath);
+                    return new TestRunResponse(
+                        exitCode: 1,
+                        testRunOutput: null,
+                        error: $"Unsupported language or invalid package path: {packagePath}")
                     {
-                        ExitCode = 1,
-                        ResponseError = $"No test runner found for package at '{packagePath}'."
+                        NextSteps = ["Verify the package path is correct and that the language is supported"],
                     };
                 }
+                var testResponse = await languageService.RunAllTests(packagePath, ct);
 
-                var success = await testRunner.RunAllTests(packagePath, ct);
-
-                if (success)
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ExitCode = 0,
-                        Result = $"Test run for package at '{packagePath}' completed successfully.",
-                    };
-                }
-                else
-                {
-                    return new DefaultCommandResponse
-                    {
-                        ExitCode = 1,
-                        Result = $"Test run for package at '{packagePath}' was not successful.",
-                        NextSteps = ["Analyze the test output to identify the cause of the failure."],
-                    };
-                }
+                await AddPackageDetailsInResponse(testResponse, packagePath, ct);
+                return testResponse;
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package tests");
-                return new DefaultCommandResponse
+                var errorResponse = new TestRunResponse(exitCode: 1, testRunOutput: null, error: $"An unexpected error occurred while running package tests: {ex.Message}")
                 {
-                    ExitCode = 1,
-                    ResponseError = $"An unexpected error occurred while running package tests: {ex.Message}"
+                    NextSteps = ["Inspect the error message and attempt to resolve it"],
                 };
+                await AddPackageDetailsInResponse(errorResponse, packagePath, ct);
+                return errorResponse;
+            }
+        }
+
+        private async Task AddPackageDetailsInResponse(TestRunResponse response, string packagePath, CancellationToken ct)
+        {
+            try
+            {
+                var languageService = await GetLanguageServiceAsync(packagePath, ct);
+                if (languageService != null)
+                {
+                    var info = await languageService.GetPackageInfo(packagePath, ct);
+                    response.PackageName = info.PackageName;
+                    response.Version = info.PackageVersion;
+                    response.PackageType = info.SdkType;
+                    response.Language = info.Language;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in AddPackageDetailsInResponse");
             }
         }
     }

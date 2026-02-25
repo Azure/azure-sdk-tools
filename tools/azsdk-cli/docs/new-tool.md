@@ -18,6 +18,7 @@ Help me create a new tool using #new-tool.md as a reference
    * [Response Handling](#response-handling)
    * [Prompt Template System](#prompt-template-system)
    * [Registration and Testing](#registration-and-testing)
+   * [Tool Discoverability Testing](#add-test-prompts-for-tool-discoverability)
    * [Required Tool Conventions](#required-tool-conventions)
    * [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
 
@@ -27,7 +28,8 @@ All tools in the azsdk-cli project follow a consistent architecture:
 
 - **Location**: Tool files are organized under [`Azure.Sdk.Tools.Cli/Tools/`](../Azure.Sdk.Tools.Cli/Tools/{Category}/) in logical categories
 - **Namespace**: Tools should be in namespace `Azure.Sdk.Tools.Cli.Tools.{Category}`
-- **Base Class**: All tools inherit from [`MCPTool`](../Azure.Sdk.Tools.Cli.Contract/MCPTool.cs) or [`MCPMultiCommandTool`](../Azure.Sdk.Tools.Cli.Contract/MCPMultiCommandTool.cs)
+- **Base Class**: If the purpose of the tool is to run an operation at package or language level, the tool must inherit from [`LanguageMcpTool`](../Azure.Sdk.Tools.Cli/Tools/Core/LanguageMcpTool.cs) or [`LanguageMultiCommandTool`](../Azure.Sdk.Tools.Cli/Tools/Core/LanguageMultiCommandTool.cs).
+  Otherwise, all other tools must inherit from [`MCPTool`](../Azure.Sdk.Tools.Cli/Tools/Core/MCPTool.cs) or [`MCPMultiCommandTool`](../Azure.Sdk.Tools.Cli/Tools/Core/MCPMultiCommandTool.cs).
 - **Attributes**: Tools are decorated with `[McpServerToolType]` for discovery
 - **Dual Interface**: Tools support both CLI commands and MCP server methods
 
@@ -316,22 +318,70 @@ default `ExitCode` to `1`. The `ExitCode` property can also be manually overridd
 
 ### Response Class Requirements
 
-A custom response class is not always necessary. It should be defined when the tool needs to:
+A custom response class is not always necessary. It should be defined if the tool is under a specific category or when the tool needs to:
 
 1. Define formatting rules for complex output data
 1. Return structured data that is easier for an LLM to parse
 1. Enforce specific fields get set in output
 1. Customize error output
 
+#### Response base class for custom tool response
+
+We have a predefined set of base classes for custom tool response to ensure all required basic properties are set in the responses.
+This allows us to classify the tool and command usage in telemetry.
+
+1. **PackageResponseBase**
+If the goal of MCP tool/command is to run operations at a package level or language repo level then MCP tool response must use a response class derived from `PackageResponseBase`
+and these custom response classes are defined in [package responses](../Azure.Sdk.Tools.Cli/Models/Responses/Package).
+
+1. **TypeSpecBaseResponse**
+If the goal of MCP tool is to run operations at TypeSpec project level then a custom response must be derived from `TypeSpecBaseResponse`.
+There are a few predefined custom responses for TypeSpec operations defined in [TypeSpec](../Azure.Sdk.Tools.Cli/Models/Responses/TypeSpec)
+
+1. **ReleasePlanBaseResponse**
+If the goal of MCP tool is to run operations at a release plan level then a custom response must be derived from `ReleasePlanBaseResponse`.
+There are a few predefined custom responses for release plan operations defined in [ReleasePlan](../Azure.Sdk.Tools.Cli/Models/Responses/ReleasePlan)
+
 All tool response classes must:
 
-1. **Inherit from `Response`** base class
+1. **Inherit from `CommandResponse`** base class if not derived from above mentioned custom base class.
 1. **Override `Format()`** to format properties in a human readable way.
 1. **Set JSON serializer attributes** on all properties.
 
 Tools that may have error cases but no need for a custom type should use `DefaultCommandResponse` as
 the return type. The `.Result` property takes `object`, but must override `Format()` to serialize/stringify
 the value.
+
+#### Setting Required Telemetry Information in Tool Responses
+
+To properly tag tool calls in telemetry, tool responses must include the following information when applicable:
+
+1. **Package Name**
+   - **Required when**: Tool is triggered/operated at a package level
+   - **How to set**: Set the `PackageName` property in responses derived from `PackageResponseBase`
+   - **Purpose**: Identifies which package the tool operation was performed on
+
+2. **Language**
+   - **Required when**: Tool/command is specifically run for an SDK language
+   - **How to set**: Set the `Language` property in responses derived from `PackageResponseBase` or use the `SetLanguage()` method
+   - **Purpose**: Identifies which SDK language the tool operation was performed for
+
+3. **TypeSpec Project Path**
+   - **Required when**: TypeSpec path is known to the tool
+   - **How to set**: Set the `TypeSpecProject` property with the relative path to TypeSpec project root in responses derived from `PackageResponseBase`, `TypeSpecBaseResponse`, or `ReleasePlanBaseResponse`
+   - **Purpose**: Links the operation to a specific TypeSpec project
+
+4. **Package Type**
+   - **Required when**: Tool call is at a package level or TypeSpec project level
+   - **How to set**: Set the `PackageType` property to `SdkType.Management` or `SdkType.Dataplane` in responses derived from `PackageResponseBase`, `TypeSpecBaseResponse`, or `ReleasePlanBaseResponse`, or use the `SetPackageType()` method
+   - **Purpose**: Classifies the package as management plane or data plane
+   - **Note**: Package type is known for TypeSpec projects and SDK packages
+
+5. **Tool Operation Status**
+   - **Required when**: Tool operation encounters an error or failure
+   - **How to set**: Set the `ResponseError` property (for a single error) or `ResponseErrors` property (for multiple errors) in any response derived from `CommandResponse`
+   - **Purpose**: Marks a tool operation as failed in telemetry, which will be included in the failed tool call list
+   - **Note**: Setting either `ResponseError` or `ResponseErrors` automatically sets `OperationStatus` to `Status.Failed`
 
 
 ### Response Class Template
@@ -557,6 +607,43 @@ internal class YourToolTests
     }
 }
 ```
+
+### Add Test Prompts for Tool Discoverability
+
+When creating a new tool, you **must** add test prompts to validate that LLM agents can discover your tool from natural language queries. This ensures your tool's description is effective for embedding-based tool matching.
+
+**Add 2-3 prompt variations** to [`Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json`](../Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json):
+
+```json
+{ "toolName": "azsdk_your_tool_method", "prompt": "Natural language query that should match your tool", "category": "all" },
+{ "toolName": "azsdk_your_tool_method", "prompt": "Alternative phrasing users might use", "category": "all" },
+{ "toolName": "azsdk_your_tool_method", "prompt": "Another variation of the request", "category": "all" }
+```
+
+**Guidelines for test prompts:**
+- Write prompts as users would naturally phrase them (not technical descriptions)
+- Include variations: questions, commands, different terminology
+- Use `"category": "all"` for tools that work in any repository
+- Use `"category": "azure-rest-api-specs"` for tools specific to the specs repository
+
+**Run the discoverability tests:**
+```bash
+# Test all prompts match their expected tools
+dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~Evaluate_PromptToToolMatch"
+
+# Verify your tool has test prompts (will fail if missing)
+dotnet test Azure.Sdk.Tools.Cli.Evaluations --filter "Name~AllToolsHaveTestPrompts"
+```
+
+**If tests fail**, your tool description may need improvement. The test output shows:
+- Current ranking of your tool for the prompt
+- Confidence score (must be ≥40%)
+- Your tool's description (to help identify what needs improvement)
+
+**Tips for good tool descriptions:**
+- Include action verbs users would say: "analyze", "check", "create", "update"
+- Mention the domain/context: "pipeline", "SDK", "TypeSpec", "release plan"
+- Be specific about what the tool does, not just technical implementation details
 
 ## Required Tool Conventions
 

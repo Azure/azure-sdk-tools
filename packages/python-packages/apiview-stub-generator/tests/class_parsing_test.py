@@ -15,6 +15,7 @@ from apistubgentest.models import (
     GenericStack,
     PetEnumPy3MetaclassAlt,
     PublicPrivateClass,
+    PropertyWithNoNameAttr,
     RequiredKwargObject,
     SomeAwesomelyNamedObject,
     SomeImplementationClass,
@@ -56,9 +57,9 @@ class TestClassParsing:
         actuals = _render_lines(tokens)
         expected = [
             "class ClassWithIvarsAndCvars:",
-            'ivar captain: str = "Picard"',
-            "ivar damage: int",
-            "cvar stats: ClassVar[Dict[str, int]] = {}",
+            'captain: str = "Picard"',
+            "damage: int",
+            "stats: ClassVar[Dict[str, int]] = {}",
         ]
         _check_all(actuals, expected, obj)
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
@@ -134,10 +135,10 @@ class TestClassParsing:
         actuals = _render_lines(tokens)
         expected = [
             "class FakeObject:",
-            'ivar PUBLIC_CONST: str = "SOMETHING"',
-            "ivar age: int",
-            "ivar name: str",
-            "ivar union: Union[bool, PetEnumPy3MetaclassAlt]",
+            'PUBLIC_CONST: str = "SOMETHING"',
+            "age: int",
+            "name: str",
+            "union: Union[bool, PetEnumPy3MetaclassAlt]",
         ]
         _check_all(actuals, expected, obj)
         expected = [
@@ -170,9 +171,9 @@ class TestClassParsing:
         actuals = _render_lines(tokens)
         expected = [
             "class PublicPrivateClass:",
-            "ivar public_datetime: datetime",
-            "ivar public_dict: dict = {'a': 'b'}",
-            'ivar public_var: str = "SOMEVAL"',
+            "public_datetime: datetime",
+            "public_dict: dict = {'a': 'b'}",
+            'public_var: str = "SOMEVAL"',
         ]
         _check_all(actuals, expected, obj)
         assert actuals[5].lstrip() == "def __init__(self)"
@@ -293,20 +294,8 @@ class TestClassParsing:
         ]
         _check(actual2, expected2, SomethingWithOverloads)
 
-        actual3 = lines[20:27]
-        expected3 = [
-            "def double(",
-            "    self, ",
-            "    input: int | Sequence[int], ",
-            "    *, ",
-            "    test: bool = False, ",
-            "    **kwargs",
-            ") -> int | list[int]"
-        ]
-        _check(actual3, expected3, SomethingWithOverloads)
-
-        assert lines[28] == "@overload"
-        actual4 = lines[29:35]
+        assert lines[20] == "@overload"
+        actual4 = lines[21:27]
         expected4 = [
             "def something(",
             "    self, ",
@@ -317,8 +306,8 @@ class TestClassParsing:
         ]
         _check(actual4, expected4, SomethingWithOverloads)
 
-        assert lines[36] == "@overload"
-        actual5 = lines[37:43]
+        assert lines[28] == "@overload"
+        actual5 = lines[29:35]
         expected5 = [
             "def something(",
             "    self, ",
@@ -329,25 +318,12 @@ class TestClassParsing:
         ]
         _check(actual5, expected5, SomethingWithOverloads)
 
-        actual6 = lines[44:]
-        expected6 = [
-            "def something(",
-            "    self, ",
-            "    id: int | str, ",
-            "    *args, ",
-            "    **kwargs",
-            ") -> str",
-            "", # Blank line at the end of the function
-            "", # Blank line at the end of the class
-        ]
-        _check(actual6, expected6, SomethingWithOverloads)
-
         # Check that the RelatedToLine and IsContextEndLine are being set correctly.
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        # 8 empty lines, 4 overloads
-        assert metadata["RelatedToLine"] == 12
-        assert metadata["IsContextEndLine"] == 7
+        # 6 empty lines, 4 overloads
+        assert metadata["RelatedToLine"] == 10
+        assert metadata["IsContextEndLine"] == 5
 
     def test_inherited_overloads(self):
         obj = SomethingWithInheritedOverloads
@@ -376,17 +352,12 @@ class TestClassParsing:
         expected3 = "def do_thing(val: bool) -> bool"
         _check(actual3, expected3, SomethingWithInheritedOverloads)
 
-        actual4 = lines[11]
-        expected4 = "def do_thing(val: str | int | bool) -> str | int | bool"
-        _check(actual4, expected4, SomethingWithInheritedOverloads)
-
         # Check that the RelatedToLine and IsContextEndLine are being set correctly.
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        # 6 empty lines, 3 overloads
-        assert metadata["RelatedToLine"] == 9
-        # TODO: For overloads, IsContextEndLine is only set for the implementation method. Should it be per overload?
-        assert metadata["IsContextEndLine"] == 1
+        # 5 empty lines, 3 overloads
+        assert metadata["RelatedToLine"] == 8
+        assert metadata["IsContextEndLine"] == 1, tokens
 
     def test_overload_line_ids(self):
         obj = SomethingWithOverloads
@@ -428,8 +399,8 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 12
-        assert metadata["IsContextEndLine"] == 7
+        assert metadata["RelatedToLine"] == 10
+        assert metadata["IsContextEndLine"] == 5
 
     # Validates that there are no repeat defintion IDs and that each line has only one definition ID.
     def _validate_line_ids(self, review_lines):
@@ -498,6 +469,28 @@ class TestClassParsing:
         assert metadata["RelatedToLine"] == 1
         # Body of class is not defined so there is no context end line
         assert metadata["IsContextEndLine"] == 0
+
+    def test_no_name_attr_typed_dict(self):
+        obj = PropertyWithNoNameAttr
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
+        expected = [
+            "class PropertyWithNoNameAttr:",
+            "schema: TypedDict",
+        ]
+        _check_all(actuals, expected, obj)
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 2
+        assert metadata["IsContextEndLine"] == 1
 
     def test_properties(self):
         obj = SomethingWithProperties
@@ -622,8 +615,8 @@ class TestClassParsing:
         expected = [
             "class SomethingWithLiterals:",
             "property literal_property: Literal[\"read\", \"write\", \"admin\"]    # Read-only",
-            "cvar literal_cvar: ClassVar[Union[Literal[\"production\", \"development\"], bool]]",
-            "ivar literal_ivar: Literal[\"active\", \"inactive\", SomeEnum.ONE_ENUM]",
+            "literal_cvar: ClassVar[Union[Literal[\"production\", \"development\"], bool]]",
+            "literal_ivar: Literal[\"active\", \"inactive\", SomeEnum.ONE_ENUM]",
             "",
             "def literal_mixed(self, option: Literal[\"auto\", 42, True, SomeEnum.TWO_ENUM]) -> None",
             "",
@@ -636,3 +629,4 @@ class TestClassParsing:
         metadata = _count_review_line_metadata(tokens, metadata)
         assert metadata["RelatedToLine"] == 4
         assert metadata["IsContextEndLine"] == 1
+

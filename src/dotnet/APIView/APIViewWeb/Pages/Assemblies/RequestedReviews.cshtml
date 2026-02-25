@@ -7,6 +7,7 @@
 @{
     ViewData["Title"] = "Requested Reviews";
     var userPreference = PageModelHelpers.GetUserPreference(Model._userProfileCache, User) ?? new UserPreferenceModel();
+    TempData["UserPreference"] = userPreference;
 
     @functions {
         private IHtmlContent RenderLanguageIcon(string language, List<APICodeFileModel> files)

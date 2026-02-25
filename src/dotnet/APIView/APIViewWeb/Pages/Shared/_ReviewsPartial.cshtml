@@ -100,7 +100,7 @@
                             lastPageNo = Math.Min(firstPageNo + (noOfPageLinks), Model.TotalPages);
                         }
                     }
-                    @for (int i = firstPageNo; i < lastPageNo; i++)
+                    @for (int i = firstPageNo; i <= lastPageNo; i++)
                     {
                         if (i == Model.CurrentPage)
                         {

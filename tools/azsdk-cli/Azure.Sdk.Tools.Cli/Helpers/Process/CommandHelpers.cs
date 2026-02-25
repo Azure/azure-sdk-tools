@@ -25,6 +25,26 @@ public interface INpxHelper
     public Task<ProcessResult> Run(NpxOptions options, CancellationToken ct);
 }
 
+public interface IMavenHelper
+{
+    public Task<ProcessResult> Run(MavenOptions options, CancellationToken ct);
+}
+
+public interface IPythonHelper
+{
+    public Task<ProcessResult> Run(PythonOptions options, CancellationToken ct);
+}
+
+public interface IGitCommandHelper
+{
+    public Task<ProcessResult> Run(GitOptions options, CancellationToken ct);
+}
+
+public interface INpmHelper
+{
+    public Task<ProcessResult> Run(NpmOptions options, CancellationToken ct);
+}
+
 public sealed class ProcessHelper(ILogger<ProcessHelper> logger, IRawOutputHelper outputHelper)
     : ProcessHelperBase<ProcessHelper>(logger, outputHelper), IProcessHelper
 {
@@ -41,4 +61,28 @@ public sealed class NpxHelper(ILogger<NpxHelper> logger, IRawOutputHelper output
     : ProcessHelperBase<NpxHelper>(logger, outputHelper), INpxHelper
 {
     public async Task<ProcessResult> Run(NpxOptions options, CancellationToken ct) => await base.Run(options, ct);
+}
+
+public sealed class MavenHelper(ILogger<MavenHelper> logger, IRawOutputHelper outputHelper)
+    : ProcessHelperBase<MavenHelper>(logger, outputHelper), IMavenHelper
+{
+    public async Task<ProcessResult> Run(MavenOptions options, CancellationToken ct) => await base.Run(options, ct);
+}
+
+public sealed class PythonHelper(ILogger<PythonHelper> logger, IRawOutputHelper outputHelper)
+    : ProcessHelperBase<PythonHelper>(logger, outputHelper), IPythonHelper
+{
+    public async Task<ProcessResult> Run(PythonOptions options, CancellationToken ct) => await base.Run(options, ct);
+}
+
+public sealed class GitCommandHelper(ILogger<GitCommandHelper> logger, IRawOutputHelper outputHelper)
+    : ProcessHelperBase<GitCommandHelper>(logger, outputHelper), IGitCommandHelper
+{
+    public async Task<ProcessResult> Run(GitOptions options, CancellationToken ct) => await base.Run(options, ct);
+}
+
+public sealed class NpmHelper(ILogger<NpmHelper> logger, IRawOutputHelper outputHelper)
+    : ProcessHelperBase<NpmHelper>(logger, outputHelper), INpmHelper
+{
+    public async Task<ProcessResult> Run(NpmOptions options, CancellationToken ct) => await base.Run(options, ct);
 }

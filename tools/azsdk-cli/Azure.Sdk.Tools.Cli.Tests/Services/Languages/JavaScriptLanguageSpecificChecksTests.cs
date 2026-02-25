@@ -1,5 +1,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -11,7 +13,8 @@ internal class JavaScriptLanguageSpecificChecksTests
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<INpxHelper> _npxHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
-    private JavaScriptLanguageSpecificChecks _languageChecks = null!;
+    private Mock<ICommonValidationHelpers> _commonValidationHelpersMock = null!;
+    private JavaScriptLanguageService _languageChecks = null!;
     private string _packagePath = null!;
 
     [SetUp]
@@ -20,12 +23,18 @@ internal class JavaScriptLanguageSpecificChecksTests
         _processHelperMock = new Mock<IProcessHelper>();
         _npxHelperMock = new Mock<INpxHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
+        _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-js");
+        _commonValidationHelpersMock = new Mock<ICommonValidationHelpers>();
 
-        _languageChecks = new JavaScriptLanguageSpecificChecks(
+        _languageChecks = new JavaScriptLanguageService(
             _processHelperMock.Object,
             _npxHelperMock.Object,
             _gitHelperMock.Object,
-            NullLogger<JavaScriptLanguageSpecificChecks>.Instance);
+            NullLogger<JavaScriptLanguageService>.Instance,
+            _commonValidationHelpersMock.Object,
+            Mock.Of<IFileHelper>(),
+            Mock.Of<ISpecGenSdkConfigHelper>(),
+            Mock.Of<IChangelogHelper>());
 
         _packagePath = "/tmp/javascript-package";
     }
@@ -42,7 +51,7 @@ internal class JavaScriptLanguageSpecificChecksTests
             .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
             .ReturnsAsync(processResult);
 
-        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, false, CancellationToken.None);
+        var response = await _languageChecks.UpdateSnippets(_packagePath, false, CancellationToken.None);
 
         Assert.That(response.ExitCode, Is.EqualTo(0));
         Assert.That(response.CheckStatusDetails, Is.EqualTo("snippets updated"));
@@ -73,7 +82,7 @@ internal class JavaScriptLanguageSpecificChecksTests
             .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, false, CancellationToken.None);
+        var response = await _languageChecks.UpdateSnippets(_packagePath, false, CancellationToken.None);
 
         Assert.That(response.ExitCode, Is.EqualTo(1));
         Assert.That(response.CheckStatusDetails, Is.EqualTo("failure output"));
@@ -89,11 +98,39 @@ internal class JavaScriptLanguageSpecificChecksTests
             .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("process failed"));
 
-        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, false, CancellationToken.None);
+        var response = await _languageChecks.UpdateSnippets(_packagePath, false, CancellationToken.None);
 
         Assert.That(response.ExitCode, Is.EqualTo(1));
         Assert.That(response.CheckStatusDetails, Is.EqualTo(string.Empty));
         Assert.That(response.ResponseError, Does.Contain("Error updating snippets: process failed"));
         Assert.That(response.NextSteps, Is.Null);
     }
+
+    #region HasCustomizations Tests
+
+    [Test]
+    public void HasCustomizations_ReturnsTrue_WhenGeneratedFolderExists()
+    {
+        using var tempDir = TempDirectory.Create("js-customization-test");
+        var generatedDir = Path.Combine(tempDir.DirectoryPath, "generated");
+        Directory.CreateDirectory(generatedDir);
+
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void HasCustomizations_ReturnsFalse_WhenNoGeneratedFolderExists()
+    {
+        using var tempDir = TempDirectory.Create("js-no-customization-test");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
+        Directory.CreateDirectory(srcDir);
+
+        var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
+
+        Assert.That(result, Is.False);
+    }
+
+    #endregion
 }

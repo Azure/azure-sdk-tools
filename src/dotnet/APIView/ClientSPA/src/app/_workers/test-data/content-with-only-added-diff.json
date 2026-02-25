@@ -2617,154 +2617,156 @@
                 }
             ],
             "commentThread": {
-                "0": {
-                    "type": "commentThread",
-                    "nodeId": "Azure.Data.Tables.TableClient.Uri",
-                    "nodeIdHashed": "nId-118351713419796220291550352218",
-                    "rowPositionInGroup": 0,
-                    "associatedRowPositionInGroup": 0,
-                    "rowClasses": [
-                        "user-comment-thread"
-                    ],
-                    "diffKind": "noneDiff",
-                    "comments": [
-                        {
-                            "id": "eb3a76fecd7f47a4ab0c4e540f1c7af8",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
-                            "elementId": "Azure.Data.Tables.TableClient.Uri",
-                            "commentText": "Should we call this \\u0060Endpoint\\u0060 since that\\u0027s the .ctor parameter name?",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2022-09-28T21:28:24.7266874-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2022-09-28T21:28:24.7266874-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "tg-msft",
-                            "createdOn": "2022-09-28T21:28:24.7266874-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "b3151cb6dd76480e991d69fe9947913c",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
-                            "elementId": "Azure.Data.Tables.TableClient.Uri",
-                            "commentText": "Although I think that makes sense, there is a lot of historical precedent across previous versions of the library and storage to where customers know and expect this name. I\\u0027m ok to change it though if you feel strongly that we shouldn\\u0027t factor this in.",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2022-09-29T11:05:54.4526431-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2022-09-29T11:05:54.4526431-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "christothes",
-                            "createdOn": "2022-09-29T11:05:54.4526431-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "5152565f743e41c48abad57e54fb9c6c",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
-                            "elementId": "Azure.Data.Tables.TableClient.Uri",
-                            "commentText": "I don\\u0027t feel strongly about it, but I would say if this library was in Azure.Storage group, I would advocate that we need to string to Uri (blobs terminology). But we are trying to position tables as a data technology, not storage. ",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "KrzysztofCwalina",
-                                    "changedOn": "2022-09-29T11:16:12.7895127-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "KrzysztofCwalina",
-                                    "changedOn": "2022-09-29T11:16:12.7895127-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "KrzysztofCwalina",
-                            "createdOn": "2022-09-29T11:16:12.7895127-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "619eed52bb8b4f92b410622327891147",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
-                            "elementId": "Azure.Data.Tables.TableClient.Uri",
-                            "commentText": "The other difference is Storage uses \\u0060fooUri\\u0060 in the .ctor so it matches \\u0060Uri\\u0060 as a property.  See https://apiview.dev/Assemblies/Review/77426af3f12a4487ab98859fca53a6dc#Azure.Storage.Blobs.BlobServiceClient",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2022-09-29T12:11:04.5122487-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2022-09-29T12:11:04.5122487-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "tg-msft",
-                            "createdOn": "2022-09-29T12:11:04.5122487-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "f5a10da9662849358ef911106a3fdaa0",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "elementId": "Azure.Data.Tables.TableClient.Uri",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2022-11-08T18:27:38.9311585-05:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2022-11-08T18:27:38.9311585-05:00"
-                                }
-                            ],
-                            "isResolved": true,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "christothes",
-                            "createdOn": "2022-11-08T18:27:38.9311585-05:00",
-                            "isDeleted": false
-                        }
-                    ],
-                    "isResolvedCommentThread": true,
-                    "isHiddenAPI": false
-                }
+                "0": [
+                    {
+                        "type": "commentThread",
+                        "nodeId": "Azure.Data.Tables.TableClient.Uri",
+                        "nodeIdHashed": "nId-118351713419796220291550352218",
+                        "rowPositionInGroup": 0,
+                        "associatedRowPositionInGroup": 0,
+                        "rowClasses": [
+                            "user-comment-thread"
+                        ],
+                        "diffKind": "noneDiff",
+                        "comments": [
+                            {
+                                "id": "eb3a76fecd7f47a4ab0c4e540f1c7af8",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
+                                "elementId": "Azure.Data.Tables.TableClient.Uri",
+                                "commentText": "Should we call this \\u0060Endpoint\\u0060 since that\\u0027s the .ctor parameter name?",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2022-09-28T21:28:24.7266874-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2022-09-28T21:28:24.7266874-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "tg-msft",
+                                "createdOn": "2022-09-28T21:28:24.7266874-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "b3151cb6dd76480e991d69fe9947913c",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
+                                "elementId": "Azure.Data.Tables.TableClient.Uri",
+                                "commentText": "Although I think that makes sense, there is a lot of historical precedent across previous versions of the library and storage to where customers know and expect this name. I\\u0027m ok to change it though if you feel strongly that we shouldn\\u0027t factor this in.",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2022-09-29T11:05:54.4526431-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2022-09-29T11:05:54.4526431-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "christothes",
+                                "createdOn": "2022-09-29T11:05:54.4526431-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "5152565f743e41c48abad57e54fb9c6c",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
+                                "elementId": "Azure.Data.Tables.TableClient.Uri",
+                                "commentText": "I don\\u0027t feel strongly about it, but I would say if this library was in Azure.Storage group, I would advocate that we need to string to Uri (blobs terminology). But we are trying to position tables as a data technology, not storage. ",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "KrzysztofCwalina",
+                                        "changedOn": "2022-09-29T11:16:12.7895127-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "KrzysztofCwalina",
+                                        "changedOn": "2022-09-29T11:16:12.7895127-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "KrzysztofCwalina",
+                                "createdOn": "2022-09-29T11:16:12.7895127-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "619eed52bb8b4f92b410622327891147",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
+                                "elementId": "Azure.Data.Tables.TableClient.Uri",
+                                "commentText": "The other difference is Storage uses \\u0060fooUri\\u0060 in the .ctor so it matches \\u0060Uri\\u0060 as a property.  See https://apiview.dev/Assemblies/Review/77426af3f12a4487ab98859fca53a6dc#Azure.Storage.Blobs.BlobServiceClient",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2022-09-29T12:11:04.5122487-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2022-09-29T12:11:04.5122487-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "tg-msft",
+                                "createdOn": "2022-09-29T12:11:04.5122487-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "f5a10da9662849358ef911106a3fdaa0",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "elementId": "Azure.Data.Tables.TableClient.Uri",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2022-11-08T18:27:38.9311585-05:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2022-11-08T18:27:38.9311585-05:00"
+                                    }
+                                ],
+                                "isResolved": true,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "christothes",
+                                "createdOn": "2022-11-08T18:27:38.9311585-05:00",
+                                "isDeleted": false
+                            }
+                        ],
+                        "isResolvedCommentThread": true,
+                        "isHiddenAPI": false
+                    }
+                ]
             },
             "parentNodeIdHashed": "nId19796220291550352218",
             "isNodeWithDiff": false,
@@ -7105,127 +7107,129 @@
                 }
             ],
             "commentThread": {
-                "0": {
-                    "type": "commentThread",
-                    "nodeId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
-                    "nodeIdHashed": "nId34146000219796220291550352218",
-                    "rowPositionInGroup": 0,
-                    "associatedRowPositionInGroup": 0,
-                    "rowClasses": [
-                        "user-comment-thread"
-                    ],
-                    "diffKind": "noneDiff",
-                    "comments": [
-                        {
-                            "id": "c5af4e5c427e4839ae40fc1900272667",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
-                            "elementId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
-                            "commentText": "I\\u0027m assuming we return \\u0060null\\u0060 if not found?",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2022-09-28T21:29:00.1467893-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2022-09-28T21:29:00.1467893-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "tg-msft",
-                            "createdOn": "2022-09-28T21:29:00.1467893-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "d4f664a29c0f41489030e8cbaf7bb8af",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
-                            "elementId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
-                            "commentText": "We actually return an \\u0022empty\\u0022 response ( \\u0060new T();\\u0060 ). Returning a null Response\\u003CT\\u003E is problematic, because the type coercion to T results in a strange and unexpected NRE.",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2022-09-29T11:45:07.8914703-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2022-09-29T11:45:07.8914703-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "christothes",
-                            "createdOn": "2022-09-29T11:45:07.8914703-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "181cabc426b345528ea377f5fc85ddc8",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
-                            "elementId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
-                            "commentText": "Really?  How do I detect that as a customer?  That seems kind of hard to use.",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2022-09-29T12:11:54.2383118-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2022-09-29T12:11:54.2383118-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "tg-msft",
-                            "createdOn": "2022-09-29T12:11:54.2383118-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "c2efe013031342f4bbe0c96b7ae7c195",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "elementId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2022-11-08T18:27:25.4359207-05:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2022-11-08T18:27:25.4359207-05:00"
-                                }
-                            ],
-                            "isResolved": true,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "christothes",
-                            "createdOn": "2022-11-08T18:27:25.4359207-05:00",
-                            "isDeleted": false
-                        }
-                    ],
-                    "isResolvedCommentThread": true,
-                    "isHiddenAPI": false
-                }
+                "0": [
+                    {
+                        "type": "commentThread",
+                        "nodeId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
+                        "nodeIdHashed": "nId34146000219796220291550352218",
+                        "rowPositionInGroup": 0,
+                        "associatedRowPositionInGroup": 0,
+                        "rowClasses": [
+                            "user-comment-thread"
+                        ],
+                        "diffKind": "noneDiff",
+                        "comments": [
+                            {
+                                "id": "c5af4e5c427e4839ae40fc1900272667",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
+                                "elementId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
+                                "commentText": "I\\u0027m assuming we return \\u0060null\\u0060 if not found?",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2022-09-28T21:29:00.1467893-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2022-09-28T21:29:00.1467893-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "tg-msft",
+                                "createdOn": "2022-09-28T21:29:00.1467893-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "d4f664a29c0f41489030e8cbaf7bb8af",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
+                                "elementId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
+                                "commentText": "We actually return an \\u0022empty\\u0022 response ( \\u0060new T();\\u0060 ). Returning a null Response\\u003CT\\u003E is problematic, because the type coercion to T results in a strange and unexpected NRE.",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2022-09-29T11:45:07.8914703-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2022-09-29T11:45:07.8914703-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "christothes",
+                                "createdOn": "2022-09-29T11:45:07.8914703-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "181cabc426b345528ea377f5fc85ddc8",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "f943207fc90d4a3d87b58230224526e4",
+                                "elementId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
+                                "commentText": "Really?  How do I detect that as a customer?  That seems kind of hard to use.",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2022-09-29T12:11:54.2383118-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2022-09-29T12:11:54.2383118-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "tg-msft",
+                                "createdOn": "2022-09-29T12:11:54.2383118-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "c2efe013031342f4bbe0c96b7ae7c195",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "elementId": "Azure.Data.Tables.TableClient.GetEntityIfExists\\u003CT\\u003E(System.String, System.String, System.Collections.Generic.IEnumerable\\u003CSystem.String\\u003E, System.Threading.CancellationToken)",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2022-11-08T18:27:25.4359207-05:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2022-11-08T18:27:25.4359207-05:00"
+                                    }
+                                ],
+                                "isResolved": true,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "christothes",
+                                "createdOn": "2022-11-08T18:27:25.4359207-05:00",
+                                "isDeleted": false
+                            }
+                        ],
+                        "isResolvedCommentThread": true,
+                        "isHiddenAPI": false
+                    }
+                ]
             },
             "parentNodeIdHashed": "nId19796220291550352218",
             "isNodeWithDiff": false,
@@ -41676,181 +41680,183 @@
                 }
             ],
             "commentThread": {
-                "0": {
-                    "type": "commentThread",
-                    "nodeId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
-                    "nodeIdHashed": "nId-1293075654421098689-556306156",
-                    "rowPositionInGroup": 0,
-                    "associatedRowPositionInGroup": 0,
-                    "rowClasses": [
-                        "user-comment-thread"
-                    ],
-                    "diffKind": "noneDiff",
-                    "comments": [
-                        {
-                            "id": "01cf9f19d3594a5bbe428368e28b4483",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
-                            "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
-                            "commentText": "What is this for?",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2021-06-04T18:05:03.8700419-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2021-06-04T18:05:03.8700419-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "tg-msft",
-                            "createdOn": "2021-06-04T18:05:03.8700419-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "67bac72d5a314a559bb8a0996e711a75",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
-                            "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
-                            "commentText": "It parses an existing SasUri. Any concerns?",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2021-06-04T18:13:03.6656546-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2021-06-04T18:13:03.6656546-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "christothes",
-                            "createdOn": "2021-06-04T18:13:03.6656546-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "2f059e9155b44f47bf21776aecf17fe6",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
-                            "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
-                            "commentText": "What\\u0027s the scenario for it?  We considered this for Blobs but Jeff felt there wasn\\u0027t a meaningful reason customers would want to clone a SAS.  Consider using \\u0060sasUri\\u0060 as the parameter name if you want to keep it.",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2021-06-04T18:24:17.5186522-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "tg-msft",
-                                    "changedOn": "2021-06-04T18:24:17.5186522-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "tg-msft",
-                            "createdOn": "2021-06-04T18:24:17.5186522-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "1802cb798e2343ebba0aeeebf7d60f9e",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
-                            "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
-                            "commentText": "I think this came from an earlier discussion - IIRC the scenario was that the developer has an existing SASUri and wants to modify it using the SasBuilder.",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2021-06-04T18:39:28.8481212-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2021-06-04T18:39:28.8481212-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "christothes",
-                            "createdOn": "2021-06-04T18:39:28.8481212-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "297dab55039f421f919f6d482d71ce48",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
-                            "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
-                            "commentText": "renamed the arg.",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2021-06-04T19:27:44.900049-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2021-06-04T19:27:44.900049-04:00"
-                                }
-                            ],
-                            "isResolved": false,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "christothes",
-                            "createdOn": "2021-06-04T19:27:44.900049-04:00",
-                            "isDeleted": false
-                        },
-                        {
-                            "id": "5e959d18017747b1937123d444ab961c",
-                            "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
-                            "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
-                            "changeHistory": [
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2021-06-04T19:29:06.2128466-04:00"
-                                },
-                                {
-                                    "changeAction": "created",
-                                    "changedBy": "christothes",
-                                    "changedOn": "2021-06-04T19:29:06.2128466-04:00"
-                                }
-                            ],
-                            "isResolved": true,
-                            "upvotes": [],
-                            "taggedUsers": [],
-                            "commentType": "apiRevision",
-                            "resolutionLocked": false,
-                            "createdBy": "christothes",
-                            "createdOn": "2021-06-04T19:29:06.2128466-04:00",
-                            "isDeleted": false
-                        }
-                    ],
-                    "isResolvedCommentThread": true,
-                    "isHiddenAPI": false
-                }
+                "0": [
+                    {
+                        "type": "commentThread",
+                        "nodeId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
+                        "nodeIdHashed": "nId-1293075654421098689-556306156",
+                        "rowPositionInGroup": 0,
+                        "associatedRowPositionInGroup": 0,
+                        "rowClasses": [
+                            "user-comment-thread"
+                        ],
+                        "diffKind": "noneDiff",
+                        "comments": [
+                            {
+                                "id": "01cf9f19d3594a5bbe428368e28b4483",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
+                                "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
+                                "commentText": "What is this for?",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2021-06-04T18:05:03.8700419-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2021-06-04T18:05:03.8700419-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "tg-msft",
+                                "createdOn": "2021-06-04T18:05:03.8700419-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "67bac72d5a314a559bb8a0996e711a75",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
+                                "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
+                                "commentText": "It parses an existing SasUri. Any concerns?",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2021-06-04T18:13:03.6656546-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2021-06-04T18:13:03.6656546-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "christothes",
+                                "createdOn": "2021-06-04T18:13:03.6656546-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "2f059e9155b44f47bf21776aecf17fe6",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
+                                "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
+                                "commentText": "What\\u0027s the scenario for it?  We considered this for Blobs but Jeff felt there wasn\\u0027t a meaningful reason customers would want to clone a SAS.  Consider using \\u0060sasUri\\u0060 as the parameter name if you want to keep it.",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2021-06-04T18:24:17.5186522-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "tg-msft",
+                                        "changedOn": "2021-06-04T18:24:17.5186522-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "tg-msft",
+                                "createdOn": "2021-06-04T18:24:17.5186522-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "1802cb798e2343ebba0aeeebf7d60f9e",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
+                                "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
+                                "commentText": "I think this came from an earlier discussion - IIRC the scenario was that the developer has an existing SASUri and wants to modify it using the SasBuilder.",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2021-06-04T18:39:28.8481212-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2021-06-04T18:39:28.8481212-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "christothes",
+                                "createdOn": "2021-06-04T18:39:28.8481212-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "297dab55039f421f919f6d482d71ce48",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "apiRevisionId": "d505276880de4da89bd5c8b4c6ebcb50",
+                                "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
+                                "commentText": "renamed the arg.",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2021-06-04T19:27:44.900049-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2021-06-04T19:27:44.900049-04:00"
+                                    }
+                                ],
+                                "isResolved": false,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "christothes",
+                                "createdOn": "2021-06-04T19:27:44.900049-04:00",
+                                "isDeleted": false
+                            },
+                            {
+                                "id": "5e959d18017747b1937123d444ab961c",
+                                "reviewId": "6ebe8818d1954821a6dad0f74b9d3ead",
+                                "elementId": "Azure.Data.Tables.Sas.TableAccountSasBuilder.TableAccountSasBuilder(System.Uri)",
+                                "changeHistory": [
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2021-06-04T19:29:06.2128466-04:00"
+                                    },
+                                    {
+                                        "changeAction": "created",
+                                        "changedBy": "christothes",
+                                        "changedOn": "2021-06-04T19:29:06.2128466-04:00"
+                                    }
+                                ],
+                                "isResolved": true,
+                                "upvotes": [],
+                                "taggedUsers": [],
+                                "commentType": "apiRevision",
+                                "resolutionLocked": false,
+                                "createdBy": "christothes",
+                                "createdOn": "2021-06-04T19:29:06.2128466-04:00",
+                                "isDeleted": false
+                            }
+                        ],
+                        "isResolvedCommentThread": true,
+                        "isHiddenAPI": false
+                    }
+                ]
             },
             "parentNodeIdHashed": "nId421098689-556306156",
             "isNodeWithDiff": false,

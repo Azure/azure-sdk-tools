@@ -117,8 +117,17 @@ class NodeEntityBase:
                 c.generate_tokens(apiview)
             apiview.end_group()
 
+    def is_pylint_error_owner(self, err) -> bool:
+        """Check if this node is the owner of a pylint error and that the error object is the same as the node.
+
+        :param PylintError err: The pylint error to check
+        :return: True if this node owns the error, False otherwise
+        :rtype: bool
+        """
+        return err.owner == str(self.obj) and err.obj == str(self.name)
+
     def generate_diagnostics(self):
-        self.pylint_errors = PylintParser.get_items(self.obj)
+        self.pylint_errors = PylintParser.get_items(self)
         for child in self.child_nodes or []:
             child.generate_diagnostics()
 

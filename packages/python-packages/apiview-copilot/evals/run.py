@@ -1,4 +1,11 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
 import argparse
+
 import dotenv
 from _discovery import discover_targets
 from _runner import EvaluationRunner
@@ -22,13 +29,22 @@ if __name__ == "__main__":
         help="Paths to directories containing test files.",
     )
     parser.add_argument(
-        "--use-cache",
+        "--use-recording",
         action="store_true",
-        help="Enable caching of evaluation results to speed up runs.",
+        help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
+    )
+    parser.add_argument(
+        "--style",
+        "-s",
+        type=str,
+        choices=["compact", "verbose"],
+        default="compact",
+        help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
     )
     args = parser.parse_args()
     targets = discover_targets(args.test_paths)
-    runner = EvaluationRunner(num_runs=args.num_runs, use_cache=args.use_cache)
+    runner = EvaluationRunner(
+        num_runs=args.num_runs, use_recording=args.use_recording, verbose=(args.style == "verbose")
+    )
     results = runner.run(targets)
     runner.show_results(results)
-    runner.show_summary(results)

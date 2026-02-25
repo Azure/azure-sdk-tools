@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -18,6 +19,7 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
@@ -46,6 +48,7 @@ namespace APIViewWeb.Managers
         private readonly IPollingJobQueueManager _pollingJobQueueManager;
         private readonly INotificationManager _notificationManager;
         private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
+        private readonly ICopilotAuthenticationService _copilotAuthService;
         private readonly ILogger<ReviewManager> _logger;
 
         public ReviewManager (
@@ -64,7 +67,8 @@ namespace APIViewWeb.Managers
             IHttpClientFactory httpClientFactory, 
             IPollingJobQueueManager pollingJobQueueManager,
             INotificationManager notificationManager,
-            ICosmosPullRequestsRepository pullRequestsRepository, 
+            ICosmosPullRequestsRepository pullRequestsRepository,
+            ICopilotAuthenticationService copilotAuthService,
             ILogger<ReviewManager> logger)
         {
             _authorizationService = authorizationService;
@@ -83,6 +87,7 @@ namespace APIViewWeb.Managers
             _pollingJobQueueManager = pollingJobQueueManager;
             _notificationManager = notificationManager;
             _pullRequestsRepository = pullRequestsRepository;
+            _copilotAuthService = copilotAuthService;
             _logger = logger;
         }
 
@@ -107,6 +112,16 @@ namespace APIViewWeb.Managers
         public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
             return _reviewsRepository.GetReviewAsync(language, packageName, isClosed);
+        }
+
+        /// <summary>
+        /// Get distinct package names for a language
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns></returns>
+        public Task<IEnumerable<string>> GetPackageNamesAsync(string language)
+        {
+            return _reviewsRepository.GetPackageNamesAsync(language);
         }
 
         /// <summary>
@@ -234,12 +249,11 @@ namespace APIViewWeb.Managers
                 review = await GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language);
                 if (review == null)
                 {
-                    review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
+                    review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, crossLanguagePackageId: codeFile.CrossLanguagePackageId);
                 }
             }
             return review;
         }
-
 
         /// <summary>
         /// Create Reviews
@@ -248,15 +262,16 @@ namespace APIViewWeb.Managers
         /// <param name="language"></param>
         /// <param name="isClosed"></param>
         /// <param name="packageType">Optional package type. If not provided, will be automatically classified.</param>
+        /// <param name="crossLanguagePackageId"></param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null)
+        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null, string crossLanguagePackageId = null)
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(language)) 
             {
                 throw new ArgumentException("Package Name and Language are required");
             }
 
-            ReviewListItemModel review = new ReviewListItemModel()
+            ReviewListItemModel review = new()
             {
                 PackageName = packageName,
                 Language = language,
@@ -264,15 +279,16 @@ namespace APIViewWeb.Managers
                 CreatedOn = DateTime.UtcNow,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,
                 IsClosed = isClosed,
-                ChangeHistory = new List<ReviewChangeHistoryModel>()
-                {
+                CrossLanguagePackageId = crossLanguagePackageId,
+                ChangeHistory =
+                [
                     new ReviewChangeHistoryModel()
                     {
                         ChangeAction = ReviewChangeAction.Created,
                         ChangedBy = ApiViewConstants.AzureSdkBotName,
                         ChangedOn = DateTime.UtcNow
                     }
-                }
+                ]
             };
 
             await _reviewsRepository.UpsertReviewAsync(review);
@@ -300,21 +316,28 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="id"></param>
+        /// <param name="skipOwnerCheck">When true, skips the review owner authorization check (e.g. for admin deletions).</param>
         /// <returns></returns>
-        public async Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id)
+        public async Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id, bool skipOwnerCheck = false)
         {
             var review = await _reviewsRepository.GetReviewAsync(id);
             var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(id);
-            await ManagerHelpers.AssertReviewOwnerAsync(user, review, _authorizationService);
+            if (!skipOwnerCheck)
+            {
+                await ManagerHelpers.AssertReviewOwnerAsync(user, review, _authorizationService);
+            }
 
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(review.ChangeHistory, ReviewChangeAction.Deleted, user.GetGitHubLogin());
+            var userName = user.GetGitHubLogin();
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(review.ChangeHistory, ReviewChangeAction.Deleted, userName);
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsDeleted = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
 
+            // Use the no-guard overload for cascade deletion — the review-level permission
+            // check is sufficient; child revisions may be non-Manual or owned by other users.
             foreach (var revision in revisions)
             {
-                await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user, revision);
+                await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(revision, userName: userName, notes: "Cascade deleted with review");
             }
             await _commentManager.SoftDeleteCommentsAsync(user, review.Id);
         }
@@ -532,6 +555,7 @@ namespace APIViewWeb.Managers
             var copilotEndpoint = _configuration["CopilotServiceEndpoint"];
             var startUrl = $"{copilotEndpoint}/api-review/start";
             var client = _httpClientFactory.CreateClient();
+            
             var payload = new Dictionary<string, object>
             {
                 { "language", LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language, activeCodeFile.CodeFile.LanguageVariant) },
@@ -547,13 +571,21 @@ namespace APIViewWeb.Managers
                 var diffCodeFile = await _codeFileRepository.GetCodeFileAsync(diffApiRevision, false);
                 var diffCodeLines = diffCodeFile.CodeFile.GetApiLines(skipDocs: true);
                 payload.Add("base", String.Join("\\n", diffCodeLines.Select(item => item.lineText.Trim())));
+
             }
 
             try {
                 _logger.LogInformation("Starting Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}, Language: {Language}", 
                     reviewId, activeApiRevision.Id, activeApiRevision.Language);
                 
-                var response = await client.PostAsync(startUrl, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+
+                var request = new HttpRequestMessage(HttpMethod.Post, startUrl)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
+                
+                var response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
                 var responseString = await response.Content.ReadAsStringAsync();
                 var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
@@ -855,207 +887,5 @@ namespace APIViewWeb.Managers
                 return new List<ReviewListItemModel>();
             }
         }
-
-
-        /*
-        /// <summary>
-        /// Process pending namespace reviews for auto-approval after 3 business days with no open comments
-        /// Groups reviews by pull request number and sends one consolidated email per TypeSpec namespace
-        /// TODO: Auto-approval feature is currently disabled - commenting out for future use
-        /// </summary>
-        public async Task ProcessPendingNamespaceAutoApprovals()
-        {
-            try
-            {
-                // Check if auto-approval feature is enabled
-                var autoApprovalEnabled = _configuration.GetValue<bool>("Features:enableAutoApproval", false);
-                if (!autoApprovalEnabled)
-                {
-                    _logger.LogInformation("Auto-approval feature is disabled. Skipping namespace auto-approval processing.");
-                    return;
-                }
-                
-                var pendingReviews = await GetPendingNamespaceReviewsForAutoApproval();
-                
-                // Group reviews by pull request numbers to consolidate related approvals
-                var prGroups = GroupReviewsByPullRequestNumbers(pendingReviews);
-
-                foreach (var prGroup in prGroups)
-                {
-                    var reviewsInGroup = prGroup.Value;
-                    
-                    // Find the TypeSpec review as the primary review for this group
-                    var typeSpecReview = reviewsInGroup.FirstOrDefault(r => r.Language == ApiViewConstants.TypeSpecLanguage);
-                    
-                    // Check if any review in this group should be auto-approved
-                    var shouldAutoApproveGroup = false;
-                    foreach (var review in reviewsInGroup)
-                    {
-                        var shouldApprove = await ShouldAutoApprove(review);
-                        if (shouldApprove)
-                        {
-                            shouldAutoApproveGroup = true;
-                            break;
-                        }
-                    }     
-                    if (shouldAutoApproveGroup)
-                    {
-                        _logger.LogInformation($"Auto-approving group '{prGroup.Key}' with {reviewsInGroup.Count} reviews");
-                        await AutoApproveNamespaceGroup(reviewsInGroup, typeSpecReview);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-        }
-        */
-
-        /// <summary>
-        /// Get all reviews with pending namespace approval status
-        /// </summary>
-        private async Task<List<ReviewListItemModel>> GetPendingNamespaceReviewsForAutoApproval()
-        {
-            // Get all reviews (including TypeSpec) that have pending namespace approval
-            var allLanguages = ApiViewConstants.AllSupportedLanguages;
-            var pendingReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(allLanguages);
-            return pendingReviews.ToList();
-        }
-
-        /*
-        /// <summary>
-        /// Check if a review should be auto-approved (3 business days passed + no open comments)
-        /// TODO: Auto-approval feature is currently disabled - commenting out for future use
-        /// </summary>
-        private async Task<bool> ShouldAutoApprove(ReviewListItemModel review)
-        {
-            if (!review.NamespaceApprovalRequestedOn.HasValue)
-            {
-                return false;
-            }
-            
-            // Calculate 3 business day deadline (using centralized utility)
-            var approvalDeadline = DateTimeHelper.CalculateBusinessDays(review.NamespaceApprovalRequestedOn.Value, 3);
-            
-            // Check if deadline has passed
-            if (DateTime.UtcNow < approvalDeadline)
-            {
-                return false;
-            }
-            
-            // Check for open/unresolved comments
-            var openComments = await GetOpenComments(review.Id);
-            var hasOpenComments = openComments.Any();
-            
-            var shouldApprove = !hasOpenComments;
-            
-            // Only log when actually approving to reduce noise
-            if (shouldApprove)
-            {
-                _logger.LogInformation($"Auto-approving {review.PackageName} ({review.Language}) - deadline passed with no open comments");
-            }
-            
-            return shouldApprove;
-        }
-        */
-
-        // Get open/unresolved comments for a review
-        // private async Task<IEnumerable<CommentItemModel>> GetOpenComments(string reviewId)
-        // {
-        //     var comments = await _commentManager.GetCommentsAsync(reviewId);
-        //     return comments.Where(c => !c.IsResolved && !c.IsDeleted);
-        // }
-
-        // Group reviews by their timestamp and service to identify related reviews
-        // Reviews with same NamespaceApprovalRequestedOn timestamp are likely from the same logical request
-        // private Dictionary<string, List<ReviewListItemModel>> GroupReviewsByPullRequestNumbers(List<ReviewListItemModel> pendingReviews)
-        // {
-        //     var timestampGroups = new Dictionary<string, List<ReviewListItemModel>>();
-        //     var reviewsWithoutTimestamp = new List<ReviewListItemModel>();
-
-        //     // Group by NamespaceApprovalRequestedOn timestamp and service name
-        //     foreach (var review in pendingReviews)
-        //     {
-        //         try
-        //         {
-        //             if (review.NamespaceApprovalRequestedOn.HasValue)
-        //             {
-        //                 // Extract service name from package name for grouping
-        //                 var serviceName = StringHelper.ExtractServiceName(review.PackageName);
-                        
-        //                 // Create timestamp key with service name - precise to the minute to group related requests
-        //                 var timestampKey = $"{serviceName}_{review.NamespaceApprovalRequestedOn.Value:yyyy-MM-dd_HH-mm}";
-                        
-        //                 if (!timestampGroups.ContainsKey(timestampKey))
-        //                 {
-        //                     timestampGroups[timestampKey] = new List<ReviewListItemModel>();
-        //                 }
-        //                 timestampGroups[timestampKey].Add(review);
-        //             }
-        //             else
-        //             {
-        //                 // No timestamp, handle individually
-        //                 reviewsWithoutTimestamp.Add(review);
-        //             }
-        //         }
-        //         catch (Exception ex)
-        //         {
-        //             _telemetryClient.TrackException(ex);
-        //             reviewsWithoutTimestamp.Add(review);
-        //         }
-        //     }
-
-        //     // Add individual reviews for those without timestamps
-        //     foreach (var review in reviewsWithoutTimestamp)
-        //     {
-        //         var individualKey = $"individual_{review.Id}";
-        //         timestampGroups[individualKey] = new List<ReviewListItemModel> { review };
-        //     }
-
-        //     return timestampGroups;
-        // }
-
-        /*
-        /// <summary>
-        /// Auto-approve all reviews in a group and send one consolidated notification
-        /// TODO: Auto-approval feature is currently disabled - commenting out for future use
-        /// </summary>
-        private async Task AutoApproveNamespaceGroup(List<ReviewListItemModel> allReviewsInGroup, ReviewListItemModel typeSpecReview)
-        {
-            try
-            {
-                // Approve all reviews in this group
-                foreach (var review in allReviewsInGroup)
-                {
-                    review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
-                    await _reviewsRepository.UpsertReviewAsync(review);
-                }
-                
-                // Send ONE consolidated email for the TypeSpec review with all associated language reviews
-                if (typeSpecReview != null)
-                {
-                    // Get language reviews (exclude TypeSpec and Swagger from the associated list)
-                    var associatedLanguageReviews = allReviewsInGroup
-                        .Where(r => r.Language != ApiViewConstants.TypeSpecLanguage && r.Language != ApiViewConstants.SwaggerLanguage)
-                        .ToList();
-                    
-                    await _notificationManager.NotifyStakeholdersOfAutoApproval(typeSpecReview, associatedLanguageReviews);
-                }
-                else
-                {
-                    // Fallback: if no TypeSpec review found, use the first review as primary
-                    var primaryReview = allReviewsInGroup.First();
-                    var otherReviews = allReviewsInGroup.Skip(1).ToList();
-                    
-                    await _notificationManager.NotifyStakeholdersOfAutoApproval(primaryReview, otherReviews);
-                }
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-        }
-        */
     }
 }

@@ -1,0 +1,12 @@
+testcase: mention_summarize_existing_issue
+results: | 
+  {
+    "action": "no-op",
+    "url": "https://github.com/tjprescott/azure-sdk-tools/issues/42",
+    "repository_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools",
+    "title": "[Python APIView] Bare identifiers break Literal parsing",
+    "created_at": "2025-10-18T09:12:03Z",
+    "body": "**Bad code snippet:**\n```python\nLiteral[status]\n```\n\n**Description:**\nThe parser should quote bare string identifiers when rendering Literal annotations.\n\n**Expected (good) code snippet:**\n```python\nLiteral[\"status\"]\n```"
+  }
+response: |
+  Thank you for your feedback! This issue is already being tracked here: https://github.com/tjprescott/azure-sdk-tools/issues/42.

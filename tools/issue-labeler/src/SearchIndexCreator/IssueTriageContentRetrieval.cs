@@ -1,14 +1,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Storage.Blobs;
-using Azure.Identity;
-using Microsoft.Extensions.Configuration;
-using Octokit;
-using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using System.Net.Http.Headers;
-using Newtonsoft.Json;
+using Azure.Identity;
+using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
+using Azure.Storage.Blobs;
 using IssueLabeler.Shared;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using Octokit;
+using SearchIndexCreator.RepositoryIndexConfigs;
 
 namespace SearchIndexCreator
 {
@@ -19,6 +20,7 @@ namespace SearchIndexCreator
         private readonly string? _accountName;
         private readonly string? _containerName;
         private readonly string? _repo;
+        private readonly IRepositoryIndexConfig _repoConfig;
 
         public IssueTriageContentRetrieval(IConfiguration config)
         {
@@ -28,12 +30,16 @@ namespace SearchIndexCreator
             _accountName = config["StorageName"];
             _containerName = $@"{config["ContainerName"]}-blob";
             _repo = config["repo"];
+            _repoConfig = RepositoryIndexConfigFactory.Create(_repo);
         }
 
         public async Task<List<IssueTriageContent>> RetrieveContent(string repoOwner)
         {
+            Console.WriteLine($"Retrieving content for {repoOwner}/{_repo} ({_repoConfig.DisplayName} repository)...");
+
             var codeownersContents = await _client.Repository.Content.GetAllContents(repoOwner, _repo, ".github/CODEOWNERS");
             CodeOwnerUtils.codeOwnersFilePathOverride = codeownersContents[0].DownloadUrl;
+            Console.WriteLine("CODEOWNERS file loaded.");
 
             var issues = await RetrieveAllIssuesAsync(repoOwner);
             var documents = await RetrieveAllDocumentsAsync(repoOwner);
@@ -42,6 +48,7 @@ namespace SearchIndexCreator
             results.AddRange(issues);
             results.AddRange(documents);
 
+            Console.WriteLine($"Total content retrieved: {results.Count} items");
             return results;
         }
 
@@ -63,7 +70,7 @@ namespace SearchIndexCreator
                 var blobClient = containerClient.GetBlobClient(content.Id);
                 try
                 {
-                    var jsonContent = JsonConvert.SerializeObject(content);
+                    var jsonContent = System.Text.Json.JsonSerializer.Serialize(content);
 
                     var blobHttpHeaders = new Azure.Storage.Blobs.Models.BlobHttpHeaders
                     {
@@ -74,7 +81,8 @@ namespace SearchIndexCreator
                     {
                         await blobClient.UploadAsync(stream, new Azure.Storage.Blobs.Models.BlobUploadOptions
                         {
-                            HttpHeaders = blobHttpHeaders
+                            HttpHeaders = blobHttpHeaders,
+                            Conditions = null  // Allow overwrite of existing blobs
                         });
                     }
 
@@ -173,108 +181,94 @@ namespace SearchIndexCreator
 
         private async Task<List<IssueTriageContent>> RetrieveAllIssuesAsync(string repoOwner)
         {
-            List<IssueTriageContent> results = new List<IssueTriageContent>();
+            var results = new List<IssueTriageContent>();
 
             var issueReq = new RepositoryIssueRequest
             {
-                State = ItemStateFilter.Closed,
+                State = _repoConfig.IssueStateFilter,
                 Filter = IssueFilter.All,
             };
-            issueReq.Labels.Add("customer-reported");
-            issueReq.Labels.Add("issue-addressed");
+
+            foreach (var label in _repoConfig.RequiredLabels)
+            {
+                issueReq.Labels.Add(label);
+            }
 
             var issues = await _client.Issue.GetAllForRepository(repoOwner, _repo, issueReq);
+            Console.WriteLine($"Found {issues.Count} issues.");
 
+            var processedCount = 0;
             foreach (var issue in issues)
             {
-                // Find all pink and yellow labels
-                var (service, category, hasCustomerReported, hasIssueAddressed) = AnalyzeLabels(issue.Labels);
-
-                if (service == null || category == null || !hasCustomerReported || !hasIssueAddressed)
+                if (_repoConfig.SkipPullRequests && issue.PullRequest != null)
                 {
-                    continue; // Skip this issue if it doesn't meet all criteria
+                    continue;
                 }
 
-                List<string> labels = new List<string>
+                processedCount++;
+                if (processedCount % 50 == 0)
                 {
-                    service.Name,
-                    category.Name
-                };
+                    Console.WriteLine($"Processing issue {processedCount}/{issues.Count}... (Issue #{issue.Number})");
+                }
 
-                var codeowners = CodeOwnerUtils.GetCodeownersEntryForLabelList(labels).AzureSdkOwners;
+                var (primaryLabel, secondaryLabel) = _repoConfig.AnalyzeLabels(issue.Labels);
 
-                IssueTriageContent searchContent = new IssueTriageContent(
-                    $"{repoOwner}/{_repo}/{issue.Number.ToString()}/Issue",
-                    repoOwner + "/" + _repo,
+                if (_repoConfig.ShouldSkipIssue(issue.Labels, primaryLabel, secondaryLabel))
+                {
+                    continue;
+                }
+
+                var labels = new List<string>();
+                if (primaryLabel != null) labels.AddRange(primaryLabel.Split(", "));
+                if (secondaryLabel != null) labels.AddRange(secondaryLabel.Split(", "));
+
+                var codeowners = _repoConfig.GetCodeowners(labels);
+
+                var searchContent = new IssueTriageContent(
+                    $"{repoOwner}/{_repo}/{issue.Number}/Issue",
+                    $"{repoOwner}/{_repo}",
                     issue.HtmlUrl,
                     DocumentTypes.Issue.ToString()
                 )
                 {
                     Title = issue.Title,
-                    Body = $"{issue.Body}",
-                    Service = service.Name,
-                    Category = category.Name,
+                    Body = _repoConfig.FormatBody(issue),
                     Author = issue.User.Login,
                     CreatedAt = issue.CreatedAt,
                     CodeOwner = 0
                 };
 
+                _repoConfig.PopulateCustomFields(searchContent, primaryLabel, secondaryLabel);
                 results.Add(searchContent);
 
-                var issue_comments = await GetIssueCommentsAsync(repoOwner, _repo, issue.Number);
-
-                foreach (var comment in issue_comments)
+                // Optionally fetch comments based on profile
+                if (_repoConfig.IncludeComments)
                 {
+                    var comments = await GetIssueCommentsAsync(repoOwner, _repo, issue.Number);
 
-                    IssueTriageContent commentContent = new IssueTriageContent(
-                        $"{repoOwner}/{_repo}/{issue.Number.ToString()}/{comment.Id.ToString()}",
-                        repoOwner + "/" + _repo,
-                        comment.HtmlUrl,
-                        DocumentTypes.Issue.ToString()
-                    )
+                    foreach (var comment in comments)
                     {
-                        Title = issue.Title,
-                        Body = $"{comment.Body}",
-                        Service = service.Name,
-                        Category = category.Name,
-                        Author = comment.User.Login,
-                        CreatedAt = comment.CreatedAt,
-                        CodeOwner = codeowners.Contains(comment.User.Login) ? 1 : 0,
-                    };
+                        var commentContent = new IssueTriageContent(
+                            $"{repoOwner}/{_repo}/{issue.Number}/{comment.Id}",
+                            $"{repoOwner}/{_repo}",
+                            comment.HtmlUrl,
+                            DocumentTypes.Issue.ToString()
+                        )
+                        {
+                            Title = issue.Title,
+                            Body = comment.Body,
+                            Author = comment.User.Login,
+                            CreatedAt = comment.CreatedAt,
+                            CodeOwner = codeowners.Contains(comment.User.Login) ? 1 : 0,
+                        };
 
-                    results.Add(commentContent);
-
+                        _repoConfig.PopulateCustomFields(commentContent, primaryLabel, secondaryLabel);
+                        results.Add(commentContent);
+                    }
                 }
             }
 
             return results;
-        }
-
-        private static bool IsServiceLabel(Octokit.Label label) =>
-            string.Equals(label.Color, "e99695", StringComparison.InvariantCultureIgnoreCase);
-
-        private static bool IsCategoryLabel(Octokit.Label label) =>
-            string.Equals(label.Color, "ffeb77", StringComparison.InvariantCultureIgnoreCase);
-
-        private (Octokit.Label service, Octokit.Label category, bool hasCustomerReported, bool hasIssueAddressed) AnalyzeLabels(IReadOnlyList<Octokit.Label> labels)
-        {
-            Octokit.Label service = null;
-            Octokit.Label category = null;
-            var hasCustomerReported = false;
-            var hasIssueAddressed = false;
-
-            foreach (var label in labels)
-            {
-                if (IsServiceLabel(label))
-                    service = label;
-                else if (IsCategoryLabel(label))
-                    category = label;
-                else if (label.Name.Equals("customer-reported", StringComparison.OrdinalIgnoreCase))
-                    hasCustomerReported = true;
-                else if (label.Name.Equals("issue-addressed", StringComparison.OrdinalIgnoreCase))
-                    hasIssueAddressed = true;
-            }
-            return (service, category, hasCustomerReported, hasIssueAddressed);
         }
 
         private async Task<List<IssueComment>> GetIssueCommentsAsync(string repoOwner, string repo, int issueNumber)
@@ -283,10 +277,10 @@ namespace SearchIndexCreator
 
             return issue_comments
                 .Where(c =>
-                    !c.User.Login.Equals("github-actions[bot]") && // Filter out bot comments
-                    c.Body.Length > 250 && // Filter out short comments
-                    !c.User.Login.Equals("ghost") && // Filter out comments from deleted users (mostly because the older bot seems to have been deleted)
-                    !c.AuthorAssociation.StringValue.Equals("NONE")) // Filter out non member comments
+                    !c.User.Login.Equals("github-actions[bot]") &&
+                    c.Body.Length > _repoConfig.MinCommentLength &&
+                    !c.User.Login.Equals("ghost") &&
+                    !c.AuthorAssociation.StringValue.Equals("NONE"))
                 .ToList();
         }
 
@@ -351,7 +345,7 @@ namespace SearchIndexCreator
         {
             BlobServiceClient client = new(
                 new Uri($"https://{accountName}.blob.core.windows.net/"),
-                new DefaultAzureCredential());
+                new AzureCliCredential());
 
             return client;
         }

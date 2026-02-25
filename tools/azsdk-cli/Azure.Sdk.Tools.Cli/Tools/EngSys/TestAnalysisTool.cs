@@ -7,12 +7,21 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Tools.Core;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
 [McpServerToolType, Description("Processes and analyzes test results from TRX files")]
 public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTool> logger) : MCPTool()
 {
+    // MCP Tool Names
+    private const string GetFailedTestCasesToolName = "azsdk_get_failed_test_cases";
+    private const string GetFailedTestCaseDataToolName = "azsdk_get_failed_test_case_data";
+    private const string GetFailedTestRunDataToolName = "azsdk_get_failed_test_run_data";
+
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageTest];
+
     // Options
     private readonly Option<string> trxPathOpt = new("--trx-file")
     {
@@ -33,7 +42,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
     };
 
     protected override Command GetCommand() =>
-        new("test-results", "Analyze test results")
+        new McpCommand("results", "Analyze test results", GetFailedTestCasesToolName)
         {
             trxPathOpt,
             filterOpt,
@@ -61,7 +70,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         return await GetFailedTestRunDataFromTrx(trxPath);
     }
 
-    [McpServerTool(Name = "azsdk_get_failed_test_cases"), Description("Get titles of failed test cases from a TRX file")]
+    [McpServerTool(Name = GetFailedTestCasesToolName), Description("Get list of all failed test case titles (names only) from a TRX file. Use this to quickly see which tests failed without details.")]
     public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath)
     {
         try
@@ -75,7 +84,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         }
     }
 
-    [McpServerTool(Name = "azsdk_get_failed_test_case_data"), Description("Get details for a failed test from a TRX file")]
+    [McpServerTool(Name = GetFailedTestCaseDataToolName), Description("Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a TRX file. Use this to debug a particular test failure.")]
     public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle)
     {
         try
@@ -101,7 +110,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
         }
     }
 
-    [McpServerTool(Name = "azsdk_get_failed_test_run_data"), Description("Get failed test run data from a TRX file")]
+    [McpServerTool(Name = GetFailedTestRunDataToolName), Description("Get complete details for all failed test cases from a TRX file. Returns full data including error messages, stack traces, and output for every failed test. Use this for comprehensive analysis.")]
     public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath)
     {
         try

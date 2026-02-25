@@ -1,6 +1,5 @@
 import "@typespec/rest";
 
-using TypeSpec.Rest;
 using TypeSpec.Http;
 
 @service(#{ title: "APIView Copilot Service" })
@@ -12,6 +11,7 @@ namespace ApiViewCopilot {
   op legacyApiReview(
     @path language: string,
     @body request: ApiReviewRequest,
+    @header("Authorization") authorization: string,
   ): ApiReviewResponse;
 
   /** Starts a new API review job */
@@ -19,22 +19,32 @@ namespace ApiViewCopilot {
   @post
   op startApiReviewJob(
     @body request: ApiReviewJobRequest,
+    @header("Authorization") authorization: string,
   ): ApiReviewJobStartResponse;
 
   /** Gets the status of an API review job */
   @route("/api-review/{jobId}")
   @get
-  op getApiReviewJobStatus(@path jobId: string): ApiReviewJobStatusResponse;
+  op getApiReviewJobStatus(
+    @path jobId: string,
+    @header("Authorization") authorization: string,
+  ): ApiReviewJobStatusResponse;
 
   /** Summarizes an API or the diff between two APIs */
   @route("/api-review/summarize")
   @post
-  op summarizeApi(@body request: SummarizeRequest): SummarizeResponse;
+  op summarizeApi(
+    @body request: SummarizeRequest,
+    @header("Authorization") authorization: string,
+  ): SummarizeResponse;
 
   /** Submit a chat message to the agent. */
   @route("/agent/chat")
   @post
-  op agentChat(@body request: AgentChatRequest): AgentChatResponse;
+  op agentChat(
+    @body request: AgentChatRequest,
+    @header("Authorization") authorization: string,
+  ): AgentChatResponse;
 
   /** Handles an @mention from APIView. */
   @route("/api-review/mention")
@@ -51,6 +61,26 @@ namespace ApiViewCopilot {
     @body request: MentionRequest,
     @header("Authorization") authorization: string,
   ): AgentChatResponse;
+
+  /** Resolves package information from a package description and language. */
+  @route("/api-review/resolve-package")
+  @post
+  op resolvePackage(
+    @body request: ResolvePackageRequest,
+    @header("Authorization") authorization: string,
+  ): ResolvePackageResponse;
+
+  /** Test endpoint to verify authentication is working. */
+  @route("/auth-test")
+  @get
+  op authTest(
+    @header("Authorization") authorization: string,
+  ): { status: "ok" };
+
+  /** Health check endpoint to verify service is running. */
+  @route("/health-test")
+  @get
+  op healthCheck(): { status: "ok" };
 
   model MentionRequest {
     /** The programming language of the APIView. */
@@ -201,5 +231,39 @@ namespace ApiViewCopilot {
 
     /** The list of messages in the conversation. */
     messages: {}[];
+  }
+
+  model ResolvePackageRequest {
+    /** The package description or name to search for. */
+    packageQuery: string;
+
+    /** The programming language of the package (e.g., 'python', 'java'). */
+    language: string;
+
+    /** Optional version to filter by. If not provided, returns the latest revision. */
+    version?: string;
+
+    /** The APIView environment ('production' or 'staging'). Defaults to 'production'. */
+    environment?: "production" | "staging";
+  }
+
+  model ResolvePackageResponse {
+    /** The resolved package name. */
+    packageName: string;
+
+    /** The review ID for the package. */
+    reviewId: string;
+
+    /** The programming language. */
+    language: string;
+
+    /** The package version. */
+    version?: string;
+
+    /** The revision ID for the package. */
+    revisionId?: string;
+
+    /** The revision label (e.g., 'Source Branch:main'). */
+    revisionLabel?: string;
   }
 }

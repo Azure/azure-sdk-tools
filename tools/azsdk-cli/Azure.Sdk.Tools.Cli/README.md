@@ -7,13 +7,15 @@ This is the SDK developer experience CLI and MCP server. It is intended to:
 
 ## Table of Contents
 
-* [Azure SDK CLI](#azure-sdk-cli)
-   * [Table of Contents](#table-of-contents)
-   * [Prerequisites](#prerequisites)
-   * [Quick Start](#quick-start)
-   * [Usage Modes](#usage-modes)
-      * [1. MCP Server Mode](#1-mcp-server-mode)
-      * [2. Standalone CLI Mode](#2-standalone-cli-mode)
+- [`Azure SDK CLI`](#azure-sdk-cli)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
+  - [Usage Modes](#usage-modes)
+    - [1. MCP Server Mode](#1-mcp-server-mode)
+    - [2. Standalone CLI Mode](#2-standalone-cli-mode)
+  - [Telemetry Configuration](#telemetry-configuration)
+  - [Configure Azure Knowledge base service](#configure-azure-knowledge-base-service)
 
 ## Prerequisites
 
@@ -40,39 +42,6 @@ This is the SDK developer experience CLI and MCP server. It is intended to:
 4. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`) with any of our recommended prompts from the [documentation](https://aka.ms/azsdk/agent#agentic-workflow-scenarios)
 
 ## Usage Modes
-
-```text
-Description:
-  azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.
-
-Usage:
-  azsdk [command] [options]
-
-Options:
-  --tools <tools>        If provided, the tools server will only respond to CLI or MCP server requests for tools named the same as provided in this option. Glob matching is honored.
-  --debug                Enable debug logging [default: False]
-  -o, --output <output>  The format of the output. Supported formats are: plain, json [default: plain]
-  --version              Show version information
-  -?, -h, --help         Show help and usage information
-
-Commands:
-  eng                       Internal azsdk engineering system commands
-  download-prompts
-  log                       Log processing commands
-  validate-workspace-files
-  start                     Starts the MCP server (stdio mode)
-  azp                       Azure Pipelines Tool
-  release-plan              Manage release plans in AzureDevops
-  releaseReadiness          Checks release readiness of a SDK package.
-  sdk-release               Run the release pipeline for the package
-  spec-tool                 TypeSpec project tools for Azure REST API Specs
-  spec-pr                   Pull request tools
-  spec-workflow             Tools to help with the TypeSpec SDK generation.
-  validate-typespec         Run typespec validation
-  test-results              Analyze test results
-  generators                File generators (e.g., client library README.md)
-  samples                   Sample generation and management commands
-```
 
 ### 1. MCP Server Mode
 
@@ -134,3 +103,10 @@ If you need to direct telemetry to an alternate Application Insights instance (f
 
 - `AZSDKTOOLS_APPLICATIONINSIGHTS_CONNECTION_STRING`: the full Application Insights connection string.
 
+## Configure Azure Knowledge base service
+
+The `TypeSpecAuthoringTool` uses the Azure Knowledge Base service and is configured with a default service by default.
+
+If you want to use a different Azure Knowledge Base service instead of the default one, set the `AZURE_SDK_KB_ENDPOINT` environment variable to specify the endpoint.
+
+If the service is deployed in Azure with built-in Microsoft authentication enabled, you must also set the `AZURE_SDK_KB_CLIENT_ID` and `AZURE_SDK_KB_SCOPE`environment variables. These variables should reference the application (client) ID of the service and the authentication scope. You can find both the endpoint and the client ID in the Azure SDK QA backend service configuration blob.

@@ -8,7 +8,13 @@
 
 import os
 
-from azure.identity import AzurePipelinesCredential, DefaultAzureCredential
+from azure.identity import (
+    AzureCliCredential,
+    AzureDeveloperCliCredential,
+    AzurePipelinesCredential,
+    ChainedTokenCredential,
+    ManagedIdentityCredential,
+)
 
 
 def in_ci():
@@ -31,4 +37,8 @@ def get_credential():
             system_access_token=system_access_token,
         )
 
-    return DefaultAzureCredential()
+    return ChainedTokenCredential(
+        ManagedIdentityCredential(),
+        AzureCliCredential(),
+        AzureDeveloperCliCredential(),
+    )

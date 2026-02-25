@@ -38,9 +38,7 @@ public final class SnippetDictionary {
     }
 
     public void beginSnippet(String key) {
-        if (!this.snippetDictionary.containsKey((key))) {
-            this.snippetDictionary.put(key, new ArrayList<>());
-        }
+        this.snippetDictionary.computeIfAbsent(key, ignoredKey -> new ArrayList<>());
     }
 
     public void processLine(String line) {
@@ -50,14 +48,12 @@ public final class SnippetDictionary {
     }
 
     public List<String> finalizeSnippet(String key) {
-        List<String> value = null;
+        // Attempt to remove the key from the dictionary.
+        List<String> value = snippetDictionary.remove(key);
 
-        // Check the dictionary for containing the key.
-        if (snippetDictionary.containsKey(key)) {
-            // If it does contain the key return the codesnippet for the key.
-            value = snippetDictionary.remove(key);
-        } else {
-            // Otherwise add the codesnippet to the list of keys that have missing begin tags.
+        if (value == null) {
+            // Given we never put a null value into the map, if the value of removal was null that key didn't exist in
+            // the dictionary.
             missingBeginTag.add(key);
         }
 

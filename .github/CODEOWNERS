@@ -20,9 +20,9 @@
 /.config/1espt/                        @benbp @weshaggard
 
 ###########
-# CODEOWNERS Linter pipeline
+# Files used to manage tsp-client version and installation
 ###########
-/eng/common/pipelines/codeowners-linter.yml @weshaggard
+/eng/common/tsp-client @catalinaperalta @raych1
 
 ###########
 # Eng Sys Tools
@@ -36,6 +36,7 @@
 /tools/github-team-user-store/          @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao
+/tools/keyvault-mock-attestation/       @maorleger
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
@@ -90,7 +91,7 @@
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
 /tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
 /src/swift/                               @tjprescott
-/src/java/apiview-java-processor/         @JonathanGiles
+/src/java/apiview-java-processor/         @JonathanGiles @alzimmermsft @srnagar
 /src/go/                                  @jhendrixMSFT @chlowell @RickWinter
 
 ###########
@@ -107,3 +108,6 @@
 /tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
 /tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev
 /tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared  @chunyu3 @JiaqiZhang-Dev
+
+# Add owners for notifications for specific pipelines
+/eng/common/pipelines/codeowners-linter.yml         @weshaggard

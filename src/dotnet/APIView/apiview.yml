@@ -110,7 +110,7 @@ extends:
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
-                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
+                condition: or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true'))
 
               - script: |
                   npm install -g @angular/cli@16.1.8
@@ -146,13 +146,13 @@ extends:
                 inputs:
                   mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
                   goals: 'clean package'
-                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
+                condition: or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true'))
 
               - script: |
                   go build
                 workingDirectory: $(GoParserPackagePath)
                 displayName: 'Build go parser'
-                condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
+                condition: or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true'))
 
               - task: UseDotNet@2
                 inputs:
@@ -186,7 +186,7 @@ extends:
                   ArtifactPath: '$(Build.ArtifactStagingDirectory)'
 
           - job: 'Test'
-            condition: ne(coalesce(variables['skipNonWebBuildAndTest'], 'false'), 'true')
+            condition: or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true'))
 
             pool:
               name: $(WINDOWSPOOL)
@@ -351,7 +351,7 @@ extends:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
-          condition: and(succeeded(), eq(coalesce(variables['runStagingPublish'], 'true'), 'true'))
+          condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true')))
 
           variables:
             - name: 'apiUrl'
@@ -405,11 +405,11 @@ extends:
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
-      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
-          condition: and(succeeded(), eq(coalesce(variables['runTestUIPublish'], 'false'), 'true'))
+          condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), ne(variables['runAsCI'], 'true'))
 
           variables:
             - name: 'apiUrl'
@@ -461,11 +461,11 @@ extends:
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
-      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
-          condition: eq(coalesce(variables['runProductionPublish'], 'true'), 'true')
+          condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'), or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true')))
 
           variables:
             - name: 'apiUrl'

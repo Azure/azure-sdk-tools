@@ -101,38 +101,6 @@ extends:
                   enabled: true # Enable CG only on the build job
 
             steps:
-              - script: |
-                  echo "========== Pipeline Condition Debug =========="
-                  echo "Build.Reason        = $(Build.Reason)"
-                  echo "runAsCI             = $(runAsCI)"
-                  echo ""
-                  echo "--- Condition evaluations ---"
-                  echo "ne(Build.Reason, 'Manual')  => Build.Reason is '$(Build.Reason)'"
-                  echo "eq(runAsCI, 'true')         => runAsCI is '$(runAsCI)'"
-                  echo ""
-                  echo "Expected behavior for condition: or(ne(Build.Reason,'Manual'), eq(runAsCI,'true'))"
-                  if "$(Build.Reason)"=="Manual" (
-                    echo "  ne(Build.Reason, 'Manual') = FALSE"
-                  ) else (
-                    echo "  ne(Build.Reason, 'Manual') = TRUE"
-                  )
-                  if "$(runAsCI)"=="true" (
-                    echo "  eq(runAsCI, 'true')        = TRUE"
-                  ) else (
-                    echo "  eq(runAsCI, 'true')        = FALSE"
-                  )
-                  if "$(Build.Reason)"=="Manual" (
-                    if "$(runAsCI)"=="true" (
-                      echo "  RESULT: RUN (manual + runAsCI=true)"
-                    ) else (
-                      echo "  RESULT: SKIP (manual + runAsCI=false => deploy to UX Test only)"
-                    )
-                  ) else (
-                    echo "  RESULT: RUN (not manual => CI/PR behavior)"
-                  )
-                  echo "=============================================="
-                displayName: 'Debug: Log runAsCI and Build.Reason'
-
               - task: NodeTool@0
                 inputs:
                   versionSpec: '$(NodeVersion)'

@@ -28,10 +28,9 @@ For Azure SDK onboarding and development questions, follow this structured appro
 - Carefully read the **Before you begin** and **Next steps** sections of the KNOWLEDGE CONTEXT
 
 ## Step 3: Answer Construction
-- Start with the most direct solution based on SDK onboarding knowledge from KNOWLEDGE CONTEXT
-- Consider the complete onboarding process and how the solution fits into the process
-- Provide actionable next steps and reference documents
-- For CI/validation issues, guide customers on permanent resolution rather than suppression methods
+- Give the direct answer first, then one actionable next step
+- Only explain onboarding process context if it is essential to the answer
+- For CI/validation issues, guide toward permanent resolution rather than suppression
 
 ## Step 4: Verification and Validation
 - Double-check all technical recommendations against Azure standards

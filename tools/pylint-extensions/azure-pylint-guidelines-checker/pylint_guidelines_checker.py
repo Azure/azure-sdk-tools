@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4773
+Pylint custom checkers for SDK guidelines: C4717 - C4775
 """
 import os
 import logging
@@ -3507,6 +3507,62 @@ class DoNotUseLoggingException(BaseChecker):
                 node=node,
                 confidence=None,
             )
+
+class DoNotUseLoggingDirectly(BaseChecker):
+    """Rule to check that code doesn't use module logging without creating a logger instance."""
+
+    name = "do-not-use-logging-directly"
+    priority = -1
+    msgs = {
+        "C4775": (
+            "Do not use the logging module directly. Create a logger instance with "
+            "logging.getLogger(__name__) instead.",
+            "do-not-use-logging-directly",
+            "Use a named logger instance instead of the root logger for better log filtering and configuration.",
+        ),
+    }
+
+    def _is_logging_directly_call(self, node):
+        """Check if this is a direct call to logging.<method>() without a named logger instance."""
+        try:
+            # Check if the function being called is a logging method we want to flag
+            if not (hasattr(node.func, 'attrname') and node.func.attrname in ["debug", "info", "warning", "error", "critical", "exception", "log"]):
+                return False
+            
+            if (hasattr(node.func, 'expr') and
+                hasattr(node.func.expr, 'name') and
+                node.func.expr.name == 'logging'):
+                # Only flag direct calls to logging.<method>()
+                return self._has_string_argument(node)
+            # Calls on logger instances are allowed
+            return False
+        except:
+            return False
+
+    def _has_string_argument(self, node):
+        """Check if the call has at least one string argument (required for logging methods)."""
+        try:
+            # logging methods require at least one argument (the message format string)
+            if len(node.args) > 0:
+                # Check if the first argument is a string literal
+                first_arg = node.args[0]
+                if hasattr(first_arg, 'value') and isinstance(first_arg.value, str):
+                    return True
+                # Also accept string variables/expressions (we can't fully validate runtime types)
+                return True
+            return False
+        except:
+            return False
+
+    def visit_call(self, node):
+        """Check that we aren't using logging.<method>() directly without a logger instance."""
+        if self._is_logging_directly_call(node):
+            self.add_message(
+                msgid="do-not-use-logging-directly",
+                node=node,
+                confidence=None,
+            )
+            
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -3560,3 +3616,4 @@ def register(linter):
     # linter.register_checker(ClientLROMethodsUseCorrectNaming(linter))
     linter.register_checker(DoNotUseLoggingException(linter))
     linter.register_checker(DoNotStoreSecretsInTestVariables(linter))
+    linter.register_checker(DoNotUseLoggingDirectly(linter))

@@ -165,7 +165,7 @@ namespace APIViewIntegrationTests
                 codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
                 diagnosticCommentService: diagnosticCommentService,
                 originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object, configuration: _config);
+                telemetryClient: telemetryClient.Object, projectsManager: Mock.Of<IProjectsManager>(), configuration: _config);
 
             var pollingJobQueueManagerMoq = new Mock<IPollingJobQueueManager>();
             var pullRequestsRepositoryMoq = new Mock<ICosmosPullRequestsRepository>();

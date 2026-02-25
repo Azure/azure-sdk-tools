@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -27,7 +27,7 @@ public class PackageInfoContractTests
     [TearDown]
     public void TearDown() => _tempRoot.Dispose();
 
-    private async Task<(string packagePath, GitHelper gitHelper, IOutputHelper, IProcessHelper, IPowershellHelper, IMicroagentHostService, INpxHelper, IPythonHelper, ICommonValidationHelpers)> CreateSdkPackageAsync(string service, string package)
+    private async Task<(string packagePath, GitHelper gitHelper, IOutputHelper, IProcessHelper, IPowershellHelper, ICopilotAgentRunner, INpxHelper, IPythonHelper, ICommonValidationHelpers)> CreateSdkPackageAsync(string service, string package)
     {
         var repoRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-repo-root");
         Directory.CreateDirectory(repoRoot);
@@ -40,7 +40,7 @@ public class PackageInfoContractTests
         var powershellMock = new Mock<IPowershellHelper>();
         var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
         var gitHelper = new GitHelper(ghMock.Object, gitCommandHelper, new TestLogger<GitHelper>());
-        var microAgentMock = new Mock<IMicroagentHostService>();
+        var microAgentMock = new Mock<ICopilotAgentRunner>();
         var npxHelperMock = new Mock<INpxHelper>();
         var pythonHelperMock = new Mock<IPythonHelper>();
         var commonValidationHelper = new Mock<ICommonValidationHelpers>();
@@ -256,7 +256,7 @@ print(f'{{package_name}} {{version}} True {{package_path}} ')
         Assert.That(info.PackageVersion, Is.Null);
     }
 
-    private static LanguageService CreateHelperForLanguage(SdkLanguage language, IGitHelper gitHelper, IOutputHelper outputHelper, IProcessHelper processHelper, IPowershellHelper powershellHelper, IMicroagentHostService microAgentMock, INpxHelper npxHelper, IPythonHelper pythonHelper, ICommonValidationHelpers commonValidationHelper) => language switch
+    private static LanguageService CreateHelperForLanguage(SdkLanguage language, IGitHelper gitHelper, IOutputHelper outputHelper, IProcessHelper processHelper, IPowershellHelper powershellHelper, ICopilotAgentRunner microAgentMock, INpxHelper npxHelper, IPythonHelper pythonHelper, ICommonValidationHelpers commonValidationHelper) => language switch
     {
         ///var powershellHelper = new Mock<IPowershellHelper>();
 

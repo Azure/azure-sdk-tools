@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
@@ -24,6 +25,7 @@ public class SampleGeneratorToolTests
     private TestLogger<SampleGeneratorTool> logger;
     private OutputHelper _outputHelper;
     private Mock<IMicroagentHostService> microagentHostServiceMock;
+    private Mock<ICopilotAgentRunner> copilotAgentRunnerMock;
     private SampleGeneratorTool tool;
     private Mock<ITelemetryService> telemetryServiceMock;
     private Mock<INpxHelper> _mockNpxHelper;
@@ -347,6 +349,7 @@ public class SampleGeneratorToolTests
         logger = new TestLogger<SampleGeneratorTool>();
         _outputHelper = new OutputHelper();
         microagentHostServiceMock = new Mock<IMicroagentHostService>();
+        copilotAgentRunnerMock = new Mock<ICopilotAgentRunner>();
         telemetryServiceMock = new Mock<ITelemetryService>();
         _mockNpxHelper = new Mock<INpxHelper>();
         _mockPowerShellHelper = new Mock<IPowershellHelper>();
@@ -366,7 +369,7 @@ public class SampleGeneratorToolTests
         var fileHelper = new FileHelper(new TestLogger<FileHelper>());
         _languageServices = [
             new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, copilotAgentRunnerMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
             new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
             _mockGoLanguageService.Object,
             new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>())

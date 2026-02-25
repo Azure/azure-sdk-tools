@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
@@ -54,7 +54,7 @@ public class SdkBuildToolTests
         _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
         var languageLogger = new TestLogger<LanguageService>();
-        var mockMicrohostAgent = new Mock<IMicroagentHostService>();
+        var mockMicrohostAgent = new Mock<ICopilotAgentRunner>();
         // Create temp directory for tests
         _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
         _languageServices = [

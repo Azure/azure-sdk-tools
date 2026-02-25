@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
@@ -15,7 +16,7 @@ public sealed partial class JavaLanguageService : LanguageService
 {
     public override SdkLanguage Language { get; } = SdkLanguage.Java;
     public override bool IsCustomizedCodeUpdateSupported => true;
-    private readonly IMicroagentHostService microagentHost;
+    private readonly ICopilotAgentRunner copilotAgentRunner;
     private readonly IMavenHelper _mavenHelper;
     private const string CustomizationDirName = "customization";
 
@@ -23,7 +24,7 @@ public sealed partial class JavaLanguageService : LanguageService
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         IMavenHelper mavenHelper,
-        IMicroagentHostService microagentHost,
+        ICopilotAgentRunner copilotAgentRunner,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
         IFileHelper fileHelper,
@@ -31,7 +32,7 @@ public sealed partial class JavaLanguageService : LanguageService
         IChangelogHelper changelogHelper)
         : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
-        this.microagentHost = microagentHost;
+        this.copilotAgentRunner = copilotAgentRunner;
         this._mavenHelper = mavenHelper;
     }
 
@@ -245,122 +246,99 @@ public sealed partial class JavaLanguageService : LanguageService
         return Task.FromResult(new List<ApiChange>());
     }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {
         // In azure-sdk-for-java layout, customizations live under:
         //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
-        // Example (document intelligence):
-        //   package path: .../azure-ai-documentintelligence
-        //   customization: .../azure-ai-documentintelligence/customization/src/main/java
-        // TODO: In the future, check tspconfig.yaml for "customization-class" directive for definitive detection.
-
-        try
-        {
-            var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
-            if (Directory.Exists(customizationSourceRoot))
-            {
-                logger.LogDebug("Found Java customization directory at {CustomizationPath}", customizationSourceRoot);
-                return true;
-            }
-
-            logger.LogDebug("No Java customization directory found in {PackagePath}", packagePath);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error searching for Java customization files in {PackagePath}", packagePath);
-            return false;
-        }
+        var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
+        return Directory.Exists(customizationSourceRoot) ? customizationSourceRoot : null;
     }
 
-    public override async Task<bool> ApplyPatchesAsync(
-        string commitSha,
+    /// <summary>
+    /// Applies patches to customization files based on build errors.
+    /// This is a mechanical worker - the Classifier does the thinking and routing.
+    /// </summary>
+    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
+        string buildError,
         CancellationToken ct)
     {
         try
         {
-            logger.LogInformation("Generating automated patches for customization files");
-            logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
-            logger.LogInformation("Package path: {PackagePath}", packagePath);
-            logger.LogInformation("Commit SHA: {CommitSha}", commitSha);
-
-            // Read all .java files under customizationRoot and concatenate their contents into customizationContent
-            var customizationContentBuilder = new System.Text.StringBuilder();
-
-            if (Directory.Exists(customizationRoot))
+            if (!Directory.Exists(customizationRoot))
             {
-                var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
-                logger.LogInformation("Found {FileCount} Java customization files in {Root}", javaFiles.Length, customizationRoot);
-
-                foreach (var file in javaFiles)
-                {
-                    logger.LogDebug("Reading customization file: {File}", file);
-                    var fileContent = await File.ReadAllTextAsync(file, ct);
-                    logger.LogInformation("File {File} has {Lines} lines and {Characters} characters",
-                        Path.GetFileName(file), fileContent.Split('\n').Length, fileContent.Length);
-
-                    // Use relative path from customizationRoot for the LLM to reference
-                    var relativePath = Path.GetRelativePath(customizationRoot, file);
-                    customizationContentBuilder.AppendLine($"// File: {relativePath}");
-                    customizationContentBuilder.AppendLine(fileContent);
-                    customizationContentBuilder.AppendLine();
-                }
-            }
-            else
-            {
-                logger.LogWarning("Customization root directory does not exist: {Root}", customizationRoot);
-                return false;
+                logger.LogDebug("Customization root does not exist: {Root}", customizationRoot);
+                return [];
             }
 
-            var customizationContent = customizationContentBuilder.ToString();
+            // Get the list of customization files
+            var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
+            
+            // Collect patches directly from the tool as they succeed
+            var patchLog = new ConcurrentBag<AppliedPatch>();
 
-            // For now, using placeholder generated code - TODO: implement proper old/new code comparison  
-            // Future enhancement: read actual generated files and compare them
-            var oldGeneratedCode = "// TODO: Read actual old generated code for comparison";
-            var newGeneratedCode = "// TODO: Read actual new generated code for comparison";
+            // Build both relative-path lists in a single pass over javaFiles:
+            //  - customizationFiles: relative to packagePath (for the ReadFile tool)
+            //  - patchFilePaths:     relative to customizationRoot (for the CodePatch tool)
+            var customizationFiles = new List<string>(javaFiles.Length);
+            var patchFilePaths = new List<string>(javaFiles.Length);
+            foreach (var f in javaFiles)
+            {
+                customizationFiles.Add(Path.GetRelativePath(packagePath, f));
+                patchFilePaths.Add(Path.GetRelativePath(customizationRoot, f));
+            }
 
-            // Build prompt for direct patch application using the java patch template
-            var prompt = new JavaPatchGenerationTemplate(
-                oldGeneratedCode,
-                newGeneratedCode,
+            // Build error-driven prompt for patch agent
+            var prompt = new JavaErrorDrivenPatchTemplate(
+                buildError,
                 packagePath,
-                customizationContent,
                 customizationRoot,
-                commitSha).BuildPrompt();
-            logger.LogInformation("Generated prompt for patch analysis with {ContentLength} characters", prompt.Length);
+                customizationFiles,
+                patchFilePaths).BuildPrompt();
 
-            var agentDefinition = new Microagent<bool>
+            // Single-pass agent: applies all patches it can in one run
+            var agentDefinition = new CopilotAgent<string>
             {
                 Instructions = prompt,
+                MaxIterations = 25,
                 Tools =
                 [
-                    new ReadFileTool(packagePath)
-                    {
-                        Name = "ReadFile",
-                        Description = "Read files from the package directory (generated code, customization files, etc.)"
-                    },
-                    new ClientCustomizationCodePatchTool(customizationRoot)
-                    {
-                        Name = "ClientCustomizationCodePatch",
-                        Description = "Apply code patches directly to customization files"
-                    }
+                    FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,
+                        description: "Read files from the package directory (generated code, customization files, etc.)"),
+                    CodePatchTools.CreateCodePatchTool(customizationRoot,
+                        description: "Apply code patches to customization files only (never generated code)",
+                        onPatchApplied: patchLog.Add)
                 ]
             };
 
-            // Use microagent system to apply patches directly
-            logger.LogInformation("Sending prompt to microagent for direct patch application");
-            var patchApplicationSuccess = await microagentHost.RunAgentToCompletion(agentDefinition, ct);
-            logger.LogInformation("Patch application completed with result: {Success}", patchApplicationSuccess);
+            // Run the agent to apply patches
+            try
+            {
+                await copilotAgentRunner.RunAsync(agentDefinition, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancelled externally, re-throw
+                throw;
+            }
+            catch (Exception agentEx)
+            {
+                // Agent exhausted its iteration budget without completing.
+                logger.LogDebug(agentEx, "CopilotAgent terminated early");
+            }
 
-            // Return the result of patch application
-            return patchApplicationSuccess;
+            // The patchLog was populated directly by the tool on each successful patch
+            var appliedPatches = patchLog.ToList();
+
+            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
+            return appliedPatches;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to apply automated patches");
-            return false;
+            logger.LogError(ex, "Failed to apply patches");
+            return [];
         }
     }
+
 }

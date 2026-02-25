@@ -68,7 +68,10 @@ function createDefaultExportExcerptTokens(varName: string, typeValue: string): E
 describe("variableTokenGenerator", () => {
   describe("isValid", () => {
     it("returns true for variable items", () => {
-      const mockVariable = { kind: ApiItemKind.Variable, displayName: "testVariable" } as ApiVariable;
+      const mockVariable = {
+        kind: ApiItemKind.Variable,
+        displayName: "testVariable",
+      } as ApiVariable;
       expect(variableTokenGenerator.isValid(mockVariable)).toBe(true);
     });
 
@@ -93,8 +96,16 @@ describe("variableTokenGenerator", () => {
 
       const { tokens } = variableTokenGenerator.generate(mockVariable, false);
 
-      expect(tokens[0]).toMatchObject({ Kind: TokenKind.Keyword, Value: "export", HasSuffixSpace: true });
-      expect(tokens[1]).toMatchObject({ Kind: TokenKind.Keyword, Value: "const", HasSuffixSpace: true });
+      expect(tokens[0]).toMatchObject({
+        Kind: TokenKind.Keyword,
+        Value: "export",
+        HasSuffixSpace: true,
+      });
+      expect(tokens[1]).toMatchObject({
+        Kind: TokenKind.Keyword,
+        Value: "const",
+        HasSuffixSpace: true,
+      });
       expect(tokens[2]).toMatchObject({
         Kind: TokenKind.MemberName,
         Value: "myString",
@@ -102,7 +113,11 @@ describe("variableTokenGenerator", () => {
         NavigationDisplayName: "myString",
         RenderClasses: ["variable"],
       });
-      expect(tokens[3]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ":", HasSuffixSpace: true });
+      expect(tokens[3]).toMatchObject({
+        Kind: TokenKind.Punctuation,
+        Value: ":",
+        HasSuffixSpace: true,
+      });
     });
 
     it("marks all tokens as deprecated when deprecated flag is true", () => {
@@ -159,7 +174,11 @@ describe("variableTokenGenerator", () => {
       ["[string, number, boolean]", "[string, number, boolean]"],
       ["typeof SomeClass", "typeof SomeClass"],
     ])("handles %s type", (typeText) => {
-      const mockVariable = createMockVariable("testVar", typeText, createBasicExcerptTokens("testVar", typeText));
+      const mockVariable = createMockVariable(
+        "testVar",
+        typeText,
+        createBasicExcerptTokens("testVar", typeText),
+      );
       const { tokens } = variableTokenGenerator.generate(mockVariable, false);
 
       expect(tokens.length).toBeGreaterThan(0);
@@ -203,7 +222,11 @@ describe("variableTokenGenerator", () => {
     });
 
     it("throws an error for invalid item kind", () => {
-      const mockClass = { kind: ApiItemKind.Class, displayName: "TestClass", excerptTokens: [] } as any;
+      const mockClass = {
+        kind: ApiItemKind.Class,
+        displayName: "TestClass",
+        excerptTokens: [],
+      } as any;
       expect(() => variableTokenGenerator.generate(mockClass, false)).toThrow(
         "Invalid item TestClass of kind Class for Variable token generator.",
       );
@@ -261,6 +284,26 @@ describe("variableTokenGenerator", () => {
 
       const equalsToken = tokens.find((t) => t.Value === "=");
       expect(equalsToken).toBeUndefined();
+    });
+
+    it("does not emit colon when variable has no type annotation", () => {
+      const mockVariable = createMockVariable(
+        "AI_OPERATION_NAME",
+        "",
+        createBasicExcerptTokens("AI_OPERATION_NAME", ""),
+        '"ai.operation.name"',
+      );
+
+      const { tokens } = variableTokenGenerator.generate(mockVariable, false);
+
+      const colonToken = tokens.find((t) => t.Value === ":");
+      expect(colonToken).toBeUndefined();
+
+      const equalsToken = tokens.find((t) => t.Value === "=");
+      expect(equalsToken).toBeDefined();
+
+      const valueToken = tokens.find((t) => t.Value === '"ai.operation.name"');
+      expect(valueToken).toBeDefined();
     });
   });
 });

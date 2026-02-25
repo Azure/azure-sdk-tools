@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView.Model;
 using APIViewWeb;
+using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -80,6 +82,7 @@ public class APIRevisionsManagerTests
     private readonly Mock<INotificationManager> _mockNotificationManager;
     private readonly Mock<IBlobOriginalsRepository> _mockOriginalsRepository;
     private readonly Mock<ICosmosReviewRepository> _mockReviewsRepository;
+    private readonly Mock<IProjectsManager> _mockProjectsManager;
     private readonly TelemetryClient _telemetryClient;
     private readonly TestLanguageService _testLanguageService;
 
@@ -96,6 +99,7 @@ public class APIRevisionsManagerTests
         _mockDevopsArtifactRepository = new Mock<IDevopsArtifactRepository>();
         _mockNotificationManager = new Mock<INotificationManager>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockProjectsManager = new Mock<IProjectsManager>();
 
         TelemetryConfiguration telemetryConfiguration = new();
         _telemetryClient = new TelemetryClient(telemetryConfiguration);
@@ -117,6 +121,7 @@ public class APIRevisionsManagerTests
             _mockOriginalsRepository.Object,
             _mockNotificationManager.Object,
             _telemetryClient,
+            _mockProjectsManager.Object,
             _mockConfiguration.Object
         );
     }
@@ -375,6 +380,320 @@ public class APIRevisionsManagerTests
         CrossLanguagePackageId = packageId,
         CrossLanguageDefinitionId = new Dictionary<string, string> { { key, value } }
     };
+
+    [Fact]
+    public async Task UpdateAPIRevisionCodeFileAsync_WithTypeSpecMetadata_CallsUpsertProjectFromMetadata()
+    {
+        var reviewId = "typespec-review-id";
+        var apiRevisionId = "typespec-revision-id";
+        var fileId = "typespec-file-id";
+        var metadataFileName = "typespec-metadata.json";
+
+        var typeSpecMetadata = new TypeSpecMetadata
+        {
+            EmitterVersion = "1.0.0",
+            GeneratedAt = DateTime.UtcNow,
+            TypeSpec = new TypeSpecInfo
+            {
+                Namespace = "Azure.AI.TextAnalytics",
+                Documentation = "Test documentation",
+                Type = "client"
+            },
+            Languages = new Dictionary<string, LanguageConfig>
+            {
+                ["python"] = new LanguageConfig
+                {
+                    EmitterName = "@azure-tools/typespec-python",
+                    PackageName = "azure-ai-textanalytics",
+                    Namespace = "azure.ai.textanalytics"
+                }
+            },
+            SourceConfigPath = "specification/ai/Azure.AI.TextAnalytics/tspconfig.yaml"
+        };
+
+        MemoryStream zipStream = await CreateZipArchiveWithCodeFileAndMetadata(
+            reviewId, apiRevisionId, fileId, 
+            CreatePipelineCodeFile(null), 
+            metadataFileName, 
+            typeSpecMetadata);
+
+        _mockDevopsArtifactRepository
+            .Setup(x => x.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null,
+                It.IsAny<string>(), "zip"))
+            .ReturnsAsync(zipStream);
+
+        _mockReviewsRepository
+            .Setup(x => x.GetReviewAsync(reviewId))
+            .ReturnsAsync(new ReviewListItemModel { Id = reviewId, Language = ApiViewConstants.TypeSpecLanguage });
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionAsync(apiRevisionId))
+            .ReturnsAsync(new APIRevisionListItemModel
+            {
+                Id = apiRevisionId,
+                Language = ApiViewConstants.TypeSpecLanguage,
+                Files = new List<APICodeFileModel> { new() { FileId = fileId, FileName = TestFileName } }
+            });
+
+        _mockCodeFileRepository
+            .Setup(x => x.GetCodeFileFromStorageAsync(apiRevisionId, fileId))
+            .ReturnsAsync((CodeFile)null);
+
+        _mockCodeFileRepository
+            .Setup(x => x.UpsertCodeFileAsync(apiRevisionId, fileId, It.IsAny<CodeFile>()))
+            .Returns(Task.CompletedTask);
+
+        await _manager.UpdateAPIRevisionCodeFileAsync("test-repo", "12345", "apiview", "internal", metadataFileName);
+
+        _mockProjectsManager.Verify(
+            x => x.UpsertProjectFromMetadataAsync(
+                It.Is<string>(u => u == ApiViewConstants.AzureSdkBotName),
+                It.Is<TypeSpecMetadata>(m => 
+                    m.TypeSpec.Namespace == "Azure.AI.TextAnalytics" &&
+                    m.EmitterVersion == "1.0.0"),
+                It.Is<ReviewListItemModel>(r => r.Id == reviewId)),
+            Times.Once,
+            "UpsertProjectFromMetadataAsync should be called for TypeSpec reviews with metadata");
+    }
+
+    [Fact]
+    public async Task UpdateAPIRevisionCodeFileAsync_WithNonTypeSpecReview_DoesNotCallUpsertProjectFromMetadata()
+    {
+        var metadataFileName = "typespec-metadata.json";
+
+        MemoryStream zipStream = await CreateZipArchiveWithCodeFile(TestReviewId, TestApiRevisionId, TestFileId, CreatePipelineCodeFile(null));
+
+        _mockDevopsArtifactRepository
+            .Setup(x => x.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null,
+                It.IsAny<string>(), "zip"))
+            .ReturnsAsync(zipStream);
+
+        _mockReviewsRepository
+            .Setup(x => x.GetReviewAsync(TestReviewId))
+            .ReturnsAsync(new ReviewListItemModel { Id = TestReviewId, Language = "Python" }); // Non-TypeSpec
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.GetAPIRevisionAsync(TestApiRevisionId))
+            .ReturnsAsync(new APIRevisionListItemModel
+            {
+                Id = TestApiRevisionId,
+                Language = "Python",
+                Files = new List<APICodeFileModel> { new() { FileId = TestFileId, FileName = TestFileName } }
+            });
+
+        _mockCodeFileRepository
+            .Setup(x => x.GetCodeFileFromStorageAsync(TestApiRevisionId, TestFileId))
+            .ReturnsAsync((CodeFile)null);
+
+        _mockCodeFileRepository
+            .Setup(x => x.UpsertCodeFileAsync(TestApiRevisionId, TestFileId, It.IsAny<CodeFile>()))
+            .Returns(Task.CompletedTask);
+
+        await _manager.UpdateAPIRevisionCodeFileAsync("test-repo", "12345", "apiview", "internal", metadataFileName);
+
+        _mockProjectsManager.Verify(
+            x => x.UpsertProjectFromMetadataAsync(
+                It.IsAny<string>(),
+                It.IsAny<TypeSpecMetadata>(),
+                It.IsAny<ReviewListItemModel>()),
+            Times.Never,
+            "UpsertProjectFromMetadataAsync should not be called for non-TypeSpec reviews");
+    }
+
+    private async Task<MemoryStream> CreateZipArchiveWithCodeFileAndMetadata(
+        string reviewId, 
+        string apiRevisionId, 
+        string fileId,
+        CodeFile codeFile,
+        string metadataFileName,
+        TypeSpecMetadata metadata)
+    {
+        MemoryStream zipStream = new();
+        using (ZipArchive archive = new(zipStream, ZipArchiveMode.Create, true))
+        {
+            // Add code file: apiview/{reviewId}/{apiRevisionId}/{fileId}.json
+            string codeFilePath = $"apiview/{reviewId}/{apiRevisionId}/{fileId}.json";
+            ZipArchiveEntry codeEntry = archive.CreateEntry(codeFilePath);
+            using (Stream codeEntryStream = codeEntry.Open())
+            {
+                await codeFile.SerializeAsync(codeEntryStream);
+            }
+
+            // Add metadata file: apiview/{reviewId}/{apiRevisionId}/{metadataFileName}
+            string metadataPath = $"apiview/{reviewId}/{apiRevisionId}/{metadataFileName}";
+            ZipArchiveEntry metadataEntry = archive.CreateEntry(metadataPath);
+            using (Stream metadataStream = metadataEntry.Open())
+            {
+                var jsonOptions = new JsonSerializerOptions 
+                { 
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
+                };
+                await JsonSerializer.SerializeAsync(metadataStream, metadata, jsonOptions);
+            }
+        }
+
+        zipStream.Position = 0;
+        return zipStream;
+    }
+    #endregion
+
+    #region CarryForwardRevisionDataAsync Tests
+
+    [Fact]
+    public async Task CarryForwardRevisionDataAsync_CopiesHasAutoGeneratedComments_WhenSourceHasTrue()
+    {
+        var sourceRevision = new APIRevisionListItemModel
+        {
+            Id = "source-revision",
+            ReviewId = "test-review",
+            HasAutoGeneratedComments = true
+        };
+
+        var targetRevision = new APIRevisionListItemModel
+        {
+            Id = "target-revision",
+            ReviewId = "test-review",
+            HasAutoGeneratedComments = false
+        };
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        await _manager.CarryForwardRevisionDataAsync(targetRevision, sourceRevision);
+
+        Assert.True(targetRevision.HasAutoGeneratedComments);
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => 
+                r.Id == "target-revision" && 
+                r.HasAutoGeneratedComments)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CarryForwardRevisionDataAsync_DoesNotCopy_WhenSourceHasFalse()
+    {
+        var sourceRevision = new APIRevisionListItemModel
+        {
+            Id = "source-revision",
+            ReviewId = "test-review",
+            HasAutoGeneratedComments = false
+        };
+
+        var targetRevision = new APIRevisionListItemModel
+        {
+            Id = "target-revision",
+            ReviewId = "test-review",
+            HasAutoGeneratedComments = false
+        };
+
+        await _manager.CarryForwardRevisionDataAsync(targetRevision, sourceRevision);
+
+        Assert.False(targetRevision.HasAutoGeneratedComments);
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task CarryForwardRevisionDataAsync_CopiesApproval_WhenSourceIsApproved()
+    {
+        var sourceRevision = new APIRevisionListItemModel
+        {
+            Id = "source-revision",
+            ReviewId = "test-review",
+            IsApproved = true,
+            Approvers = new HashSet<string> { "test-approver" },
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+        };
+
+        var targetRevision = new APIRevisionListItemModel
+        {
+            Id = "target-revision",
+            ReviewId = "test-review",
+            IsApproved = false,
+            Approvers = new HashSet<string>(),
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+        };
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        await _manager.CarryForwardRevisionDataAsync(targetRevision, sourceRevision);
+
+        Assert.True(targetRevision.IsApproved);
+        Assert.Contains("test-approver", targetRevision.Approvers);
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => 
+                r.Id == "target-revision" && 
+                r.IsApproved)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CarryForwardRevisionDataAsync_CopiesBothApprovalAndComments_InSingleWrite()
+    {
+        var sourceRevision = new APIRevisionListItemModel
+        {
+            Id = "source-revision",
+            ReviewId = "test-review",
+            IsApproved = true,
+            HasAutoGeneratedComments = true,
+            Approvers = new HashSet<string> { "test-approver" },
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+        };
+
+        var targetRevision = new APIRevisionListItemModel
+        {
+            Id = "target-revision",
+            ReviewId = "test-review",
+            IsApproved = false,
+            HasAutoGeneratedComments = false,
+            Approvers = new HashSet<string>(),
+            ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+        };
+
+        _mockAPIRevisionsRepository
+            .Setup(x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
+            .Returns(Task.CompletedTask);
+
+        await _manager.CarryForwardRevisionDataAsync(targetRevision, sourceRevision);
+
+        Assert.True(targetRevision.IsApproved);
+        Assert.True(targetRevision.HasAutoGeneratedComments);
+        // Verify only ONE upsert call (not two)
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CarryForwardRevisionDataAsync_DoesNotUpdate_WhenNothingToCarryForward()
+    {
+        var sourceRevision = new APIRevisionListItemModel
+        {
+            Id = "source-revision",
+            ReviewId = "test-review",
+            IsApproved = false,
+            HasAutoGeneratedComments = false
+        };
+
+        var targetRevision = new APIRevisionListItemModel
+        {
+            Id = "target-revision",
+            ReviewId = "test-review",
+            IsApproved = false,
+            HasAutoGeneratedComments = false
+        };
+
+        await _manager.CarryForwardRevisionDataAsync(targetRevision, sourceRevision);
+
+        _mockAPIRevisionsRepository.Verify(
+            x => x.UpsertAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()),
+            Times.Never);
+    }
+
     #endregion
 
     #region AutoArchiveAPIRevisions Tests

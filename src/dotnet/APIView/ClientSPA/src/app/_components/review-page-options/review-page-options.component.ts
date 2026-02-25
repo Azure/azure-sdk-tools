@@ -727,9 +727,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   private shouldDisableApproval(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): boolean {
     if (this.isMissingPackageVersion) return true;
+    if(this.activeAPIRevision?.isApproved) return false;
     if (!this.isCopilotReviewSupported) return false;
     if (this.isPreviewVersion()) return false;
-    if (this.activeAPIRevisionIsApprovedByCurrentUser) return false;
 
     return isReviewByCopilotRequired && !isVersionReviewedByCopilot;
   }

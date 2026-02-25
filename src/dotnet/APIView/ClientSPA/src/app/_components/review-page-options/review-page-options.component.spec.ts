@@ -264,9 +264,9 @@ describe('ReviewPageOptionsComponent', () => {
         expect(result).toBe(false);
       });
 
-      it('should return false when user has already approved', () => {
+      it('should return false when revision is already approved', () => {
         component.activeAPIRevision!.approvers = ['test-user'];
-        component.activeAPIRevisionIsApprovedByCurrentUser = true;
+        component.activeAPIRevision!.isApproved = true;
         const isReviewByCopilotRequired = true;
         const isVersionReviewedByCopilot = false;
         const result = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
@@ -424,8 +424,9 @@ describe('ReviewPageOptionsComponent', () => {
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
-      it('should not disable approval when user has already approved', () => {
+      it('should not disable approval when revision is already approved', () => {
         component.activeAPIRevision!.approvers = ['testuser'];
+        component.activeAPIRevision!.isApproved = true;
 
         component['updateApprovalStates'](true, false);
 

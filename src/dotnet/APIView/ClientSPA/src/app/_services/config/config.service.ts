@@ -14,8 +14,7 @@ export class ConfigService {
   private config: any = {
     apiUrl : "api/",
     hubUrl : "hubs/",
-    webAppUrl : "http://localhost:5000/",
-    uxTestPipelineUrl : ""
+    webAppUrl : "http://localhost:5000/"
   };
 
   constructor(private http: HttpClient) { }
@@ -41,9 +40,5 @@ export class ConfigService {
 
   get webAppUrl () : string {
     return this.config.webAppUrl;
-  }
-
-  get uxTestPipelineUrl() : string {
-    return this.config.uxTestPipelineUrl;
   }
 }

@@ -360,10 +360,6 @@ extends:
               value: 'https://apiviewstagingtest.com/hubs/'
             - name: 'webAppUrl'
               value: 'https://apiviewstagingtest.com/'
-            # URL to the APIView-UX pipeline for quick admin access
-            # Replace <DEFINITION_ID> with the actual pipeline definition ID after creating the pipeline
-            - name: 'uxTestPipelineUrl'
-              value: 'https://dev.azure.com/azure-sdk/internal/_build?definitionId=<DEFINITION_ID>'
 
           jobs:
             - job: Publish_to_Staging
@@ -422,10 +418,6 @@ extends:
               value: 'https://apiview.org/hubs/'
             - name: 'webAppUrl'
               value: 'https://apiview.org/'
-            # URL to the APIView-UX pipeline for quick admin access
-            # Replace <DEFINITION_ID> with the actual pipeline definition ID after creating the pipeline
-            - name: 'uxTestPipelineUrl'
-              value: 'https://dev.azure.com/azure-sdk/internal/_build?definitionId=<DEFINITION_ID>'
 
           jobs:
             - deployment: Publish_to_Prod

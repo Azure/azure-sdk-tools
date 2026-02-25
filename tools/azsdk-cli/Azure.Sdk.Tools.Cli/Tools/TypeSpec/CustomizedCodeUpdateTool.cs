@@ -81,7 +81,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         "Open a pull request with your changes"
     ];
 
-    // NextSteps for failure scenarios - formatted for classifier to parse
+    // NextSteps for manual-intervention scenarios - formatted for classifier to parse
     private static string[] GetBuildNoCustomizationsFailedNextSteps(string language) =>
     [
         "Issue: Build failed after regeneration but no customization files exist",
@@ -290,7 +290,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
 
     /// <summary>
     /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE
-    /// (can be resolved with TSP customizations), SUCCESS (no action needed), or FAILURE (requires manual code customizations).
+    /// (can be resolved with TSP customizations), SUCCESS (no action needed), or REQUIRES_MANUAL_INTERVENTION (requires manual code customizations).
     /// </summary>
     private async Task<FeedbackClassificationResponse> Classify(
         string tspProjectPath,
@@ -298,6 +298,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
         string? plainTextFeedback,
         string? plainTextFeedbackFile,
         string? language,
+        string? serviceName,
         CancellationToken ct)
     {
         try
@@ -329,11 +330,11 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
             FeedbackBatch feedbackBatch;
             if (!string.IsNullOrWhiteSpace(apiViewUrl))
             {
-                feedbackBatch = await new APIViewFeedbackItem(apiViewUrl, feedbackService, loggerFactory.CreateLogger<APIViewFeedbackItem>()).PreprocessAsync(ct);
+                feedbackBatch = await new APIViewFeedbackSource(apiViewUrl, feedbackService, loggerFactory.CreateLogger<APIViewFeedbackSource>()).CreateBatchAsync(ct);
             }
             else if (!string.IsNullOrWhiteSpace(plainTextFeedback))
             {
-                feedbackBatch = await new PlainTextFeedbackItem(plainTextFeedback, loggerFactory.CreateLogger<PlainTextFeedbackItem>()).PreprocessAsync(ct);
+                feedbackBatch = await new PlainTextFeedbackSource(plainTextFeedback, loggerFactory.CreateLogger<PlainTextFeedbackSource>()).CreateBatchAsync(ct);
             }
             else
             {
@@ -349,13 +350,18 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
                 };
             }
 
-            language ??= feedbackBatch.Language;
-            if (string.IsNullOrEmpty(language))
+            var resolvedLanguage = language ?? feedbackBatch.Language;
+            if (string.IsNullOrEmpty(resolvedLanguage))
             {
                 throw new ArgumentException("Language is required but could not be determined from the feedback source. Please specify --language (e.g. python, java, dotnet, go, javascript).");
             }
 
-            return await classifier.ClassifyItemsAsync(feedbackBatch.Items, globalContext: "", language, serviceName: null, ct);
+            if (string.IsNullOrEmpty(serviceName))
+            {
+                throw new ArgumentException("Service name is required. Please specify --service-name.");
+            }
+
+            return await classifier.ClassifyItemsAsync(feedbackBatch.Items, globalContext: "", resolvedLanguage, serviceName, ct);
         }
         catch (Exception ex)
         {

@@ -51,11 +51,29 @@ public class FeedbackClassificationResponse : CommandResponse
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Detailed classification result for a single feedback item.
+    /// </summary>
     public class ItemClassificationDetails
     {
+        /// <summary>
+        /// Unique identifier of the feedback item.
+        /// </summary>
         public string ItemId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Classification outcome for the item.
+        /// </summary>
         public string Classification { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Reason provided for the classification decision.
+        /// </summary>
         public string Reason { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Original feedback text for the item, when available.
+        /// </summary>
         public string? Text { get; set; }
     }
 }

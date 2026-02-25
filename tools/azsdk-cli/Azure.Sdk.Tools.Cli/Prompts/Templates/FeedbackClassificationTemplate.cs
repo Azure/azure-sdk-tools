@@ -15,11 +15,11 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 public class FeedbackClassificationTemplate : BasePromptTemplate
 {
     public override string TemplateId => "feedback-classification";
-    public override string Version => "2.0.0";
+    public override string Version => "1.0.0";
     public override string Description => "Classify SDK feedback items in batch and route to appropriate phase";
 
-    private readonly string? _serviceName;
-    private readonly string? _language;
+    private readonly string _serviceName;
+    private readonly string _language;
     private readonly string _referenceDocContent;
     private readonly List<FeedbackItem> _items;
     private readonly string _globalContext;
@@ -27,14 +27,14 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     /// <summary>
     /// Initializes a new batch classification template.
     /// </summary>
-    /// <param name="serviceName">The name of the service being customized (optional)</param>
+    /// <param name="serviceName">The name of the service being customized</param>
     /// <param name="language">Target SDK language (e.g., python, csharp, java) (optional)</param>
     /// <param name="referenceDocContent">Content of the customizing-client-tsp.md reference document</param>
     /// <param name="items">The feedback items to classify</param>
     /// <param name="globalContext">Global context containing all changes and history</param>
     public FeedbackClassificationTemplate(
-        string? serviceName,
-        string? language,
+        string serviceName,
+        string language,
         string referenceDocContent,
         List<FeedbackItem> items,
         string globalContext)
@@ -77,14 +77,14 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         var sb = new StringBuilder();
         sb.AppendLine($"""
         **Current Context:**
-        - Service: {_serviceName ?? "N/A"}
-        - Language: {_language ?? "N/A"}
+        - Service: {_serviceName}
+        - Language: {_language}
 
         **Task:**
-        Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **SUCCESS**, or **FAILURE**.
+        Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.
         - If the feedback is non-actionable (discussion, informational, "keep as is", or about build/generation succeeding), classify as **SUCCESS**.
         - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **TSP_APPLICABLE**.
-        - If the feedback is actionable but NO TypeSpec decorators can address it (requires code-level changes), classify as **FAILURE**.
+        - If the feedback is actionable but NO TypeSpec decorators can address it (requires code-level changes), classify as **REQUIRES_MANUAL_INTERVENTION**.
 
         Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.
 
@@ -132,14 +132,14 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         **Decision Logic (apply to EACH item independently):**
 
         **If Context is NON-EMPTY** (check first):
-        - Contains error indicators ("Failed", "error", "COMPILATION ERROR", "cannot find", "did not address") → **FAILURE**
+        - Contains error indicators ("Failed", "error", "COMPILATION ERROR", "cannot find", "did not address") → **REQUIRES_MANUAL_INTERVENTION**
         - Contains success ("Successfully applied", "Build succeeded") → **SUCCESS**
-        - Otherwise (unclear or no clear indicator) → **FAILURE**
+        - Otherwise (unclear or no clear indicator) → **REQUIRES_MANUAL_INTERVENTION**
 
         **If Context is EMPTY** (first attempt):
         - Non-actionable (informational, "keep as is", past tense, build success, discussion, question) → **SUCCESS**
         - Actionable AND a TypeSpec decorator from the reference doc can address it → **TSP_APPLICABLE**
-        - Actionable BUT no TypeSpec decorator can address it (requires code changes) → **FAILURE**
+        - Actionable BUT no TypeSpec decorator can address it (requires code changes) → **REQUIRES_MANUAL_INTERVENTION**
 
         **What counts as "Non-actionable" (SUCCESS):**
         - Explicit acceptance: "Keep as is", "No changes needed", "This is fine"
@@ -160,10 +160,10 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         - Client location/namespace changes → `@clientLocation`, `@clientNamespace`
         - Type overrides (use different type in SDK) → `@@alternateType`, `@@override`
 
-        **Code Changes Required (FAILURE):**
+        **Code Changes Required (REQUIRES_MANUAL_INTERVENTION):**
         If the feedback requires changes that TypeSpec decorators cannot handle (e.g., custom
         serialization logic, complex method implementations, test changes, documentation edits
-        outside TypeSpec), classify as FAILURE.
+        outside TypeSpec), classify as REQUIRES_MANUAL_INTERVENTION.
         """;
     }
 
@@ -181,7 +181,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         Reason: @@clientName decorator can rename the client in client.tsp
 
         [ghi-789]
-        Classification: FAILURE
+        Classification: REQUIRES_MANUAL_INTERVENTION
         Reason: Custom retry logic requires code changes; no TypeSpec decorator applies
         ```
         """;
@@ -197,20 +197,20 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
         ```
         [<item-id>]
-        Classification: [TSP_APPLICABLE | SUCCESS | FAILURE]
+        Classification: [TSP_APPLICABLE | SUCCESS | REQUIRES_MANUAL_INTERVENTION]
         Reason: <one-line explanation>
 
         [<next-item-id>]
-        Classification: [TSP_APPLICABLE | SUCCESS | FAILURE]
+        Classification: [TSP_APPLICABLE | SUCCESS | REQUIRES_MANUAL_INTERVENTION]
         Reason: <one-line explanation>
         ```
 
         **Rules:**
         - The `[<item-id>]` header MUST match the exact ID from each feedback item
-        - Classification must be exactly one of: TSP_APPLICABLE, SUCCESS, or FAILURE
+        - Classification must be exactly one of: TSP_APPLICABLE, SUCCESS, or REQUIRES_MANUAL_INTERVENTION
         - Reason must clearly state which condition triggered the classification
         - For TSP_APPLICABLE: mention which TypeSpec decorator(s) can address the feedback
-        - For FAILURE: explain why no TypeSpec decorator applies
+        - For REQUIRES_MANUAL_INTERVENTION: explain why no TypeSpec decorator applies
         - For SUCCESS: explain why the feedback is non-actionable or already resolved
         - Do NOT include Next Action or step-by-step guidance (that is handled separately)
         - Output ALL items — every single item ID must appear in your response

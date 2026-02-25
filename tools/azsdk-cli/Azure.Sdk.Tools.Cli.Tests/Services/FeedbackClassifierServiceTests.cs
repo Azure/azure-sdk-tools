@@ -10,6 +10,7 @@ using GitHub.Copilot.SDK;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using System.Reflection;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
@@ -172,7 +173,7 @@ public class FeedbackClassifierServiceTests
         var items = new List<FeedbackItem>();
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
 
         // Assert - no LLM calls made for empty list
         _mockAgentRunner.Verify(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -185,21 +186,21 @@ public class FeedbackClassifierServiceTests
         var service = CreateMockedService();
         // Non-actionable API review comment -> SUCCESS
         var item1 = CreateTestItem("LGTM, the API surface looks appropriate for this service", "item-1");
-        // Requires code-level implementation (no TypeSpec decorator exists for this) -> FAILURE
+        // Requires code-level implementation (no TypeSpec decorator exists for this) -> REQUIRES_MANUAL_INTERVENTION
         var item2 = CreateTestItem("Please add a convenience method that combines getDocument and analyzeDocument into a single call", "item-2");
         var items = new List<FeedbackItem> { item1, item2 };
 
         // Mock the batch classification response
         // Per FeedbackClassificationTemplate:
         // - SUCCESS: non-actionable (LGTM, keep as is, build succeeding)
-        // - FAILURE: actionable but requires code changes (no TypeSpec decorator applies)
+        // - REQUIRES_MANUAL_INTERVENTION: actionable but requires code changes (no TypeSpec decorator applies)
         var batchResponse = """
             [item-1]
             Classification: SUCCESS
             Reason: Non-actionable feedback - approval comment with no requested changes
 
             [item-2]
-            Classification: FAILURE
+            Classification: REQUIRES_MANUAL_INTERVENTION
             Reason: Convenience methods combining multiple operations require code-level implementation; no TypeSpec decorator can create new composite operations
             """;
         _mockAgentRunner
@@ -207,11 +208,11 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.SUCCESS));
-        Assert.That(item2.Status, Is.EqualTo(FeedbackStatus.FAILURE));
+        Assert.That(item2.Status, Is.EqualTo(FeedbackStatus.REQUIRES_MANUAL_INTERVENTION));
     }
 
     [Test]
@@ -236,22 +237,22 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE));
     }
 
     /// <summary>
-    /// Tests that FAILURE classification is applied correctly.
-    /// Note: NextAction guidance generation was removed - FAILURE items are just classified.
+    /// Tests that REQUIRES_MANUAL_INTERVENTION classification is applied correctly.
+    /// Note: NextAction guidance generation was removed - REQUIRES_MANUAL_INTERVENTION items are just classified.
     /// </summary>
     [Test]
-    public async Task ClassifyAsync_FailureItems_ClassifiedCorrectly()
+    public async Task ClassifyAsync_RequiresManualInterventionItems_ClassifiedCorrectly()
     {
         // Arrange
         var service = CreateMockedService();
-        // API review feedback requesting streaming support - requires code-level changes -> FAILURE
+        // API review feedback requesting streaming support - requires code-level changes -> REQUIRES_MANUAL_INTERVENTION
         var item1 = CreateTestItem("Add support for streaming responses with progress callbacks when uploading large documents", "item-1");
         var items = new List<FeedbackItem> { item1 };
 
@@ -259,15 +260,15 @@ public class FeedbackClassifierServiceTests
             .Setup(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("""
                 [item-1]
-                Classification: FAILURE
+                Classification: REQUIRES_MANUAL_INTERVENTION
                 Reason: Streaming support with progress callbacks requires code-level implementation; no TypeSpec decorator can add streaming behavior
                 """);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context", language: "python");
+        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
 
         // Assert
-        Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.FAILURE));
+        Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.REQUIRES_MANUAL_INTERVENTION));
         Assert.That(item1.ClassificationReason, Does.Contain("streaming").IgnoreCase);
     }
 
@@ -294,7 +295,7 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item.ClassificationReason, Is.EqualTo("Non-actionable feedback - approval comment with no requested changes"));
@@ -303,7 +304,7 @@ public class FeedbackClassifierServiceTests
     }
 
     [Test]
-    public async Task ClassifyAsync_MissingItemInResponse_DefaultsToFailure()
+    public async Task ClassifyAsync_MissingItemInResponse_DefaultsToRequiresManualIntervention()
     {
         // Arrange
         var service = CreateMockedService();
@@ -324,12 +325,43 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context");
+        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.SUCCESS));
-        Assert.That(item2.Status, Is.EqualTo(FeedbackStatus.FAILURE), "Missing items should default to FAILURE");
+        Assert.That(item2.Status, Is.EqualTo(FeedbackStatus.REQUIRES_MANUAL_INTERVENTION), "Missing items should default to REQUIRES_MANUAL_INTERVENTION");
         Assert.That(item2.Context, Does.Contain("missing from batch LLM response"));
+    }
+
+    #endregion
+
+    #region Caching Tests
+
+    [Test]
+    public async Task LoadTspCustomizationGuideAsync_CachesContentAfterFirstRead()
+    {
+        // Arrange
+        var service = CreateMockedService();
+        var guidePath = Path.Combine(_specRepoRoot, "eng", "common", "knowledge", "customizing-client-tsp.md");
+        var loadMethod = typeof(FeedbackClassifierService).GetMethod(
+            "LoadTspCustomizationGuideAsync",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.That(loadMethod, Is.Not.Null, "Expected private LoadTspCustomizationGuideAsync method to exist.");
+
+        // Act - first load should read from disk
+        var firstLoadTask = (Task<string>)loadMethod!.Invoke(service, [CancellationToken.None])!;
+        var firstContent = await firstLoadTask;
+
+        // Delete file to verify second load comes from in-memory cache, not disk
+        File.Delete(guidePath);
+
+        var secondLoadTask = (Task<string>)loadMethod.Invoke(service, [CancellationToken.None])!;
+        var secondContent = await secondLoadTask;
+
+        // Assert
+        Assert.That(secondContent, Is.EqualTo(firstContent));
+        Assert.That(secondContent, Does.Contain("TypeSpec Client Customizations"));
     }
 
     #endregion
@@ -341,7 +373,7 @@ public class FeedbackClassifierServiceTests
     /// Tests all three classification categories:
     /// - TSP_APPLICABLE: @clientName (renames), @access (visibility)
     /// - SUCCESS: Non-actionable (LGTM, keep as is, approvals)
-    /// - FAILURE: Code-level changes (custom retry, serialization)
+    /// - REQUIRES_MANUAL_INTERVENTION: Code-level changes (custom retry, serialization)
     /// </summary>
     [Test]
     public async Task Live_ClassifyAsync_AllFeedbackCategories_ClassifiesCorrectly()
@@ -363,7 +395,7 @@ public class FeedbackClassifierServiceTests
             CreateLiveTestItem("LGTM - the pagination follows Azure SDK guidelines"),
             // SUCCESS: Keep as is
             CreateLiveTestItem("No changes needed - the model hierarchy follows Azure best practices"),
-            // FAILURE: Requires code-level implementation
+            // REQUIRES_MANUAL_INTERVENTION: Requires code-level implementation
             CreateLiveTestItem("Add support for custom retry policies with circuit breaker pattern for transient failures")
         };
 
@@ -398,17 +430,17 @@ public class FeedbackClassifierServiceTests
         Assert.That(items[3].Status, Is.EqualTo(FeedbackStatus.SUCCESS),
             "'No changes needed' should be SUCCESS - non-actionable");
 
-        // FAILURE assertion
-        Assert.That(items[4].Status, Is.EqualTo(FeedbackStatus.FAILURE),
-            "Custom retry with circuit breaker requires code implementation -> FAILURE");
+        // REQUIRES_MANUAL_INTERVENTION assertion
+        Assert.That(items[4].Status, Is.EqualTo(FeedbackStatus.REQUIRES_MANUAL_INTERVENTION),
+            "Custom retry with circuit breaker requires code implementation -> REQUIRES_MANUAL_INTERVENTION");
     }
 
     /// <summary>
-    /// Live test: Verifies items with prior compilation error context are classified as FAILURE.
+    /// Live test: Verifies items with prior compilation error context are classified as REQUIRES_MANUAL_INTERVENTION.
     /// This represents a retry scenario where previous TypeSpec customization attempt failed.
     /// </summary>
     [Test]
-    public async Task Live_ClassifyAsync_WithErrorContext_ClassifiedAsFailure()
+    public async Task Live_ClassifyAsync_WithErrorContext_ClassifiedAsRequiresManualIntervention()
     {
         if (!await CopilotTestHelper.IsCopilotAvailableAsync())
         {
@@ -437,16 +469,16 @@ public class FeedbackClassifierServiceTests
 
         LogClassificationResults(items);
 
-        Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.FAILURE),
-            "Items with prior compilation errors should be classified as FAILURE - indicates TypeSpec cannot address this");
+        Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.REQUIRES_MANUAL_INTERVENTION),
+            "Items with prior compilation errors should be classified as REQUIRES_MANUAL_INTERVENTION - indicates TypeSpec cannot address this");
     }
 
     /// <summary>
-    /// Live test: Verifies FAILURE items are classified correctly.
+    /// Live test: Verifies REQUIRES_MANUAL_INTERVENTION items are classified correctly.
     /// Note: NextAction guidance generation was removed.
     /// </summary>
     [Test]
-    public async Task Live_ClassifyAsync_FailureItems_ClassifiedCorrectly()
+    public async Task Live_ClassifyAsync_RequiresManualInterventionItems_ClassifiedCorrectly()
     {
         if (!await CopilotTestHelper.IsCopilotAvailableAsync())
         {
@@ -469,8 +501,8 @@ public class FeedbackClassifierServiceTests
 
         LogClassificationResults(items);
 
-        Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.FAILURE),
-            "Streaming with progress callbacks requires code implementation -> FAILURE");
+        Assert.That(items[0].Status, Is.EqualTo(FeedbackStatus.REQUIRES_MANUAL_INTERVENTION),
+            "Streaming with progress callbacks requires code implementation -> REQUIRES_MANUAL_INTERVENTION");
     }
 
     #endregion

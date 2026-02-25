@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
@@ -14,10 +15,16 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
 /// Classifies feedback items using LLM-powered classification.
-/// Uses chunked batch LLM calls to classify items as TSP_APPLICABLE, SUCCESS, or FAILURE.
+/// Uses chunked batch LLM calls to classify items as TSP_APPLICABLE, SUCCESS, or REQUIRES_MANUAL_INTERVENTION.
 /// </summary>
 public class FeedbackClassifierService
 {
+    private static readonly ConcurrentDictionary<string, string> TspCustomizationGuideCache = new(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly Regex BatchResultBlockPattern = new(
+        @"\[(?<id>[^\]]+)\]\s*\n\s*Classification:\s*(?<classification>\S+)\s*\n\s*Reason:\s*(?<reason>.+)",
+        RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
     private readonly ICopilotAgentRunner _agentRunner;
     private readonly ILogger<FeedbackClassifierService> _logger;
     private readonly string _tspProjectPath;
@@ -48,8 +55,8 @@ public class FeedbackClassifierService
     public async Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items, 
         string globalContext, 
-        string? language = null,
-        string? serviceName = null,
+        string language,
+        string serviceName,
         CancellationToken ct = default)
     {
         if (items.Count == 0)
@@ -90,14 +97,14 @@ public class FeedbackClassifierService
             var classification = item.Status switch
             {
                 FeedbackStatus.SUCCESS => "SUCCESS",
-                FeedbackStatus.FAILURE => "FAILURE",
+                FeedbackStatus.REQUIRES_MANUAL_INTERVENTION => "REQUIRES_MANUAL_INTERVENTION",
                 _ => "TSP_APPLICABLE"
             };
 
             switch (item.Status)
             {
                 case FeedbackStatus.SUCCESS: successCount++; break;
-                case FeedbackStatus.FAILURE: failureCount++; break;
+                case FeedbackStatus.REQUIRES_MANUAL_INTERVENTION: failureCount++; break;
                 default: tspApplicableCount++; break;
             }
 
@@ -112,7 +119,7 @@ public class FeedbackClassifierService
 
         return new FeedbackClassificationResponse
         {
-            Message = $"Classification complete: {successCount} success, {failureCount} failure, {tspApplicableCount} tsp-applicable",
+            Message = $"Classification complete: {successCount} success, {failureCount} requires-manual-intervention, {tspApplicableCount} tsp-applicable",
             Classifications = classifications
         };
     }
@@ -124,8 +131,8 @@ public class FeedbackClassifierService
     private async Task BatchClassifyAsync(
         List<FeedbackItem> items,
         string globalContext,
-        string? language,
-        string? serviceName,
+        string language,
+        string serviceName,
         string referenceDocContent,
         CancellationToken ct)
     {
@@ -154,9 +161,9 @@ public class FeedbackClassifierService
             Tools = specTools
         }, ct);
 
-        _logger.LogInformation("=== Batch Classification Result ===");
-        _logger.LogInformation("{Result}", result);
-        _logger.LogInformation("=== End Batch Result ===");
+        _logger.LogDebug("=== Batch Classification Result ===");
+        _logger.LogDebug("{Result}", result);
+        _logger.LogDebug("=== End Batch Result ===");
 
         // Parse the batch result and apply classifications to each item
         ParseBatchResult(items, result);
@@ -166,7 +173,7 @@ public class FeedbackClassifierService
     /// Parses the batch LLM result with ID-keyed blocks and applies classifications to items.
     /// Expected format:
     /// [item-id]
-    /// Classification: TSP_APPLICABLE | SUCCESS | FAILURE
+    /// Classification: TSP_APPLICABLE | SUCCESS | REQUIRES_MANUAL_INTERVENTION
     /// Reason: explanation
     /// </summary>
     private void ParseBatchResult(List<FeedbackItem> items, string result)
@@ -174,12 +181,7 @@ public class FeedbackClassifierService
         var itemLookup = items.ToDictionary(i => i.Id, i => i);
         var matchedIds = new HashSet<string>();
 
-        // Match blocks like: [some-guid-id]\nClassification: ...\nReason: ...
-        var blockPattern = new Regex(
-            @"\[(?<id>[^\]]+)\]\s*\n\s*Classification:\s*(?<classification>\S+)\s*\n\s*Reason:\s*(?<reason>.+)",
-            RegexOptions.Multiline | RegexOptions.IgnoreCase);
-
-        foreach (Match match in blockPattern.Matches(result))
+        foreach (Match match in BatchResultBlockPattern.Matches(result))
         {
             var id = match.Groups["id"].Value.Trim();
             var classification = match.Groups["classification"].Value.Trim();
@@ -198,9 +200,9 @@ public class FeedbackClassifierService
         // Handle any items that weren't in the response
         foreach (var item in items.Where(i => !matchedIds.Contains(i.Id)))
         {
-            _logger.LogWarning("Item {Id} was not found in batch classification result. Defaulting to FAILURE.", item.Id);
-            item.Status = FeedbackStatus.FAILURE;
-            item.Context += "\nClassification failed: item missing from batch LLM response";
+            _logger.LogWarning("Item {Id} was not found in batch classification result. Defaulting to REQUIRES_MANUAL_INTERVENTION.", item.Id);
+            item.Status = FeedbackStatus.REQUIRES_MANUAL_INTERVENTION;
+            item.AppendContext("Classification failed: item missing from batch LLM response", leadingNewLines: 1);
         }
     }
 
@@ -214,9 +216,9 @@ public class FeedbackClassifierService
         {
             status = FeedbackStatus.SUCCESS;
         }
-        else if (classification.Contains("FAILURE", StringComparison.OrdinalIgnoreCase))
+        else if (classification.Contains("REQUIRES_MANUAL_INTERVENTION", StringComparison.OrdinalIgnoreCase))
         {
-            status = FeedbackStatus.FAILURE;
+            status = FeedbackStatus.REQUIRES_MANUAL_INTERVENTION;
         }
         else if (classification.Contains("TSP_APPLICABLE", StringComparison.OrdinalIgnoreCase))
         {
@@ -232,7 +234,7 @@ public class FeedbackClassifierService
         if (!string.IsNullOrEmpty(reason))
         {
             item.ClassificationReason = reason;
-            item.Context += $"\n\nClassification: {classification}\nReason: {reason}";
+            item.AppendContext($"Classification: {classification}\nReason: {reason}", leadingNewLines: 2);
         }
         
         _logger.LogInformation("Item {Id} classified as {Status}: {Reason}", item.Id, status, reason);
@@ -259,6 +261,12 @@ public class FeedbackClassifierService
     private async Task<string> LoadTspCustomizationGuideAsync(CancellationToken ct)
     {
         var guidePath = Path.Combine(_specRepoBasePath, "eng", "common", "knowledge", "customizing-client-tsp.md");
+
+        if (TspCustomizationGuideCache.TryGetValue(guidePath, out var cachedContent))
+        {
+            return cachedContent;
+        }
+
         if (!File.Exists(guidePath))
         {
             throw new FileNotFoundException(
@@ -266,6 +274,9 @@ public class FeedbackClassifierService
                 "Ensure the azure-rest-api-specs repository is up to date.",
                 guidePath);
         }
-        return await File.ReadAllTextAsync(guidePath, ct);
+
+        var content = await File.ReadAllTextAsync(guidePath, ct);
+        TspCustomizationGuideCache.TryAdd(guidePath, content);
+        return content;
     }
 }

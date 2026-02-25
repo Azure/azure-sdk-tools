@@ -3,6 +3,7 @@
 
 using System.ComponentModel;
 using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Microsoft.Extensions.AI;
 
@@ -13,6 +14,12 @@ namespace Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 /// </summary>
 public static class FileTools
 {
+    private static readonly HashSet<string> IgnoredDirectories = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".git", "node_modules", "bin", "obj", "dist", ".vs", ".idea",
+        "packages", "TestResults", "__pycache__", ".tox", "target"
+    };
+
     /// <summary>
     /// Creates a ReadFile tool that reads file contents from a base directory.
     /// </summary>
@@ -107,12 +114,15 @@ public static class FileTools
                 }
 
                 var searchPattern = string.IsNullOrWhiteSpace(filter) ? "*" : filter;
-                var searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
                 // Use GetFileSystemEntries to return both files and directories (parity with Microagents)
-                var entries = Directory.GetFileSystemEntries(path, searchPattern, searchOption)
-                    .Select(f => Path.GetRelativePath(baseDir, f))
-                    .ToArray();
+                var entries = recursive
+                    ? EnumerateFileSystemEntries(path, searchPattern)
+                        .Select(f => Path.GetRelativePath(baseDir, f))
+                        .ToArray()
+                    : Directory.GetFileSystemEntries(path, searchPattern, SearchOption.TopDirectoryOnly)
+                        .Select(f => Path.GetRelativePath(baseDir, f))
+                        .ToArray();
 
                 return entries;
             },
@@ -149,51 +159,155 @@ public static class FileTools
                     throw new ArgumentException($"Path {path} does not exist", nameof(path));
                 }
 
-                var regex = isRegex ? new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled) : null;
-                var files = File.Exists(searchPath)
-                    ? [searchPath]
-                    : Directory.GetFiles(searchPath, "*", SearchOption.AllDirectories).Take(2000).ToArray();
-
-                var matches = new List<object>();
-                foreach (var file in files)
+                // Regex with timeout to prevent ReDoS from LLM-generated patterns
+                Regex? regex = null;
+                if (isRegex)
                 {
                     try
                     {
+                        regex = new Regex(pattern, RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(500));
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        throw new ArgumentException($"Invalid regex pattern: {ex.Message}", nameof(pattern));
+                    }
+                }
+                var files = File.Exists(searchPath)
+                    ? [searchPath]
+                    : EnumerateFileSystemEntries(searchPath, filesOnly: true).Take(2000).ToArray();
+
+                var matches = new ConcurrentBag<GrepMatch>();
+                var totalMatches = 0;
+                var skippedFiles = 0;
+                var readErrors = 0;
+                var parallelOptions = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 8)
+                };
+
+                Parallel.ForEach(files.Select((file, index) => (file, index)), parallelOptions, (entry, state) =>
+                {
+                    if (Volatile.Read(ref totalMatches) >= maxResults)
+                    {
+                        state.Stop();
+                        return;
+                    }
+
+                    try
+                    {
                         // Skip files > 2MB (use ReadFile for large files)
-                        if (new FileInfo(file).Length > 2 * 1024 * 1024)
+                        if (new FileInfo(entry.file).Length > 2 * 1024 * 1024)
                         {
-                            continue;
+                            Interlocked.Increment(ref skippedFiles);
+                            return;
                         }
 
-                        int lineNum = 0;
-                        foreach (var line in File.ReadLines(file))
+                        var lineNum = 0;
+                        foreach (var line in File.ReadLines(entry.file))
                         {
                             lineNum++;
-                            if (isRegex ? regex!.IsMatch(line) : line.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                            if (!(isRegex ? regex!.IsMatch(line) : line.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
                             {
-                                matches.Add(new
-                                {
-                                    FilePath = Path.GetRelativePath(baseDir, file),
-                                    LineNumber = lineNum,
-                                    Content = line.Trim()
-                                });
-                                if (matches.Count >= maxResults)
-                                {
-                                    break;
-                                }
+                                continue;
+                            }
+
+                            var found = Interlocked.Increment(ref totalMatches);
+                            if (found > maxResults)
+                            {
+                                state.Stop();
+                                break;
+                            }
+
+                            matches.Add(new GrepMatch(
+                                entry.index,
+                                lineNum,
+                                Path.GetRelativePath(baseDir, entry.file),
+                                line.TrimEnd()));
+
+                            if (found >= maxResults)
+                            {
+                                state.Stop();
+                                break;
                             }
                         }
-                        if (matches.Count >= maxResults)
-                        {
-                            break;
-                        }
                     }
-                    catch { /* Skip unreadable files */ }
-                }
+                    catch
+                    {
+                        Interlocked.Increment(ref skippedFiles);
+                        Interlocked.Increment(ref readErrors);
+                    }
+                });
 
-                return new { Matches = matches, TotalMatches = matches.Count };
+                var orderedMatches = matches
+                    .OrderBy(m => m.FileIndex)
+                    .ThenBy(m => m.LineNumber)
+                    .Take(maxResults)
+                    .Select(m => new
+                    {
+                        m.FilePath,
+                        m.LineNumber,
+                        m.Content
+                    })
+                    .ToArray();
+
+                return new
+                {
+                    Matches = orderedMatches,
+                    TotalMatches = orderedMatches.Length,
+                    SkippedFiles = Volatile.Read(ref skippedFiles),
+                    ReadErrors = Volatile.Read(ref readErrors)
+                };
             },
             "GrepSearch",
             description);
     }
+
+    private static IEnumerable<string> EnumerateFileSystemEntries(string rootPath, string searchPattern = "*", bool filesOnly = false)
+    {
+        var pending = new Stack<string>();
+        pending.Push(rootPath);
+
+        while (pending.Count > 0)
+        {
+            var current = pending.Pop();
+
+            var entries = TryEnumerate(() => filesOnly
+                ? Directory.EnumerateFiles(current, searchPattern, SearchOption.TopDirectoryOnly)
+                : Directory.EnumerateFileSystemEntries(current, searchPattern, SearchOption.TopDirectoryOnly));
+
+            foreach (var entry in entries)
+            {
+                yield return entry;
+            }
+
+            foreach (var subdirectory in TryEnumerate(() => Directory.EnumerateDirectories(current)))
+            {
+                if (IsIgnoredDirectory(subdirectory))
+                {
+                    continue;
+                }
+
+                pending.Push(subdirectory);
+            }
+        }
+    }
+
+    private static IEnumerable<string> TryEnumerate(Func<IEnumerable<string>> enumerate)
+    {
+        try
+        {
+            return enumerate();
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private static bool IsIgnoredDirectory(string directoryPath)
+    {
+        return IgnoredDirectories.Contains(Path.GetFileName(directoryPath));
+    }
+
+    private readonly record struct GrepMatch(int FileIndex, int LineNumber, string FilePath, string Content);
 }

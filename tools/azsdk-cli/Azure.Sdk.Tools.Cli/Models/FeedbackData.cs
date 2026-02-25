@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Text;
+
 namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
@@ -37,7 +39,7 @@ public enum FeedbackStatus
     /// <summary>
     /// Item cannot be resolved and requires manual intervention
     /// </summary>
-    FAILURE
+    REQUIRES_MANUAL_INTERVENTION
 }
 
 /// <summary>
@@ -72,15 +74,46 @@ public class FeedbackItem
     public string ClassificationReason { get; set; } = string.Empty;
 
     /// <summary>
-    /// Appends a labeled section to the running context.
+    /// Appends content to the running context. If section is provided, wraps content in labeled section markers.
     /// </summary>
-    public void AppendContext(string section, string content)
+    public void AppendContext(string content, string? section = null, int leadingNewLines = 0)
     {
         if (string.IsNullOrWhiteSpace(content))
         {
             return;
         }
-        var formatted = $"=== {section} ===\n{content}\n=== End {section} ===";
-        Context = string.IsNullOrEmpty(Context) ? formatted : $"{Context}\n\n{formatted}";
+
+        var sb = new StringBuilder(Context);
+        for (var i = 0; i < leadingNewLines; i++)
+        {
+            sb.Append('\n');
+        }
+
+        if (string.IsNullOrWhiteSpace(section))
+        {
+            sb.Append(content);
+            Context = sb.ToString();
+            return;
+        }
+
+        var formattedBuilder = new StringBuilder();
+        formattedBuilder
+            .Append("=== ")
+            .Append(section)
+            .Append(" ===\n")
+            .Append(content)
+            .Append("\n=== End ")
+            .Append(section)
+            .Append(" ===");
+
+        var formatted = formattedBuilder.ToString();
+
+        if (sb.Length > 0)
+        {
+            sb.Append("\n\n");
+        }
+
+        sb.Append(formatted);
+        Context = sb.ToString();
     }
 }

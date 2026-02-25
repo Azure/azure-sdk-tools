@@ -9,38 +9,34 @@ using Microsoft.Extensions.Logging;
 namespace Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 
 /// <summary>
-/// Feedback input from APIView review comments
+/// Feedback source from APIView review comments
 /// </summary>
-public class APIViewFeedbackItem : IFeedbackItem
+public class APIViewFeedbackSource
 {
     private readonly string _apiViewUrl;
     private readonly IAPIViewFeedbackService _feedbackService;
-    private readonly ILogger<APIViewFeedbackItem> _logger;
+    private readonly ILogger<APIViewFeedbackSource> _logger;
 
-    public APIViewFeedbackItem(
+    public APIViewFeedbackSource(
         string apiViewUrl,
         IAPIViewFeedbackService feedbackService,
-        ILogger<APIViewFeedbackItem> logger)
+        ILogger<APIViewFeedbackSource> logger)
     {
         _apiViewUrl = apiViewUrl;
         _feedbackService = feedbackService;
         _logger = logger;
     }
 
-    public async Task<FeedbackBatch> PreprocessAsync(CancellationToken ct = default)
+    public async Task<FeedbackBatch> CreateBatchAsync(CancellationToken ct = default)
     {
         _logger.LogInformation("Preprocessing APIView feedback from: {Url}", _apiViewUrl);
 
-        // Extract revisionId from URL
         var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(_apiViewUrl);
-        
-        // Get metadata using the revisionId
+
         var metadata = await _feedbackService.ParseReviewMetadata(revisionId);
-        
-        // Get consolidated comments
+
         var comments = await _feedbackService.GetConsolidatedComments(revisionId);
 
-        // Convert to feedback items
         var feedbackItems = comments.Select(c =>
         {
             var text = $"API Line {c.LineNo}: {c.LineId}, Code: {c.LineText.Trim()}, ReviewComment: {c.Comment}";

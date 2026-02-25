@@ -602,6 +602,9 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 			return "", fmt.Errorf("failed to create redirect request: %w", err)
 		}
 
+		// Close the original redirect response before reassigning resp
+		resp.Body.Close()
+
 		// Use a new client that follows redirects for the blob storage URL
 		redirectClient := &http.Client{Timeout: 30 * time.Second}
 		resp, err = redirectClient.Do(redirectReq)

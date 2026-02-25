@@ -10,30 +10,18 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// Language-specific helper for Go packages. Provides structural package info plus lazy accessors
 /// for samples directory, file extension, and version parsing.
 /// </summary>
-public partial class GoLanguageService : LanguageService
+public partial class GoLanguageService(
+    IProcessHelper processHelper,
+    IPowershellHelper powershellHelper,
+    IGitHelper gitHelper,
+    ILogger<LanguageService> logger,
+    ICommonValidationHelpers commonValidationHelpers,
+    IPackageInfoHelper packageInfoHelper,
+    IFileHelper fileHelper,
+    ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+    IChangelogHelper changelogHelper) : LanguageService(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
 {
-    public GoLanguageService(
-        IProcessHelper processHelper,
-        IPowershellHelper powershellHelper,
-        IGitHelper gitHelper,
-        ILogger<LanguageService> logger,
-        ICommonValidationHelpers commonValidationHelpers,
-        IPackageInfoHelper packageInfoHelper,
-        IFileHelper fileHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-        IChangelogHelper changelogHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
-    {
-        this.powershellHelper = powershellHelper;
-    }
-
-    private readonly string goUnix = "go";
-    private readonly string goWin = "go.exe";
-    private readonly string gofmtUnix = "gofmt";
-    private readonly string gofmtWin = "gofmt.exe";
-    private readonly string golangciLintUnix = "golangci-lint";
-    private readonly string golangciLintWin = "golangci-lint.exe";
-    private readonly IPowershellHelper powershellHelper;
+    private readonly IPowershellHelper powershellHelper = powershellHelper;
 
     // Known locations for Go customization files
     private const string CustomizationPathInternalGenerate = "internal/generate";
@@ -46,6 +34,28 @@ public partial class GoLanguageService : LanguageService
     /// Go packages are identified by go.mod files.
     /// </summary>
     protected override string[] PackageManifestPatterns => ["go.mod"];
+
+    protected override string? GetPackageRootFromManifest(string manifestPath)
+    {
+        var packageRoot = base.GetPackageRootFromManifest(manifestPath);
+        return ShouldSkipPackagePath(packageRoot) ? null : packageRoot;
+    }
+
+    protected override IEnumerable<string> DiscoverPackageDirectories(string searchRoot, bool isServiceDirectory)
+    {
+        if (!isServiceDirectory)
+        {
+            return base.DiscoverPackageDirectories(searchRoot, isServiceDirectory);
+        }
+
+        var goModPath = Path.Combine(searchRoot, "go.mod");
+        if (!File.Exists(goModPath) || ShouldSkipPackagePath(searchRoot))
+        {
+            return [];
+        }
+
+        return [searchRoot];
+    }
 
     protected override void ApplyLanguageCiParameters(PackageInfo packageInfo)
     {
@@ -154,8 +164,7 @@ public partial class GoLanguageService : LanguageService
             .Replace(Path.DirectorySeparatorChar, '/')
             .Trim('/');
 
-        if (relativePath.Contains("testdata", StringComparison.OrdinalIgnoreCase)
-            || relativePath.Contains("sdk/samples", StringComparison.OrdinalIgnoreCase))
+        if (ShouldSkipPackagePath(relativePath))
         {
             return null;
         }
@@ -168,7 +177,7 @@ public partial class GoLanguageService : LanguageService
 
         var modulePath = modMatch.Groups["modPath"].Value;
         var moduleName = modMatch.Groups["modName"].Value;
-        var serviceDirectory = modulePath[(modulePath.IndexOf('/') + 1)..];
+        var serviceDirectory = modMatch.Groups["serviceDir"].Value;
         var sdkType = GetSdkType(modulePath, moduleName);
 
         var (version, _) = await GetGoModuleVersionInfoAsync(packagePath, ct);
@@ -231,6 +240,13 @@ public partial class GoLanguageService : LanguageService
         return "client";
     }
 
+    private static bool ShouldSkipPackagePath(string? path)
+    {
+        return string.IsNullOrEmpty(path)
+            || path.Contains("testdata", StringComparison.OrdinalIgnoreCase)
+            || path.Contains("sdk/samples", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static PackageInfo CreateEmptyPackageInfo(string fullPath, string repoRoot, string relativePath)
     {
         return new PackageInfo
@@ -261,6 +277,8 @@ public partial class GoLanguageService : LanguageService
 
     private const string SemVerPattern = @"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(?:\+[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)?";
 
+    // We should keep this regex in sync with what is in the azure-sdk repo at https://github.com/Azure/azure-sdk/blob/main/eng/scripts/Query-Azure-Packages.ps1#L303
+    // The serviceName named capture group is unused but used in azure-sdk, so it's kept here for parity
     [GeneratedRegex(@"^(?<modPath>(sdk|profile|eng)/(?<serviceDir>(.*?(?<serviceName>[^/]+)/)?(?<modName>[^/]+)))$", RegexOptions.CultureInvariant)]
     private static partial Regex GoModulePathRegex();
 

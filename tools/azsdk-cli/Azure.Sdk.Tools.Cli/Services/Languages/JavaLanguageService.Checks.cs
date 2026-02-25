@@ -136,7 +136,6 @@ public partial class JavaLanguageService : LanguageService
                     // Note: Javadoc doesn't have a failOnError flag - it contributes to build exit code
                 ]);
             }
-            ;
 
             var result = await mavenHelper.Run(new("install", [.. args], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
 

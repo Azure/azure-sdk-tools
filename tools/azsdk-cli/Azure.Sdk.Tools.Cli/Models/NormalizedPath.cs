@@ -15,6 +15,11 @@ public readonly struct NormalizedPath(string? path) : IEquatable<NormalizedPath>
 {
     private readonly string value = path?.Replace("\\", "/") ?? string.Empty;
 
+    public static string Normalize(string str)
+    {
+        return new NormalizedPath(str).ToString();
+    }
+
     /// <summary>
     /// Returns true if this path starts with the specified prefix.
     /// </summary>
@@ -36,8 +41,8 @@ public readonly struct NormalizedPath(string? path) : IEquatable<NormalizedPath>
     /// <summary>
     /// Returns true if this path contains the specified substring.
     /// </summary>
-    public bool Contains(string value, StringComparison comparison = StringComparison.Ordinal)
-        => value.Contains(value, comparison);
+    public bool Contains(string str, StringComparison comparison = StringComparison.Ordinal)
+        => value.Contains(str, comparison);
 
     /// <summary>
     /// Removes leading characters from this path.

@@ -14,7 +14,11 @@ param(
 
   [string]$SourceCommit = "HEAD",
 
-  [string]$TargetBranch = "main"
+  [string]$TargetBranch = "main",
+
+  [switch]$UseExecutable,
+
+  [string]$ArtifactDir = ""
 )
 
 # reset $LASTEXITCODE
@@ -25,9 +29,14 @@ $scriptDir = Join-Path $repoRootFull "eng" "common" "scripts"
 $saveScript = Join-Path $scriptDir "Save-Package-Properties.ps1"
 $diffScript = Join-Path $scriptDir "Generate-PR-Diff.ps1"
 
-$psOutDir = Join-Path $repoRootFull "artifacts" "PackageInfo-ps"
-$cliOutDir = Join-Path $repoRootFull "artifacts" "PackageInfo-cli"
-$diffDir = Join-Path $repoRootFull "artifacts" "diff"
+$artifactBase = if ([string]::IsNullOrEmpty($ArtifactDir)) {
+    Join-Path $repoRootFull "artifacts"
+} else {
+    $ArtifactDir
+}
+$psOutDir = Join-Path $artifactBase "PackageInfo-ps"
+$cliOutDir = Join-Path $artifactBase "PackageInfo-cli"
+$diffDir = Join-Path $artifactBase "diff"
 
 Remove-Item -Recurse -Force $psOutDir, $cliOutDir, $diffDir -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force $psOutDir | Out-Null
@@ -68,10 +77,16 @@ elseif (-not [string]::IsNullOrEmpty($ServiceDirectory)) {
   $cliArgs += @("--service-directory", $ServiceDirectory)
 }
 
-$cliProject = Join-Path $PSScriptRoot '..' '..' 'tools' 'azsdk-cli' 'Azure.Sdk.Tools.Cli'
-$cmdString = "dotnet run --project $cliProject -- $cliArgs"
-Write-Host $cmdString
-& dotnet run --project $cliProject -- @cliArgs
+if ($UseExecutable) {
+  $cmdString = "azsdk $cliArgs"
+  Write-Host $cmdString
+  azsdk @cliArgs
+} else {
+  $cliProject = Join-Path $PSScriptRoot '..' '..' 'tools' 'azsdk-cli' 'Azure.Sdk.Tools.Cli'
+  $cmdString = "dotnet run --project $cliProject -- $cliArgs"
+  Write-Host $cmdString
+  & dotnet run --project $cliProject -- @cliArgs
+}
 if ($LASTEXITCODE -ne 0) {
   throw "'$cmdString' failed with exit code $LASTEXITCODE"
 }

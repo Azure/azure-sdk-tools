@@ -78,16 +78,27 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             CancellationToken ct = default)
         {
             var sdkRoot = Path.Combine(repoRoot, "sdk");
+            var normalizedServiceDirectory = serviceDirectory;
+            // Handle service directories passed with sdk like 'sdk/core'
+            if (!string.IsNullOrWhiteSpace(normalizedServiceDirectory))
+            {
+                normalizedServiceDirectory = NormalizedPath.Normalize(normalizedServiceDirectory);
+                if (normalizedServiceDirectory.StartsWith("sdk/", StringComparison.OrdinalIgnoreCase))
+                {
+                    normalizedServiceDirectory = normalizedServiceDirectory["sdk/".Length..];
+                }
+            }
+
             var searchRoot = string.IsNullOrWhiteSpace(serviceDirectory)
                 ? sdkRoot
-                : Path.Combine(sdkRoot, serviceDirectory);
+                : Path.Combine(sdkRoot, normalizedServiceDirectory!);
 
             if (!Directory.Exists(searchRoot))
             {
                 return [];
             }
 
-            var packageDirectories = DiscoverPackageDirectories(searchRoot, !string.IsNullOrWhiteSpace(serviceDirectory));
+            var packageDirectories = DiscoverPackageDirectories(searchRoot, !string.IsNullOrWhiteSpace(normalizedServiceDirectory));
             var packages = new List<PackageInfo>();
 
             foreach (var packageDirectory in packageDirectories)
@@ -118,10 +129,17 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 return [];
             }
 
+
             var packageRoots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var pattern in PackageManifestPatterns)
             {
-                foreach (var filePath in Directory.EnumerateFiles(searchRoot, pattern, SearchOption.AllDirectories))
+                var enumerationOptions = new EnumerationOptions()
+                {
+                    RecurseSubdirectories = true,
+                    MaxRecursionDepth = 3
+                };
+
+                foreach (var filePath in Directory.EnumerateFiles(searchRoot, pattern, enumerationOptions))
                 {
                     var packageRoot = GetPackageRootFromManifest(filePath);
                     if (!string.IsNullOrEmpty(packageRoot))

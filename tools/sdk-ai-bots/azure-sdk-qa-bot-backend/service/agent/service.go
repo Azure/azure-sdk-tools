@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	neturl "net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -125,6 +126,11 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	jsonReq, _ = json.Marshal(intention)
 	log.Printf("Intent Result: %s", utils.SanitizeForLog(string(jsonReq)))
 	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
+
+	// Fetch GitHub check/PR info if intention indicates CI-related question
+	if utils.IsCIRelatedIntention(intention.Category, intention.Question) {
+		llmMessages = s.fetchAndInjectGitHubCheckInfo(req, llmMessages)
+	}
 
 	var knowledges []model.Knowledge
 	var prompt string
@@ -455,6 +461,82 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 		userMsg.Name = openai.String(*name)
 	}
 	llmMessages = append(llmMessages, openai.ChatCompletionMessageParamUnion{OfUser: userMsg})
+	return llmMessages
+}
+
+// fetchAndInjectGitHubCheckInfo scans the request's AdditionalInfos for GitHub PR or
+// check/action links, fetches their check run details, and injects the results into
+// llmMessages. This should only be called when the intention indicates a CI-related question.
+func (s *CompletionService) fetchAndInjectGitHubCheckInfo(req *model.CompletionReq, llmMessages []openai.ChatCompletionMessageParamUnion) []openai.ChatCompletionMessageParamUnion {
+	preprocessService := preprocess.NewPreprocessService()
+	for _, info := range req.AdditionalInfos {
+		if info.Type != model.AdditionalInfoType_Link {
+			continue
+		}
+		link := preprocessService.PreprocessHTMLContent(info.Link)
+		var content string
+		var err error
+
+		if utils.IsGitHubPRLink(link) {
+			log.Printf("CI-related intent: fetching GitHub PR checks for %s", link)
+			content, err = utils.FetchGitHubPRChecks(link)
+			if err != nil {
+				log.Printf("Failed to fetch GitHub PR checks: %v", err)
+				continue
+			}
+			log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
+		} else if utils.IsGitHubCheckLink(link) {
+			log.Printf("CI-related intent: fetching GitHub check logs for %s", link)
+			content, err = utils.FetchGitHubCheckLogs(link)
+			if err != nil {
+				log.Printf("Failed to fetch GitHub check logs: %v", err)
+				continue
+			}
+			log.Printf("GitHub check logs fetched successfully, result: %s", utils.SanitizeForLog(content))
+		} else {
+			continue
+		}
+
+		if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("GitHub check content too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+			content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
+		}
+		msg := openai.UserMessage(fmt.Sprintf("GitHub Check Analysis for %s:\n%s", link, content))
+		llmMessages = append(llmMessages, msg)
+	}
+
+	// Also scan the user message content for embedded GitHub PR links
+	userContent := req.Message.Content
+	prLinkRegex := regexp.MustCompile(`https?://github\.com/[^/]+/[^/]+/pull/\d+`)
+	if prLinks := prLinkRegex.FindAllString(userContent, -1); len(prLinks) > 0 {
+		for _, prLink := range prLinks {
+			// Skip if we already processed this link from AdditionalInfos
+			alreadyProcessed := false
+			for _, info := range req.AdditionalInfos {
+				if info.Type == model.AdditionalInfoType_Link && strings.Contains(info.Link, prLink) {
+					alreadyProcessed = true
+					break
+				}
+			}
+			if alreadyProcessed {
+				continue
+			}
+
+			log.Printf("CI-related intent: fetching GitHub PR checks for embedded link %s", prLink)
+			content, err := utils.FetchGitHubPRChecks(prLink)
+			if err != nil {
+				log.Printf("Failed to fetch GitHub PR checks for embedded link: %v", err)
+				continue
+			}
+			if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+				content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
+			}
+			msg := openai.UserMessage(fmt.Sprintf("GitHub Check Analysis for %s:\n%s", prLink, content))
+			llmMessages = append(llmMessages, msg)
+			log.Printf("Injected GitHub PR check analysis for embedded link: %s", prLink)
+		}
+	}
+
 	return llmMessages
 }
 

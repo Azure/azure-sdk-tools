@@ -28,6 +28,9 @@ import (
 	"github.com/openai/openai-go/v3/shared"
 )
 
+// prLinkRegex matches GitHub PR URLs embedded in user messages.
+var prLinkRegex = regexp.MustCompile(`https?://github\.com/[^/]+/[^/]+/pull/\d+`)
+
 type CompletionService struct {
 	model        string
 	searchClient *search.SearchClient
@@ -507,7 +510,6 @@ func (s *CompletionService) fetchAndInjectGitHubCheckInfo(req *model.CompletionR
 
 	// Also scan the user message content for embedded GitHub PR links
 	userContent := req.Message.Content
-	prLinkRegex := regexp.MustCompile(`https?://github\.com/[^/]+/[^/]+/pull/\d+`)
 	if prLinks := prLinkRegex.FindAllString(userContent, -1); len(prLinks) > 0 {
 		for _, prLink := range prLinks {
 			// Skip if we already processed this link from AdditionalInfos

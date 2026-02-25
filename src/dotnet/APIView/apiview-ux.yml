@@ -1,0 +1,205 @@
+# APIView UX Test Pipeline
+# This pipeline deploys to the UX test environment (apiviewuxtest.com)
+# It should ONLY run when manually queued - never automatically.
+
+parameters:
+  - name: AzureSdkForNetDevOpsFeed
+    type: string
+    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json'
+  - name: CSharpAPIParserVersion
+    type: string
+    default: '1.0.0-dev.20251117.2'
+  - name: JavaScriptAPIParser
+    type: string
+    default: '@azure-tools/ts-genapi@2.0.10'
+  - name: RustAPIParser
+    type: string
+    default: '@azure-tools/rust-genapi@1.2.0'
+  - name: JavaScriptArtifactRegistry
+    type: string
+    default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
+
+# Disable all automatic triggers - this pipeline should ONLY run when manually queued
+trigger: none
+pr: none
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    GenerateBaselines: true
+    stages:
+      - stage: 'Build'
+        displayName: 'Build'
+
+        variables:
+          - name: 'WebClientProjectDirectory'
+            value: 'src/dotnet/APIView/APIViewWeb/Client'
+          - name: 'SPAClientProjectDirectory'
+            value: 'src/dotnet/APIView/ClientSPA'
+          - name: WebProjectPath
+            value: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
+          - name: NodeVersion
+            value: '22.x'
+          - name: BuildConfiguration
+            value: 'Release'
+          - name: GoParserPackagePath
+            value: 'src/go'
+          - name: GoVersion
+            value: '1.22.1'
+          - name: NugetSecurityAnalysisWarningLevel
+            value: 'none'
+          - template: /eng/pipelines/templates/variables/image.yml
+
+        jobs:
+          - job: 'Build'
+
+            pool:
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
+
+            templateContext:
+              sdl: 
+                componentgovernance:
+                  enabled: true
+
+            steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '$(NodeVersion)'
+                displayName: 'Use NodeJS $(NodeVersion)'
+
+              - task: GoTool@0
+                inputs:
+                  version: '$(GoVersion)'
+                displayName: "Use Go $(GoVersion)"
+
+              - script: |
+                  npm install -g @angular/cli@16.1.8
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Angular CLI"
+
+              - script: |
+                  npm install
+                workingDirectory: $(WebClientProjectDirectory)
+                displayName: "Install npm packages"
+
+              - script: |
+                  npm run-script build
+                workingDirectory: $(WebClientProjectDirectory)
+                displayName: "Build client assets"
+
+              - script: |
+                  npm install
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Client SPA Packages"
+
+              - script: |
+                  npm run-script build
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Build Client SPA assets"
+
+              - script: |
+                  npx workbox-cli generateSW workbox-config.js
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Configure Service Worker"
+
+              - task: Maven@3
+                inputs:
+                  mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
+                  goals: 'clean package'
+
+              - script: |
+                  go build
+                workingDirectory: $(GoParserPackagePath)
+                displayName: 'Build go parser'
+
+              - task: UseDotNet@2
+                inputs:
+                  packageType: 'sdk'
+                  useGlobalJson: true
+                  workingDirectory: $(Build.SourcesDirectory)
+
+              - script: 'dotnet build $(WebProjectPath) -warnaserror'
+                displayName: 'Build and Package'
+                env:
+                  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                  DOTNET_MULTILEVEL_LOOKUP: 0
+
+              - task: DotNetCoreCLI@2
+                displayName: 'Publish site'
+                env:
+                  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                  DOTNET_MULTILEVEL_LOOKUP: 0
+                inputs:
+                  command: 'publish'
+                  projects: '$(WebProjectPath)'
+                  publishWebProjects: false
+                  arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+                  zipAfterPublish: true
+
+              - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+                parameters:
+                  ArtifactName: 'APIView'
+                  ArtifactPath: '$(Build.ArtifactStagingDirectory)'
+
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        - stage: Test_UI_Publish
+          displayName: Publish Test UI
+          dependsOn: Build
+
+          variables:
+            - name: 'apiUrl'
+              value: 'https://apiviewuxtest.com/api/'
+            - name: 'hubUrl'
+              value: 'https://apiviewuxtest.com/hubs/'
+            - name: 'webAppUrl'
+              value: 'https://apiviewuxtest.com/'
+
+          jobs:
+            - deployment: Publish_Test_UI
+              displayName: Publish Test UI
+              environment: 'package-publish'
+              templateContext:
+                type: releaseJob
+                isProduction: false
+                inputs:
+                - input: pipelineArtifact
+                  artifactName: APIView
+                  targetPath: '$(Pipeline.Workspace)/APIView'
+              pool:
+                name: azsdk-pool
+                image: ubuntu-24.04
+                os: linux
+
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+
+                    - task: FileTransform@1
+                      displayName: 'Update Angular Config for Environment'
+                      inputs:
+                        folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
+                        fileType: json
+                        targetFiles: wwwroot/spa/browser/assets/config.json
+
+                    - task: AzureRmWebAppDeployment@4
+                      displayName: 'Azure App Service Deploy: apiviewuat'
+                      inputs:
+                        azureSubscription: 'APIViewUI-Instance-deployment-connection'
+                        WebAppName: apiviewuat
+                        packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+                        InlineScript: |
+                          @echo off
+                          echo Installing .NET tool
+                          call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                          call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
+                          echo Installing JavaScript parser
+                          call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                          echo Installing Rust parser
+                          call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
+                        enableCustomDeployment: true
+                        DeploymentType: zipDeploy

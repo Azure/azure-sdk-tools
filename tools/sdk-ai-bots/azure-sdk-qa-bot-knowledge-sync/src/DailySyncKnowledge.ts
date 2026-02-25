@@ -150,9 +150,9 @@ export async function processDailySyncKnowledge(): Promise<void> {
 
     } finally {
         // Cleanup working directory
-        if (fs.existsSync(workingDir)) {
-            fs.rmSync(workingDir, { recursive: true, force: true });
-        }
+        // if (fs.existsSync(workingDir)) {
+        //     fs.rmSync(workingDir, { recursive: true, force: true });
+        // }
     }
 }
 

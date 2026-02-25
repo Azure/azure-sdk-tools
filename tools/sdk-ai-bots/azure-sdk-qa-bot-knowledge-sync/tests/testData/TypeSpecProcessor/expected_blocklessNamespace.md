@@ -7,7 +7,6 @@
 namespace Azure.ResourceManager;
 ```
 
----
 
 ## subNameSpace
 
@@ -22,7 +21,6 @@ namespace subNameSpace {
 }
 ```
 
----
 
 ### Employee
 
@@ -34,7 +32,6 @@ namespace subNameSpace {
     }
 ```
 
----
 
 ## manager
 
@@ -47,7 +44,6 @@ model manager {
 }
 ```
 
----
 
 ## UserOperations
 
@@ -72,7 +68,6 @@ interface UserOperations {
 }
 ```
 
----
 
 ### getUser
 
@@ -82,7 +77,6 @@ interface UserOperations {
     getUser(): User;
 ```
 
----
 
 ### createUser
 
@@ -92,7 +86,6 @@ interface UserOperations {
     createUser(user: User): User;
 ```
 
----
 
 ### get
 
@@ -102,7 +95,6 @@ interface UserOperations {
     get is ArmResourceRead<User>;
 ```
 
----
 
 ### list
 
@@ -112,4 +104,3 @@ interface UserOperations {
     op list(): User[];
 ```
 
----

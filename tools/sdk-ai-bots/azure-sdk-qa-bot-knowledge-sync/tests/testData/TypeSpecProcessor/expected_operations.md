@@ -7,7 +7,6 @@
 namespace Azure.ResourceManager;
 ```
 
----
 
 ## ArmListBySubscription
 
@@ -42,7 +41,6 @@ op ArmListBySubscription<
 > is ArmReadOperation<SubscriptionScope<Resource> & Parameters, Response, Error>;
 ```
 
----
 
 ## ArmResourceListByParent
 
@@ -85,7 +83,6 @@ op ArmResourceListByParent<
 >;
 ```
 
----
 
 ## ArmResourceListAtScope
 
@@ -124,7 +121,6 @@ op ArmResourceListAtScope<
 >;
 ```
 
----
 
 ## ArmResourceRead
 
@@ -159,7 +155,6 @@ op ArmResourceRead<
 >;
 ```
 
----
 
 ## ArmResourceCheckExistence
 
@@ -194,7 +189,6 @@ op ArmResourceCheckExistence<
 >;
 ```
 
----
 
 ## ArmResourceCreateOrUpdateAsync
 
@@ -238,7 +232,6 @@ op ArmResourceCreateOrUpdateAsync<
 >;
 ```
 
----
 
 ## ArmResourceCreateOrUpdateSync
 
@@ -276,7 +269,6 @@ op ArmResourceCreateOrUpdateSync<
 >;
 ```
 
----
 
 ## ArmResourceCreateOrReplaceSync
 
@@ -313,7 +305,6 @@ op ArmResourceCreateOrReplaceSync<
 >;
 ```
 
----
 
 ## ArmResourceCreateOrReplaceAsync
 
@@ -352,7 +343,6 @@ op ArmResourceCreateOrReplaceAsync<
 >;
 ```
 
----
 
 ## ArmTagsPatchAsync
 
@@ -390,7 +380,6 @@ op ArmTagsPatchAsync<
 >;
 ```
 
----
 
 ## ArmResourcePatchAsync
 
@@ -422,7 +411,6 @@ op ArmResourcePatchAsync<
 > is ArmCustomPatchAsync<Resource, Resource, BaseParameters, LroHeaders, Parameters>;
 ```
 
----
 
 ## ArmCustomPatchAsync
 
@@ -471,7 +459,6 @@ op ArmCustomPatchAsync<
 >;
 ```
 
----
 
 ## ArmTagsPatchSync
 
@@ -494,7 +481,6 @@ op ArmTagsPatchSync<
 > is ArmCustomPatchSync<Resource, TagsUpdateModel<Resource>, BaseParameters, Parameters>;
 ```
 
----
 
 ## ArmResourcePatchSync
 
@@ -519,7 +505,6 @@ op ArmResourcePatchSync<
 > is ArmCustomPatchSync<Resource, Resource, BaseParameters, Parameters>;
 ```
 
----
 
 ## ArmCustomPatchSync
 
@@ -558,7 +543,6 @@ op ArmCustomPatchSync<
 >;
 ```
 
----
 
 ## ArmResourceDeleteAsyncBase
 
@@ -588,7 +572,6 @@ op ArmResourceDeleteAsyncBase<
 >(...ResourceInstanceParameters<Resource, BaseParameters>, ...Parameters): Response | Error;
 ```
 
----
 
 ## ArmResourceDeleteAsync
 
@@ -618,7 +601,6 @@ op ArmResourceDeleteAsync<
 > is ArmResourceDeleteAsyncBase<Resource, Response, BaseParameters, Parameters, Error>;
 ```
 
----
 
 ## ArmResourceDeleteWithoutOkAsync
 
@@ -647,7 +629,6 @@ op ArmResourceDeleteWithoutOkAsync<
 > is ArmResourceDeleteAsyncBase<Resource, Response, BaseParameters, Parameters, Error>;
 ```
 
----
 
 ## ArmResourceDeleteSync
 
@@ -679,7 +660,6 @@ op ArmResourceDeleteSync<
 >(...ResourceInstanceParameters<Resource, BaseParameters>, ...Parameters): Response | Error;
 ```
 
----
 
 ## ArmResourceActionAsyncBase
 
@@ -721,7 +701,6 @@ op ArmResourceActionAsyncBase<
 ): Response | Error;
 ```
 
----
 
 ## ArmResourceActionAsync
 
@@ -767,7 +746,6 @@ op ArmResourceActionAsync<
 >;
 ```
 
----
 
 ## ActionAsync
 
@@ -813,7 +791,6 @@ op ActionAsync<
 >;
 ```
 
----
 
 ## ArmResourceActionSync
 
@@ -856,7 +833,6 @@ op ArmResourceActionSync<
 ): Response | Error;
 ```
 
----
 
 ## ArmResourceActionNoContentAsync
 
@@ -898,7 +874,6 @@ op ArmResourceActionNoContentAsync<
 >;
 ```
 
----
 
 ## ArmResourceActionNoResponseContentAsync
 
@@ -941,7 +916,6 @@ op ArmResourceActionNoResponseContentAsync<
 >;
 ```
 
----
 
 ## ArmResourceActionNoContentSync
 
@@ -981,7 +955,6 @@ op ArmResourceActionNoContentSync<
 ): ArmNoContentResponse<"Action completed successfully."> | Error;
 ```
 
----
 
 ## checkGlobalNameAvailability
 
@@ -1012,7 +985,6 @@ op checkGlobalNameAvailability<
 >;
 ```
 
----
 
 ## checkLocalNameAvailability
 
@@ -1043,7 +1015,6 @@ op checkLocalNameAvailability<
 >;
 ```
 
----
 
 ## ArmProviderActionSync
 
@@ -1082,7 +1053,6 @@ op ArmProviderActionSync<
 ): Response | Error;
 ```
 
----
 
 ## ArmProviderActionAsync
 
@@ -1128,4 +1098,3 @@ op ArmProviderActionAsync<
 ): ArmAcceptedLroResponse<"Resource operation accepted.", LroHeaders> | Response | Error;
 ```
 
----

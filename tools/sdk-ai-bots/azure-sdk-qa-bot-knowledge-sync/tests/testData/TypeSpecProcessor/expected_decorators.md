@@ -8,7 +8,6 @@ using Reflection;
 namespace Azure.ResourceManager;
 ```
 
----
 
 ## armProviderNamespace
 
@@ -41,7 +40,6 @@ namespace Azure.ResourceManager;
 extern dec armProviderNamespace(target: Namespace, providerNamespace?: valueof string);
 ```
 
----
 
 ## useLibraryNamespace
 
@@ -59,7 +57,6 @@ Declare the Azure Resource Manager library namespaces used in this provider. Thi
 extern dec useLibraryNamespace(target: Namespace, ...namespaces: Namespace[]);
 ```
 
----
 
 ## armLibraryNamespace
 
@@ -83,7 +80,6 @@ extern dec useLibraryNamespace(target: Namespace, ...namespaces: Namespace[]);
 extern dec armLibraryNamespace(target: Namespace);
 ```
 
----
 
 ## singleton
 
@@ -106,7 +102,6 @@ extern dec armLibraryNamespace(target: Namespace);
 extern dec singleton(target: Model, keyValue?: valueof string | "default");
 ```
 
----
 
 ## tenantResource
 
@@ -127,7 +122,6 @@ extern dec singleton(target: Model, keyValue?: valueof string | "default");
 extern dec tenantResource(target: Model);
 ```
 
----
 
 ## subscriptionResource
 
@@ -148,7 +142,6 @@ extern dec tenantResource(target: Model);
 extern dec subscriptionResource(target: Model);
 ```
 
----
 
 ## locationResource
 
@@ -169,7 +162,6 @@ extern dec subscriptionResource(target: Model);
 extern dec locationResource(target: Model);
 ```
 
----
 
 ## resourceGroupResource
 
@@ -191,7 +183,6 @@ extern dec locationResource(target: Model);
 extern dec resourceGroupResource(target: Model);
 ```
 
----
 
 ## extensionResource
 
@@ -213,7 +204,6 @@ extern dec resourceGroupResource(target: Model);
 extern dec extensionResource(target: Model);
 ```
 
----
 
 ## armProviderNameValue
 
@@ -231,7 +221,6 @@ extern dec extensionResource(target: Model);
 extern dec armProviderNameValue(target: Operation);
 ```
 
----
 
 ## armResourceCollectionAction
 
@@ -247,7 +236,6 @@ Marks the operation as being a collection action
 extern dec armResourceCollectionAction(target: Operation);
 ```
 
----
 
 ## armResourceAction
 
@@ -266,7 +254,6 @@ extern dec armResourceAction(
 );
 ```
 
----
 
 ## armResourceCreateOrUpdate
 
@@ -285,7 +272,6 @@ extern dec armResourceCreateOrUpdate(
 );
 ```
 
----
 
 ## armResourceRead
 
@@ -300,7 +286,6 @@ extern dec armResourceCreateOrUpdate(
 extern dec armResourceRead(target: Operation, resourceModel: Model, resourceName?: valueof string);
 ```
 
----
 
 ## armResourceUpdate
 
@@ -319,7 +304,6 @@ extern dec armResourceUpdate(
 );
 ```
 
----
 
 ## armResourceDelete
 
@@ -338,7 +322,6 @@ extern dec armResourceDelete(
 );
 ```
 
----
 
 ## armResourceList
 
@@ -353,7 +336,6 @@ extern dec armResourceDelete(
 extern dec armResourceList(target: Operation, resourceModel: Model, resourceName?: valueof string);
 ```
 
----
 
 ## armResourceCheckExistence
 
@@ -375,7 +357,6 @@ extern dec armResourceCheckExistence(
 );
 ```
 
----
 
 ## armResourceOperations
 
@@ -413,7 +394,6 @@ extern dec armResourceOperations(
 );
 ```
 
----
 
 ## ResourceOperationOptions
 
@@ -440,7 +420,6 @@ model ResourceOperationOptions {
 }
 ```
 
----
 
 ## armCommonTypesVersion
 
@@ -462,7 +441,6 @@ extern dec armCommonTypesVersion(
 );
 ```
 
----
 
 ## armVirtualResource
 
@@ -482,7 +460,6 @@ This decorator is used on Azure Resource Manager resources that are not based on
 extern dec armVirtualResource(target: Model, provider?: valueof string);
 ```
 
----
 
 ## resourceBaseType
 
@@ -503,7 +480,6 @@ extern dec resourceBaseType(
 );
 ```
 
----
 
 ## identifiers
 
@@ -530,4 +506,3 @@ This decorator is used to indicate the identifying properties of objects in the 
 extern dec identifiers(entity: ModelProperty | Array<unknown>, properties: valueof string[]);
 ```
 
----

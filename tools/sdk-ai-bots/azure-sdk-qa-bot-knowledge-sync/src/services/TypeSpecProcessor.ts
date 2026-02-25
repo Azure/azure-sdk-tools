@@ -655,14 +655,6 @@ export class TypeSpecProcessor {
      */
     private generateMarkdown(definitions: TypeSpecDefinition[], sourceFile: string, excluded: TypeSpecDefinitionType[]|undefined = undefined): string {
         const lines: string[] = [];
-        
-        // Add header
-        // lines.push(`# TypeSpec Definitions`);
-        // lines.push('');
-        // lines.push(`Source: \`${sourceFile}\``);
-        // lines.push('');
-        // lines.push('---');
-        // lines.push('');
 
         // Generate chapters for each definition
         for (const def of definitions) {
@@ -698,7 +690,6 @@ export class TypeSpecProcessor {
             output.push(definition.code);
             output.push('```');
             output.push('');
-            output.push('---');
             output.push('');
     }
 

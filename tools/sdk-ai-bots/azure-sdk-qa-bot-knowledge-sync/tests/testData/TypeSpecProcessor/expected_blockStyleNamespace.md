@@ -11,7 +11,6 @@ namespace Azure.ResourceManager {
 }
 ```
 
----
 
 ## manager
 
@@ -23,4 +22,3 @@ namespace Azure.ResourceManager {
     }
 ```
 
----

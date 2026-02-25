@@ -21,7 +21,6 @@ interface UserOperations {
 }
 ```
 
----
 
 ## getUser
 
@@ -31,7 +30,6 @@ interface UserOperations {
     getUser(): User;
 ```
 
----
 
 ## createUser
 
@@ -41,7 +39,6 @@ interface UserOperations {
     createUser(user: User): User;
 ```
 
----
 
 ## get
 
@@ -51,7 +48,6 @@ interface UserOperations {
     get is ArmResourceRead<User>;
 ```
 
----
 
 ## list
 
@@ -61,7 +57,6 @@ interface UserOperations {
     op list(): User[];
 ```
 
----
 
 # RoutedOperations
 
@@ -127,7 +122,6 @@ interface RoutedOperations<
 }
 ```
 
----
 
 ## CreateOrUpdateAsync
 
@@ -176,4 +170,3 @@ A long-running resource CreateOrUpdate (PUT)
   ): Response | OverrideErrorType;
 ```
 
----

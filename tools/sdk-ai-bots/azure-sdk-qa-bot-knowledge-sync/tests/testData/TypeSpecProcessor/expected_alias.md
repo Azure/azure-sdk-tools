@@ -8,7 +8,6 @@ namespace Azure.ResourceManager;
 using Azure.ResourceManager.Private;
 ```
 
----
 
 ## NspConfigurations
 
@@ -50,7 +49,6 @@ alias NspConfigurations<
 >;
 ```
 
----
 
 ## NspConfiguration
 
@@ -84,4 +82,3 @@ alias NspConfiguration<
 > = CommonTypes.NspConfigurationResource<KeyName, Description>;
 ```
 
----

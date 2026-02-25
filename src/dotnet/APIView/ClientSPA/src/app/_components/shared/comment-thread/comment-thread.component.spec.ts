@@ -201,6 +201,29 @@ describe('CommentThreadComponent', () => {
       component.setCommentResolutionState();
       expect(component.threadResolvedBy).toBe('test user 2');
     });
+
+    it('should compute thread participants from comment createdBy fields', () => {
+      const comment1 = { id: '1', createdBy: 'alice', isResolved: true, changeHistory: [] } as CommentItemModel;
+      const comment2 = { id: '2', createdBy: 'bob', isResolved: true, changeHistory: [] } as CommentItemModel;
+      const comment3 = { id: '3', createdBy: 'alice', isResolved: true, changeHistory: [] } as CommentItemModel;
+
+      component.codePanelRowData!.comments = [comment1, comment2, comment3];
+      component.codePanelRowData!.isResolvedCommentThread = true;
+      component.codePanelRowData!.commentThreadIsResolvedBy = 'alice';
+      component.setCommentResolutionState();
+
+      expect(component.threadParticipants).toBe('alice, bob');
+    });
+
+    it('should clear thread participants when thread is unresolved', () => {
+      const comment1 = { id: '1', createdBy: 'alice', isResolved: false, changeHistory: [] } as CommentItemModel;
+
+      component.codePanelRowData!.comments = [comment1];
+      component.codePanelRowData!.isResolvedCommentThread = false;
+      component.setCommentResolutionState();
+
+      expect(component.threadParticipants).toBe('');
+    });
   });
 
   describe('thread resolution collapse behavior', () => {

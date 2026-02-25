@@ -8,5 +8,6 @@ output/
 test/examples/specification/convert/examples/*
 .tmp-test-*
 TempTypeSpecFiles/
+test-results.browser.xml
 # Ignore generated SDK files in test examples
 test/examples/sdk/contosowidgetmanager/

@@ -1,5 +1,11 @@
 # Release History
 
+## 0.5.19 (2026-02-25)
+
+### Bugs Fixed
+
+- Override path extension variable to support running commands on Windows without extension.
+
 ## 0.5.18 (2026-02-24)
 
 ### Bugs Fixed

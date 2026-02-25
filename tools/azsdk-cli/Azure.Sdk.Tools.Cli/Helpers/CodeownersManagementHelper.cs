@@ -13,8 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 /// Business logic layer for CODEOWNERS management operations on Azure DevOps work items.
 /// </summary>
 public class CodeownersManagementHelper(
-    IDevOpsService devOpsService,
-    ILogger<CodeownersManagementHelper> logger
+    IDevOpsService devOpsService
 ) : ICodeownersManagementHelper
 {
 
@@ -246,8 +245,6 @@ public class CodeownersManagementHelper(
 
         foreach (var lo in labelOwners)
         {
-            lo.Owners.Clear();
-            lo.Labels.Clear();
             foreach (var id in lo.RelatedIds)
             {
                 if (owners.TryGetValue(id, out var owner))
@@ -279,8 +276,6 @@ public class CodeownersManagementHelper(
 
         foreach (var package in packages)
         {
-            package.Owners.Clear();
-            package.Labels.Clear();
             foreach (var id in package.RelatedIds)
             {
                 if (owners.TryGetValue(id, out var owner))

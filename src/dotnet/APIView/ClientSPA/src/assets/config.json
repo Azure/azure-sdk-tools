@@ -2,5 +2,5 @@
     "apiUrl": "api/",
     "hubUrl": "hubs/",
     "webAppUrl": "http://localhost:5000/",
-    "uxTestPipelineUrl": ""
+    "uxTestPipelineUrl": "https://dev.azure.com/azure-sdk/internal/_build?definitionId=7887"
 }

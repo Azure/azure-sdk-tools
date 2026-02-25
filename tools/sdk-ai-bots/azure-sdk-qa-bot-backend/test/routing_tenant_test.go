@@ -86,8 +86,13 @@ func TestRoutingTenant_General(t *testing.T) {
 		},
 		{
 			"Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?",
-			"title: Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?\n\nquestion: Right now, after pushing my commit, I’m unable to see the error details for the validation checks, it just says “at least one review required to see the workflow.” This makes it difficult to verify if my changes are passing validation before the final review.\nWould it be possible to enable workflow visibility for me so I can debug and ensure everything is in order ahead of time? PR link: [Stable version 2025-09-01 with prevalidation and autoscale changes by prachinandi · Pull Request #3…](https://github.com/Azure/azure-rest-api-specs/pull/37218)",
+			"Right now, after pushing my commit, I’m unable to see the error details for the validation checks, it just says “at least one review required to see the workflow.” This makes it difficult to verify if my changes are passing validation before the final review.\nWould it be possible to enable workflow visibility for me so I can debug and ensure everything is in order ahead of time? PR link: [Stable version 2025-09-01 with prevalidation and autoscale changes by prachinandi · Pull Request #3…](https://github.com/Azure/azure-rest-api-specs/pull/37218)",
 			model.TenantID_AzureSDKOnboarding,
+		},
+		{
+			"SDK Validation for API PR's",
+			"I have these lines in my suppressions.yaml \n \nYAML\n- tool: TypeSpecValidation\n  reason: >\n    Not ready to generate SDKs from TypeSpec.\n    Responsibility: Service team with SDK team collaboration.\n    More info: https://aka.ms/azsdk/spec-gen-sdk-config.\n  rules: \n  - SdkTspConfigValidation\n  paths: \n  - HybridContainerService.Management/tspconfig.yaml\n \nBut PR is still running SDK validations and failing. Did the suppressions method change? ",
+			model.TenantID_APISpecReviewBot,
 		},
 	}
 

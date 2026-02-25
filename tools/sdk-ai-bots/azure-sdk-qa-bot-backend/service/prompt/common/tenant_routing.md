@@ -12,8 +12,8 @@ Your task is to analyze the core question from user and determine the best tenan
 ### Azure SDK Onboarding
 Questions about Azure API specification and Azure SDK onboarding process, SDK develop lifecycle, Azure MCP and retirement processes:
 - Prerequisites and setup about onboarding Azure API or SDK
-- Any permission issue about specification repo or SDK repo access, workflow
-- SDK development, SDK generation, SDK validation, SDK release tooling and guidance
+- Any permission issue about specification repo or SDK repo access, workflow visibility
+- SDK development, SDK generation(reproduce sdk validation in local), SDK release tooling and guidance
 - Service, API and SDK deprecation guidance
 - API documentation publishing
 - AzSDK agent, Azure MCP tool usage guidance
@@ -23,7 +23,10 @@ Questions about Azure API specification and Azure SDK onboarding process, SDK de
 ### API Spec Review
 Questions about Azure REST API specifications repo pull request review process and failing checks, not including API design questions:
 - Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories
-- Specification PR pipeline errors, check failures or CI failures(excludes SDK generation/validation errors)
+- Specification PR pipeline errors, check failures or CI failures
+- For specfic language SDK generation or validation errors, you should route to language channel tenant instead of this tenant.
+- For tyepspec validation errors, you should route to TypeSpec tenant instead of this tenant.
+- For questions about API design, even it causes PR failures, you should also route to TypeSpec tenant instead of this tenant.
 - **Recommended Tenant**: `api_spec_review_bot`
 
 ### TypeSpec

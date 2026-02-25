@@ -89,5 +89,3 @@ stages:
         # Set working directory for temporary files
         TMPDIR: $(Agent.TempDirectory)
         HOME: $(Agent.HomeDirectory)
-
-    

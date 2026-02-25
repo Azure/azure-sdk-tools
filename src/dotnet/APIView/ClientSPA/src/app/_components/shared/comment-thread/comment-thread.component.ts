@@ -803,6 +803,9 @@ export class CommentThreadComponent {
 
         this.emitCreationEvents(createdComments);
 
+        // Refresh quality score after batch operation completes
+        this.commentsService.notifyQualityScoreRefresh();
+
         this.showRelatedCommentsDialog = false;
       },
       error: (error) => {

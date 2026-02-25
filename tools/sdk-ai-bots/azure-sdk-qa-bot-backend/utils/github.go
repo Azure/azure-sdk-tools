@@ -251,7 +251,7 @@ func fetchPRCheckRuns(prLink *gitHubPRLink) (string, error) {
 	}
 
 	var pr gitHubPRResponse
-	if err := json.Unmarshal(body, &pr); err != nil {
+	if err = json.Unmarshal(body, &pr); err != nil {
 		return "", fmt.Errorf("failed to parse PR response: %w", err)
 	}
 
@@ -431,7 +431,7 @@ func fetchWorkflowRunDetails(link *gitHubCheckLink) (string, error) {
 	}
 
 	var run gitHubWorkflowRunResponse
-	if err := json.Unmarshal(body, &run); err != nil {
+	if err = json.Unmarshal(body, &run); err != nil {
 		return "", fmt.Errorf("failed to parse workflow run response: %w", err)
 	}
 
@@ -450,7 +450,7 @@ func fetchWorkflowRunDetails(link *gitHubCheckLink) (string, error) {
 	}
 
 	var jobsList gitHubJobsListResponse
-	if err := json.Unmarshal(body, &jobsList); err != nil {
+	if err = json.Unmarshal(body, &jobsList); err != nil {
 		log.Printf("Failed to parse jobs response: %v", err)
 		return sb.String(), nil
 	}
@@ -511,7 +511,7 @@ func fetchJobLogs(link *gitHubCheckLink) (string, error) {
 	}
 
 	var job gitHubJobResponse
-	if err := json.Unmarshal(body, &job); err != nil {
+	if err = json.Unmarshal(body, &job); err != nil {
 		return "", fmt.Errorf("failed to parse job response: %w", err)
 	}
 
@@ -582,7 +582,8 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 			return "", fmt.Errorf("received redirect but no Location header")
 		}
 		log.Printf("Following redirect to log URL")
-		redirectReq, err := http.NewRequest("GET", redirectURL, nil)
+		var redirectReq *http.Request
+		redirectReq, err = http.NewRequest("GET", redirectURL, nil)
 		if err != nil {
 			return "", fmt.Errorf("failed to create redirect request: %w", err)
 		}
@@ -606,7 +607,8 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 	// The response may be gzip-encoded
 	var reader io.Reader = resp.Body
 	if resp.Header.Get("Content-Encoding") == "gzip" {
-		gzReader, err := gzip.NewReader(resp.Body)
+		var gzReader *gzip.Reader
+		gzReader, err = gzip.NewReader(resp.Body)
 		if err != nil {
 			return "", fmt.Errorf("failed to create gzip reader: %w", err)
 		}

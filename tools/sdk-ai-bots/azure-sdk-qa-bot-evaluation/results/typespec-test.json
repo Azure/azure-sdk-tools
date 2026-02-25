@@ -102,57 +102,6 @@
         "overall_score": 8.866666666666667
     },
     {
-        "testcase": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?",
-        "expected": {
-            "answer": "You need to get the necessary permissions, see here: https://aka.ms/azsdk/access",
-            "references": [
-                {
-                    "title": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR? | answer",
-                    "link": ""
-                },
-                {
-                    "title": "How to Re-evaluate `SDK Validation Status` Check",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
-                }
-            ]
-        },
-        "actual": {
-            "answer": "You are unable to view the workflow and validation check details for your Azure REST API PR because you do not have the necessary permissions. To resolve this, you need to:\n\n1. Ensure your GitHub account is a member of the Azure organization and that your membership is set to public (not private).\n2. Request access by following the instructions at https://aka.ms/azsdk/access. This will guide you through joining the appropriate Azure SDK groups and setting up your permissions.\n\nOnce you have the correct permissions and your membership is public, you will be able to view workflow logs and validation errors for your PRs, allowing you to debug and verify your changes before final review.",
-            "references": [
-                {
-                    "title": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR? | answer",
-                    "link": ""
-                },
-                {
-                    "title": "PR gateway pipelines not starting/waiting for long time | answer",
-                    "link": ""
-                },
-                {
-                    "title": "How to Re-evaluate `SDK Validation Status` Check",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
-                }
-            ]
-        },
-        "similarity": 5.0,
-        "gpt_similarity": 5.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The response is fully supported by the context, covers all necessary steps, and does not add unsupported information or omit critical details.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 5.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response contains all the necessary information from the ground truth and expands on it with helpful, relevant details, but does not omit any required information.",
-        "reference_match": 1.0,
-        "reference_match_result": "pass",
-        "knowledge_match": 1.0,
-        "knowledge_match_result": "pass",
-        "overall_score": 9.0
-    },
-    {
         "testcase": "Service under conversation label",
         "expected": {
             "answer": "The label should not impact your previous PR, and , if this is a later api-version thatn the conversion PR, the conversion would normally be based on that version once checked in.",

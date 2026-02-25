@@ -84,8 +84,8 @@ namespace APIViewWeb.Managers
 
             var content = await _emailTemplateService.RenderAsync(
                 EmailTemplateKey.SubscriberComment,
-                SubscriberCommentEmailModel.Create(comment, elementUrl));
-            await SendSubscriberEmailsAsync(review, user, content, comment.TaggedUsers);
+                SubscriberCommentEmailModel.Create(_apiviewEndpoint, comment, elementUrl));
+            await SendSubscriberEmailsAsync(review, user, content, comment.TaggedUsers, "New Comment");
         }
 
         public async Task NotifyUserOnCommentTagAsync(CommentItemModel comment)
@@ -105,7 +105,7 @@ namespace APIViewWeb.Managers
                 var content = await _emailTemplateService.RenderAsync(
                     EmailTemplateKey.CommentTag,
                     CommentTagEmailModel.Create(_apiviewEndpoint, comment, review, reviewUrl));
-                await SendUserEmailsAsync(review, user, content);
+                await SendUserEmailsAsync(review.PackageName, "Comment Mention", user, content);
             } 
         }
 
@@ -125,7 +125,7 @@ namespace APIViewWeb.Managers
                 var content = await _emailTemplateService.RenderAsync(
                     EmailTemplateKey.ReviewerAssigned,
                     ReviewerAssignedEmailModel.Create(_apiviewEndpoint, userProfile.UserName, apiRevision.Id, apiRevision.PackageName));
-                await SendUserEmailsAsync(apiRevision, reviewerProfile, content);
+                await SendUserEmailsAsync(apiRevision.PackageName, "Review Requested", reviewerProfile, content);
             }
         }
 
@@ -134,7 +134,7 @@ namespace APIViewWeb.Managers
             var htmlContent = await _emailTemplateService.RenderAsync(
                 EmailTemplateKey.NewRevision,
                 NewRevisionEmailModel.Create(_apiviewEndpoint, review, revision));
-            await SendSubscriberEmailsAsync(review, user, htmlContent, null);
+            await SendSubscriberEmailsAsync(review, user, htmlContent, null, "New Revision Uploaded");
         }
         /// <summary>
         /// Toggle Subscription to a Review
@@ -202,12 +202,17 @@ namespace APIViewWeb.Managers
         public static string GetUserEmail(ClaimsPrincipal user) =>
             user.FindFirstValue(ClaimConstants.Email);
 
-        private async Task SendUserEmailsAsync<T>(T model, UserProfileModel user, string htmlContent) where T : BaseListitemModel 
+        private static string BuildEmailSubject(string eventName, string packageName)
+        {
+            return $"[APIView] {eventName} for {packageName}";
+        }
+
+        private async Task SendUserEmailsAsync(string packageName, string eventName, UserProfileModel user, string htmlContent)
         {
             // SendEmailAsync already handles email validation
-            await SendEmailAsync(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
+            await SendEmailAsync(user.Email, BuildEmailSubject(eventName, packageName), htmlContent);
         }
-        private async Task SendSubscriberEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
+        private async Task SendSubscriberEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers, string eventName)
         {
             var initiatingUserEmail = GetUserEmail(user);
             
@@ -245,7 +250,7 @@ namespace APIViewWeb.Managers
 
             // Send single email to all subscribers
             var emailToList = string.Join("; ", subscribers);
-            await SendEmailAsync(emailToList, $"Update on APIView - {review.PackageName} from {GetUserName(user)}", htmlContent);
+            await SendEmailAsync(emailToList, BuildEmailSubject(eventName, review.PackageName), htmlContent);
         }
 
         private static string GetUserName(ClaimsPrincipal user)
@@ -308,7 +313,7 @@ namespace APIViewWeb.Managers
                     return;
                 }
 
-                var subject = $"Namespace Review Requested: {review.PackageName}";
+                var subject = BuildEmailSubject("Namespace Review Requested", review.PackageName);
 
                 // Build TypeSpec URL
                 var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
@@ -391,7 +396,7 @@ namespace APIViewWeb.Managers
                     return;
                 }
                 
-                var subject = $"Namespace Review Approved: {review.PackageName}";
+                var subject = BuildEmailSubject("Namespace Review Approved", review.PackageName);
                 
                 // Build TypeSpec URL
                 var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";

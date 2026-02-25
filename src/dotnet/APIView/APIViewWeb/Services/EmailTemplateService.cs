@@ -16,6 +16,7 @@ namespace APIViewWeb.Services
 {
     public class EmailTemplateService : IEmailTemplateService
     {
+        private const string EmailLogoUrl = "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/src/dotnet/APIView/APIViewWeb/wwwroot/icons/apiview.png";
         private readonly IServiceProvider _serviceProvider;
 
         public EmailTemplateService(IServiceProvider serviceProvider)
@@ -53,6 +54,7 @@ namespace APIViewWeb.Services
             {
                 Model = model,
             };
+            viewData["EmailLogoUrl"] = EmailLogoUrl;
 
             var viewContext = new ViewContext(
                 actionContext,

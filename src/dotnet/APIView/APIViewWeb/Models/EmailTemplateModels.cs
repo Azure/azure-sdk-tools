@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.Linq;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
@@ -123,16 +124,18 @@ namespace APIViewWeb.Models
     public class SubscriberCommentEmailModel
     {
         public string CommentedBy { get; set; } = string.Empty;
+        public string CommenterProfileUrl { get; set; } = string.Empty;
         public string ElementUrl { get; set; } = string.Empty;
         public string ElementId { get; set; } = string.Empty;
         public bool HasElementLink { get; set; }
         public IHtmlContent CommentBodyHtml { get; set; } = HtmlString.Empty;
 
-        public static SubscriberCommentEmailModel Create(CommentItemModel comment, string elementUrl)
+        public static SubscriberCommentEmailModel Create(string apiviewEndpoint, CommentItemModel comment, string elementUrl)
         {
             return new SubscriberCommentEmailModel
             {
                 CommentedBy = comment.CreatedBy,
+                CommenterProfileUrl = $"{apiviewEndpoint}/Assemblies/Profile/{comment.CreatedBy}",
                 ElementUrl = elementUrl ?? string.Empty,
                 ElementId = comment.ElementId ?? string.Empty,
                 HasElementLink = !string.IsNullOrEmpty(comment.ElementId) && !string.IsNullOrEmpty(elementUrl),
@@ -143,20 +146,31 @@ namespace APIViewWeb.Models
 
     public class NewRevisionEmailModel
     {
+        public string ReviewName { get; set; } = string.Empty;
         public string RevisionUrl { get; set; } = string.Empty;
-        public string RevisionLabel { get; set; } = string.Empty;
+        public string RevisionName { get; set; } = string.Empty;
         public string CreatedBy { get; set; } = string.Empty;
+        public DateTime CreatedOn { get; set; }
 
         public static NewRevisionEmailModel Create(
             string apiviewEndpoint,
             ReviewListItemModel review,
             APIRevisionListItemModel revision)
         {
+            var resolvedRevisionLabel = PageModelHelpers.ResolveRevisionLabel(revision);
+            var resolvedRevisionName = PageModelHelpers.ResolveRevisionLabel(
+                revision,
+                addAPIRevisionType: false,
+                addCreatedBy: false,
+                addCreatedOn: false);
+
             return new NewRevisionEmailModel
             {
+                ReviewName = review.PackageName,
                 RevisionUrl = $"{apiviewEndpoint}/Assemblies/Review/{review.Id}",
-                RevisionLabel = PageModelHelpers.ResolveRevisionLabel(revision),
+                RevisionName = string.IsNullOrWhiteSpace(resolvedRevisionName) ? resolvedRevisionLabel : resolvedRevisionName,
                 CreatedBy = revision.CreatedBy,
+                CreatedOn = revision.CreatedOn,
             };
         }
     }

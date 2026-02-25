@@ -89,3 +89,10 @@ stages:
         # Set working directory for temporary files
         TMPDIR: $(Agent.TempDirectory)
         HOME: $(Agent.HomeDirectory)
+    templateContext:
+      outputs:
+        - output: pipelineArtifact
+          path: /tmp/daily-sync-work/docs/typespec-azure/packages/typespec-azure-resource-manager/lib/generated
+          artifact: typespecLibrary
+          displayName: Publish Artifact
+          condition: always()

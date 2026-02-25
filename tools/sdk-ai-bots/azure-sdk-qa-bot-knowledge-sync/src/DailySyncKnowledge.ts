@@ -439,8 +439,12 @@ async function processSourceDirectory(
                 const relativePath = path.relative(sourceDir, fullPath);
 
                 // Skip ignored paths
-                if (source.ignoredPaths && source.ignoredPaths.some(p => relativePath.startsWith(p))) {
-                    continue;
+                if (source.ignoredPaths) {
+                    if (source.isGenerated) {
+                        if (source.ignoredPaths.some(p => entry.name.startsWith(p.replace(/[\\/]/g, "#")))) continue;
+                    } else {
+                        if (source.ignoredPaths.some(p => relativePath.startsWith(p))) continue;
+                    }
                 }
 
                 // Skip reference files and release notes

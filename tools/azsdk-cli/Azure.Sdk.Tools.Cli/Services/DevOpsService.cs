@@ -116,9 +116,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         // CODEOWNERS Management methods
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
-        Task<WorkItem> CreateTypedWorkItemAsync(string workItemType, Dictionary<string, object> fields);
-        Task AddRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId);
-        Task RemoveRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -1712,117 +1709,6 @@ namespace Azure.Sdk.Tools.Cli.Services
                 workItems.AddRange(batch);
             }
             return workItems;
-        }
-
-        public async Task<WorkItem> CreateTypedWorkItemAsync(string workItemType, Dictionary<string, object> fields)
-        {
-            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
-            foreach (var field in fields)
-            {
-                patchDocument.Add(new JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = $"/fields/{field.Key}",
-                    Value = field.Value
-                });
-            }
-
-            var createdWorkItem = await connection.GetWorkItemClient().CreateWorkItemAsync(patchDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType);
-            if (createdWorkItem == null)
-            {
-                throw new Exception($"Failed to create {workItemType} work item");
-            }
-            return createdWorkItem;
-        }
-
-        public async Task AddRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId)
-        {
-            var workItemClient = connection.GetWorkItemClient();
-
-            // Check if link already exists
-            var sourceWorkItem = await workItemClient.GetWorkItemAsync(sourceWorkItemId, expand: WorkItemExpand.Relations);
-            if (sourceWorkItem == null)
-            {
-                throw new Exception($"Work item {sourceWorkItemId} not found.");
-            }
-
-            var targetWorkItem = await workItemClient.GetWorkItemAsync(targetWorkItemId);
-            if (targetWorkItem == null)
-            {
-                throw new Exception($"Work item {targetWorkItemId} not found.");
-            }
-
-            // Check if link already exists
-            if (sourceWorkItem.Relations != null)
-            {
-                var existingLink = sourceWorkItem.Relations.FirstOrDefault(r =>
-                    r.Rel == "System.LinkTypes.Related" &&
-                    r.Url != null &&
-                    r.Url.Equals(targetWorkItem.Url, StringComparison.OrdinalIgnoreCase));
-                if (existingLink != null)
-                {
-                    logger.LogInformation("Related link already exists between {Source} and {Target}", sourceWorkItemId, targetWorkItemId);
-                    return;
-                }
-            }
-
-            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
-            patchDocument.Add(new JsonPatchOperation
-            {
-                Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                Path = "/relations/-",
-                Value = new WorkItemRelation
-                {
-                    Rel = "System.LinkTypes.Related",
-                    Url = targetWorkItem.Url
-                }
-            });
-
-            await workItemClient.UpdateWorkItemAsync(patchDocument, sourceWorkItemId);
-        }
-
-        public async Task RemoveRelatedLinkAsync(int sourceWorkItemId, int targetWorkItemId)
-        {
-            var workItemClient = connection.GetWorkItemClient();
-
-            var sourceWorkItem = await workItemClient.GetWorkItemAsync(sourceWorkItemId, expand: WorkItemExpand.Relations);
-            if (sourceWorkItem == null)
-            {
-                throw new Exception($"Work item {sourceWorkItemId} not found.");
-            }
-
-            var targetWorkItem = await workItemClient.GetWorkItemAsync(targetWorkItemId);
-            if (targetWorkItem == null)
-            {
-                throw new Exception($"Work item {targetWorkItemId} not found.");
-            }
-
-            if (sourceWorkItem.Relations == null || !sourceWorkItem.Relations.Any())
-            {
-                logger.LogInformation("Work item {Source} has no relations to remove", sourceWorkItemId);
-                return;
-            }
-
-            var targetRelation = sourceWorkItem.Relations.FirstOrDefault(r =>
-                r.Rel == "System.LinkTypes.Related" &&
-                r.Url != null &&
-                r.Url.Equals(targetWorkItem.Url, StringComparison.OrdinalIgnoreCase));
-
-            if (targetRelation == null)
-            {
-                logger.LogInformation("No related link found between {Source} and {Target}", sourceWorkItemId, targetWorkItemId);
-                return;
-            }
-
-            var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
-            var relationIndex = sourceWorkItem.Relations.IndexOf(targetRelation);
-            patchDocument.Add(new JsonPatchOperation
-            {
-                Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Remove,
-                Path = $"/relations/{relationIndex}"
-            });
-
-            await workItemClient.UpdateWorkItemAsync(patchDocument, sourceWorkItemId);
         }
     }
 }

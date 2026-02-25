@@ -15,179 +15,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 public class CodeownersManagementHelperTests
 {
     private Mock<IDevOpsService> _mockDevOps;
-    private Mock<ICodeownersValidatorHelper> _mockValidator;
     private CodeownersManagementHelper _helper;
 
     [SetUp]
     public void Setup()
     {
         _mockDevOps = new Mock<IDevOpsService>();
-        _mockValidator = new Mock<ICodeownersValidatorHelper>();
         _helper = new CodeownersManagementHelper(
             _mockDevOps.Object,
-            _mockValidator.Object,
             new TestLogger<CodeownersManagementHelper>()
         );
-    }
-
-    // ========================
-    // FindOrCreateOwner tests
-    // ========================
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task FindOrCreateOwner_ExistingOwner_ReturnsExisting()
-    {
-        // Arrange: mock QueryWorkItemsByTypeAndFieldAsync to return an existing Owner work item
-        // Act: call FindOrCreateOwner
-        // Assert: returns existing owner, CreateTypedWorkItemAsync NOT called
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task FindOrCreateOwner_NewOwner_CreatesAndReturns()
-    {
-        // Arrange: mock QueryWorkItemsByTypeAndFieldAsync to return empty, mock ValidateCodeOwnerAsync to return valid
-        // Act: call FindOrCreateOwner
-        // Assert: CreateTypedWorkItemAsync called, returns new owner
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task FindOrCreateOwner_InvalidAlias_ThrowsError()
-    {
-        // Arrange: mock ValidateCodeOwnerAsync to return IsValidCodeOwner = false
-        // Act/Assert: FindOrCreateOwner throws Exception
-        await Task.CompletedTask;
-    }
-
-    // ========================
-    // Add operation tests
-    // ========================
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task AddOwnerToPackage_CreatesRelatedLink()
-    {
-        // Arrange: mock owner exists, package exists
-        // Act: AddOwnerToPackage
-        // Assert: AddRelatedLinkAsync called with correct IDs
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task AddOwnerToPackage_DuplicateLink_SkipsSilently()
-    {
-        // Arrange: mock AddRelatedLinkAsync is idempotent (no throw)
-        // Act: AddOwnerToPackage
-        // Assert: no error, returns success message
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task AddOwnerToLabel_ServiceOwner_CreatesRelationships()
-    {
-        // Arrange: mock owner, label exists, label owner created
-        // Act: AddOwnerToLabel with "service-owner"
-        // Assert: AddRelatedLinkAsync called for Owner→LabelOwner and Label→LabelOwner
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task AddOwnerToLabel_PrLabel_CreatesWithPath()
-    {
-        // Arrange: mock owner, label exists, path provided
-        // Act: AddOwnerToLabel with "pr-label" and path
-        // Assert: Label Owner created with RepoPath set
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task AddOwnerToPath_CreatesLabelOwnerAndLink()
-    {
-        // Arrange: mock owner valid, no existing label owner for path
-        // Act: AddOwnerToPath
-        // Assert: CreateTypedWorkItemAsync called for Label Owner, AddRelatedLinkAsync called
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task AddLabelToPath_CreatesRelationship()
-    {
-        // Arrange: mock label exists, label owner exists for path
-        // Act: AddLabelToPath
-        // Assert: AddRelatedLinkAsync called for Label→LabelOwner
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task AddLabelToPath_LabelNotFound_ThrowsError()
-    {
-        // Arrange: mock label does not exist
-        // Act/Assert: AddLabelToPath throws Exception about label not found
-        await Task.CompletedTask;
-    }
-
-    // ========================
-    // Remove operation tests
-    // ========================
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task RemoveOwnerFromPackage_RemovesRelatedLink()
-    {
-        // Arrange: mock owner and package exist
-        // Act: RemoveOwnerFromPackage
-        // Assert: RemoveRelatedLinkAsync called
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task RemoveOwnerFromLabel_RemovesRelatedLink()
-    {
-        // Arrange: mock owner, label owner with matching type/repo
-        // Act: RemoveOwnerFromLabel
-        // Assert: RemoveRelatedLinkAsync called
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task RemoveOwnerFromLabel_LastOwner_Warns()
-    {
-        // Arrange: mock label owner has only this owner
-        // Act: RemoveOwnerFromLabel
-        // Assert: returns message with warning
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task RemoveOwnerFromPath_RemovesRelatedLink()
-    {
-        // Arrange: mock owner, label owner matching path+type
-        // Act: RemoveOwnerFromPath
-        // Assert: RemoveRelatedLinkAsync called
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    [Ignore("Not yet implemented — requires WorkItemDataBuilder integration")]
-    public async Task RemoveLabelFromPath_RemovesRelatedLink()
-    {
-        // Arrange: mock label, label owner matching path
-        // Act: RemoveLabelFromPath
-        // Assert: RemoveRelatedLinkAsync called for label→label owner
-        await Task.CompletedTask;
     }
 
     // ========================
@@ -244,19 +81,5 @@ public class CodeownersManagementHelperTests
         Assert.That(CodeownersManagementHelper.NormalizeGitHubAlias("@johndoe"), Is.EqualTo("johndoe"));
         Assert.That(CodeownersManagementHelper.NormalizeGitHubAlias("johndoe"), Is.EqualTo("johndoe"));
         Assert.That(CodeownersManagementHelper.NormalizeGitHubAlias(" @johndoe "), Is.EqualTo("johndoe"));
-    }
-
-    [Test]
-    public void ResolveOwnerType_ValidTypes_ReturnsMapping()
-    {
-        Assert.That(CodeownersManagementHelper.ResolveOwnerType("service-owner"), Is.EqualTo("Service Owner"));
-        Assert.That(CodeownersManagementHelper.ResolveOwnerType("azsdk-owner"), Is.EqualTo("Azure SDK Owner"));
-        Assert.That(CodeownersManagementHelper.ResolveOwnerType("pr-label"), Is.EqualTo("PR Label"));
-    }
-
-    [Test]
-    public void ResolveOwnerType_InvalidType_ThrowsException()
-    {
-        Assert.Throws<Exception>(() => CodeownersManagementHelper.ResolveOwnerType("invalid-type"));
     }
 }

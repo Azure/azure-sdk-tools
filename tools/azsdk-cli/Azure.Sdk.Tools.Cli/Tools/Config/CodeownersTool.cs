@@ -133,11 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
-        private readonly Option<string> ownerTypeOption = new("--owner-type")
-        {
-            Description = "Owner type: service-owner, azsdk-owner, or pr-label",
-            Required = false,
-        };
+
 
         private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTool> logger;
@@ -154,15 +150,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string validateCodeownersEntryCommandName = "validate";
         private const string generateCodeownersCommandName = "generate";
         private const string viewCodeownersCommandName = "view";
-        private const string addCodeownersCommandName = "add";
-        private const string removeCodeownersCommandName = "remove";
+
 
         // MCP Tool Names
         private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
         private const string ValidateCodeownersEntryToolName = "azsdk_engsys_validate_codeowners_entry_for_service";
         private const string CodeownerViewToolName = "azsdk_engsys_codeowner_view";
-        private const string CodeownerAddToolName = "azsdk_engsys_codeowner_add";
-        private const string CodeownerRemoveToolName = "azsdk_engsys_codeowner_remove";
+
 
         public CodeownersTool(
             IGitHubService githubService,
@@ -208,14 +202,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
             {
                 githubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption,
-            },
-            new(addCodeownersCommandName, "Add ownership relationships between DevOps work items")
-            {
-                optionalRepoOption, githubUserOption, packageOption, labelsOption, pathOption, ownerTypeOption,
-            },
-            new(removeCodeownersCommandName, "Remove ownership relationships between DevOps work items")
-            {
-                optionalRepoOption, githubUserOption, packageOption, labelsOption, pathOption, ownerTypeOption,
             }
         ];
 
@@ -280,28 +266,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
                 return await ViewCodeowners(user, labels, package, path, repo);
-            }
-
-            if (command == addCodeownersCommandName)
-            {
-                var repo = parseResult.GetValue(optionalRepoOption);
-                var user = parseResult.GetValue(githubUserOption);
-                var package = parseResult.GetValue(packageOption);
-                var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
-                var path = parseResult.GetValue(pathOption);
-                var ownerType = parseResult.GetValue(ownerTypeOption);
-                return await AddCodeowners(repo, user, package, labels, path, ownerType);
-            }
-
-            if (command == removeCodeownersCommandName)
-            {
-                var repo = parseResult.GetValue(optionalRepoOption);
-                var user = parseResult.GetValue(githubUserOption);
-                var package = parseResult.GetValue(packageOption);
-                var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
-                var path = parseResult.GetValue(pathOption);
-                var ownerType = parseResult.GetValue(ownerTypeOption);
-                return await RemoveCodeowners(repo, user, package, labels, path, ownerType);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -720,193 +684,5 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerAddToolName), Description("Add ownership relationships between DevOps work items. Use --user+--package, --user+--label+--owner-type, --user+--path+--owner-type, or --label+--path.")]
-        public async Task<CommandResponse> AddCodeowners(
-            string? repo = null,
-            string? user = null,
-            string? package = null,
-            List<string>? label = null,
-            string? path = null,
-            string? ownerType = null)
-        {
-            try
-            {
-                repo = await ResolveRepoAsync(repo);
-                var repoName = repo?.Split('/').Last() ?? "";
-                if (SdkLanguageHelpers.GetLanguageForRepo(repoName) == SdkLanguage.Unknown)
-                {
-                    return new DefaultCommandResponse { ResponseError = $"Repo '{repo}' is not a recognized language repo. Please specify --repo explicitly." };
-                }
-
-                var labels = label ?? [];
-                var validationError = ValidateAddRemoveParams(user, package, labels, path, ownerType, isAdd: true);
-                if (validationError != null)
-                {
-                    return new DefaultCommandResponse { ResponseError = validationError };
-                }
-
-                string result;
-                if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(package))
-                {
-                    result = await codeownersManagementHelper.AddOwnerToPackage(user, package, repo);
-                }
-                else if (!string.IsNullOrEmpty(user) && labels.Count > 0)
-                {
-                    result = await codeownersManagementHelper.AddOwnerToLabel(user, labels, repo, ownerType!, path);
-                }
-                else if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(path))
-                {
-                    result = await codeownersManagementHelper.AddOwnerToPath(user, repo, path, ownerType!);
-                }
-                else
-                {
-                    result = await codeownersManagementHelper.AddLabelToPath(labels, repo, path!);
-                }
-
-                return new DefaultCommandResponse
-                {
-                    Message = result
-                };
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error adding codeowners relationship");
-                return new DefaultCommandResponse { ResponseError = ex.Message };
-            }
-        }
-
-        [McpServerTool(Name = CodeownerRemoveToolName), Description("Remove ownership relationships between DevOps work items. Same parameter rules as add.")]
-        public async Task<CommandResponse> RemoveCodeowners(
-            string? repo = null,
-            string? user = null,
-            string? package = null,
-            List<string>? label = null,
-            string? path = null,
-            string? ownerType = null)
-        {
-            try
-            {
-                repo = await ResolveRepoAsync(repo);
-                var repoName = repo?.Split('/').Last() ?? "";
-                if (SdkLanguageHelpers.GetLanguageForRepo(repoName) == SdkLanguage.Unknown)
-                {
-                    return new DefaultCommandResponse { ResponseError = $"Repo '{repo}' is not a recognized language repo. Please specify --repo explicitly." };
-                }
-
-                var labels = label ?? [];
-                var validationError = ValidateAddRemoveParams(user, package, labels, path, ownerType, isAdd: false);
-                if (validationError != null)
-                {
-                    return new DefaultCommandResponse { ResponseError = validationError };
-                }
-
-                string result;
-                if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(package))
-                {
-                    result = await codeownersManagementHelper.RemoveOwnerFromPackage(user, package, repo);
-                }
-                else if (!string.IsNullOrEmpty(user) && labels.Count > 0)
-                {
-                    result = await codeownersManagementHelper.RemoveOwnerFromLabel(user, labels, repo, ownerType!);
-                }
-                else if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(path))
-                {
-                    result = await codeownersManagementHelper.RemoveOwnerFromPath(user, repo, path, ownerType!);
-                }
-                else
-                {
-                    result = await codeownersManagementHelper.RemoveLabelFromPath(labels, repo, path!);
-                }
-
-                return new DefaultCommandResponse
-                {
-                    Message = result
-                };
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error removing codeowners relationship");
-                return new DefaultCommandResponse { ResponseError = ex.Message };
-            }
-        }
-
-        /// <summary>
-        /// Validates parameter combinations for add/remove commands.
-        /// </summary>
-        public static string? ValidateAddRemoveParams(string? user, string? package, List<string> labels, string? path, string? ownerType, bool isAdd)
-        {
-            var hasUser = !string.IsNullOrEmpty(user);
-            var hasPackage = !string.IsNullOrEmpty(package);
-            var hasLabels = labels.Count > 0;
-            var hasPath = !string.IsNullOrEmpty(path);
-            var hasOwnerType = !string.IsNullOrEmpty(ownerType);
-
-            // Scenario: User + Package
-            if (hasUser && hasPackage)
-            {
-                if (hasOwnerType)
-                {
-                    return "Cannot specify --owner-type when adding/removing a user from a package. Packages only have source owners.";
-                }
-                if (hasLabels)
-                {
-                    return "Cannot specify --label when adding/removing a user from a package.";
-                }
-                if (hasPath)
-                {
-                    return "Cannot specify --path when adding/removing a user from a package.";
-                }
-                return null;
-            }
-
-            // Scenario: User + Label(s)
-            if (hasUser && hasLabels)
-            {
-                if (!hasOwnerType)
-                {
-                    return "Must specify --owner-type (service-owner, azsdk-owner, or pr-label) when adding/removing a user from a label.";
-                }
-                if (ownerType!.Equals("pr-label", StringComparison.OrdinalIgnoreCase) && !hasPath)
-                {
-                    return "Must specify --path when using --owner-type pr-label.";
-                }
-                return null;
-            }
-
-            // Scenario: User + Path (no labels, no package)
-            if (hasUser && hasPath && !hasPackage && !hasLabels)
-            {
-                if (!hasOwnerType)
-                {
-                    return "Must specify --owner-type (service-owner, azsdk-owner, or pr-label) when adding/removing a user from a path.";
-                }
-                return null;
-            }
-
-            // Scenario: Label(s) + Path (no user)
-            if (hasLabels && hasPath && !hasUser)
-            {
-                if (hasOwnerType)
-                {
-                    return "Cannot specify --owner-type when adding/removing labels to/from a path.";
-                }
-                return null;
-            }
-
-            return "Invalid parameter combination. Use: --user+--package, --user+--label+--owner-type, --user+--path+--owner-type, or --label+--path.";
-        }
-
-        /// <summary>
-        /// Resolves the repo name. If not provided, uses GitHelper to detect from the current working directory.
-        /// </summary>
-        private async Task<string?> ResolveRepoAsync(string? repo)
-        {
-            if (!string.IsNullOrEmpty(repo))
-            {
-                return repo;
-            }
-
-            return await gitHelper.GetRepoFullNameAsync(".");
-        }
     }
 }

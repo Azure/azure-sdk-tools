@@ -1232,57 +1232,6 @@
         "overall_score": 8.851851851851851
     },
     {
-        "testcase": "Swagger LintDiff validation for certain models",
-        "expected": {
-            "answer": "You should not suppress this LintDiff validation error. The error `RequiredPropertiesMissingInResourceModel` indicates that your `SharingDetail` model is being interpreted as a resource model, but it does not contain the required ARM resource properties: `name`, `id`, and `type` (all marked as readOnly). According to Azure API and TypeSpec guidelines, all resource models must include these properties to be compliant.\nSuppressing this error is not the correct approach\u2014instead, you must fix your TypeSpec definition. Ensure that resource models either extend the appropriate common-types resource base model (such as `Resource`, `ProxyResource`, or `ExtensionResource`) or, if `SharingDetail` is not a resource, ensure it is not referenced in a way that causes it to be treated as one.\nFor suppressing LintDiff errors in general, you can add scoped suppressions in your `readme.md` following the guidance here: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions. However, for this particular error, you are expected to fix your TypeSpec spec to meet the ARM requirements\u2014not suppress it.\nTo resolve this:\nIf `SharingDetail` is a resource, extend from the correct base model and add `id`, `name`, `type` (all readOnly).\nIf it is not a resource, check where it is referenced in your operations or model hierarchy to ensure it is not being treated as a resource by the code generator.",
-            "references": [
-                {
-                    "title": "Swagger LintDiff Suppression via TypeSpec | question",
-                    "link": ""
-                },
-                {
-                    "title": "TypeSpec",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
-                }
-            ]
-        },
-        "actual": {
-            "answer": "Yes, you can suppress the LintDiff validation error 'RequiredPropertiesMissingInResourceModel' for the 'SharingDetail' model, but only in the OpenAPI (Swagger) validation layer, not directly in TypeSpec. According to Azure API guidelines and current tooling, LintDiff errors must be suppressed in the `readme.md` file of your spec, not in the TypeSpec source or suppressions.yaml.\n\nTo suppress this error:\n1. Open your `readme.md` file in the relevant folder (e.g., `specification/limit/resource-manager/Microsoft.Limit/Limit/readme.md`).\n2. Add a suppression directive for the specific error and path. The suppression should target the exact location in the generated OpenAPI where the error occurs (see the error message for the path).\n\nExample suppression directive:\n\n```yaml\n  - where:\n    - $.definitions.SharingDetail\n    suppress:\n      - RequiredPropertiesMissingInResourceModel\n    reason: 'SharingDetail is not a resource model and does not require id, name, type.'\n```\n\nMake sure the path (`$.definitions.SharingDetail`) matches the location in your generated OpenAPI where the error is reported. If the error is in a different location (e.g., inside a PATCH body or another definition), adjust the path accordingly.\n\n**Important:**\n- This suppression only affects LintDiff (Swagger) validation. TypeSpec validation errors must be fixed in the TypeSpec source itself.\n- Suppressions for LintDiff cannot be placed in TypeSpec files or suppressions.yaml\u2014they must be in `readme.md`.\n- Always provide a clear reason for the suppression, as reviewers will check for justification.\n\nFor more details and examples, see the official guidance: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions",
-            "references": [
-                {
-                    "title": "Swagger LintDiff Suppression via TypeSpec | question",
-                    "link": ""
-                },
-                {
-                    "title": "Swagger LintDiff validation for certain models | question",
-                    "link": ""
-                },
-                {
-                    "title": "Swagger-LintDiff.md",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
-                }
-            ]
-        },
-        "similarity": 5.0,
-        "gpt_similarity": 5.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully supported by the CONTEXT, covers all essential points, and does not add unsupported details or omit critical information.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 5.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response contains all major and minor information from the ground truth, with only a very slight omission about the location for suppressions, but this does not affect the main completeness. It is fully complete.",
-        "reference_match": 0.5,
-        "reference_match_result": "fail",
-        "knowledge_match": 0.8518518518518519,
-        "knowledge_match_result": "pass",
-        "overall_score": 5.951851851851852
-    },
-    {
         "testcase": "How to make an interface internal ?",
         "expected": {
             "answer": "We do not support hiding an entire operation group directly. The recommended approach is to redefine your client in client.tsp and use @@access decorator to control which operations appear on the public client. When you do this properly, the default service clients and their Operations classes should not be emitted",

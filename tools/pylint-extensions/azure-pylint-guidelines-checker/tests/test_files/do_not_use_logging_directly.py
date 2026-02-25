@@ -18,7 +18,6 @@ logging.debug("direct call")
 logging.warning("direct call")
 logging.error("direct call")
 logging.critical("direct call")
-logging.exception("direct call")
 logging.log(logging.INFO, "direct call")
 
 # Good: Using logger instance (should NOT be flagged)

@@ -3526,7 +3526,8 @@ class DoNotUseLoggingDirectly(BaseChecker):
         """Check if this is a direct call to logging.<method>() without a named logger instance."""
         try:
             # Check if the function being called is a logging method we want to flag
-            if not (hasattr(node.func, 'attrname') and node.func.attrname in ["debug", "info", "warning", "error", "critical", "exception", "log"]):
+            # Note: exception() is handled by the dedicated DoNotUseLoggingException checker (C4769) to avoid duplicate warnings
+            if not (hasattr(node.func, 'attrname') and node.func.attrname in ["debug", "info", "warning", "error", "critical", "log"]):
                 return False
             
             if (hasattr(node.func, 'expr') and

@@ -360,6 +360,10 @@ extends:
               value: 'https://apiviewstagingtest.com/hubs/'
             - name: 'webAppUrl'
               value: 'https://apiviewstagingtest.com/'
+            # URL to the APIView-UX pipeline for quick admin access
+            # Replace <DEFINITION_ID> with the actual pipeline definition ID after creating the pipeline
+            - name: 'uxTestPipelineUrl'
+              value: 'https://dev.azure.com/azure-sdk/internal/_build?definitionId=<DEFINITION_ID>'
 
           jobs:
             - job: Publish_to_Staging
@@ -406,62 +410,6 @@ extends:
                   DeploymentType: zipDeploy
 
       - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
-        - stage: Test_UI_Publish
-          displayName: Publish Test UI
-          dependsOn: Build
-          condition: and(succeeded(), eq(coalesce(variables['runTestUIPublish'], 'false'), 'true'))
-
-          variables:
-            - name: 'apiUrl'
-              value: 'https://apiviewuxtest.com/api/'
-            - name: 'hubUrl'
-              value: 'https://apiviewuxtest.com/hubs/'
-            - name: 'webAppUrl'
-              value: 'https://apiviewuxtest.com/'
-
-          jobs:
-            - job: Publish_Test_UI
-              displayName: Publish Test UI
-              templateContext:
-                type: releaseJob
-                isProduction: false
-                inputs:
-                - input: pipelineArtifact
-                  artifactName: APIView
-                  targetPath: '$(Pipeline.Workspace)/APIView'
-              pool:
-                name: azsdk-pool
-                image: ubuntu-24.04
-                os: linux
-
-              steps:
-
-              - task: FileTransform@1
-                displayName: 'Update Angular Config for Environment'
-                inputs:
-                  folderPath: '$(Pipeline.Workspace)/APIView/APIViewWeb.zip'
-                  fileType: json
-                  targetFiles: wwwroot/spa/browser/assets/config.json
-
-              - task: AzureRmWebAppDeployment@4
-                displayName: 'Azure App Service Deploy: apiviewuat'
-                inputs:
-                  azureSubscription: 'APIViewUI-Instance-deployment-connection'
-                  WebAppName: apiviewuat
-                  packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
-                  InlineScript: |
-                    @echo off
-                    echo Installing .NET tool
-                    call dotnet tool uninstall --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                    call dotnet tool install --add-source ${{ parameters.AzureSdkForNetDevOpsFeed }} --version  ${{ parameters.CSharpAPIParserVersion }} --tool-path D:\home\site\wwwroot\csharp-parser CSharpAPIParser
-                    echo Installing JavaScript parser
-                    call npm install --prefix D:\home\site\wwwroot\js-parser ${{ parameters.JavaScriptAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
-                    echo Installing Rust parser
-                    call npm install --prefix D:\home\site\wwwroot\rust-parser ${{ parameters.RustAPIParser }} --registry ${{ parameters.JavaScriptArtifactRegistry }}
-                  enableCustomDeployment: true
-                  DeploymentType: zipDeploy
-
-      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
@@ -474,6 +422,10 @@ extends:
               value: 'https://apiview.org/hubs/'
             - name: 'webAppUrl'
               value: 'https://apiview.org/'
+            # URL to the APIView-UX pipeline for quick admin access
+            # Replace <DEFINITION_ID> with the actual pipeline definition ID after creating the pipeline
+            - name: 'uxTestPipelineUrl'
+              value: 'https://dev.azure.com/azure-sdk/internal/_build?definitionId=<DEFINITION_ID>'
 
           jobs:
             - deployment: Publish_to_Prod

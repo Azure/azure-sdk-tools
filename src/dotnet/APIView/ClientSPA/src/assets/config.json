@@ -1,5 +1,6 @@
 {
     "apiUrl": "api/",
     "hubUrl": "hubs/",
-    "webAppUrl": "http://localhost:5000/"
+    "webAppUrl": "http://localhost:5000/",
+    "uxTestPipelineUrl": ""
 }

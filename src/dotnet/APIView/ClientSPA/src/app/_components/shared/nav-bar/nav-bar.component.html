@@ -48,6 +48,13 @@
                     </a>
                 </li>
 
+                <!-- Deploy to UX Test link (for admins) -->
+                <li *ngIf="isLoggedIn && isAdmin && uxTestPipelineUrl" class="nav-item">
+                    <a [href]="uxTestPipelineUrl" target="_blank" rel="noopener noreferrer" class="nav-link nav-icon" aria-label="Deploy to UX Test" title="Deploy to UX Test" data-clarity-region="ux-test-deploy-button">
+                        <i class="bi bi-rocket-takeoff"></i>
+                    </a>
+                </li>
+
                 <!-- User profile avatar with dropdown -->
                 <li *ngIf="isLoggedIn" class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User profile menu" data-clarity-region="user-profile-menu">

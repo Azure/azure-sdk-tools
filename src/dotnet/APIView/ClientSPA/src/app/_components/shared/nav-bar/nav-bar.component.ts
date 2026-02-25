@@ -36,6 +36,7 @@ export class NavBarComponent implements OnInit {
   userProfile : UserProfile | undefined;
   logoutPageWebAppUrl : string  = this.configService.webAppUrl + "Account/Logout"
   RequestReviewPageUrl: string = this.configService.webAppUrl + "Assemblies/RequestedReviews"
+  uxTestPipelineUrl: string = this.configService.uxTestPipelineUrl;
   assetsPath : string = environment.assetsPath;
   notificationsSidePanel : boolean | undefined = undefined;
   notifications: SiteNotification[] = [];

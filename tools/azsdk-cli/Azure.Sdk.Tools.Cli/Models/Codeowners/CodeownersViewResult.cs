@@ -2,25 +2,27 @@
 // Licensed under the MIT License.
 using System.Text;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Models.Codeowners;
 
 /// <summary>
 /// Structured result for the CODEOWNERS view command.
+/// Renders directly from the hydrated Azure DevOps model objects.
 /// </summary>
 public class CodeownersViewResult : CommandResponse
 {
     [JsonPropertyName("packages")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<PackageViewItem>? Packages { get; set; }
+    public List<PackageWorkItem>? Packages { get; set; }
 
     [JsonPropertyName("path_based_label_owners")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<LabelOwnerGroup>? PathBasedLabelOwners { get; set; }
+    public List<LabelOwnerWorkItem>? PathBasedLabelOwners { get; set; }
 
     [JsonPropertyName("pathless_label_owners")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<LabelOwnerGroup>? PathlessLabelOwners { get; set; }
+    public List<LabelOwnerWorkItem>? PathlessLabelOwners { get; set; }
 
     protected override string Format()
     {
@@ -32,13 +34,13 @@ public class CodeownersViewResult : CommandResponse
             foreach (var pkg in Packages)
             {
                 sb.AppendLine($"  Package: {pkg.PackageName} (Language: {pkg.Language}, Type: {pkg.PackageType}) [{pkg.WorkItemId}]");
-                if (pkg.SourceOwners?.Count > 0)
+                if (pkg.Owners.Count > 0)
                 {
-                    sb.AppendLine($"    Source Owners: {string.Join(", ", pkg.SourceOwners)}");
+                    sb.AppendLine($"    Source Owners: {string.Join(", ", pkg.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase))}");
                 }
-                if (pkg.Labels?.Count > 0)
+                if (pkg.Labels.Count > 0)
                 {
-                    sb.AppendLine($"    Labels: {string.Join(", ", pkg.Labels)}");
+                    sb.AppendLine($"    Labels: {string.Join(", ", pkg.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase))}");
                 }
             }
         }
@@ -46,22 +48,26 @@ public class CodeownersViewResult : CommandResponse
         if (PathBasedLabelOwners?.Count > 0)
         {
             sb.AppendLine("=== Path-Based Label Owners ===");
-            foreach (var repoGroup in PathBasedLabelOwners.GroupBy(g => g.Repo, StringComparer.OrdinalIgnoreCase).OrderBy(rg => rg.Key, StringComparer.OrdinalIgnoreCase))
+            foreach (var repoGroup in PathBasedLabelOwners
+                .GroupBy(lo => lo.Repository, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(rg => rg.Key, StringComparer.OrdinalIgnoreCase))
             {
                 sb.AppendLine($"  Repo: {repoGroup.Key}");
-                foreach (var group in repoGroup)
+                foreach (var pathGroup in repoGroup
+                    .GroupBy(lo => lo.RepoPath, StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(pg => pg.Key, StringComparer.OrdinalIgnoreCase))
                 {
-                    sb.AppendLine($"    Path: {group.Path}");
-                    foreach (var item in group.Items ?? [])
+                    sb.AppendLine($"    Path: {pathGroup.Key}");
+                    foreach (var lo in pathGroup)
                     {
-                        sb.AppendLine($"      Type: {item.LabelType} [{item.WorkItemId}]");
-                        if (item.Owners?.Count > 0)
+                        sb.AppendLine($"      Type: {lo.LabelType} [{lo.WorkItemId}]");
+                        if (lo.Owners.Count > 0)
                         {
-                            sb.AppendLine($"        Owners: {string.Join(", ", item.Owners)}");
+                            sb.AppendLine($"        Owners: {string.Join(", ", lo.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase))}");
                         }
-                        if (item.Labels?.Count > 0)
+                        if (lo.Labels.Count > 0)
                         {
-                            sb.AppendLine($"        Labels: {string.Join(", ", item.Labels)}");
+                            sb.AppendLine($"        Labels: {string.Join(", ", lo.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase))}");
                         }
                     }
                 }
@@ -71,20 +77,18 @@ public class CodeownersViewResult : CommandResponse
         if (PathlessLabelOwners?.Count > 0)
         {
             sb.AppendLine("=== Pathless Label Owners ===");
-            foreach (var repoGroup in PathlessLabelOwners.GroupBy(g => g.Repo, StringComparer.OrdinalIgnoreCase).OrderBy(rg => rg.Key, StringComparer.OrdinalIgnoreCase))
+            foreach (var repoGroup in PathlessLabelOwners
+                .GroupBy(lo => lo.Repository, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(rg => rg.Key, StringComparer.OrdinalIgnoreCase))
             {
                 sb.AppendLine($"  Repo: {repoGroup.Key}");
-                foreach (var group in repoGroup)
+                foreach (var lo in repoGroup)
                 {
-                    var item = group.Items?.FirstOrDefault();
-                    sb.AppendLine($"    Labels: {string.Join(", ", group.LabelSet ?? [])} [{item?.WorkItemId}]");
-                    if (item != null)
+                    sb.AppendLine($"    Labels: {string.Join(", ", lo.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase))} [{lo.WorkItemId}]");
+                    sb.AppendLine($"      Type: {lo.LabelType}");
+                    if (lo.Owners.Count > 0)
                     {
-                        sb.AppendLine($"      Type: {item.LabelType}");
-                        if (item.Owners?.Count > 0)
-                        {
-                            sb.AppendLine($"      Owners: {string.Join(", ", item.Owners)}");
-                        }
+                        sb.AppendLine($"      Owners: {string.Join(", ", lo.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase))}");
                     }
                 }
             }
@@ -92,81 +96,4 @@ public class CodeownersViewResult : CommandResponse
 
         return sb.ToString();
     }
-}
-
-/// <summary>
-/// A package with its associated owners and labels.
-/// </summary>
-public class PackageViewItem
-{
-    [JsonPropertyName("work_item_id")]
-    public int WorkItemId { get; set; }
-
-    [JsonPropertyName("package_name")]
-    public string PackageName { get; set; } = string.Empty;
-
-    [JsonPropertyName("language")]
-    public string Language { get; set; } = string.Empty;
-
-    [JsonPropertyName("package_type")]
-    public string PackageType { get; set; } = string.Empty;
-
-    [JsonPropertyName("source_owners")]
-    public List<string> SourceOwners { get; set; } = [];
-
-    [JsonPropertyName("labels")]
-    public List<string> Labels { get; set; } = [];
-}
-
-/// <summary>
-/// A group of label owners, either path-based or pathless.
-/// </summary>
-public class LabelOwnerGroup
-{
-    /// <summary>
-    /// For path-based groups, the repo path.
-    /// </summary>
-    [JsonPropertyName("path")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Path { get; set; }
-
-    /// <summary>
-    /// Repository name.
-    /// </summary>
-    [JsonPropertyName("repo")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Repo { get; set; }
-
-    /// <summary>
-    /// For pathless groups, the alphabetized label set.
-    /// </summary>
-    [JsonPropertyName("label_set")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? LabelSet { get; set; }
-
-    [JsonPropertyName("items")]
-    public List<LabelOwnerViewItem> Items { get; set; } = [];
-}
-
-/// <summary>
-/// A single label owner entry within a group.
-/// </summary>
-public class LabelOwnerViewItem
-{
-    [JsonPropertyName("work_item_id")]
-    public int WorkItemId { get; set; }
-
-    [JsonPropertyName("repo")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Repo { get; set; }
-
-    [JsonPropertyName("label_type")]
-    public string LabelType { get; set; } = string.Empty;
-
-    [JsonPropertyName("owners")]
-    public List<string> Owners { get; set; } = [];
-
-    [JsonPropertyName("labels")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? Labels { get; set; }
 }

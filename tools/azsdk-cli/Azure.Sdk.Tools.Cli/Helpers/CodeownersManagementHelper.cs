@@ -303,79 +303,31 @@ public class CodeownersManagementHelper(
     {
         var result = new CodeownersViewResult();
 
-        // Build package view items
         if (packages.Count > 0)
         {
-            result.Packages = packages.Select(p => new PackageViewItem
-            {
-                WorkItemId = p.WorkItemId,
-                PackageName = p.PackageName,
-                Language = p.Language,
-                PackageType = p.PackageType,
-                SourceOwners = p.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList(),
-                Labels = p.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
-            }).ToList();
+            result.Packages = packages;
         }
 
         // Split label owners into path-based and pathless
         var pathBased = labelOwners.Where(lo => !string.IsNullOrEmpty(lo.RepoPath)).ToList();
         var pathless = labelOwners.Where(lo => string.IsNullOrEmpty(lo.RepoPath)).ToList();
 
-        // Path-based: group by repo+path, sorted by repo then path
         if (pathBased.Count > 0)
         {
             result.PathBasedLabelOwners = pathBased
-                .GroupBy(lo => (lo.Repository, lo.RepoPath), new RepoPathComparer())
-                .Select(g => new LabelOwnerGroup
-                {
-                    Path = g.Key.RepoPath,
-                    Repo = g.Key.Repository,
-                    Items = g.Select(lo => new LabelOwnerViewItem
-                    {
-                        WorkItemId = lo.WorkItemId,
-                        Repo = lo.Repository,
-                        LabelType = lo.LabelType,
-                        Owners = lo.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList(),
-                        Labels = lo.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
-                    }).ToList()
-                })
-                .OrderBy(g => g.Repo, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(g => g.Path, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(lo => lo.Repository, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(lo => lo.RepoPath, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
 
-        // Pathless: group by repo, sorted by repo then label set
         if (pathless.Count > 0)
         {
             result.PathlessLabelOwners = pathless
                 .OrderBy(lo => lo.Repository, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(lo => string.Join("|", lo.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase)), StringComparer.OrdinalIgnoreCase)
-                .Select(lo => new LabelOwnerGroup
-                {
-                    Repo = lo.Repository,
-                    LabelSet = lo.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList(),
-                    Items = [new LabelOwnerViewItem
-                    {
-                        WorkItemId = lo.WorkItemId,
-                        Repo = lo.Repository,
-                        LabelType = lo.LabelType,
-                        Owners = lo.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToList()
-                    }]
-                }).ToList();
+                .ToList();
         }
 
         return result;
-    }
-
-    private class RepoPathComparer : IEqualityComparer<(string Repository, string RepoPath)>
-    {
-        public bool Equals((string Repository, string RepoPath) x, (string Repository, string RepoPath) y) =>
-            string.Equals(x.Repository, y.Repository, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(x.RepoPath, y.RepoPath, StringComparison.OrdinalIgnoreCase);
-
-        public int GetHashCode((string Repository, string RepoPath) obj) =>
-            HashCode.Combine(
-                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Repository),
-                StringComparer.OrdinalIgnoreCase.GetHashCode(obj.RepoPath));
     }
 }

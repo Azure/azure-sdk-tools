@@ -4327,11 +4327,10 @@ class TestDoNotUseLoggingDirectly(pylint.testutils.CheckerTestCase):
 
     @pytest.fixture(scope="class")
     def setup(self):
-        file = open(
+        with open(
             os.path.join(TEST_FOLDER, "test_files", "do_not_use_logging_directly.py")
-        )
-        node = astroid.parse(file.read())
-        file.close()
+        ) as file:
+            node = astroid.parse(file.read())
         return node
 
     def _find_logging_call(self, node, method_name, module_name="logging"):

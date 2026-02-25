@@ -21,10 +21,10 @@ logging.critical("direct call")
 logging.log(logging.INFO, "direct call")
 
 # Good: Using logger instance (should NOT be flagged)
-logger.info("using named logger")  
-logger.debug("using named logger")  
-my_logger.warning("using named logger")  
-_log.error("using named logger")  
+logger.info("using named logger")
+logger.debug("using named logger")
+my_logger.warning("using named logger")
+_log.error("using named logger")
 
 
 class MyClass:

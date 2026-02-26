@@ -25,10 +25,8 @@ public class JudgmentResult
 /// Helper for making LLM judgment calls using the GitHub Copilot SDK.
 /// Used by validators that need LLM-based evaluation.
 /// </summary>
-public class LlmJudge : IDisposable
+public class LlmJudge
 {
-    private CopilotClient? _client;
-
     /// <summary>
     /// Asks the LLM to make a pass/fail judgment.
     /// </summary>
@@ -49,7 +47,8 @@ public class LlmJudge : IDisposable
 
         try
         {
-            _client ??= new CopilotClient(new CopilotClientOptions
+            // Create a new client for each call since we use a different temp directory each time
+            using var client = new CopilotClient(new CopilotClientOptions
             {
                 Cwd = tempDir
             });
@@ -70,7 +69,7 @@ public class LlmJudge : IDisposable
                 InfiniteSessions = new InfiniteSessionConfig { Enabled = false }
             };
 
-            await using var session = await _client.CreateSessionAsync(sessionConfig);
+            await using var session = await client.CreateSessionAsync(sessionConfig);
 
             var messageOptions = new MessageOptions { Prompt = userPrompt };
             await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(2));
@@ -104,11 +103,5 @@ public class LlmJudge : IDisposable
             // Cleanup temp directory
             try { Directory.Delete(tempDir, recursive: true); } catch { /* ignore */ }
         }
-    }
-
-    public void Dispose()
-    {
-        _client?.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

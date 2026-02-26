@@ -92,9 +92,9 @@ public class CommandValidator : IValidator
             startInfo.ArgumentList.Add(arg);
         }
 
+        using var process = new Process { StartInfo = startInfo };
         try
         {
-            using var process = new Process { StartInfo = startInfo };
             process.Start();
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

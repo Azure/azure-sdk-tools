@@ -99,7 +99,7 @@ public class ExpectedDiffValidator : IValidator
         // 3. Call LLM judge
         try
         {
-            using var judge = new LlmJudge();
+            var judge = new LlmJudge();
             var judgment = await judge.JudgeAsync(SystemPrompt, userPrompt, Model, cancellationToken);
 
             stopwatch.Stop();

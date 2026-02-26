@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
@@ -337,7 +338,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             var response = await releasePlanTool.LinkSdkPullRequestToReleasePlan(language, pullRequestUrl, 1, 1);
             Assert.That(response.Details, Has.Some.Contains("Successfully linked pull request to release plan"), $"Assertion failed for language '{language}' and PR '{pullRequestUrl}'.");
-            Assert.That(response.Language, Is.Not.EqualTo(Models.SdkLanguage.Unknown), $"Language property should be set for '{language}'.");
+            Assert.That(response.Language, Is.Not.EqualTo(SdkLanguage.Unknown), $"Language property should be set for '{language}'.");
         }
 
         [Test]

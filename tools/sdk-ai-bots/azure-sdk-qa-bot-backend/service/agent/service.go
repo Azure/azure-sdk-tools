@@ -508,37 +508,6 @@ func (s *CompletionService) fetchAndInjectGitHubCheckInfo(req *model.CompletionR
 		llmMessages = append(llmMessages, msg)
 	}
 
-	// Also scan the user message content for embedded GitHub PR links
-	userContent := req.Message.Content
-	if prLinks := prLinkRegex.FindAllString(userContent, -1); len(prLinks) > 0 {
-		for _, prLink := range prLinks {
-			// Skip if we already processed this link from AdditionalInfos
-			alreadyProcessed := false
-			for _, info := range req.AdditionalInfos {
-				if info.Type == model.AdditionalInfoType_Link && strings.Contains(info.Link, prLink) {
-					alreadyProcessed = true
-					break
-				}
-			}
-			if alreadyProcessed {
-				continue
-			}
-
-			log.Printf("CI-related intent: fetching GitHub PR checks for embedded link %s", prLink)
-			content, err := utils.FetchGitHubPRChecks(prLink)
-			if err != nil {
-				log.Printf("Failed to fetch GitHub PR checks for embedded link: %v", err)
-				continue
-			}
-			if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
-				content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
-			}
-			msg := openai.UserMessage(fmt.Sprintf("GitHub Check Analysis for %s:\n%s", prLink, content))
-			llmMessages = append(llmMessages, msg)
-			log.Printf("Injected GitHub PR check analysis for embedded link: %s", prLink)
-		}
-	}
-
 	return llmMessages
 }
 

@@ -298,10 +298,46 @@ function addTypeNodeTokensOrInlineLiteral(
   }
 }
 
-/** Process excerpt tokens and add them to the tokens array */
+/**
+ * Collects tokens and manages multi-line splitting into ReviewLine children.
+ * When a newline is encountered during excerpt processing, subsequent tokens
+ * are routed to child ReviewLines instead of the main token array.
+ */
+export class TokenCollector {
+  readonly tokens: ReviewToken[] = [];
+  readonly children: ReviewLine[] = [];
+
+  /** Get the current target array (last child's tokens, or main tokens) */
+  get currentTarget(): ReviewToken[] {
+    return this.children.length > 0
+      ? this.children[this.children.length - 1].Tokens
+      : this.tokens;
+  }
+
+  /** Push tokens to the current target (main line or last child line) */
+  push(...items: ReviewToken[]): void {
+    this.currentTarget.push(...items);
+  }
+
+  /** Start a new child line for multi-line content */
+  newLine(): void {
+    this.children.push({ Tokens: [] });
+  }
+
+  /** Build the final result object */
+  toResult(additionalChildren?: ReviewLine[]): { tokens: ReviewToken[]; children?: ReviewLine[] } {
+    const allChildren = [...this.children, ...(additionalChildren || [])];
+    return {
+      tokens: this.tokens,
+      ...(allChildren.length > 0 && { children: allChildren }),
+    };
+  }
+}
+
+/** Process excerpt tokens and add them to the tokens array or TokenCollector */
 export function processExcerptTokens(
   excerptTokens: readonly ExcerptToken[],
-  tokens: ReviewToken[],
+  target: ReviewToken[] | TokenCollector,
   deprecated?: boolean,
 ): void {
   for (const excerpt of excerptTokens) {
@@ -312,6 +348,9 @@ export function processExcerptTokens(
 
     for (const segment of lines) {
       if (segment === "\n" || segment === "\r\n") {
+        if (target instanceof TokenCollector) {
+          target.newLine();
+        }
         continue;
       }
 
@@ -323,24 +362,24 @@ export function processExcerptTokens(
       const hasSuffixSpace =
         segment.endsWith(" ") || segment.endsWith("\t") || needsTrailingSpace(trimmedText);
 
-      if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-        tokens.push(
-          createToken(TokenKind.TypeName, trimmedText, {
-            navigateToId: excerpt.canonicalReference.toString(),
-            hasPrefixSpace,
-            hasSuffixSpace,
-            deprecated,
-          }),
-        );
+      const token =
+        excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference
+          ? createToken(TokenKind.TypeName, trimmedText, {
+              navigateToId: excerpt.canonicalReference.toString(),
+              hasPrefixSpace,
+              hasSuffixSpace,
+              deprecated,
+            })
+          : createToken(getTokenKind(trimmedText), trimmedText, {
+              hasPrefixSpace,
+              hasSuffixSpace,
+              deprecated,
+            });
+
+      if (target instanceof TokenCollector) {
+        target.push(token);
       } else {
-        const tokenKind = getTokenKind(trimmedText);
-        tokens.push(
-          createToken(tokenKind, trimmedText, {
-            hasPrefixSpace,
-            hasSuffixSpace,
-            deprecated,
-          }),
-        );
+        target.push(token);
       }
     }
   }

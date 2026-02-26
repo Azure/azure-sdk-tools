@@ -1,15 +1,22 @@
 import { RemoteContent } from './RemoteContent.js';
 import { GithubClient, PRDetails, IssueDetails } from './GithubClient.js';
 import { URLNotSupportedError } from '../error/inputErrors.js';
+import { GitHubAppTokenProvider } from '../github/GitHubAppTokenProvider.js';
 
 export class LinkContentExtractor {
-  private readonly githubClient = new GithubClient();
+  private readonly tokenProvider?: GitHubAppTokenProvider;
 
-  constructor() {
-    this.githubClient = new GithubClient(undefined);
+  constructor(tokenProvider?: GitHubAppTokenProvider) {
+    this.tokenProvider = tokenProvider;
+  }
+
+  private async createGithubClient(): Promise<GithubClient> {
+    const token = await this.tokenProvider?.getToken();
+    return new GithubClient(token);
   }
 
   public async extract(urls: URL[], meta: object): Promise<RemoteContent[]> {
+    const githubClient = await this.createGithubClient();
     const contents: RemoteContent[] = [];
 
     for (const [index, url] of urls.entries()) {
@@ -24,9 +31,9 @@ export class LinkContentExtractor {
       try {
         let details: PRDetails | IssueDetails | undefined;
         if (isPR) {
-          details = await this.githubClient.getPullRequestDetails(url.href, meta);
+          details = await githubClient.getPullRequestDetails(url.href, meta);
         } else {
-          details = await this.githubClient.getIssueDetails(url.href, meta);
+          details = await githubClient.getIssueDetails(url.href, meta);
         }
 
         if (!details) {

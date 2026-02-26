@@ -5,6 +5,7 @@ import { LinkContentExtractor } from './LinkContentExtractor.js';
 import { RemoteContent } from './RemoteContent.js';
 import { logger } from '../logging/logger.js';
 import { LoggingAnalyzer } from './LoggingAnalyzer.js';
+import { GitHubAppTokenProvider } from '../github/GitHubAppTokenProvider.js';
 
 export interface MessageWithRemoteContent {
   user: string;
@@ -21,10 +22,12 @@ export interface MessageWithRemoteContent {
 
 export class PromptGenerator {
   private readonly urlRegex = /https?:\/\/[^\s"'<>]+/g;
-  private linkContentExtractor = new LinkContentExtractor();
+  private linkContentExtractor: LinkContentExtractor;
   private loggingAnalyzer = new LoggingAnalyzer();
 
-  constructor() {}
+  constructor(tokenProvider?: GitHubAppTokenProvider) {
+    this.linkContentExtractor = new LinkContentExtractor(tokenProvider);
+  }
 
   public async generateFullPrompt(
     prompt: Prompt,

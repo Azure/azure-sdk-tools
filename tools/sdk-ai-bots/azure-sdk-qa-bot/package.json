@@ -30,6 +30,7 @@
     "@azure/cognitiveservices-computervision": "^8.2.0",
     "@azure/data-tables": "^13.3.0",
     "@azure/identity": "^4.9.1",
+    "@azure/keyvault-keys": "^4.10.0",
     "@azure/keyvault-secrets": "^4.8.0",
     "@azure/ms-rest-js": "^2.7.0",
     "@azure/storage-blob": "^12.17.0",

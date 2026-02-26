@@ -13,33 +13,44 @@ public class Program
 
         // list command
         var listCommand = new Command("list", "List all available scenarios");
-        listCommand.SetHandler(HandleListCommand);
-        rootCommand.AddCommand(listCommand);
+        listCommand.SetAction((_, _) =>
+        {
+            HandleListCommand();
+            return Task.FromResult(0);
+        });
+        rootCommand.Subcommands.Add(listCommand);
 
         // run command
         var runCommand = new Command("run", "Run benchmark scenario(s)");
 
-        var nameArgument = new Argument<string?>("name", () => null, "Name of the scenario to run");
-        var allOption = new Option<bool>("--all", "Run all scenarios");
-        var modelOption = new Option<string?>("--model", $"Model to use (default: {BenchmarkDefaults.DefaultModel})");
-        var cleanupOption = new Option<CleanupPolicy>(
-            "--cleanup",
-            () => CleanupPolicy.OnSuccess,
-            "Cleanup policy for workspaces (always, never, on-success)");
-        var verboseOption = new Option<bool>(
-            "--verbose",
-            "Show agent activity during execution");
+        var nameArgument = new Argument<string?>("name") { Description = "Name of the scenario to run", Arity = ArgumentArity.ZeroOrOne };
+        var allOption = new Option<bool>("--all") { Description = "Run all scenarios" };
+        var modelOption = new Option<string?>("--model") { Description = $"Model to use (default: {BenchmarkDefaults.DefaultModel})" };
+        var cleanupOption = new Option<CleanupPolicy>("--cleanup")
+        {
+            Description = "Cleanup policy for workspaces (always, never, on-success)",
+            DefaultValueFactory = _ => CleanupPolicy.OnSuccess
+        };
+        var verboseOption = new Option<bool>("--verbose") { Description = "Show agent activity during execution" };
 
-        runCommand.AddArgument(nameArgument);
-        runCommand.AddOption(allOption);
-        runCommand.AddOption(modelOption);
-        runCommand.AddOption(cleanupOption);
-        runCommand.AddOption(verboseOption);
+        runCommand.Arguments.Add(nameArgument);
+        runCommand.Options.Add(allOption);
+        runCommand.Options.Add(modelOption);
+        runCommand.Options.Add(cleanupOption);
+        runCommand.Options.Add(verboseOption);
 
-        runCommand.SetHandler(HandleRunCommand, nameArgument, allOption, modelOption, cleanupOption, verboseOption);
-        rootCommand.AddCommand(runCommand);
+        runCommand.SetAction(async (parseResult, _) =>
+        {
+            var name = parseResult.GetValue(nameArgument);
+            var all = parseResult.GetValue(allOption);
+            var model = parseResult.GetValue(modelOption);
+            var cleanup = parseResult.GetValue(cleanupOption);
+            var verbose = parseResult.GetValue(verboseOption);
+            return await HandleRunCommand(name, all, model, cleanup, verbose);
+        });
+        rootCommand.Subcommands.Add(runCommand);
 
-        return await rootCommand.InvokeAsync(args);
+        return await rootCommand.Parse(args).InvokeAsync();
     }
 
     private static void HandleListCommand()

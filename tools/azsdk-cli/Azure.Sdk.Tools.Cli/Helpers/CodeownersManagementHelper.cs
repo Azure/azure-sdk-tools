@@ -39,7 +39,7 @@ public class CodeownersManagementHelper(
         return BuildViewResult(relatedPackages, relatedLabelOwners);
     }
 
-    public async Task<CodeownersViewResult> GetViewByLabel(List<string> labels, string? repo)
+    public async Task<CodeownersViewResult> GetViewByLabel(string[] labels, string? repo)
     {
         var labelWorkItems = new List<LabelWorkItem>();
         foreach (var label in labels)

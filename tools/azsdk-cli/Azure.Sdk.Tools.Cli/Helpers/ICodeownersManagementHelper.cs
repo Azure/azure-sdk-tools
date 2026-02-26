@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 public interface ICodeownersManagementHelper
 {
     Task<CodeownersViewResult> GetViewByUser(string alias, string? repo);
-    Task<CodeownersViewResult> GetViewByLabel(List<string> labels, string? repo);
+    Task<CodeownersViewResult> GetViewByLabel(string[] labels, string? repo);
     Task<CodeownersViewResult> GetViewByPath(string path, string? repo);
     Task<CodeownersViewResult> GetViewByPackage(string packageName);
 }

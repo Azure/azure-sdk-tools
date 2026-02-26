@@ -261,7 +261,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             if (command == viewCodeownersCommandName)
             {
                 var user = parseResult.GetValue(githubUserOption);
-                var labels = parseResult.GetValue(labelsOption)?.ToList() ?? [];
+                var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
@@ -645,14 +645,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (--user, --label, --package, or --path) must be specified. Multiple labels are treated as AND.")]
         public async Task<CommandResponse> ViewCodeowners(
             string? user = null,
-            List<string>? labels = null,
+            string[] labels = null,
             string? package = null,
             string? path = null,
             string? repo = null)
         {
             try
             {
-                var hasLabels = labels != null && labels.Count > 0;
+                var hasLabels = labels.Length > 0;
                 var axes = new[] { !string.IsNullOrEmpty(user), hasLabels, !string.IsNullOrEmpty(package), !string.IsNullOrEmpty(path) }.Count(a => a);
                 if (axes == 0)
                 {
@@ -669,7 +669,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
                 if (hasLabels)
                 {
-                    return await codeownersManagementHelper.GetViewByLabel(labels!, repo);
+                    return await codeownersManagementHelper.GetViewByLabel(labels, repo);
                 }
                 if (!string.IsNullOrEmpty(package))
                 {

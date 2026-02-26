@@ -3,9 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
-using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
 

@@ -166,16 +166,16 @@ public class FeedbackClassifierServiceTests
     #region ClassifyAsync Flow Tests
 
     [Test]
-    public async Task ClassifyAsync_EmptyList_ReturnsImmediately()
+    public void ClassifyAsync_EmptyList_ThrowsArgumentException()
     {
         // Arrange
         var service = CreateMockedService();
         var items = new List<FeedbackItem>();
 
-        // Act
-        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
+        // Act & Assert
+        Assert.ThrowsAsync<ArgumentException>(
+            () => service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService"));
 
-        // Assert - no LLM calls made for empty list
         _mockAgentRunner.Verify(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

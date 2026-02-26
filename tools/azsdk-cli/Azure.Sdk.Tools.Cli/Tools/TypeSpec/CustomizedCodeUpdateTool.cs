@@ -4,7 +4,6 @@ using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
@@ -269,43 +268,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 tspProjectPath
             );
 
-            List<FeedbackItem> feedbackItems;
+            List<FeedbackItem> feedbackItems = [];
             if (!string.IsNullOrWhiteSpace(apiViewUrl))
             {
-                var apiViewSource = new APIViewFeedbackSource(apiViewUrl, feedbackService, loggerFactory.CreateLogger<APIViewFeedbackSource>());
-                feedbackItems = await apiViewSource.CreateBatchAsync(ct);
-                language ??= await apiViewSource.GetLanguageAsync(ct);
+                feedbackItems = await feedbackService.GetFeedbackItemsAsync(apiViewUrl, ct);
+                language ??= await feedbackService.GetLanguageAsync(apiViewUrl, ct);
             }
             else if (!string.IsNullOrWhiteSpace(plainTextFeedback))
             {
-                feedbackItems = new PlainTextFeedbackSource(plainTextFeedback, loggerFactory.CreateLogger<PlainTextFeedbackSource>()).CreateBatch();
-            }
-            else
-            {
-                throw new ArgumentException("Either --apiview-url or --plain-text-feedback (or --plain-text-feedback-file) must be provided.");
+                feedbackItems = [new FeedbackItem { Text = plainTextFeedback, Context = string.Empty }];
             }
 
-            if (feedbackItems.Count == 0)
-            {
-                return new FeedbackClassificationResponse
-                {
-                    Message = "No valid feedback items found.",
-                    Classifications = []
-                };
-            }
-
-            var resolvedLanguage = language;
-            if (string.IsNullOrEmpty(resolvedLanguage))
-            {
-                throw new ArgumentException("Language is required but could not be determined from the feedback source. Please specify --language (e.g. python, java, dotnet, go, javascript).");
-            }
-
-            if (string.IsNullOrEmpty(serviceName))
-            {
-                throw new ArgumentException("Service name is required. Please specify --service-name.");
-            }
-
-            return await classifier.ClassifyItemsAsync(feedbackItems, globalContext: "", resolvedLanguage, serviceName, ct);
+            return await classifier.ClassifyItemsAsync(feedbackItems, globalContext: "", language, serviceName, ct);
         }
         catch (Exception ex)
         {

@@ -29,7 +29,6 @@ public class FeedbackClassifierService
     private readonly ILogger<FeedbackClassifierService> _logger;
     private readonly string _tspProjectPath;
     private readonly string _specRepoBasePath;
-    private readonly ITypeSpecHelper _typeSpecHelper;
     private readonly int _batchSize;
 
     public const int DefaultBatchSize = 50;
@@ -43,9 +42,14 @@ public class FeedbackClassifierService
     {
         _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
-        _typeSpecHelper = typeSpecHelper;
         _tspProjectPath = tspProjectPath;
-        _specRepoBasePath = GetSpecRepoBasePath(tspProjectPath);
+        _specRepoBasePath = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
+        if (string.IsNullOrEmpty(_specRepoBasePath))
+        {
+            throw new ArgumentException(
+                $"Could not determine spec repo root from TypeSpec project path: {tspProjectPath}",
+                nameof(tspProjectPath));
+        }
         _batchSize = batchSize ?? DefaultBatchSize;
     }
 
@@ -53,34 +57,25 @@ public class FeedbackClassifierService
     /// Classifies feedback items in chunked batch LLM calls. Mutates items in place.
     /// </summary>
     public async Task<FeedbackClassificationResponse> ClassifyItemsAsync(
-        List<FeedbackItem> items, 
-        string globalContext, 
-        string language,
-        string serviceName,
+        List<FeedbackItem> items,
+        string globalContext,
+        string? language,
+        string? serviceName,
         CancellationToken ct = default)
     {
         if (items.Count == 0)
         {
-            return new FeedbackClassificationResponse { Message = "No items to classify.", Classifications = [] };
+            throw new ArgumentException("No feedback items to classify. Provide an APIView URL or plain text feedback.");
         }
 
-        var chunks = items
-            .Select((item, index) => new { item, index })
-            .GroupBy(x => x.index / _batchSize)
-            .Select(g => g.Select(x => x.item).ToList())
-            .ToList();
-
-        _logger.LogInformation("Classifying {Count} items in {ChunkCount} batch(es) of up to {BatchSize} items", 
-            items.Count, chunks.Count, _batchSize);
+        _logger.LogInformation("Classifying {Count} items in batch(es) of up to {BatchSize} items",
+            items.Count, _batchSize);
 
         var referenceDocContent = await LoadTspCustomizationGuideAsync(ct);
 
-        for (int i = 0; i < chunks.Count; i++)
+        foreach (var chunk in items.Chunk(_batchSize))
         {
-            var chunk = chunks[i];
-            _logger.LogInformation("Processing batch {BatchNum}/{TotalBatches} ({ItemCount} items)", 
-                i + 1, chunks.Count, chunk.Count);
-            await BatchClassifyAsync(chunk, globalContext, language, serviceName, referenceDocContent, ct);
+            await BatchClassifyAsync(chunk.ToList(), globalContext, language, serviceName, referenceDocContent, ct);
         }
         return BuildClassificationResponse(items);
     }
@@ -131,8 +126,8 @@ public class FeedbackClassifierService
     private async Task BatchClassifyAsync(
         List<FeedbackItem> items,
         string globalContext,
-        string language,
-        string serviceName,
+        string? language,
+        string? serviceName,
         string referenceDocContent,
         CancellationToken ct)
     {
@@ -211,23 +206,17 @@ public class FeedbackClassifierService
     /// </summary>
     private void ApplyClassification(FeedbackItem item, string classification, string reason)
     {
-        FeedbackStatus status;
-        if (classification.Contains("SUCCESS", StringComparison.OrdinalIgnoreCase))
+        var status = classification switch
         {
-            status = FeedbackStatus.SUCCESS;
-        }
-        else if (classification.Contains("REQUIRES_MANUAL_INTERVENTION", StringComparison.OrdinalIgnoreCase))
-        {
-            status = FeedbackStatus.REQUIRES_MANUAL_INTERVENTION;
-        }
-        else if (classification.Contains("TSP_APPLICABLE", StringComparison.OrdinalIgnoreCase))
-        {
-            status = FeedbackStatus.TSP_APPLICABLE;
-        }
-        else
+            "SUCCESS" => FeedbackStatus.SUCCESS,
+            "REQUIRES_MANUAL_INTERVENTION" => FeedbackStatus.REQUIRES_MANUAL_INTERVENTION,
+            "TSP_APPLICABLE" => FeedbackStatus.TSP_APPLICABLE,
+            _ => FeedbackStatus.TSP_APPLICABLE
+        };
+
+        if (status == FeedbackStatus.TSP_APPLICABLE && classification != "TSP_APPLICABLE")
         {
             _logger.LogWarning("Unknown classification '{Classification}' for item {Id}. Defaulting to TSP_APPLICABLE.", classification, item.Id);
-            status = FeedbackStatus.TSP_APPLICABLE;
         }
 
         item.Status = status;
@@ -238,21 +227,6 @@ public class FeedbackClassifierService
         }
         
         _logger.LogInformation("Item {Id} classified as {Status}: {Reason}", item.Id, status, reason);
-    }
-
-    /// <summary>
-    /// Resolves the spec repo base path by walking up from tspProjectPath.
-    /// </summary>
-    private string GetSpecRepoBasePath(string tspProjectPath)
-    {
-        var repoRoot = _typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
-        if (string.IsNullOrEmpty(repoRoot))
-        {
-            throw new ArgumentException(
-                $"Could not determine spec repo root from TypeSpec project path: {tspProjectPath}",
-                nameof(tspProjectPath));
-        }
-        return repoRoot;
     }
 
     /// <summary>

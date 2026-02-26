@@ -289,18 +289,36 @@ public static class FileTools
         {
             var current = pending.Pop();
 
-            var entries = TryEnumerate(() => filesOnly
-                ? Directory.EnumerateFiles(current, searchPattern, SearchOption.TopDirectoryOnly)
-                : Directory.EnumerateFileSystemEntries(current, searchPattern, SearchOption.TopDirectoryOnly));
+            IEnumerable<string> entries;
+            try
+            {
+                entries = filesOnly
+                    ? Directory.EnumerateFiles(current, searchPattern, SearchOption.TopDirectoryOnly)
+                    : Directory.EnumerateFileSystemEntries(current, searchPattern, SearchOption.TopDirectoryOnly);
+            }
+            catch
+            {
+                continue;
+            }
 
             foreach (var entry in entries)
             {
                 yield return entry;
             }
 
-            foreach (var subdirectory in TryEnumerate(() => Directory.EnumerateDirectories(current)))
+            IEnumerable<string> subdirectories;
+            try
             {
-                if (IsIgnoredDirectory(subdirectory))
+                subdirectories = Directory.EnumerateDirectories(current);
+            }
+            catch
+            {
+                continue;
+            }
+
+            foreach (var subdirectory in subdirectories)
+            {
+                if (IgnoredDirectories.Contains(Path.GetFileName(subdirectory)))
                 {
                     continue;
                 }
@@ -308,23 +326,6 @@ public static class FileTools
                 pending.Push(subdirectory);
             }
         }
-    }
-
-    private static IEnumerable<string> TryEnumerate(Func<IEnumerable<string>> enumerate)
-    {
-        try
-        {
-            return enumerate();
-        }
-        catch
-        {
-            return [];
-        }
-    }
-
-    private static bool IsIgnoredDirectory(string directoryPath)
-    {
-        return IgnoredDirectories.Contains(Path.GetFileName(directoryPath));
     }
 
     private readonly record struct GrepMatch(int FileIndex, int LineNumber, string FilePath, string Content);

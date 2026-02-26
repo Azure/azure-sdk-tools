@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System.Text;
-using Azure.Sdk.Tools.Cli.Helpers.ClientCustomization;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
@@ -18,8 +17,8 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     public override string Version => "1.0.0";
     public override string Description => "Classify SDK feedback items in batch and route to appropriate phase";
 
-    private readonly string _serviceName;
-    private readonly string _language;
+    private readonly string? _serviceName;
+    private readonly string? _language;
     private readonly string _referenceDocContent;
     private readonly List<FeedbackItem> _items;
     private readonly string _globalContext;
@@ -33,8 +32,8 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
     /// <param name="items">The feedback items to classify</param>
     /// <param name="globalContext">Global context containing all changes and history</param>
     public FeedbackClassificationTemplate(
-        string serviceName,
-        string language,
+        string? serviceName,
+        string? language,
         string referenceDocContent,
         List<FeedbackItem> items,
         string globalContext)
@@ -77,8 +76,8 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         var sb = new StringBuilder();
         sb.AppendLine($"""
         **Current Context:**
-        - Service: {_serviceName}
-        - Language: {_language}
+        - Service: {_serviceName ?? "N/A"}
+        - Language: {_language ?? "N/A"}
 
         **Task:**
         Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.

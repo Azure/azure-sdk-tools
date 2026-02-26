@@ -137,6 +137,13 @@ public class CommandValidator : IValidator
         catch (OperationCanceledException)
         {
             stopwatch.Stop();
+            
+            // Kill the process if it's still running to prevent orphaned processes
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
+            
             return ValidationResult.Fail(Name, $"Command timed out after {Timeout}");
         }
         catch (Exception ex)

@@ -9,18 +9,10 @@ using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-/// <summary>
-/// Business logic layer for CODEOWNERS management operations on Azure DevOps work items.
-/// </summary>
 public class CodeownersManagementHelper(
     IDevOpsService devOpsService
 ) : ICodeownersManagementHelper
 {
-
-    // ========================
-    // View methods
-    // ========================
-
     public async Task<CodeownersViewResult> GetViewByUser(string alias, string? repo)
     {
         var normalizedAlias = NormalizeGitHubAlias(alias);
@@ -90,10 +82,6 @@ public class CodeownersManagementHelper(
 
         return new CodeownersViewResult([packageWi], relatedLabelOwners);
     }
-
-    // ========================
-    // Internal helpers
-    // ========================
 
     public static string NormalizeGitHubAlias(string alias) => alias.Trim().TrimStart('@').Trim();
 

@@ -18,11 +18,6 @@ public class ValidatorRunner
         /// Default: false (run all validators).
         /// </summary>
         public bool StopOnFirstFailure { get; init; } = false;
-
-        /// <summary>
-        /// Gets or sets the default timeout for validators.
-        /// </summary>
-        public TimeSpan DefaultTimeout { get; init; } = TimeSpan.FromMinutes(5);
     }
 
     private readonly Options _options;

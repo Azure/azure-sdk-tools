@@ -5,18 +5,14 @@
 # --------------------------------------------------------------------------
 
 """
-Grant access to the APIView Cosmos DB for the current user.
+Grant or revoke access to the APIView Cosmos DB accounts for a given principal.
 This script requires the user has elevated access to the Azure SDK Engineering System
 subscription. It will assign the "DocumentDB Account Contributor" ARM role and the
-"Built-in Data Reader" SQL role to the current user for the production and staging
-APIView Cosmos DB accounts.
-
-Note: Uses AZURE_APP_CONFIG_ENDPOINT and ENVIRONMENT_NAME from .env file.
+"Built-in Data Contributor" SQL role to the principal for all APIView Cosmos DB
+accounts (production, staging, and uxtest).
 """
 
 import argparse
-import sys
-from pathlib import Path
 from uuid import uuid4
 
 import requests

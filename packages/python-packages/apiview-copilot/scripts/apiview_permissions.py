@@ -20,10 +20,6 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from src._settings import SettingsManager
-
 
 def get_principal_type(credential, principal_id: str) -> str:
     """Determine if the principal ID is a User or ServicePrincipal using Microsoft Graph."""
@@ -63,12 +59,8 @@ def modify_permissions():
     parser.add_argument("--revoke", action="store_true", help="Revoke permissions instead of granting them.")
     args = parser.parse_args()
 
-    settings = SettingsManager()
-    environment = settings.label
-
     user_principal_id = args.principal_id
     print(f"Principal ID: {user_principal_id}")
-    print(f"Environment: {environment}")
 
     subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
 
@@ -182,21 +174,15 @@ def modify_permissions():
             assign_arm_role()
             assign_sql_role()
 
-    settings_map = {
+    environments = {
+        "production": {"resource_group": "apiview", "cosmos_account": "apiview-cosmos"},
         "staging": {"resource_group": "apiviewstagingrg", "cosmos_account": "apiviewstaging"},
-        "prod": {"resource_group": "apiview", "cosmos_account": "apiview-cosmos"},
+        "uxtest": {"resource_group": "APIView-UI", "cosmos_account": "apiviewuitest"},
     }
 
-    if environment not in settings_map:
-        valid_environments = ", ".join(sorted(settings_map.keys()))
-        print(f"Error: Unsupported environment '{environment}'. Expected one of: {valid_environments}.")
-        sys.exit(1)
-
-    data = settings_map[environment]
-    print(f"\n=== Processing {environment} ===")
-    resource_group = data["resource_group"]
-    cosmos_account = data["cosmos_account"]
-    process_permissions(resource_group, cosmos_account)
+    for env_name, data in environments.items():
+        print(f"\n=== Processing {env_name} ===")
+        process_permissions(data["resource_group"], data["cosmos_account"])
 
 
 if __name__ == "__main__":

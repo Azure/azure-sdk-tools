@@ -38,6 +38,8 @@ public class JavaLanguageServiceVersionUpdateTests
         var gitHelperMock = new Mock<IGitHelper>();
         gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("azure-sdk-for-java");
+        gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
 
         _javaLanguageService = new JavaLanguageService(
             new Mock<IProcessHelper>().Object,

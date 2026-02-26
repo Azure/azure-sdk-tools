@@ -1,5 +1,3 @@
-
-
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;

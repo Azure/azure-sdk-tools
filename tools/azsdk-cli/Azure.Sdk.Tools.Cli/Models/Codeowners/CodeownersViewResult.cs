@@ -24,6 +24,36 @@ public class CodeownersViewResult : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<LabelOwnerWorkItem>? PathlessLabelOwners { get; set; }
 
+    public CodeownersViewResult() { }
+
+    public CodeownersViewResult(List<PackageWorkItem> packages, List<LabelOwnerWorkItem> labelOwners)
+    {
+        if (packages.Count > 0)
+        {
+            Packages = packages;
+        }
+
+        // Split label owners into path-based and pathless
+        var pathBased = labelOwners.Where(lo => !string.IsNullOrEmpty(lo.RepoPath)).ToList();
+        var pathless = labelOwners.Where(lo => string.IsNullOrEmpty(lo.RepoPath)).ToList();
+
+        if (pathBased.Count > 0)
+        {
+            PathBasedLabelOwners = pathBased
+                .OrderBy(lo => lo.Repository, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(lo => lo.RepoPath, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        if (pathless.Count > 0)
+        {
+            PathlessLabelOwners = pathless
+                .OrderBy(lo => lo.Repository, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(lo => string.Join("|", lo.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase)), StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+    }
+
     protected override string Format()
     {
         var sb = new StringBuilder();

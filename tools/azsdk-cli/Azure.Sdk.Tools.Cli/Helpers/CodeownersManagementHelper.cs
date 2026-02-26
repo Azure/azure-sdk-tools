@@ -36,7 +36,7 @@ public class CodeownersManagementHelper(
         await HydratePackages(relatedPackages);
         await HydrateLabelOwners(relatedLabelOwners);
 
-        return BuildViewResult(relatedPackages, relatedLabelOwners);
+        return new CodeownersViewResult(relatedPackages, relatedLabelOwners);
     }
 
     public async Task<CodeownersViewResult> GetViewByLabel(string[] labels, string? repo)
@@ -64,7 +64,7 @@ public class CodeownersManagementHelper(
         await HydratePackages(relatedPackages);
         await HydrateLabelOwners(relatedLabelOwners);
 
-        return BuildViewResult(relatedPackages, relatedLabelOwners);
+        return new CodeownersViewResult(relatedPackages, relatedLabelOwners);
     }
 
     public async Task<CodeownersViewResult> GetViewByPath(string path, string? repo)
@@ -72,7 +72,7 @@ public class CodeownersManagementHelper(
         var labelOwners = await QueryLabelOwnersByPath(path, repo);
         await HydrateLabelOwners(labelOwners);
 
-        return BuildViewResult([], labelOwners);
+        return new CodeownersViewResult([], labelOwners);
     }
 
     public async Task<CodeownersViewResult> GetViewByPackage(string packageName)
@@ -88,14 +88,14 @@ public class CodeownersManagementHelper(
         var relatedLabelOwners = await FetchRelatedLabelOwners(packageWi.RelatedIds);
         await HydrateLabelOwners(relatedLabelOwners);
 
-        return BuildViewResult([packageWi], relatedLabelOwners);
+        return new CodeownersViewResult([packageWi], relatedLabelOwners);
     }
 
     // ========================
     // Internal helpers
     // ========================
 
-    public static string NormalizeGitHubAlias(string alias) => alias.TrimStart('@').Trim();
+    public static string NormalizeGitHubAlias(string alias) => alias.Trim().TrimStart('@').Trim();
 
     /// <summary>
     /// Converts a repo identity (e.g., "Azure/azure-sdk-for-python" or "azure-sdk-for-python")
@@ -290,39 +290,4 @@ public class CodeownersManagementHelper(
         }
     }
 
-    // ========================
-    // View result building
-    // ========================
-
-    private static CodeownersViewResult BuildViewResult(List<PackageWorkItem> packages, List<LabelOwnerWorkItem> labelOwners)
-    {
-        var result = new CodeownersViewResult();
-
-        if (packages.Count > 0)
-        {
-            result.Packages = packages;
-        }
-
-        // Split label owners into path-based and pathless
-        var pathBased = labelOwners.Where(lo => !string.IsNullOrEmpty(lo.RepoPath)).ToList();
-        var pathless = labelOwners.Where(lo => string.IsNullOrEmpty(lo.RepoPath)).ToList();
-
-        if (pathBased.Count > 0)
-        {
-            result.PathBasedLabelOwners = pathBased
-                .OrderBy(lo => lo.Repository, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(lo => lo.RepoPath, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
-        if (pathless.Count > 0)
-        {
-            result.PathlessLabelOwners = pathless
-                .OrderBy(lo => lo.Repository, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(lo => string.Join("|", lo.Labels.Select(l => l.LabelName).OrderBy(l => l, StringComparer.OrdinalIgnoreCase)), StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
-        return result;
-    }
 }

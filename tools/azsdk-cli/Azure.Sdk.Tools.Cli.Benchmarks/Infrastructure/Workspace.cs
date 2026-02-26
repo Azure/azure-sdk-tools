@@ -143,14 +143,15 @@ public class Workspace : IDisposable
 
     /// <summary>
     /// Writes the benchmark execution log to the workspace root directory.
-    /// The log includes messages, tool calls, and other execution details.
+    /// The log includes messages, tool calls, validation results, and other execution details.
     /// </summary>
     /// <param name="scenarioName">The name of the scenario that was executed.</param>
     /// <param name="messages">The messages from the Copilot SDK session.</param>
     /// <param name="toolCalls">The list of tool calls made during execution.</param>
     /// <param name="gitDiff">The git diff of changes made during execution.</param>
     /// <param name="duration">The duration of the execution.</param>
-    /// <param name="passed">Whether the benchmark passed.</param>
+    /// <param name="passed">Whether the benchmark passed validation.</param>
+    /// <param name="validation">The validation summary (null if no validators were run).</param>
     /// <param name="error">Optional error message if the benchmark failed.</param>
     public async Task WriteExecutionLogAsync(
         string scenarioName,
@@ -159,6 +160,7 @@ public class Workspace : IDisposable
         string? gitDiff,
         TimeSpan duration,
         bool passed,
+        Validation.ValidationSummary? validation = null,
         string? error = null)
     {
         var log = new
@@ -168,6 +170,7 @@ public class Workspace : IDisposable
             Duration = duration.ToString(),
             Passed = passed,
             Error = error,
+            Validation = validation,
             ToolCalls = toolCalls,
             Messages = messages,
             GitDiff = gitDiff

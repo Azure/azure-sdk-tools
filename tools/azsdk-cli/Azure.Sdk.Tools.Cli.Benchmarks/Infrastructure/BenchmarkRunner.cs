@@ -159,18 +159,7 @@ public class BenchmarkRunner : IDisposable
             Console.WriteLine($"[Benchmark] Capturing git diff...");
             var gitDiff = await workspace.GetGitDiffAsync();
 
-            // 5. Write execution log to workspace
-            Console.WriteLine($"[Benchmark] Writing execution log...");
-            await workspace.WriteExecutionLogAsync(
-                scenario.Name,
-                execResult.Messages,
-                execResult.ToolCalls,
-                gitDiff,
-                stopwatch.Elapsed,
-                execResult.Completed,
-                execResult.Error);
-
-            // 6. Validation
+            // 5. Validation
             ValidationSummary? validation = null;
             var validators = scenario.Validators.ToList();
 
@@ -199,6 +188,18 @@ public class BenchmarkRunner : IDisposable
             var passed = validators.Count > 0
                 ? validation!.Passed
                 : execResult.Completed && !string.IsNullOrWhiteSpace(gitDiff); // POC fallback
+
+            // 6. Write execution log to workspace (after validation)
+            Console.WriteLine($"[Benchmark] Writing execution log...");
+            await workspace.WriteExecutionLogAsync(
+                scenario.Name,
+                execResult.Messages,
+                execResult.ToolCalls,
+                gitDiff,
+                stopwatch.Elapsed,
+                passed,
+                validation,
+                execResult.Error);
 
             // Determine if cleanup will happen based on policy
             var willCleanup = options.CleanupPolicy switch

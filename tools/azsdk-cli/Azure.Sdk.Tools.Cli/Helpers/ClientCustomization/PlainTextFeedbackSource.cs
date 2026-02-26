@@ -22,18 +22,14 @@ public class PlainTextFeedbackSource
         _logger = logger;
     }
 
-    public Task<FeedbackBatch> CreateBatchAsync(CancellationToken ct = default)
+    public List<FeedbackItem> CreateBatch()
     {
-        ct.ThrowIfCancellationRequested();
         _logger.LogInformation("Processing plain text feedback");
 
-        return Task.FromResult(new FeedbackBatch
+        return [new FeedbackItem
         {
-            Items = [new FeedbackItem
-            {
-                Text = _plainText,
-                Context = string.Empty
-            }]
-        });
+            Text = _plainText,
+            Context = string.Empty
+        }];
     }
 }

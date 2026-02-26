@@ -6,22 +6,6 @@ using System.Text;
 namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
-/// Batch of feedback items after preprocessing
-/// </summary>
-public class FeedbackBatch
-{
-    /// <summary>
-    /// Individual feedback items for per-item classification
-    /// </summary>
-    public List<FeedbackItem> Items { get; set; } = new();
-    
-    /// <summary>
-    /// Target SDK language (e.g., python, csharp, java)
-    /// </summary>
-    public string? Language { get; set; }
-}
-
-/// <summary>
 /// Status of a feedback item during classification
 /// </summary>
 public enum FeedbackStatus

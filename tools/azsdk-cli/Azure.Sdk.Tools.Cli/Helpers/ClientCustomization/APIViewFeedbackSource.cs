@@ -16,6 +16,8 @@ public class APIViewFeedbackSource
     private readonly string _apiViewUrl;
     private readonly IAPIViewFeedbackService _feedbackService;
     private readonly ILogger<APIViewFeedbackSource> _logger;
+    private readonly string _revisionId;
+    private ReviewMetadata? _reviewMetadata;
 
     public APIViewFeedbackSource(
         string apiViewUrl,
@@ -25,35 +27,38 @@ public class APIViewFeedbackSource
         _apiViewUrl = apiViewUrl;
         _feedbackService = feedbackService;
         _logger = logger;
+        (_revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(_apiViewUrl);
     }
 
-    public async Task<FeedbackBatch> CreateBatchAsync(CancellationToken ct = default)
+    /// <summary>
+    /// Returns the SDK language detected from APIView review metadata.
+    /// </summary>
+    public async Task<string?> GetLanguageAsync(CancellationToken ct = default)
+    {
+        _reviewMetadata ??= await _feedbackService.ParseReviewMetadata(_revisionId);
+        return _reviewMetadata.Language;
+    }
+
+    public async Task<List<FeedbackItem>> CreateBatchAsync(CancellationToken ct = default)
     {
         _logger.LogInformation("Preprocessing APIView feedback from: {Url}", _apiViewUrl);
 
-        var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(_apiViewUrl);
+        _reviewMetadata ??= await _feedbackService.ParseReviewMetadata(_revisionId);
 
-        var metadata = await _feedbackService.ParseReviewMetadata(revisionId);
-
-        var comments = await _feedbackService.GetConsolidatedComments(revisionId);
+        var comments = await _feedbackService.GetConsolidatedComments(_revisionId);
 
         var feedbackItems = comments.Select(c =>
         {
             var text = $"API Line {c.LineNo}: {c.LineId}, Code: {c.LineText.Trim()}, ReviewComment: {c.Comment}";
-            var item = new FeedbackItem
+            return new FeedbackItem
             {
                 Text = text,
                 Context = string.Empty
             };
-            return item;
         }).ToList();
 
         _logger.LogInformation("Converted {Count} comments to feedback items", feedbackItems.Count);
 
-        return new FeedbackBatch
-        {
-            Items = feedbackItems,
-            Language = metadata.Language
-        };
+        return feedbackItems;
     }
 }

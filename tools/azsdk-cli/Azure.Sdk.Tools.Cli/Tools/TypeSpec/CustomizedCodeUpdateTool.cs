@@ -269,21 +269,23 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 tspProjectPath
             );
 
-            FeedbackBatch feedbackBatch;
+            List<FeedbackItem> feedbackItems;
             if (!string.IsNullOrWhiteSpace(apiViewUrl))
             {
-                feedbackBatch = await new APIViewFeedbackSource(apiViewUrl, feedbackService, loggerFactory.CreateLogger<APIViewFeedbackSource>()).CreateBatchAsync(ct);
+                var apiViewSource = new APIViewFeedbackSource(apiViewUrl, feedbackService, loggerFactory.CreateLogger<APIViewFeedbackSource>());
+                feedbackItems = await apiViewSource.CreateBatchAsync(ct);
+                language ??= await apiViewSource.GetLanguageAsync(ct);
             }
             else if (!string.IsNullOrWhiteSpace(plainTextFeedback))
             {
-                feedbackBatch = await new PlainTextFeedbackSource(plainTextFeedback, loggerFactory.CreateLogger<PlainTextFeedbackSource>()).CreateBatchAsync(ct);
+                feedbackItems = new PlainTextFeedbackSource(plainTextFeedback, loggerFactory.CreateLogger<PlainTextFeedbackSource>()).CreateBatch();
             }
             else
             {
                 throw new ArgumentException("Either --apiview-url or --plain-text-feedback (or --plain-text-feedback-file) must be provided.");
             }
 
-            if (feedbackBatch.Items.Count == 0)
+            if (feedbackItems.Count == 0)
             {
                 return new FeedbackClassificationResponse
                 {
@@ -292,7 +294,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 };
             }
 
-            var resolvedLanguage = language ?? feedbackBatch.Language;
+            var resolvedLanguage = language;
             if (string.IsNullOrEmpty(resolvedLanguage))
             {
                 throw new ArgumentException("Language is required but could not be determined from the feedback source. Please specify --language (e.g. python, java, dotnet, go, javascript).");
@@ -303,7 +305,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 throw new ArgumentException("Service name is required. Please specify --service-name.");
             }
 
-            return await classifier.ClassifyItemsAsync(feedbackBatch.Items, globalContext: "", resolvedLanguage, serviceName, ct);
+            return await classifier.ClassifyItemsAsync(feedbackItems, globalContext: "", resolvedLanguage, serviceName, ct);
         }
         catch (Exception ex)
         {

@@ -3522,6 +3522,24 @@ class DoNotUseLoggingDirectly(BaseChecker):
         ),
     }
 
+    def __init__(self, linter=None):
+        super().__init__(linter)
+        # Track local names referring to logging module, in case of aliases 
+        self._logging_aliases = {"logging"}
+
+    def visit_module(self, node):
+        """Reset logging aliases when entering a new module."""
+        self._logging_aliases = {"logging"}
+
+    def visit_import(self, node):
+        """Track imports of the logging module to identify aliases."""
+        try:
+            for name, alias in node.names:
+                if name == "logging":
+                    self._logging_aliases.add(alias if alias else "logging")
+        except:
+            pass
+
     def _is_logging_directly_call(self, node):
         """Check if this is a direct call to logging.<method>() without a named logger instance."""
         try:
@@ -3532,7 +3550,7 @@ class DoNotUseLoggingDirectly(BaseChecker):
             
             if (hasattr(node.func, 'expr') and
                 hasattr(node.func.expr, 'name') and
-                node.func.expr.name == 'logging'):
+                node.func.expr.name in self._logging_aliases):
                 # Only flag direct calls to logging.<method>()
                 return self._has_string_argument(node)
             # Calls on logger instances are allowed

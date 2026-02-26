@@ -4409,3 +4409,41 @@ class TestDoNotUseLoggingDirectly(pylint.testutils.CheckerTestCase):
         
         with self.assertNoMessages():
             self.checker.visit_call(call_node)
+
+    def test_flags_aliased_logging_import(self, setup):
+        """Test that aliased logging imports (import logging as log) are flagged."""
+        # Visit the module to reset state
+        self.checker.visit_module(setup)
+        
+        # Visit all imports to register aliases
+        for import_node in setup.nodes_of_class(astroid.nodes.Import):
+            self.checker.visit_import(import_node)
+        
+        # Find the log.info() call
+        call_node = self._find_logging_call(setup, "info", "log")
+        assert call_node is not None, "Could not find log.info() call"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_does_not_flag_unrelated_alias(self, setup):
+        """Test that non-logging aliases named 'unrelated_log' are NOT flagged."""
+        # Visit the module to reset state
+        self.checker.visit_module(setup)
+        
+        # Visit all imports to register aliases
+        for import_node in setup.nodes_of_class(astroid.nodes.Import):
+            self.checker.visit_import(import_node)
+        
+        # Find the unrelated_log.sqrt() call
+        call_node = self._find_logging_call(setup, "sqrt", "unrelated_log")
+        assert call_node is not None, "Could not find unrelated_log.sqrt() call"
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)

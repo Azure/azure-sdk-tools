@@ -19,10 +19,12 @@
    - [Problem 2: Version Ambiguity](#problem-2-version-ambiguity)
    - [Problem 3: Opaque Approval Copying](#problem-3-opaque-approval-copying)
    - [Problem 4: Duplicate Blob Storage](#problem-4-duplicate-blob-storage)
+   - [Problem 5: Comment Orphaning on Revision Deletion/Replacement](#problem-5-comment-orphaning-on-revision-deletionreplacement)
 4. [Proposed Architecture: Version-Centric Model](#proposed-architecture-version-centric-model)
    - [New Entity: APIVersion](#new-entity-apiversion)
    - [Updated Entity Hierarchy](#updated-entity-hierarchy)
    - [Version Aliasing & Storage Deduplication](#version-aliasing--storage-deduplication)
+   - [PR Versions](#pr-versions)
    - [Comment Scoping](#comment-scoping)
    - [Explicit Approval Inheritance](#explicit-approval-inheritance)
    - [O(1) Sameness Checks via Content Hash](#o1-sameness-checks-via-content-hash)
@@ -172,7 +174,7 @@ Two Azure Blob Storage containers hold artifacts per revision:
 There is no explicit "version" entity. The concept of "v12.2.0" exists implicitly as "whichever revisions happen to have `Files[0].PackageVersion == "12.2.0"`. This means:
 
 - **No clean version timeline:** The UI shows one big list of revisions with no grouping.
-- **Approval is per-revision, not per-version:** Approving revision X doesn't mean "v12.2.0 is approved"—it means "this specific upload is approved."
+- **Approval is per-revision, not per-version:** Approving revision X doesn't mean "v12.2.0 is approved"—it means "this API surface is approved." In practice, the auto-copy mechanism ([Problem 3](#problem-3-opaque-approval-copying)) propagates approval to any other revision with a byte-identical API surface, regardless of version. This is correct for patch bumps where nothing meaningful changed, but wrong when context matters — e.g., a version that warrants re-review due to new dependencies, changed behavior behind the same surface, or a different release stage. The system offers no way to distinguish these cases or opt out of auto-propagation.
 - **Version lookup is expensive:** `GetAPIRevisionsAsync(reviewId, packageVersion)` does in-memory filtering across ALL revisions to find matches by major.minor prefix.
 
 ---
@@ -206,7 +208,6 @@ This loop:
 
 **Sub-problems:**
 - **Expensive comparison:** Each `AreAPIRevisionsTheSame` call downloads a blob from Azure Storage and does a full diff. For reviews with many approved revisions, this can mean dozens of blob downloads per CI upload.
-- **No audit trail distinction:** `CopyApprovalFromAsync` records `"Approval copied from revision {id}"` in `ChangeHistory`, but the `IsApproved` flag and `Approvers` set look identical to a human approval.
 - **Approval loops:** If version A was approved, version B gets auto-approved (same API), then version A is un-approved, version B remains approved.
 
 ---
@@ -246,6 +247,21 @@ For a package with N versions where M of those have identical API surfaces, the 
 
 ---
 
+### Problem 5: Comment Orphaning on Revision Deletion/Replacement
+
+> **Ref:** [azure-sdk-tools#14187](https://github.com/Azure/azure-sdk-tools/issues/14187)
+
+**Symptom:** Comments reference revisions that no longer exist, creating orphaned data in the `Comments` container.
+
+**Root Cause:** Comments are keyed to `APIRevisionId`, but revisions are routinely deleted or replaced without migrating or cleaning up their associated comments. This happens in two scenarios:
+
+1. **Revision replacement:** When an automatic revision supersedes an older one, the old revision is soft-deleted but its comments' `APIRevisionId` is never updated to the replacement. Revisions with comments are kept as stale "anchors" solely to preserve the linkage.
+2. **Direct deletion:** Archive, PR cleanup, manual delete, and purge operations remove revisions without touching their associated comments at all.
+
+The frontend masks this with fallback logic that maps orphaned comments to the active revision, but the underlying data relationship is broken. Over time, orphaned comments accumulate and the comment history becomes unreliable — comments appear attached to revisions they were never written against.
+
+---
+
 ## Proposed Architecture: Version-Centric Model
 
 ### New Entity: APIVersion
@@ -254,17 +270,30 @@ Introduce `APIVersion` as a **first-class entity** that sits between `Review` an
 
 ```
 Review (1 per package+language)
-  └── APIVersion (1 per significant version: v12.1.0, v12.2.0-beta.1, etc.)
-       └── APIRevision (1+ per version: uploads, re-parses, PR previews)
+  ├── APIVersion (Kind=Stable/Preview: 1 per unique version label — v12.1.0, v12.2.0-beta.1, etc.)
+  │    ├── APIRevision (1+ per version: uploads, re-parses)
+  │    └── SamplesRevision (0+ per version: code samples for this API surface)
+  └── APIVersion (Kind=PullRequest: 1 per PR, identified by PR number)
+       └── APIRevision (1+ per PR: each push to the PR branch)
 ```
+
+Samples revisions are version-scoped: sample code for v12.1.0 may differ from v12.2.0 when the API surface changes. `SamplesRevisionModel` gains an `APIVersionId` FK. For aliased versions (identical API surface), samples from the canonical version are shared via the same alias resolution used for code file blobs.
 
 ```csharp
 public class APIVersionModel : BaseListitemModel
 {
     // Identity
     public string ReviewId { get; set; }               // FK to parent Review
-    public string SemanticVersion { get; set; }         // e.g. "12.2.0", "12.3.0-beta.1"
-    public VersionKind Kind { get; set; }               // Stable, Preview, Development
+    public string VersionIdentifier { get; set; }      // Semantic version ("12.2.0") or PR identifier ("PR#1234")
+    public VersionKind Kind { get; set; }               // Stable, Preview, PullRequest
+
+    // Package version (derived from latest revision's Files[0].PackageVersion)
+    public string PackageVersion { get; set; }          // e.g. "12.2.0-beta.1" — updated on each new revision
+
+    // PR-specific (null for Stable/Preview)
+    public int? PullRequestNumber { get; set; }         // GitHub PR number
+    public string SourceBranch { get; set; }            // e.g. "feature/add-widget"
+    public PullRequestStatus? PRStatus { get; set; }    // Open, Merged, Closed (null for non-PR)
 
     // Approval (explicit, auditable)
     public bool IsApproved { get; set; }
@@ -280,17 +309,29 @@ public class APIVersionModel : BaseListitemModel
     public bool IsReleased { get; set; }
     public DateTime? ReleasedOn { get; set; }
 
+    // Review Requests
+    public List<string> ReviewRequestIds { get; set; } = new(); // IDs of review-request records (reviewer assignments, approvals)
+    public bool IsReviewedByCopilot { get; set; }              // true if any ReviewRequest includes a completed Copilot review
+
     // Metadata
     public string CreatedBy { get; set; }
     public DateTime CreatedOn { get; set; }
+    public DateTime LastUpdated { get; set; }                   // Updated on any revision add, approval change, or metadata edit
     public List<APIVersionChangeHistoryModel> ChangeHistory { get; set; } = new();
 }
 
 public enum VersionKind
 {
-    Stable,      // GA release (12.2.0)
-    Preview,     // Prerelease (12.3.0-beta.1)
-    Development  // PR preview, never released
+    Stable,       // GA release (12.2.0)
+    Preview,      // Prerelease (12.3.0-beta.1)
+    PullRequest   // PR preview — one per PR, archived on PR close
+}
+
+public enum PullRequestStatus
+{
+    Open,    // PR is active — revisions are being added
+    Merged,  // PR was merged — retain longer, may have historical value
+    Closed   // PR was closed without merging — changes rejected, eligible for early cleanup
 }
 ```
 
@@ -312,9 +353,10 @@ public enum VersionKind
 │ Partition Key: /ReviewId                            │
 │                                                     │
 │  APIVersionModel                                    │
-│    Id, ReviewId, SemanticVersion, Kind               │
+│    Id, ReviewId, VersionIdentifier, Kind             │
 │    IsApproved, ApprovalInheritedFromVersionId        │
 │    CanonicalVersionId, APIContentHash                │
+│    PullRequestNumber, SourceBranch, PRStatus (PR)    │
 └───────────┬─────────────────────────────────────────┘
             │ 1:N
 ┌───────────▼─────────────────────────────────────────┐
@@ -334,6 +376,15 @@ public enum VersionKind
 │  CommentItemModel                                   │
 │    Id, ReviewId, APIVersionId (NEW FK)               │
 │    APIRevisionId, ElementId, ThreadId, ...           │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ Cosmos DB Container: SamplesRevisions (existing)    │
+│ Partition Key: /ReviewId                            │
+│                                                     │
+│  SamplesRevisionModel                               │
+│    Id, ReviewId, APIVersionId (NEW FK)               │
+│    OriginalFileId, Title, ...                        │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -383,7 +434,39 @@ When a new package version arrives with an identical API surface:
 
 5. **If alias target changes (rare):** If the canonical version's blobs are deleted or updated, the alias can be re-pointed or the aliased version can be "materialized" by uploading its own blobs and clearing `CanonicalVersionId`.
 
+6. **Canonical version soft-deletion:** Admins should never hard-delete a canonical version that has aliases. If a canonical version is soft-deleted:
+   - The **first alias** (by `CreatedOn`) is promoted: it copies the canonical version's blobs to its own storage paths, clears its `CanonicalVersionId` (becoming a new canonical), and becomes the live version.
+   - All **other aliases** update their `CanonicalVersionId` to point to the newly promoted version.
+   - This ensures that when the soft-deleted canonical version is eventually garbage-collected, no artifacts are lost.
+   - The promotion is performed as part of the soft-delete operation, not deferred to garbage collection, to prevent a window where aliases point to a version whose blobs may be reclaimed.
+
 **Storage savings:** For a package where 75% of version bumps don't change the API surface (common for patch releases and implementation-only changes), this eliminates ~75% of blob storage for that package.
+
+### PR Versions
+
+Each pull request is modeled as its own `APIVersion` with `Kind = PullRequest`. This treats PRs as a first-class unit with a clear lifecycle, scoped comments, and clean deletion semantics.
+
+**Identity & Deduplication:**
+- `VersionIdentifier` is set to `"PR#1234"` (the GitHub PR number).
+- `PullRequestNumber` and `SourceBranch` provide lookup keys.
+- `PackageVersion` is updated to reflect the most recent revision's `Files[0].PackageVersion` on each new push. This ensures the PR version always shows which package version it would produce (e.g., "PR#1234 — 12.3.0-beta.1").
+- When a new push arrives for an existing PR, the system finds the existing `APIVersion` by `ReviewId + PullRequestNumber` and creates a new `APIRevision` under it — no new version is created.
+
+**Lifecycle:**
+
+| Event | Action |
+|---|---|
+| PR opened / first push | Create `APIVersion` with `Kind = PullRequest`, `PRStatus = Open`, `PackageVersion` from revision; create first `APIRevision` |
+| Subsequent push to PR | Create new `APIRevision` under existing PR version; update `PackageVersion` to latest revision's value |
+| PR merged | Set `PRStatus = Merged` — retain for longer TTL (changes were accepted, may have historical value) |
+| PR closed without merge | Set `PRStatus = Closed` — eligible for shorter TTL (changes were rejected) |
+| Archive TTL expires | Cascade-delete the `APIVersion`, all its `APIRevision` entries, all its `Comment` entries, and all associated blobs |
+
+**Why this works:**
+- **Comment isolation:** PR review comments stay scoped to the PR version. They never leak into release versions or other PRs. When the PR version is deleted, its comments are deleted with it — no orphans.
+- **Clean deletion:** Today, PR revision cleanup (`ClosePullRequestAPIRevision`, auto-archive) must carefully handle comments to avoid orphaning. With the version-centric model, deleting a PR version is a single cascade operation: delete version → delete revisions → delete comments → delete blobs.
+- **No version guessing:** The system doesn't need to know which release version the PR targets. The PR version is self-contained. If the PR merges and triggers a CI build, that build creates a new Stable/Preview version through the normal automatic revision flow.
+- **UI grouping:** The version list can separate PR versions from release versions, giving users a clean view of both in-flight PRs and the release timeline.
 
 ### Comment Scoping
 
@@ -409,6 +492,16 @@ var filteredComments = allComments.Where(c =>
 - Comments on v12.1.0 stay on v12.1.0 — they never leak into v12.2.0
 - Within a version, all revisions share comments (correct behavior — re-uploads of the same version should see the same feedback)
 - The `ElementId` matching in `CollectUserCommentsForRow` continues to work but now only against version-scoped comments
+- **Eliminates comment orphaning (Problem 5):** Since comments are scoped to `APIVersion` rather than `APIRevision`, replacing or deleting an individual revision within a version does not orphan its comments. The comment's `APIVersionId` remains valid regardless of which revision is the "current" one for that version. For version-level deletion (rare), comments are cascade-deleted with the version entity, maintaining referential integrity.
+
+**Diagnostic comments** follow the same version-level scoping as user comments — they are keyed to `APIVersionId`, not `APIRevisionId`. Although diagnostics are generated per-upload by language-specific analyzers, scoping them to the version is consistent with the model and avoids the complexity of mixed scoping rules. When a new revision is uploaded within a version, diagnostics are reconciled as follows:
+
+1. **On new revision upload:** Compare the new revision's diagnostics against the existing diagnostic comments for that `APIVersionId`.
+2. **Diagnostics present in both:** No action needed — the existing diagnostic comment remains valid and visible.
+3. **Diagnostics present only in the old set:** Auto-resolve the diagnostic comment (set `IsResolved = true`). The issue no longer exists in the latest code.
+4. **Diagnostics present only in the new revision:** Create a new diagnostic comment with `APIVersionId` scoping.
+
+The existing `DiagnosticsHash` on `APIRevisionListItemModel` continues to serve as a short-circuit — if the hash matches the previous revision's, no diagnostic diff is needed.
 
 **Cross-version comment visibility (optional UX):**  
 If a user *wants* to see what was said on a prior version, the UI can offer an opt-in "Show comments from other versions" toggle. This is additive UX, not a data model concern.
@@ -470,9 +563,9 @@ The hash is computed once at upload time and stored on `APIVersionModel`. The ex
 ### Phase 1: Add APIVersion Entity (Non-Breaking)
 
 1. Create `APIVersions` Cosmos DB container
-2. Add `APIVersionId` field to `APIRevisionListItemModel` and `CommentItemModel` (nullable, for backward compat)
+2. Add `APIVersionId` field to `APIRevisionListItemModel`, `CommentItemModel`, and `SamplesRevisionModel` (nullable, for backward compat)
 3. **Backfill migration:** Group existing revisions by `PackageVersion` → create one `APIVersionModel` per unique version per review
-4. Set `APIVersionId` on each existing revision and comment
+4. Set `APIVersionId` on each existing revision, comment, and samples revision
 5. Compute and store `APIContentHash` for each version from its latest revision's blob
 
 ### Phase 2: Version Aliasing & Storage Dedup
@@ -485,14 +578,24 @@ The hash is computed once at upload time and stored on `APIVersionModel`. The ex
    - Skip blob upload if alias is appropriate
 4. Update retrieval paths to resolve `CanonicalVersionId`
 
-### Phase 3: Comment Scoping
+### Phase 3: Comment Scoping & Orphan Cleanup
 
 1. Update `ReviewsController` query path to fetch comments by `APIVersionId`
 2. Update `CodeFileHelpers.CollectUserCommentsForRow` — no structural change needed since comments are pre-filtered
 3. Update SPA `CommentsService` to pass version context
 4. Add "Show comments from other versions" opt-in toggle
+5. **Orphan cleanup ([#14187](https://github.com/Azure/azure-sdk-tools/issues/14187)):** During migration, identify comments whose `APIRevisionId` references a deleted/soft-deleted revision. Re-associate these to the correct `APIVersionId` based on the revision's original `PackageVersion`. Delete diagnostic comments whose parent revision no longer exists (they are revision-specific by nature).
+6. **Cascade deletion rules:** When an `APIVersion` is deleted, cascade-delete all associated comments. When an individual `APIRevision` is replaced within a version, no comment migration is needed — comments are already scoped to the version, not the revision.
 
-### Phase 4: Approval Migration
+### Phase 4: PR Version Migration
+
+1. **Backfill:** Group existing PR-type revisions by `PullRequestNo` (or `SourceBranch` where PR number is absent) → create one `APIVersion` per unique PR per review with `Kind = PullRequest`
+2. Set `APIVersionId` on each existing PR revision and its associated comments
+3. Update `PullRequestManager` to create/find `APIVersion` by PR number on incoming webhooks instead of creating bare `APIRevision` entries
+4. Set `PRStatus = Merged` or `Closed` on PR versions based on current GitHub PR state
+5. Apply differentiated archive TTLs — shorter for `Closed` (rejected), longer for `Merged` — then cascade-delete after retention period
+
+### Phase 5: Approval Migration
 
 1. Move `IsApproved` / `Approvers` from `APIRevisionListItemModel` to `APIVersionModel`
 2. Set `ApprovalInheritedFromVersionId` for versions that had bot-copied approvals (detectable from `ChangeHistory` notes containing "Approval copied from")
@@ -510,4 +613,49 @@ The hash is computed once at upload time and stored on `APIVersionModel`. The ex
 | **Opaque approval** | Silent copy, no UI distinction | `ApprovalInheritedFromVersionId` with clear UI |
 | **Duplicate storage** | Full blob duplication per version | Version aliasing; ~75% blob reduction for stable packages |
 | **Expensive sameness checks** | Blob download + full diff per comparison | O(1) `APIContentHash` comparison |
+| **Comment orphaning** | Comments reference deleted revisions; frontend workarounds mask broken data | Comments scoped to `APIVersion`; revision replacement cannot orphan comments; cascade delete on version removal |
+| **PR lifecycle** | PR revisions mixed into flat revision list; cleanup orphans comments | Each PR is its own `APIVersion`; close → archive → cascade-delete version + revisions + comments + blobs |
 | **Version lookup** | In-memory filter across all revisions | Direct query on `APIVersions` container |
+
+---
+
+## Additional Considerations
+
+### Carrying Comments Forward Across Versions
+
+Today, unresolved comments bleed across all versions implicitly. Once comment scoping is enforced, that implicit behavior goes away — which is the desired outcome for the vast majority of cases. However, there is a legitimate (if rare) scenario where a reviewer intentionally wants a comment to remain visible in future versions: for example, flagging an API surface for re-review at the next breaking change release.
+
+The current proposal's "Show comments from other versions" toggle (in [Comment Scoping](#comment-scoping)) addresses the *read* side — users can opt in to viewing historical threads. But it doesn't cover the *write* side: a reviewer explicitly marking a thread as "revisit this later."
+
+**Options to explore (not yet committed):**
+
+1. **Thread-level carry-forward flag** — A boolean on a comment thread that makes it appear in future versions until explicitly resolved. Simple, but adds UI/filter complexity.
+2. **Severity-based carry-forward** — Threads marked `MustFix` or `ShouldFix` could automatically carry forward to the next version until resolved. Leverages the existing `Severity` field without new data model changes.
+3. **External tracking** — Rather than building this into APIView, link out to a GitHub issue for long-lived action items. APIView threads stay version-scoped; the issue tracks the cross-version concern.
+4. **Do nothing initially** — Ship version-scoped comments with the "show other versions" toggle. If the carry-forward need proves common in practice, add the mechanism later. The data model supports it (adding a flag to `CommentItemModel` is non-breaking).
+
+### Version List Display
+
+The UI today presents a single flattened dropdown of all versions and revisions. The version-centric model doesn't change this: **all `APIVersion` entries — including aliased versions — appear in the list.** An aliased version (one whose `CanonicalVersionId` points elsewhere) is still a real version with its own label; it just shares blobs and approval with the canonical version. Users should see it in the list so they can confirm it exists and verify its approval status.
+
+One refinement worth experimenting with: a display mode that shows only the **latest revision per version** by default. In practice, reviewers almost always want to compare the most recent revision of one version against another released version — not inspect how revision 1 of v12.2.0 differs from revision 3 of the same version. Collapsing to "latest per version" would shorten the dropdown significantly for packages with many re-uploads. Earlier revisions would still be accessible via an expand control or a "Show all revisions" toggle.
+
+This is a UX experiment, not a data model change — the underlying query simply filters to `MAX(CreatedOn)` per `APIVersionId`. It can be shipped (or reverted) independently of any other phase.
+
+### Notifications
+
+The current notification system (`NotificationManager`) sends emails referencing `reviewId` + `apiRevisionId`. The version-centric model introduces new notification considerations:
+
+- Whether "new version uploaded" and "new revision within existing version" should be distinct notification types
+- Whether subscribers can filter by version kind (e.g., stable only, no PRs)
+- How email deep-links should be structured (version-level vs. revision-level)
+
+These decisions are deferred to a **separate notification proposal**. The data model changes in this proposal are compatible with any notification granularity — `APIVersionModel` provides all the fields needed for version-aware notifications when that work is undertaken.
+
+### First Release Approval
+
+`ReviewListItemModel.IsApprovedForFirstRelease` is a review-level concept distinct from per-version approval. This field is managed by the **Namespace Approval** system, which is outside the scope of this proposal. The version-centric model does not change or interact with first-release approval — it remains at the `Review` level.
+
+### Samples Revisions
+
+Samples revisions (`SamplesRevisionModel`) move from review-level to version-level scoping. Sample code for v12.1.0 may differ from v12.2.0 when the API surface changes, so samples are associated with `APIVersionId`. For aliased versions sharing an identical API surface, samples from the canonical version are resolved through the same alias indirection used for code file blobs. Migration of existing samples revisions is included in Phase 1 (backfill assigns each existing `SamplesRevision` to the `APIVersion` matching its associated revision's `PackageVersion`).

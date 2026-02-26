@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;

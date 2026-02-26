@@ -78,7 +78,6 @@ while (-not $ready -and $attempt -lt $maxAttempts) {
     $attempt++
     try {
         # Ignore SSL certificate errors for localhost self-signed cert
-        $null = [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
         $response = Invoke-WebRequest -Uri $spaUrl -TimeoutSec 5 -SkipCertificateCheck -ErrorAction SilentlyContinue
         if ($response.StatusCode -eq 200) {
             $ready = $true

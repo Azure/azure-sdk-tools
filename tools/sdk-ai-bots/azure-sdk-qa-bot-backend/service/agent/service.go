@@ -139,7 +139,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	var prompt string
 	promptTemplate := tenantConfig.PromptTemplate
 
-	if intention != nil && !intention.NeedsRagProcessing {
+	if !intention.NeedsRagProcessing {
 		// Skip RAG workflow for non-technical messages
 		log.Printf("Skipping RAG workflow - non-technical message detected")
 		knowledges = []model.Knowledge{}
@@ -232,7 +232,7 @@ func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTe
 		return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 	}
 	result, err := promptParser.ParseResponse(resp.Choices[0].Message.Content, promptTemplate)
-	if err != nil {
+	if err != nil || result == nil {
 		respStr := resp.RawJSON()
 		log.Printf("Failed to parse intention response: %v, response:%s", err, respStr)
 		return nil, err

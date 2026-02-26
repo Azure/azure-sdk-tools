@@ -573,7 +573,7 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to request logs: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// GitHub returns a 302 redirect to the actual log URL
 	if resp.StatusCode == http.StatusFound {
@@ -589,7 +589,7 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 		}
 
 		// Close the original redirect response before reassigning resp
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Use a new client that follows redirects for the blob storage URL
 		redirectClient := &http.Client{Timeout: 30 * time.Second}
@@ -597,7 +597,7 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to follow redirect: %w", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -612,7 +612,7 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to create gzip reader: %w", err)
 		}
-		defer gzReader.Close()
+		defer func() { _ = gzReader.Close() }()
 		reader = gzReader
 	}
 

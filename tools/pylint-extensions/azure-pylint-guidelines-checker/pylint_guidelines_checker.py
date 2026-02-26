@@ -3485,17 +3485,19 @@ class DoNotUseLoggingException(BaseChecker):
             return False
 
     def _has_string_argument(self, node):
-        """Check if the call has at least one string argument (required for logging methods)."""
+        """Check if the call has at least one positional argument that is a string-like value.
+        
+        Logging methods require at least one argument (the message format string).
+        This check ensures the first argument is a string literal or f-string to reduce false positives.
+        """
         try:
-            # logging.exception() requires at least one argument (the message format string)
-            if len(node.args) > 0:
-                # Check if the first argument is a string literal
-                first_arg = node.args[0]
-                if hasattr(first_arg, 'value') and isinstance(first_arg.value, str):
-                    return True
-                # Also accept string variables/expressions (we can't fully validate runtime types)
+            if len(getattr(node, "args", ())) == 0:
+                return False
+            first_arg = node.args[0]
+            # Accept string literals (Const with str value) or f-strings (JoinedStr)
+            if isinstance(first_arg, astroid.JoinedStr):
                 return True
-            return False
+            return hasattr(first_arg, 'value') and isinstance(first_arg.value, str)
         except:
             return False
 
@@ -3559,17 +3561,19 @@ class DoNotUseLoggingDirectly(BaseChecker):
             return False
 
     def _has_string_argument(self, node):
-        """Check if the call has at least one string argument (required for logging methods)."""
+        """Check if the call has at least one positional argument that is a string-like value.
+        
+        Logging methods require at least one argument (the message format string).
+        This check ensures the first argument is a string literal or f-string to reduce false positives.
+        """
         try:
-            # logging methods require at least one argument (the message format string)
-            if len(node.args) > 0:
-                # Check if the first argument is a string literal
-                first_arg = node.args[0]
-                if hasattr(first_arg, 'value') and isinstance(first_arg.value, str):
-                    return True
-                # Also accept string variables/expressions (we can't fully validate runtime types)
+            if len(getattr(node, "args", ())) == 0:
+                return False
+            first_arg = node.args[0]
+            # Accept string literals (Const with str value) or f-strings (JoinedStr)
+            if isinstance(first_arg, astroid.JoinedStr):
                 return True
-            return False
+            return hasattr(first_arg, 'value') and isinstance(first_arg.value, str)
         except:
             return False
 

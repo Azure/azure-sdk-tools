@@ -476,22 +476,22 @@ func (s *CompletionService) fetchAndInjectGitHubCheckInfo(req *model.CompletionR
 		var content string
 		var err error
 
-		if utils.IsGitHubPRLink(link) {
-			log.Printf("CI-related intent: fetching GitHub PR checks for %s", link)
-			content, err = utils.FetchGitHubPRChecks(link)
-			if err != nil {
-				log.Printf("Failed to fetch GitHub PR checks: %v", err)
-				continue
-			}
-			log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
-		} else if utils.IsGitHubCheckLink(link) {
+		if utils.IsGitHubCheckLink(link) {
 			log.Printf("CI-related intent: fetching GitHub check logs for %s", link)
-			content, err = utils.FetchGitHubCheckLogs(link)
+			content, err = utils.GetGitHubClient().FetchCheckLogs(link)
 			if err != nil {
 				log.Printf("Failed to fetch GitHub check logs: %v", err)
 				continue
 			}
 			log.Printf("GitHub check logs fetched successfully, result: %s", utils.SanitizeForLog(content))
+		} else if utils.IsGitHubPRLink(link) {
+			log.Printf("CI-related intent: fetching GitHub PR checks for %s", link)
+			content, err = utils.GetGitHubClient().FetchPRChecks(link)
+			if err != nil {
+				log.Printf("Failed to fetch GitHub PR checks: %v", err)
+				continue
+			}
+			log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
 		} else {
 			continue
 		}

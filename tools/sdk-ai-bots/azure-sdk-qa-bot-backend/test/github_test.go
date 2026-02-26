@@ -51,33 +51,41 @@ func TestIsCIRelatedIntention(t *testing.T) {
 // ============================================================
 
 // func TestDebug_FetchGitHubPRChecks(t *testing.T) {
-// 	result, err := utils.FetchGitHubPRChecks("https://github.com/Azure/azure-rest-api-specs/pull/40736")
+// 	result, err := utils.GetGitHubClient().FetchPRChecks("https://github.com/Azure/azure-rest-api-specs/pull/40736")
 // 	if err != nil {
-// 		t.Fatalf("FetchGitHubPRChecks error: %v", err)
+// 		t.Fatalf("FetchPRChecks error: %v", err)
 // 	}
 // 	t.Logf("PR Checks result:\n%s", result)
 // }
 
-// func TestDebug_FetchGitHubCheckLogs_WorkflowRun(t *testing.T) {
-// 	result, err := utils.FetchGitHubCheckLogs("https://github.com/Azure/azure-rest-api-specs/actions/runs/22387426697")
+// func TestDebug_FetchCheckLogs_PRCheckRun(t *testing.T) {
+// 	result, err := utils.GetGitHubClient().FetchCheckLogs("https://github.com/Azure/azure-rest-api-specs/pull/40770/checks?check_run_id=64935706870")
 // 	if err != nil {
-// 		t.Fatalf("FetchGitHubCheckLogs (workflow run) error: %v", err)
+// 		t.Fatalf("FetchCheckLogs (PR check run) error: %v", err)
 // 	}
-// 	t.Logf("Workflow run result:\n%s", result)
+// 	t.Logf("PR check run result:\n%s", result)
 // }
 
-// func TestDebug_FetchGitHubCheckLogs_Job(t *testing.T) {
-// 	result, err := utils.FetchGitHubCheckLogs("https://github.com/Azure/azure-rest-api-specs/actions/runs/22387426697/job/64801013267")
+// func TestDebug_FetchCheckLogs_ActionsRun(t *testing.T) {
+// 	result, err := utils.GetGitHubClient().FetchCheckLogs("https://github.com/Azure/azure-rest-api-specs/actions/runs/22387426697")
 // 	if err != nil {
-// 		t.Fatalf("FetchGitHubCheckLogs (job) error: %v", err)
+// 		t.Fatalf("FetchCheckLogs (actions run) error: %v", err)
+// 	}
+// 	t.Logf("Actions run result:\n%s", result)
+// }
+
+// func TestDebug_FetchCheckLogs_Job(t *testing.T) {
+// 	result, err := utils.GetGitHubClient().FetchCheckLogs("https://github.com/Azure/azure-rest-api-specs/actions/runs/22387426697/job/64801013267")
+// 	if err != nil {
+// 		t.Fatalf("FetchCheckLogs (job) error: %v", err)
 // 	}
 // 	t.Logf("Job result:\n%s", result)
 // }
 
-// func TestDebug_FetchGitHubCheckLogs_CheckRun(t *testing.T) {
-// 	result, err := utils.FetchGitHubCheckLogs("https://github.com/Azure/azure-rest-api-specs/runs/53495170336")
+// func TestDebug_FetchCheckLogs_CheckRun(t *testing.T) {
+// 	result, err := utils.GetGitHubClient().FetchCheckLogs("https://github.com/Azure/azure-rest-api-specs/runs/53495170336")
 // 	if err != nil {
-// 		t.Fatalf("FetchGitHubCheckLogs (check run) error: %v", err)
+// 		t.Fatalf("FetchCheckLogs (check run) error: %v", err)
 // 	}
 // 	t.Logf("Check run result:\n%s", result)
 // }

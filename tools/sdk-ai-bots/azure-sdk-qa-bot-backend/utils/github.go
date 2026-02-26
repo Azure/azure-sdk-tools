@@ -2,6 +2,9 @@ package utils
 
 import (
 	"compress/gzip"
+	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,7 +12,13 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 )
 
 // GitHub API base URL
@@ -18,119 +27,116 @@ const githubAPIBaseURL = "https://api.github.com"
 // Max log size to return (200KB) to avoid overwhelming the LLM context
 const maxGitHubLogSize = 200 * 1024
 
-// gitHubAnnotation represents a single annotation from a check run
-type gitHubAnnotation struct {
-	Path            string `json:"path"`
-	StartLine       int    `json:"start_line"`
-	EndLine         int    `json:"end_line"`
-	AnnotationLevel string `json:"annotation_level"`
-	Message         string `json:"message"`
-	Title           string `json:"title"`
+// Pre-compiled regexes for URL parsing (compiled once at package init).
+var (
+	prRegex         = regexp.MustCompile(`^https?://github\.com/([^/]+)/([^/]+)/pull/(\d+)`)
+	prCheckRunRegex = regexp.MustCompile(`^https?://github\.com/([^/]+)/([^/]+)/pull/\d+/checks\?check_run_id=(\d+)`)
+	actionsRunRegex = regexp.MustCompile(`^https?://github\.com/([^/]+)/([^/]+)/actions/runs/(\d+)(?:/jobs?/(\d+))?`)
+	checkRunRegex   = regexp.MustCompile(`^https?://github\.com/([^/]+)/([^/]+)/runs/(\d+)`)
+)
+
+// =====================================================================
+// Singleton
+// =====================================================================
+
+var (
+	githubClientOnce     sync.Once
+	githubClientInstance *GitHubClient
+)
+
+// GetGitHubClient returns the singleton GitHubClient instance.
+// The client is lazily initialised on first call and reused thereafter.
+func GetGitHubClient() *GitHubClient {
+	githubClientOnce.Do(func() {
+		githubClientInstance = &GitHubClient{
+			httpClient: &http.Client{Timeout: 30 * time.Second},
+			userAgent:  "azure-sdk-qa-bot",
+		}
+	})
+	return githubClientInstance
 }
 
-// gitHubCheckRunResponse represents the GitHub API response for a check run
-type gitHubCheckRunResponse struct {
-	ID         int64  `json:"id"`
-	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
-	Output     struct {
-		Title       string             `json:"title"`
-		Summary     string             `json:"summary"`
-		Text        string             `json:"text"`
-		Annotations []gitHubAnnotation `json:"annotations"`
-	} `json:"output"`
-	HTMLURL    string `json:"html_url"`
-	ExternalID string `json:"external_id"`
-	App        struct {
-		Name string `json:"name"`
-	} `json:"app"`
+// =====================================================================
+// GitHubClient
+// =====================================================================
+
+// GitHubClient encapsulates GitHub API access including GitHub App
+// authentication via Azure Key Vault signing. Obtain an instance via
+// GetGitHubClient().
+type GitHubClient struct {
+	httpClient *http.Client
+	userAgent  string
+
+	// Token cache (guarded by tokenMu)
+	tokenMu  sync.Mutex
+	token    string
+	tokenExp time.Time
 }
 
-// gitHubWorkflowRunResponse represents GitHub API response for a workflow run
-type gitHubWorkflowRunResponse struct {
-	ID         int64  `json:"id"`
-	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
-	HTMLURL    string `json:"html_url"`
+// =====================================================================
+// Public API
+// =====================================================================
+
+// FetchCheckLogs fetches logs/details for a GitHub check run or Actions
+//
+//	run. Uses GitHub App authentication when configured.
+func (g *GitHubClient) FetchCheckLogs(url string) (string, error) {
+	startTime := time.Now()
+	defer func() {
+		log.Printf("FetchCheckLogs completed in %v", time.Since(startTime))
+	}()
+
+	link := parseGitHubCheckLink(url)
+	if link == nil {
+		return "", fmt.Errorf("not a valid GitHub check/actions URL: %s", url)
+	}
+
+	if link.CheckRunID != "" {
+		return g.fetchCheckRunDetails(link)
+	}
+	if link.JobID != "" {
+		return g.fetchJobLogs(link)
+	}
+	if link.ActionsRunID != "" {
+		return g.fetchActionsRunDetails(link)
+	}
+	return "", fmt.Errorf("unable to determine GitHub check type from URL: %s", url)
 }
 
-// gitHubJobResponse represents GitHub API response for a workflow job
-type gitHubJobResponse struct {
-	ID         int64  `json:"id"`
-	RunID      int64  `json:"run_id"`
-	Name       string `json:"name"`
-	Status     string `json:"status"`
-	Conclusion string `json:"conclusion"`
-	Steps      []struct {
-		Name       string `json:"name"`
-		Status     string `json:"status"`
-		Conclusion string `json:"conclusion"`
-		Number     int    `json:"number"`
-	} `json:"steps"`
+// FetchPRChecks fetches all check runs for a GitHub PR and returns details
+// of failed/problematic checks including their output, annotations, and logs.
+func (g *GitHubClient) FetchPRChecks(url string) (string, error) {
+	startTime := time.Now()
+	defer func() {
+		log.Printf("FetchPRChecks completed in %v", time.Since(startTime))
+	}()
+
+	prLink := parseGitHubPRLink(url)
+	if prLink == nil {
+		return "", fmt.Errorf("not a valid GitHub PR URL: %s", url)
+	}
+	return g.fetchPRCheckRuns(prLink)
 }
 
-// gitHubJobsListResponse represents the GitHub API response for listing jobs
-type gitHubJobsListResponse struct {
-	TotalCount int                 `json:"total_count"`
-	Jobs       []gitHubJobResponse `json:"jobs"`
-}
-
-// gitHubCheckRunsListResponse represents the GitHub API response for listing check runs
-type gitHubCheckRunsListResponse struct {
-	TotalCount int                      `json:"total_count"`
-	CheckRuns  []gitHubCheckRunResponse `json:"check_runs"`
-}
-
-// gitHubPRResponse represents the GitHub API response for a pull request (minimal fields)
-type gitHubPRResponse struct {
-	Number int    `json:"number"`
-	Title  string `json:"title"`
-	State  string `json:"state"`
-	Head   struct {
-		SHA string `json:"sha"`
-	} `json:"head"`
-	HTMLURL string `json:"html_url"`
-}
-
-// gitHubCheckLink holds parsed info from a GitHub check/actions URL
-type gitHubCheckLink struct {
-	Owner      string
-	Repo       string
-	RunID      string // workflow run ID (for /actions/runs/{id})
-	JobID      string // job ID (for /actions/runs/{id}/job/{job_id})
-	CheckRunID string // check run ID (for /runs/{id})
-}
-
-// gitHubPRLink holds parsed info from a GitHub PR URL
-type gitHubPRLink struct {
-	Owner    string
-	Repo     string
-	PRNumber string
-}
-
-// IsGitHubCheckLink checks if a URL is a GitHub check run or GitHub Actions link
+// IsGitHubCheckLink checks if a URL is a GitHub check run or GitHub Actions link.
 func IsGitHubCheckLink(url string) bool {
 	return parseGitHubCheckLink(url) != nil
 }
 
-// IsGitHubPRLink checks if a URL is a GitHub pull request link
+// IsGitHubPRLink checks if a URL is a GitHub pull request link.
 func IsGitHubPRLink(url string) bool {
 	return parseGitHubPRLink(url) != nil
 }
 
-// ciRelatedKeywords are terms in the intention category or question that signal
-// the user is asking about CI checks, build/validation failures, or pipeline issues.
+// ciRelatedKeywords are terms that signal CI-related questions.
 var ciRelatedKeywords = []string{
 	"check", "ci", "pipeline", "build", "fail", "error",
 	"lint", "validation", "action", "workflow",
 	"blocking", "merge", "spec-validation",
 }
 
-// IsCIRelatedIntention returns true if the recognized intention indicates the user
-// is asking about CI checks, build failures, or pipeline issues.
-// It inspects both the category and the rewritten question from intention recognition.
+// IsCIRelatedIntention returns true if the recognised intention indicates the
+// user is asking about CI checks, build failures, or pipeline issues.
 func IsCIRelatedIntention(category string, question string) bool {
 	combined := strings.ToLower(category + " " + question)
 	for _, keyword := range ciRelatedKeywords {
@@ -141,13 +147,9 @@ func IsCIRelatedIntention(category string, question string) bool {
 	return false
 }
 
-// parseGitHubPRLink extracts owner, repo, and PR number from a GitHub PR URL.
-// Supported URL formats:
-//   - https://github.com/{owner}/{repo}/pull/{pr_number}
-func parseGitHubPRLink(url string) *gitHubPRLink {
-	prRegex := regexp.MustCompile(`^https?://github\.com/([^/]+)/([^/]+)/pull/(\d+)`)
+func parseGitHubPRLink(url string) *model.GitHubPRLink {
 	if matches := prRegex.FindStringSubmatch(url); len(matches) >= 4 {
-		return &gitHubPRLink{
+		return &model.GitHubPRLink{
 			Owner:    matches[1],
 			Repo:     matches[2],
 			PRNumber: matches[3],
@@ -156,21 +158,21 @@ func parseGitHubPRLink(url string) *gitHubPRLink {
 	return nil
 }
 
-// parseGitHubCheckLink extracts owner, repo, and IDs from a GitHub check/actions URL.
-// Supported URL formats:
-//   - https://github.com/{owner}/{repo}/actions/runs/{run_id}
-//   - https://github.com/{owner}/{repo}/actions/runs/{run_id}/job/{job_id}
-//   - https://github.com/{owner}/{repo}/actions/runs/{run_id}/jobs/{job_id}
-//   - https://github.com/{owner}/{repo}/runs/{check_run_id}
-func parseGitHubCheckLink(url string) *gitHubCheckLink {
-	// Match GitHub Actions workflow run with optional job ID
-	// e.g., https://github.com/Azure/azure-rest-api-specs/actions/runs/18752237048/job/53494737696
-	actionsRunRegex := regexp.MustCompile(`^https?://github\.com/([^/]+)/([^/]+)/actions/runs/(\d+)(?:/jobs?/(\d+))?`)
+func parseGitHubCheckLink(url string) *model.GitHubCheckLink {
+	// PR check run link: /pull/N/checks?check_run_id=N
+	if matches := prCheckRunRegex.FindStringSubmatch(url); len(matches) >= 4 {
+		return &model.GitHubCheckLink{
+			Owner:      matches[1],
+			Repo:       matches[2],
+			CheckRunID: matches[3],
+		}
+	}
+
 	if matches := actionsRunRegex.FindStringSubmatch(url); len(matches) >= 4 {
-		link := &gitHubCheckLink{
-			Owner: matches[1],
-			Repo:  matches[2],
-			RunID: matches[3],
+		link := &model.GitHubCheckLink{
+			Owner:        matches[1],
+			Repo:         matches[2],
+			ActionsRunID: matches[3],
 		}
 		if len(matches) >= 5 && matches[4] != "" {
 			link.JobID = matches[4]
@@ -178,79 +180,63 @@ func parseGitHubCheckLink(url string) *gitHubCheckLink {
 		return link
 	}
 
-	// Match GitHub check run URL
-	// e.g., https://github.com/Azure/azure-rest-api-specs/runs/53495233105
-	checkRunRegex := regexp.MustCompile(`^https?://github\.com/([^/]+)/([^/]+)/runs/(\d+)`)
 	if matches := checkRunRegex.FindStringSubmatch(url); len(matches) >= 4 {
-		return &gitHubCheckLink{
+		return &model.GitHubCheckLink{
 			Owner:      matches[1],
 			Repo:       matches[2],
 			CheckRunID: matches[3],
 		}
 	}
-
 	return nil
 }
 
-// FetchGitHubCheckLogs fetches logs/details for a GitHub check run or Actions workflow run.
-// Uses the public GitHub API (no authentication required for public repos).
-// Returns a formatted text summary of the check/action results and logs.
-func FetchGitHubCheckLogs(url string) (string, error) {
-	startTime := time.Now()
-	defer func() {
-		log.Printf("FetchGitHubCheckLogs completed in %v", time.Since(startTime))
-	}()
+// =====================================================================
+// Internal: API helpers
+// =====================================================================
 
-	link := parseGitHubCheckLink(url)
-	if link == nil {
-		return "", fmt.Errorf("not a valid GitHub check/actions URL: %s", url)
+// apiGet makes an authenticated GET request to the GitHub API.
+func (g *GitHubClient) apiGet(url string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	if link.CheckRunID != "" {
-		return fetchCheckRunDetails(link)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", g.userAgent)
+
+	if token, tokenErr := g.getToken(); tokenErr == nil && token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	} else if tokenErr != nil {
+		log.Printf("GitHub App auth not available, using unauthenticated API: %v", tokenErr)
 	}
 
-	if link.JobID != "" {
-		return fetchJobLogs(link)
+	resp, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
+	defer func() { _ = resp.Body.Close() }()
 
-	if link.RunID != "" {
-		return fetchWorkflowRunDetails(link)
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitHub API returned status %d: %s", resp.StatusCode, string(body))
 	}
-
-	return "", fmt.Errorf("unable to determine GitHub check type from URL: %s", url)
+	return io.ReadAll(resp.Body)
 }
 
-// FetchGitHubPRChecks fetches all check runs for a GitHub PR and returns details
-// of failed/problematic checks including their output, annotations, and logs.
-// For passing checks, only a summary line is returned.
-func FetchGitHubPRChecks(url string) (string, error) {
-	startTime := time.Now()
-	defer func() {
-		log.Printf("FetchGitHubPRChecks completed in %v", time.Since(startTime))
-	}()
+// =====================================================================
+// Internal: check / PR / job fetchers
+// =====================================================================
 
-	prLink := parseGitHubPRLink(url)
-	if prLink == nil {
-		return "", fmt.Errorf("not a valid GitHub PR URL: %s", url)
-	}
-
-	return fetchPRCheckRuns(prLink)
-}
-
-// fetchPRCheckRuns fetches the PR details and all check runs, then returns
-// a formatted summary with detailed info for failed checks.
-func fetchPRCheckRuns(prLink *gitHubPRLink) (string, error) {
-	// 1. Get PR details to obtain the head SHA
+func (g *GitHubClient) fetchPRCheckRuns(prLink *model.GitHubPRLink) (string, error) {
 	prURL := fmt.Sprintf("%s/repos/%s/%s/pulls/%s", githubAPIBaseURL, prLink.Owner, prLink.Repo, prLink.PRNumber)
 	log.Printf("Fetching GitHub PR details: %s", prURL)
 
-	body, err := githubAPIGet(prURL)
+	body, err := g.apiGet(prURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch PR details: %w", err)
 	}
 
-	var pr gitHubPRResponse
+	var pr model.GitHubPRResponse
 	if err = json.Unmarshal(body, &pr); err != nil {
 		return "", fmt.Errorf("failed to parse PR response: %w", err)
 	}
@@ -260,31 +246,32 @@ func fetchPRCheckRuns(prLink *gitHubPRLink) (string, error) {
 	sb.WriteString(fmt.Sprintf("- **State**: %s\n", pr.State))
 	sb.WriteString(fmt.Sprintf("- **URL**: %s\n", pr.HTMLURL))
 
-	// 2. Get all check runs for the head SHA
-	checksURL := fmt.Sprintf("%s/repos/%s/%s/commits/%s/check-runs?per_page=100", githubAPIBaseURL, prLink.Owner, prLink.Repo, pr.Head.SHA)
+	checksURL := fmt.Sprintf("%s/repos/%s/%s/commits/%s/check-runs?per_page=100",
+		githubAPIBaseURL, prLink.Owner, prLink.Repo, pr.Head.SHA)
 	log.Printf("Fetching check runs for SHA %s", pr.Head.SHA)
 
-	body, err = githubAPIGet(checksURL)
+	body, err = g.apiGet(checksURL)
 	if err != nil {
 		log.Printf("Failed to fetch check runs: %v", err)
 		sb.WriteString("*Failed to fetch check runs*\n")
 		return sb.String(), nil
 	}
 
-	var checksList gitHubCheckRunsListResponse
+	var checksList model.GitHubCheckRunsListResponse
 	if err := json.Unmarshal(body, &checksList); err != nil {
 		log.Printf("Failed to parse check runs response: %v", err)
 		sb.WriteString("*Failed to parse check runs*\n")
 		return sb.String(), nil
 	}
 
-	// 3. Categorize checks
-	var failed, succeeded, pending []gitHubCheckRunResponse
+	var failed, succeeded, pending []model.GitHubCheckRunResponse
 	for _, check := range checksList.CheckRuns {
 		switch {
-		case check.Conclusion == "failure" || check.Conclusion == "action_required" || check.Conclusion == "timed_out" || check.Conclusion == "cancelled":
+		case check.Conclusion == "failure" || check.Conclusion == "action_required" ||
+			check.Conclusion == "timed_out" || check.Conclusion == "cancelled":
 			failed = append(failed, check)
-		case check.Status == "completed" && (check.Conclusion == "success" || check.Conclusion == "neutral" || check.Conclusion == "skipped"):
+		case check.Status == "completed" && (check.Conclusion == "success" ||
+			check.Conclusion == "neutral" || check.Conclusion == "skipped"):
 			succeeded = append(succeeded, check)
 		default:
 			pending = append(pending, check)
@@ -294,7 +281,6 @@ func fetchPRCheckRuns(prLink *gitHubPRLink) (string, error) {
 	sb.WriteString(fmt.Sprintf("### Check Runs Summary: %d total, %d failed, %d passed, %d pending\n\n",
 		checksList.TotalCount, len(failed), len(succeeded), len(pending)))
 
-	// 4. Show detailed info for failed checks
 	if len(failed) > 0 {
 		sb.WriteString("### Failed Checks\n")
 		for _, check := range failed {
@@ -321,21 +307,10 @@ func fetchPRCheckRuns(prLink *gitHubPRLink) (string, error) {
 				sb.WriteString(fmt.Sprintf("\n**Details**:\n%s\n", text))
 			}
 
-			// Fetch annotations separately (the list check-runs endpoint does not include them)
-			annotations := fetchCheckRunAnnotations(prLink.Owner, prLink.Repo, check.ID)
+			annotations := g.fetchCheckRunAnnotations(prLink.Owner, prLink.Repo, check.ID)
 			if len(annotations) > 0 {
 				sb.WriteString("\n**Annotations**:\n")
-				for _, a := range annotations {
-					sb.WriteString(fmt.Sprintf("- **[%s]** %s (line %d", a.AnnotationLevel, a.Path, a.StartLine))
-					if a.EndLine != a.StartLine {
-						sb.WriteString(fmt.Sprintf("-%d", a.EndLine))
-					}
-					sb.WriteString(fmt.Sprintf("): %s", a.Message))
-					if a.Title != "" {
-						sb.WriteString(fmt.Sprintf(" — %s", a.Title))
-					}
-					sb.WriteString("\n")
-				}
+				writeAnnotations(&sb, annotations)
 			}
 		}
 	}
@@ -343,38 +318,55 @@ func fetchPRCheckRuns(prLink *gitHubPRLink) (string, error) {
 	return sb.String(), nil
 }
 
-// fetchCheckRunAnnotations fetches annotations for a check run via the dedicated endpoint.
-// The list check-runs endpoint does NOT include annotations; they must be fetched separately.
-func fetchCheckRunAnnotations(owner, repo string, checkRunID int64) []gitHubAnnotation {
-	apiURL := fmt.Sprintf("%s/repos/%s/%s/check-runs/%d/annotations?per_page=50", githubAPIBaseURL, owner, repo, checkRunID)
+func (g *GitHubClient) fetchCheckRunAnnotations(owner, repo string, checkRunID int64) []model.GitHubAnnotation {
+	apiURL := fmt.Sprintf("%s/repos/%s/%s/check-runs/%d/annotations?per_page=50",
+		githubAPIBaseURL, owner, repo, checkRunID)
 	log.Printf("Fetching annotations for check run %d: %s", checkRunID, apiURL)
 
-	body, err := githubAPIGet(apiURL)
+	body, err := g.apiGet(apiURL)
 	if err != nil {
 		log.Printf("Failed to fetch annotations for check run %d: %v", checkRunID, err)
 		return nil
 	}
 
-	var annotations []gitHubAnnotation
+	var annotations []model.GitHubAnnotation
 	if err := json.Unmarshal(body, &annotations); err != nil {
 		log.Printf("Failed to parse annotations for check run %d: %v", checkRunID, err)
 		return nil
 	}
-
 	return annotations
 }
 
-// fetchCheckRunDetails gets details and annotations for a GitHub check run
-func fetchCheckRunDetails(link *gitHubCheckLink) (string, error) {
+// fetchJobSummary fetches the job summary (written via $GITHUB_STEP_SUMMARY)
+// using the undocumented github.com summary_raw endpoint. The check-runs API
+// does not expose this content (output fields are null for Actions jobs).
+func (g *GitHubClient) fetchJobSummary(owner, repo, actionsRunID string, jobID int64) string {
+	url := fmt.Sprintf("https://github.com/%s/%s/actions/runs/%s/jobs/%d/summary_raw", owner, repo, actionsRunID, jobID)
+	log.Printf("Fetching job summary for job %d: %s", jobID, url)
+
+	body, err := g.apiGet(url)
+	if err != nil {
+		log.Printf("Failed to fetch job summary for job %d: %v", jobID, err)
+		return ""
+	}
+
+	summary := strings.TrimSpace(string(body))
+	if len(summary) > maxGitHubLogSize {
+		summary = summary[:maxGitHubLogSize] + "\n... [truncated]"
+	}
+	return summary
+}
+
+func (g *GitHubClient) fetchCheckRunDetails(link *model.GitHubCheckLink) (string, error) {
 	apiURL := fmt.Sprintf("%s/repos/%s/%s/check-runs/%s", githubAPIBaseURL, link.Owner, link.Repo, link.CheckRunID)
 	log.Printf("Fetching GitHub check run details: %s", apiURL)
 
-	body, err := githubAPIGet(apiURL)
+	body, err := g.apiGet(apiURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch check run details: %w", err)
 	}
 
-	var checkRun gitHubCheckRunResponse
+	var checkRun model.GitHubCheckRunResponse
 	if err := json.Unmarshal(body, &checkRun); err != nil {
 		return "", fmt.Errorf("failed to parse check run response: %w", err)
 	}
@@ -399,57 +391,43 @@ func fetchCheckRunDetails(link *gitHubCheckLink) (string, error) {
 		sb.WriteString(fmt.Sprintf("**Details**:\n%s\n\n", text))
 	}
 
-	// Fetch annotations via dedicated endpoint (the check-run response may not include them)
-	annotations := fetchCheckRunAnnotations(link.Owner, link.Repo, checkRun.ID)
+	annotations := g.fetchCheckRunAnnotations(link.Owner, link.Repo, checkRun.ID)
 	if len(annotations) > 0 {
 		sb.WriteString("### Annotations\n")
-		for _, a := range annotations {
-			sb.WriteString(fmt.Sprintf("- **[%s]** %s (line %d", a.AnnotationLevel, a.Path, a.StartLine))
-			if a.EndLine != a.StartLine {
-				sb.WriteString(fmt.Sprintf("-%d", a.EndLine))
-			}
-			sb.WriteString(fmt.Sprintf("): %s", a.Message))
-			if a.Title != "" {
-				sb.WriteString(fmt.Sprintf(" — %s", a.Title))
-			}
-			sb.WriteString("\n")
-		}
+		writeAnnotations(&sb, annotations)
 	}
 
 	return sb.String(), nil
 }
 
-// fetchWorkflowRunDetails gets the workflow run info and its failed jobs' logs
-func fetchWorkflowRunDetails(link *gitHubCheckLink) (string, error) {
-	// First, get workflow run details
-	runURL := fmt.Sprintf("%s/repos/%s/%s/actions/runs/%s", githubAPIBaseURL, link.Owner, link.Repo, link.RunID)
-	log.Printf("Fetching GitHub workflow run details: %s", runURL)
+func (g *GitHubClient) fetchActionsRunDetails(link *model.GitHubCheckLink) (string, error) {
+	runURL := fmt.Sprintf("%s/repos/%s/%s/actions/runs/%s", githubAPIBaseURL, link.Owner, link.Repo, link.ActionsRunID)
+	log.Printf("Fetching GitHub Actions run details: %s", runURL)
 
-	body, err := githubAPIGet(runURL)
+	body, err := g.apiGet(runURL)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch workflow run details: %w", err)
+		return "", fmt.Errorf("failed to fetch actions run details: %w", err)
 	}
 
-	var run gitHubWorkflowRunResponse
+	var run model.GitHubActionsRunResponse
 	if err = json.Unmarshal(body, &run); err != nil {
-		return "", fmt.Errorf("failed to parse workflow run response: %w", err)
+		return "", fmt.Errorf("failed to parse actions run response: %w", err)
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("## GitHub Actions Workflow Run: %s\n", run.Name))
+	sb.WriteString(fmt.Sprintf("## GitHub Actions Run: %s\n", run.Name))
 	sb.WriteString(fmt.Sprintf("- **Status**: %s\n", run.Status))
 	sb.WriteString(fmt.Sprintf("- **Conclusion**: %s\n", run.Conclusion))
 	sb.WriteString(fmt.Sprintf("- **URL**: %s\n\n", run.HTMLURL))
 
-	// Get jobs for this run
-	jobsURL := fmt.Sprintf("%s/repos/%s/%s/actions/runs/%s/jobs", githubAPIBaseURL, link.Owner, link.Repo, link.RunID)
-	body, err = githubAPIGet(jobsURL)
+	jobsURL := fmt.Sprintf("%s/repos/%s/%s/actions/runs/%s/jobs", githubAPIBaseURL, link.Owner, link.Repo, link.ActionsRunID)
+	body, err = g.apiGet(jobsURL)
 	if err != nil {
-		log.Printf("Failed to fetch jobs for workflow run: %v", err)
-		return sb.String(), nil // Return what we have
+		log.Printf("Failed to fetch jobs for actions run: %v", err)
+		return sb.String(), nil
 	}
 
-	var jobsList gitHubJobsListResponse
+	var jobsList model.GitHubJobsListResponse
 	if err = json.Unmarshal(body, &jobsList); err != nil {
 		log.Printf("Failed to parse jobs response: %v", err)
 		return sb.String(), nil
@@ -461,35 +439,26 @@ func fetchWorkflowRunDetails(link *gitHubCheckLink) (string, error) {
 		sb.WriteString(fmt.Sprintf("\n#### Job: %s\n", job.Name))
 		sb.WriteString(fmt.Sprintf("- **Status**: %s, **Conclusion**: %s\n", job.Status, job.Conclusion))
 
-		// Show steps
 		if len(job.Steps) > 0 {
 			sb.WriteString("**Steps**:\n")
-			for _, step := range job.Steps {
-				icon := "✓"
-				if step.Conclusion == "failure" {
-					icon = "✗"
-				} else if step.Conclusion == "skipped" {
-					icon = "○"
-				} else if step.Status == "in_progress" {
-					icon = "●"
-				}
-				sb.WriteString(fmt.Sprintf("  %s %d. %s (%s)\n", icon, step.Number, step.Name, step.Conclusion))
-			}
+			writeSteps(&sb, job.Steps)
 		}
 
-		// Fetch logs for failed jobs
+		// Fetch job summary
+		if jobSummary := g.fetchJobSummary(link.Owner, link.Repo, link.ActionsRunID, job.ID); jobSummary != "" {
+			sb.WriteString(fmt.Sprintf("\n**Job Summary**:\n%s\n", jobSummary))
+		}
+
 		if job.Conclusion == "failure" {
 			log.Printf("Fetching logs for failed job %d: %s", job.ID, job.Name)
-			jobLink := &gitHubCheckLink{
-				Owner: link.Owner,
-				Repo:  link.Repo,
-				RunID: link.RunID,
-				JobID: fmt.Sprintf("%d", job.ID),
+			jobLink := &model.GitHubCheckLink{
+				Owner: link.Owner, Repo: link.Repo,
+				ActionsRunID: link.ActionsRunID, JobID: fmt.Sprintf("%d", job.ID),
 			}
-			logs, err := downloadJobLogs(jobLink)
-			if err != nil {
-				log.Printf("Failed to fetch logs for job %d: %v", job.ID, err)
-				sb.WriteString(fmt.Sprintf("\n*Failed to fetch logs: %v*\n", err))
+			logs, dlErr := g.downloadJobLogs(jobLink)
+			if dlErr != nil {
+				log.Printf("Failed to fetch logs for job %d: %v", job.ID, dlErr)
+				sb.WriteString(fmt.Sprintf("\n*Failed to fetch logs: %v*\n", dlErr))
 			} else {
 				sb.WriteString(fmt.Sprintf("\n**Logs**:\n```\n%s\n```\n", logs))
 			}
@@ -499,18 +468,16 @@ func fetchWorkflowRunDetails(link *gitHubCheckLink) (string, error) {
 	return sb.String(), nil
 }
 
-// fetchJobLogs gets the details and logs for a specific job
-func fetchJobLogs(link *gitHubCheckLink) (string, error) {
-	// Get job details first
+func (g *GitHubClient) fetchJobLogs(link *model.GitHubCheckLink) (string, error) {
 	jobURL := fmt.Sprintf("%s/repos/%s/%s/actions/jobs/%s", githubAPIBaseURL, link.Owner, link.Repo, link.JobID)
 	log.Printf("Fetching GitHub job details: %s", jobURL)
 
-	body, err := githubAPIGet(jobURL)
+	body, err := g.apiGet(jobURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch job details: %w", err)
 	}
 
-	var job gitHubJobResponse
+	var job model.GitHubJobResponse
 	if err = json.Unmarshal(body, &job); err != nil {
 		return "", fmt.Errorf("failed to parse job response: %w", err)
 	}
@@ -520,27 +487,22 @@ func fetchJobLogs(link *gitHubCheckLink) (string, error) {
 	sb.WriteString(fmt.Sprintf("- **Status**: %s\n", job.Status))
 	sb.WriteString(fmt.Sprintf("- **Conclusion**: %s\n", job.Conclusion))
 
-	// Show steps
 	if len(job.Steps) > 0 {
 		sb.WriteString("\n**Steps**:\n")
-		for _, step := range job.Steps {
-			icon := "✓"
-			if step.Conclusion == "failure" {
-				icon = "✗"
-			} else if step.Conclusion == "skipped" {
-				icon = "○"
-			} else if step.Status == "in_progress" {
-				icon = "●"
-			}
-			sb.WriteString(fmt.Sprintf("  %s %d. %s (%s)\n", icon, step.Number, step.Name, step.Conclusion))
+		writeSteps(&sb, job.Steps)
+	}
+
+	// Fetch job summary
+	if link.ActionsRunID != "" {
+		if jobSummary := g.fetchJobSummary(link.Owner, link.Repo, link.ActionsRunID, job.ID); jobSummary != "" {
+			sb.WriteString(fmt.Sprintf("\n**Job Summary**:\n%s\n", jobSummary))
 		}
 	}
 
-	// Fetch the logs
-	logs, err := downloadJobLogs(link)
-	if err != nil {
-		log.Printf("Failed to download job logs: %v", err)
-		sb.WriteString(fmt.Sprintf("\n*Failed to fetch logs: %v*\n", err))
+	logs, dlErr := g.downloadJobLogs(link)
+	if dlErr != nil {
+		log.Printf("Failed to download job logs: %v", dlErr)
+		sb.WriteString(fmt.Sprintf("\n*Failed to fetch logs: %v*\n", dlErr))
 	} else {
 		sb.WriteString(fmt.Sprintf("\n**Logs**:\n```\n%s\n```\n", logs))
 	}
@@ -548,8 +510,7 @@ func fetchJobLogs(link *gitHubCheckLink) (string, error) {
 	return sb.String(), nil
 }
 
-// downloadJobLogs downloads the plain text logs for a specific job
-func downloadJobLogs(link *gitHubCheckLink) (string, error) {
+func (g *GitHubClient) downloadJobLogs(link *model.GitHubCheckLink) (string, error) {
 	logsURL := fmt.Sprintf("%s/repos/%s/%s/actions/jobs/%s/logs", githubAPIBaseURL, link.Owner, link.Repo, link.JobID)
 	log.Printf("Downloading job logs: %s", logsURL)
 
@@ -559,23 +520,25 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 	}
 
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("User-Agent", "azure-sdk-qa-bot")
+	req.Header.Set("User-Agent", g.userAgent)
 
-	client := &http.Client{
+	if token, tokenErr := g.getToken(); tokenErr == nil && token != "" {
+		req.Header.Set("Authorization", "token "+token)
+	}
+
+	noRedirectClient := &http.Client{
 		Timeout: 30 * time.Second,
-		// Don't follow redirects automatically - we handle them
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
 
-	resp, err := client.Do(req)
+	resp, err := noRedirectClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to request logs: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	// GitHub returns a 302 redirect to the actual log URL
 	if resp.StatusCode == http.StatusFound {
 		redirectURL := resp.Header.Get("Location")
 		if redirectURL == "" {
@@ -587,11 +550,8 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to create redirect request: %w", err)
 		}
-
-		// Close the original redirect response before reassigning resp
 		_ = resp.Body.Close()
 
-		// Use a new client that follows redirects for the blob storage URL
 		redirectClient := &http.Client{Timeout: 30 * time.Second}
 		resp, err = redirectClient.Do(redirectReq)
 		if err != nil {
@@ -604,7 +564,6 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 		return "", fmt.Errorf("unexpected status code %d when fetching logs", resp.StatusCode)
 	}
 
-	// The response may be gzip-encoded
 	var reader io.Reader = resp.Body
 	if resp.Header.Get("Content-Encoding") == "gzip" {
 		var gzReader *gzip.Reader
@@ -616,7 +575,6 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 		reader = gzReader
 	}
 
-	// Read with size limit
 	limitedReader := io.LimitReader(reader, int64(maxGitHubLogSize)+1)
 	logBytes, err := io.ReadAll(limitedReader)
 	if err != nil {
@@ -627,31 +585,237 @@ func downloadJobLogs(link *gitHubCheckLink) (string, error) {
 	if len(logBytes) > maxGitHubLogSize {
 		logText = logText[:maxGitHubLogSize] + "\n... [truncated]"
 	}
-
 	return logText, nil
 }
 
-// githubAPIGet makes a GET request to the public GitHub API (no authentication).
-func githubAPIGet(url string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+// =====================================================================
+// Internal: GitHub App authentication
+// =====================================================================
+
+// getToken returns a cached or fresh GitHub App installation token.
+func (g *GitHubClient) getToken() (string, error) {
+	g.tokenMu.Lock()
+	defer g.tokenMu.Unlock()
+
+	if g.token != "" && time.Now().Before(g.tokenExp.Add(-5*time.Minute)) {
+		return g.token, nil
 	}
 
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("User-Agent", "azure-sdk-qa-bot")
+	if config.AppConfig == nil {
+		return "", fmt.Errorf("app configuration not initialized")
+	}
+	if config.Credential == nil {
+		return "", fmt.Errorf("azure credential not initialized")
+	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Do(req)
+	appID := config.AppConfig.GITHUB_APP_ID
+	keyName := config.AppConfig.GITHUB_APP_KEY_NAME
+	vaultURL := config.AppConfig.GITHUB_APP_KEYVAULT_URL
+	owner := config.AppConfig.GITHUB_APP_INSTALLATION_OWNER
+
+	if appID == "" || keyName == "" || vaultURL == "" {
+		return "", fmt.Errorf("GitHub App configuration incomplete: GITHUB_APP_ID, GITHUB_APP_KEY_NAME, and GITHUB_APP_KEYVAULT_URL are required")
+	}
+	if owner == "" {
+		owner = "Azure"
+	}
+
+	jwt, err := g.createAppJWT(vaultURL, keyName, appID)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return "", fmt.Errorf("failed to create GitHub App JWT: %w", err)
+	}
+
+	installationID, err := g.findInstallationID(jwt, owner)
+	if err != nil {
+		return "", fmt.Errorf("failed to find installation ID for owner '%s': %w", owner, err)
+	}
+	log.Printf("GitHub App installation ID for '%s': %d", owner, installationID)
+
+	token, expiresAt, err := g.createInstallationToken(jwt, installationID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create installation token: %w", err)
+	}
+
+	g.token = token
+	g.tokenExp = expiresAt
+	log.Printf("GitHub App installation token obtained, expires at %s", expiresAt.Format(time.RFC3339))
+	return token, nil
+}
+
+func (g *GitHubClient) createAppJWT(vaultURL, keyName, appID string) (string, error) {
+	header := map[string]string{"alg": "RS256", "typ": "JWT"}
+	now := time.Now().Unix()
+	payload := map[string]interface{}{
+		"iat": now - 10,
+		"exp": now + 600,
+		"iss": appID,
+	}
+
+	headerJSON, err := json.Marshal(header)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal JWT header: %w", err)
+	}
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal JWT payload: %w", err)
+	}
+
+	encodedHeader := base64URLEncode(headerJSON)
+	encodedPayload := base64URLEncode(payloadJSON)
+	unsignedToken := encodedHeader + "." + encodedPayload
+
+	digest := sha256.Sum256([]byte(unsignedToken))
+
+	cred, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ID: azidentity.ClientID(config.GetBotClientID()),
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create managed identity credential: %w", err)
+	}
+	client, err := azkeys.NewClient(vaultURL, cred, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create Key Vault keys client: %w", err)
+	}
+
+	algo := azkeys.SignatureAlgorithmRS256
+	signResult, err := client.Sign(context.TODO(), keyName, "", azkeys.SignParameters{
+		Algorithm: &algo,
+		Value:     digest[:],
+	}, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign JWT with Key Vault: %w", err)
+	}
+
+	signature := base64URLEncode(signResult.Result)
+	return unsignedToken + "." + signature, nil
+}
+
+func (g *GitHubClient) findInstallationID(jwt, owner string) (int64, error) {
+	req, err := http.NewRequest("GET", githubAPIBaseURL+"/app/installations", nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+jwt)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", g.userAgent)
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	resp, err := g.httpClient.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("failed to list installations: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("GitHub API returned status %d: %s", resp.StatusCode, string(body))
+		return 0, fmt.Errorf("GitHub API returned status %d listing installations: %s", resp.StatusCode, string(body))
 	}
 
-	return io.ReadAll(resp.Body)
+	var installations []struct {
+		ID      int64 `json:"id"`
+		Account struct {
+			Login string `json:"login"`
+		} `json:"account"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&installations); err != nil {
+		return 0, fmt.Errorf("failed to decode installations response: %w", err)
+	}
+
+	for _, inst := range installations {
+		if strings.EqualFold(inst.Account.Login, owner) {
+			return inst.ID, nil
+		}
+	}
+	return 0, fmt.Errorf("no GitHub App installation found for owner '%s'", owner)
+}
+
+func (g *GitHubClient) createInstallationToken(jwt string, installationID int64) (string, time.Time, error) {
+	url := fmt.Sprintf("%s/app/installations/%d/access_tokens", githubAPIBaseURL, installationID)
+	req, err := http.NewRequest("POST", url, strings.NewReader("{}"))
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+jwt)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", g.userAgent)
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	resp, err := g.httpClient.Do(req)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("failed to request installation token: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return "", time.Time{}, fmt.Errorf("GitHub API returned status %d creating installation token: %s", resp.StatusCode, string(body))
+	}
+
+	var result struct {
+		Token     string `json:"token"`
+		ExpiresAt string `json:"expires_at"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", time.Time{}, fmt.Errorf("failed to decode token response: %w", err)
+	}
+
+	if result.Token == "" {
+		return "", time.Time{}, fmt.Errorf("empty token in GitHub response")
+	}
+
+	expiresAt, err := time.Parse(time.RFC3339, result.ExpiresAt)
+	if err != nil {
+		expiresAt = time.Now().Add(1 * time.Hour)
+	}
+	return result.Token, expiresAt, nil
+}
+
+// =====================================================================
+// Small helpers
+// =====================================================================
+
+func base64URLEncode(data []byte) string {
+	return strings.TrimRight(base64.URLEncoding.EncodeToString(data), "=")
+}
+
+// writeAnnotations appends formatted annotation lines to sb.
+func writeAnnotations(sb *strings.Builder, annotations []model.GitHubAnnotation) {
+	for _, a := range annotations {
+		fmt.Fprintf(sb, "- **[%s]** %s (line %d", a.AnnotationLevel, a.Path, a.StartLine)
+		if a.EndLine != a.StartLine {
+			fmt.Fprintf(sb, "-%d", a.EndLine)
+		}
+		fmt.Fprintf(sb, "): %s", a.Message)
+		if a.Title != "" {
+			fmt.Fprintf(sb, " \u2014 %s", a.Title)
+		}
+		sb.WriteString("\n")
+	}
+}
+
+// writeSteps appends formatted step lines to sb.
+func writeSteps(sb *strings.Builder, steps []struct {
+	Name       string `json:"name"`
+	Status     string `json:"status"`
+	Conclusion string `json:"conclusion"`
+	Number     int    `json:"number"`
+}) {
+	for _, step := range steps {
+		icon := stepIcon(step.Status, step.Conclusion)
+		sb.WriteString(fmt.Sprintf("  %s %d. %s (%s)\n", icon, step.Number, step.Name, step.Conclusion))
+	}
+}
+
+func stepIcon(status, conclusion string) string {
+	switch {
+	case conclusion == "failure":
+		return "✗"
+	case conclusion == "skipped":
+		return "○"
+	case status == "in_progress":
+		return "●"
+	default:
+		return "✓"
+	}
 }

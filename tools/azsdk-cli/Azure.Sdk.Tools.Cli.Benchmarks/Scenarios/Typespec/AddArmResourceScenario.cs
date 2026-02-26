@@ -8,8 +8,8 @@ using Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 
 /// <summary>
-/// POC scenario that tests renaming a TypeSpec property's client name.
-/// Target: AddFaceFromUrlRequest.url property in specification/ai/Face/models.common.tsp
+/// POC scenario that tests adding a new ARM resource to a TypeSpec-based ARM specification.
+/// Target: Add an 'Asset' ARM resource with CRUD operations to specification/widget/resource-manager/Microsoft.Widget/Widget.
 /// </summary>
 public class AddArmResourceScenario : BenchmarkScenario
 {

@@ -375,7 +375,7 @@ public class VerifySetupService : IVerifySetupService
 
     private async Task<RequirementContext> CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null, CancellationToken ct = default)
     {
-        var (repoRoot, _, _) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
         var repoName = await gitHelper.GetRepoNameAsync(repoRoot, ct);
 
         // If no languages specified, try to detect from the repo

@@ -28,6 +28,7 @@ public class VerifySetupTool : LanguageMcpTool
         ILogger<VerifySetupTool> logger,
         IGitHelper gitHelper,
         IPackageInfoHelper packageInfoHelper,
+        IVerifySetupService verifySetupService,
         IEnumerable<LanguageService> languageServices) : base(languageServices, gitHelper, logger)
     {
         this.verifySetupService = verifySetupService;

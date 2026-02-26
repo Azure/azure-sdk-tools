@@ -27,8 +27,7 @@ internal class VerifySetupToolTests
     private Mock<IPowershellHelper> _mockPowerShellHelper;
     private TestLogger<LanguageService> _languageLogger;
     private Mock<ICopilotAgentRunner> _mockMicrohostAgent;
-    private Mock<IGitHelper> _mockGitHelper;
-    private Mock<ICommonValidationHelpers> _commonValidationHelpers;
+    private Mock<IProcessHelper> _mockProcessHelper;
     private IPackageInfoHelper _packageInfoHelper;
 
     [SetUp]
@@ -42,6 +41,7 @@ internal class VerifySetupToolTests
         _mockNpxHelper = new Mock<INpxHelper>();
         _mockPowerShellHelper = new Mock<IPowershellHelper>();
         _mockGitHelper = new Mock<IGitHelper>();
+        _mockProcessHelper = new Mock<IProcessHelper>();
         _packageInfoHelper = new PackageInfoHelper(new TestLogger<PackageInfoHelper>(), _mockGitHelper.Object);
 
         languageServices = []; // TODO is language service still needed
@@ -57,7 +57,7 @@ internal class VerifySetupToolTests
     }
 
     private VerifySetupTool CreateTool() =>
-        new(mockService.Object, logger, _mockGitHelper.Object, _packageInfoHelper, languageServices);
+        new(_mockProcessHelper.Object, logger, _mockGitHelper.Object, _packageInfoHelper, mockService.Object, languageServices);
 
     [Test]
     public async Task VerifySetup_DelegatesToService()

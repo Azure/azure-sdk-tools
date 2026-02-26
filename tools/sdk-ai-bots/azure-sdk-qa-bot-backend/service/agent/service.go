@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	neturl "net/url"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -27,9 +26,6 @@ import (
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/shared"
 )
-
-// prLinkRegex matches GitHub PR URLs embedded in user messages.
-var prLinkRegex = regexp.MustCompile(`https?://github\.com/[^/]+/[^/]+/pull/\d+`)
 
 type CompletionService struct {
 	model        string

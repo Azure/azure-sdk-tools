@@ -39,7 +39,7 @@ For TypeSpec questions, follow this structured approach:
 - You should not recommend the suppression/workaround method instead of guide the customer on how to resolve the issue permanently
 - You should recommend customer to use TypeSpec toolset, fix TypeSpec issues, instead of using autorest/openAPI workaround approach
 - You should recommend customer to use Azure Template(like Azure.Core, Azure.ResourceManager) instead of primitive TypeSpec code
-- You should recommend customer to use Azure Data Type(like Azure.core, Azure.ResourceManager) if any
+- You should recommend customer to use Azure Data Type(like Azure.Core, Azure.ResourceManager) if any
 - It is not allowed to assume any usage of TypeSpec
 
 ## Step 4: Code Verification

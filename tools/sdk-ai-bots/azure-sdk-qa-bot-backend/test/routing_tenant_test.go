@@ -18,7 +18,7 @@ func TestRoutingTenant_General(t *testing.T) {
 	service, err := agent.NewCompletionService()
 	require.NoError(t, err)
 
-	// Each testcase: query, expected tenant (always model.TenantID_AzureSDKOnboarding for general channel)
+	// Each testcase: query, original tenant, and the expected target tenant for that query
 	testcases := []struct {
 		name            string
 		content         string
@@ -46,7 +46,7 @@ func TestRoutingTenant_General(t *testing.T) {
 		{
 			"MSWB API spec removal",
 			`The Azure Modeling and Simulation Workbench (MSWB) preview service has been retired, so I'm trying to remove its related API specs from the REST API specs repository.\nPR Deleting 5 API specs for the deprecated MSWB service - RPSaaSDev by yochu-msft · Pull Request #2508… targets RPSaaSDev to delete 5 API specs.\nI want to move forward with merging this PR without resolving the Swagger LintDiff failure since the specs are being removed.\n'Next Steps to Merge' says "If you still want to proceed merging this PR without addressing the above failures, refer to step 4 in the PR workflow diagram." but 'PR workflow diagram' step 4 loops back that "Follow the instructions in the Next Steps to Merge comment." How should I merge the PR without fixing the failure?\ncc Mick Zaffke`,
-			model.TenantID_GeneralQaBot,
+			model.TenantID_APISpecReviewBot,
 			model.TenantID_APISpecReviewBot,
 		},
 		{
@@ -106,7 +106,7 @@ func TestRoutingTenant_General(t *testing.T) {
 		{
 			"SDK Validation for API PR's",
 			"I have these lines in my suppressions.yaml \n \nYAML\n- tool: TypeSpecValidation\n  reason: >\n    Not ready to generate SDKs from TypeSpec.\n    Responsibility: Service team with SDK team collaboration.\n    More info: https://aka.ms/azsdk/spec-gen-sdk-config.\n  rules: \n  - SdkTspConfigValidation\n  paths: \n  - HybridContainerService.Management/tspconfig.yaml\n \nBut PR is still running SDK validations and failing. Did the suppressions method change? ",
-			model.TenantID_AzureSDKQaBot,
+			model.TenantID_GeneralQaBot,
 			model.TenantID_APISpecReviewBot,
 		},
 		{

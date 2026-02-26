@@ -35,7 +35,7 @@ while (-not $ready -and $attempt -lt $maxAttempts) {
     Start-Sleep -Seconds 2
     $attempt++
     try {
-        $response = Invoke-WebRequest -Uri $apiViewUrl -UseBasicParsing -TimeoutSec 5 -ErrorAction SilentlyContinue
+        $response = Invoke-WebRequest -Uri $apiViewUrl -TimeoutSec 5 -ErrorAction SilentlyContinue
         if ($response.StatusCode -eq 200 -or $response.StatusCode -eq 302) {
             $ready = $true
             Write-Host "APIViewWeb is ready!" -ForegroundColor Green

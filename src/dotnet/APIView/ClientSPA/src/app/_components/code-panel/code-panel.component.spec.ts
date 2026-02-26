@@ -89,6 +89,147 @@ describe('CodePanelComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('diff comment behavior', () => {
+    it('should allow adding comments on removed rows in diff mode when row has content', () => {
+      const removedRow = new CodePanelRowData();
+      removedRow.type = CodePanelRowDatatype.CodeLine;
+      removedRow.rowClasses = new Set<string>(['removed']);
+      removedRow.rowOfTokens = [{ value: 'removed line' } as any];
+
+      component.isDiffView = true;
+      component.userProfile = {} as any;
+
+      expect(component.canAddComment(removedRow)).toBe(true);
+    });
+
+    it('should route new comment creation from removed rows to diff revision', () => {
+      const commentsService = TestBed.inject(CommentsService);
+      const createCommentSpy = vi.spyOn(commentsService, 'createComment').mockReturnValue(of({ threadId: 'new-thread' } as CommentItemModel));
+      vi.spyOn(component as any, 'addCommentToCommentThread').mockImplementation(() => {});
+
+      component.reviewId = 'review-1';
+      component.activeApiRevisionId = 'active-rev';
+      component.diffApiRevisionId = 'diff-rev';
+      component.isDiffView = true;
+      component.codePanelData = {
+        nodeMetaData: {
+          'hash-1': {
+            codeLines: [{ rowClasses: new Set<string>(['removed']), nodeId: 'line-1' }]
+          }
+        }
+      } as any;
+
+      component.handleSaveCommentActionEmitter({
+        nodeId: 'line-1',
+        nodeIdHashed: 'hash-1',
+        associatedRowPositionInGroup: 0,
+        commentText: 'new comment',
+        allowAnyOneToResolve: false,
+        severity: undefined,
+        isReply: false,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+      } as CommentUpdatesDto);
+
+      expect(createCommentSpy).toHaveBeenCalledWith(
+        'review-1',
+        'diff-rev',
+        'line-1',
+        'new comment',
+        0,
+        true,
+        undefined,
+        undefined
+      );
+    });
+
+    it('should immediately display new comment on green row when red and green share same elementId', () => {
+      const commentsService = TestBed.inject(CommentsService);
+      vi.spyOn(commentsService, 'createComment').mockReturnValue(of({
+        id: 'comment-1',
+        threadId: 'thread-1',
+        elementId: 'shared-id'
+      } as CommentItemModel));
+
+      const addCommentSpy = vi.spyOn(component as any, 'addCommentToCommentThread').mockImplementation(() => {});
+      vi.spyOn(component as any, 'removeItemsFromScroller').mockImplementation(() => Promise.resolve());
+
+      component.reviewId = 'review-1';
+      component.activeApiRevisionId = 'active-rev';
+      component.diffApiRevisionId = 'diff-rev';
+      component.isDiffView = true;
+      component.codePanelData = {
+        nodeMetaData: {
+          redNode: {
+            codeLines: [{ rowClasses: new Set<string>(['removed']), nodeId: 'shared-id', nodeIdHashed: 'redNode', rowPositionInGroup: 0 }],
+            commentThread: {
+              0: [{
+                type: CodePanelRowDatatype.CommentThread,
+                nodeIdHashed: 'redNode',
+                associatedRowPositionInGroup: 0,
+                threadId: 'thread-1',
+                comments: []
+              }]
+            }
+          },
+          greenNode: {
+            codeLines: [{ rowClasses: new Set<string>(), nodeId: 'shared-id', nodeIdHashed: 'greenNode', rowPositionInGroup: 0 }],
+            commentThread: {}
+          }
+        }
+      } as any;
+
+      component.handleSaveCommentActionEmitter({
+        nodeId: 'shared-id',
+        nodeIdHashed: 'redNode',
+        associatedRowPositionInGroup: 0,
+        commentText: 'new comment',
+        threadId: 'thread-1',
+        allowAnyOneToResolve: false,
+        severity: undefined,
+        isReply: false,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+      } as CommentUpdatesDto);
+
+      const forwardedUpdates = addCommentSpy.mock.calls[0][0] as CommentUpdatesDto;
+      expect(forwardedUpdates.nodeIdHashed).toBe('greenNode');
+      expect(forwardedUpdates.associatedRowPositionInGroup).toBe(0);
+      expect(forwardedUpdates.nodeId).toBe('shared-id');
+    });
+
+    it('should keep non-diff comment creation on active revision', () => {
+      const commentsService = TestBed.inject(CommentsService);
+      const createCommentSpy = vi.spyOn(commentsService, 'createComment').mockReturnValue(of({ threadId: 'new-thread' } as CommentItemModel));
+      vi.spyOn(component as any, 'addCommentToCommentThread').mockImplementation(() => {});
+
+      component.reviewId = 'review-1';
+      component.activeApiRevisionId = 'active-rev';
+      component.diffApiRevisionId = 'diff-rev';
+      component.isDiffView = false;
+
+      component.handleSaveCommentActionEmitter({
+        nodeId: 'line-1',
+        nodeIdHashed: 'hash-1',
+        associatedRowPositionInGroup: 0,
+        commentText: 'new comment',
+        allowAnyOneToResolve: false,
+        severity: undefined,
+        isReply: false,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+      } as CommentUpdatesDto);
+
+      expect(createCommentSpy).toHaveBeenCalledWith(
+        'review-1',
+        'active-rev',
+        'line-1',
+        'new comment',
+        0,
+        true,
+        undefined,
+        undefined
+      );
+    });
+  });
+
   describe('copyReviewTextToClipBoard', () => {
     it('should copy formatted review text to clipboard', async () => {
       const token1 = new StructuredToken();

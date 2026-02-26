@@ -271,6 +271,8 @@ namespace APIViewWeb.LeanControllers
                 var codePanelRawData = new CodePanelRawData()
                 {
                     activeRevisionCodeFile = activeRevisionReviewCodeFile,
+                    ActiveApiRevisionId = activeApiRevisionId,
+                    DiffApiRevisionId = diffApiRevisionId,
                     Comments = filteredComments
                 };
 

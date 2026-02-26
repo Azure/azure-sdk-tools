@@ -405,6 +405,65 @@ namespace APIViewUnitTests
         }
 
         [Fact]
+        public void CollectUserCommentsForRow_RemovedRowWithMatchingActiveLine_HidesDuplicateThread()
+        {
+            var comment = new CommentItemModel
+            {
+                ElementId = "same-element-id", CommentText = "comment text", CreatedBy = "test-user"
+            };
+
+            var codePanelRawData = new CodePanelRawData
+            {
+                Comments = new List<CommentItemModel> { comment },
+                AddedDiffLineIds = ["same-element-id"]
+            };
+
+            var removedRow = new CodePanelRowData { RowClassesObj = new HashSet<string> { "removed" } };
+
+            var method = typeof(CodeFileHelpers).GetMethod("CollectUserCommentsForRow",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CodePanelRowData)method.Invoke(null, new object[]
+            {
+                codePanelRawData, "same-element-id", "test-node-hash", removedRow
+            });
+
+            Assert.NotNull(result);
+            Assert.Empty(result.CommentsObj);
+            Assert.Equal("bi bi-chat-right-text hide", removedRow.ToggleCommentsClasses);
+        }
+
+        [Fact]
+        public void CollectUserCommentsForRow_RemovedRowWithoutMatchingActiveLine_ShowsThread()
+        {
+            var comment = new CommentItemModel
+            {
+                ElementId = "deleted-only-element", CommentText = "comment text", CreatedBy = "test-user"
+            };
+
+            var codePanelRawData = new CodePanelRawData
+            {
+                Comments = new List<CommentItemModel> { comment },
+                AddedDiffLineIds = []
+            };
+
+            var removedRow = new CodePanelRowData { RowClassesObj = new HashSet<string> { "removed" } };
+
+            var method = typeof(CodeFileHelpers).GetMethod("CollectUserCommentsForRow",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+
+            var result = (CodePanelRowData)method.Invoke(null, new object[]
+            {
+                codePanelRawData, "deleted-only-element", "test-node-hash", removedRow
+            });
+
+            Assert.NotNull(result);
+            Assert.Single(result.CommentsObj);
+            Assert.Equal("deleted-only-element", result.CommentsObj[0].ElementId);
+            Assert.Equal("bi bi-chat-right-text show", removedRow.ToggleCommentsClasses);
+        }
+
+        [Fact]
         public void FindDiff_DecoratorOnlyInDiff_ShouldAppearBeforeRelatedClass()
         {
             var activeLines = new List<ReviewLine>

@@ -35,6 +35,7 @@ export class CodePanelComponent implements OnChanges {
   @Input() scrollToNodeId: string | undefined;
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
+  @Input() diffApiRevisionId: string | undefined;
   @Input() userProfile: UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
   @Input() showDocumentation: boolean = true;
@@ -227,19 +228,10 @@ export class CodePanelComponent implements OnChanges {
   canAddComment(item: CodePanelRowData): boolean {
     const hasNonWhitespaceContent = item.rowOfTokens &&
                                      item.rowOfTokens.some(token => token.value && token.value.trim().length > 0);
-
-    // Handle rowClasses being either a Set or an Array (can happen after JSON deserialization)
-    let isRemoved = false;
-    if (item.rowClasses) {
-      if (item.rowClasses instanceof Set) {
-        isRemoved = item.rowClasses.has('removed');
-      } else if (Array.isArray(item.rowClasses)) {
-        isRemoved = (item.rowClasses as unknown as string[]).includes('removed');
-      }
-    }
+    const isRemoved = this.isRemovedRow(item);
 
     return item.type === CodePanelRowDatatype.CodeLine &&
-           !isRemoved &&
+           (!isRemoved || this.isDiffView) &&
            this.userProfile !== undefined &&
            hasNonWhitespaceContent;
   }
@@ -745,13 +737,19 @@ export class CodePanelComponent implements OnChanges {
     else {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
+      const targetRevisionId = this.getTargetRevisionIdForComment(commentUpdates);
+      commentUpdates.revisionId = targetRevisionId;
+      this.commentsService.createComment(this.reviewId!, targetRevisionId, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               if (!commentUpdates.threadId && response.threadId) {
                 commentUpdates.threadId = response.threadId;
               }
-              this.addCommentToCommentThread(commentUpdates, response);
+              const displayUpdates = this.getDisplayLocationForNewComment(commentUpdates, response);
+              this.addCommentToCommentThread(displayUpdates, response);
+              commentUpdates.nodeIdHashed = displayUpdates.nodeIdHashed;
+              commentUpdates.associatedRowPositionInGroup = displayUpdates.associatedRowPositionInGroup;
+              commentUpdates.nodeId = displayUpdates.nodeId;
               commentUpdates.comment = response;
               // Only refresh quality score for new threads, not replies
               if (isNewThread) {
@@ -761,6 +759,112 @@ export class CodePanelComponent implements OnChanges {
           }
         );
       }
+  }
+
+  private getTargetRevisionIdForComment(commentUpdates: CommentUpdatesDto): string {
+    if (!this.isDiffView) {
+      return this.activeApiRevisionId!;
+    }
+
+    const row = this.getAssociatedCodeLineRow(commentUpdates);
+    if (row && this.isRemovedRow(row)) {
+      return this.diffApiRevisionId || this.activeApiRevisionId!;
+    }
+
+    return this.activeApiRevisionId!;
+  }
+
+  private getDisplayLocationForNewComment(commentUpdates: CommentUpdatesDto, newComment: CommentItemModel): CommentUpdatesDto {
+    if (!this.isDiffView) {
+      return commentUpdates;
+    }
+
+    const sourceRow = this.getAssociatedCodeLineRow(commentUpdates);
+    if (!sourceRow || !this.isRemovedRow(sourceRow)) {
+      return commentUpdates;
+    }
+
+    const elementId = newComment.elementId || commentUpdates.nodeId;
+    const preferredGreenRow = this.findPreferredGreenRowByElementId(elementId);
+    if (!preferredGreenRow) {
+      return commentUpdates;
+    }
+
+    // Remove the temporary empty thread row from red so new comment appears where it will persist.
+    this.removePendingEmptyThread(commentUpdates);
+
+    return {
+      ...commentUpdates,
+      nodeIdHashed: preferredGreenRow.nodeIdHashed,
+      associatedRowPositionInGroup: preferredGreenRow.rowPositionInGroup,
+      nodeId: preferredGreenRow.nodeId
+    };
+  }
+
+  private findPreferredGreenRowByElementId(elementId: string | undefined): CodePanelRowData | undefined {
+    if (!elementId || !this.codePanelData?.nodeMetaData) {
+      return undefined;
+    }
+
+    for (const nodeMetaData of Object.values(this.codePanelData.nodeMetaData)) {
+      for (const row of nodeMetaData.codeLines ?? []) {
+        if (row.nodeId === elementId && !this.isRemovedRow(row)) {
+          return row;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private removePendingEmptyThread(commentUpdates: CommentUpdatesDto): void {
+    const nodeIdHashed = commentUpdates.nodeIdHashed;
+    const position = commentUpdates.associatedRowPositionInGroup;
+    if (!nodeIdHashed || position === undefined) {
+      return;
+    }
+
+    const nodeMetaData = this.codePanelData?.nodeMetaData?.[nodeIdHashed];
+    const threads = nodeMetaData?.commentThread?.[position];
+    if (!threads) {
+      return;
+    }
+
+    const pendingThread = this.findCommentThread(threads, commentUpdates.threadId);
+    if (!pendingThread || (pendingThread.comments && pendingThread.comments.length > 0)) {
+      return;
+    }
+
+    this.removeItemsFromScroller(nodeIdHashed, CodePanelRowDatatype.CommentThread, 'toggleCommentsClasses', 'show', 'can-show', position, commentUpdates.threadId);
+
+    const threadIndex = this.findCommentThreadIndex(threads, commentUpdates.threadId);
+    if (threadIndex > -1) {
+      threads.splice(threadIndex, 1);
+    }
+  }
+
+  private getAssociatedCodeLineRow(commentUpdates: CommentUpdatesDto): CodePanelRowData | undefined {
+    if (!commentUpdates.nodeIdHashed || commentUpdates.associatedRowPositionInGroup === undefined) {
+      return undefined;
+    }
+
+    return this.codePanelData?.nodeMetaData[commentUpdates.nodeIdHashed]?.codeLines[commentUpdates.associatedRowPositionInGroup];
+  }
+
+  private isRemovedRow(row: CodePanelRowData | undefined): boolean {
+    if (!row?.rowClasses) {
+      return false;
+    }
+
+    if (row.rowClasses instanceof Set) {
+      return row.rowClasses.has('removed');
+    }
+
+    if (Array.isArray(row.rowClasses)) {
+      return (row.rowClasses as unknown as string[]).includes('removed');
+    }
+
+    return false;
   }
 
   handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {

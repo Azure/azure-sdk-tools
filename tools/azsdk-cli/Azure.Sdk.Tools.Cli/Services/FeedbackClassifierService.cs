@@ -15,9 +15,27 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
 /// Classifies feedback items using LLM-powered classification.
+/// </summary>
+public interface IFeedbackClassifierService
+{
+    /// <summary>
+    /// Classifies feedback items in chunked batch LLM calls. Mutates items in place.
+    /// </summary>
+    Task<FeedbackClassificationResponse> ClassifyItemsAsync(
+        List<FeedbackItem> items,
+        string globalContext,
+        string tspProjectPath,
+        string? language = null,
+        string? serviceName = null,
+        int? batchSize = null,
+        CancellationToken ct = default);
+}
+
+/// <summary>
+/// Classifies feedback items using LLM-powered classification.
 /// Uses chunked batch LLM calls to classify items as TSP_APPLICABLE, SUCCESS, or REQUIRES_MANUAL_INTERVENTION.
 /// </summary>
-public class FeedbackClassifierService
+public class FeedbackClassifierService : IFeedbackClassifierService
 {
     private static readonly ConcurrentDictionary<string, string> TspCustomizationGuideCache = new(StringComparer.OrdinalIgnoreCase);
 
@@ -27,30 +45,18 @@ public class FeedbackClassifierService
 
     private readonly ICopilotAgentRunner _agentRunner;
     private readonly ILogger<FeedbackClassifierService> _logger;
-    private readonly string _tspProjectPath;
-    private readonly string _specRepoBasePath;
-    private readonly int _batchSize;
+    private readonly ITypeSpecHelper _typeSpecHelper;
 
     public const int DefaultBatchSize = 50;
 
     public FeedbackClassifierService(
         ICopilotAgentRunner agentRunner,
         ILoggerFactory loggerFactory,
-        ITypeSpecHelper typeSpecHelper,
-        string tspProjectPath,
-        int? batchSize = null)
+        ITypeSpecHelper typeSpecHelper)
     {
         _agentRunner = agentRunner;
         _logger = loggerFactory.CreateLogger<FeedbackClassifierService>();
-        _tspProjectPath = tspProjectPath;
-        _specRepoBasePath = typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
-        if (string.IsNullOrEmpty(_specRepoBasePath))
-        {
-            throw new ArgumentException(
-                $"Could not determine spec repo root from TypeSpec project path: {tspProjectPath}",
-                nameof(tspProjectPath));
-        }
-        _batchSize = batchSize ?? DefaultBatchSize;
+        _typeSpecHelper = typeSpecHelper;
     }
 
     /// <summary>
@@ -59,8 +65,10 @@ public class FeedbackClassifierService
     public async Task<FeedbackClassificationResponse> ClassifyItemsAsync(
         List<FeedbackItem> items,
         string globalContext,
-        string? language,
-        string? serviceName,
+        string tspProjectPath,
+        string? language = null,
+        string? serviceName = null,
+        int? batchSize = null,
         CancellationToken ct = default)
     {
         if (items.Count == 0)
@@ -68,14 +76,23 @@ public class FeedbackClassifierService
             throw new ArgumentException("No feedback items to classify. Provide an APIView URL or plain text feedback.");
         }
 
-        _logger.LogInformation("Classifying {Count} items in batch(es) of up to {BatchSize} items",
-            items.Count, _batchSize);
-
-        var referenceDocContent = await LoadTspCustomizationGuideAsync(ct);
-
-        foreach (var chunk in items.Chunk(_batchSize))
+        var specRepoBasePath = _typeSpecHelper.GetSpecRepoRootPath(tspProjectPath);
+        if (string.IsNullOrEmpty(specRepoBasePath))
         {
-            await BatchClassifyAsync(chunk.ToList(), globalContext, language, serviceName, referenceDocContent, ct);
+            throw new ArgumentException(
+                $"Could not determine spec repo root from TypeSpec project path: {tspProjectPath}",
+                nameof(tspProjectPath));
+        }
+
+        var effectiveBatchSize = batchSize ?? DefaultBatchSize;
+        _logger.LogInformation("Classifying {Count} items in batch(es) of up to {BatchSize} items",
+            items.Count, effectiveBatchSize);
+
+        var referenceDocContent = await LoadTspCustomizationGuideAsync(specRepoBasePath, ct);
+
+        foreach (var chunk in items.Chunk(effectiveBatchSize))
+        {
+            await BatchClassifyAsync(chunk.ToList(), globalContext, language, serviceName, referenceDocContent, specRepoBasePath, ct);
         }
         return BuildClassificationResponse(items);
     }
@@ -129,6 +146,7 @@ public class FeedbackClassifierService
         string? language,
         string? serviceName,
         string referenceDocContent,
+        string specRepoBasePath,
         CancellationToken ct)
     {
         var template = new FeedbackClassificationTemplate(
@@ -144,9 +162,9 @@ public class FeedbackClassifierService
         // Tools scoped to spec repo for TypeSpec project inspection
         var specTools = new List<AIFunction>
         {
-            FileTools.CreateReadFileTool(_specRepoBasePath),
-            FileTools.CreateListFilesTool(_specRepoBasePath),
-            FileTools.CreateGrepSearchTool(_specRepoBasePath)
+            FileTools.CreateReadFileTool(specRepoBasePath),
+            FileTools.CreateListFilesTool(specRepoBasePath),
+            FileTools.CreateGrepSearchTool(specRepoBasePath)
         };
 
         var result = await _agentRunner.RunAsync(new CopilotAgent<string>
@@ -232,9 +250,9 @@ public class FeedbackClassifierService
     /// <summary>
     /// Loads the TypeSpec client customization guide from eng/common/knowledge/customizing-client-tsp.md.
     /// </summary>
-    private async Task<string> LoadTspCustomizationGuideAsync(CancellationToken ct)
+    private async Task<string> LoadTspCustomizationGuideAsync(string specRepoBasePath, CancellationToken ct)
     {
-        var guidePath = Path.Combine(_specRepoBasePath, "eng", "common", "knowledge", "customizing-client-tsp.md");
+        var guidePath = Path.Combine(specRepoBasePath, "eng", "common", "knowledge", "customizing-client-tsp.md");
 
         if (TspCustomizationGuideCache.TryGetValue(guidePath, out var cachedContent))
         {

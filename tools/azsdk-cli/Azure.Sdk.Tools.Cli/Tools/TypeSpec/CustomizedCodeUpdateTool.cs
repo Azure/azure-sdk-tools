@@ -4,7 +4,6 @@ using System.CommandLine;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -23,10 +22,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 public class CustomizedCodeUpdateTool : LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
-    private readonly ITypeSpecHelper typeSpecHelper;
     private readonly IAPIViewFeedbackService feedbackService;
-    private readonly ILoggerFactory loggerFactory;
-    private readonly ICopilotAgentRunner _agentRunner;
+    private readonly IFeedbackClassifierService _classifierService;
 
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
@@ -38,27 +35,21 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <param name="languageServices">The collection of available language services.</param>
     /// <param name="gitHelper">The Git helper for repository operations.</param>
     /// <param name="tspClientHelper">The TypeSpec client helper for regeneration operations.</param>
-    /// <param name="typeSpecHelper">The TypeSpec helper for spec repo path resolution.</param>
     /// <param name="feedbackService">The feedback service for extracting feedback from various sources.</param>
-    /// <param name="loggerFactory">The logger factory for creating loggers.</param>
-    /// <param name="agentRunner">The copilot agent runner for LLM-powered classification.</param>
+    /// <param name="classifierService">The feedback classifier service for LLM-powered classification.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="tspClientHelper"/> is null.</exception>
     public CustomizedCodeUpdateTool(
         ILogger<CustomizedCodeUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
         IGitHelper gitHelper,
         ITspClientHelper tspClientHelper,
-        ITypeSpecHelper typeSpecHelper,
         IAPIViewFeedbackService feedbackService,
-        ILoggerFactory loggerFactory,
-        ICopilotAgentRunner agentRunner
+        IFeedbackClassifierService classifierService
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper ?? throw new ArgumentNullException(nameof(tspClientHelper));
-        this.typeSpecHelper = typeSpecHelper;
         this.feedbackService = feedbackService;
-        this.loggerFactory = loggerFactory;
-        _agentRunner = agentRunner;
+        _classifierService = classifierService;
     }
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
@@ -261,13 +252,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 throw new DirectoryNotFoundException($"TypeSpec project path does not exist: {tspProjectPath}");
             }
 
-            var classifier = new FeedbackClassifierService(
-                _agentRunner,
-                loggerFactory,
-                typeSpecHelper,
-                tspProjectPath
-            );
-
             List<FeedbackItem> feedbackItems = [];
             if (!string.IsNullOrWhiteSpace(apiViewUrl))
             {
@@ -279,7 +263,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 feedbackItems = [new FeedbackItem { Text = plainTextFeedback, Context = string.Empty }];
             }
 
-            return await classifier.ClassifyItemsAsync(feedbackItems, globalContext: "", language, serviceName, ct);
+            return await _classifierService.ClassifyItemsAsync(feedbackItems, globalContext: "", tspProjectPath, language, serviceName, ct: ct);
         }
         catch (Exception ex)
         {

@@ -89,8 +89,7 @@ public class FeedbackClassifierServiceTests
         return new FeedbackClassifierService(
             _mockAgentRunner.Object,
             _loggerFactory,
-            _mockTypeSpecHelper.Object,
-            _testTspPath);
+            _mockTypeSpecHelper.Object);
     }
 
     private static FeedbackItem CreateTestItem(string text, string? id = null)
@@ -137,8 +136,7 @@ public class FeedbackClassifierServiceTests
         return new FeedbackClassifierService(
             copilotAgentRunner,
             LoggerFactory.Create(builder => builder.AddConsole()),
-            typeSpecHelper,
-            _typeSpecProjectPath);
+            typeSpecHelper);
     }
 
     private static FeedbackItem CreateLiveTestItem(string text, string context = "")
@@ -174,7 +172,7 @@ public class FeedbackClassifierServiceTests
 
         // Act & Assert
         Assert.ThrowsAsync<ArgumentException>(
-            () => service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService"));
+            () => service.ClassifyItemsAsync(items, "global context", _testTspPath, language: "python", serviceName: "TestService"));
 
         _mockAgentRunner.Verify(x => x.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -208,7 +206,7 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
+        await service.ClassifyItemsAsync(items, "global context", _testTspPath, language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.SUCCESS));
@@ -237,7 +235,7 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
+        await service.ClassifyItemsAsync(items, "global context", _testTspPath, language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.TSP_APPLICABLE));
@@ -265,7 +263,7 @@ public class FeedbackClassifierServiceTests
                 """);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
+        await service.ClassifyItemsAsync(items, "global context", _testTspPath, language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.REQUIRES_MANUAL_INTERVENTION));
@@ -295,7 +293,7 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
+        await service.ClassifyItemsAsync(items, "global context", _testTspPath, language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item.ClassificationReason, Is.EqualTo("Non-actionable feedback - approval comment with no requested changes"));
@@ -325,7 +323,7 @@ public class FeedbackClassifierServiceTests
             .ReturnsAsync(batchResponse);
 
         // Act
-        await service.ClassifyItemsAsync(items, "global context", language: "python", serviceName: "TestService");
+        await service.ClassifyItemsAsync(items, "global context", _testTspPath, language: "python", serviceName: "TestService");
 
         // Assert
         Assert.That(item1.Status, Is.EqualTo(FeedbackStatus.SUCCESS));
@@ -350,13 +348,13 @@ public class FeedbackClassifierServiceTests
         Assert.That(loadMethod, Is.Not.Null, "Expected private LoadTspCustomizationGuideAsync method to exist.");
 
         // Act - first load should read from disk
-        var firstLoadTask = (Task<string>)loadMethod!.Invoke(service, [CancellationToken.None])!;
+        var firstLoadTask = (Task<string>)loadMethod!.Invoke(service, [_specRepoRoot, CancellationToken.None])!;
         var firstContent = await firstLoadTask;
 
         // Delete file to verify second load comes from in-memory cache, not disk
         File.Delete(guidePath);
 
-        var secondLoadTask = (Task<string>)loadMethod.Invoke(service, [CancellationToken.None])!;
+        var secondLoadTask = (Task<string>)loadMethod.Invoke(service, [_specRepoRoot, CancellationToken.None])!;
         var secondContent = await secondLoadTask;
 
         // Assert
@@ -402,6 +400,7 @@ public class FeedbackClassifierServiceTests
         await service.ClassifyItemsAsync(
             items,
             globalContext: "Testing comprehensive feedback classification",
+            tspProjectPath: _typeSpecProjectPath,
             language: "python",
             serviceName: "TestService");
 
@@ -464,6 +463,7 @@ public class FeedbackClassifierServiceTests
         await service.ClassifyItemsAsync(
             items,
             globalContext: $"--- TYPESPEC CUSTOMIZATIONS ---\nId: {id}\nText: Rename the 'Items' property to 'Documents'\nContext: COMPILATION ERROR: @@clientName target not found - property 'Items' does not exist in model 'ListResponse'",
+            tspProjectPath: _typeSpecProjectPath,
             language: "python",
             serviceName: "TestService");
 
@@ -496,6 +496,7 @@ public class FeedbackClassifierServiceTests
         await service.ClassifyItemsAsync(
             items,
             globalContext: "Testing classification for code-level changes",
+            tspProjectPath: _typeSpecProjectPath,
             language: "python",
             serviceName: "StorageBlob");
 

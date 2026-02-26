@@ -90,10 +90,11 @@ namespace APIViewWeb.Managers
 
         public async Task NotifyUserOnCommentTagAsync(CommentItemModel comment)
         {
+            var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
+
             foreach (string username in comment.TaggedUsers)
             {
                 if(string.IsNullOrEmpty(username)) continue;
-                var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
                 var user = await _userProfileRepository.TryGetUserProfileAsync(username);
                 var reviewUrl = ManagerHelpers.ResolveReviewUrl(
                     reviewId: review.Id,
@@ -105,7 +106,7 @@ namespace APIViewWeb.Managers
                 var content = await _emailTemplateService.RenderAsync(
                     EmailTemplateKey.CommentTag,
                     CommentTagEmailModel.Create(_apiviewEndpoint, comment, review, reviewUrl));
-                await SendUserEmailsAsync(review.PackageName, "Comment Mention", user, content);
+                await SendEmailAsync(user?.Email, BuildEmailSubject("Comment Mention", review.PackageName), content);
             } 
         }
 
@@ -124,8 +125,8 @@ namespace APIViewWeb.Managers
                 var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
                 var content = await _emailTemplateService.RenderAsync(
                     EmailTemplateKey.ReviewerAssigned,
-                    ReviewerAssignedEmailModel.Create(_apiviewEndpoint, userProfile.UserName, apiRevision.Id, apiRevision.PackageName));
-                await SendUserEmailsAsync(apiRevision.PackageName, "Review Requested", reviewerProfile, content);
+                    ReviewerAssignedEmailModel.Create(_apiviewEndpoint, userProfile.UserName, apiRevision.ReviewId, apiRevision.PackageName));
+                await SendEmailAsync(reviewerProfile?.Email, BuildEmailSubject("Review Requested", apiRevision.PackageName), content);
             }
         }
 
@@ -136,6 +137,7 @@ namespace APIViewWeb.Managers
                 NewRevisionEmailModel.Create(_apiviewEndpoint, review, revision));
             await SendSubscriberEmailsAsync(review, user, htmlContent, null, "New Revision Uploaded");
         }
+        
         /// <summary>
         /// Toggle Subscription to a Review
         /// </summary>
@@ -207,11 +209,6 @@ namespace APIViewWeb.Managers
             return $"[APIView] {eventName} for {packageName}";
         }
 
-        private async Task SendUserEmailsAsync(string packageName, string eventName, UserProfileModel user, string htmlContent)
-        {
-            // SendEmailAsync already handles email validation
-            await SendEmailAsync(user.Email, BuildEmailSubject(eventName, packageName), htmlContent);
-        }
         private async Task SendSubscriberEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers, string eventName)
         {
             var initiatingUserEmail = GetUserEmail(user);
@@ -251,12 +248,6 @@ namespace APIViewWeb.Managers
             // Send single email to all subscribers
             var emailToList = string.Join("; ", subscribers);
             await SendEmailAsync(emailToList, BuildEmailSubject(eventName, review.PackageName), htmlContent);
-        }
-
-        private static string GetUserName(ClaimsPrincipal user)
-        {
-            var name = user.FindFirstValue(ClaimConstants.Name);
-            return string.IsNullOrEmpty(name) ? user.FindFirstValue(ClaimConstants.Login) : name;
         }
 
         private async Task<string> GetEmailAddress(string username)
@@ -301,7 +292,7 @@ namespace APIViewWeb.Managers
             return emailAddresses;
         }
 
-        public async Task NotifyApproversOnNamespaceReviewRequestAsync(ClaimsPrincipal user, ReviewListItemModel review, IEnumerable<ReviewListItemModel> languageReviews = null, string notes = "")
+        public async Task NotifyNamespaceReviewRequestRecipientsAsync(ClaimsPrincipal user, ReviewListItemModel review, IEnumerable<ReviewListItemModel> languageReviews = null, string notes = "")
         {
             try
             {
@@ -343,6 +334,13 @@ namespace APIViewWeb.Managers
             if (string.IsNullOrEmpty(_emailSenderServiceUrl))
             {
                 _logger.LogTrace("Email sender service URL is not configured. Email will not be sent to {EmailToList} with subject: {Subject}", emailToList, subject);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(emailToList))
+            {
+                _logger.LogTrace("Email recipient is empty. Email will not be sent for subject: {Subject}", subject);
+                _telemetryClient.TrackTrace($"Email recipient is empty. Email will not be sent for subject: {subject}");
                 return;
             }
 

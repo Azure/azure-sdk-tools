@@ -22,7 +22,7 @@ namespace APIViewUnitTests
     // artifacts/bin/APIViewUnitTests/email-previews for local visual inspection.
     public class EmailTemplatePreviewGeneratorTests
     {
-        [Fact]
+        [Fact(Skip = "Local visual inspection test. Enable explicitly for local runs when preview files are needed.")]
         public async Task GenerateEmailPreviews()
         {
             string repoRoot = FindRepositoryRoot();

@@ -175,8 +175,10 @@ export const getApiVersionTypeFromMetadata = async (
         let apiVersion: string | undefined;
 
         // Support new format: { "apiVersions": { "service": "version", ... } }
-        if (metadata.apiVersions && typeof metadata.apiVersions === 'object') {
-            const values = Object.values(metadata.apiVersions) as string[];
+        if (metadata.apiVersions != null && !Array.isArray(metadata.apiVersions) && typeof metadata.apiVersions === 'object') {
+            const values = Object.values(metadata.apiVersions).filter(
+                (v): v is string => typeof v === 'string'
+            );
             if (values.length > 0) {
                 apiVersion = values[0];
             }

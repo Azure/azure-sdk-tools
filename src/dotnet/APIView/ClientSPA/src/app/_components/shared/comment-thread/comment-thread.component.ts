@@ -179,9 +179,9 @@ export class CommentThreadComponent {
     if (this.codePanelRowData?.isResolvedCommentThread) {
       this.threadResolvedBy = this.codePanelRowData?.commentThreadIsResolvedBy;
       if (!this.threadResolvedBy) {
-        const lastestResolvedComment = Array.from(this.codePanelRowData?.comments || []).reverse().find(comment => comment.isResolved && comment.changeHistory && comment.changeHistory.some(ch => ch.changeAction === 'resolved'));
-        if (lastestResolvedComment) {
-          this.threadResolvedBy = lastestResolvedComment.changeHistory.reverse().find(ch => ch.changeAction === 'resolved')?.changedBy;
+        const latestResolvedComment = Array.from(this.codePanelRowData?.comments || []).reverse().find(comment => comment.isResolved && comment.changeHistory && comment.changeHistory.some(ch => ch.changeAction === 'resolved'));
+        if (latestResolvedComment) {
+          this.threadResolvedBy = latestResolvedComment.changeHistory.slice().reverse().find(ch => ch.changeAction === 'resolved')?.changedBy;
         }
       }
       const participants = Array.from(new Set((this.codePanelRowData?.comments || []).map(c => c.createdBy).filter(Boolean)));

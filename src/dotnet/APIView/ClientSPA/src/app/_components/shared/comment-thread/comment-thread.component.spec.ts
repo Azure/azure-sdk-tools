@@ -215,6 +215,33 @@ describe('CommentThreadComponent', () => {
       expect(component.threadParticipants).toBe('alice, bob');
     });
 
+    it('should render participants text in DOM when thread is resolved', () => {
+      const comment1 = { id: '1', createdBy: 'alice', createdOn: new Date().toISOString(), isResolved: true, changeHistory: [] } as CommentItemModel;
+      const comment2 = { id: '2', createdBy: 'bob', createdOn: new Date().toISOString(), isResolved: true, changeHistory: [] } as CommentItemModel;
+
+      component.codePanelRowData!.comments = [comment1, comment2];
+      component.codePanelRowData!.isResolvedCommentThread = true;
+      component.codePanelRowData!.commentThreadIsResolvedBy = 'alice';
+      component.setCommentResolutionState();
+      fixture.detectChanges();
+
+      const participantsSpan = fixture.nativeElement.querySelector('.participants-info');
+      expect(participantsSpan).toBeTruthy();
+      expect(participantsSpan.textContent).toContain('alice, bob');
+    });
+
+    it('should not render participants span in DOM when thread is unresolved', () => {
+      const comment1 = { id: '1', createdBy: 'alice', createdOn: new Date().toISOString(), isResolved: false, changeHistory: [], upvotes: [], downvotes: [] } as CommentItemModel;
+
+      component.codePanelRowData!.comments = [comment1];
+      component.codePanelRowData!.isResolvedCommentThread = false;
+      component.setCommentResolutionState();
+      fixture.detectChanges();
+
+      const participantsSpan = fixture.nativeElement.querySelector('.participants-info');
+      expect(participantsSpan).toBeFalsy();
+    });
+
     it('should clear thread participants when thread is unresolved', () => {
       const comment1 = { id: '1', createdBy: 'alice', isResolved: false, changeHistory: [] } as CommentItemModel;
 

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using GitHub.Copilot.SDK;
+using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 

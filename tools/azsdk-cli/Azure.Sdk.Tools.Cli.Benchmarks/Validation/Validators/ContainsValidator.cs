@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Benchmarks.Models;
+
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
 
 /// <summary>

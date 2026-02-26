@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
@@ -160,7 +161,7 @@ public class Workspace : IDisposable
         string? gitDiff,
         TimeSpan duration,
         bool passed,
-        Validation.ValidationSummary? validation = null,
+        ValidationSummary? validation = null,
         string? error = null)
     {
         var log = new

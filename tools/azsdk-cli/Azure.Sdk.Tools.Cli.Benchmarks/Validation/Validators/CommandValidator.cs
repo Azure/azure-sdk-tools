@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
+using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
 

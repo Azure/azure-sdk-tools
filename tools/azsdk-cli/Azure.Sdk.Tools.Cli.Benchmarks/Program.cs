@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks;

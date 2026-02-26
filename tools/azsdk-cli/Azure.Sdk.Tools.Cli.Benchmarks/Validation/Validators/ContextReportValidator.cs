@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using GitHub.Copilot.SDK;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;

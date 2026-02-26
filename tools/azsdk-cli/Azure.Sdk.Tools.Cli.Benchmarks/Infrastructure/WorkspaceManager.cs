@@ -2,29 +2,9 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
+using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
-
-/// <summary>
-/// Specifies when workspace cleanup should occur.
-/// </summary>
-public enum CleanupPolicy
-{
-    /// <summary>
-    /// Always cleanup the workspace after execution.
-    /// </summary>
-    Always,
-
-    /// <summary>
-    /// Never cleanup the workspace after execution.
-    /// </summary>
-    Never,
-
-    /// <summary>
-    /// Only cleanup the workspace if the execution was successful.
-    /// </summary>
-    OnSuccess
-}
 
 /// <summary>
 /// Manages repository caching and workspace creation for benchmark execution.

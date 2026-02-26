@@ -2,87 +2,11 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
+using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
-
-/// <summary>
-/// Options for running a benchmark.
-/// </summary>
-public class BenchmarkOptions
-{
-    /// <summary>
-    /// Override path to azsdk MCP server.
-    /// </summary>
-    public string? AzsdkMcpPath { get; init; }
-
-    /// <summary>
-    /// Cleanup policy after run.
-    /// </summary>
-    public CleanupPolicy CleanupPolicy { get; init; } = CleanupPolicy.OnSuccess;
-
-    /// <summary>
-    /// Override model to use (for future use).
-    /// </summary>
-    public string? Model { get; init; }
-
-    /// <summary>
-    /// Show agent activity during execution.
-    /// </summary>
-    public bool Verbose { get; init; }
-}
-
-/// <summary>
-/// Result of running a benchmark scenario.
-/// </summary>
-public class BenchmarkResult
-{
-    /// <summary>
-    /// Gets the name of the scenario that was executed.
-    /// </summary>
-    public required string ScenarioName { get; init; }
-
-    /// <summary>
-    /// Gets whether the benchmark passed.
-    /// </summary>
-    public bool Passed { get; init; }
-
-    /// <summary>
-    /// Gets the error message if the benchmark failed.
-    /// </summary>
-    public string? Error { get; init; }
-
-    /// <summary>
-    /// Gets the duration of the benchmark execution.
-    /// </summary>
-    public TimeSpan Duration { get; init; }
-
-    /// <summary>
-    /// Gets the git diff of changes made during the benchmark.
-    /// </summary>
-    public string? GitDiff { get; init; }
-
-    /// <summary>
-    /// Gets the list of tool calls made during execution.
-    /// </summary>
-    public IReadOnlyList<string> ToolCalls { get; init; } = [];
-
-    /// <summary>
-    /// Gets the path to the workspace where the benchmark was executed.
-    /// </summary>
-    public string? WorkspacePath { get; init; }
-
-    /// <summary>
-    /// Gets whether the workspace was cleaned up after execution.
-    /// </summary>
-    public bool WorkspaceCleanedUp { get; init; }
-
-    /// <summary>
-    /// Gets the validation summary (null if no validators defined).
-    /// </summary>
-    public ValidationSummary? Validation { get; init; }
-}
 
 /// <summary>
 /// Orchestrates benchmark execution by coordinating workspace setup,

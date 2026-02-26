@@ -21,10 +21,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Verify;
 public class VerifySetupTool : LanguageMcpTool
 {
     private readonly IVerifySetupService verifySetupService;
+    private readonly IPackageInfoHelper packageInfoHelper;
 
-    public VerifySetupTool(IVerifySetupService verifySetupService, ILogger<VerifySetupTool> logger, IGitHelper gitHelper, IEnumerable<LanguageService> languageServices) : base(languageServices, gitHelper, logger)
+    public VerifySetupTool(
+        IProcessHelper processHelper,
+        ILogger<VerifySetupTool> logger,
+        IGitHelper gitHelper,
+        IPackageInfoHelper packageInfoHelper,
+        IEnumerable<LanguageService> languageServices) : base(languageServices, gitHelper, logger)
     {
         this.verifySetupService = verifySetupService;
+        this.packageInfoHelper = packageInfoHelper;
     }
 
     private const string VerifySetupToolName = "azsdk_verify_setup";

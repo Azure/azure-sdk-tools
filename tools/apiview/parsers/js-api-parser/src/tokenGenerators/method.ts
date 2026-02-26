@@ -54,12 +54,12 @@ function generate(item: MethodLike, deprecated?: boolean): GeneratorResult {
 
   // Add optional marker if applicable
   if (item.isOptional) {
-    tokens.push(createToken(TokenKind.Text, "?", { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
   }
 
   // Add type parameters
   if (typeParameters?.length > 0) {
-    tokens.push(createToken(TokenKind.Text, "<", { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
     typeParameters.forEach((tp, index) => {
       tokens.push(createToken(TokenKind.TypeName, tp.name, { deprecated }));
 
@@ -76,7 +76,7 @@ function generate(item: MethodLike, deprecated?: boolean): GeneratorResult {
 
       if (tp.defaultTypeExcerpt?.text.trim()) {
         tokens.push(
-          createToken(TokenKind.Text, "=", {
+          createToken(TokenKind.Punctuation, "=", {
             hasPrefixSpace: true,
             hasSuffixSpace: true,
             deprecated,
@@ -86,14 +86,14 @@ function generate(item: MethodLike, deprecated?: boolean): GeneratorResult {
       }
 
       if (index < typeParameters.length - 1) {
-        tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
+        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
       }
     });
-    tokens.push(createToken(TokenKind.Text, ">", { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
   }
 
   // Add parameters
-  tokens.push(createToken(TokenKind.Text, "(", { deprecated }));
+  tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
   if (parameters?.length > 0) {
     parameters.forEach((param, index) => {
       tokens.push(
@@ -104,20 +104,21 @@ function generate(item: MethodLike, deprecated?: boolean): GeneratorResult {
       );
 
       if (param.isOptional) {
-        tokens.push(createToken(TokenKind.Text, "?", { deprecated }));
+        tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
       }
 
-      tokens.push(createToken(TokenKind.Text, ":", { hasSuffixSpace: true, deprecated }));
+      tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
       processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, tokens, deprecated);
 
       if (index < parameters.length - 1) {
-        tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
+        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
       }
     });
   }
 
   // Add return type
-  tokens.push(createToken(TokenKind.Text, "):", { hasSuffixSpace: true, deprecated }));
+  tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+  tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
   processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
 
   // Add semicolon at the end

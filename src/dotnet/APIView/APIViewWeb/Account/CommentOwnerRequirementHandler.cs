@@ -34,11 +34,20 @@ public class CommentOwnerRequirementHandler : IAuthorizationHandler
                     continue;
                 }
 
-                if (creator == ApiViewConstants.AzureSdkBotName && !string.IsNullOrEmpty(loggedInUserName))
+                if (!string.IsNullOrEmpty(loggedInUserName))
                 {
                     EffectivePermissions permissions =
                         await _permissionsManager.GetEffectivePermissionsAsync(loggedInUserName);
-                    if (permissions.IsLanguageApprover)
+
+                    // Admins can modify comment severity and delete any comment
+                    if (permissions.IsAdmin)
+                    {
+                        context.Succeed(requirement);
+                        continue;
+                    }
+
+                    // Language approvers can manage azure-sdk bot comments
+                    if (creator == ApiViewConstants.AzureSdkBotName && permissions.IsLanguageApprover)
                     {
                         context.Succeed(requirement);
                     }

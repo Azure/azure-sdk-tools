@@ -83,7 +83,7 @@ public class ProcessOptions : IProcessOptions
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         if (isWindows && windowsCommand != "pwsh" && windowsCommand != "powershell")
         {
-            args = ["/C", command, .. windowsArgs];
+            args = ["/C", windowsCommand, .. windowsArgs];
             command = CMD;
         }
 

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -22,14 +23,28 @@ internal class VerifySetupToolTests
     private TestLogger<VerifySetupTool> logger;
     private Mock<IGitHelper> _mockGitHelper;
     private List<LanguageService> languageServices;
+    private Mock<INpxHelper> _mockNpxHelper;
+    private Mock<IPowershellHelper> _mockPowerShellHelper;
+    private TestLogger<LanguageService> _languageLogger;
+    private Mock<ICopilotAgentRunner> _mockMicrohostAgent;
+    private Mock<IGitHelper> _mockGitHelper;
+    private Mock<ICommonValidationHelpers> _commonValidationHelpers;
+    private IPackageInfoHelper _packageInfoHelper;
 
     [SetUp]
     public void Setup()
     {
         mockService = new Mock<IVerifySetupService>();
         logger = new TestLogger<VerifySetupTool>();
+
+        _languageLogger = new TestLogger<LanguageService>();
+        _mockMicrohostAgent = new Mock<ICopilotAgentRunner>();
+        _mockNpxHelper = new Mock<INpxHelper>();
+        _mockPowerShellHelper = new Mock<IPowershellHelper>();
         _mockGitHelper = new Mock<IGitHelper>();
-        languageServices = [];
+        _packageInfoHelper = new PackageInfoHelper(new TestLogger<PackageInfoHelper>(), _mockGitHelper.Object);
+
+        languageServices = []; // TODO is language service still needed
 
         // Default: service returns a successful empty response
         mockService
@@ -42,7 +57,7 @@ internal class VerifySetupToolTests
     }
 
     private VerifySetupTool CreateTool() =>
-        new(mockService.Object, logger, _mockGitHelper.Object, languageServices);
+        new(mockService.Object, logger, _mockGitHelper.Object, _packageInfoHelper, languageServices);
 
     [Test]
     public async Task VerifySetup_DelegatesToService()

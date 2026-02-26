@@ -35,20 +35,25 @@ function generate(item: ApiVariable, deprecated?: boolean): GeneratorResult {
   nameToken.RenderClasses = ["variable"];
   tokens.push(nameToken);
 
-  // Add colon and type
-  tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-
+  // Add colon and type (only if type annotation exists)
   const typeText = item.variableTypeExcerpt?.text?.trim();
   let children;
 
   if (typeText) {
+    tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
     children = parseTypeText(typeText, tokens, deprecated);
   }
 
   // Add initializer value if present (e.g., = 1000000)
   const initializerText = item.initializerExcerpt?.text?.trim();
   if (initializerText) {
-    tokens.push(createToken(TokenKind.Punctuation, "=", { hasPrefixSpace: true, hasSuffixSpace: true, deprecated }));
+    tokens.push(
+      createToken(TokenKind.Punctuation, "=", {
+        hasPrefixSpace: true,
+        hasSuffixSpace: true,
+        deprecated,
+      }),
+    );
     tokens.push(createToken(TokenKind.StringLiteral, initializerText, { deprecated }));
   }
 

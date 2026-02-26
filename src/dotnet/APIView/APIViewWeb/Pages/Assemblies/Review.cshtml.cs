@@ -325,8 +325,18 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<ActionResult> OnPostRequestReviewersAsync(string id, string apiRevisionId, HashSet<string> reviewers)
         {
+            var currentApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
+            var existingReviewers = new HashSet<string>(
+                currentApiRevision.AssignedReviewers.Select(assignment => assignment.AssingedTo),
+                StringComparer.OrdinalIgnoreCase);
+
             await _apiRevisionsManager.AssignReviewersToAPIRevisionAsync(User, apiRevisionId, reviewers);
-            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
+
+            var newlyAddedReviewers = reviewers
+                .Where(reviewer => !existingReviewers.Contains(reviewer))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            await _notificationManager.NotifyAssignedReviewersAsync(User, apiRevisionId, newlyAddedReviewers);
             return RedirectToPage(new { id = id, revisionId = apiRevisionId });
         }
 
@@ -423,21 +433,21 @@ namespace APIViewWeb.Pages.Assemblies
         /// </summary>
         /// <param name="hasActiveConversations"></param>
         /// <param name="hasFatalDiagnostics"></param>
-        /// <param name="userInApprovers"></param>
+        /// <param name="userIsLanguageApprover"></param>
         /// <param name="isActiveRevisionAhead"></param>
         /// <returns></returns>
 
-        public string GetDataBSTarget(bool hasActiveConversations, bool hasFatalDiagnostics, bool userInApprovers, bool isActiveRevisionAhead)
+        public string GetDataBSTarget(bool hasActiveConversations, bool hasFatalDiagnostics, bool userIsLanguageApprover, bool isActiveRevisionAhead)
         {
-            if (hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            if (hasActiveConversations && hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#convoFatalModel";
             }
-            else if (hasActiveConversations && !hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            else if (hasActiveConversations && !hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#openConversationModel";
             }
-            else if (!hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            else if (!hasActiveConversations && hasFatalDiagnostics && userIsLanguageApprover && isActiveRevisionAhead)
             {
                 return "#fatalErrorModel";
             }

@@ -8,6 +8,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper outputHelper)
 {
     private List<string> WindowsDefaultProcess = ["pwsh", "powershell", ProcessOptions.CMD];
+    // WINDOWS_PATH_EXT is used to override Environment variable PATHEXT to support command lookup when running a process.
+    // This is required to support process run when MCP is used from copilot CLI which overrides PATHEXT to .CPL
+    private const string WINDOWS_PATH_EXT = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PY;.PYW;.CPL";
 
     /// <summary>
     /// Runs a process with the specified command and arguments in the given working directory.
@@ -51,6 +54,8 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
         {
             processStartInfo.ArgumentList.Add(arg);
         }
+        //Override PATHEXT to support command lookup
+        processStartInfo.Environment["PATHEXT"] = WINDOWS_PATH_EXT;
 
         ProcessResult result = new() { ExitCode = 1 };
 

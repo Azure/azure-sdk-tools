@@ -163,6 +163,15 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
             }
           }
 
+          // If the thread's apiRevisionId doesn't match any loaded revision,
+          // fall back to the active revision so it still appears in the panel.
+          if (apiRevisionPostion === Number.MAX_SAFE_INTEGER && this.activeApiRevisionId) {
+            const activePosition = apiRevisionPositionMap.get(this.activeApiRevisionId);
+            if (activePosition !== undefined) {
+              apiRevisionPostion = activePosition;
+            }
+          }
+
           if (apiRevisionPostion >= 0 && apiRevisionPostion < apiRevisionInOrder.length) {
             const apiRevisionIdForThread = apiRevisionInOrder[apiRevisionPostion].id;
             const codePanelRowData = new CodePanelRowData();
@@ -183,6 +192,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
+
       this.isLoading = false;
       this.changeDetectorRef.markForCheck();
     }

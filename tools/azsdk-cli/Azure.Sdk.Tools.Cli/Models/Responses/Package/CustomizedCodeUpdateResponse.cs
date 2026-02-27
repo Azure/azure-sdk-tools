@@ -36,7 +36,6 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? BuildResult { get; set; }
 
-
     /// <summary>
     /// Error codes for classifier to parse programmatically.
     /// These define the contract between the tool and downstream processors.
@@ -62,9 +61,6 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ErrorCode { get; set; }
 
-    /// <summary>
-    /// Summary of TypeSpec client.tsp changes applied during the TypeSpec Customizations phase.
-    /// </summary>
     [JsonPropertyName("typeSpecChangesSummary")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? TypeSpecChangesSummary { get; set; }

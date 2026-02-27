@@ -220,7 +220,7 @@ func (g *GitHubClient) apiGet(url string) ([]byte, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("GitHub API returned status %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("GitHub API returned status %d for %s: %s", resp.StatusCode, url, string(body))
 	}
 	return io.ReadAll(resp.Body)
 }

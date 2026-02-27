@@ -445,36 +445,36 @@
     {
         "testcase": "In Resource provider, what is the type I should declare for an object or dictionary of string, string?",
         "expected": {
-            "answer": "For a property in a TypeSpec ARM resource provider model that represents a dictionary (object) mapping strings to strings, you should use the built-in `Record<string>` type.\nFor example:\n```\nmodel MyResourceProperties {\nmetadata?: Record<string>;\n}\n```\nThis models a property (`metadata`) that is an object/dictionary where all keys and values are strings, equivalent to `{ [key: string]: string }` in TypeScript or `Dictionary<string, string>` in .NET.\nYou should not use `{}` (empty model) or just `Record` (without specifying the value type) as these are either incomplete or invalid in TypeSpec. The correct, type-safe way is `Record<string>`, which will be emitted to OpenAPI/Swagger as an `object` with `additionalProperties: { type: \"string\" }`.\nIf your API spec review asks for a 'model', you can define a named type:\n```\nmodel MetadataModel is Record<string>;\nmodel MyResourceProperties {\nmetadata?: MetadataModel;\n}\n```\nBut `Record<string>` is the canonical, recommended approach for a string-to-string dictionary in TypeSpec ARM resource definitions.\nNote: While this is technically correct, ARM guidelines recommend against unbounded dictionary/object types unless absolutely necessary, as they can limit Azure Policy and ARG capabilities. Use with care, and document any supported/expected keys in your @doc comments if possible.",
+            "answer": "In an Azure Resource Provider (management-plane), you **should not use `Record<string>`** for arbitrary dictionaries. The `arm-no-record` rule requires ARM RPs to define types explicitly for better discoverability and SDK experience.\n\nSo this is **not allowed** in ARM specs:\n\n```typespec\nmetadata?: Record<string>; // \u274c Fails arm-no-record\n```\n\nAnd `{}` is invalid because TypeSpec requires a proper model type.\n\n\u2705 Correct approach for ARM\n\nYou must define an explicit model with concrete properties instead of a free-form dictionary:\n\n```typespec\nmodel Metadata {\n  key1?: string;\n  key2?: string;\n  // Define known properties explicitly\n}\n\nmodel MyResourceProperties {\n  metadata?: Metadata;\n}\n```\n\nARM requires explicit modeling of properties rather than open-ended dictionaries.\n\n---\n\nIf you truly need arbitrary key/value pairs\n\nFree-form dictionaries (`Record<string>`) are discouraged in ARM and will fail CI because of:\n\n`@azure-tools/typespec-azure-resource-manager/arm-no-record`\n\nIf there is a legitimate business need for arbitrary metadata:\n\n1. You must get architecture/review board approval.\n2. Then explicitly suppress the rule with justification.\n\nExample (only if approved):\n\n```typespec\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-no-record\" \"Approved free-form metadata bag\"\nmetadata?: Record<string>;\n```\n\nThis should be rare.\n\n---\n\nImportant: If this is actually resource \"tags\"\n\nDo NOT redefine them. Use the built-in ARM tags support instead:\n\n```typespec\nmodel MyResource is TrackedResource<MyProperties> {\n  ...ResourceNameParameter<MyResource>;\n  // tags already included in TrackedResource\n}\n```\n\nOr explicitly:\n\n```typespec\n...Foundations.ArmTagsProperty;\n```\n\n---\n\nSummary\n\nFor management-plane (ARM):\n\n- \u2705 Define an explicit model with named properties\n- \u2705 Use built-in `tags` if that\u2019s what you mean\n- \u26a0\ufe0f Only use `Record<string>` with approved suppression\n- \u274c Do not use open-ended dictionary types by default\n\nARM requires strongly modeled property bags for customer experience and SDK quality.",
             "references": [
+                {
+                    "title": "arm-no-record",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-no-record"
+                },
                 {
                     "title": "bad-record-type",
                     "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/bad-record-type"
                 },
                 {
-                    "title": "Built-in types | Other core types",
-                    "link": "https://typespec.io/docs/language-basics/built-in-types"
-                },
-                {
-                    "title": "Generated Types | Models | Models with additional properties of any type",
-                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+                    "title": "ARM Resource Types | Designing Resource-specific Properties",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type"
                 }
             ]
         },
         "actual": {
-            "answer": "In Azure Resource Provider TypeSpec, when you want to represent a property that is a dictionary (object) with string keys and string values (e.g., for metadata or tags), you should use `Record<string>`. This is the correct and recommended way to declare such a type in TypeSpec. \n\nFor example:\n\n```typespec\nmodel MyResourceProperties {\n  metadata?: Record<string>;\n}\n```\n\n- Do NOT use `{}` (empty object) as a type; TypeSpec expects a model or a valid type.\n- Do NOT use just `Record;` (without a type argument), as `Record` is a generic type and requires a value type argument.\n- `Record<string>` means an object with arbitrary string keys and string values, which matches the typical JSON object structure for metadata or tags in Azure APIs.\n\nThis pattern is widely used in Azure Resource Manager specs for properties like `tags` and `metadata`.\n\nIf you want to require the property, omit the `?` (optional marker):\n\n```typespec\nmodel MyResourceProperties {\n  metadata: Record<string>;\n}\n```\n\nThis will emit the correct OpenAPI schema for an object with string keys and string values.",
+            "answer": "In an Azure Resource Provider (management-plane), you **should not use `Record<string>`** for arbitrary dictionaries. The `arm-no-record` rule requires ARM RPs to define types explicitly for better discoverability and SDK experience.\n\nSo this is **not allowed** in ARM specs:\n\n```typespec\nmetadata?: Record<string>; // \u274c Fails arm-no-record\n```\n\nAnd `{}` is invalid because TypeSpec requires a proper model type.\n\n\u2705 Correct approach for ARM\n\nYou must define an explicit model with concrete properties instead of a free-form dictionary:\n\n```typespec\nmodel Metadata {\n  key1?: string;\n  key2?: string;\n  // Define known properties explicitly\n}\n\nmodel MyResourceProperties {\n  metadata?: Metadata;\n}\n```\n\nARM requires explicit modeling of properties rather than open-ended dictionaries.\n\n---\n\nIf you truly need arbitrary key/value pairs\n\nFree-form dictionaries (`Record<string>`) are discouraged in ARM and will fail CI because of:\n\n`@azure-tools/typespec-azure-resource-manager/arm-no-record`\n\nIf there is a legitimate business need for arbitrary metadata:\n\n1. You must get architecture/review board approval.\n2. Then explicitly suppress the rule with justification.\n\nExample (only if approved):\n\n```typespec\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-no-record\" \"Approved free-form metadata bag\"\nmetadata?: Record<string>;\n```\n\nThis should be rare.\n\n---\n\nImportant: If this is actually resource \"tags\"\n\nDo NOT redefine them. Use the built-in ARM tags support instead:\n\n```typespec\nmodel MyResource is TrackedResource<MyProperties> {\n  ...ResourceNameParameter<MyResource>;\n  // tags already included in TrackedResource\n}\n```\n\nOr explicitly:\n\n```typespec\n...Foundations.ArmTagsProperty;\n```\n\n---\n\nSummary\n\nFor management-plane (ARM):\n\n- \u2705 Define an explicit model with named properties\n- \u2705 Use built-in `tags` if that\u2019s what you mean\n- \u26a0\ufe0f Only use `Record<string>` with approved suppression\n- \u274c Do not use open-ended dictionary types by default\n\nARM requires strongly modeled property bags for customer experience and SDK quality.",
             "references": [
+                {
+                    "title": "arm-no-record",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-no-record"
+                },
                 {
                     "title": "bad-record-type",
                     "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/bad-record-type"
                 },
                 {
-                    "title": "Built-in types | Other core types",
-                    "link": "https://typespec.io/docs/language-basics/built-in-types"
-                },
-                {
-                    "title": "Usages for Illustrates various of dictionaries. | Scenario: Template to have dictionary operations",
-                    "link": "https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/type/dictionary/main.tsp"
+                    "title": "ARM Resource Types | Designing Resource-specific Properties",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type"
                 }
             ]
         },

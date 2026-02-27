@@ -22,8 +22,7 @@ public class CodeownersManagementHelper(
             return new CodeownersViewResult { ResponseError = $"No Owner work item found for alias '{normalizedAlias}'." };
         }
 
-        var relatedPackages = await FetchRelatedPackages(ownerWi.RelatedIds, repo);
-        var relatedLabelOwners = await FetchRelatedLabelOwners(ownerWi.RelatedIds, repo);
+        var (relatedPackages, relatedLabelOwners) = await FetchRelatedPackagesAndLabelOwners(ownerWi.RelatedIds, repo);
 
         await HydratePackages(relatedPackages);
         await HydrateLabelOwners(relatedLabelOwners);
@@ -50,8 +49,7 @@ public class CodeownersManagementHelper(
             .Aggregate((a, b) => a.Intersect(b))
             .ToList();
 
-        var relatedPackages = await FetchRelatedPackages(commonRelatedIds, repo);
-        var relatedLabelOwners = await FetchRelatedLabelOwners(commonRelatedIds, repo);
+        var (relatedPackages, relatedLabelOwners) = await FetchRelatedPackagesAndLabelOwners(commonRelatedIds, repo);
 
         await HydratePackages(relatedPackages);
         await HydrateLabelOwners(relatedLabelOwners);
@@ -135,9 +133,10 @@ public class CodeownersManagementHelper(
     // ========================
 
     /// <summary>
-    /// Fetches Package work items from a set of work item IDs, filtering by repo language and deduplicating versions.
+    /// Fetches Package and Label Owner work items from a set of work item IDs in a single API call,
+    /// filtering packages by repo language and deduplicating versions, and optionally filtering label owners by repo.
     /// </summary>
-    private async Task<List<PackageWorkItem>> FetchRelatedPackages(IEnumerable<int> relatedIds, string? repo = null)
+    private async Task<(List<PackageWorkItem> Packages, List<LabelOwnerWorkItem> LabelOwners)> FetchRelatedPackagesAndLabelOwners(IEnumerable<int> relatedIds, string? repo = null)
     {
         var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds, expand: WorkItemExpand.Relations);
 
@@ -155,7 +154,19 @@ public class CodeownersManagementHelper(
             }
         }
 
-        return WorkItemMappers.GetLatestPackageVersions(packages);
+        packages = WorkItemMappers.GetLatestPackageVersions(packages);
+
+        var labelOwners = workItems
+            .Where(wi => wi.Fields.TryGetValue("System.WorkItemType", out var type) && type?.ToString() == "Label Owner")
+            .Select(WorkItemMappers.MapToLabelOwnerWorkItem)
+            .ToList();
+
+        if (!string.IsNullOrEmpty(repo))
+        {
+            labelOwners = labelOwners.Where(lo => lo.Repository.Equals(repo, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        return (packages, labelOwners);
     }
 
     /// <summary>

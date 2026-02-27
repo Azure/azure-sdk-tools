@@ -232,7 +232,7 @@ namespace APIViewUnitTests
 
             // Setup notification manager
             _mockNotificationManager
-                .Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
+                .Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.IsAny<ClaimsPrincipal>(), 
                     It.IsAny<ReviewListItemModel>(), 
                     It.IsAny<IEnumerable<ReviewListItemModel>>(), 
@@ -320,7 +320,7 @@ namespace APIViewUnitTests
             _mockPullRequestsRepository.Setup(p => p.GetPullRequestsAsync(12345, "azure-rest-api-specs")).ReturnsAsync(pullRequests);
             _mockReviewsRepository.Setup(r => r.GetReviewsAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<bool?>())).ReturnsAsync(new List<ReviewListItemModel> { discoveredReview });
             _mockReviewsRepository.Setup(r => r.UpsertReviewAsync(It.IsAny<ReviewListItemModel>())).Returns(Task.CompletedTask);
-            _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>())).Returns(Task.CompletedTask);
+            _mockNotificationManager.Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
             // Act
             var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
@@ -365,7 +365,7 @@ namespace APIViewUnitTests
                 .Callback<ReviewListItemModel>(review => updatedReviews.Add(review))
                 .Returns(Task.CompletedTask);
             
-            _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>())).Returns(Task.CompletedTask);
+            _mockNotificationManager.Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
             // Act
             var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
@@ -490,7 +490,7 @@ namespace APIViewUnitTests
 
             // Setup notification manager to succeed
             _mockNotificationManager
-                .Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
+                .Setup(n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.IsAny<ClaimsPrincipal>(), 
                     It.IsAny<ReviewListItemModel>(), 
                     It.IsAny<IEnumerable<ReviewListItemModel>>(), 
@@ -532,7 +532,7 @@ namespace APIViewUnitTests
 
             // Verify notification was called
             _mockNotificationManager.Verify(
-                n => n.NotifyApproversOnNamespaceReviewRequest(
+                n => n.NotifyNamespaceReviewRequestRecipientsAsync(
                     It.Is<ClaimsPrincipal>(p => p.Identity.Name == "testuser"),
                     It.Is<ReviewListItemModel>(r => r.Id == reviewId),
                     It.Is<IEnumerable<ReviewListItemModel>>(reviews => reviews.Count() == 2),

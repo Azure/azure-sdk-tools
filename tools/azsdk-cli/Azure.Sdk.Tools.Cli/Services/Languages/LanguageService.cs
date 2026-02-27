@@ -13,6 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected readonly IGitHelper gitHelper;
         protected readonly ILogger<LanguageService> logger;
         protected readonly ICommonValidationHelpers commonValidationHelpers;
+        protected readonly IPackageInfoHelper packageInfoHelper;
         protected readonly IFileHelper fileHelper;
         protected readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
         protected readonly IChangelogHelper changelogHelper;
@@ -26,6 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             gitHelper = null!;
             logger = null!;
             commonValidationHelpers = null!;
+            packageInfoHelper = null!;
             fileHelper = null!;
             specGenSdkConfigHelper = null!;
             changelogHelper = null!;
@@ -36,6 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             IGitHelper gitHelper,
             ILogger<LanguageService> logger,
             ICommonValidationHelpers commonValidationHelpers,
+            IPackageInfoHelper packageInfoHelper,
             IFileHelper fileHelper,
             ISpecGenSdkConfigHelper specGenSdkConfigHelper,
             IChangelogHelper changelogHelper)
@@ -44,6 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             this.gitHelper = gitHelper;
             this.logger = logger;
             this.commonValidationHelpers = commonValidationHelpers;
+            this.packageInfoHelper = packageInfoHelper;
             this.fileHelper = fileHelper;
             this.specGenSdkConfigHelper = specGenSdkConfigHelper;
             this.changelogHelper = changelogHelper;
@@ -58,6 +62,121 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             throw new NotImplementedException("GetPackageInfo is not implemented for this language.");
         }
 #pragma warning restore CS1998
+
+        /// <summary>
+        /// Discovers all packages in a service directory (or all services if empty).
+        /// Returns fully-populated PackageInfo including CI parameters and triggering paths.
+        /// Default implementation discovers package directories and calls GetPackageInfo for each.
+        /// </summary>
+        /// <param name="repoRoot">Absolute path to the repository root.</param>
+        /// <param name="serviceDirectory">Service directory under sdk/ (e.g., "storage"). Empty for all services.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>List of discovered packages with CI parameters populated.</returns>
+        public virtual async Task<IReadOnlyList<PackageInfo>> DiscoverPackagesAsync(
+            string repoRoot,
+            string? serviceDirectory,
+            CancellationToken ct = default)
+        {
+            var sdkRoot = Path.Combine(repoRoot, "sdk");
+            var normalizedServiceDirectory = serviceDirectory;
+            // Handle service directories passed with sdk like 'sdk/core'
+            if (!string.IsNullOrWhiteSpace(normalizedServiceDirectory))
+            {
+                normalizedServiceDirectory = NormalizedPath.Normalize(normalizedServiceDirectory);
+                if (normalizedServiceDirectory.StartsWith("sdk/", StringComparison.OrdinalIgnoreCase))
+                {
+                    normalizedServiceDirectory = normalizedServiceDirectory["sdk/".Length..];
+                }
+            }
+
+            var searchRoot = string.IsNullOrWhiteSpace(serviceDirectory)
+                ? sdkRoot
+                : Path.Combine(sdkRoot, normalizedServiceDirectory!);
+
+            if (!Directory.Exists(searchRoot))
+            {
+                return [];
+            }
+
+            var packageDirectories = DiscoverPackageDirectories(searchRoot, !string.IsNullOrWhiteSpace(normalizedServiceDirectory));
+            var packages = new List<PackageInfo>();
+
+            foreach (var packageDirectory in packageDirectories)
+            {
+                try
+                {
+                    var packageInfo = await GetPackageInfo(packageDirectory, ct);
+                    PopulateCiMetadata(packageInfo);
+                    packages.Add(packageInfo);
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogDebug(ex, "Failed to get package info for {directory}", packageDirectory);
+                }
+            }
+
+            return packages;
+        }
+
+        /// <summary>
+        /// Discovers package directories under the search root.
+        /// Override this to customize package discovery for a language.
+        /// </summary>
+        protected virtual IEnumerable<string> DiscoverPackageDirectories(string searchRoot, bool isServiceDirectory)
+        {
+            if (PackageManifestPatterns.Length == 0)
+            {
+                return [];
+            }
+
+
+            var packageRoots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var pattern in PackageManifestPatterns)
+            {
+                var enumerationOptions = new EnumerationOptions()
+                {
+                    RecurseSubdirectories = true,
+                    MaxRecursionDepth = 3
+                };
+
+                foreach (var filePath in Directory.EnumerateFiles(searchRoot, pattern, enumerationOptions))
+                {
+                    var packageRoot = GetPackageRootFromManifest(filePath);
+                    if (!string.IsNullOrEmpty(packageRoot))
+                    {
+                        packageRoots.Add(packageRoot);
+                    }
+                }
+            }
+
+            return packageRoots;
+        }
+
+        /// <summary>
+        /// File patterns used to identify package manifest files (e.g., "pom.xml", "package.json").
+        /// Override in derived classes to specify language-specific patterns.
+        /// </summary>
+        protected virtual string[] PackageManifestPatterns => [];
+
+        protected virtual void ApplyLanguageCiParameters(PackageInfo packageInfo)
+        {
+        }
+
+        protected void PopulateCiMetadata(PackageInfo packageInfo)
+        {
+            packageInfoHelper.PopulateCommonCiMetadata(packageInfo);
+            ApplyLanguageCiParameters(packageInfo);
+        }
+
+        /// <summary>
+        /// Gets the package root directory from a manifest file path.
+        /// Default implementation returns the directory containing the manifest.
+        /// Override in derived classes if the manifest is in a subdirectory (e.g., src/).
+        /// </summary>
+        protected virtual string? GetPackageRootFromManifest(string manifestPath)
+        {
+            return Path.GetDirectoryName(manifestPath);
+        }
 
         /// <summary>
         /// Analyzes dependencies for the specific package.
@@ -124,7 +243,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="packagePath">Path to the package directory</param>
         /// <param name="fixCheckErrors">Whether to automatically apply code formatting</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Result of the code formatting operation</returns>  
+        /// <returns>Result of the code formatting operation</returns>
         public virtual Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
@@ -259,7 +378,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             {
                 return ValidationResult.CreateFailure($"Validation exception: {ex.Message}");
             }
-        }               
+        }
 
         /// <summary>
         /// Updates the package metadata content for a specified package.
@@ -312,7 +431,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             // Use provided version or get current version from package
             var targetVersion = version;
             if (string.IsNullOrWhiteSpace(targetVersion))
-            {   
+            {
                 targetVersion = packageInfo?.PackageVersion;
                 if (string.IsNullOrWhiteSpace(targetVersion))
                 {
@@ -507,6 +626,38 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 logger.LogError(ex, "Error occurred while building SDK code");
                 return (false, $"An error occurred: {ex.Message}", null);
             }
+        }
+
+        protected static string? GetSpecProjectPath(string packagePath)
+        {
+            var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
+            if (!File.Exists(tspLocationPath))
+            {
+                return null;
+            }
+
+            try
+            {
+                using var reader = new StreamReader(tspLocationPath);
+                var tspLocation = TspLocationYamlDeserializer.Deserialize<TspLocation>(reader);
+                return tspLocation?.Directory;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static readonly YamlDotNet.Serialization.IDeserializer TspLocationYamlDeserializer =
+            new YamlDotNet.Serialization.DeserializerBuilder()
+                .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
+                .Build();
+
+        private class TspLocation
+        {
+            [YamlDotNet.Serialization.YamlMember(Alias = "directory")]
+            public string? Directory { get; set; }
         }
     }
 }

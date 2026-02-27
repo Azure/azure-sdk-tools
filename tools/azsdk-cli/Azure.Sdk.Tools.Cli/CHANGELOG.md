@@ -1,5 +1,15 @@
 # Release History
 
+## 0.5.20 (Unreleased)
+
+### Features Added
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.5.19 (2026-02-25)
 
 ### Bugs Fixed

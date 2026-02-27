@@ -5,10 +5,10 @@
 <div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded"
      class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container {{ floatItemStart }}"
      [class.thread-collapsed]="isThreadCollapsed">
-    <div *ngIf="instanceLocation === 'code-panel' && codePanelRowData!.comments && codePanelRowData!.comments.length > 0"
+    <div *ngIf="(instanceLocation === 'code-panel' || instanceLocation === 'conversations') && codePanelRowData!.comments && codePanelRowData!.comments.length > 0"
          class="comment-thread-header d-flex justify-content-between align-items-center p-2 pb-1 mb-2"
          [class.collapsed]="isThreadCollapsed">
-        <div class="d-flex align-items-center" (click)="toggleThreadCollapse()" style="cursor: pointer;">
+        <div *ngIf="instanceLocation === 'code-panel'" class="d-flex align-items-center" (click)="toggleThreadCollapse()" style="cursor: pointer;">
             <i class="bi"
                [class.bi-chevron-down]="!isThreadCollapsed"
                [class.bi-chevron-right]="isThreadCollapsed"
@@ -17,7 +17,7 @@
         </div>
         <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 &&
                     hasSeverity(codePanelRowData!.comments[0].severity)"
-             class="severity-header-container">
+             class="severity-header-container ms-auto">
             <div *ngIf="canEditSeverity">
                 <div *ngIf="isEditingSeverity === codePanelRowData!.comments[0].id" class="severity-edit-container">
                     <p-select
@@ -156,6 +156,7 @@
             <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="!codePanelRowData!.draftCommentText || codePanelRowData!.draftCommentText.length === 0" (click)="saveCommentAction($event)">Add comment</button>
             <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
             <button
+                *ngIf="!codePanelRowData!.comments || codePanelRowData!.comments.length === 0"
                 type="button"
                 class="btn btn-sm btn-outline-secondary editor-action-btn"
                 [class.active]="allowAnyOneToResolve"

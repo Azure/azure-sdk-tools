@@ -107,7 +107,7 @@ namespace APIViewWeb.LeanControllers
             [FromForm] string apiRevisionId = null,
             [FromForm] string sampleRevisionId = null,
             [FromForm] CommentSeverity? severity = null,
-            bool resolutionLocked = false,
+            [FromForm] bool resolutionLocked = false,
             [FromForm] string threadId = null)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
@@ -115,6 +115,10 @@ namespace APIViewWeb.LeanControllers
                 return new BadRequestResult();
             }
 
+            // Severity and resolutionLocked values are controlled by the frontend:
+            // - New threads send the user-selected severity and resolution lock setting
+            // - Replies send severity=null and resolutionLocked=false
+            // The backend uses these values as-is without re-deriving reply status.
             var comment = new CommentItemModel
             {
                 ReviewId = reviewId,

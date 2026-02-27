@@ -188,7 +188,7 @@ internal class TypeSpecCustomizationServiceTests
         var gitHelper = CreateRealGitHelper();
 
         // Discover repo root from the test project path
-        var repoRoot = await gitHelper.DiscoverRepoRootAsync(typeSpecProjectPath);
+        var repoRoot = await gitHelper.DiscoverRepoRootAsync(typeSpecProjectPath, CancellationToken.None);
         Assert.That(repoRoot, Is.Not.Null.And.Not.Empty, "Should find repository root");
 
         // Check that the reference doc exists at the expected location

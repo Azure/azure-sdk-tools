@@ -325,8 +325,18 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<ActionResult> OnPostRequestReviewersAsync(string id, string apiRevisionId, HashSet<string> reviewers)
         {
+            var currentApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
+            var existingReviewers = new HashSet<string>(
+                currentApiRevision.AssignedReviewers.Select(assignment => assignment.AssingedTo),
+                StringComparer.OrdinalIgnoreCase);
+
             await _apiRevisionsManager.AssignReviewersToAPIRevisionAsync(User, apiRevisionId, reviewers);
-            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
+
+            var newlyAddedReviewers = reviewers
+                .Where(reviewer => !existingReviewers.Contains(reviewer))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            await _notificationManager.NotifyAssignedReviewersAsync(User, apiRevisionId, newlyAddedReviewers);
             return RedirectToPage(new { id = id, revisionId = apiRevisionId });
         }
 

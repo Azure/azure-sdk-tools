@@ -30,7 +30,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
-
+    
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
     /// </summary>

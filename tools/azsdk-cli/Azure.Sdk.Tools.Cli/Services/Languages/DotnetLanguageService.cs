@@ -24,13 +24,14 @@ public sealed partial class DotnetLanguageService: LanguageService
     public DotnetLanguageService(
         IProcessHelper processHelper,
         IPowershellHelper powershellHelper,
-        IGitHelper gitHelper,        
+        IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
+        IPackageInfoHelper packageInfoHelper,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper,
         IChangelogHelper changelogHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.powershellHelper = powershellHelper;
     }
@@ -50,9 +51,9 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving .NET package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var (repoRoot, relativePath, fullPath) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
         var (packageName, packageVersion, sdkType) = await TryGetPackageInfoAsync(fullPath, ct);
-        
+
         if (packageName == null)
         {
             logger.LogWarning("Could not determine package name for .NET package at {fullPath}", fullPath);
@@ -65,7 +66,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         {
             logger.LogWarning("Could not determine SDK type for .NET package at {fullPath}", fullPath);
         }
-        
+
         var samplesDirectory = FindSamplesDirectory(fullPath);
 
         var parsedSdkType = sdkType switch
@@ -75,7 +76,7 @@ public sealed partial class DotnetLanguageService: LanguageService
             "functions" => SdkType.Functions,
             _ => SdkType.Unknown
         };
-        
+
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -88,10 +89,10 @@ public sealed partial class DotnetLanguageService: LanguageService
             SamplesDirectory = samplesDirectory,
             SdkType = parsedSdkType
         };
-        
-        logger.LogDebug("Resolved .NET package: {packageName} v{packageVersion} at {relativePath} (as {parsedSdkType})", 
+
+        logger.LogDebug("Resolved .NET package: {packageName} v{packageVersion} at {relativePath} (as {parsedSdkType})",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath, parsedSdkType.ToString() ?? "(unknown)");
-        
+
         return model;
     }
 
@@ -101,12 +102,12 @@ public sealed partial class DotnetLanguageService: LanguageService
         {
             var csproj = Directory.GetFiles(Path.Combine(packagePath, "src"), "*.csproj").FirstOrDefault();
 
-            if (csproj == null) 
+            if (csproj == null)
             {
                 logger.LogWarning("No .csproj file found in {packagePath}", packagePath);
-                return (null, null, null); 
+                return (null, null, null);
             }
-            
+
             logger.LogTrace("Getting package info via MSBuild for: {csproj}", csproj);
 
             var result = await processHelper.Run(new ProcessOptions(
@@ -143,7 +144,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                 // Validate we got actual values before returning
                 if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(version))
                 {
-                    logger.LogTrace("Found package info via MSBuild: {name} v{version} ({sdkType})", 
+                    logger.LogTrace("Found package info via MSBuild: {name} v{version} ({sdkType})",
                         name, version, sdkType);
 
                     return (name, version, sdkType);
@@ -178,7 +179,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 
             // Get all subdirectories under tests (sorted for consistent behavior across platforms)
             var testSubdirectories = Directory.GetDirectories(testsPath).OrderBy(d => d).ToArray();
-            
+
             foreach (var directory in testSubdirectories)
             {
                 // Look for .cs files containing "#region Snippet:" in their content
@@ -196,15 +197,15 @@ public sealed partial class DotnetLanguageService: LanguageService
                         }
                     })
                     .ToArray();
-                
+
                 if (sampleFiles.Length > 0)
                 {
-                    logger.LogTrace("Found samples directory at {directory} with {count} files containing snippet regions", 
+                    logger.LogTrace("Found samples directory at {directory} with {count} files containing snippet regions",
                         directory, sampleFiles.Length);
                     return directory;
                 }
             }
-            
+
             logger.LogTrace("No samples directory found under {testsPath}, using default", testsPath);
             return GetDefaultSamplesDirectory(packagePath);
         }
@@ -219,7 +220,7 @@ public sealed partial class DotnetLanguageService: LanguageService
     {
         var testsPath = Path.Combine(packagePath, "tests");
         var workingDirectory = Directory.Exists(testsPath) ? testsPath : packagePath;
-        
+
         var result = await processHelper.Run(new ProcessOptions(
                 command: "dotnet",
                 args: ["test"],
@@ -250,7 +251,7 @@ public sealed partial class DotnetLanguageService: LanguageService
             var generatedDirMarker = Path.DirectorySeparatorChar + GeneratedFolderName + Path.DirectorySeparatorChar;
             var csFiles = Directory.GetFiles(srcDir, "*.cs", SearchOption.AllDirectories)
                 .Where(file => !file.Contains(generatedDirMarker, StringComparison.OrdinalIgnoreCase));
-            
+
             foreach (var file in csFiles)
             {
                 try

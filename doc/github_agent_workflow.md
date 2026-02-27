@@ -212,8 +212,6 @@ This shared import handles:
 - OIDC token acquisition via `actions/github-script`.
 - Azure CLI login using workload identity federation.
 - GitHub CLI installation and `gh-aw` extension setup.
-- Fetching secrets from Azure Key Vault.
-- Setting the `COPILOT_GITHUB_TOKEN` via `gh aw secrets set`.
 
 Include it in your workflow's `imports` to avoid re-implementing authentication logic:
 

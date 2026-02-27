@@ -2,6 +2,9 @@ name: Test login-to-github action
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - TestWorkflow
 
 jobs:
   test-single-owner:

@@ -488,26 +488,6 @@ func (g *GitHubClient) fetchActionsRunDetails(link *model.GitHubCheckLink) (stri
 	for _, job := range jobsList.Jobs {
 		sb.WriteString(fmt.Sprintf("\n#### Job: %s\n", job.Name))
 		sb.WriteString(fmt.Sprintf("- **Status**: %s, **Conclusion**: %s\n", job.Status, job.Conclusion))
-
-		if len(job.Steps) > 0 {
-			sb.WriteString("**Steps**:\n")
-			writeSteps(&sb, job.Steps)
-		}
-
-		if job.Conclusion == "failure" {
-			log.Printf("Fetching logs for failed job %d: %s", job.ID, job.Name)
-			jobLink := &model.GitHubCheckLink{
-				Owner: link.Owner, Repo: link.Repo,
-				ActionsRunID: link.ActionsRunID, JobID: fmt.Sprintf("%d", job.ID),
-			}
-			logs, dlErr := g.downloadJobLogs(jobLink)
-			if dlErr != nil {
-				log.Printf("Failed to fetch logs for job %d: %v", job.ID, dlErr)
-				sb.WriteString(fmt.Sprintf("\n*Failed to fetch logs: %v*\n", dlErr))
-			} else {
-				sb.WriteString(fmt.Sprintf("\n**Logs**:\n```\n%s\n```\n", logs))
-			}
-		}
 	}
 
 	// Fetch run-level summary artifact (written via $GITHUB_STEP_SUMMARY)

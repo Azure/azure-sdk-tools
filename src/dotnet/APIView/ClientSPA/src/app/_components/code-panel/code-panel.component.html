@@ -6,6 +6,13 @@
     <span *ngIf="loadingMessage" class="mt-2 text-muted">{{ loadingMessage }}</span>
 </div>
 <div *ngIf="codePanelRowSource;" id="viewport" tabindex="0" class="{{languageSafeName!}}" role="region" aria-label="Scrollable code panel" (click)="onCodePanelItemClick($event)" (keydown)="onKeyDown($event)">
+  <div *ngFor="let indicator of orphanUnresolvedThreadIndicators" class="unresolved-orphan-indicator">
+    <small class="d-flex align-items-center">
+      <i class="bi bi-exclamation-circle-fill me-1" [ngClass]="indicator.severityIconClass"></i>
+      Unresolved <span *ngIf="indicator.severityLabel">&nbsp;{{ indicator.severityLabel }}&nbsp;</span> comment by&nbsp;<b>{{ indicator.createdBy }}</b>
+      <a class="ms-1 unresolved-toggler" (click)="showOrphanUnresolvedThread(indicator.elementId, indicator.targetApiRevisionId)"><i class="bi bi-arrows-expand"></i>&nbsp;Show</a>
+    </small>
+  </div>
   <p-message class="sticky-top" *ngIf="showNoDiffInContentMessage()" severity="info" icon="bi bi-info-circle" text="There are no differences between the two API revisions"></p-message>
   <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeIdHashed"
     [attr.data-row-position-in-group]="item.rowPositionInGroup" [attr.data-row-type]="item.type" [ngClass]="getRowClassObject(item)">

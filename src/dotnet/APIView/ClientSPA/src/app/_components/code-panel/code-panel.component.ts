@@ -5,7 +5,7 @@ import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, DIFF_ADDED, DIFF_REMOVED, getCodePanelRowDataClass, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
-import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
+import { DIFF_API_REVISION_ID_QUERY_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentSeverity, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
@@ -17,6 +17,7 @@ import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/comm
 import { Menu } from 'primeng/menu';
 import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLineSearchInfo';
 import { DoublyLinkedList } from 'src/app/_helpers/doubly-linkedlist';
+import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 
 @Component({
     selector: 'app-code-panel',
@@ -69,6 +70,14 @@ export class CodePanelComponent implements OnChanges {
   diffNodeNavigationPointer: number | undefined = undefined;
 
   menuItemsLineActions: MenuItem[] = [];
+  orphanUnresolvedThreadIndicators: {
+    threadKey: string,
+    elementId: string,
+    createdBy: string,
+    severityLabel: string,
+    severityIconClass: string,
+    targetApiRevisionId: string
+  }[] = [];
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
@@ -107,6 +116,10 @@ export class CodePanelComponent implements OnChanges {
         this.isLoading = true;
         this.codePanelRowSource = undefined;
       }
+    }
+
+    if (changes['codePanelRowData'] || changes['allComments'] || changes['activeApiRevisionId']) {
+      this.updateOrphanUnresolvedThreadIndicators();
     }
 
     if (changes['loadFailed'] && changes['loadFailed'].currentValue) {
@@ -165,6 +178,18 @@ export class CodePanelComponent implements OnChanges {
 
   getTokenClassObject(token: StructuredToken) {
     return getStructuredTokenClass(token);
+  }
+
+  showOrphanUnresolvedThread(elementId: string, targetApiRevisionId: string) {
+    if (!targetApiRevisionId || targetApiRevisionId === this.activeApiRevisionId) {
+      this.scrollToNode(undefined, elementId);
+      return;
+    }
+
+    const queryParams = getQueryParams(this.route);
+    queryParams[DIFF_API_REVISION_ID_QUERY_PARAM] = targetApiRevisionId;
+    queryParams[SCROLL_TO_NODE_QUERY_PARAM] = elementId;
+    this.router.navigate([], { queryParams });
   }
 
   getLineMenu(row: CodePanelRowData) {
@@ -865,6 +890,102 @@ export class CodePanelComponent implements OnChanges {
     }
 
     return false;
+  }
+
+  private updateOrphanUnresolvedThreadIndicators(): void {
+    const visibleLineIds = new Set(
+      (this.codePanelRowData || [])
+        .filter(row => row.type === CodePanelRowDatatype.CodeLine)
+        .map(row => row.nodeId)
+        .filter((id): id is string => !!id)
+    );
+
+    const activeComments = (this.allComments || []).filter(comment => !comment.isDeleted);
+    const grouped = activeComments.reduce((acc, comment) => {
+      const key = comment.threadId || comment.elementId;
+      if (!key) {
+        return acc;
+      }
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(comment);
+      return acc;
+    }, {} as { [key: string]: CommentItemModel[] });
+
+    this.orphanUnresolvedThreadIndicators = Object.entries(grouped)
+      .map(([threadKey, comments]) => {
+        const isResolvedThread = comments.some(c => c.isResolved);
+        if (isResolvedThread) {
+          return undefined;
+        }
+
+        const representative = comments[0];
+        if (!representative?.elementId || visibleLineIds.has(representative.elementId)) {
+          return undefined;
+        }
+
+        const nonActiveRevisionComment = comments.find(c => c.apiRevisionId && c.apiRevisionId !== this.activeApiRevisionId);
+        const targetApiRevisionId = nonActiveRevisionComment?.apiRevisionId || representative.apiRevisionId;
+
+        return {
+          threadKey,
+          elementId: representative.elementId,
+          createdBy: representative.createdBy,
+          severityLabel: this.getSeverityLabel(comments),
+          severityIconClass: this.getSeverityIconClass(comments),
+          targetApiRevisionId
+        };
+      })
+      .filter((item): item is {
+        threadKey: string,
+        elementId: string,
+        createdBy: string,
+        severityLabel: string,
+        severityIconClass: string,
+        targetApiRevisionId: string
+      } => !!item)
+      .sort((a, b) => a.threadKey.localeCompare(b.threadKey));
+  }
+
+  private getSeverityLabel(comments: CommentItemModel[]): string {
+    const highestSeverity = this.getHighestSeverity(comments);
+
+    switch (highestSeverity) {
+      case CommentSeverity.MustFix:
+        return 'MUST FIX';
+      case CommentSeverity.ShouldFix:
+        return 'SHOULD FIX';
+      case CommentSeverity.Suggestion:
+        return 'SUGGESTION';
+      case CommentSeverity.Question:
+        return 'QUESTION';
+      default:
+        return '';
+    }
+  }
+
+  private getSeverityIconClass(comments: CommentItemModel[]): string {
+    const highestSeverity = this.getHighestSeverity(comments);
+    switch (CommentSeverityHelper.getSeverityBadgeClass(highestSeverity)) {
+      case 'severity-must-fix':
+        return 'severity-icon-must-fix';
+      case 'severity-should-fix':
+        return 'severity-icon-should-fix';
+      case 'severity-suggestion':
+        return 'severity-icon-suggestion';
+      case 'severity-question':
+        return 'severity-icon-question';
+      default:
+        return '';
+    }
+  }
+
+  private getHighestSeverity(comments: CommentItemModel[]): CommentSeverity | null {
+    return comments
+      .map(comment => CommentSeverityHelper.getSeverityEnumValue(comment.severity))
+      .filter((severity): severity is CommentSeverity => severity !== null)
+      .sort((a, b) => b - a)[0] ?? null;
   }
 
   handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {

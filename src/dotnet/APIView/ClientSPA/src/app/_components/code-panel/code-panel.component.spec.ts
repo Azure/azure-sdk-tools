@@ -230,6 +230,72 @@ describe('CodePanelComponent', () => {
     });
   });
 
+  describe('orphan unresolved thread indicators', () => {
+    it('should create indicator for unresolved comment whose elementId is not visible', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'tjprescott',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.MustFix
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+      expect(component.orphanUnresolvedThreadIndicators[0].severityLabel).toBe('MUST FIX');
+      expect(component.orphanUnresolvedThreadIndicators[0].severityIconClass).toBe('severity-icon-must-fix');
+      expect(component.orphanUnresolvedThreadIndicators[0].elementId).toBe('deleted-id');
+    });
+
+    it('should handle string-typed severity from JSON deserialization', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'AlitzelMendez',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: 'ShouldFix' as any
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+      expect(component.orphanUnresolvedThreadIndicators[0].severityLabel).toBe('SHOULD FIX');
+      expect(component.orphanUnresolvedThreadIndicators[0].severityIconClass).toBe('severity-icon-should-fix');
+    });
+
+    it('should navigate to diff context when showing orphan unresolved thread', () => {
+      const navigateSpy = vi.spyOn((component as any).router, 'navigate').mockResolvedValue(true);
+      component.activeApiRevisionId = 'active-rev';
+
+      component.showOrphanUnresolvedThread('deleted-id', 'old-rev');
+
+      expect(navigateSpy).toHaveBeenCalled();
+      const queryParams = navigateSpy.mock.calls[0][1].queryParams;
+      expect(queryParams.diffApiRevisionId).toBe('old-rev');
+      expect(queryParams.nId).toBe('deleted-id');
+      navigateSpy.mockRestore();
+    });
+  });
+
   describe('copyReviewTextToClipBoard', () => {
     it('should copy formatted review text to clipboard', async () => {
       const token1 = new StructuredToken();

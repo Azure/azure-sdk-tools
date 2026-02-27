@@ -26,6 +26,44 @@
         p-messages.sticky-top {
             z-index: 1 !important;
         }
+
+        .unresolved-orphan-indicator {
+            margin: 4px 10px;
+            margin-left: 42px;
+            padding: 3px 8px;
+            background-color: var(--base-fg-color);
+            border-left: 2px solid var(--danger-color);
+            border-radius: 2px;
+            width: fit-content;
+            color: var(--text-muted-color);
+
+            .bi-exclamation-circle-fill {
+                color: var(--danger-color);
+            }
+
+            .severity-icon-must-fix {
+                color: var(--severity-must-fix-text);
+            }
+
+            .severity-icon-should-fix {
+                color: var(--severity-should-fix-text);
+            }
+
+            .severity-icon-suggestion {
+                color: var(--severity-suggestion-text);
+            }
+
+            .severity-icon-question {
+                color: var(--severity-question-text);
+            }
+
+            .unresolved-toggler {
+                color: var(--danger-color);
+                font-weight: bolder;
+                cursor: pointer;
+                text-decoration: none;
+            }
+        }
     }
 
     .code-line {

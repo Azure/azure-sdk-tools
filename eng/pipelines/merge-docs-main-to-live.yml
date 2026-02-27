@@ -56,7 +56,7 @@ jobs:
           filePath: eng/scripts/create-tag-for-current-branch.ps1
           arguments:
             -ReleaseTag "live_release-$(Get-Date -Format 'yyyy-MM-dd').$(Build.BuildId)"
-            -GithubUrl "https://$(GH_TOKEN)@github.com/${{repo.RepoOwner}}/${{repo.RepoName}}.git" `
+            -GithubUrl "https://x-access-token:$(GH_TOKEN)@github.com/${{repo.RepoOwner}}/${{repo.RepoName}}.git" `
             -WhatIf:$${{ parameters.WhatIfPreference }}
           workingDirectory: $(DocRepoLocation)
         displayName: Create tag for base branch

@@ -62,7 +62,7 @@ steps:
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://$(GH_TOKEN)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -GitUrl "https://x-access-token:$(GH_TOKEN)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -SkipCommit $${{parameters.SkipCheckingForChanges}}
 
@@ -76,7 +76,7 @@ steps:
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://$(GH_TOKEN)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -GitUrl "https://x-access-token:$(GH_TOKEN)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -AmendCommit $True
 

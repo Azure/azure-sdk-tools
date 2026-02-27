@@ -176,7 +176,7 @@ stages:
         . $(toolsRepositoryPath)/eng/common/scripts/git-branch-push.ps1 `
           -PRBranchName $branchName `
           -CommitMsg 'Update repo on failing build`n`nBuild url: $(System.CollectionUri)_build/results?buildId=$(Build.BuildId)' `
-          -GitUrl "https://$(GH_TOKEN)@github.com/azure-sdk/$repositoryName.git"
+          -GitUrl "https://x-access-token:$(GH_TOKEN)@github.com/azure-sdk/$repositoryName.git"
 
         Write-Host ""
         Write-Host @"

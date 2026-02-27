@@ -30,9 +30,10 @@ For Azure SDK development and usage questions, follow this structured approach:
 - Carefully read the **Before you begin** and **Next steps** sections of the KNOWLEDGE CONTEXT
 
 ## Step 3: Answer Construction
-- Give the direct answer first, then one actionable next step
-- Only explain SDK lifecycle context if it is essential to the answer
-- For CI/validation issues, guide toward permanent resolution rather than suppression
+- Start with the most direct solution based on SDK knowledge from KNOWLEDGE CONTEXT
+- Consider the complete SDK development lifecycle and how the solution fits into the process
+- Provide actionable next steps and reference documents
+- For CI/validation issues, guide customers on permanent resolution rather than suppression methods
 
 ## Step 4: Verification and Validation
 - Double-check all technical recommendations against Azure SDK standards and Azure guidelines

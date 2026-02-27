@@ -160,7 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             AllowMultipleArgumentsPerToken = false,
         };
 
-        private readonly Option<string> outputOption = new("--output")
+        private readonly Option<string> outputFilePathOption = new("--output-file")
         {
             Description = "File path to write exported content",
             Required = true,
@@ -226,7 +226,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
-                codeownersPathOption, sectionsOption, outputOption,
+                codeownersPathOption, sectionsOption, outputFilePathOption,
             }
         ];
 
@@ -297,7 +297,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var codeownersPath = parseResult.GetValue(codeownersPathOption);
                 var sections = parseResult.GetValue(sectionsOption);
-                var output = parseResult.GetValue(outputOption);
+                var output = parseResult.GetValue(outputFilePathOption);
                 return await ExportSection(codeownersPath!, sections!, output!);
             }
 

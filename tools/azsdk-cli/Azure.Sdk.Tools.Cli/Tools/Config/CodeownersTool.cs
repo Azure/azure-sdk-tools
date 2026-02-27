@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         private readonly Option<string> optionalRepoOption = new("--repo", "-r")
         {
-            Description = "Repository name (e.g., Azure/azure-sdk-for-python).",
+            Description = "Repository name of the format <owner>/<repo> (e.g., Azure/azure-sdk-for-python).",
             Required = false,
         };
 
@@ -642,7 +642,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (--user, --label, --package, or --path) must be specified. Multiple labels are treated as AND.")]
+        [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (--github-user, --label, --package, or --path) must be specified. Multiple labels are treated as AND.")]
         public async Task<CommandResponse> ViewCodeowners(
             string? user = null,
             string[] labels = null,
@@ -652,7 +652,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
-                var hasLabels = labels.Length > 0;
+                var hasLabels = labels?.Length > 0;
                 var axes = new[] { !string.IsNullOrEmpty(user), hasLabels, !string.IsNullOrEmpty(package), !string.IsNullOrEmpty(path) }.Count(a => a);
                 if (axes == 0)
                 {
@@ -673,7 +673,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
                 if (!string.IsNullOrEmpty(package))
                 {
-                    return await codeownersManagementHelper.GetViewByPackage(package);
+                    return await codeownersManagementHelper.GetViewByPackage(package, repo);
                 }
                 return await codeownersManagementHelper.GetViewByPath(path!, repo);
             }

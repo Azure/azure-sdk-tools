@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -65,9 +66,9 @@ public class CodeownersManagementHelper(
         return new CodeownersViewResult([], labelOwners);
     }
 
-    public async Task<CodeownersViewResult> GetViewByPackage(string packageName)
+    public async Task<CodeownersViewResult> GetViewByPackage(string packageName, string? repo = null)
     {
-        var packageWi = await FindPackageByName(packageName);
+        var packageWi = await FindPackageByName(packageName, repo);
         if (packageWi == null)
         {
             return new CodeownersViewResult { ResponseError = $"No Package work item found for '{packageName}'." };
@@ -75,7 +76,7 @@ public class CodeownersManagementHelper(
 
         await HydratePackages([packageWi]);
 
-        var relatedLabelOwners = await FetchRelatedLabelOwners(packageWi.RelatedIds);
+        var relatedLabelOwners = await FetchRelatedLabelOwners(packageWi.RelatedIds, repo);
         await HydrateLabelOwners(relatedLabelOwners);
 
         return new CodeownersViewResult([packageWi], relatedLabelOwners);
@@ -97,7 +98,9 @@ public class CodeownersManagementHelper(
 
     private async Task<OwnerWorkItem?> FindOwnerByGitHubAlias(string alias)
     {
-        var workItems = await devOpsService.QueryWorkItemsByTypeAndFieldAsync("Owner", "Custom.GitHubAlias", alias);
+        var escapedAlias = alias.Replace("'", "''");
+        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Owner' AND [Custom.GitHubAlias] = '{escapedAlias}'";
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
         if (workItems.Count == 0)
         {
             return null;
@@ -105,9 +108,22 @@ public class CodeownersManagementHelper(
         return WorkItemMappers.MapToOwnerWorkItem(workItems.First());
     }
 
-    private async Task<PackageWorkItem?> FindPackageByName(string packageName)
+    private async Task<PackageWorkItem?> FindPackageByName(string packageName, string? repo = null)
     {
-        var workItems = await devOpsService.QueryWorkItemsByTypeAndFieldAsync("Package", "Custom.Package", packageName);
+        var escapedPackageName = packageName.Replace("'", "''");
+        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Package' AND [Custom.Package] = '{escapedPackageName}'";
+
+        if (!string.IsNullOrEmpty(repo))
+        {
+            var languageString = RepoToLanguageString(repo);
+            if (languageString != repo)
+            {
+                var escapedLanguage = languageString.Replace("'", "''");
+                query += $" AND [Custom.Language] = '{escapedLanguage}'";
+            }
+        }
+
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
         if (workItems.Count == 0)
         {
             return null;
@@ -120,7 +136,9 @@ public class CodeownersManagementHelper(
 
     private async Task<LabelWorkItem?> FindLabelByName(string labelName)
     {
-        var workItems = await devOpsService.QueryWorkItemsByTypeAndFieldAsync("Label", "Custom.Label", labelName);
+        var escapedLabel = labelName.Replace("'", "''");
+        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Label' AND [Custom.Label] = '{escapedLabel}'";
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
         if (workItems.Count == 0)
         {
             return null;
@@ -192,7 +210,7 @@ public class CodeownersManagementHelper(
     private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByPath(string path, string? repo)
     {
         var escapedPath = path.Replace("'", "''");
-        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Label Owner' AND [Custom.RepoPath] = '{escapedPath}'";
+        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label Owner' AND [Custom.RepoPath] = '{escapedPath}'";
         if (!string.IsNullOrEmpty(repo))
         {
             var escapedRepo = repo.Replace("'", "''");

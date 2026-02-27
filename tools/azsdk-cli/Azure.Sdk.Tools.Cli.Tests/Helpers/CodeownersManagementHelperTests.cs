@@ -135,7 +135,11 @@ public class CodeownersManagementHelperTests
     [Test]
     public async Task GetViewByUser_OwnerNotFound_ReturnsError()
     {
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Owner", "Custom.GitHubAlias", "nonexistent-owner", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("nonexistent-owner")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var result = await _helper.GetViewByUser("nonexistent-owner", null);
@@ -154,7 +158,11 @@ public class CodeownersManagementHelperTests
         // Owner has related package and label owner
         var ownerWi = MakeOwnerWorkItem(ownerId, "owner1", pkgId, loId);
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Owner", "Custom.GitHubAlias", "owner1", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("owner1")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { ownerWi });
 
         // GetWorkItemsByIdsAsync for related IDs of the owner — returns package + label owner
@@ -195,7 +203,11 @@ public class CodeownersManagementHelperTests
 
         var ownerWi = MakeOwnerWorkItem(ownerId, "owner1", netPkgId, pyPkgId);
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Owner", "Custom.GitHubAlias", "owner1", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("owner1")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { ownerWi });
 
         var netPkg = MakePackageWorkItem(netPkgId, "Azure.Storage.Blobs", language: ".NET", relatedIds: [ownerId]);
@@ -227,7 +239,11 @@ public class CodeownersManagementHelperTests
         var ownerId = 1;
         var ownerWi = MakeOwnerWorkItem(ownerId, "owner1"); // no related IDs
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Owner", "Custom.GitHubAlias", "owner1", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("owner1")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { ownerWi });
 
         // Empty response for no IDs
@@ -252,7 +268,11 @@ public class CodeownersManagementHelperTests
     [Test]
     public async Task GetViewByLabel_LabelNotFound_ReturnsError()
     {
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Label", "Custom.Label", "NonExistent", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("NonExistent")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var result = await _helper.GetViewByLabel(["NonExistent"], null);
@@ -269,7 +289,11 @@ public class CodeownersManagementHelperTests
 
         var labelWi = MakeLabelWorkItem(labelId, "Storage", pkgId);
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Label", "Custom.Label", "Storage", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Storage")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { labelWi });
 
         var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs", relatedIds: [ownerId, labelId]);
@@ -312,9 +336,17 @@ public class CodeownersManagementHelperTests
         var labelAWi = MakeLabelWorkItem(labelAId, "Storage", 10, sharedPkgId, sharedLoId);
         var labelBWi = MakeLabelWorkItem(labelBId, "Blobs", sharedPkgId, sharedLoId, 40);
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Label", "Custom.Label", "Storage", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Storage")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { labelAWi });
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Label", "Custom.Label", "Blobs", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Blobs")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { labelBWi });
 
         var pkgWi = MakePackageWorkItem(sharedPkgId, "Azure.Storage.Blobs", relatedIds: [ownerId, labelAId]);
@@ -356,9 +388,17 @@ public class CodeownersManagementHelperTests
     {
         var labelWi = MakeLabelWorkItem(1, "Storage", 10);
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Label", "Custom.Label", "Storage", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Storage")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { labelWi });
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Label", "Custom.Label", "Missing", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label'") && q.Contains("Custom.Label") && q.Contains("Missing")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var result = await _helper.GetViewByLabel(["Storage", "Missing"], null);
@@ -446,7 +486,11 @@ public class CodeownersManagementHelperTests
     [Test]
     public async Task GetViewByPackage_PackageNotFound_ReturnsError()
     {
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Package", "Custom.Package", "NoSuch.Package", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Custom.Package") && q.Contains("NoSuch.Package")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem>());
 
         var result = await _helper.GetViewByPackage("NoSuch.Package");
@@ -463,7 +507,11 @@ public class CodeownersManagementHelperTests
 
         var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs", relatedIds: [ownerId, labelId]);
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Package", "Custom.Package", "Azure.Storage.Blobs", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Custom.Package") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { pkgWi });
 
         // Hydration for package's related IDs
@@ -500,7 +548,11 @@ public class CodeownersManagementHelperTests
         var pkgV1Wi = MakePackageWorkItem(pkgV1Id, "Azure.Storage.Blobs", version: "1.0");
         var pkgV2Wi = MakePackageWorkItem(pkgV2Id, "Azure.Storage.Blobs", version: "2.0");
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Package", "Custom.Package", "Azure.Storage.Blobs", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Custom.Package") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { pkgV1Wi, pkgV2Wi });
 
         // Hydration
@@ -529,7 +581,11 @@ public class CodeownersManagementHelperTests
 
         var ownerWi = MakeOwnerWorkItem(ownerId, "owner1", netLoId, pyLoId);
 
-        _mockDevOps.Setup(d => d.QueryWorkItemsByTypeAndFieldAsync("Owner", "Custom.GitHubAlias", "owner1", It.IsAny<WorkItemExpand>()))
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Owner'") && q.Contains("Custom.GitHubAlias") && q.Contains("owner1")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { ownerWi });
 
         var netLo = MakeLabelOwnerWorkItem(netLoId, "Service Owner", "Azure/azure-sdk-for-net", "/sdk/storage");

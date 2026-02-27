@@ -10,5 +10,5 @@ public interface ICodeownersManagementHelper
     Task<CodeownersViewResult> GetViewByUser(string alias, string? repo);
     Task<CodeownersViewResult> GetViewByLabel(string[] labels, string? repo);
     Task<CodeownersViewResult> GetViewByPath(string path, string? repo);
-    Task<CodeownersViewResult> GetViewByPackage(string packageName);
+    Task<CodeownersViewResult> GetViewByPackage(string packageName, string? repo = null);
 }

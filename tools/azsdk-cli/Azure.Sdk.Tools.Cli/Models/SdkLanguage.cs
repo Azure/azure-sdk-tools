@@ -76,6 +76,9 @@ public static class SdkLanguageHelpers
     {
         switch (language.ToLower())
         {
+            case "c++":
+            case "cpp":
+                return SdkLanguage.Cpp;
             case ".net":
             case "dotnet":
             case "c#":

@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -145,12 +146,32 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
 
+        // Export section command options
+        private readonly Option<string> codeownersPathOption = new("--codeowners-path")
+        {
+            Description = "Path to the CODEOWNERS file",
+            Required = true,
+        };
+
+        private readonly Option<string[]> sectionsOption = new("--section")
+        {
+            Description = "Section name to export. Can be specified multiple times.",
+            Required = true,
+            AllowMultipleArgumentsPerToken = false,
+        };
+
+        private readonly Option<string> outputOption = new("--output")
+        {
+            Description = "File path to write exported content",
+            Required = true,
+        };
+
         // Command names
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
         private const string generateCodeownersCommandName = "generate";
         private const string viewCodeownersCommandName = "view";
-
+        private const string exportSectionCommandName = "export-section";
 
         // MCP Tool Names
         private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
@@ -202,6 +223,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
             {
                 githubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption,
+            },
+            new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
+            {
+                codeownersPathOption, sectionsOption, outputOption,
             }
         ];
 
@@ -266,6 +291,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
                 return await ViewCodeowners(user, labels, package, path, repo);
+            }
+
+            if (command == exportSectionCommandName)
+            {
+                var codeownersPath = parseResult.GetValue(codeownersPathOption);
+                var sections = parseResult.GetValue(sectionsOption);
+                var output = parseResult.GetValue(outputOption);
+                return await ExportSection(codeownersPath!, sections!, output!);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -684,5 +717,46 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
+        /// <summary>
+        /// Exports named sections from a CODEOWNERS file to an output file.
+        /// </summary>
+        public async Task<DefaultCommandResponse> ExportSection(
+            string codeownersPath,
+            string[] sections,
+            string output)
+        {
+            if (!File.Exists(codeownersPath))
+            {
+                return new DefaultCommandResponse
+                {
+                    ResponseError = $"CODEOWNERS file not found: {codeownersPath}"
+                };
+            }
+
+            var lines = (await File.ReadAllLinesAsync(codeownersPath)).ToList();
+            var exportedLines = new List<string>();
+
+            foreach (var sectionName in sections)
+            {
+                var (headerStart, contentStart, sectionEnd) = CodeownersSectionFinder.FindSection(lines, sectionName);
+                if (headerStart == -1)
+                {
+                    logger.LogError("Section '{SectionName}' not found in CODEOWNERS file", sectionName);
+                    return new DefaultCommandResponse
+                    {
+                        ResponseError = $"Section '{sectionName}' not found in CODEOWNERS file"
+                    };
+                }
+
+                exportedLines.AddRange(lines.GetRange(headerStart, sectionEnd - headerStart));
+            }
+
+            await File.WriteAllLinesAsync(output, exportedLines);
+
+            return new DefaultCommandResponse
+            {
+                Message = $"Exported {sections.Length} section(s) to {output}"
+            };
+        }
     }
 }

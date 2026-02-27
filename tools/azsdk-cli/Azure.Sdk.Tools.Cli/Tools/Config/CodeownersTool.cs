@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         private readonly Option<string> optionalRepoOption = new("--repo", "-r")
         {
-            Description = "Repository name (e.g., Azure/azure-sdk-for-python). Defaults to current repo if in a language repo.",
+            Description = "Repository name (e.g., Azure/azure-sdk-for-python).",
             Required = false,
         };
 

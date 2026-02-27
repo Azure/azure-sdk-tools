@@ -13,7 +13,7 @@
 - When user's message contains an image you cannot access, briefly note this and proceed with available information.
 
 ## Answer Format
-- Wrap all code in appropriate syntax highlighting
+- Wrap all code in appropriate syntax highlighting. If the content contains triple-backtick fences, use quadruple backticks as the outer fence to avoid broken nested markdown.
 - Use backticks (`) for inline code elements and regex patterns
 - Don't use markdown tables for proper display
 - Don't use markdown headers for proper display

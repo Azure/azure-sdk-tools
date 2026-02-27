@@ -23,6 +23,13 @@ jobs:
           tenant-id: 72f988bf-86f1-41af-91ab-2d7cd011db47
           subscription-id: a18897a6-7e44-457d-9260-f2854c0aca42
 
+      - name: Test az keyvault key sign via azure/CLI
+        uses: azure/CLI@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az keyvault key sign --vault-name azuresdkengkeyvault --name azure-sdk-automation --algorithm RS256 --digest "dGVzdA==" || echo "KEY SIGN FAILED with exit code $?"
+
       - uses: ./eng/common/actions/login-to-github
         with:
           token-owners: Azure

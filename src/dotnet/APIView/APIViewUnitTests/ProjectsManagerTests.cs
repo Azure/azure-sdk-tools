@@ -482,4 +482,112 @@ public class ProjectsManagerTests
     }
 
     #endregion
+
+    #region Language Key Normalization Tests
+
+    [Fact]
+    public async Task UpsertProjectFromMetadataAsync_LowercaseLanguageKeys_UsesCaseInsensitiveLookup()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage");
+        // Metadata with lowercase language keys (common in TypeSpec metadata)
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Storage", Documentation = "Azure Storage" },
+            Languages = new Dictionary<string, LanguageConfig>
+            {
+                ["python"] = new() { Namespace = "azure.storage", PackageName = "azure-storage" },
+                ["javascript"] = new() { Namespace = "@azure/storage", PackageName = "@azure/storage" },
+                ["java"] = new() { Namespace = "com.azure.storage", PackageName = "azure-storage" },
+                ["csharp"] = new() { Namespace = "Azure.Storage", PackageName = "Azure.Storage" },
+                ["go"] = new() { Namespace = "azstorage", PackageName = "azstorage" }
+            }
+        };
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        Assert.Equal(5, capturedProject.ExpectedPackages.Count);
+        // Dictionary is case-insensitive for lookups
+        Assert.True(capturedProject.ExpectedPackages.ContainsKey("python"));
+        Assert.True(capturedProject.ExpectedPackages.ContainsKey("Python")); // Case-insensitive lookup works
+        Assert.True(capturedProject.ExpectedPackages.ContainsKey("PYTHON")); // Case-insensitive lookup works
+        // Verify values are preserved
+        Assert.Equal("azure-storage", capturedProject.ExpectedPackages["python"].PackageName);
+        Assert.Equal("@azure/storage", capturedProject.ExpectedPackages["javascript"].PackageName);
+    }
+
+    [Fact]
+    public async Task Reconcile_LowercaseMetadataKeys_MatchesReviewWithCanonicalLanguage()
+    {
+        // Review uses canonical casing "Python"
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage", "project-1");
+        ReviewListItemModel pyReview = CreateReview("py-review", "Python", "azure-storage", projectId: "project-1");
+        // Project has canonical-cased keys
+        Project project = CreateProject("project-1", "Azure.Storage",
+            "Azure.Storage", "Azure Storage",
+            Packages(("Python", "azure-storage")),
+            new HashSet<string> { "ts-1", "py-review" });
+        // Metadata comes with lowercase keys (common in TypeSpec)
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Storage", Documentation = "Azure Storage" },
+            Languages = new Dictionary<string, LanguageConfig>
+            {
+                ["python"] = new() { Namespace = "azure.storage", PackageName = "azure-storage" }
+            }
+        };
+
+        SetupGetProject("project-1", project);
+        SetupGetReviews(new[] { pyReview });
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        // Review should remain linked because package name matches, even with different key casing
+        Assert.Contains("py-review", result.ReviewIds);
+        Assert.DoesNotContain("py-review", result.HistoricalReviewIds);
+        // No reviews should have been unlinked
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(It.IsAny<IEnumerable<ReviewListItemModel>>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Reconcile_MixedCaseLanguageKeys_HandlesCorrectly()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Core", "project-1");
+        ReviewListItemModel pyReview = CreateReview("py-review", "Python", "azure-core-old", projectId: "project-1");
+        ReviewListItemModel newPyReview = CreateReview("py-new", "Python", "azure-core-new");
+        Project project = CreateProject("project-1", "Azure.Core",
+            "Azure.Core", "Azure Core",
+            Packages(("Python", "azure-core-old")),
+            new HashSet<string> { "ts-1", "py-review" });
+        // Metadata with lowercase key
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Core", Documentation = "Azure Core" },
+            Languages = new Dictionary<string, LanguageConfig>
+            {
+                ["python"] = new() { Namespace = "azure.core", PackageName = "azure-core-new" }
+            }
+        };
+
+        SetupGetProject("project-1", project);
+        SetupGetReviews(new[] { pyReview });
+        SetupFindReview("python", "azure-core-new", newPyReview);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        // Old review should be unlinked (package name changed)
+        Assert.Contains("py-review", result.HistoricalReviewIds);
+        Assert.DoesNotContain("py-review", result.ReviewIds);
+        // New review should be linked
+        Assert.Contains("py-new", result.ReviewIds);
+        Assert.Equal("project-1", newPyReview.ProjectId);
+    }
+
+    #endregion
 }

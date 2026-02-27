@@ -140,7 +140,7 @@ namespace APIViewWeb
 
         public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
-            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language) AND LOWER(r.PackageName) = LOWER(@packageName)");
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language) AND LOWER(r.PackageName) = LOWER(@packageName) AND r.IsDeleted = false");
             if (isClosed.HasValue)
             {
                 queryStringBuilder.Append(" AND r.IsClosed = @isClosed");

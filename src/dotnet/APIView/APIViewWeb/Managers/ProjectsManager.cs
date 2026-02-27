@@ -118,11 +118,9 @@ public class ProjectsManager : IProjectsManager
             IsDeleted = false
         };
 
+        await _projectsRepository.UpsertProjectAsync(project);
         typeSpecReview.ProjectId = project.Id;
-
-        await Task.WhenAll(
-            _projectsRepository.UpsertProjectAsync(project),
-            _reviewsRepository.UpsertReviewAsync(typeSpecReview));
+        await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 
         return project;
     }
@@ -276,12 +274,17 @@ public class ProjectsManager : IProjectsManager
 
     private static Dictionary<string, PackageInfo> BuildExpectedPackages(TypeSpecMetadata metadata)
     {
-        return metadata.Languages?
+        if (metadata?.Languages == null)
+        {
+            return new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        return metadata.Languages
             .Where(lang => !string.IsNullOrEmpty(lang.Value.Namespace) || !string.IsNullOrEmpty(lang.Value.PackageName))
             .ToDictionary(
                 lang => lang.Key,
-                lang => new PackageInfo { Namespace = lang.Value.Namespace, PackageName = lang.Value.PackageName }
-            ) ?? new Dictionary<string, PackageInfo>();
+                lang => new PackageInfo { Namespace = lang.Value.Namespace, PackageName = lang.Value.PackageName },
+                StringComparer.OrdinalIgnoreCase);
     }
 
     private static bool AreExpectedPackagesEqual(Dictionary<string, PackageInfo> current,

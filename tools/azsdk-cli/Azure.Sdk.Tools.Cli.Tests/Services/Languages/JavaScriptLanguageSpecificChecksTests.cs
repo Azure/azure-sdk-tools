@@ -32,6 +32,7 @@ internal class JavaScriptLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<JavaScriptLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
+            Mock.Of<IPackageInfoHelper>(),
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());

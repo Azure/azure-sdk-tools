@@ -66,6 +66,26 @@ describe('Rest client file fallbacks', () => {
             const version = await getApiVersionType(root);
             expect(version).toBe(ApiVersionType.Preview);
         });
+        test("metadata.json exists with apiVersions - all stable", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-apiVersions-all-stable/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Stable);
+        });
+        test("metadata.json exists with apiVersions - with preview", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-apiVersions-with-preview/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("metadata.json exists with apiVersions - preview listed first", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-apiVersions-preview-first/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("metadata.json exists with apiVersions - single stable version", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-apiVersions-single/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Stable);
+        });
         test("Model only spec", async () => {
             const mockNpmUtils = await import("../../common/npmUtils.js");
             let npmViewCount = 0;

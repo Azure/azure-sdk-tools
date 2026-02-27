@@ -20,6 +20,8 @@ public interface IAPIViewFeedbackService
 {
     Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId);
     Task<ReviewMetadata> ParseReviewMetadata(string revisionId);
+    Task<List<FeedbackItem>> GetFeedbackItemsAsync(string apiViewUrl, CancellationToken ct = default);
+    Task<string?> GetLanguageAsync(string apiViewUrl, CancellationToken ct = default);
     Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata);
 }
 
@@ -358,6 +360,33 @@ Respond in JSON format:
         {
             _logger.LogWarning("Cannot call Resolve endpoint - ReviewId is null or empty, or Revision is null");
         }
+    }
+
+    /// <summary>
+    /// Returns feedback items derived from consolidated APIView review comments for the given APIView URL.
+    /// </summary>
+    public async Task<List<FeedbackItem>> GetFeedbackItemsAsync(string apiViewUrl, CancellationToken ct = default)
+    {
+        _logger.LogInformation("Preprocessing APIView feedback from: {Url}", apiViewUrl);
+        var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
+        var comments = await GetConsolidatedComments(revisionId);
+        var feedbackItems = comments.Select(c =>
+        {
+            var text = $"API Line {c.LineNo}: {c.LineId}, Code: {c.LineText.Trim()}, ReviewComment: {c.Comment}";
+            return new FeedbackItem { Text = text, Context = string.Empty };
+        }).ToList();
+        _logger.LogInformation("Converted {Count} comments to feedback items", feedbackItems.Count);
+        return feedbackItems;
+    }
+
+    /// <summary>
+    /// Returns the SDK language detected from APIView review metadata for the given APIView URL.
+    /// </summary>
+    public async Task<string?> GetLanguageAsync(string apiViewUrl, CancellationToken ct = default)
+    {
+        var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
+        var metadata = await ParseReviewMetadata(revisionId);
+        return metadata.Language;
     }
 
     /// <summary>

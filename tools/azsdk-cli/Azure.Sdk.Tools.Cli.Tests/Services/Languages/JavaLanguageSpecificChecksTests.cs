@@ -28,6 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             MockMavenHelper = new Mock<IMavenHelper>();
             var gitHelperMock = new Mock<IGitHelper>();
             gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+            var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelperMock.Object);
             LangService = new JavaLanguageService(
                 MockProcessHelper.Object,
                 gitHelperMock.Object,
@@ -35,6 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 new Mock<ICopilotAgentRunner>().Object,
                 NullLogger<JavaLanguageService>.Instance,
                 new Mock<ICommonValidationHelpers>().Object,
+                packageInfoHelper,
                 Mock.Of<IFileHelper>(),
                 Mock.Of<ISpecGenSdkConfigHelper>(),
                 Mock.Of<IChangelogHelper>());
@@ -47,7 +49,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulMavenVersionCheck()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
         }
@@ -57,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedMavenVersionCheck()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Maven not found")] });
         }
@@ -67,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulSpotlessCheck()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:check")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:check")),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
         }
@@ -77,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulSpotlessApply()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:apply")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:apply")),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
         }
@@ -87,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSpotlessCheck()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:check")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:check")),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "The following files had format violations")] });
         }
@@ -97,7 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSpotlessApply()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:apply")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("spotless:apply")),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "spotless failed with errors")] });
         }
@@ -107,15 +109,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulMavenInstall()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ProcessResult { 
-                    ExitCode = 0, 
-                    OutputDetails = [(StdioLevel.StandardOutput, 
+                .ReturnsAsync(new ProcessResult
+                {
+                    ExitCode = 0,
+                    OutputDetails = [(StdioLevel.StandardOutput,
                         "[INFO] BUILD SUCCESS\n" +
                         "[INFO] Total time: 30.123 s\n" +
                         "[INFO] Finished at: 2025-01-09T10:30:00-08:00"
-                    )] 
+                    )]
                 });
         }
 
@@ -124,18 +127,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupMavenInstallWithToolErrors(string errorOutput)
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => IsMavenInstallCommand(p)),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, errorOutput)] });
         }
 
-         /// <summary>
+        /// <summary>
         /// Sets up successful Maven codesnippet update command.
         /// </summary>
         private void SetupSuccessfulSnippetUpdate()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
-                p.Args.Any(arg => arg.Contains("codesnippet-maven-plugin"))), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p =>
+                p.Args.Any(arg => arg.Contains("codesnippet-maven-plugin"))),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
         }
@@ -145,8 +148,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedSnippetUpdate()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
-                p.Args.Any(arg => arg.Contains("codesnippet-maven-plugin"))), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p =>
+                p.Args.Any(arg => arg.Contains("codesnippet-maven-plugin"))),
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Codesnippet update failed")] });
         }
@@ -157,7 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulMavenLinting()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p =>
                 p.Args.Contains("install") &&
                 p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
@@ -169,19 +172,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 p.Args.Contains("-Djacoco.skip=true") &&
                 p.Args.Contains("-Dshade.skip=true") &&
                 p.Args.Contains("-Dmaven.antrun.skip=true") &&
-                p.Args.Contains("-am")), 
+                p.Args.Contains("-am")),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ProcessResult { 
-                    ExitCode = 0, 
-                    OutputDetails = [(StdioLevel.StandardOutput, 
+                .ReturnsAsync(new ProcessResult
+                {
+                    ExitCode = 0,
+                    OutputDetails = [(StdioLevel.StandardOutput,
                         "[INFO] Building jar: /path/to/target/test-1.0-javadoc.jar\n" +
                         "[INFO] BUILD SUCCESS"
-                    )] 
+                    )]
                 });
         }
 
         #endregion
-        
+
         [Test]
         public async Task TestFormatCode_MavenNotAvailable_ReturnsError()
         {
@@ -205,12 +209,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             // Arrange - Use a temp directory without pom.xml for this test
             var emptyDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(emptyDir);
-            
+
             SetupSuccessfulMavenVersionCheck();
 
             // Act
             var result = await LangService.FormatCode(emptyDir, false, CancellationToken.None);
-            
+
             // Cleanup
             try { Directory.Delete(emptyDir, true); } catch { }
 
@@ -306,7 +310,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             // Arrange
             var subDir = Path.Combine(JavaPackageDir, "src", "main", "java");
             Directory.CreateDirectory(subDir);
-            
+
             // Create pom.xml in parent directory but not in the package directory we're testing
             var parentPomPath = Path.Combine(JavaPackageDir, "pom.xml");
             File.WriteAllText(parentPomPath, "<project></project>");
@@ -357,12 +361,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             await LangService.FormatCode(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called
-            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p =>
                 p.Args.Contains("spotless:check") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
                 p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(10)), 
+                p.Timeout == TimeSpan.FromMinutes(10)),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -378,7 +382,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             await LangService.FormatCode(JavaPackageDir, true, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called
-            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p =>
                 p.Args.Contains("spotless:apply") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
@@ -411,7 +415,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         {
             // Arrange
             SetupSuccessfulMavenVersionCheck();
-            
+
             var emptyDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(emptyDir);
 
@@ -507,7 +511,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                                         "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-javadoc-plugin:3.4.1:jar (default) on project test: MavenReportException: Error while generating Javadoc";
                         return new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, errorOutput)] };
                     }
-                    
+
                     return new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Unknown command")] };
                 });
 
@@ -543,7 +547,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         {
             // Arrange - Reset mock to avoid interference from other test setups
             MockMavenHelper.Reset();
-            
+
             var capturedOptions = new List<MavenOptions>();
             MockMavenHelper.Setup(x => x.Run(It.IsAny<MavenOptions>(), It.IsAny<CancellationToken>()))
                 .Callback<MavenOptions, CancellationToken>((options, _) => capturedOptions.Add(options))
@@ -563,7 +567,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                         }
                         return new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Missing fix parameter")] };
                     }
-                    
+
                     return new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Unknown command")] };
                 });
 
@@ -574,13 +578,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             Assert.That(capturedOptions, Has.Count.EqualTo(2)); // Maven version + install command
             Assert.That(capturedOptions.Any(IsMavenVersionCheck), Is.True, "Maven version check should be called");
             Assert.That(capturedOptions.Any(IsMavenInstallCommand), Is.True, "Maven install should be called");
-            
+
             // Verify the install command includes the correct RevAPI fix parameter
             var installCommand = capturedOptions.FirstOrDefault(IsMavenInstallCommand);
             Assert.That(installCommand, Is.Not.Null);
             var argsString = string.Join(" ", installCommand.Args);
             Assert.That(argsString, Does.Contain("-Drevapi.failBuildOnProblemsFound=false"));
-            
+
             // Verify pom.xml path is included in Maven install command
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
             Assert.That(installCommand.Args.Contains("-f"), Is.True, "Maven install command should include -f flag");
@@ -616,7 +620,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             // Act
             await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
-            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p =>
                 p.Args.Contains("install") &&
                 p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
@@ -704,7 +708,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             // Act
             await LangService.LintCode(JavaPackageDir, false, CancellationToken.None);
 
-            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p =>
                 p.Args.Contains("install") &&
                 p.Args.Contains("--no-transfer-progress") &&
                 p.Args.Contains("-DskipTests") &&
@@ -745,12 +749,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             // Arrange
             var emptyDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(emptyDir);
-            
+
             SetupSuccessfulMavenVersionCheck();
 
             // Act
             var result = await LangService.UpdateSnippets(emptyDir, false, CancellationToken.None);
-            
+
             // Cleanup
             try { Directory.Delete(emptyDir, true); } catch { }
 
@@ -832,12 +836,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             await LangService.UpdateSnippets(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called with -am flag
-            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p =>
                 p.Args.Any(arg => arg.Contains("com.azure.tools:codesnippet-maven-plugin:update-codesnippet")) &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
                 p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(5)), 
+                p.Timeout == TimeSpan.FromMinutes(5)),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -850,13 +854,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulDependencyAnalysis()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
-                p.Args.Contains("dependency:tree") && 
-                p.Args.Contains("-Dverbose")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p =>
+                p.Args.Contains("dependency:tree") &&
+                p.Args.Contains("-Dverbose")),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ProcessResult { 
-                    ExitCode = 0, 
-                    OutputDetails = [(StdioLevel.StandardOutput, "[INFO] BUILD SUCCESS\n[INFO] Total time: 5.123 s")] 
+                .ReturnsAsync(new ProcessResult
+                {
+                    ExitCode = 0,
+                    OutputDetails = [(StdioLevel.StandardOutput, "[INFO] BUILD SUCCESS\n[INFO] Total time: 5.123 s")]
                 });
         }
 
@@ -865,13 +870,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedDependencyAnalysis()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => 
-                p.Args.Contains("dependency:tree") && 
-                p.Args.Contains("-Dverbose")), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p =>
+                p.Args.Contains("dependency:tree") &&
+                p.Args.Contains("-Dverbose")),
                 It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new ProcessResult { 
-                    ExitCode = 1, 
-                    OutputDetails = [(StdioLevel.StandardError, "[ERROR] Failed to execute goal on project: Maven dependency analysis failed")] 
+                .ReturnsAsync(new ProcessResult
+                {
+                    ExitCode = 1,
+                    OutputDetails = [(StdioLevel.StandardError, "[ERROR] Failed to execute goal on project: Maven dependency analysis failed")]
                 });
         }
 
@@ -895,13 +901,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
             // Verify correct Maven command was called
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p =>
                 p.Args.Contains("dependency:tree") &&
                 p.Args.Contains("-Dverbose") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
                 p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(5)), 
+                p.Timeout == TimeSpan.FromMinutes(5)),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -928,13 +934,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
             // Verify correct Maven command was called
             var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
-            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p => 
+            MockMavenHelper.Verify(x => x.Run(It.Is<MavenOptions>(p =>
                 p.Args.Contains("dependency:tree") &&
                 p.Args.Contains("-Dverbose") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
                 p.WorkingDirectory == JavaPackageDir &&
-                p.Timeout == TimeSpan.FromMinutes(5)), 
+                p.Timeout == TimeSpan.FromMinutes(5)),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -967,6 +973,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 var gitHelperMock = new Mock<IGitHelper>();
                 gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(tempDir);
                 gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+                var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelperMock.Object);
 
                 var langService = new JavaLanguageService(
                     new Mock<IProcessHelper>().Object,
@@ -975,6 +982,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<ICopilotAgentRunner>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
+                    packageInfoHelper,
                     Mock.Of<IFileHelper>(),
                     Mock.Of<ISpecGenSdkConfigHelper>(),
                     Mock.Of<IChangelogHelper>());
@@ -1023,6 +1031,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 var gitHelperMock = new Mock<IGitHelper>();
                 gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(tempDir);
                 gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+                var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelperMock.Object);
 
                 var langService = new JavaLanguageService(
                     new Mock<IProcessHelper>().Object,
@@ -1031,6 +1040,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<ICopilotAgentRunner>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
+                    packageInfoHelper,
                     Mock.Of<IFileHelper>(),
                     Mock.Of<ISpecGenSdkConfigHelper>(),
                     Mock.Of<IChangelogHelper>());
@@ -1079,6 +1089,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 var gitHelperMock = new Mock<IGitHelper>();
                 gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(tempDir);
                 gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+                var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelperMock.Object);
 
                 var langService = new JavaLanguageService(
                     new Mock<IProcessHelper>().Object,
@@ -1087,6 +1098,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<ICopilotAgentRunner>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
+                    packageInfoHelper,
                     Mock.Of<IFileHelper>(),
                     Mock.Of<ISpecGenSdkConfigHelper>(),
                     Mock.Of<IChangelogHelper>());
@@ -1135,6 +1147,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 var gitHelperMock = new Mock<IGitHelper>();
                 gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(tempDir);
                 gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-java");
+                var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelperMock.Object);
 
                 var langService = new JavaLanguageService(
                     new Mock<IProcessHelper>().Object,
@@ -1143,6 +1156,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                     new Mock<ICopilotAgentRunner>().Object,
                     NullLogger<JavaLanguageService>.Instance,
                     new Mock<ICommonValidationHelpers>().Object,
+                    packageInfoHelper,
                     Mock.Of<IFileHelper>(),
                     Mock.Of<ISpecGenSdkConfigHelper>(),
                     Mock.Of<IChangelogHelper>());

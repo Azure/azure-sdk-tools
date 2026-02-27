@@ -83,20 +83,19 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - shell: pwsh
+    - uses: azure/CLI@v2
       env:
         INPUT_TOKEN_OWNERS: ${{ inputs.token-owners }}
         INPUT_VARIABLE_NAME_PREFIX: ${{ inputs.variable-name-prefix }}
         INPUT_KEY_VAULT_NAME: ${{ inputs.key-vault-name }}
         INPUT_KEY_NAME: ${{ inputs.key-name }}
         INPUT_APP_ID: ${{ inputs.app-id }}
-        ACTION_PATH: ${{ github.action_path }}
-      run: |
-        $scriptPath = Join-Path $env:ACTION_PATH ".." ".." "scripts" "login-to-github.ps1"
-        $owners = $env:INPUT_TOKEN_OWNERS -split ',' | ForEach-Object { $_.Trim() }
-        & $scriptPath `
-          -KeyVaultName $env:INPUT_KEY_VAULT_NAME `
-          -KeyName $env:INPUT_KEY_NAME `
-          -GitHubAppId $env:INPUT_APP_ID `
-          -InstallationTokenOwners $owners `
-          -VariableNamePrefix $env:INPUT_VARIABLE_NAME_PREFIX
+      with:
+        azcliversion: latest
+        inlineScript: |
+          pwsh -File "${{ github.action_path }}/../scripts/login-to-github.ps1" \
+            -KeyVaultName "$INPUT_KEY_VAULT_NAME" \
+            -KeyName "$INPUT_KEY_NAME" \
+            -GitHubAppId "$INPUT_APP_ID" \
+            -InstallationTokenOwners $(echo "$INPUT_TOKEN_OWNERS" | tr ',' ' ') \
+            -VariableNamePrefix "$INPUT_VARIABLE_NAME_PREFIX"

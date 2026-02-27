@@ -107,7 +107,7 @@ func TestRoutingTenant_General(t *testing.T) {
 			"SDK Validation for API PR's",
 			"I have these lines in my suppressions.yaml \n \nYAML\n- tool: TypeSpecValidation\n  reason: >\n    Not ready to generate SDKs from TypeSpec.\n    Responsibility: Service team with SDK team collaboration.\n    More info: https://aka.ms/azsdk/spec-gen-sdk-config.\n  rules: \n  - SdkTspConfigValidation\n  paths: \n  - HybridContainerService.Management/tspconfig.yaml\n \nBut PR is still running SDK validations and failing. Did the suppressions method change? ",
 			model.TenantID_GeneralQaBot,
-			model.TenantID_APISpecReviewBot,
+			model.TenantID_AzureSDKQaBot,
 		},
 		{
 			"How to make an interface internal?",

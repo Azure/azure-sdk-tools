@@ -230,6 +230,10 @@ Agent workflows currently require a `COPILOT_GITHUB_TOKEN` to be set as a GitHub
 
 > **Note:** This is a **temporary limitation**. Per discussions with the gh-aw team, once **organization-wide billing** for Copilot requests is supported, the `COPILOT_GITHUB_TOKEN` PAT will no longer be required.
 
+### azsdk MCP Server Limitation
+
+GitHub Agent Workflows cannot host or run the azsdk MCP server inline, so MCP-based interactions are unavailable inside the Copilot step. However, the Copilot step can still issue any supported azsdk CLI command (via standard GitHub Actions tooling), so prompts may continue to reference azsdk CLI operations for current automation scenarios.
+
 ### Lock File Commit SHA Constraint
 
 The compiled `.lock.yml` file and the source `.md` file must share the **same commit SHA**. If they diverge (e.g., the `.md` is updated without recompiling), the agent workflow will skip the Copilot step.

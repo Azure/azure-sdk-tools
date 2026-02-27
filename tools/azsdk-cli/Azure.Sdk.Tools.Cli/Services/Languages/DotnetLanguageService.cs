@@ -252,7 +252,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 
             var packageInfo = await GetPackageInfo(fullPath, ct);
 
-            var args = new List<string> { "pack", "--no-build" };
+            var args = new List<string> { "pack" };
             if (!string.IsNullOrWhiteSpace(outputPath))
             {
                 args.AddRange(["--output", outputPath]);

@@ -271,11 +271,7 @@ public sealed partial class JavaLanguageService : LanguageService
             var pomPath = Path.Combine(fullPath, "pom.xml");
             var args = new List<string>
             {
-                "package",
-                "-Dgpg.skip",
-                "-DskipTestCompile",
-                "-Djacoco.skip",
-                "-Drevapi.skip",
+                "package"
             };
 
             if (!string.IsNullOrWhiteSpace(outputPath))
@@ -283,7 +279,7 @@ public sealed partial class JavaLanguageService : LanguageService
                 args.Add($"-DpackageOutputDirectory={outputPath}");
             }
 
-            var result = await _mavenHelper.Run(
+            var result = await mavenHelper.Run(
                 new("clean", args.ToArray(), pomPath, workingDirectory: fullPath, timeout: TimeSpan.FromMinutes(timeoutMinutes)),
                 ct
             );

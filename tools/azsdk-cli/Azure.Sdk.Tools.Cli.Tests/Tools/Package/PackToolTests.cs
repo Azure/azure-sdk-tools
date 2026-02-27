@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
@@ -17,7 +17,7 @@ public class PackToolTests
 {
     #region Test Constants
 
-    private const string InvalidProjectPathError = "Failed to detect the language from package path";
+    private const string InvalidProjectPathError = "Failed to find the language from package path";
     private const string EmptyPathError = "Package path is required and cannot be empty";
 
     #endregion
@@ -34,6 +34,7 @@ public class PackToolTests
     private TempDirectory _tempDirectory;
     private List<LanguageService> _languageServices;
     private Mock<ICommonValidationHelpers> _commonValidationHelpers;
+    private Mock<IPackageInfoHelper> _mockPackageInfoHelper;
 
     [SetUp]
     public void Setup()
@@ -47,17 +48,21 @@ public class PackToolTests
         _mockMavenHelper = new Mock<IMavenHelper>();
         _logger = new TestLogger<PackTool>();
         _commonValidationHelpers = new Mock<ICommonValidationHelpers>();
+        _mockPackageInfoHelper = new Mock<IPackageInfoHelper>();
+        _mockPackageInfoHelper
+            .Setup(x => x.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string path, CancellationToken _) => (path, ".", path));
 
         var languageLogger = new TestLogger<LanguageService>();
-        var mockMicrohostAgent = new Mock<IMicroagentHostService>();
+        var mockCopilotAgentRunner = new Mock<ICopilotAgentRunner>();
 
         _tempDirectory = TempDirectory.Create("PackToolTests");
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
-            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, _mockMavenHelper.Object, mockMicrohostAgent.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
-            new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>())
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new JavaLanguageService(_mockProcessHelper.Object, _mockGitHelper.Object, _mockMavenHelper.Object, mockCopilotAgentRunner.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new GoLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>()),
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, languageLogger, _commonValidationHelpers.Object, _mockPackageInfoHelper.Object, Mock.Of<IFileHelper>(), _mockSpecGenSdkConfigHelper.Object, Mock.Of<IChangelogHelper>())
         ];
 
         _tool = new PackTool(
@@ -131,23 +136,21 @@ public class PackToolTests
         var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
 
         // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain("Failed to detect the language"));
+        Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidProjectPathError));
     }
 
     [Test]
     public async Task PackAsync_GoProject_ReturnsNoop()
     {
         // Arrange
-        _mockGitHelper
-            .Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync("azure-sdk-for-go");
+        SetupGoRepo();
 
         // Act
         var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
 
-        // Assert
-        Assert.That(result.Result, Is.EqualTo("noop"));
-        Assert.That(result.Message, Does.Contain("Go SDK does not produce distributable artifacts"));
+        // Assert - Go pack is a no-op handled in GoLanguageService, returns success
+        Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
+        Assert.That(result.Message, Does.Contain("No pack operation needed"));
     }
 
     #endregion
@@ -234,7 +237,7 @@ public class PackToolTests
     }
 
     [Test]
-    public async Task PackAsync_DotNet_UsesNoBuildFlag()
+    public async Task PackAsync_DotNet_UsesPackCommand()
     {
         // Arrange
         SetupDotNetRepo();
@@ -246,9 +249,9 @@ public class PackToolTests
         // Act
         await _tool.PackAsync(_tempDirectory.DirectoryPath);
 
-        // Assert - verify --no-build is passed
+        // Assert - verify dotnet pack is called
         _mockProcessHelper.Verify(x => x.Run(
-            It.Is<ProcessOptions>(p => p.Args.Contains("--no-build")),
+            It.Is<ProcessOptions>(p => p.Command == "dotnet" && p.Args.Contains("pack")),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -414,7 +417,7 @@ public class PackToolTests
         SetupPythonRepo();
 
         _mockPythonHelper
-            .Setup(x => x.Run(It.Is<PythonOptions>(p => p.Args.Contains("-m") && p.Args.Contains("build")), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Run(It.Is<PythonOptions>(p => p.Command == "sdk_build"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
 
         // Create dist directory with wheel file
@@ -440,9 +443,8 @@ public class PackToolTests
 
         _mockPythonHelper
             .Setup(x => x.Run(It.Is<PythonOptions>(p =>
-                p.Args.Contains("-m") &&
-                p.Args.Contains("build") &&
-                p.Args.Contains("--outdir") &&
+                p.Command == "sdk_build" &&
+                p.Args.Contains("-d") &&
                 p.Args.Contains(outputDir)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
@@ -453,7 +455,7 @@ public class PackToolTests
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
         _mockPythonHelper.Verify(x => x.Run(
-            It.Is<PythonOptions>(p => p.Args.Contains("--outdir") && p.Args.Contains(outputDir)),
+            It.Is<PythonOptions>(p => p.Args.Contains("-d") && p.Args.Contains(outputDir)),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -475,7 +477,7 @@ public class PackToolTests
         var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
 
         // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain("python -m build failed"));
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("sdk_build command failed"));
     }
 
     #endregion
@@ -562,6 +564,16 @@ public class PackToolTests
         _mockGitHelper
             .Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("azure-sdk-for-python");
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_tempDirectory.DirectoryPath);
+    }
+
+    private void SetupGoRepo()
+    {
+        _mockGitHelper
+            .Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("azure-sdk-for-go");
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_tempDirectory.DirectoryPath);

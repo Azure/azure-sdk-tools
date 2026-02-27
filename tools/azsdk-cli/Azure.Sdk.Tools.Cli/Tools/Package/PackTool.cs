@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await PackAsync(packagePath, outputPath, ct);
         }
 
-        [McpServerTool(Name = PackToolName), Description("Create distributable artifacts for the specified SDK package. Provide package path and optional output path.")]
+        [McpServerTool(Name = PackToolName), Description("Create distributable artifacts for the specified SDK package.")]
         public async Task<PackageOperationResponse> PackAsync(
             [Description("Absolute path to the SDK package directory.")]
             string packagePath,
@@ -70,15 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var languageService = await GetLanguageServiceAsync(fullPath, ct);
                 if (languageService == null)
                 {
-                    return PackageOperationResponse.CreateFailure($"Failed to detect the language from package path {packagePath}");
-                }
-
-                // Go does not produce distributable artifacts
-                if (languageService.Language == SdkLanguage.Go)
-                {
-                    return PackageOperationResponse.CreateSuccess(
-                        "Go SDK does not produce distributable artifacts. No pack operation needed.",
-                        result: "noop");
+                    return PackageOperationResponse.CreateFailure($"Failed to find the language from package path {packagePath}");
                 }
 
                 logger.LogInformation("Packing SDK project at: {PackagePath} for language: {Language}", fullPath, languageService.Language);
@@ -90,7 +82,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return PackageOperationResponse.CreateSuccess(
                         artifactPath != null
                             ? $"Pack completed successfully. Artifact: {artifactPath}"
-                            : "Pack completed successfully.",
+                            : errorMessage ?? "Pack completed successfully.",
                         packageInfo);
                 }
 

@@ -188,15 +188,16 @@ public sealed partial class PythonLanguageService : LanguageService
             }
 
             var packageInfo = await GetPackageInfo(fullPath, ct);
+            var packageName = packageInfo?.PackageName ?? Path.GetFileName(fullPath.TrimEnd(Path.DirectorySeparatorChar));
 
-            var args = new List<string> { "-m", "build" };
+            var args = new List<string> { packageName };
             if (!string.IsNullOrWhiteSpace(outputPath))
             {
-                args.AddRange(["--outdir", outputPath]);
+                args.AddRange(["-d", outputPath]);
             }
 
             var result = await pythonHelper.Run(new PythonOptions(
-                    "python",
+                    "sdk_build",
                     args.ToArray(),
                     workingDirectory: fullPath,
                     timeout: TimeSpan.FromMinutes(timeoutMinutes)
@@ -206,7 +207,7 @@ public sealed partial class PythonLanguageService : LanguageService
 
             if (result.ExitCode != 0)
             {
-                var errorMessage = $"python -m build failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                var errorMessage = $"sdk_build command failed with exit code {result.ExitCode}. Output:\n{result.Output}";
                 logger.LogError("{ErrorMessage}", errorMessage);
                 return (false, errorMessage, packageInfo, null);
             }

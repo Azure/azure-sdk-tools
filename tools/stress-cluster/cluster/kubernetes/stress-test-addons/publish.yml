@@ -18,6 +18,12 @@ extends:
               os: linux
 
             steps:
+              - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+                parameters:
+                  TokenOwners:
+                    - Azure
+                    - azure-sdk
+
               - task: AzureCLI@2
                 displayName: Publish addons helm chart
                 inputs:
@@ -38,3 +44,5 @@ extends:
                   PRBranchName: "stress/addons-helm-update"
                   CommitMsg: "[stress] Updating helm chart index.yaml file for new stress-test-addons release"
                   PRTitle: "[stress] Updating helm chart index.yaml file for new stress-test-addons release"
+                  AuthToken: $(GH_TOKEN_Azure)
+                  PushAuthToken: $(GH_TOKEN_azure-sdk)

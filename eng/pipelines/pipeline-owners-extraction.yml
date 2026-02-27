@@ -29,6 +29,8 @@ stages:
     steps:
       - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
       - task: AzureCLI@2
         displayName: 'Fetch and store team/user data'
         inputs:
@@ -39,7 +41,7 @@ stages:
             dotnet run -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
           workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
         env:
-          GITHUB_TOKEN: $(azuresdk-github-pat)
+          GITHUB_TOKEN: $(GH_TOKEN)
 
       - task: DotNetCoreCLI@2
         displayName: 'Install Pipeline Owners Extractor'

@@ -10,6 +10,7 @@ parameters:
   ScriptDirectory: eng/common/scripts
   PROwner: Azure
   PushArgs: -f
+  AuthToken: $(GH_TOKEN)
 
 steps:
 - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
@@ -61,7 +62,7 @@ steps:
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -GitUrl "https://$(GH_TOKEN)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -SkipCommit $${{parameters.SkipCheckingForChanges}}
 
@@ -75,7 +76,7 @@ steps:
         arguments: >
           -PRBranchName "${{ parameters.UpstreamBranchName }}-ForTestPipeline"
           -CommitMsg "${{ parameters.CommitMessage }}"
-          -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
+          -GitUrl "https://$(GH_TOKEN)@github.com/${{ parameters.PROwner }}/${{ repo }}.git"
           -PushArgs "${{ parameters.PushArgs }}"
           -AmendCommit $True
 
@@ -131,7 +132,7 @@ steps:
         -Comment "The following pipelines have been queued for testing:<br>$env:QUEUEDPIPELINES`
         <br>You can sign off on the approval gate to test the release stage of each pipeline.`
         <br>See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
-        -AuthToken "$(azuresdk-github-pat)"
+        -AuthToken "$(GH_TOKEN)"
 
 - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
   - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
@@ -183,4 +184,4 @@ steps:
 - template: /eng/common/pipelines/templates/steps/emit-rate-limit-metrics.yml
   parameters:
     GitHubUser: azure-sdk
-    GitHubToken: $(azuresdk-github-pat)
+    GitHubToken: $(GH_TOKEN)

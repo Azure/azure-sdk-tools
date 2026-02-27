@@ -12,8 +12,14 @@ jobs:
     displayName: Version azure-sdk-tools with Git Tag
 
     steps:
+    - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+      parameters:
+        TokenOwners:
+          - Azure
+          - azure-sdk
+
     - pwsh: |
-        $PushURL = "$(Build.Repository.Uri)".Replace("https://", "https://$(azuresdk-github-pat)@") + ".git"
+        $PushURL = "$(Build.Repository.Uri)".Replace("https://", "https://$(GH_TOKEN_Azure)@") + ".git"
         # Remove Organization name i.e Transform Azure/azure-sdk-tools -> azure-sdk-tools before appending build Number
         $Tag = "$(Build.Repository.Name)".SubString("$(Build.Repository.Name)".IndexOf('/') + 1) + "_$(Build.BuildNumber)"
         Write-Host "Tagging Repo with $Tag"

@@ -100,6 +100,11 @@ stages:
 
     - checkout: azure-sdk-tools
     
+    - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+      parameters:
+        TokenOwners:
+          - azure-sdk
+
     - task: NuGetAuthenticate@1
 
     - task: UseNode@1
@@ -171,7 +176,7 @@ stages:
         . $(toolsRepositoryPath)/eng/common/scripts/git-branch-push.ps1 `
           -PRBranchName $branchName `
           -CommitMsg 'Update repo on failing build`n`nBuild url: $(System.CollectionUri)_build/results?buildId=$(Build.BuildId)' `
-          -GitUrl "https://$(azuresdk-github-pat)@github.com/azure-sdk/$repositoryName.git"
+          -GitUrl "https://$(GH_TOKEN)@github.com/azure-sdk/$repositoryName.git"
 
         Write-Host ""
         Write-Host @"
@@ -354,6 +359,11 @@ stages:
       path: s/autorest
     - checkout: azure-sdk-tools
 
+    - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+      parameters:
+        TokenOwners:
+          - azure-sdk
+
     - task: NuGetAuthenticate@1
 
     - task: UseNode@1
@@ -419,6 +429,12 @@ stages:
     steps:
     - checkout: self
     - checkout: azure-sdk-tools
+
+    - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+      parameters:
+        TokenOwners:
+          - azure-sdk
+
     - task: NuGetAuthenticate@1
     - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
       parameters:
@@ -474,6 +490,12 @@ stages:
     steps:
     - checkout: self
     - checkout: azure-sdk-tools
+
+    - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+      parameters:
+        TokenOwners:
+          - Azure
+          - azure-sdk
 
     - pwsh: |
         $generateJobResult = '$(generateJobResult)'
@@ -532,7 +554,7 @@ stages:
           -BaseBranch '$(pullRequestTargetBranch)'
           -PROwner 'azure-sdk'
           -PRBranch '$(branchName)'
-          -AuthToken '$(azuresdk-github-pat)'
+          -AuthToken '$(GH_TOKEN_Azure)'
           -PRTitle '$(PullRequestTitle)'
           -PRBody '$(PullRequestBody)'
           -OpenAsDraft $true

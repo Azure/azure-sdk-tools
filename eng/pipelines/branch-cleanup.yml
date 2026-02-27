@@ -72,6 +72,13 @@ jobs:
           pwsh --version
         displayName: Dump tool versions
 
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          TokenOwners:
+            - Azure
+            - azure-sdk
+            - MicrosoftDocs
+
       - ${{ each repo in parameters.Repos }}:
         - task: PowerShell@2
           displayName: ${{ repo }} sync eng/common branch clean-up
@@ -85,7 +92,7 @@ jobs:
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-sdk-tools"
               -BranchRegex "^sync-eng/common.*-(?<PrNumber>\d+).*$"
-              -AuthToken $(azuresdk-github-pat)
+              -AuthToken $(GH_TOKEN_Azure)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
         - task: PowerShell@2
@@ -100,7 +107,7 @@ jobs:
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-sdk-tools"
               -BranchRegex "^sync-.github/workflows.*-(?<PrNumber>\d+).*$"
-              -AuthToken $(azuresdk-github-pat)
+              -AuthToken $(GH_TOKEN_Azure)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
       - ${{ each repo in parameters.ForkAutomationBranches }}:
@@ -116,7 +123,7 @@ jobs:
               -RepoId "${{ repo }}"
               -BranchRegex "^(increment-package-version-|fluent-lite-generation-|auto-update-|version-increment-build-|post-release-automation-|restapi_auto_|t2-).*$"
               -LastCommitOlderThan ((Get-Date).AddDays(-1))
-              -AuthToken $(azuresdk-github-pat)
+              -AuthToken $(GH_TOKEN_azure-sdk)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
         - task: PowerShell@2
@@ -131,24 +138,40 @@ jobs:
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-rest-api-specs"
               -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
-              -AuthToken $(azuresdk-github-pat)
+              -AuthToken $(GH_TOKEN_azure-sdk)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
       - ${{ each repo in parameters.SDKPrivate }}:
-        - task: PowerShell@2
-          displayName: ${{ repo }} swagger private SDK PR and branch clean-up
-          condition: succeededOrFailed()
-          continueOnError: true
-          inputs:
-            pwsh: true
-            workingDirectory: $(System.DefaultWorkingDirectory)
-            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-            arguments: >
-              -RepoId "${{ repo }}"
-              -CentralRepoId "Azure/azure-rest-api-specs-pr"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
-              -AuthToken $(azuresdk-github-pat)
-              -WhatIf:$${{parameters.WhatIfPreference}}
+        - ${{ if startsWith(repo, 'Azure/') }}:
+          - task: PowerShell@2
+            displayName: ${{ repo }} swagger private SDK PR and branch clean-up
+            condition: succeededOrFailed()
+            continueOnError: true
+            inputs:
+              pwsh: true
+              workingDirectory: $(System.DefaultWorkingDirectory)
+              filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+              arguments: >
+                -RepoId "${{ repo }}"
+                -CentralRepoId "Azure/azure-rest-api-specs-pr"
+                -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
+                -AuthToken $(GH_TOKEN_Azure)
+                -WhatIf:$${{parameters.WhatIfPreference}}
+        - ${{ if startsWith(repo, 'azure-sdk/') }}:
+          - task: PowerShell@2
+            displayName: ${{ repo }} swagger private SDK PR and branch clean-up
+            condition: succeededOrFailed()
+            continueOnError: true
+            inputs:
+              pwsh: true
+              workingDirectory: $(System.DefaultWorkingDirectory)
+              filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+              arguments: >
+                -RepoId "${{ repo }}"
+                -CentralRepoId "Azure/azure-rest-api-specs-pr"
+                -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
+                -AuthToken $(GH_TOKEN_azure-sdk)
+                -WhatIf:$${{parameters.WhatIfPreference}}
 
       - ${{ each repo in parameters.DailyBranchRepos }}:
         - task: PowerShell@2
@@ -163,7 +186,7 @@ jobs:
               -RepoId "${{ repo }}"
               -BranchRegex "^daily"
               -LastCommitOlderThan ((Get-Date).AddDays(-7))
-              -AuthToken $(azuresdk-github-pat)
+              -AuthToken $(GH_TOKEN_MicrosoftDocs)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
       - ${{ each repo in parameters.RestAPISpecsDocsRepos }}:
@@ -179,5 +202,5 @@ jobs:
               -RepoId "${{ repo }}"
               -BranchRegex "^(result_)?([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
               -LastCommitOlderThan ((Get-Date).AddDays(-14))
-              -AuthToken $(azuresdk-github-pat)
+              -AuthToken $(GH_TOKEN_MicrosoftDocs)
               -WhatIf:$${{parameters.WhatIfPreference}}

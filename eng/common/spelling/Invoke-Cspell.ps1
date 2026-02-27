@@ -27,6 +27,9 @@ If set the PackageInstallCache will not be deleted. Use if there are multiple
 calls to Invoke-Cspell.ps1 to prevent creating multiple working directories and
 redundant calls `npm ci`.
 
+.PARAMETER AdditionalParams
+Additional parameters to pass to cspell (e.g. `--fix` to auto-fix spelling errors).
+
 .EXAMPLE
 ./eng/common/scripts/Invoke-Cspell.ps1 -FileList @('./README.md', 'file2.txt')
 
@@ -52,7 +55,10 @@ param(
   [string] $PackageInstallCache = (Join-Path ([System.IO.Path]::GetTempPath()) "cspell-tool-path"),
 
   [Parameter()]
-  [switch] $LeavePackageInstallCache
+  [switch] $LeavePackageInstallCache,
+
+  [Parameter()]
+  [array] $AdditionalParams
 )
 
 begin {
@@ -91,7 +97,7 @@ process {
 end {
   npm --prefix $PackageInstallCache ci | Write-Host
 
-  $command = "npm --prefix $PackageInstallCache exec --no -- cspell $JobType --config $CSpellConfigPath --no-must-find-files --root $SpellCheckRoot --file-list stdin"
+  $command = "npm --prefix $PackageInstallCache exec --no -- cspell $JobType --config $CSpellConfigPath --no-must-find-files --root $SpellCheckRoot --file-list stdin $AdditionalParams"
   Write-Host $command
   $cspellOutput = $filesToCheck | npm --prefix $PackageInstallCache `
     exec  `
@@ -102,7 +108,8 @@ end {
     --config $CSpellConfigPath `
     --no-must-find-files `
     --root $SpellCheckRoot `
-    --file-list stdin
+    --file-list stdin `
+    @AdditionalParams
 
   if (!$LeavePackageInstallCache) {
     Write-Host "Cleaning up package install cache at $PackageInstallCache"

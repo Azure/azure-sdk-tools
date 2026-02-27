@@ -12,7 +12,8 @@ public enum ProjectChangeAction
     Edited,
     Deleted,
     UnDeleted,
-    ReviewLinked
+    ReviewLinked,
+    ReviewUnlinked
 }
 
 public class Project
@@ -28,6 +29,7 @@ public class Project
     public ProjectNamespaceInfo NamespaceInfo { get; set; }
     public List<ProjectChangeHistory> ChangeHistory { get; set; }
     public HashSet<string> ReviewIds { get; set; }
+    public HashSet<string> HistoricalReviewIds { get; set; }
     public DateTime CreatedOn { get; set; }
     public DateTime LastUpdatedOn { get; set; }
     public bool IsDeleted { get; set; }

@@ -16,15 +16,18 @@ namespace APIViewWeb.Managers;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICommentsManager _commentsManager;
+        private readonly IProjectsManager _projectsManager;
 
-        public AutoReviewService(
+    public AutoReviewService(
             IReviewManager reviewManager,
             IAPIRevisionsManager apiRevisionsManager,
-            ICommentsManager commentsManager)
+            ICommentsManager commentsManager,
+            IProjectsManager projectsManager)
         {
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
             _commentsManager = commentsManager;
+            _projectsManager = projectsManager;
         }
 
         public async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(
@@ -124,7 +127,7 @@ namespace APIViewWeb.Managers;
                 apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: user.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName, sourceBranch: sourceBranch);
             }
 
-            // TODO: await _projectsManager.TryLinkReviewToProjectAsync(user, review);
+            await _projectsManager.TryLinkReviewToProjectAsync(user.GetGitHubLogin(), review);
 
             if (apiRevision != null && apiRevisions.Any())
             {

@@ -35,6 +35,17 @@ namespace APIViewWeb
             await _reviewsContainer.UpsertItemAsync(review, new PartitionKey(review.Id));
         }
 
+        public async Task UpsertReviewsAsync(IEnumerable<ReviewListItemModel> reviews)
+        {
+            var now = DateTime.UtcNow;
+            var tasks = reviews.Select(review =>
+            {
+                review.LastUpdatedOn = now;
+                return _reviewsContainer.UpsertItemAsync(review, new PartitionKey(review.Id));
+            });
+            await Task.WhenAll(tasks);
+        }
+
         public async Task<ReviewListItemModel> GetReviewAsync(string reviewId)
         {
             var review = default(ReviewListItemModel);

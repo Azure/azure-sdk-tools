@@ -180,7 +180,9 @@ export const getApiVersionTypeFromMetadata = async (
                 (v): v is string => typeof v === 'string'
             );
             if (values.length > 0) {
-                apiVersion = values[0];
+                // If any version is preview, use a preview version; otherwise use the first stable version
+                // This ensures: any preview -> Preview, all stable -> Stable
+                apiVersion = values.find(v => v.indexOf('-preview') >= 0) || values[0];
             }
         } else {
             // Support old format: { "apiVersion": "version" }

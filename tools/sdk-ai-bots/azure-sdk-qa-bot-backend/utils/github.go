@@ -786,7 +786,7 @@ func (g *GitHubClient) createInstallationToken(jwt string, installationID int64)
 		Token     string `json:"token"`
 		ExpiresAt string `json:"expires_at"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return "", time.Time{}, fmt.Errorf("failed to decode token response: %w", err)
 	}
 

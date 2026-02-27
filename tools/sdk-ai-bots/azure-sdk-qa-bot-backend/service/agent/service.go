@@ -126,11 +126,6 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	log.Printf("Intent Result: %s", utils.SanitizeForLog(string(jsonReq)))
 	query = preprocess.NewPreprocessService().PreprocessInput(req.TenantID, query)
 
-	// Fetch GitHub check/PR info if intention indicates CI-related question
-	if utils.IsCIRelatedIntention(intention.Category, intention.Question) {
-		llmMessages = s.fetchAndInjectGitHubCheckInfo(req, llmMessages)
-	}
-
 	var knowledges []model.Knowledge
 	var prompt string
 	promptTemplate := tenantConfig.PromptTemplate
@@ -399,9 +394,29 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 						log.Printf("Failed to analyze pipeline: %v", err)
 						// Fall back to regular link processing
 					} else {
-						// Use the pipeline analysis as content
 						content = analysisText
 						log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				} else if utils.IsGitHubCheckLink(info.Link) {
+					// Fetch GitHub check logs so the LLM has actual error details
+					// before intention recognition and knowledge retrieval.
+					log.Printf("Detected GitHub check link: %s", info.Link)
+					checkContent, err := utils.GetGitHubClient().FetchCheckLogs(info.Link)
+					if err != nil {
+						log.Printf("Failed to fetch GitHub check logs: %v", err)
+					} else {
+						content = checkContent
+						log.Printf("GitHub check logs fetched successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				} else if utils.IsGitHubPRLink(info.Link) {
+					// Fetch GitHub PR check runs so the LLM can see CI failures.
+					log.Printf("Detected GitHub PR link: %s", info.Link)
+					prContent, err := utils.GetGitHubClient().FetchPRChecks(info.Link)
+					if err != nil {
+						log.Printf("Failed to fetch GitHub PR checks: %v", err)
+					} else {
+						content = prContent
+						log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
 					}
 				}
 
@@ -460,50 +475,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 		userMsg.Name = openai.String(*name)
 	}
 	llmMessages = append(llmMessages, openai.ChatCompletionMessageParamUnion{OfUser: userMsg})
-	return llmMessages
-}
-
-// fetchAndInjectGitHubCheckInfo scans the request's AdditionalInfos for GitHub PR or
-// check/action links, fetches their check run details, and injects the results into
-// llmMessages. This should only be called when the intention indicates a CI-related question.
-func (s *CompletionService) fetchAndInjectGitHubCheckInfo(req *model.CompletionReq, llmMessages []openai.ChatCompletionMessageParamUnion) []openai.ChatCompletionMessageParamUnion {
-	preprocessService := preprocess.NewPreprocessService()
-	for _, info := range req.AdditionalInfos {
-		if info.Type != model.AdditionalInfoType_Link {
-			continue
-		}
-		link := preprocessService.PreprocessHTMLContent(info.Link)
-		var content string
-		var err error
-
-		if utils.IsGitHubCheckLink(link) {
-			log.Printf("CI-related intent: fetching GitHub check logs for %s", link)
-			content, err = utils.GetGitHubClient().FetchCheckLogs(link)
-			if err != nil {
-				log.Printf("Failed to fetch GitHub check logs: %v", err)
-				continue
-			}
-			log.Printf("GitHub check logs fetched successfully, result: %s", utils.SanitizeForLog(content))
-		} else if utils.IsGitHubPRLink(link) {
-			log.Printf("CI-related intent: fetching GitHub PR checks for %s", link)
-			content, err = utils.GetGitHubClient().FetchPRChecks(link)
-			if err != nil {
-				log.Printf("Failed to fetch GitHub PR checks: %v", err)
-				continue
-			}
-			log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
-		} else {
-			continue
-		}
-
-		if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
-			log.Printf("GitHub check content too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
-			content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
-		}
-		msg := openai.UserMessage(fmt.Sprintf("GitHub Check Analysis for %s:\n%s", link, content))
-		llmMessages = append(llmMessages, msg)
-	}
-
 	return llmMessages
 }
 

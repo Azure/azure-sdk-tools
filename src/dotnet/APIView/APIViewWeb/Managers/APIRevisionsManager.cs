@@ -1549,9 +1549,16 @@ namespace APIViewWeb.Managers
             // Group comments by conversation thread. Only the thread-starting comment's severity
             // should be counted — replies within a thread do not carry their own severity and must
             // not inflate the score. Use ThreadId when available, falling back to ElementId for
-            // legacy comments that predate thread support.
+            // legacy comments that predate thread support. When both are empty (orphaned comments
+            // with no visible elementId), fall back to the comment's own Id so each orphan is
+            // scored independently rather than being collapsed into a single group.
             var threads = unresolvedComments
-                .GroupBy(c => !string.IsNullOrEmpty(c.ThreadId) ? c.ThreadId : c.ElementId)
+                .GroupBy(c =>
+                {
+                    if (!string.IsNullOrEmpty(c.ThreadId)) return c.ThreadId;
+                    if (!string.IsNullOrEmpty(c.ElementId)) return c.ElementId;
+                    return c.Id;
+                })
                 .ToList();
 
             // For each thread, pick the first comment (by creation date) as the representative.

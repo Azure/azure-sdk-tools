@@ -356,6 +356,85 @@ describe('CodePanelComponent', () => {
       (component as any).updateOrphanUnresolvedThreadIndicators();
       expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(true);
     });
+
+    it('should remove orphan indicator when thread is resolved via applyCommentResolutionUpdate', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'author',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.ShouldFix
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+
+      // Simulate resolution via applyCommentResolutionUpdate (orphan path)
+      (component as any).applyCommentResolutionUpdate({
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+        nodeIdHashed: 'deleted-id',
+        threadId: 'thread-1',
+        elementId: 'deleted-id',
+        associatedRowPositionInGroup: 0,
+        resolvedBy: 'resolver'
+      } as CommentUpdatesDto);
+
+      // allComments should be marked resolved
+      expect(component.allComments[0].isResolved).toBe(true);
+      // Orphan indicator should be removed
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(0);
+    });
+
+    it('should resolve orphan with null threadId (legacy comments) by matching elementId', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: undefined,
+          elementId: 'deleted-id',
+          createdBy: 'author',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.Question
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+      // actualThreadId should be undefined for legacy comments
+      expect(component.orphanUnresolvedThreadIndicators[0].actualThreadId).toBeUndefined();
+
+      // Expand and verify the row uses empty threadId (not the elementId fallback)
+      component.toggleOrphanIndicator('deleted-id');
+      const rowData = component.orphanUnresolvedThreadIndicators[0].commentThreadRowData!;
+      expect(rowData.threadId).toBe('');
+
+      // Simulate resolution with empty threadId (matching backend behavior)
+      (component as any).applyCommentResolutionUpdate({
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+        nodeIdHashed: 'deleted-id',
+        threadId: '',
+        elementId: 'deleted-id',
+        associatedRowPositionInGroup: 0,
+        resolvedBy: 'resolver'
+      } as CommentUpdatesDto);
+
+      expect(component.allComments[0].isResolved).toBe(true);
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(0);
+    });
   });
 
   describe('copyReviewTextToClipBoard', () => {
@@ -710,6 +789,53 @@ describe('CodePanelComponent', () => {
       commentsService.notifySeverityChanged('comment-999', CommentSeverity.ShouldFix);
 
       expect(row.comments[0].severity).toBe(CommentSeverity.Question);
+    });
+  });
+
+  describe('Unresolved markers refresh on quality score refresh', () => {
+    let commentsService: CommentsService;
+
+    beforeEach(() => {
+      commentsService = TestBed.inject(CommentsService);
+    });
+
+    it('should call refreshUnresolvedMarkers when unresolvedMarkersRefreshNeeded$ emits', () => {
+      const refreshSpy = vi.spyOn(component, 'refreshUnresolvedMarkers').mockImplementation(() => {});
+
+      component.ngOnInit();
+
+      commentsService.notifyQualityScoreRefresh();
+
+      expect(refreshSpy).toHaveBeenCalled();
+    });
+
+    it('should update orphan indicators and hasActiveConversation via refreshUnresolvedMarkers', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'author',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.ShouldFix
+        } as CommentItemModel
+      ];
+
+      component.refreshUnresolvedMarkers();
+
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+
+      // Simulate the conversations panel unresolving and then resolving
+      component.allComments[0].isResolved = true;
+      component.refreshUnresolvedMarkers();
+
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(0);
     });
   });
 });

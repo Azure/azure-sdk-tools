@@ -26,10 +26,14 @@ namespace APIViewWeb.Helpers
             IEnumerable<CommentItemModel> allComments,
             string activeApiRevisionId)
         {
-            var nonDiagnosticComments = allComments
+            // Only include comments for API revisions, not sample revisions
+            var apiRevisionComments = allComments
+                .Where(c => c.CommentType != CommentType.SampleRevision);
+
+            var nonDiagnosticComments = apiRevisionComments
                 .Where(c => c.CommentSource != CommentSource.Diagnostic);
 
-            var diagnosticCommentsForRevision = allComments
+            var diagnosticCommentsForRevision = apiRevisionComments
                 .Where(c => c.CommentSource == CommentSource.Diagnostic
                          && c.APIRevisionId == activeApiRevisionId);
 

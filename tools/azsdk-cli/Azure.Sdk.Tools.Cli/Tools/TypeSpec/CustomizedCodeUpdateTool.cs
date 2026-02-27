@@ -5,7 +5,9 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
@@ -20,25 +22,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 public class CustomizedCodeUpdateTool : LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
+    private readonly IAPIViewFeedbackService feedbackService;
+    private readonly IFeedbackClassifierService _classifierService;
+
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
-
+    
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
     /// </summary>
-    /// <param name="logger">Logger for diagnostic output.</param>
-    /// <param name="languageServices">Available language services for SDK operations.</param>
-    /// <param name="gitHelper">Helper for git operations.</param>
-    /// <param name="tspClientHelper">Helper for TypeSpec client generation operations.</param>
+    /// <param name="logger">The logger for this tool.</param>
+    /// <param name="languageServices">The collection of available language services.</param>
+    /// <param name="gitHelper">The Git helper for repository operations.</param>
+    /// <param name="tspClientHelper">The TypeSpec client helper for regeneration operations.</param>
+    /// <param name="feedbackService">The feedback service for extracting feedback from various sources.</param>
+    /// <param name="classifierService">The feedback classifier service for LLM-powered classification.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="tspClientHelper"/> is null.</exception>
     public CustomizedCodeUpdateTool(
         ILogger<CustomizedCodeUpdateTool> logger,
         IEnumerable<LanguageService> languageServices,
         IGitHelper gitHelper,
-        ITspClientHelper tspClientHelper
+        ITspClientHelper tspClientHelper,
+        IAPIViewFeedbackService feedbackService,
+        IFeedbackClassifierService classifierService
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper ?? throw new ArgumentNullException(nameof(tspClientHelper));
+        this.feedbackService = feedbackService;
+        _classifierService = classifierService;
     }
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
@@ -207,5 +218,57 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             BuildResult = finalBuildError,
             AppliedPatches = patches
         };
+    }
+
+    /// <summary>
+    /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE
+    /// (can be resolved with TSP customizations), SUCCESS (no action needed), or REQUIRES_MANUAL_INTERVENTION (requires manual code customizations).
+    /// </summary>
+    private async Task<FeedbackClassificationResponse> Classify(
+        string tspProjectPath,
+        string? apiViewUrl,
+        string? plainTextFeedback,
+        string? plainTextFeedbackFile,
+        string? language,
+        string? serviceName,
+        CancellationToken ct)
+    {
+        try
+        {
+            // Read feedback from file if provided
+            if (!string.IsNullOrWhiteSpace(plainTextFeedbackFile))
+            {
+                if (!File.Exists(plainTextFeedbackFile))
+                {
+                    throw new FileNotFoundException($"Plain text feedback file does not exist: {plainTextFeedbackFile}");
+                }
+
+                plainTextFeedback = await File.ReadAllTextAsync(plainTextFeedbackFile, ct);
+                logger.LogInformation("Read {length} characters from feedback file: {file}", plainTextFeedback.Length, plainTextFeedbackFile);
+            }
+
+            if (string.IsNullOrEmpty(tspProjectPath) || !Directory.Exists(tspProjectPath))
+            {
+                throw new DirectoryNotFoundException($"TypeSpec project path does not exist: {tspProjectPath}");
+            }
+
+            List<FeedbackItem> feedbackItems = [];
+            if (!string.IsNullOrWhiteSpace(apiViewUrl))
+            {
+                feedbackItems = await feedbackService.GetFeedbackItemsAsync(apiViewUrl, ct);
+                language ??= await feedbackService.GetLanguageAsync(apiViewUrl, ct);
+            }
+            else if (!string.IsNullOrWhiteSpace(plainTextFeedback))
+            {
+                feedbackItems = [new FeedbackItem { Text = plainTextFeedback, Context = string.Empty }];
+            }
+
+            return await _classifierService.ClassifyItemsAsync(feedbackItems, globalContext: "", tspProjectPath, language, serviceName, ct: ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Classification failed");
+            throw;
+        }
     }
 }

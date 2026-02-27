@@ -833,7 +833,7 @@ func writeSteps(sb *strings.Builder, steps []struct {
 }) {
 	for _, step := range steps {
 		icon := stepIcon(step.Status, step.Conclusion)
-		sb.WriteString(fmt.Sprintf("  %s %d. %s (%s)\n", icon, step.Number, step.Name, step.Conclusion))
+		fmt.Fprintf(sb, "  %s %d. %s (%s)\n", icon, step.Number, step.Name, step.Conclusion)
 	}
 }
 

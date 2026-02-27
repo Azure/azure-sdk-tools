@@ -223,9 +223,10 @@ imports:
 
 Agent workflows currently require a `COPILOT_GITHUB_TOKEN` to be set as a GitHub Actions secret. This token is used for **Copilot request billing**.
 
-- The fine grained PAT with `copilot-requests` permission must be provisioned and added as GitHub actions secret.
+- The fine grained PAT with `copilot-requests` permission must be provisioned and added as GitHub actions secret. You need to create a PAT in your GitHub account and configure it in the repo for the time being when creating an agent workflow.
 
 > **Note:** This is a **temporary limitation**. Per discussions with the gh-aw team, once **organization-wide billing** for Copilot requests is supported, the `COPILOT_GITHUB_TOKEN` PAT will no longer be required.
+Issue filed in gh-aw repo: https://github.com/github/gh-aw/issues/18379
 
 ### Lock File Commit SHA Constraint
 

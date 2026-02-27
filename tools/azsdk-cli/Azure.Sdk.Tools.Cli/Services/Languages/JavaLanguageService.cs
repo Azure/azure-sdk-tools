@@ -12,21 +12,35 @@ using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
+/// <summary>
+/// Language service implementation for Java SDK packages.
+/// </summary>
 public sealed partial class JavaLanguageService : LanguageService
 {
+    /// <inheritdoc/>
     public override SdkLanguage Language { get; } = SdkLanguage.Java;
-    public override bool IsCustomizedCodeUpdateSupported => true;
 
-    /// <summary>
-    /// Java packages are identified by pom.xml files.
-    /// </summary>
-    protected override string[] PackageManifestPatterns => ["pom.xml"];
+    /// <inheritdoc/>
+    public override bool IsCustomizedCodeUpdateSupported => true;
 
     private readonly ICopilotAgentRunner copilotAgentRunner;
     private readonly IMavenHelper mavenHelper;
 
     private const string CustomizationDirName = "customization";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JavaLanguageService"/> class.
+    /// </summary>
+    /// <param name="processHelper">Process execution helper.</param>
+    /// <param name="gitHelper">Git helper.</param>
+    /// <param name="mavenHelper">Maven command helper.</param>
+    /// <param name="copilotAgentRunner">Copilot agent runner.</param>
+    /// <param name="logger">Logger for language service operations.</param>
+    /// <param name="commonValidationHelpers">Common validation helpers.</param>
+    /// <param name="packageInfoHelper">Package information helper.</param>
+    /// <param name="fileHelper">File helper.</param>
+    /// <param name="specGenSdkConfigHelper">Spec-gen SDK config helper.</param>
+    /// <param name="changelogHelper">Changelog helper.</param>
     public JavaLanguageService(
         IProcessHelper processHelper,
         IGitHelper gitHelper,
@@ -44,6 +58,12 @@ public sealed partial class JavaLanguageService : LanguageService
         this.mavenHelper = mavenHelper;
     }
 
+    /// <summary>
+    /// Resolves package metadata for a Java SDK package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A populated <see cref="PackageInfo"/> instance.</returns>
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Java package info for path: {packagePath}", packagePath);
@@ -97,68 +117,43 @@ public sealed partial class JavaLanguageService : LanguageService
 
     private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
     {
-        var path = Path.Combine(packagePath, "pom.xml");
-        if (!File.Exists(path))
+        if (!TryGetPomFilePath(packagePath, out var path))
         {
-            logger.LogWarning("No pom.xml file found at {path}", path);
             return (null, null);
         }
-        try
+
+        var metadataResult = await TryReadPomMetadataAsync(path, ct);
+        if (!metadataResult.Success)
         {
-            logger.LogTrace("Reading pom.xml file: {path}", path);
-            using var stream = File.OpenRead(path);
-            var doc = await XDocument.LoadAsync(stream, LoadOptions.None, ct);
-            var root = doc.Root;
-            if (root == null)
-            {
-                logger.LogWarning("pom.xml has no root element at {path}", path);
-                return (null, null);
-            }
-            // Maven POM uses a default namespace; capture it to access elements.
-            var ns = root.Name.Namespace;
-
-            // Extract artifactId
-            string? artifactId = root.Element(ns + "artifactId")?.Value?.Trim();
-            if (string.IsNullOrWhiteSpace(artifactId))
-            {
-                logger.LogWarning("No artifactId found in pom.xml at {path}", path);
-                artifactId = null;
-            }
-            else
-            {
-                logger.LogTrace("Found artifactId: {artifactId}", artifactId);
-            }
-
-            // Extract version
-            string? version = root.Element(ns + "version")?.Value?.Trim();
-            if (string.IsNullOrWhiteSpace(version))
-            {
-                // Fallback to parent version if project version not declared directly.
-                var parent = root.Element(ns + "parent");
-                version = parent?.Element(ns + "version")?.Value?.Trim();
-                if (!string.IsNullOrWhiteSpace(version))
-                {
-                    logger.LogTrace("Found version from parent: {version}", version);
-                }
-            }
-            else
-            {
-                logger.LogTrace("Found version: {version}", version);
-            }
-
-            if (string.IsNullOrWhiteSpace(version))
-            {
-                logger.LogWarning("No version found in pom.xml at {path}", path);
-                version = null;
-            }
-
-            return (artifactId, version);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error reading Java package info from {path}", path);
+            logger.LogWarning("{Error} at {path}", metadataResult.Error, path);
             return (null, null);
         }
+
+        var metadata = metadataResult.Metadata!;
+        logger.LogTrace("Found artifactId: {artifactId}", metadata.ArtifactId);
+
+        if (string.IsNullOrWhiteSpace(metadata.Version))
+        {
+            logger.LogWarning("No version found in pom.xml at {path}", path);
+        }
+        else
+        {
+            logger.LogTrace("Found version: {version}", metadata.Version);
+        }
+
+        return (metadata.ArtifactId, metadata.Version);
+    }
+
+    private bool TryGetPomFilePath(string packagePath, out string pomPath)
+    {
+        pomPath = Path.Combine(packagePath, "pom.xml");
+        if (File.Exists(pomPath))
+        {
+            return true;
+        }
+
+        logger.LogWarning("No pom.xml file found at {PomPath}", pomPath);
+        return false;
     }
 
     private string? TryGetJavaModuleName(string packagePath)
@@ -225,27 +220,48 @@ public sealed partial class JavaLanguageService : LanguageService
     [GeneratedRegex(@"^\s*module\s+([^\{\s]+)\s*\{", RegexOptions.Compiled | RegexOptions.Multiline)]
     private static partial Regex JavaModuleDeclarationRegex();
 
-    private static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan testTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan versioningScriptTimeout = TimeSpan.FromMinutes(5);
 
+    private sealed record ScriptUpdateResult(bool ScriptsAvailable, bool Success, string? Message)
+    {
+        public static ScriptUpdateResult NotAvailable(string message) => new(false, false, message);
+        public static ScriptUpdateResult Failed(string message) => new(true, false, message);
+        public static ScriptUpdateResult Succeeded(string message) => new(true, true, message);
+    }
+
+    private sealed record PomMetadata(string ArtifactId, string? Version, string GroupId);
+
+    /// <summary>
+    /// Runs all Maven tests for the specified Java package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="TestRunResponse"/> containing test execution details.</returns>
     public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         logger.LogInformation("Starting test execution for Java project at: {PackagePath}", packagePath);
 
         // Run Maven tests using consistent command pattern
-        var pomPath = Path.Combine(packagePath, "pom.xml");
-        var result = await mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: TestTimeout), ct);
-
-        if (result.ExitCode == 0)
+        if (!TryGetPomFilePath(packagePath, out var pomPath))
         {
-            logger.LogInformation("Test execution completed successfully");
-            return new TestRunResponse(result);
+            logger.LogError("Cannot run tests - no pom.xml found at {PackagePath}", packagePath);
+            return new TestRunResponse(
+                exitCode: 1,
+                testRunOutput: $"No pom.xml file found at {pomPath}. Cannot run tests.",
+                error: "pom.xml not found");
         }
-        else
+
+        var result = await mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: testTimeout), ct);
+
+        if (result.ExitCode != 0)
         {
             logger.LogWarning("Test execution failed with exit code {ExitCode}", result.ExitCode);
             return new TestRunResponse(result);
         }
 
+        logger.LogInformation("Test execution completed successfully");
+        return new TestRunResponse(result);
     }
 
     public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
@@ -350,8 +366,9 @@ public sealed partial class JavaLanguageService : LanguageService
     }
 
     /// <summary>
-    /// Updates the package version in Java-specific files (pom.xml).
-    /// Implements the logic from SetPackageVersion in azure-sdk-for-java/eng/scripts/Language-Settings.ps1.
+    /// Updates Java package versions using the Java repository versioning scripts.
+    /// Follows SetPackageVersion from azure-sdk-for-java/eng/scripts/Language-Settings.ps1,
+    /// excluding changelog updates because changelog changes are handled by the base language workflow.
     /// </summary>
     protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
         string packagePath,
@@ -363,75 +380,29 @@ public sealed partial class JavaLanguageService : LanguageService
 
         try
         {
-            var pomPath = Path.Combine(packagePath, "pom.xml");
-            if (!File.Exists(pomPath))
+            if (!TryGetPomFilePath(packagePath, out var pomPath))
             {
-                logger.LogWarning("No pom.xml found at {PomPath}", pomPath);
                 return PackageOperationResponse.CreateFailure(
                     $"No pom.xml file found at {pomPath}",
                     nextSteps: ["Ensure the package path contains a valid Maven project with pom.xml"]);
             }
 
-            // Load and parse the pom.xml
-            logger.LogDebug("Loading pom.xml from {PomPath}", pomPath);
-            XDocument doc;
-            using (var stream = File.OpenRead(pomPath))
-            {
-                doc = await XDocument.LoadAsync(stream, LoadOptions.PreserveWhitespace, ct);
-            }
+            var scriptResult = await TryUpdateVersionUsingScriptsAsync(packagePath, pomPath, version, ct);
 
-            var root = doc.Root;
-            if (root == null)
+            if (!scriptResult.ScriptsAvailable || !scriptResult.Success)
             {
-                logger.LogError("pom.xml has no root element");
                 return PackageOperationResponse.CreateFailure(
-                    "Invalid pom.xml file - no root element",
-                    nextSteps: ["Check the pom.xml file format"]);
+                    scriptResult.Message ?? "Failed to run Java versioning scripts.",
+                    nextSteps:
+                    [
+                        "Ensure Python is available in PATH",
+                        "Ensure eng/versioning/set_versions.py and eng/versioning/update_versions.py exist",
+                        "Run scripts manually and verify version propagation"
+                    ]);
             }
 
-            // Maven POM uses a default namespace
-            var ns = root.Name.Namespace;
-
-            // Find the version element
-            var versionElement = root.Element(ns + "version");
-            if (versionElement == null)
-            {
-                // Check if version is in parent
-                var parentElement = root.Element(ns + "parent");
-                if (parentElement != null)
-                {
-                    logger.LogWarning("Version is defined in parent POM, cannot update directly");
-                    return PackageOperationResponse.CreateSuccess(
-                        "Version is defined in parent POM. Direct update not supported.",
-                        nextSteps: [
-                            "Update the version in the parent POM instead",
-                            "Or add an explicit <version> element to this pom.xml"
-                        ],
-                        result: "partial");
-                }
-
-                logger.LogError("No version element found in pom.xml");
-                return PackageOperationResponse.CreateFailure(
-                    "No version element found in pom.xml",
-                    nextSteps: ["Add a <version> element to the pom.xml file"]);
-            }
-
-            var oldVersion = versionElement.Value;
-            logger.LogInformation("Updating version from {OldVersion} to {NewVersion}", oldVersion, version);
-
-            // Update the version
-            versionElement.Value = version;
-
-            // Save the updated pom.xml, preserving original formatting
-            logger.LogDebug("Saving updated pom.xml to {PomPath}", pomPath);
-            using (var stream = File.Create(pomPath))
-            {
-                await doc.SaveAsync(stream, SaveOptions.DisableFormatting, ct);
-            }
-
-            logger.LogInformation("Successfully updated version in pom.xml from {OldVersion} to {NewVersion}", oldVersion, version);
             return PackageOperationResponse.CreateSuccess(
-                $"Version updated from {oldVersion} to {version} in pom.xml");
+                $"Version updated to {version} via Java versioning scripts.");
         }
         catch (Exception ex)
         {
@@ -439,6 +410,149 @@ public sealed partial class JavaLanguageService : LanguageService
             return PackageOperationResponse.CreateFailure(
                 $"Failed to update version: {ex.Message}",
                 nextSteps: ["Check the pom.xml file format", "Ensure the file is not locked by another process"]);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to run Java versioning scripts to update version source files and propagate version references.
+    /// </summary>
+    /// <param name="packagePath">Path to the Java package directory.</param>
+    /// <param name="pomPath">Path to the package pom.xml.</param>
+    /// <param name="version">Target version string.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="ScriptUpdateResult"/> describing script availability, outcome, and details.</returns>
+    private async Task<ScriptUpdateResult> TryUpdateVersionUsingScriptsAsync(
+        string packagePath,
+        string pomPath,
+        string version,
+        CancellationToken ct)
+    {
+        string repoRoot;
+        try
+        {
+            repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to discover repo root for {PackagePath}; script propagation skipped", packagePath);
+            return ScriptUpdateResult.NotAvailable("Failed to discover repository root for Java versioning scripts.");
+        }
+
+        if (string.IsNullOrWhiteSpace(repoRoot))
+        {
+            logger.LogDebug("Repo root not found for {PackagePath}; script propagation skipped", packagePath);
+            return ScriptUpdateResult.NotAvailable("Repository root was not found for Java versioning scripts.");
+        }
+
+        var setVersionsScriptPath = Path.Combine(repoRoot, "eng", "versioning", "set_versions.py");
+        var updateVersionsScriptPath = Path.Combine(repoRoot, "eng", "versioning", "update_versions.py");
+        if (!File.Exists(setVersionsScriptPath) || !File.Exists(updateVersionsScriptPath))
+        {
+            logger.LogDebug("Java versioning scripts not found under repo root {RepoRoot}; script propagation skipped", repoRoot);
+            return ScriptUpdateResult.NotAvailable("Java versioning scripts were not found under eng/versioning.");
+        }
+
+        var metadataResult = await TryReadPomMetadataAsync(pomPath, ct);
+        if (!metadataResult.Success)
+        {
+            return ScriptUpdateResult.Failed(metadataResult.Error);
+        }
+
+        var metadata = metadataResult.Metadata!;
+        if (string.IsNullOrWhiteSpace(metadata.GroupId))
+        {
+            return ScriptUpdateResult.Failed("No groupId found in pom.xml");
+        }
+
+        var groupId = metadata.GroupId;
+        var artifactId = metadata.ArtifactId;
+        var fullLibraryName = $"{groupId}:{artifactId}";
+        logger.LogInformation("Running Java versioning scripts for {LibraryName}", fullLibraryName);
+
+        var setVersionsResult = await processHelper.Run(new ProcessOptions(
+            command: "python",
+            args:
+            [
+                setVersionsScriptPath,
+                "--new-version", version,
+                "--artifact-id", artifactId,
+                "--group-id", groupId
+            ],
+            workingDirectory: repoRoot,
+            timeout: versioningScriptTimeout), ct);
+
+        if (setVersionsResult.ExitCode != 0)
+        {
+            logger.LogError("set_versions.py failed for {LibraryName} with exit code {ExitCode}", fullLibraryName, setVersionsResult.ExitCode);
+            return ScriptUpdateResult.Failed($"set_versions.py failed: {setVersionsResult.Output}");
+        }
+
+        var updateVersionsResult = await processHelper.Run(new ProcessOptions(
+            command: "python",
+            args:
+            [
+                updateVersionsScriptPath,
+                "--library-list", fullLibraryName,
+                "--skip-readme"
+            ],
+            workingDirectory: repoRoot,
+            timeout: versioningScriptTimeout), ct);
+
+        if (updateVersionsResult.ExitCode != 0)
+        {
+            logger.LogError("update_versions.py failed for {LibraryName} with exit code {ExitCode}", fullLibraryName, updateVersionsResult.ExitCode);
+            return ScriptUpdateResult.Failed($"update_versions.py failed: {updateVersionsResult.Output}");
+        }
+
+        return ScriptUpdateResult.Succeeded($"Version updated to {version} via Java versioning scripts for {fullLibraryName}.");
+    }
+
+    private static async Task<(bool Success, PomMetadata? Metadata, string Error)> TryReadPomMetadataAsync(
+        string pomPath,
+        CancellationToken ct)
+    {
+        try
+        {
+            using var stream = File.OpenRead(pomPath);
+            var doc = await XDocument.LoadAsync(stream, LoadOptions.None, ct);
+            var root = doc.Root;
+            if (root == null)
+            {
+                return (false, null, "pom.xml has no root element");
+            }
+
+            var ns = root.Name.Namespace;
+
+            var artifactId = root.Element(ns + "artifactId")?.Value?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(artifactId))
+            {
+                return (false, null, "No artifactId found in pom.xml");
+            }
+
+            var version = root.Element(ns + "version")?.Value?.Trim();
+            if (string.IsNullOrWhiteSpace(version))
+            {
+                var parent = root.Element(ns + "parent");
+                version = parent?.Element(ns + "version")?.Value?.Trim();
+            }
+
+            var groupId = root.Element(ns + "groupId")?.Value?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(groupId))
+            {
+                var parent = root.Element(ns + "parent");
+                groupId = parent?.Element(ns + "groupId")?.Value?.Trim() ?? string.Empty;
+            }
+
+            var metadata = new PomMetadata(
+                artifactId,
+                string.IsNullOrWhiteSpace(version) ? null : version,
+                groupId);
+
+            return (true, metadata, string.Empty);
+        }
+        catch (Exception ex)
+        {
+            return (false, null, $"Failed to parse pom.xml: {ex.Message}");
         }
     }
 }

@@ -255,6 +255,8 @@ describe('CodePanelComponent', () => {
       expect(component.orphanUnresolvedThreadIndicators[0].severityLabel).toBe('MUST FIX');
       expect(component.orphanUnresolvedThreadIndicators[0].severityIconClass).toBe('severity-icon-must-fix');
       expect(component.orphanUnresolvedThreadIndicators[0].elementId).toBe('deleted-id');
+      expect(component.orphanUnresolvedThreadIndicators[0].comments.length).toBe(1);
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(false);
     });
 
     it('should handle string-typed severity from JSON deserialization', () => {
@@ -293,6 +295,66 @@ describe('CodePanelComponent', () => {
       expect(queryParams.diffApiRevisionId).toBe('old-rev');
       expect(queryParams.nId).toBe('deleted-id');
       navigateSpy.mockRestore();
+    });
+
+    it('should toggle expanded state of orphan indicator', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'tjprescott',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          commentText: 'This needs fixing',
+          severity: CommentSeverity.MustFix
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(false);
+      expect(component.orphanUnresolvedThreadIndicators[0].commentThreadRowData).toBeNull();
+
+      component.toggleOrphanIndicator('thread-1');
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(true);
+      expect(component.orphanUnresolvedThreadIndicators[0].commentThreadRowData).not.toBeNull();
+      expect(component.orphanUnresolvedThreadIndicators[0].commentThreadRowData!.comments.length).toBe(1);
+      expect(component.orphanUnresolvedThreadIndicators[0].commentThreadRowData!.nodeId).toBe('deleted-id');
+
+      component.toggleOrphanIndicator('thread-1');
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(false);
+    });
+
+    it('should preserve expanded state when indicators are rebuilt', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'tjprescott',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.MustFix
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      component.toggleOrphanIndicator('thread-1');
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(true);
+
+      // Re-run the update (simulating data change)
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(true);
     });
   });
 

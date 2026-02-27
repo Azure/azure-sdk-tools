@@ -76,7 +76,10 @@ export class CodePanelComponent implements OnChanges {
     createdBy: string,
     severityLabel: string,
     severityIconClass: string,
-    targetApiRevisionId: string
+    targetApiRevisionId: string,
+    comments: CommentItemModel[],
+    expanded: boolean,
+    commentThreadRowData: CodePanelRowData | null
   }[] = [];
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
@@ -190,6 +193,32 @@ export class CodePanelComponent implements OnChanges {
     queryParams[DIFF_API_REVISION_ID_QUERY_PARAM] = targetApiRevisionId;
     queryParams[SCROLL_TO_NODE_QUERY_PARAM] = elementId;
     this.router.navigate([], { queryParams });
+  }
+
+  toggleOrphanIndicator(threadKey: string) {
+    const indicator = this.orphanUnresolvedThreadIndicators.find(i => i.threadKey === threadKey);
+    if (indicator) {
+      indicator.expanded = !indicator.expanded;
+      if (indicator.expanded && !indicator.commentThreadRowData) {
+        indicator.commentThreadRowData = this.buildOrphanCommentThreadRowData(indicator);
+      }
+    }
+  }
+
+  private buildOrphanCommentThreadRowData(indicator: {
+    threadKey: string, elementId: string, comments: CommentItemModel[]
+  }): CodePanelRowData {
+    const row = new CodePanelRowData();
+    row.type = CodePanelRowDatatype.CommentThread;
+    row.nodeId = indicator.elementId;
+    row.nodeIdHashed = indicator.elementId;
+    row.threadId = indicator.threadKey;
+    row.rowClasses = new Set<string>(['user-comment-thread']);
+    row.associatedRowPositionInGroup = 0;
+    row.comments = [...indicator.comments];
+    row.showReplyTextBox = false;
+    row.isResolvedCommentThread = false;
+    return row;
   }
 
   getLineMenu(row: CodePanelRowData) {
@@ -893,6 +922,10 @@ export class CodePanelComponent implements OnChanges {
   }
 
   private updateOrphanUnresolvedThreadIndicators(): void {
+    const existingIndicators = new Map(
+      this.orphanUnresolvedThreadIndicators.map(i => [i.threadKey, i])
+    );
+
     const visibleLineIds = new Set(
       (this.codePanelRowData || [])
         .filter(row => row.type === CodePanelRowDatatype.CodeLine)
@@ -928,13 +961,17 @@ export class CodePanelComponent implements OnChanges {
         const nonActiveRevisionComment = comments.find(c => c.apiRevisionId && c.apiRevisionId !== this.activeApiRevisionId);
         const targetApiRevisionId = nonActiveRevisionComment?.apiRevisionId || representative.apiRevisionId;
 
+        const wasExpanded = existingIndicators.get(threadKey);
         return {
           threadKey,
           elementId: representative.elementId,
           createdBy: representative.createdBy,
           severityLabel: this.getSeverityLabel(comments),
           severityIconClass: this.getSeverityIconClass(comments),
-          targetApiRevisionId
+          targetApiRevisionId,
+          comments: [...comments],
+          expanded: !!wasExpanded?.expanded,
+          commentThreadRowData: wasExpanded?.commentThreadRowData || null
         };
       })
       .filter((item): item is {
@@ -943,7 +980,10 @@ export class CodePanelComponent implements OnChanges {
         createdBy: string,
         severityLabel: string,
         severityIconClass: string,
-        targetApiRevisionId: string
+        targetApiRevisionId: string,
+        comments: CommentItemModel[],
+        expanded: boolean,
+        commentThreadRowData: CodePanelRowData | null
       } => !!item)
       .sort((a, b) => a.threadKey.localeCompare(b.threadKey));
   }

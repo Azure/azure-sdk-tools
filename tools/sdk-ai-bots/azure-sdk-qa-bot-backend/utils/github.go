@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
@@ -337,20 +339,68 @@ func (g *GitHubClient) fetchCheckRunAnnotations(owner, repo string, checkRunID i
 	return annotations
 }
 
-// fetchJobSummary fetches the job summary (written via $GITHUB_STEP_SUMMARY)
-// using the undocumented github.com summary_raw endpoint. The check-runs API
-// does not expose this content (output fields are null for Actions jobs).
-func (g *GitHubClient) fetchJobSummary(owner, repo, actionsRunID string, jobID int64) string {
-	url := fmt.Sprintf("https://github.com/%s/%s/actions/runs/%s/jobs/%d/summary_raw", owner, repo, actionsRunID, jobID)
-	log.Printf("Fetching job summary for job %d: %s", jobID, url)
+// fetchRunSummaryArtifact fetches the job summary (written via $GITHUB_STEP_SUMMARY)
+// by downloading the "job-summary" artifact from the workflow run.
+// The check-runs API does not expose this content (output fields are null for Actions jobs).
+func (g *GitHubClient) fetchRunSummaryArtifact(owner, repo, actionsRunID string) string {
+	artifactsURL := fmt.Sprintf("%s/repos/%s/%s/actions/runs/%s/artifacts", githubAPIBaseURL, owner, repo, actionsRunID)
+	log.Printf("Fetching artifacts for run %s: %s", actionsRunID, artifactsURL)
 
-	body, err := g.apiGet(url)
+	body, err := g.apiGet(artifactsURL)
 	if err != nil {
-		log.Printf("Failed to fetch job summary for job %d: %v", jobID, err)
+		log.Printf("Failed to fetch artifacts for run %s: %v", actionsRunID, err)
 		return ""
 	}
 
-	summary := strings.TrimSpace(string(body))
+	var artifactsList model.GitHubArtifactsListResponse
+	if err := json.Unmarshal(body, &artifactsList); err != nil {
+		log.Printf("Failed to parse artifacts response: %v", err)
+		return ""
+	}
+
+	for _, a := range artifactsList.Artifacts {
+		if a.Name == "job-summary" {
+			log.Printf("Found job-summary artifact (id=%d, size=%d), downloading...", a.ID, a.SizeInBytes)
+			return g.downloadArtifactContent(a.ArchiveDownloadURL)
+		}
+	}
+
+	log.Printf("No job-summary artifact found for run %s", actionsRunID)
+	return ""
+}
+
+// downloadArtifactContent downloads a GitHub artifact zip and extracts its text content.
+func (g *GitHubClient) downloadArtifactContent(archiveURL string) string {
+	data, err := g.apiGet(archiveURL)
+	if err != nil {
+		log.Printf("Failed to download artifact: %v", err)
+		return ""
+	}
+
+	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		log.Printf("Failed to open artifact zip: %v", err)
+		return ""
+	}
+
+	var sb strings.Builder
+	for _, f := range zipReader.File {
+		rc, err := f.Open()
+		if err != nil {
+			log.Printf("Failed to open file %s in artifact zip: %v", f.Name, err)
+			continue
+		}
+		content, err := io.ReadAll(rc)
+		_ = rc.Close()
+		if err != nil {
+			log.Printf("Failed to read file %s in artifact zip: %v", f.Name, err)
+			continue
+		}
+		sb.WriteString(strings.TrimSpace(string(content)))
+		sb.WriteString("\n")
+	}
+
+	summary := strings.TrimSpace(sb.String())
 	if len(summary) > maxGitHubLogSize {
 		summary = summary[:maxGitHubLogSize] + "\n... [truncated]"
 	}
@@ -444,11 +494,6 @@ func (g *GitHubClient) fetchActionsRunDetails(link *model.GitHubCheckLink) (stri
 			writeSteps(&sb, job.Steps)
 		}
 
-		// Fetch job summary
-		if jobSummary := g.fetchJobSummary(link.Owner, link.Repo, link.ActionsRunID, job.ID); jobSummary != "" {
-			sb.WriteString(fmt.Sprintf("\n**Job Summary**:\n%s\n", jobSummary))
-		}
-
 		if job.Conclusion == "failure" {
 			log.Printf("Fetching logs for failed job %d: %s", job.ID, job.Name)
 			jobLink := &model.GitHubCheckLink{
@@ -463,6 +508,11 @@ func (g *GitHubClient) fetchActionsRunDetails(link *model.GitHubCheckLink) (stri
 				sb.WriteString(fmt.Sprintf("\n**Logs**:\n```\n%s\n```\n", logs))
 			}
 		}
+	}
+
+	// Fetch run-level summary artifact (written via $GITHUB_STEP_SUMMARY)
+	if summary := g.fetchRunSummaryArtifact(link.Owner, link.Repo, link.ActionsRunID); summary != "" {
+		sb.WriteString(fmt.Sprintf("\n### Run Summary\n%s\n", summary))
 	}
 
 	return sb.String(), nil
@@ -492,10 +542,10 @@ func (g *GitHubClient) fetchJobLogs(link *model.GitHubCheckLink) (string, error)
 		writeSteps(&sb, job.Steps)
 	}
 
-	// Fetch job summary
+	// Fetch run-level summary artifact
 	if link.ActionsRunID != "" {
-		if jobSummary := g.fetchJobSummary(link.Owner, link.Repo, link.ActionsRunID, job.ID); jobSummary != "" {
-			sb.WriteString(fmt.Sprintf("\n**Job Summary**:\n%s\n", jobSummary))
+		if summary := g.fetchRunSummaryArtifact(link.Owner, link.Repo, link.ActionsRunID); summary != "" {
+			sb.WriteString(fmt.Sprintf("\n**Run Summary**:\n%s\n", summary))
 		}
 	}
 

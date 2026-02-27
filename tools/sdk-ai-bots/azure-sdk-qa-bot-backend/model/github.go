@@ -69,6 +69,20 @@ type GitHubCheckRunsListResponse struct {
 	CheckRuns  []GitHubCheckRunResponse `json:"check_runs"`
 }
 
+// GitHubArtifact represents a single artifact from a workflow run.
+type GitHubArtifact struct {
+	ID                 int64  `json:"id"`
+	Name               string `json:"name"`
+	SizeInBytes        int64  `json:"size_in_bytes"`
+	ArchiveDownloadURL string `json:"archive_download_url"`
+}
+
+// GitHubArtifactsListResponse wraps a list of artifacts returned by the GitHub API.
+type GitHubArtifactsListResponse struct {
+	TotalCount int              `json:"total_count"`
+	Artifacts  []GitHubArtifact `json:"artifacts"`
+}
+
 // GitHubPRResponse represents a GitHub pull request API response.
 type GitHubPRResponse struct {
 	Number int    `json:"number"`

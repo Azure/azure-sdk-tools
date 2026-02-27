@@ -14,8 +14,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Verify;
 
 /// <summary>
 /// This tool verifies that the environment is set up with the required installations to run MCP release tools.
-/// CLI: azsdk verify setup check
-/// MCP: azsdk_verify_setup
 /// </summary>
 [McpServerToolType, Description("This tool verifies that the environment is set up with the required installations to run MCP release tools.")]
 public class VerifySetupTool : LanguageMcpTool

@@ -16,12 +16,18 @@ public static class FileTools
     /// Creates a ReadFile tool that reads file contents from a base directory.
     /// </summary>
     /// <param name="baseDir">The base directory for relative path resolution.</param>
+    /// <param name="includeLineNumbers">If true, prefix each line with its 1-based line number (e.g., "1: content").</param>
     /// <param name="description">Optional custom description for the tool.</param>
     /// <returns>An AIFunction that reads files.</returns>
     public static AIFunction CreateReadFileTool(
         string baseDir,
-        string description = "Read the contents of a file")
+        bool includeLineNumbers = false,
+        string? description = null)
     {
+        description ??= includeLineNumbers
+            ? "Read the contents of a file with line numbers prefixed to each line"
+            : "Read the contents of a file";
+
         return AIFunctionFactory.Create(
             async ([Description("Relative path of the file to read")] string filePath) =>
             {
@@ -37,6 +43,18 @@ public static class FileTools
                 {
                     throw new ArgumentException($"{path} does not exist");
                 }
+
+                if (includeLineNumbers)
+                {
+                    var lines = await File.ReadAllLinesAsync(path);
+                    var sb = new System.Text.StringBuilder();
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        sb.Append(i + 1).Append(": ").AppendLine(lines[i]);
+                    }
+                    return sb.ToString();
+                }
+
                 return await File.ReadAllTextAsync(path);
             },
             "ReadFile",

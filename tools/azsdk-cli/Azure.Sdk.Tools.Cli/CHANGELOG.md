@@ -1,17 +1,36 @@
 # Release History
 
-## 0.5.17 (Unreleased)
+## 0.5.20 (Unreleased)
 
 ### Features Added
-
-- Added `azsdk upgrade` command and `#azsdk_upgrade` mcp tool to perform a self-upgrade to the latest (or specified) version
-- The CLI and MCP server will proactively check for new updates and notify the user on a 1 and 3 day TTL, respectively
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.5.19 (2026-02-25)
+
+### Bugs Fixed
+
+- Override path extension variable to support running commands on Windows without extension.
+
+## 0.5.18 (2026-02-24)
+
+### Bugs Fixed
+
+- Fix process running issues on Windows when MCP server is used in copilot CLI
+
+## 0.5.17 (2026-02-18)
+
+### Features Added
+
+- Added `azsdk upgrade` command and `#azsdk_upgrade` mcp tool to perform a self-upgrade to the latest (or specified) version
+- The CLI and MCP server will proactively check for new updates and notify the user on a 1 and 3 day TTL, respectively
+- Add TypeSpec project path in package release status telemetry when release plan exists
+- Add WorkloadIdentityCredential in identity chain when running on GitHub action
+
 
 ## 0.5.16 (2026-02-09)
 

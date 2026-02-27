@@ -39,6 +39,7 @@ var azureTypespecAuthoringSources = []model.Source{
 	model.Source_TypeSpecMigration,
 	model.Source_TypeSpecHttpSpecs,
 	model.Source_StaticAzureDocs,
+	model.Source_TypeSpecAzureResourceManagerLib,
 }
 
 var SourceTopK = map[model.Source]int{

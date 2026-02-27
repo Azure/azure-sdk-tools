@@ -6,7 +6,6 @@ namespace APIViewWeb.DTOs
     public class UserPreferenceDto
     {
         public IEnumerable<string> Language { get; set; }
-        public IEnumerable<string> ApprovedLanguages { get; set; }
         public IEnumerable<APIRevisionType> APIRevisionType { get; set; }
         public IEnumerable<string> State { get; set; }
         public IEnumerable<string> Status { get; set; }

@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages.Samples;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -23,6 +25,7 @@ public class SampleGeneratorToolTests
     private TestLogger<SampleGeneratorTool> logger;
     private OutputHelper _outputHelper;
     private Mock<IMicroagentHostService> microagentHostServiceMock;
+    private Mock<ICopilotAgentRunner> copilotAgentRunnerMock;
     private SampleGeneratorTool tool;
     private Mock<ITelemetryService> telemetryServiceMock;
     private Mock<INpxHelper> _mockNpxHelper;
@@ -346,6 +349,7 @@ public class SampleGeneratorToolTests
         logger = new TestLogger<SampleGeneratorTool>();
         _outputHelper = new OutputHelper();
         microagentHostServiceMock = new Mock<IMicroagentHostService>();
+        copilotAgentRunnerMock = new Mock<ICopilotAgentRunner>();
         telemetryServiceMock = new Mock<ITelemetryService>();
         _mockNpxHelper = new Mock<INpxHelper>();
         _mockPowerShellHelper = new Mock<IPowershellHelper>();
@@ -361,14 +365,15 @@ public class SampleGeneratorToolTests
         var gitHubServiceMock = new Mock<IGitHubService>();
         var gitCommandHelper = new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>());
         realGitHelper = new GitHelper(gitHubServiceMock.Object, gitCommandHelper, gitLogger);
+        var packageInfoHelper = new PackageInfoHelper(new TestLogger<PackageInfoHelper>(), realGitHelper);
         // Use a real FileHelper instance instead of mock
         var fileHelper = new FileHelper(new TestLogger<FileHelper>());
         _languageServices = [
-            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, microagentHostServiceMock.Object, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+            new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+            new JavaLanguageService(_mockProcessHelper.Object, realGitHelper, new Mock<IMavenHelper>().Object, copilotAgentRunnerMock.Object, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
+            new JavaScriptLanguageService(_mockProcessHelper.Object, _mockNpxHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
             _mockGoLanguageService.Object,
-            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>())
+            new DotnetLanguageService(_mockProcessHelper.Object, _mockPowerShellHelper.Object, realGitHelper, languageLogger, _commonValidationHelpers.Object, packageInfoHelper, fileHelper, Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>())
         ];
 
         _mockGoLanguageService.Setup(ls => ls.Language).Returns(SdkLanguage.Go);
@@ -545,5 +550,38 @@ public class SampleGeneratorToolTests
 
         // Assert: parser/tool should fail with non-zero exit code
         Assert.That(parseResult.Errors, Is.Not.Empty, "Expected parse errors when required --prompt option is missing");
+    }
+
+    [Test]
+    public async Task GenerateSamples_PopulatesTelemetryFields()
+    {
+        // Arrange
+        var (_, packagePath) = await CreateFakeGoPackageAsync();
+        var generatedSamples = new List<GeneratedSample>
+        {
+            new("sample_one", "package main\nfunc main(){}"),
+            new("sample_two", "package main\nfunc main(){}")
+        };
+
+        microagentHostServiceMock
+            .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(generatedSamples);
+
+        // Act
+        var response = await tool.GenerateSamplesAsync(packagePath, "Generate samples", overwrite: false);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(response.Language, Is.EqualTo(SdkLanguage.Go), "Language should be set");
+            Assert.That(response.PackageName, Is.EqualTo("sdk/security/keyvault/azkeys"), "Package name should be set");
+            Assert.That(response.PackageType, Is.EqualTo(SdkType.Dataplane), "Package type should be set");
+            Assert.That(response.Version, Is.EqualTo("1.5.0"), "Version should be set");
+
+            // Verify samples_count is in Result as an anonymous type
+            Assert.That(response.Result, Is.Not.Null, "Result should not be null");
+            var json = System.Text.Json.JsonSerializer.Serialize(response.Result);
+            Assert.That(json, Does.Contain("\"samples_count\":2"), "Result should contain samples_count with value 2");
+        });
     }
 }

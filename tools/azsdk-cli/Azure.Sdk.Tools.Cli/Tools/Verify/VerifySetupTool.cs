@@ -20,10 +20,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Verify;
 public class VerifySetupTool : LanguageMcpTool
 {
     private readonly IProcessHelper processHelper;
+    private readonly IPackageInfoHelper packageInfoHelper;
 
-    public VerifySetupTool(IProcessHelper processHelper, ILogger<VerifySetupTool> logger, IGitHelper gitHelper, IEnumerable<LanguageService> languageServices) : base(languageServices, gitHelper, logger)
+    public VerifySetupTool(
+        IProcessHelper processHelper,
+        ILogger<VerifySetupTool> logger,
+        IGitHelper gitHelper,
+        IPackageInfoHelper packageInfoHelper,
+        IEnumerable<LanguageService> languageServices) : base(languageServices, gitHelper, logger)
     {
         this.processHelper = processHelper;
+        this.packageInfoHelper = packageInfoHelper;
     }
 
     private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
@@ -78,7 +85,7 @@ public class VerifySetupTool : LanguageMcpTool
         {
             // Create context for filtering requirements
             var ctx = await CreateRequirementContext(packagePath ?? Environment.CurrentDirectory, langs, ct);
-            
+
             // Get all requirements that should be checked in this context
             var reqsToCheck = AllRequirements.All
                 .Where(r => r.ShouldCheck(ctx))
@@ -91,7 +98,7 @@ public class VerifySetupTool : LanguageMcpTool
 
             // Start all checks concurrently
             var checkTasks = new List<Task<(Requirement req, DefaultCommandResponse result)>>();
-            
+
             foreach (var req in reqsToCheck)
             {
                 logger.LogInformation("Checking requirement: {Requirement}", req.Name);
@@ -105,9 +112,9 @@ public class VerifySetupTool : LanguageMcpTool
             foreach (var (req, result) in results)
             {
                 var instructions = req.GetInstructions(ctx).ToList();
-                
+
                 var displayName = req.Name;
-                
+
                 // Display version constraints if applicable
                 if (req.MinVersion != null)
                 {
@@ -159,7 +166,7 @@ public class VerifySetupTool : LanguageMcpTool
             if (!checkResult.Success)
             {
                 var instructions = req.GetInstructions(ctx);
-                logger.LogError("Requirement {Requirement} check failed.\n\nInstructions: {Instructions}", 
+                logger.LogError("Requirement {Requirement} check failed.\n\nInstructions: {Instructions}",
                     req.Name, string.Join(", ", instructions));
                 return new DefaultCommandResponse
                 {
@@ -171,7 +178,7 @@ public class VerifySetupTool : LanguageMcpTool
 
             if (!versionCheckResult.Equals(string.Empty))
             {
-                logger.LogError("Requirement {Requirement} failed, requires upgrade to version {Version}.", 
+                logger.LogError("Requirement {Requirement} failed, requires upgrade to version {Version}.",
                     req.Name, versionCheckResult);
                 return new DefaultCommandResponse
                 {
@@ -182,7 +189,7 @@ public class VerifySetupTool : LanguageMcpTool
         catch (Exception ex)
         {
             var instructions = req.GetInstructions(ctx);
-            logger.LogError(ex, "Requirement {Requirement} check failed to execute.\n\nInstructions: {Instructions}", 
+            logger.LogError(ex, "Requirement {Requirement} check failed to execute.\n\nInstructions: {Instructions}",
                 req.Name, string.Join(", ", instructions));
             return new DefaultCommandResponse
             {
@@ -195,7 +202,7 @@ public class VerifySetupTool : LanguageMcpTool
 
     private async Task<RequirementContext> CreateRequirementContext(string packagePath, HashSet<SdkLanguage>? languages = null, CancellationToken ct = default)
     {
-        var (repoRoot, _, _) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var (repoRoot, _, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
         var repoName = await gitHelper.GetRepoNameAsync(repoRoot, ct);
 
         // If no languages specified, try to detect from the repo

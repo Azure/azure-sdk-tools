@@ -1,11 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper outputHelper)
 {
+    private List<string> WindowsDefaultProcess = ["pwsh", "powershell", ProcessOptions.CMD];
+    // WINDOWS_PATH_EXT is used to override Environment variable PATHEXT to support command lookup when running a process.
+    // This is required to support process run when MCP is used from copilot CLI which overrides PATHEXT to .CPL
+    private const string WINDOWS_PATH_EXT = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.PY;.PYW;.CPL";
+
     /// <summary>
     /// Runs a process with the specified command and arguments in the given working directory.
     /// </summary>
@@ -20,9 +26,22 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
         using var timeoutCts = new CancellationTokenSource(options.Timeout);
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
+        var cmdName = options.Command;
+
+        // Update process command as CMD.exe on Windows
+        var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        List<string> processArgs = [];
+        // Check if command is supported without cmd
+        if (isWindows && !WindowsDefaultProcess.Contains(cmdName))
+        {
+            cmdName = ProcessOptions.CMD;
+            processArgs.Add("/c");
+            processArgs.Add(options.Command);
+        }
+
         var processStartInfo = new ProcessStartInfo
         {
-            FileName = options.Command,
+            FileName = cmdName,
             WorkingDirectory = options.WorkingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -31,10 +50,12 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
             CreateNoWindow = true
         };
 
-        foreach (var arg in options.Args)
+        foreach(var arg in processArgs.Concat(options.Args))
         {
             processStartInfo.ArgumentList.Add(arg);
         }
+        //Override PATHEXT to support command lookup
+        processStartInfo.Environment["PATHEXT"] = WINDOWS_PATH_EXT;
 
         ProcessResult result = new() { ExitCode = 1 };
 

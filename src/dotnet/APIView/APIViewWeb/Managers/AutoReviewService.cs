@@ -126,17 +126,13 @@ namespace APIViewWeb.Managers;
 
             // TODO: await _projectsManager.TryLinkReviewToProjectAsync(user, review);
 
-            if (apiRevision != null)
+            if (apiRevision != null && apiRevisions.Any())
             {
-                if (!apiRevision.IsApproved && apiRevisions.Any())
+                foreach (var apiRev in apiRevisions)
                 {
-                    foreach (var apiRev in apiRevisions)
+                    if (await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
                     {
-                        if (apiRev.IsApproved && await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
-                        {
-                            await _apiRevisionsManager.CopyApprovalFromAsync(targetRevision: apiRevision, sourceRevision: apiRev);
-                            break;
-                        }    
+                        await _apiRevisionsManager.CarryForwardRevisionDataAsync(targetRevision: apiRevision, sourceRevision: apiRev);
                     }
                 }
             }

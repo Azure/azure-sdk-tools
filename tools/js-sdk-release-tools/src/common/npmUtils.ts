@@ -67,6 +67,8 @@ function executeCommand(
     maxRetries = 3,
     retryDelayMs = 1000
 ): shell.ShellString | null {
+    const currentRepo = shell.pwd().stdout.trim();
+    logger.info(`Executing git command in repo: ${currentRepo}`);
     logger.info(`Executing command with retry mode (max attempts: ${maxRetries}): ${command}`);
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {

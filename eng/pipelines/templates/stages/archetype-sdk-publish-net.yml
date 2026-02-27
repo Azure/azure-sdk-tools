@@ -59,6 +59,7 @@ stages:
 
       - template: /eng/common/pipelines/templates/steps/login-to-github.yml
         parameters:
+          ScriptDirectory: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts'
           TokenOwners:
             - Azure
             - azure-sdk
@@ -106,7 +107,6 @@ stages:
             pwsh: true
           env:
             GH_TOKEN: $(GH_TOKEN_Azure)
-
 
       # if we are verifying the changelog, we should definitely submit an increment version + changelog update PR
       - ${{ if eq(parameters.VerifyChangelog, true) }}:

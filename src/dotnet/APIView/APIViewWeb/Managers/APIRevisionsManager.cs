@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -40,6 +41,7 @@ namespace APIViewWeb.Managers
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly TelemetryClient _telemetryClient;
         private readonly IProjectsManager _projectsManager;
+        private readonly ILogger<APIRevisionsManager> _logger;
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
@@ -57,6 +59,7 @@ namespace APIViewWeb.Managers
             ICosmosCommentsRepository commentsRepository,
             TelemetryClient telemetryClient,
             IProjectsManager projectsManager,
+            ILogger<APIRevisionsManager> logger,
             IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
@@ -73,6 +76,7 @@ namespace APIViewWeb.Managers
             _commentsRepository = commentsRepository;
             _telemetryClient = telemetryClient;
             _projectsManager = projectsManager;
+            _logger = logger;
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
             {
@@ -1541,10 +1545,25 @@ namespace APIViewWeb.Managers
             // Apply the shared visibility filter so that only comments relevant to this
             // revision are considered. Same rules as the Conversations panel and code panel.
             var visibleComments = CommentVisibilityHelper.GetVisibleComments(allComments, apiRevisionId);
-            
+
+            // --- DIAGNOSTIC LOGGING: Quality Score Pipeline ---
+            _logger.LogWarning("[QualityScore] RevisionId={RevisionId}, ReviewId={ReviewId}", apiRevisionId, revision.ReviewId);
+            _logger.LogWarning("[QualityScore] Total comments from DB: {Count}", allComments.Count);
+            _logger.LogWarning("[QualityScore] After GetVisibleComments: {Count} (non-diagnostic: {NonDiag}, diagnostic: {Diag})",
+                visibleComments.Count,
+                visibleComments.Count(c => c.CommentSource != CommentSource.Diagnostic),
+                visibleComments.Count(c => c.CommentSource == CommentSource.Diagnostic));
+            foreach (var c in visibleComments)
+            {
+                _logger.LogWarning("[QualityScore]   Comment Id={Id}, ThreadId={ThreadId}, ElementId={ElementId}, IsResolved={IsResolved}, Severity={Severity}, Source={Source}, Text={Text}",
+                    c.Id, c.ThreadId ?? "(null)", c.ElementId ?? "(null)", c.IsResolved, c.Severity?.ToString() ?? "(null)", c.CommentSource, c.CommentText?.Substring(0, Math.Min(c.CommentText?.Length ?? 0, 80)));
+            }
+
             var unresolvedComments = visibleComments
                 .Where(c => !c.IsResolved)
                 .ToList();
+
+            _logger.LogWarning("[QualityScore] Unresolved comments: {Count}", unresolvedComments.Count);
 
             // Group comments by conversation thread. Only the thread-starting comment's severity
             // should be counted — replies within a thread do not carry their own severity and must
@@ -1561,11 +1580,25 @@ namespace APIViewWeb.Managers
                 })
                 .ToList();
 
+            _logger.LogWarning("[QualityScore] Thread groups (unresolved): {Count}", threads.Count);
+            foreach (var thread in threads)
+            {
+                _logger.LogWarning("[QualityScore]   ThreadKey={Key}, CommentCount={Count}, CommentIds=[{Ids}]",
+                    thread.Key, thread.Count(), string.Join(", ", thread.Select(c => c.Id)));
+            }
+
             // For each thread, pick the first comment (by creation date) as the representative.
             // Its severity determines the thread's severity for scoring purposes.
             var threadRepresentatives = threads
                 .Select(g => g.OrderBy(c => c.CreatedOn).First())
                 .ToList();
+
+            _logger.LogWarning("[QualityScore] Thread representatives (scored): {Count}", threadRepresentatives.Count);
+            foreach (var rep in threadRepresentatives)
+            {
+                _logger.LogWarning("[QualityScore]   Rep Id={Id}, Severity={Severity}, Source={Source}, ThreadId={ThreadId}, ElementId={ElementId}",
+                    rep.Id, rep.Severity?.ToString() ?? "(null)", rep.CommentSource, rep.ThreadId ?? "(null)", rep.ElementId ?? "(null)");
+            }
 
             var score = new ReviewQualityScore();
             double totalPenalty = 0.0;

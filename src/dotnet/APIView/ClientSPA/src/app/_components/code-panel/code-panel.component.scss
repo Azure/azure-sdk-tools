@@ -145,6 +145,11 @@
             color: var(--text-muted-color);
 
             .orphan-indicator-content {
+                position: sticky;
+                left: 0;
+                width: fit-content;
+                max-width: 100cqw;
+
                 .indicator-label {
                     margin-left: 42px;
                     padding: 3px 8px;

@@ -211,7 +211,6 @@ This shared import handles:
 
 - OIDC token acquisition via `actions/github-script`.
 - Azure CLI login using workload identity federation.
-- GitHub CLI installation and `gh-aw` extension setup.
 
 Include it in your workflow's `imports` to avoid re-implementing authentication logic:
 

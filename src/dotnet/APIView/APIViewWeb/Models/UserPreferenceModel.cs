@@ -10,7 +10,6 @@ namespace APIViewWeb.Models
     {
         public string UserName { get; set; }
         public IEnumerable<string> Language { get; set; } = new List<string>();
-        public IEnumerable<string> ApprovedLanguages { get; set; } = new List<string>();
         public IEnumerable<APIRevisionType> APIRevisionType { get; set; } = new List<APIRevisionType>();
         public IEnumerable<string> State { get; set; } = new List<string>();
         public IEnumerable<string> Status { get; set; } = new List<string>();

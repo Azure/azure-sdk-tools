@@ -73,6 +73,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   hasHiddenAPIThatIsDiff: boolean = false;
   loadFailed: boolean = false;
   loadFailedMessage: string = "API-Revision Content Load Failed...";
+  loadingMessage: string | undefined = undefined;
 
   showLeftNavigation: boolean = true;
   showPageOptions: boolean = true;
@@ -130,7 +131,6 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
     this.loadReview(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
-    this.loadComments();
     this.handleRealTimeReviewUpdates();
     this.handleRealTimeAPIRevisionUpdates();
     this.loadLatestSampleRevision(this.reviewId!);
@@ -162,8 +162,9 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     }
     menu.push(...[
       {
+        id: 'conversations',
         icon: 'bi bi-chat-left-dots',
-        tooltip: 'Conversations',
+        tooltip: (this.numberOfActiveConversation > 0) ? `Conversations (${this.numberOfActiveConversation} unresolved)` : 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => {
           if (this.getLoadingStatus() === 'completed') {
@@ -203,7 +204,26 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     this.reviewPageNavigation = [];
     this.codePanelRowData = [];
     this.codePanelData = null;
+    this.comments = [];
     this.loadFailed = false;
+
+    // Clear the conversations badge immediately — the count will be inaccurate
+    // until the code panel finishes loading and diagnostics are synced.
+    this.numberOfActiveConversation = 0;
+    if (this.sideMenu) {
+      const conversationsItem = this.sideMenu.find(item => item.id === 'conversations');
+      if (conversationsItem) {
+        conversationsItem.badge = undefined;
+        conversationsItem.tooltip = 'Conversations';
+        this.sideMenu = [...this.sideMenu];
+      }
+    }
+
+    // Set loading message if diagnostics need migration (old revisions without hash)
+    this.loadingMessage = (this.activeAPIRevision && !this.activeAPIRevision.diagnosticsHash)
+      ? 'Processing diagnostics...'
+      : undefined;
+
     this.changeDetectorRef.detectChanges();
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
@@ -679,11 +699,17 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   }
 
   handleNumberOfActiveThreadsEmitter(value: number) {
+    // Suppress the badge until the code panel has loaded. Before that point,
+    // diagnostics may not be synced yet so the count would be inaccurate.
+    if (!this.codePanelData) {
+      return;
+    }
     this.numberOfActiveConversation = value;
     if (this.sideMenu) {
-      const conversationsItem = this.sideMenu.find(item => item.tooltip === 'Conversations');
+      const conversationsItem = this.sideMenu.find(item => item.id === 'conversations');
       if (conversationsItem) {
         conversationsItem.badge = (value > 0) ? value.toString() : undefined;
+        conversationsItem.tooltip = (value > 0) ? `Conversations (${value} unresolved)` : 'Conversations';
         this.sideMenu = [...this.sideMenu];
         this.changeDetectorRef.detectChanges();
       }

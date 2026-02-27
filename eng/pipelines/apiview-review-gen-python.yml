@@ -1,4 +1,4 @@
-pr: none
+﻿pr: none
 
 trigger: none
 
@@ -12,7 +12,7 @@ parameters:
     default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","FileID":"<fileid>","FileName":"<fileName>"}]'
   - name: APIViewURL
     type: string
-    default: 'https://apiview.dev'
+    default: 'https://apiview.org'
   - name: StorageContainerUrl
     type: string
     default: ''
@@ -20,7 +20,7 @@ parameters:
 variables:
   PythonIndexUrl: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
   PythonVersion: '3.10'
-  ApiStubVersion: '0.3.25'
+  ApiStubVersion: '0.3.26'
 
 jobs:
 - job: CreatePythonReviewCodeFile

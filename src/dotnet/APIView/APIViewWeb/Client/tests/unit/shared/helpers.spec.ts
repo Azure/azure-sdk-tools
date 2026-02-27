@@ -15,43 +15,43 @@ test.describe('getReviewAndRevisionIdFromUrl should return valid review and revi
   var expectedResults = [
     {
       title: 'older revision returns correct values',
-      href: 'https://apiview.dev/Assemblies/Review/b08a59aad6fe47f1949b54a531e67fa9?revisionId=ae4bb4afdc104c07a0f0058e0c133b4f&doc=False',
+      href: 'https://apiview.org/Assemblies/Review/b08a59aad6fe47f1949b54a531e67fa9?revisionId=ae4bb4afdc104c07a0f0058e0c133b4f&doc=False',
       reviewId: 'b08a59aad6fe47f1949b54a531e67fa9',
       revisionId: 'ae4bb4afdc104c07a0f0058e0c133b4f',
     },
     {
       title: 'older revision returns correct values 2',
-      href: 'https://apiview.dev/Assemblies/Review/0ab7afb3131d4eacb1bfc1b0230fece8?revisionId=e822cfe035b148d2999a57e3e6b07460&doc=False',
+      href: 'https://apiview.org/Assemblies/Review/0ab7afb3131d4eacb1bfc1b0230fece8?revisionId=e822cfe035b148d2999a57e3e6b07460&doc=False',
       reviewId: '0ab7afb3131d4eacb1bfc1b0230fece8',
       revisionId: 'e822cfe035b148d2999a57e3e6b07460',
     },
     {
       title: 'latest revision returns correct reviewId and undefined revisionId',
-      href: 'https://apiview.dev/Assemblies/Review/7674e7e8fdd0496f80b29127673928ec',
+      href: 'https://apiview.org/Assemblies/Review/7674e7e8fdd0496f80b29127673928ec',
       reviewId: '7674e7e8fdd0496f80b29127673928ec',
       revisionId: undefined,
     },
     {
       title: 'latest revision returns correct reviewId and undefined revisionId 2',
-      href: 'https://apiview.dev/Assemblies/Review/0ab7afb3131d4eacb1bfc1b0230fece8',
+      href: 'https://apiview.org/Assemblies/Review/0ab7afb3131d4eacb1bfc1b0230fece8',
       reviewId: '0ab7afb3131d4eacb1bfc1b0230fece8',
       revisionId: undefined,
     },
     {
       title: 'review conversation page returns its reviewId',
-      href: 'https://apiview.dev/Assemblies/Conversation/7c1724b222bd4a49bfeba6100d77297e',
+      href: 'https://apiview.org/Assemblies/Conversation/7c1724b222bd4a49bfeba6100d77297e',
       reviewId: '7c1724b222bd4a49bfeba6100d77297e',
       revisionId: undefined,
     },
     {
       title: 'review revisions page returns its reviewId',
-      href: 'https://apiview.dev/Assemblies/Revisions/7c1724b222bd4a49bfeba6100d77297e',
+      href: 'https://apiview.org/Assemblies/Revisions/7c1724b222bd4a49bfeba6100d77297e',
       reviewId: '7c1724b222bd4a49bfeba6100d77297e',
       revisionId: undefined,
     },
     {
       title: 'review usage samples page returns its reviewId',
-      href: 'https://apiview.dev/Assemblies/Samples/7c1724b222bd4a49bfeba6100d77297e',
+      href: 'https://apiview.org/Assemblies/Samples/7c1724b222bd4a49bfeba6100d77297e',
       reviewId: '7c1724b222bd4a49bfeba6100d77297e',
       revisionId: undefined,
     },
@@ -69,19 +69,19 @@ test.describe('getReviewAndRevisionIdFromUrl should return valid review and revi
   var nonReviewExpectedResults = [
     {
       title: 'landing',
-      href: 'https://apiview.dev/',
+      href: 'https://apiview.org/',
     },
     {
       title: 'login',
-      href: 'https://apiview.dev/Login',
+      href: 'https://apiview.org/Login',
     },
     {
       title: 'profile',
-      href: 'https://apiview.dev/Assemblies/Profile/yeojunh',
+      href: 'https://apiview.org/Assemblies/Profile/yeojunh',
     },
     {
       title: 'review filter',
-      href: 'https://apiview.dev/?languages=C%252B%252B&state=Closed&state=Open&status=Approved&type=Automatic&type=Manual&type=PullRequest&pageNo=1&pageSize=50',
+      href: 'https://apiview.org/?languages=C%252B%252B&state=Closed&state=Open&status=Approved&type=Automatic&type=Manual&type=PullRequest&pageNo=1&pageSize=50',
     },
     {
       title: 'requested reviews',

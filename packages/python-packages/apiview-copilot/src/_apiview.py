@@ -178,8 +178,8 @@ class ApiViewClient:
             endpoint = endpoint[1:]
 
         apiview_endpoints = {
-            "production": "https://apiview.dev",
-            "staging": "https://apiview.org",
+            "production": "https://apiview.org",
+            "staging": "https://apiviewstagingtest.com",
         }
         endpoint_root = apiview_endpoints.get(self.environment)
         endpoint = f"{endpoint_root}/{endpoint}"

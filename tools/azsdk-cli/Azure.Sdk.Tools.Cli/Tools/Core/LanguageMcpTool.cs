@@ -6,7 +6,7 @@ using Microsoft.TeamFoundation.TestManagement.WebApi;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Core
 {
-    public abstract class LanguageMcpTool: MCPTool
+    public abstract class LanguageMcpTool : MCPTool
     {
         protected IEnumerable<LanguageService> languageServices;
         protected ILogger<LanguageMcpTool> logger;
@@ -35,6 +35,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Core
             var service = languageServices.FirstOrDefault(s => s.Language == language);
             return service;
         }
-#pragma warning restore MCP003 // Tool methods must return Response types, built-in value types, or string        
+#pragma warning restore MCP003 // Tool methods must return Response types, built-in value types, or string
     }
 }

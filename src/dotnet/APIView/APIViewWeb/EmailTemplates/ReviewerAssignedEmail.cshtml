@@ -1,0 +1,15 @@
+@model APIViewWeb.Models.ReviewerAssignedEmailModel
+@{
+	Layout = "/EmailTemplates/_EmailLayout.cshtml";
+	ViewData["EmailTitle"] = "New Review Request";
+}
+
+<p class="section">
+	<a href="@Model.RequesterProfileUrl">@Model.RequesterUserName</a> requested your review on
+	<a href="@Model.ReviewUrl"><strong>@Model.ReviewName</strong></a>.
+</p>
+
+<div class="panel">
+	View all your pending APIViews
+	<a href="@Model.RequestedReviewsUrl"><strong>here</strong></a>.
+</div>

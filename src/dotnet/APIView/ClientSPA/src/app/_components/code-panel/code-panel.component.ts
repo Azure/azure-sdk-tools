@@ -8,7 +8,7 @@ import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, 
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
-import { CommentItemModel, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { MenuItem, MenuItemCommandEvent, MessageService, ToastMessageOptions } from 'primeng/api';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
@@ -40,6 +40,7 @@ export class CodePanelComponent implements OnChanges {
   @Input() showDocumentation: boolean = true;
   @Input() loadFailed: boolean = false;
   @Input() loadFailedMessage: string | undefined;
+  @Input() loadingMessage: string | undefined;
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
   @Input() allComments: CommentItemModel[] = [];
@@ -89,6 +90,10 @@ export class CodePanelComponent implements OnChanges {
 
     this.scrollToNodeIdHashed?.pipe(takeUntil(this.destroy$)).subscribe((nodeIdHashed) => {
       this.scrollToNode(nodeIdHashed);
+    });
+
+    this.commentsService.severityChanged$.pipe(takeUntil(this.destroy$)).subscribe(({ commentId, newSeverity }) => {
+      this.updateCommentSeverity(commentId, newSeverity);
     });
   }
 
@@ -738,7 +743,9 @@ export class CodePanelComponent implements OnChanges {
         });
     }
     else {
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity, commentUpdates.threadId)
+      const isNewThread = commentUpdates.isReply === false;
+      const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
+      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               if (!commentUpdates.threadId && response.threadId) {
@@ -746,6 +753,10 @@ export class CodePanelComponent implements OnChanges {
               }
               this.addCommentToCommentThread(commentUpdates, response);
               commentUpdates.comment = response;
+              // Only refresh quality score for new threads, not replies
+              if (isNewThread) {
+                this.commentsService.notifyQualityScoreRefresh();
+              }
             }
           }
         );
@@ -757,6 +768,7 @@ export class CodePanelComponent implements OnChanges {
     this.commentsService.deleteComment(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.deleteCommentFromCommentThread(commentUpdates);
+        this.commentsService.notifyQualityScoreRefresh();
       }
     });
   }
@@ -767,6 +779,7 @@ export class CodePanelComponent implements OnChanges {
       this.commentsService.resolveComments(this.reviewId!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.commentsService.notifyQualityScoreRefresh();
         }
       });
     }
@@ -774,6 +787,7 @@ export class CodePanelComponent implements OnChanges {
       this.commentsService.unresolveComments(this.reviewId!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
+          this.commentsService.notifyQualityScoreRefresh();
         }
       });
     }
@@ -1180,6 +1194,32 @@ export class CodePanelComponent implements OnChanges {
   }
 
   /**
+   * Highlights a comment when the URL contains a comment ID in the fragment (hash)
+   */
+  private highlightCommentFromFragment() {
+    const fragment = window.location.hash;
+    if (!fragment || fragment.length <= 1) {
+      return;
+    }
+
+    const commentId = fragment.substring(1); // Remove the '#' prefix
+    if (!commentId) {
+      return;
+    }
+
+    setTimeout(() => {
+      const commentPanel = this.elementRef.nativeElement.querySelector(`[data-comment-id="${commentId}"]`);
+      if (commentPanel) {
+        commentPanel.classList.add('active');
+        commentPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          commentPanel.classList.remove('active');
+        }, 1550);
+      }
+    }, 600);
+  }
+
+  /**
    * Navigates to the next or previous code line that contains a search match but is outside the viewport
    */
   private navigateToCodeLineWithSearchMatch() {
@@ -1314,8 +1354,9 @@ export class CodePanelComponent implements OnChanges {
     this.initializeDataSource().then(() => {
       this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
         this.isLoading = false;
-        setTimeout(() => {
-          this.scrollToNode(undefined, this.scrollToNodeId);
+        setTimeout(async () => {
+          await this.scrollToNode(undefined, this.scrollToNodeId);
+          this.highlightCommentFromFragment();
           const viewport = this.elementRef.nativeElement.ownerDocument.getElementById('viewport');
           if (viewport) {
             viewport.addEventListener('scroll', (event) => {
@@ -1352,6 +1393,19 @@ export class CodePanelComponent implements OnChanges {
       }
     }
     this.updateHasActiveConversations();
+  }
+
+  private updateCommentSeverity(commentId: string, newSeverity: CommentSeverity) {
+    for (const row of this.codePanelRowData) {
+      if (row.type === CodePanelRowDatatype.CommentThread && row.comments) {
+        const comment = row.comments.find((c: CommentItemModel) => c.id === commentId);
+        if (comment) {
+          comment.severity = newSeverity;
+          this.updateItemInScroller(row);
+          break;
+        }
+      }
+    }
   }
 
   private addCommentToCommentThread(commentUpdates: CommentUpdatesDto, newComment: CommentItemModel) {

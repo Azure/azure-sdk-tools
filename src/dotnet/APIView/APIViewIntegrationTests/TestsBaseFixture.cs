@@ -132,9 +132,12 @@ namespace APIViewIntegrationTests
             var commentsLoggerMoq = new Mock<ILogger<CommentsManager>>();
             var copilotAuthServiceMoq = new Mock<ICopilotAuthenticationService>();
             var permissionsManagerMoq = new Mock<IPermissionsManager>();
+
+            var diagnosticCommentService = new DiagnosticCommentService(CommentRepository);
             
             CommentsManager = new CommentsManager(
                 apiRevisionsManager: APIRevisionManager,
+                diagnosticCommentService: diagnosticCommentService,
                 authorizationService: authorizationServiceMoq.Object,
                 commentsRepository: CommentRepository,
                 reviewRepository: ReviewRepository,
@@ -160,8 +163,9 @@ namespace APIViewIntegrationTests
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
                 codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
+                diagnosticCommentService: diagnosticCommentService,
                 originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object, configuration: _config);
+                telemetryClient: telemetryClient.Object, projectsManager: Mock.Of<IProjectsManager>(), configuration: _config);
 
             var pollingJobQueueManagerMoq = new Mock<IPollingJobQueueManager>();
             var pullRequestsRepositoryMoq = new Mock<ICosmosPullRequestsRepository>();

@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Moq;
+using System.Runtime.InteropServices;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package;
 
@@ -19,6 +20,20 @@ public class PackToolTests
 
     private const string InvalidProjectPathError = "Failed to find the language from package path";
     private const string EmptyPathError = "Package path is required and cannot be empty";
+
+    /// <summary>
+    /// Checks if a ProcessOptions instance matches the expected command name.
+    /// On Windows, ProcessOptions wraps commands in cmd.exe /C, so the original
+    /// command is at Args[1] instead of Command.
+    /// </summary>
+    private static bool CommandMatches(IProcessOptions p, string command)
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return p.Command == ProcessOptions.CMD && p.Args.Count > 1 && p.Args[1] == command;
+        }
+        return p.Command == command;
+    }
 
     #endregion
 
@@ -164,7 +179,7 @@ public class PackToolTests
         SetupDotNetRepo();
 
         _mockProcessHelper
-            .Setup(x => x.Run(It.Is<ProcessOptions>(p => p.Command == "dotnet" && p.Args.Contains("pack")), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Run(It.Is<ProcessOptions>(p => CommandMatches(p, "dotnet") && p.Args.Contains("pack")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult
             {
                 ExitCode = 0,
@@ -196,7 +211,7 @@ public class PackToolTests
 
         _mockProcessHelper
             .Setup(x => x.Run(It.Is<ProcessOptions>(p =>
-                p.Command == "dotnet" &&
+                CommandMatches(p, "dotnet") &&
                 p.Args.Contains("pack") &&
                 p.Args.Contains("--output") &&
                 p.Args.Contains(outputDir)),
@@ -221,7 +236,7 @@ public class PackToolTests
         SetupDotNetRepo();
 
         _mockProcessHelper
-            .Setup(x => x.Run(It.Is<ProcessOptions>(p => p.Command == "dotnet" && p.Args.Contains("pack")), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Run(It.Is<ProcessOptions>(p => CommandMatches(p, "dotnet") && p.Args.Contains("pack")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult
             {
                 ExitCode = 1,
@@ -251,7 +266,7 @@ public class PackToolTests
 
         // Assert - verify dotnet pack is called
         _mockProcessHelper.Verify(x => x.Run(
-            It.Is<ProcessOptions>(p => p.Command == "dotnet" && p.Args.Contains("pack")),
+            It.Is<ProcessOptions>(p => CommandMatches(p, "dotnet") && p.Args.Contains("pack")),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -340,7 +355,7 @@ public class PackToolTests
         SetupJavaScriptRepo();
 
         _mockProcessHelper
-            .Setup(x => x.Run(It.Is<ProcessOptions>(p => p.Command == "pnpm" && p.Args.Contains("pack")), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Run(It.Is<ProcessOptions>(p => CommandMatches(p, "pnpm") && p.Args.Contains("pack")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult
             {
                 ExitCode = 0,
@@ -368,7 +383,7 @@ public class PackToolTests
 
         _mockProcessHelper
             .Setup(x => x.Run(It.Is<ProcessOptions>(p =>
-                p.Command == "pnpm" &&
+                CommandMatches(p, "pnpm") &&
                 p.Args.Contains("pack") &&
                 p.Args.Contains("--pack-destination") &&
                 p.Args.Contains(outputDir)),
@@ -392,7 +407,7 @@ public class PackToolTests
         SetupJavaScriptRepo();
 
         _mockProcessHelper
-            .Setup(x => x.Run(It.Is<ProcessOptions>(p => p.Command == "pnpm"), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Run(It.Is<ProcessOptions>(p => CommandMatches(p, "pnpm")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult
             {
                 ExitCode = 1,
@@ -417,7 +432,7 @@ public class PackToolTests
         SetupPythonRepo();
 
         _mockPythonHelper
-            .Setup(x => x.Run(It.Is<PythonOptions>(p => p.Command == "sdk_build"), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Run(It.Is<PythonOptions>(p => CommandMatches(p, "sdk_build")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
 
         // sdk_build outputs to {repoRoot}/.artifacts/{packageName}
@@ -444,7 +459,7 @@ public class PackToolTests
 
         _mockPythonHelper
             .Setup(x => x.Run(It.Is<PythonOptions>(p =>
-                p.Command == "sdk_build" &&
+                CommandMatches(p, "sdk_build") &&
                 p.Args.Contains("-d") &&
                 p.Args.Contains(outputDir)),
                 It.IsAny<CancellationToken>()))

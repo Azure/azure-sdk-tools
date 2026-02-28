@@ -53,7 +53,7 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,     // The rewritten standalone question
-  "category": string,     // Must be one of the categories: api-design, code-generation, sdk-development, sdk-release, and sdk-usage,
+  "category": string,     // Must be one of the categories: sdk-generation, sdk-development, sdk-release, sdk-usage, just-post, or unknown
   "service_type": string, // Must be one of the intent service types or unknown
   "needs_rag_processing": boolean    // Whether to invoke RAG workflow, default is true
 }

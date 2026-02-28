@@ -37,9 +37,16 @@ type GitHubCheckRunResponse struct {
 type GitHubActionsRunResponse struct {
 	ID         int64  `json:"id"`
 	Name       string `json:"name"`
+	RunNumber  int    `json:"run_number"`
 	Status     string `json:"status"`
 	Conclusion string `json:"conclusion"`
 	HTMLURL    string `json:"html_url"`
+}
+
+// GitHubActionsRunsListResponse wraps a list of workflow runs returned by the GitHub API.
+type GitHubActionsRunsListResponse struct {
+	TotalCount   int                        `json:"total_count"`
+	WorkflowRuns []GitHubActionsRunResponse `json:"workflow_runs"`
 }
 
 // GitHubJobResponse represents a single job within a GitHub Actions workflow run.
@@ -61,12 +68,6 @@ type GitHubJobResponse struct {
 type GitHubJobsListResponse struct {
 	TotalCount int                 `json:"total_count"`
 	Jobs       []GitHubJobResponse `json:"jobs"`
-}
-
-// GitHubCheckRunsListResponse wraps a list of check runs returned by the GitHub API.
-type GitHubCheckRunsListResponse struct {
-	TotalCount int                      `json:"total_count"`
-	CheckRuns  []GitHubCheckRunResponse `json:"check_runs"`
 }
 
 // GitHubArtifact represents a single artifact from a workflow run.

@@ -248,72 +248,66 @@ func (g *GitHubClient) fetchPRCheckRuns(prLink *model.GitHubPRLink) (string, err
 	sb.WriteString(fmt.Sprintf("- **State**: %s\n", pr.State))
 	sb.WriteString(fmt.Sprintf("- **URL**: %s\n", pr.HTMLURL))
 
-	checksURL := fmt.Sprintf("%s/repos/%s/%s/commits/%s/check-runs?per_page=100",
+	runsURL := fmt.Sprintf("%s/repos/%s/%s/actions/runs?head_sha=%s&per_page=100",
 		githubAPIBaseURL, prLink.Owner, prLink.Repo, pr.Head.SHA)
-	log.Printf("Fetching check runs for SHA %s", pr.Head.SHA)
+	log.Printf("Fetching actions runs for SHA %s", pr.Head.SHA)
 
-	body, err = g.apiGet(checksURL)
+	body, err = g.apiGet(runsURL)
 	if err != nil {
-		log.Printf("Failed to fetch check runs: %v", err)
-		sb.WriteString("*Failed to fetch check runs*\n")
+		log.Printf("Failed to fetch actions runs: %v", err)
+		sb.WriteString("*Failed to fetch actions runs*\n")
 		return sb.String(), nil
 	}
 
-	var checksList model.GitHubCheckRunsListResponse
-	if err := json.Unmarshal(body, &checksList); err != nil {
-		log.Printf("Failed to parse check runs response: %v", err)
-		sb.WriteString("*Failed to parse check runs*\n")
+	var runsList model.GitHubActionsRunsListResponse
+	if err := json.Unmarshal(body, &runsList); err != nil {
+		log.Printf("Failed to parse actions runs response: %v", err)
+		sb.WriteString("*Failed to parse actions runs*\n")
 		return sb.String(), nil
 	}
 
-	var failed, succeeded, pending []model.GitHubCheckRunResponse
-	for _, check := range checksList.CheckRuns {
-		switch {
-		case check.Conclusion == "failure" || check.Conclusion == "action_required" ||
-			check.Conclusion == "timed_out" || check.Conclusion == "cancelled":
-			failed = append(failed, check)
-		case check.Status == "completed" && (check.Conclusion == "success" ||
-			check.Conclusion == "neutral" || check.Conclusion == "skipped"):
-			succeeded = append(succeeded, check)
-		default:
-			pending = append(pending, check)
+	// Deduplicate workflow runs by name, keeping only the latest (highest run_number).
+	latestByName := make(map[string]model.GitHubActionsRunResponse)
+	for _, run := range runsList.WorkflowRuns {
+		if existing, ok := latestByName[run.Name]; !ok || run.RunNumber > existing.RunNumber {
+			latestByName[run.Name] = run
 		}
 	}
 
-	sb.WriteString(fmt.Sprintf("### Check Runs Summary: %d total, %d failed, %d passed, %d pending\n\n",
-		checksList.TotalCount, len(failed), len(succeeded), len(pending)))
+	var failed, succeeded, pending []model.GitHubActionsRunResponse
+	for _, run := range latestByName {
+		switch {
+		case run.Conclusion == "failure" || run.Conclusion == "action_required" ||
+			run.Conclusion == "timed_out" || run.Conclusion == "cancelled":
+			failed = append(failed, run)
+		case run.Status == "completed" && (run.Conclusion == "success" ||
+			run.Conclusion == "neutral" || run.Conclusion == "skipped"):
+			succeeded = append(succeeded, run)
+		default:
+			pending = append(pending, run)
+		}
+	}
+
+	sb.WriteString(fmt.Sprintf("### Actions Runs Summary: %d unique workflows, %d failed, %d passed, %d pending\n\n",
+		len(latestByName), len(failed), len(succeeded), len(pending)))
 
 	if len(failed) > 0 {
-		sb.WriteString("### Failed Checks\n")
-		for _, check := range failed {
-			sb.WriteString(fmt.Sprintf("\n#### %s\n", check.Name))
-			sb.WriteString(fmt.Sprintf("- **Conclusion**: %s\n", check.Conclusion))
-			sb.WriteString(fmt.Sprintf("- **App**: %s\n", check.App.Name))
-			sb.WriteString(fmt.Sprintf("- **URL**: %s\n", check.HTMLURL))
-
-			if check.Output.Title != "" {
-				sb.WriteString(fmt.Sprintf("- **Output Title**: %s\n", check.Output.Title))
+		sb.WriteString("### Failed Actions Runs\n")
+		for _, run := range failed {
+			link := &model.GitHubCheckLink{
+				Owner:        prLink.Owner,
+				Repo:         prLink.Repo,
+				ActionsRunID: fmt.Sprintf("%d", run.ID),
 			}
-			if check.Output.Summary != "" {
-				summary := check.Output.Summary
-				if len(summary) > maxGitHubLogSize/4 {
-					summary = summary[:maxGitHubLogSize/4] + "\n... [truncated]"
-				}
-				sb.WriteString(fmt.Sprintf("\n**Summary**:\n%s\n", summary))
+			details, err := g.fetchActionsRunDetails(link)
+			if err != nil {
+				log.Printf("Failed to fetch details for run %d: %v", run.ID, err)
+				sb.WriteString(fmt.Sprintf("\n#### %s\n", run.Name))
+				sb.WriteString(fmt.Sprintf("- **Conclusion**: %s\n", run.Conclusion))
+				sb.WriteString(fmt.Sprintf("- **URL**: %s\n", run.HTMLURL))
+				continue
 			}
-			if check.Output.Text != "" {
-				text := check.Output.Text
-				if len(text) > maxGitHubLogSize/4 {
-					text = text[:maxGitHubLogSize/4] + "\n... [truncated]"
-				}
-				sb.WriteString(fmt.Sprintf("\n**Details**:\n%s\n", text))
-			}
-
-			annotations := g.fetchCheckRunAnnotations(prLink.Owner, prLink.Repo, check.ID)
-			if len(annotations) > 0 {
-				sb.WriteString("\n**Annotations**:\n")
-				writeAnnotations(&sb, annotations)
-			}
+			sb.WriteString(details)
 		}
 	}
 
@@ -488,6 +482,10 @@ func (g *GitHubClient) fetchActionsRunDetails(link *model.GitHubCheckLink) (stri
 	for _, job := range jobsList.Jobs {
 		sb.WriteString(fmt.Sprintf("\n#### Job: %s\n", job.Name))
 		sb.WriteString(fmt.Sprintf("- **Status**: %s, **Conclusion**: %s\n", job.Status, job.Conclusion))
+		if job.Conclusion == "failure" && len(job.Steps) > 0 {
+			sb.WriteString("Steps:\n")
+			writeSteps(&sb, job.Steps)
+		}
 	}
 
 	// Fetch run-level summary artifact (written via $GITHUB_STEP_SUMMARY)
@@ -520,13 +518,6 @@ func (g *GitHubClient) fetchJobLogs(link *model.GitHubCheckLink) (string, error)
 	if len(job.Steps) > 0 {
 		sb.WriteString("\n**Steps**:\n")
 		writeSteps(&sb, job.Steps)
-	}
-
-	// Fetch run-level summary artifact
-	if link.ActionsRunID != "" {
-		if summary := g.fetchRunSummaryArtifact(link.Owner, link.Repo, link.ActionsRunID); summary != "" {
-			sb.WriteString(fmt.Sprintf("\n**Run Summary**:\n%s\n", summary))
-		}
 	}
 
 	logs, dlErr := g.downloadJobLogs(link)

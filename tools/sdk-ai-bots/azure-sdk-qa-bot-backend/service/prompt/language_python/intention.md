@@ -33,9 +33,10 @@ The question must be classified into one of these categories:
     - Service-specific SDK usage patterns and best practices
     - SDK client configuration for sovereign clouds
 
-- **just-post**: Questions including:
+- **just-post**: Non-question messages including:
     - Ask for review about PR of azure-sdk-for-python repo 
     - Announcement for upcoming changes of SDK repo or eng tools or monthly kickoff
+    - These are informational posts, not questions seeking help. Set `needs_rag_processing` to `false`.
 
 - **unknown**: Questions that:
     - Lack sufficient context to determine the specific development or usage context
@@ -84,4 +85,13 @@ Response:
   "category": "sdk-release",
   "service_type": "unknown",
   "needs_rag_processing": true
+}
+
+Original: "Hi team, please help review this PR: https://github.com/Azure/azure-sdk-for-python/pull/12345"
+Response:
+{
+  "question": "PR review request for azure-sdk-for-python",
+  "category": "just-post",
+  "service_type": "unknown",
+  "needs_rag_processing": false
 }

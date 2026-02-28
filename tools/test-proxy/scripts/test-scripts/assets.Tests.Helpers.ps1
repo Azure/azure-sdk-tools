@@ -20,12 +20,7 @@ Function Get-CloneUrl {
   Param([string] $AssetsRepo)
   $gitToken = $env:GIT_TOKEN
   if (-not ([string]::IsNullOrWhitespace($gitToken))) {
-    # GitHub App installation tokens (ghs_ prefix) require x-access-token as the username.
-    # Classic PATs (ghp_ / github_pat_) work with the token alone as the username.
-    if ($gitToken.StartsWith("ghs_")) {
-      return "https://x-access-token:$($gitToken)@github.com/$($AssetsRepo)"
-    }
-    return "https://$($gitToken)@github.com/$($AssetsRepo)"
+    return "https://x-access-token:$($gitToken)@github.com/$($AssetsRepo)"
   }
   else {
     return "https://github.com/$($AssetsRepo)"

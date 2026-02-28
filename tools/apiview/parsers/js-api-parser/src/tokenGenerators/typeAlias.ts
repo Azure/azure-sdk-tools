@@ -1,7 +1,7 @@
 import { ApiTypeAlias, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { ReviewToken, ReviewLine, TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import { createToken, processExcerptTokens, parseTypeText } from "./helpers";
+import { createToken, processExcerptTokens, parseTypeText, buildReferenceMap } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiTypeAlias {
   return item.kind === ApiItemKind.TypeAlias;
@@ -85,15 +85,18 @@ function generate(item: ApiTypeAlias, deprecated?: boolean): GeneratorResult {
     }),
   );
 
-  // Process the type definition using parseTypeText for complex types
-  // (handles union, intersection, type literals, etc.)
+  // Process the type definition
+  // Use parseTypeText with a reference map for both type structure and navigation
   const typeText = item.typeExcerpt?.text?.trim();
   if (typeText) {
-    const typeChildren = parseTypeText(typeText, tokens, deprecated);
+    // Build a reference map from spanned tokens for navigation
+    const referenceMap = item.typeExcerpt.spannedTokens
+      ? buildReferenceMap(item.typeExcerpt.spannedTokens)
+      : undefined;
+    const typeChildren = parseTypeText(typeText, tokens, deprecated, 0, referenceMap);
     if (typeChildren?.length) {
       children.push(...typeChildren);
     } else {
-      // Simple type - just add semicolon
       tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
     }
   } else {

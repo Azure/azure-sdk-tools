@@ -204,7 +204,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             if (command == generateCodeownersCommandName)
             {
                 var repoRoot = await gitHelper.DiscoverRepoRootAsync(
-                    parseResult.GetValue(repoRootOption)
+                    parseResult.GetValue(repoRootOption), ct
                 );
                 var packageTypes = parseResult.GetValue(packageTypesOption);
                 var section = parseResult.GetValue(sectionOption);

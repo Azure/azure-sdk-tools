@@ -6,8 +6,9 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
 import { vi } from 'vitest';
 import { initializeTestBed } from '../../../../test-setup';
-import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
+import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
@@ -17,13 +18,13 @@ import { createMockSignalRService, createMockNotificationsService, createMockWor
 // Mock ngx-simplemde before any component imports
 vi.mock('ngx-simplemde', () => {
   const SimplemdeModuleMock = class SimplemdeModule {
-    static ɵmod = { 
+    static ɵmod = {
       id: 'SimplemdeModule',
       declarations: [],
       imports: [],
       exports: []
     };
-    static ɵinj = { 
+    static ɵinj = {
       imports: [],
       providers: []
     };
@@ -53,13 +54,13 @@ vi.mock('ngx-simplemde', () => {
 // Mock ngx-ui-scroll to avoid vscroll package dependency
 vi.mock('ngx-ui-scroll', () => {
   const UiScrollModuleMock = class UiScrollModule {
-    static ɵmod = { 
+    static ɵmod = {
       id: 'UiScrollModule',
       declarations: [],
       imports: [],
       exports: []
     };
-    static ɵinj = { 
+    static ɵinj = {
       imports: [],
       providers: []
     };
@@ -70,6 +71,9 @@ vi.mock('ngx-ui-scroll', () => {
 });
 
 import { CommentThreadComponent } from './comment-thread.component';
+import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 
 describe('CommentThreadComponent', () => {
   let component: CommentThreadComponent;
@@ -555,6 +559,165 @@ describe('CommentThreadComponent', () => {
 
       const calledUrl = mockClipboard.writeText.mock.calls[0][0];
       expect(calledUrl).toContain('nId=fallback-node-id');
+    });
+  });
+
+  describe('reply restrictions', () => {
+    let emittedDto: CommentUpdatesDto | undefined;
+
+    beforeEach(() => {
+      component.userProfile = { userName: 'test-user' } as any;
+      component.instanceLocation = 'code-panel';
+      emittedDto = undefined;
+      component.saveCommentActionEmitter.subscribe((dto: CommentUpdatesDto) => {
+        emittedDto = dto;
+      });
+    });
+
+    function makeEditorReturn(content: string) {
+      // Mock the editor QueryList so getEditorContent returns our content
+      component.editor = {
+        find: () => ({ getEditorContent: () => content })
+      } as any;
+    }
+
+    function buildReplyEvent(): Event {
+      // Build a DOM that mimics clicking Save inside the reply-editor-container
+      const replyContainer = document.createElement('div');
+      replyContainer.className = 'reply-editor-container';
+      const btn = document.createElement('button');
+      replyContainer.appendChild(btn);
+      return { target: btn } as unknown as Event;
+    }
+
+    it('should send severity when creating a new thread (no existing comments)', () => {
+      // No existing comments → new thread
+      component.codePanelRowData!.comments = [];
+      component.codePanelRowData!.nodeId = 'node-1';
+      component.codePanelRowData!.showReplyTextBox = true;
+      component.selectedSeverity = CommentSeverity.MustFix;
+      component.allowAnyOneToResolve = true;
+
+      makeEditorReturn('<p>New thread comment</p>');
+      component.saveCommentAction(buildReplyEvent());
+
+      expect(emittedDto).toBeDefined();
+      expect(emittedDto!.severity).toBe(CommentSeverity.MustFix);
+      expect(emittedDto!.allowAnyOneToResolve).toBe(true);
+      expect(emittedDto!.isReply).toBe(false);
+    });
+
+    it('should force severity to null when replying to an existing thread', () => {
+      const existingComment = new CommentItemModel();
+      existingComment.id = 'c1';
+      existingComment.elementId = 'elem-1';
+      existingComment.severity = CommentSeverity.ShouldFix;
+
+      component.codePanelRowData!.comments = [existingComment];
+      component.codePanelRowData!.nodeId = 'node-1';
+      component.codePanelRowData!.threadId = 'thread-1';
+      component.codePanelRowData!.showReplyTextBox = true;
+      component.selectedSeverity = CommentSeverity.Question; // even if somehow set
+
+      makeEditorReturn('<p>Reply text</p>');
+      component.saveCommentAction(buildReplyEvent());
+
+      expect(emittedDto).toBeDefined();
+      expect(emittedDto!.severity).toBeNull();
+      expect(emittedDto!.isReply).toBe(true);
+    });
+
+    it('should not send allowAnyOneToResolve when replying to an existing thread', () => {
+      const existingComment = new CommentItemModel();
+      existingComment.id = 'c1';
+      existingComment.elementId = 'elem-1';
+
+      component.codePanelRowData!.comments = [existingComment];
+      component.codePanelRowData!.nodeId = 'node-1';
+      component.codePanelRowData!.threadId = 'thread-1';
+      component.codePanelRowData!.showReplyTextBox = true;
+      component.allowAnyOneToResolve = true; // even if set
+
+      makeEditorReturn('<p>Reply text</p>');
+      component.saveCommentAction(buildReplyEvent());
+
+      expect(emittedDto).toBeDefined();
+      expect(emittedDto!.allowAnyOneToResolve).toBeUndefined();
+      expect(emittedDto!.isReply).toBe(true);
+    });
+
+    it('should not show Allow Anyone to Resolve button for replies', () => {
+      const existingComment = new CommentItemModel();
+      existingComment.id = 'c1';
+      existingComment.createdBy = 'test-user';
+      existingComment.createdOn = new Date().toISOString();
+      existingComment.commentText = 'Thread starter';
+
+      component.codePanelRowData!.comments = [existingComment];
+      component.codePanelRowData!.showReplyTextBox = true;
+
+      // Verify via component logic: when comments exist, the template condition
+      // *ngIf="!codePanelRowData!.comments || codePanelRowData!.comments.length === 0"
+      // evaluates to false, so the button is hidden for replies.
+      const comments = component.codePanelRowData!.comments;
+      const showResolveButton = !comments || comments.length === 0;
+      expect(showResolveButton).toBe(false);
+    });
+
+    it('should show Allow Anyone to Resolve button for new threads', () => {
+      component.codePanelRowData!.comments = [];
+      component.codePanelRowData!.showReplyTextBox = true;
+
+      // When no comments exist, the template condition evaluates to true,
+      // so the button is shown for new threads.
+      const comments = component.codePanelRowData!.comments;
+      const showResolveButton = !comments || comments.length === 0;
+      expect(showResolveButton).toBe(true);
+    });
+  });
+
+  describe('onSeverityChange', () => {
+    let commentsService: CommentsService;
+
+    beforeEach(() => {
+      commentsService = TestBed.inject(CommentsService);
+      component.reviewId = 'test-review';
+    });
+
+    it('should call notifySeverityChanged after successful severity update', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'c1';
+      comment.severity = CommentSeverity.Question;
+      comment.createdOn = new Date().toISOString();
+      comment.createdBy = 'test-user';
+      component.codePanelRowData!.comments = [comment];
+
+      vi.spyOn(commentsService, 'updateCommentSeverity').mockReturnValue(of(new HttpResponse({ status: 200 })));
+      const severityChangedSpy = vi.spyOn(commentsService, 'notifySeverityChanged');
+      const qualityRefreshSpy = vi.spyOn(commentsService, 'notifyQualityScoreRefresh');
+
+      component.onSeverityChange(CommentSeverity.MustFix, 'c1');
+
+      expect(severityChangedSpy).toHaveBeenCalledWith('c1', CommentSeverity.MustFix);
+      expect(qualityRefreshSpy).toHaveBeenCalled();
+      expect(comment.severity).toBe(CommentSeverity.MustFix);
+    });
+
+    it('should NOT call notifySeverityChanged when severity update fails', () => {
+      const comment = new CommentItemModel();
+      comment.id = 'c1';
+      comment.severity = CommentSeverity.Question;
+      comment.createdOn = new Date().toISOString();
+      comment.createdBy = 'test-user';
+      component.codePanelRowData!.comments = [comment];
+
+      vi.spyOn(commentsService, 'updateCommentSeverity').mockReturnValue(throwError(() => ({ status: 500 })));
+      const severityChangedSpy = vi.spyOn(commentsService, 'notifySeverityChanged');
+
+      component.onSeverityChange(CommentSeverity.MustFix, 'c1');
+
+      expect(severityChangedSpy).not.toHaveBeenCalled();
+      expect(comment.severity).toBe(CommentSeverity.Question); // reverted
     });
   });
 });

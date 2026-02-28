@@ -37,10 +37,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             _mockCommonValidationHelpers = new Mock<ICommonValidationHelpers>();
 
             // Create language-specific check implementations with mocked dependencies
-            var pythonCheck = new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockCommonValidationHelpers.Object, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
+            var pythonCheck = new PythonLanguageService(_mockProcessHelper.Object, _mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockCommonValidationHelpers.Object, Mock.Of<IPackageInfoHelper>(), Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
 
             var languageChecks = new List<PythonLanguageService> { pythonCheck };
- 
+
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockGitHelper.Object, languageChecks);
 
             // Setup default mock responses
@@ -215,21 +215,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             var mockRepoRoot = Path.GetTempPath();
             var cspellConfigDir = Path.Combine(mockRepoRoot, ".vscode");
             var cspellConfigPath = Path.Combine(cspellConfigDir, "cspell.json");
-            
+
             Directory.CreateDirectory(cspellConfigDir);
             await File.WriteAllTextAsync(cspellConfigPath, "{}"); // Create minimal cspell config
 
             // Setup mocks
             _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                          .ReturnsAsync(mockRepoRoot);
-            
+
             // Setup mock to return spelling errors for cspell check (exit code 1 indicates errors found)
             var cspellErrorResult = new ProcessResult { ExitCode = 1 };
             cspellErrorResult.AppendStdout("test_fix.md:1:11 - Unknown word (contians)");
             cspellErrorResult.AppendStdout("test_fix.md:1:19 - Unknown word (obvioius)");
             cspellErrorResult.AppendStdout("test_fix.md:1:27 - Unknown word (speling)");
             cspellErrorResult.AppendStdout("test_fix.md:1:34 - Unknown word (erors)");
-            
+
             // Reset and setup mock for this specific test
             _mockNpxHelper.Reset();
             _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
@@ -259,13 +259,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 Assert.IsNotNull(fixResult);
                 Assert.IsNotNull(normalResult.CheckStatusDetails);
                 Assert.IsNotNull(fixResult.CheckStatusDetails);
-                
+
                 // Normal result should fail since there are spelling errors
                 Assert.That(normalResult.ExitCode, Is.EqualTo(1));
-                
+
                 // Fix result should succeed since the microagent fixed the issues
                 Assert.That(fixResult.ExitCode, Is.EqualTo(0));
-                
+
                 // The fix result should contain details about what was fixed
                 Assert.That(fixResult.CheckStatusDetails, Does.Contain("Successfully fixed"));
             }

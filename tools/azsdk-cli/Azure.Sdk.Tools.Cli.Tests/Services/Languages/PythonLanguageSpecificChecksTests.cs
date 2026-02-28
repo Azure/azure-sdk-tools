@@ -34,6 +34,7 @@ internal class PythonLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
+            Mock.Of<IPackageInfoHelper>(),
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -42,61 +43,63 @@ internal class PythonLanguageSpecificChecksTests
     #region HasCustomizations Tests
 
     [Test]
-    public void HasCustomizations_ReturnsTrue_WhenPatchFileHasNonEmptyAllExport()
+    public void HasCustomizations_ReturnsPath_WhenPatchFileHasNonEmptyAllExport()
     {
         using var tempDir = TempDirectory.Create("python-customization-test");
         var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
         Directory.CreateDirectory(azureDir);
-        
-        File.WriteAllText(Path.Combine(azureDir, "_patch.py"), 
+
+        File.WriteAllText(Path.Combine(azureDir, "_patch.py"),
             "__all__ = [\"CustomClient\"]\n\nclass CustomClient:\n    pass");
 
         var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
 
-        Assert.That(result, Is.True);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.EqualTo(tempDir.DirectoryPath));
     }
 
     [Test]
-    public void HasCustomizations_ReturnsTrue_WhenMultilineAllExport()
+    public void HasCustomizations_ReturnsPath_WhenMultilineAllExport()
     {
         using var tempDir = TempDirectory.Create("python-multiline-test");
         var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
         Directory.CreateDirectory(azureDir);
-        
-        File.WriteAllText(Path.Combine(azureDir, "_patch.py"), 
+
+        File.WriteAllText(Path.Combine(azureDir, "_patch.py"),
             "__all__ = [\n    \"CustomClient\",\n]");
 
         var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
 
-        Assert.That(result, Is.True);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.EqualTo(tempDir.DirectoryPath));
     }
 
     [Test]
-    public void HasCustomizations_ReturnsFalse_WhenPatchFileHasEmptyAllExport()
+    public void HasCustomizations_ReturnsNull_WhenPatchFileHasEmptyAllExport()
     {
         using var tempDir = TempDirectory.Create("python-empty-patch-test");
         var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
         Directory.CreateDirectory(azureDir);
-        
+
         File.WriteAllText(Path.Combine(azureDir, "_patch.py"), "__all__: List[str] = []");
 
         var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
 
-        Assert.That(result, Is.False);
+        Assert.That(result, Is.Null);
     }
 
     [Test]
-    public void HasCustomizations_ReturnsFalse_WhenNoPatchFilesExist()
+    public void HasCustomizations_ReturnsNull_WhenNoPatchFilesExist()
     {
         using var tempDir = TempDirectory.Create("python-no-patch-test");
         var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
         Directory.CreateDirectory(azureDir);
-        
+
         File.WriteAllText(Path.Combine(azureDir, "client.py"), "# Client code");
 
         var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
 
-        Assert.That(result, Is.False);
+        Assert.That(result, Is.Null);
     }
 
     #endregion

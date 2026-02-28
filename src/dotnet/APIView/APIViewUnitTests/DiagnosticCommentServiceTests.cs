@@ -500,4 +500,57 @@ public class DiagnosticCommentServiceTests
     }
 
     #endregion
+
+    #region CorrelationId Tests
+
+    [Fact]
+    public async Task SyncDiagnosticCommentsAsync_NewComments_SetsCorrelationIdFromDiagnosticId()
+    {
+        DiagnosticCommentService service = CreateService(out Mock<ICosmosCommentsRepository> commentsRepoMock);
+
+        CodeDiagnostic[] diagnostics =
+        [
+            new("DIAG001", "target1", "First diagnostic", null),
+            new("DIAG002", "target2", "Second diagnostic", null)
+        ];
+
+        List<CommentItemModel> upsertedComments = [];
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c => upsertedComments.Add(c))
+            .Returns(Task.CompletedTask);
+
+        DiagnosticSyncResult result = await service.SyncDiagnosticCommentsAsync(
+            "review1", "rev1", null, diagnostics, new List<CommentItemModel>());
+
+        Assert.True(result.WasSynced);
+        Assert.Equal(2, upsertedComments.Count);
+        Assert.Equal("DIAG001", upsertedComments[0].CorrelationId);
+        Assert.Equal("DIAG002", upsertedComments[1].CorrelationId);
+    }
+
+    [Fact]
+    public async Task SyncDiagnosticCommentsAsync_SameDiagnosticIdAcrossRevisions_ProducesMatchingCorrelationIds()
+    {
+        DiagnosticCommentService service = CreateService(out Mock<ICosmosCommentsRepository> commentsRepoMock);
+
+        CodeDiagnostic[] diagnostics = [new("SHARED_DIAG", "target1", "Shared diagnostic", null)];
+
+        List<CommentItemModel> allUpserted = [];
+        commentsRepoMock.Setup(r => r.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+            .Callback<CommentItemModel>(c => allUpserted.Add(c))
+            .Returns(Task.CompletedTask);
+
+        // Sync for revision 1
+        await service.SyncDiagnosticCommentsAsync("review1", "rev1", null, diagnostics, new List<CommentItemModel>());
+
+        // Sync for revision 2
+        await service.SyncDiagnosticCommentsAsync("review1", "rev2", null, diagnostics, new List<CommentItemModel>());
+
+        Assert.Equal(2, allUpserted.Count);
+        Assert.Equal("SHARED_DIAG", allUpserted[0].CorrelationId);
+        Assert.Equal("SHARED_DIAG", allUpserted[1].CorrelationId);
+        Assert.Equal(allUpserted[0].CorrelationId, allUpserted[1].CorrelationId);
+    }
+
+    #endregion
 }

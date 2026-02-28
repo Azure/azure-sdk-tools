@@ -8,7 +8,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { TimeagoModule } from 'ngx-timeago';
 import { CommentSeverityComponent } from 'src/app/_components/shared/comment-severity/comment-severity.component';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
-import { CommentItemModel, CommentSeverity } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
@@ -84,6 +84,29 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
     { label: 'Resolve', value: 'resolve' as ConversationDisposition, icon: 'pi pi-check-circle' },
     { label: 'Delete', value: 'delete' as ConversationDisposition, icon: 'pi pi-trash' }
   ];
+
+  get filteredDispositionOptions() {
+    if (this.hasDiagnosticComments) {
+      return this.dispositionOptions.filter(o => o.value !== 'delete');
+    }
+    return this.dispositionOptions;
+  }
+
+  /** True when any active (selected or all) comment is a diagnostic */
+  get hasDiagnosticComments(): boolean {
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+    return commentsToCheck.some(c => c.commentSource === CommentSource.Diagnostic);
+  }
+
+  /** True when all active (selected or all) comments are diagnostics */
+  get allSelectedAreDiagnostic(): boolean {
+    const commentsToCheck = this.selectedCommentIds.size > 0
+      ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
+      : this.relatedComments;
+    return commentsToCheck.length > 0 && commentsToCheck.every(c => c.commentSource === CommentSource.Diagnostic);
+  }
 
   // Permission check: User can edit severity if they can edit ALL selected comments
   get canEditSeverity(): boolean {
@@ -241,6 +264,11 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   }
 
   toggleBatchVote(voteType: 'up' | 'down') {
+    // Diagnostic comments cannot be voted on
+    if (this.allSelectedAreDiagnostic) {
+      return;
+    }
+
     if (this.batchVote === voteType) {
       this.batchVote = null;
       this.showInlineFeedback = false;

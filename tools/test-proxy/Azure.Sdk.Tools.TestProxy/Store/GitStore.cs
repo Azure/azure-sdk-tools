@@ -533,7 +533,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 var gitToken = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
                 if (!string.IsNullOrWhiteSpace(gitToken))
                 {
-                    httpUrl = $"https://{gitToken}@github.com/{assetsRepo}";
+                    // GitHub App installation tokens (ghs_ prefix) require x-access-token as the username.
+                    // Classic PATs (ghp_ / github_pat_) work with the token alone as the username.
+                    if (gitToken.StartsWith("ghs_"))
+                    {
+                        httpUrl = $"https://x-access-token:{gitToken}@github.com/{assetsRepo}";
+                    }
+                    else
+                    {
+                        httpUrl = $"https://{gitToken}@github.com/{assetsRepo}";
+                    }
                 }
             }
 

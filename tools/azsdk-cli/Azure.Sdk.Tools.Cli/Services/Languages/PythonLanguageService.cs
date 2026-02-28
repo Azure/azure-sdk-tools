@@ -212,8 +212,11 @@ public sealed partial class PythonLanguageService : LanguageService
                 return (false, errorMessage, packageInfo, null);
             }
 
-            // Python build typically outputs to dist/
-            var distDir = outputPath ?? Path.Combine(fullPath, "dist");
+            // sdk_build outputs to {repoRoot}/.artifacts/{packageName} by default
+            var distDir = outputPath
+                ?? (packageInfo?.RepoRoot != null
+                    ? Path.Combine(packageInfo.RepoRoot, ".artifacts", packageName)
+                    : Path.Combine(fullPath, "dist"));
             string? artifactPath = null;
             if (Directory.Exists(distDir))
             {

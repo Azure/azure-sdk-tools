@@ -420,10 +420,11 @@ public class PackToolTests
             .Setup(x => x.Run(It.Is<PythonOptions>(p => p.Command == "sdk_build"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
 
-        // Create dist directory with wheel file
-        var distDir = Path.Combine(_tempDirectory.DirectoryPath, "dist");
-        Directory.CreateDirectory(distDir);
-        File.WriteAllText(Path.Combine(distDir, "my_package-1.0.0-py3-none-any.whl"), "fake wheel");
+        // sdk_build outputs to {repoRoot}/.artifacts/{packageName}
+        var packageName = Path.GetFileName(_tempDirectory.DirectoryPath.TrimEnd(Path.DirectorySeparatorChar));
+        var artifactsDir = Path.Combine(_tempDirectory.DirectoryPath, ".artifacts", packageName);
+        Directory.CreateDirectory(artifactsDir);
+        File.WriteAllText(Path.Combine(artifactsDir, "my_package-1.0.0-py3-none-any.whl"), "fake wheel");
 
         // Act
         var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);

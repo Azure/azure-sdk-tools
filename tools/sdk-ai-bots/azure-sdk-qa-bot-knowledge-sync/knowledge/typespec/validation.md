@@ -103,3 +103,14 @@ Automatically switching the label to `ARMChangesRequested` when checks fail is o
 - Use draft PRs to develop with failing checks
 - Only mark "ready for review" after all checks pass
 - Automatic label switching for failed checks is on the backlog
+
+## Handling Documentation-Only TypeSpec Changes That Affect Multiple API Versions
+
+**Scenario**
+
+Additional details are added to model descriptions (description) in TypeSpec. Since TypeSpec is the single source of truth for the specification, such changes cause all API version specifications generated from TypeSpec to change simultaneously. If only the latest version is updated while older versions are left unchanged, TypeSpec validation will fail.
+
+**Handling Principle**
+
+All affected historical API specification versions should be updated together, and the documentation differences regenerated from TypeSpec should be accepted.
+Documentation-only updates should not be flagged as breaking changes.

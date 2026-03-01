@@ -41,3 +41,25 @@ namespace ContosoClient {
 
 If `client.tsp` is a child namespace of the versioned service namespace, no explicit `@useDependency` is needed. Version-specific customizations use the same `@added`/`@removed` patterns as service code.
 
+## Model validation failures when adding new parent models in versioned TypeSpec APIs
+
+When migrating or evolving TypeSpec APIs, a common validation failure occurs after introducing new parent or related models in a newer API version while older versions already exist. Teams often assume that adding a new top-level model annotated with `@added` is sufficient, but validation still fails because referenced or parent models implicitly become visible to older versions. This behavior is not a tooling bug or PR‑specific issue; it reflects how TypeSpec versioning is designed.
+
+In TypeSpec, version decorators such as `@added` apply only to the model where they are explicitly declared. Versioning does not propagate transitively through model references, inheritance chains, or generic parameters. As a result, when a new version introduces a model that references additional parent models or generic arguments, those newly introduced models must also be explicitly versioned. Otherwise, the validator detects that older API versions now “see” models that were never marked as added, triggering migration or suitability errors.
+
+The **correct approach** is to treat versioning as a model-level concern rather than a graph-level concern. Any model that is newly introduced, whether it is a parent type, a generic argument, or a nested structure, must be annotated with @added in the same version. This makes version visibility explicit and avoids accidental exposure of new schemas to older API versions.
+
+## TypeSpec Does Not Support Version-Based Conditional Imports
+
+**Scenario**
+
+In `main.tsp`, multiple resource type .tsp files are imported. When introducing a new API version, one of the resource types should not be included in that new version. Is it supported to restrict importing TypeSpec files in main.tsp based on API versions?
+
+**Key Takeaway**
+
+TypeSpec does not support conditional imports by API version. 
+
+**Recommended Approach**
+
+Use the TypeSpec versioning library and mark models, resource types, operations, or properties that should no longer appear in a specific API version with the `@removed` decorator.
+Version-specific inclusion or exclusion is controlled via versioning decorators, not via import statements.

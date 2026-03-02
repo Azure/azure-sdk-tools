@@ -142,26 +142,63 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
-        // Step 1: Classify
-        var response = await Classify(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
+        // Get language info
+        var languageService = await GetLanguageServiceAsync(packagePath, ct);
 
-        if (response.Classifications == null || response.Classifications.Count == 0) // TODO - do we want to fail if classification returns nothing?
+
+        // Try tsp fixes
+
+        var buildSucceeded = false;
+        var buildError = string.Empty;
+        var tries = 0;
+        do
         {
+            var response = await Classify(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
+
+            if (response.Classifications == null || response.Classifications.Count == 0) // TODO - do we want to fail if classification returns nothing?
+            {
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = $"Feedback could not be classified.", // TODO - tune error message
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                    BuildResult = $"Feedback could not be classified."
+                };
+            }
+
+
+            var (succeeded, failureReason) = await ApplyTypeSpecFixesAndRegenerate(packagePath, tspProjectPath, response, ct);
+
+            if (!succeeded)
+            {
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = $"Failed to apply TypeSpec customizations and regenerate: {failureReason}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed,
+                    BuildResult = $"Failed to apply TypeSpec customizations and regenerate: {failureReason}",
+                };
+            }
+
+            var (sucess, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+
+            buildSucceeded = sucess;
+            buildError = error;
+            tries++;
+        } while (buildSucceeded == false && tries < 2);
+
+        if (buildSucceeded)
+        {
+            logger.LogInformation("Build passed - no repairs needed.");
             return new CustomizedCodeUpdateResponse
             {
-                Success = false,
-                Message = $"Feedback could not be classified.", // TODO - tune error message
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = $"Feedback could not be classified."
+                Success = true,
+                Message = "Build passed - no repairs needed."
             };
         }
 
-        // Step 2: Apply TypeSpec customizations
+        // Start customized code update process
 
-
-        // Step 4: Move into language specific part of the pipeline
-
-        var languageService = await GetLanguageServiceAsync(packagePath, ct);
         if (!languageService.IsCustomizedCodeUpdateSupported)
         {
             return new CustomizedCodeUpdateResponse
@@ -170,35 +207,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Message = "Language service does not support customized code updates.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
                 BuildResult = "No language service available for this package type."
-            };
-        }
-
-        // Step 5: Build to determine if we need to try typespec repairs again
-        logger.LogInformation("Running initial build...");
-        var (initialBuildSuccess, initialBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-
-        if (initialBuildSuccess)
-        {
-            logger.LogInformation("Build passed - no repairs needed.");
-            return new CustomizedCodeUpdateResponse
-            {
-                Success = true,
-                Message = "Build passed - no repairs needed."
-            };
-        }
-
-
-        // Step 5: Build to get current errors
-        logger.LogInformation("Running initial build...");
-        var (initialBuildSuccess, initialBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-
-        if (initialBuildSuccess)
-        {
-            logger.LogInformation("Build passed - no repairs needed.");
-            return new CustomizedCodeUpdateResponse
-            {
-                Success = true,
-                Message = "Build passed - no repairs needed."
             };
         }
 
@@ -212,7 +220,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Success = false,
                 Message = "Build failed but no customization files found to repair.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
-                BuildResult = initialBuildError
+                BuildResult = buildError
             };
         }
 
@@ -221,7 +229,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         var patches = await languageService.ApplyPatchesAsync(
             customizationRoot,
             packagePath,
-            initialBuildError!,
+            buildError!,
             ct);
 
         if (patches.Count == 0)

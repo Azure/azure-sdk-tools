@@ -199,7 +199,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
-        // Start customized code update process
+        // Step 2: Start customized code update process
 
         if (!languageService.IsCustomizedCodeUpdateSupported)
         {
@@ -212,7 +212,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
-        // Step 6: Check for customization files to repair
+        // Step 3: Check for customization files to repair
         var customizationRoot = languageService.HasCustomizations(packagePath, ct);
         if (customizationRoot == null)
         {
@@ -226,7 +226,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
-        // Step 7: Apply patches based on build errors
+        // Step 4: Apply patches based on build errors
         logger.LogInformation("Applying patches to fix build errors...");
         var patches = await languageService.ApplyPatchesAsync(
             customizationRoot,
@@ -242,11 +242,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Success = false,
                 Message = "No patches could be applied - automated repair found nothing to fix.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
-                BuildResult = initialBuildError
+                BuildResult = buildError
             };
         }
 
-        // Step 8: Regenerate if Java (only Java needs regen after patching customization files)
+        // Step 5: Regenerate if Java (only Java needs regen after patching customization files)
         if (languageService.Language == SdkLanguage.Java)
         {
             logger.LogInformation("Regenerating code after patches (Java)...");
@@ -265,7 +265,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
         }
 
-        // Step 5: Final build to validate
+        // Step 6: Final build to validate
         logger.LogInformation("Running final build to validate...");
         var (finalBuildSuccess, finalBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
 
@@ -356,7 +356,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         {
             if (feedback.Classification == "TSP_APPLICABLE")
             {
-                if (feedback.Text != null)
+                if (feedback.Text == null)
                 {
                     logger.LogWarning("Received TSP_APPLICABLE classification but feedback text was null. Skipping this item.");
                     continue;
@@ -387,7 +387,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Resolve the spec repo root from the TypeSpec project path.
         // tsp-client's --local-spec-repo expects the repo root, not the project subdirectory.
         var specRepoRoot = await gitHelper.DiscoverRepoRootAsync(tspProjectPath, ct);
-        logger.LogInformation("Resolved spec repo root: {RepoRoot} from project path: {ProjectPath}", specRepoRoot, typespecProjectPath);
+        logger.LogInformation("Resolved spec repo root: {RepoRoot} from project path: {ProjectPath}", specRepoRoot, tspProjectPath);
 
         // --- Regenerate SDK using local spec repo ---
         var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoRoot, isCli: false, ct: ct);

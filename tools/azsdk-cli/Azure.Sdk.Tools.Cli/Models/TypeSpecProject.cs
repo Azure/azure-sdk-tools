@@ -1,5 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+
 namespace Azure.Sdk.Tools.Cli.Models
 {
     public class TypeSpecProject
@@ -12,6 +15,8 @@ namespace Azure.Sdk.Tools.Cli.Models
 
         public bool IsDataPlane { get;}
         public string SdkServicePath { get; set; }
+
+        public List<PackageInfo> Packages { get; set; } = [];
 
         public SdkType SdkType {
             get

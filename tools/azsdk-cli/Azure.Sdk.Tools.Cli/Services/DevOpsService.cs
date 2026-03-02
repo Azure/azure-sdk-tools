@@ -102,6 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages);
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status);
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
+        public Task<bool> UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language);
@@ -111,6 +112,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync();
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label);
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath);
+        public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool isTestReleasePlan = false);
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
     }
 
@@ -1134,6 +1136,42 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
+        public async Task<bool> UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion)
+        {
+            try
+            {
+                if (releasePlanWorkItemId == 0 || string.IsNullOrEmpty(apiVersion))
+                {
+                    throw new ArgumentException("Please provide the work item ID and an API version to update.");
+                }
+
+                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlanWorkItemId);
+                int apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
+                if (apiSpecWorkItemId == 0)
+                {
+                    throw new Exception($"API spec work item not found for release plan work item {releasePlanWorkItemId}.");
+                }
+
+                var jsonDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument()
+                {
+                    new JsonPatchOperation
+                    {
+                        Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                        Path = "/fields/Custom.APISpecversion",
+                        Value = apiVersion
+                    }
+                };
+
+                await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonDocument, apiSpecWorkItemId);
+                logger.LogInformation("Updated API spec version to {apiVersion} for release plan work item {releasePlanWorkItemId}", apiVersion, releasePlanWorkItemId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to update API spec version for release plan [{releasePlanWorkItemId}]. Error: {ex.Message}");
+            }
+        }
+
         /// <summary>
         /// Link namespace approval issue to release plan work item.
         /// </summary>
@@ -1595,6 +1633,49 @@ namespace Azure.Sdk.Tools.Cli.Services
         private static string GetWorkItemHtmlUrl(int workItemId)
         {
             return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}/_workitems/edit/{workItemId}";
+        }
+
+        public async Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool isTestReleasePlan = false)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(typeSpecProjectPath))
+                {
+                    throw new ArgumentException("TypeSpec project path cannot be null or empty.", nameof(typeSpecProjectPath));
+                }
+
+                logger.LogInformation("Searching for active release plan with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+
+                var escapedPath = typeSpecProjectPath?.Replace("'", "''");
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+                query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
+                query += " AND [System.WorkItemType] = 'Release Plan'";
+                query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
+                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+                query += "  ORDER BY [System.Id] DESC";
+
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation("No active release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                    return null;
+                }
+
+                if (releasePlanWorkItems.Count > 1)
+                {
+                    logger.LogWarning(
+                        "Multiple active release plan work items ({count}) found for TypeSpec project path: {typeSpecProjectPath}. Using the first one.",
+                        releasePlanWorkItems.Count,
+                        typeSpecProjectPath);
+                }
+
+                return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get release plan for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                throw new Exception($"Failed to get release plan for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
+            }
         }
 
         public async Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath)

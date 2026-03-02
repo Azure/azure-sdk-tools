@@ -57,6 +57,13 @@ def modify_permissions():
         help="The principal ID (user or service principal) to grant/revoke permissions for.",
     )
     parser.add_argument("--revoke", action="store_true", help="Revoke permissions instead of granting them.")
+    parser.add_argument(
+        "--environments",
+        nargs="+",
+        choices=["production", "staging", "uxtest"],
+        default=None,
+        help="Space-separated list of environments to process (production, staging, uxtest). Defaults to all.",
+    )
     args = parser.parse_args()
 
     user_principal_id = args.principal_id
@@ -180,9 +187,20 @@ def modify_permissions():
         "uxtest": {"resource_group": "APIView-UI", "cosmos_account": "apiviewuitest"},
     }
 
-    for env_name, data in environments.items():
+    selected = {k: v for k, v in environments.items() if k in args.environments} if args.environments else environments
+
+    failures = []
+    for env_name, data in selected.items():
         print(f"\n=== Processing {env_name} ===")
-        process_permissions(data["resource_group"], data["cosmos_account"])
+        try:
+            process_permissions(data["resource_group"], data["cosmos_account"])
+        except Exception as e:
+            print(f"ERROR: Failed to process {env_name}: {e}")
+            failures.append(env_name)
+
+    if failures:
+        print(f"\nFailed environments: {', '.join(failures)}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

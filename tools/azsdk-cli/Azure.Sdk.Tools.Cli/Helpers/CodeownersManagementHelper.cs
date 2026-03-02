@@ -5,13 +5,15 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public class CodeownersManagementHelper(
-    IDevOpsService devOpsService
+    IDevOpsService devOpsService,
+    ITeamUserCache teamUserCache
 ) : ICodeownersManagementHelper
 {
     public async Task<CodeownersViewResult> GetViewByUser(string alias, string? repo)
@@ -273,6 +275,7 @@ public class CodeownersManagementHelper(
                     lo.Labels.Add(label);
                 }
             }
+            ExpandTeamOwners(lo.Owners);
         }
     }
 
@@ -302,6 +305,26 @@ public class CodeownersManagementHelper(
                 else if (labels.TryGetValue(id, out var label))
                 {
                     package.Labels.Add(label);
+                }
+            }
+            ExpandTeamOwners(package.Owners);
+        }
+    }
+
+    /// <summary>
+    /// For each owner that is a GitHub team, expands it to individual members
+    /// using the CodeownersUtils TeamUserCache.
+    /// </summary>
+    private void ExpandTeamOwners(List<OwnerWorkItem> owners)
+    {
+        foreach (var owner in owners)
+        {
+            if (owner.IsGitHubTeam)
+            {
+                var members = teamUserCache.GetUsersForTeam(owner.GitHubAlias);
+                if (members.Count > 0)
+                {
+                    owner.ExpandedMembers = members;
                 }
             }
         }

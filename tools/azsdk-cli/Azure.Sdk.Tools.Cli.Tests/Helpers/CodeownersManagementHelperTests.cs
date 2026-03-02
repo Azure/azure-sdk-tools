@@ -4,6 +4,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Moq;
 
@@ -13,14 +14,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 public class CodeownersManagementHelperTests
 {
     private Mock<IDevOpsService> _mockDevOps;
+    private Mock<ITeamUserCache> _mockTeamUserCache;
     private CodeownersManagementHelper _helper;
 
     [SetUp]
     public void Setup()
     {
         _mockDevOps = new Mock<IDevOpsService>();
+        _mockTeamUserCache = new Mock<ITeamUserCache>();
+        _mockTeamUserCache.Setup(c => c.GetUsersForTeam(It.IsAny<string>())).Returns(new List<string>());
         _helper = new CodeownersManagementHelper(
-            _mockDevOps.Object
+            _mockDevOps.Object,
+            _mockTeamUserCache.Object
         );
     }
 
@@ -568,6 +573,74 @@ public class CodeownersManagementHelperTests
         Assert.That(result.Packages![0].WorkItemId, Is.EqualTo(pkgV2Id));
     }
 
+    [Test]
+    public async Task GetViewByPackage_WithRepoFilter_FiltersByRepo()
+    {
+        var netPkgId = 1;
+        var pyPkgId = 2;
+        var owner1Id = 10;
+        var owner2Id = 11;
+
+        // This name collision between .NET and Python package identities is unlikely in practice,
+        // but is useful here to validate repo/language filtering behavior.
+        var netPkgWi = MakePackageWorkItem(netPkgId, "Azure.Storage.Blobs", language: ".NET", relatedIds: [owner1Id, owner2Id]);
+        var pyPkgWi = MakePackageWorkItem(pyPkgId, "Azure.Storage.Blobs", language: "Python", relatedIds: [owner1Id]);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'")
+                    && q.Contains("Custom.Package")
+                    && q.Contains("Azure.Storage.Blobs")
+                    && q.Contains("Custom.Language")
+                    && q.Contains(".NET")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { netPkgWi });
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'")
+                    && q.Contains("Custom.Package")
+                    && q.Contains("Azure.Storage.Blobs")
+                    && !q.Contains("Custom.Language")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
+            .ThrowsAsync(new InvalidOperationException("Unfiltered package query should not be called when repo filter is provided."));
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && ids.Contains(owner2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.All))
+            .ReturnsAsync(new List<WorkItem>
+            {
+                MakeOwnerWorkItem(owner1Id, "owner1"),
+                MakeOwnerWorkItem(owner2Id, "owner2")
+            });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && ids.Contains(owner2Id)),
+                It.IsAny<int>(),
+                WorkItemExpand.Relations))
+            .ReturnsAsync(new List<WorkItem>());
+
+        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs", "Azure/azure-sdk-for-net");
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.Packages, Has.Count.EqualTo(1));
+        Assert.That(result.Packages![0].WorkItemId, Is.EqualTo(netPkgId));
+        AssertPackage(result.Packages![0], "Azure.Storage.Blobs", ["owner1", "owner2"]);
+
+        _mockDevOps.Verify(d => d.FetchWorkItemsPagedAsync(
+            It.Is<string>(q => q.Contains("'Package'")
+                && q.Contains("Custom.Package")
+                && q.Contains("Azure.Storage.Blobs")
+                && q.Contains("Custom.Language")
+                && q.Contains(".NET")),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<WorkItemExpand>()), Times.Once);
+    }
+
     // ========================
     // Repo filter tests for label owners
     // ========================
@@ -602,5 +675,90 @@ public class CodeownersManagementHelperTests
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
         Assert.That(result.PathBasedLabelOwners![0].Repository, Is.EqualTo("Azure/azure-sdk-for-net"));
+    }
+
+    // ========================
+    // Team expansion tests
+    // ========================
+
+    [Test]
+    public async Task GetViewByPackage_ExpandsTeamOwners()
+    {
+        var pkgId = 1;
+        var teamOwnerId = 10;
+        var labelId = 11;
+
+        // Populate the team user cache with a team
+        _mockTeamUserCache.Setup(c => c.GetUsersForTeam("azure/azure-sdk-team")).Returns(new List<string> { "owner1", "owner2", "owner3" });
+
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs", relatedIds: [teamOwnerId, labelId]);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        // Hydration: owner is a team
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(teamOwnerId) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All))
+            .ReturnsAsync(new List<WorkItem>
+            {
+                MakeOwnerWorkItem(teamOwnerId, "azure/azure-sdk-team"),
+                MakeLabelWorkItem(labelId, "Storage")
+            });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(teamOwnerId) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.Relations))
+            .ReturnsAsync(new List<WorkItem>());
+
+        var result = await _helper.GetViewByPackage("Azure.Storage.Blobs");
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.Packages, Has.Count.EqualTo(1));
+
+        var teamOwner = result.Packages![0].Owners.First(o => o.GitHubAlias == "azure/azure-sdk-team");
+        Assert.That(teamOwner.ExpandedMembers, Is.EquivalentTo(new[] { "owner1", "owner2", "owner3" }));
+    }
+
+    [Test]
+    public async Task GetViewByPath_ExpandsTeamOwnersOnLabelOwners()
+    {
+        var loId = 1;
+        var teamOwnerId = 10;
+        var labelId = 11;
+
+        _mockTeamUserCache.Setup(c => c.GetUsersForTeam("azure/sdk-storage-team")).Returns(new List<string> { "owner4", "owner5" });
+
+        var loWi = MakeLabelOwnerWorkItem(loId, "Service Owner", "Azure/azure-sdk-for-net", "/sdk/storage", teamOwnerId, labelId);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("/sdk/storage")),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                WorkItemExpand.Relations))
+            .ReturnsAsync(new List<WorkItem> { loWi });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(teamOwnerId) && ids.Contains(labelId)),
+                It.IsAny<int>(),
+                WorkItemExpand.All))
+            .ReturnsAsync(new List<WorkItem>
+            {
+                MakeOwnerWorkItem(teamOwnerId, "azure/sdk-storage-team"),
+                MakeLabelWorkItem(labelId, "Storage")
+            });
+
+        var result = await _helper.GetViewByPath("/sdk/storage", null);
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
+        var teamOwner = result.PathBasedLabelOwners![0].Owners.First(o => o.GitHubAlias == "azure/sdk-storage-team");
+        Assert.That(teamOwner.ExpandedMembers, Is.EquivalentTo(new[] { "owner4", "owner5" }));
     }
 }

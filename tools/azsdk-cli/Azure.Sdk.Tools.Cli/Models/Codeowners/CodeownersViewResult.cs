@@ -66,7 +66,7 @@ public class CodeownersViewResult : CommandResponse
                 sb.AppendLine($"  Package: {pkg.PackageName} (Language: {pkg.Language}, Type: {pkg.PackageType}) [{pkg.WorkItemId}]");
                 if (pkg.Owners.Count > 0)
                 {
-                    sb.AppendLine($"    Source Owners: {string.Join(", ", pkg.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase))}");
+                    sb.AppendLine($"    Source Owners: {FormatOwnersList(pkg.Owners)}");
                 }
                 if (pkg.Labels.Count > 0)
                 {
@@ -93,7 +93,7 @@ public class CodeownersViewResult : CommandResponse
                         sb.AppendLine($"      Type: {lo.LabelType} [{lo.WorkItemId}]");
                         if (lo.Owners.Count > 0)
                         {
-                            sb.AppendLine($"        Owners: {string.Join(", ", lo.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase))}");
+                            sb.AppendLine($"        Owners: {FormatOwnersList(lo.Owners)}");
                         }
                         if (lo.Labels.Count > 0)
                         {
@@ -118,12 +118,31 @@ public class CodeownersViewResult : CommandResponse
                     sb.AppendLine($"      Type: {lo.LabelType}");
                     if (lo.Owners.Count > 0)
                     {
-                        sb.AppendLine($"      Owners: {string.Join(", ", lo.Owners.Select(o => o.GitHubAlias).OrderBy(a => a, StringComparer.OrdinalIgnoreCase))}");
+                        sb.AppendLine($"      Owners: {FormatOwnersList(lo.Owners)}");
                     }
                 }
             }
         }
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Formats a list of owners, showing expanded team members when available.
+    /// Teams are displayed as "azure/team-name (member1, member2, member3)".
+    /// </summary>
+    private static string FormatOwnersList(List<OwnerWorkItem> owners)
+    {
+        return string.Join(", ", owners.Select(FormatOwnerAlias).OrderBy(s => s, StringComparer.OrdinalIgnoreCase));
+    }
+
+    private static string FormatOwnerAlias(OwnerWorkItem owner)
+    {
+        if (owner.ExpandedMembers.Count > 0)
+        {
+            var members = string.Join(", ", owner.ExpandedMembers.OrderBy(m => m, StringComparer.OrdinalIgnoreCase));
+            return $"{owner.GitHubAlias} ({members})";
+        }
+        return owner.GitHubAlias;
     }
 }

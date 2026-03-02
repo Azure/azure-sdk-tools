@@ -40,6 +40,10 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Caches
             }
         }
 
+        public TeamUserCache()
+        {
+        }
+
         public TeamUserCache(string teamUserStorageURI)
         {
             if (!string.IsNullOrWhiteSpace(teamUserStorageURI))

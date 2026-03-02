@@ -18,7 +18,7 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
-
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -62,7 +62,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
-            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>();
+            services.AddSingleton<ITeamUserCache, TeamUserCache>();
+            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>(); 
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
             if (outputMode == OutputHelper.OutputModes.Mcp)

@@ -21,15 +21,6 @@ on:
         required: false
         type: string
         default: "claude-opus-4.5"
-      cleanup:
-        description: "Cleanup policy for workspaces"
-        required: false
-        type: choice
-        options:
-          - OnSuccess
-          - Always
-          - Never
-        default: "OnSuccess"
 
 jobs:
   run-benchmarks:
@@ -50,4 +41,3 @@ jobs:
           scenario: ${{ inputs.scenario }}
           tags: ${{ inputs.tags }}
           model: ${{ inputs.model }}
-          cleanup: ${{ inputs.cleanup }}

@@ -146,7 +146,7 @@ public class Workspace : IDisposable
     }
 
     /// <summary>
-    /// Writes the benchmark execution log to the workspace root directory.
+    /// Writes the benchmark execution log to the workspace root directory, persists if in CI.
     /// The log includes messages, tool calls, validation results, and other execution details.
     /// </summary>
     /// <param name="scenarioName">The name of the scenario that was executed.</param>
@@ -187,8 +187,19 @@ public class Workspace : IDisposable
         };
 
         var json = JsonSerializer.Serialize(log, options);
+
+        // Always write to workspace for local inspection
         var logPath = Path.Combine(RootPath, "benchmark-log.json");
         await File.WriteAllTextAsync(logPath, json);
+
+        // In CI, also write to a persistent directory that survives workspace cleanup
+        if (Environment.GetEnvironmentVariable("CI") == "true")
+        {
+            var logsDir = Path.Combine(Path.GetTempPath(), "azsdk-benchmarks", "logs");
+            Directory.CreateDirectory(logsDir);
+            var persistentLogPath = Path.Combine(logsDir, $"{scenarioName}-benchmark-log.json");
+            await File.WriteAllTextAsync(persistentLogPath, json);
+        }
     }
 
     /// <summary>

@@ -17,7 +17,7 @@ import {
     getUsedVersions,
     isBetaVersion,
     isStableSDKReleaseType,
-    isValidComparableVersion,
+    shouldTreatAsFirstRelease,
 } from "../../utils/version.js";
 import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version.js";
@@ -65,18 +65,24 @@ export async function generateChangelogAndBumpVersion(
         return;
     }
     const skdReleaseDate = options.skdReleaseDate ?? getCurrentDate();
-    // Treat as first release if: no npm result, no stable version, version is not comparable (e.g., alpha), or beta to stable migration
-    const isFirstRelease = !npmViewResult || !stableVersion || !isValidComparableVersion(stableVersion) || (isBetaVersion(stableVersion) && isStableRelease);
+    const isFirstRelease = shouldTreatAsFirstRelease(npmViewResult, stableVersion, isStableRelease);
     if (isFirstRelease) {
-        const releaseType = !npmViewResult ? 'initial' : (!stableVersion || !isValidComparableVersion(stableVersion)) ? 'first comparable' : 'stable';
+        const isComparableStableVersion = !!stableVersion && (!stableVersion.includes('-') || stableVersion.includes('beta'));
+        const releaseType = !npmViewResult ? 'initial' : !isComparableStableVersion ? 'first comparable' : 'stable';
         logger.info(`Package ${packageName} is first ${releaseType} release, start to generate changelogs and set version for first ${releaseType} release.`);
-        if (!npmViewResult || !stableVersion || !isValidComparableVersion(stableVersion)) {
+        if (!npmViewResult || !isComparableStableVersion) {
             await makeChangesForFirstRelease(packageFolderPath, skdReleaseDate, false, updateMode);
         } else {
             await makeChangesForFirstRelease(packageFolderPath, skdReleaseDate, isStableRelease, updateMode);
         }
         logger.info(`Generated changelogs and setting version for first ${releaseType} release successfully`);
     } else {
+        // shouldTreatAsFirstRelease returns true when npmViewResult is undefined,
+        // so reaching here guarantees npmViewResult is defined.
+        if (!npmViewResult) {
+            logger.error(`Unexpected state: npmViewResult is undefined but isFirstRelease is false`);
+            process.exit(1);
+        }
         if (!stableVersion) {
             logger.error(`Invalid latest version ${stableVersion}`);
             process.exit(1);

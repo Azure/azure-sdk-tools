@@ -94,14 +94,28 @@ export function isBetaVersion(stableVersion: string) {
     return stableVersion.includes('beta');
 }
 
-export function isValidComparableVersion(version: string) {
-    // Only accept pure stable versions (no prerelease identifier) or beta versions
-    // Reject alpha, rc, or other prerelease versions
-    const hasPrerelease = version.includes('-');
-    if (!hasPrerelease) {
-        return true; // Pure stable version like "1.0.0"
-    }
-    return version.includes('beta'); // Beta version like "1.0.0-beta.1"
+export function shouldTreatAsFirstRelease(
+    npmViewResult: object | undefined,
+    stableVersion: string | undefined,
+    isStableRelease: boolean
+): boolean {
+    // Brand-new package: no npm registry entry at all → initial first release
+    if (!npmViewResult) return true;
+
+    // Package exists on npm but has never had a stable/beta version (only e.g. next tags)
+    if (!stableVersion) return true;
+
+    // The published version uses a non-standard prerelease identifier (e.g. alpha, rc).
+    // Only pure stable ("1.0.0") and beta ("1.0.0-beta.1") can be diffed for changelog generation.
+    // Covers scenarios: alpha → beta, alpha → stable.
+    const isComparable = !stableVersion.includes('-') || stableVersion.includes('beta');
+    if (!isComparable) return true;
+
+    // The latest published version is a beta and the current release targets stable →
+    // package has never GA'd, so treat this as the first true stable release.
+    if (isBetaVersion(stableVersion) && isStableRelease) return true;
+
+    return false;
 }
 
 export function bumpMajorVersion(version: string, usedVersions: string[] | undefined) {

@@ -7,8 +7,14 @@ import { logger } from '../logging/logger.js';
 
 const mentionLinkToIgnore = new URL('http://schema.skype.com/Mention');
 
+const caseInsensitiveHosts = ['github.com', 'dev.azure.com'];
+
 function normalizeUrl(link: string) {
-  return new URL(link).href;
+  const url = new URL(link);
+  if (caseInsensitiveHosts.includes(url.hostname)) {
+    url.pathname = url.pathname.toLowerCase();
+  }
+  return url.href;
 }
 
 export function getUniqueLinks(links: string[]): string[] {

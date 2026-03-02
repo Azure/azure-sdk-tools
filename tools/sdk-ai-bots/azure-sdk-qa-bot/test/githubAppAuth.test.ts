@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GitHubAppTokenProvider, GitHubAppAuthConfig } from '../src/github/GitHubAppTokenProvider.js';
+import { GitHubAppTokenProvider } from '../src/github/GitHubAppTokenProvider.js';
 import { TokenCredential, AccessToken } from '@azure/identity';
 
 // Mock @azure/keyvault-keys
@@ -12,6 +12,11 @@ vi.mock('@azure/keyvault-keys', () => {
     })),
   };
 });
+
+// Mock config to avoid env var validation at import time
+vi.mock('../src/config/config.js', () => ({
+  default: {},
+}));
 
 // Mock global fetch (used by Octokit internally)
 const mockFetch = vi.fn();
@@ -35,12 +40,14 @@ const mockCredential: TokenCredential = {
   getToken: vi.fn().mockResolvedValue({ token: 'mock-azure-token', expiresOnTimestamp: Date.now() + 3600000 } as AccessToken),
 };
 
-const testConfig: GitHubAppAuthConfig = {
-  keyVaultName: 'test-vault',
-  keyName: 'test-key',
-  appId: '12345',
-  installOwner: 'TestOrg',
-};
+const testKeyVaultName = 'test-vault';
+const testKeyName = 'test-key';
+const testAppId = '12345';
+const testInstallOwner = 'TestOrg';
+
+function createProvider() {
+  return new GitHubAppTokenProvider(testKeyVaultName, testKeyName, testAppId, testInstallOwner, mockCredential);
+}
 
 describe('GitHubAppTokenProvider', () => {
   beforeEach(() => {
@@ -62,7 +69,7 @@ describe('GitHubAppTokenProvider', () => {
         })
       );
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
     const token = await provider.getToken();
 
     expect(token).toBe('ghs_installation_token_123');
@@ -81,7 +88,7 @@ describe('GitHubAppTokenProvider', () => {
         })
       );
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
 
     const token1 = await provider.getToken();
     const token2 = await provider.getToken();
@@ -112,7 +119,7 @@ describe('GitHubAppTokenProvider', () => {
         })
       );
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
 
     const token1 = await provider.getToken();
     const token2 = await provider.getToken();
@@ -125,7 +132,7 @@ describe('GitHubAppTokenProvider', () => {
   it('should return undefined when installation list fails (401)', async () => {
     mockFetch.mockResolvedValueOnce(mockResponse(401, { message: 'Unauthorized' }));
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
     const token = await provider.getToken();
 
     expect(token).toBeUndefined();
@@ -136,7 +143,7 @@ describe('GitHubAppTokenProvider', () => {
       mockResponse(200, [{ id: 100, account: { login: 'WrongOrg' } }])
     );
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
     const token = await provider.getToken();
 
     expect(token).toBeUndefined();
@@ -154,7 +161,7 @@ describe('GitHubAppTokenProvider', () => {
         })
       );
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
     const token = await provider.getToken();
 
     expect(token).toBe('ghs_case_insensitive');
@@ -167,7 +174,7 @@ describe('GitHubAppTokenProvider', () => {
       )
       .mockResolvedValueOnce(mockResponse(500, { message: 'Internal Server Error' }));
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
     const token = await provider.getToken();
 
     expect(token).toBeUndefined();
@@ -179,7 +186,7 @@ describe('GitHubAppTokenProvider', () => {
       sign: vi.fn().mockRejectedValue(new Error('Access denied: missing sign permission')),
     }) as any);
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
     const token = await provider.getToken();
 
     expect(token).toBeUndefined();
@@ -189,7 +196,7 @@ describe('GitHubAppTokenProvider', () => {
   it('should return undefined on network failure', async () => {
     mockFetch.mockRejectedValueOnce(new Error('ECONNREFUSED'));
 
-    const provider = new GitHubAppTokenProvider(testConfig, mockCredential);
+    const provider = createProvider();
     const token = await provider.getToken();
 
     expect(token).toBeUndefined();

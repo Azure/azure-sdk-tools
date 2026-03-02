@@ -14,7 +14,6 @@ import { parseConversationId } from '../common/shared.js';
 import { ManagedIdentityCredential, TokenCredential } from '@azure/identity';
 import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
 import { sendActivityWithRetry } from '../activityUtils.js';
-import { GitHubAppTokenProvider } from '../github/GitHubAppTokenProvider.js';
 
 // Initialize all config managers via facade
 await ConfigFacade.initialize();
@@ -26,18 +25,8 @@ await conversationHandler.initialize();
 
 let credential: TokenCredential = new ManagedIdentityCredential(config.userManagedIdentityClientID);
 
-const githubAppTokenProvider = new GitHubAppTokenProvider(
-  {
-    keyVaultName: config.githubAppKeyVaultName,
-    keyName: config.githubAppKeyName,
-    appId: config.githubAppId,
-    installOwner: config.githubAppInstallOwner,
-  },
-  credential
-);
-
 // Create AI components
-const model = new RAGModel(conversationHandler, channelConfigManager, tenantConfigManager, credential, githubAppTokenProvider);
+const model = new RAGModel(conversationHandler, channelConfigManager, tenantConfigManager, credential);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

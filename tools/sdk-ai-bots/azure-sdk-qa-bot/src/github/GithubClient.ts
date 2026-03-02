@@ -1,7 +1,7 @@
 import { components } from '@octokit/openapi-types';
 import { logger } from '../logging/logger.js';
-import { GitHubAppTokenProvider } from '../github/GitHubAppTokenProvider.js';
-import { OctokitWithRetry } from '../github/octokit.js';
+import { GitHubAppTokenProvider } from './GitHubAppTokenProvider.js';
+import { OctokitWithRetry } from './octokit.js';
 
 export interface PRDetails {
   comments: {
@@ -42,8 +42,8 @@ export class GithubClient {
   private octokit: InstanceType<typeof OctokitWithRetry>;
   private lastToken?: string;
 
-  constructor(tokenProvider?: GitHubAppTokenProvider) {
-    this.tokenProvider = tokenProvider;
+  constructor() {
+    this.tokenProvider = GitHubAppTokenProvider.create();
     this.octokit = new OctokitWithRetry({ retry: { retries: 1 } });
   }
 
@@ -51,7 +51,7 @@ export class GithubClient {
   private async refreshOctokit(): Promise<void> {
     if (this.tokenProvider) {
       const token = await this.tokenProvider.getToken();
-      if (token !== this.lastToken) {
+      if (token && token !== this.lastToken) {
         this.lastToken = token;
         this.octokit = new OctokitWithRetry({ auth: token, retry: { retries: 1 } });
       }

@@ -1,14 +1,9 @@
 import { RemoteContent } from './RemoteContent.js';
-import { GithubClient, PRDetails, IssueDetails } from './GithubClient.js';
+import { GithubClient, PRDetails, IssueDetails } from '../github/GithubClient.js';
 import { URLNotSupportedError } from '../error/inputErrors.js';
-import { GitHubAppTokenProvider } from '../github/GitHubAppTokenProvider.js';
 
 export class LinkContentExtractor {
-  private readonly githubClient: GithubClient;
-
-  constructor(tokenProvider?: GitHubAppTokenProvider) {
-    this.githubClient = new GithubClient(tokenProvider);
-  }
+  private readonly githubClient = new GithubClient();
 
   public async extract(urls: URL[], meta: object): Promise<RemoteContent[]> {
     const contents: RemoteContent[] = [];

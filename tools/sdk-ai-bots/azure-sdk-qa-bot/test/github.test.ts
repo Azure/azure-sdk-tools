@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Octokit } from '@octokit/rest';
-import { GithubClient } from '../src/input/GithubClient.js';
+import { GithubClient } from '../src/github/GithubClient.js';
 
 vi.mock('@octokit/plugin-retry', () => ({ retry: vi.fn() }));
+vi.mock('../src/github/GitHubAppTokenProvider.js', () => ({
+  GitHubAppTokenProvider: { create: vi.fn().mockReturnValue(undefined) },
+}));
 
 // Mock the Octokit client
 vi.mock('@octokit/rest', () => {

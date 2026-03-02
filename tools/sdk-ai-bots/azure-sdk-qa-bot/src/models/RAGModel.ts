@@ -13,11 +13,10 @@ import { ConversationHandler, ConversationMessage, Prompt } from '../input/Conve
 import { parseConversationId } from '../common/shared.js';
 import { AccessToken, ManagedIdentityCredential, TokenCredential } from '@azure/identity';
 import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
-import { GitHubAppTokenProvider } from '../github/GitHubAppTokenProvider.js';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
-  private readonly promptGenerator: PromptGenerator;
+  private readonly promptGenerator = new PromptGenerator();
   private readonly channelConfigManager: ChannelConfigManager;
   private readonly tenantConfigManager: TenantConfigManager;
   private readonly credential: TokenCredential;
@@ -27,10 +26,8 @@ export class RAGModel implements PromptCompletionModel {
     channelConfigManager: ChannelConfigManager,
     tenantConfigManager: TenantConfigManager,
     credential: TokenCredential,
-    tokenProvider?: GitHubAppTokenProvider
   ) {
     this.conversationHandler = conversationHandler;
-    this.promptGenerator = new PromptGenerator(tokenProvider);
     this.channelConfigManager = channelConfigManager;
     this.tenantConfigManager = tenantConfigManager;
     this.credential = credential;

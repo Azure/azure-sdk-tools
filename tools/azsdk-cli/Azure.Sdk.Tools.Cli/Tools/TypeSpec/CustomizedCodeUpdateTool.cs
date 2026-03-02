@@ -142,13 +142,39 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Step 1: Classify
         var response = await Classify(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
 
+        if (response.Classifications == null || response.Classifications.Count == 0)
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = $"Package path does not exist: {packagePath}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = $"Package path does not exist: {packagePath}"
+            };
+        }
+
         // Step 2: Apply TypeSpec customizations
 
         foreach (var feedback in response.Classifications)
         {
             if (feedback.Classification == "TSP_APPLICABLE")
             {
-                // call tsp fixer
+                var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(
+                tspProjectPath, feedback.Text, ct: ct);
+
+                if (!tspCustomizationResult.Success)
+                {
+                    logger.LogWarning("TypeSpec customization failed: {Reason}", tspCustomizationResult.FailureReason);
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Message = $"TypeSpec customization failed: {tspCustomizationResult.FailureReason}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed,
+                        ResponseError = tspCustomizationResult.FailureReason
+                    };
+                }
+
+                logger.LogInformation("TypeSpec customization succeeded. Changes: {Changes}", string.Join("; ", tspCustomizationResult.ChangesSummary));
+                var typeSpecChanges = tspCustomizationResult.ChangesSummary.ToList();
             }
             else if (feedback.Classification == "SUCCESS")
             {
@@ -161,6 +187,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         // Step 3: Regenerate
+
+        // Resolve the spec repo root from the TypeSpec project path.
+        // tsp-client's --local-spec-repo expects the repo root, not the project subdirectory.
+        var specRepoRoot = await gitHelper.DiscoverRepoRootAsync(tspProjectPath, ct);
+        logger.LogInformation("Resolved spec repo root: {RepoRoot} from project path: {ProjectPath}", specRepoRoot, typespecProjectPath);
+
+        // --- Regenerate SDK using local spec repo ---
+        var regenResult = await tspClientHelper.UpdateGenerationAsync(
+            packagePath, localSpecRepoPath: specRepoRoot, isCli: false, ct: ct);
 
         // Step 4: Move into language specific part of the pipeline
 

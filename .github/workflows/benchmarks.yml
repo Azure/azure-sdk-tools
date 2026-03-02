@@ -1,0 +1,83 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Scenario name to run (ignored when running all)"
+        required: false
+        type: string
+      all:
+        description: "Run all scenarios"
+        required: false
+        type: boolean
+        default: true
+      model:
+        description: "Model to use for agent execution"
+        required: false
+        type: string
+      tags:
+        description: "Filter scenarios by tags (comma-separated)"
+        required: false
+        type: string
+      cleanup:
+        description: "Cleanup policy for workspaces"
+        required: false
+        type: choice
+        options:
+          - on-success
+          - always
+          - never
+        default: "on-success"
+
+jobs:
+  run-benchmarks:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build benchmarks
+        run: dotnet build --configuration Release
+        working-directory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks
+
+      - name: Run benchmarks
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        working-directory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks
+        shell: pwsh
+        run: |
+          [System.Collections.ArrayList]$runArgs = @("run")
+
+          if ('${{ inputs.all }}' -eq 'true') {
+            $runArgs.Add('--all') | Out-Null
+          } elseif ('${{ inputs.scenario }}') {
+            $runArgs.Add('${{ inputs.scenario }}') | Out-Null
+          } else {
+            $runArgs.Add('--all') | Out-Null
+          }
+
+          if ('${{ inputs.model }}') {
+            $runArgs.Add('--model') | Out-Null
+            $runArgs.Add('${{ inputs.model }}') | Out-Null
+          }
+
+          if ('${{ inputs.tags }}') {
+            $runArgs.Add('--tags') | Out-Null
+            $runArgs.Add('${{ inputs.tags }}') | Out-Null
+          }
+
+          $runArgs.Add('--cleanup') | Out-Null
+          $runArgs.Add('${{ inputs.cleanup }}') | Out-Null
+
+          Write-Host "Running: dotnet run --configuration Release -- $($runArgs -join ' ')"
+          & dotnet run --configuration Release -- @runArgs

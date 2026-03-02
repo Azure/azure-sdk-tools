@@ -4,19 +4,13 @@ import { URLNotSupportedError } from '../error/inputErrors.js';
 import { GitHubAppTokenProvider } from '../github/GitHubAppTokenProvider.js';
 
 export class LinkContentExtractor {
-  private readonly tokenProvider?: GitHubAppTokenProvider;
+  private readonly githubClient: GithubClient;
 
   constructor(tokenProvider?: GitHubAppTokenProvider) {
-    this.tokenProvider = tokenProvider;
-  }
-
-  private async createGithubClient(): Promise<GithubClient> {
-    const token = await this.tokenProvider?.getToken();
-    return new GithubClient(token);
+    this.githubClient = new GithubClient(tokenProvider);
   }
 
   public async extract(urls: URL[], meta: object): Promise<RemoteContent[]> {
-    const githubClient = await this.createGithubClient();
     const contents: RemoteContent[] = [];
 
     for (const [index, url] of urls.entries()) {
@@ -31,9 +25,9 @@ export class LinkContentExtractor {
       try {
         let details: PRDetails | IssueDetails | undefined;
         if (isPR) {
-          details = await githubClient.getPullRequestDetails(url.href, meta);
+          details = await this.githubClient.getPullRequestDetails(url.href, meta);
         } else {
-          details = await githubClient.getIssueDetails(url.href, meta);
+          details = await this.githubClient.getIssueDetails(url.href, meta);
         }
 
         if (!details) {

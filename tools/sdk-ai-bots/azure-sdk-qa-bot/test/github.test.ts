@@ -117,8 +117,6 @@ describe('GitHub PR Details Fetcher', () => {
     const githubClient = new GithubClient();
     const details = await githubClient.getPullRequestDetails(prUrl, {});
 
-    // Verify Octokit was called with correct parameters
-    expect(Octokit).toHaveBeenCalledWith({ auth: undefined });
 
     // Check the returned data structure
     expect(details).toHaveProperty('reviews');
@@ -185,9 +183,6 @@ describe('GitHub Issue Details Fetcher', () => {
 
     const githubClient = new GithubClient();
     const details = await githubClient.getIssueDetails(issueUrl, {});
-
-    // Verify Octokit was called with correct parameters
-    expect(Octokit).toHaveBeenCalledWith({ auth: undefined });
 
     // Check the returned data structure
     expect(details).toHaveProperty('title');

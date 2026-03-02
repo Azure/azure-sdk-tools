@@ -1,5 +1,6 @@
 import { CryptographyClient } from '@azure/keyvault-keys';
 import { TokenCredential } from '@azure/identity';
+import { Octokit } from '@octokit/rest';
 import { createHash } from 'crypto';
 import { logger } from '../logging/logger.js';
 
@@ -15,8 +16,6 @@ interface CachedToken {
   expiresAt: number;
 }
 
-const GITHUB_API_BASE = 'https://api.github.com';
-const GITHUB_API_VERSION = '2022-11-28';
 const TOKEN_REFRESH_BUFFER_MS = 10 * 60 * 1000; // Refresh 10 minutes before expiry
 
 /**
@@ -52,24 +51,40 @@ export class GitHubAppTokenProvider {
     try {
       logger.info('Generating new GitHub App JWT via Key Vault signing...');
       const jwt = await this.createAppJwt();
+      const octokit = new Octokit();
+      const headers = { authorization: `Bearer ${jwt}` };
 
       logger.info(`Fetching installation ID for owner: ${this.config.installOwner}...`);
-      const installationId = await this.getInstallationId(jwt);
-      if (installationId === undefined) {
+      const { data: installations } = await octokit.apps.listInstallations({ headers });
+      const installation = installations.find(
+        (i) => i.account?.login?.toLowerCase() === this.config.installOwner.toLowerCase()
+      );
+
+      if (!installation) {
+        logger.error(
+          `No GitHub App installation found for owner: ${this.config.installOwner}. ` +
+          `Available installations: ${installations.map((i) => i.account?.login ?? 'unknown').join(', ')}`
+        );
         return undefined;
       }
 
-      logger.info(`Installation ID resolved: ${installationId}. Exchanging JWT for installation token...`);
-      const result = await this.createInstallationToken(jwt, installationId);
-      if (!result) {
-        return undefined;
-      }
+      logger.info(`Installation ID resolved: ${installation.id}. Exchanging JWT for installation token...`);
+      const { data } = await octokit.apps.createInstallationAccessToken({
+        installation_id: installation.id,
+        headers,
+      });
 
-      this.cachedToken = { token: result.token, expiresAt: result.expiresAt - TOKEN_REFRESH_BUFFER_MS };
-      logger.info(`GitHub App installation token obtained, expires at ${new Date(result.expiresAt).toISOString()}`);
-      return result.token;
+      this.cachedToken = {
+        token: data.token,
+        expiresAt: new Date(data.expires_at).getTime() - TOKEN_REFRESH_BUFFER_MS,
+      };
+      logger.info(`GitHub App installation token obtained, expires at ${data.expires_at}`);
+      return data.token;
     } catch (error) {
-      logger.error(`Failed to obtain GitHub App installation token: ${error}`);
+      logger.error('Failed to obtain GitHub App installation token', {
+        error,
+        meta: { appId: this.config.appId, installOwner: this.config.installOwner },
+      });
       return undefined;
     }
   }
@@ -87,74 +102,19 @@ export class GitHubAppTokenProvider {
     const cryptoClient = new CryptographyClient(keyId, this.credential);
 
     const hash = createHash('sha256').update(unsignedToken).digest();
-    const signResult = await cryptoClient.sign('RS256', hash);
+    let signResult;
+    try {
+      signResult = await cryptoClient.sign('RS256', hash);
+    } catch (error) {
+      logger.error('Key Vault JWT signing failed — check that the managed identity has "sign" permission on the key', {
+        error,
+        meta: { keyVaultName: this.config.keyVaultName, keyName: this.config.keyName },
+      });
+      throw error;
+    }
     const signature = Buffer.from(signResult.result).toString('base64url');
 
     logger.info('JWT signed successfully via Key Vault');
     return `${unsignedToken}.${signature}`;
-  }
-
-  /** Finds the GitHub App installation ID for the configured org/owner. */
-  private async getInstallationId(jwt: string): Promise<number | undefined> {
-    const response = await fetch(`${GITHUB_API_BASE}/app/installations`, {
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': GITHUB_API_VERSION,
-        'User-Agent': 'azure-sdk-qa-bot',
-      },
-    });
-
-    if (!response.ok) {
-      logger.error(`Failed to list GitHub App installations: ${response.status} ${response.statusText}`);
-      return undefined;
-    }
-
-    const installations = (await response.json()) as { id: number; account: { login: string } }[];
-    const installation = installations.find(
-      (i) => i.account.login.toLowerCase() === this.config.installOwner.toLowerCase()
-    );
-
-    if (!installation) {
-      logger.error(
-        `No GitHub App installation found for owner: ${this.config.installOwner}. ` +
-        `Available installations: ${installations.map((i) => i.account.login).join(', ')}`
-      );
-      return undefined;
-    }
-
-    return installation.id;
-  }
-
-  /** Exchanges the App JWT for an installation access token (valid ~1 hour). */
-  private async createInstallationToken(
-    jwt: string,
-    installationId: number
-  ): Promise<{ token: string; expiresAt: number } | undefined> {
-    const response = await fetch(`${GITHUB_API_BASE}/app/installations/${installationId}/access_tokens`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': GITHUB_API_VERSION,
-        'User-Agent': 'azure-sdk-qa-bot',
-      },
-    });
-
-    if (!response.ok) {
-      logger.error(`Failed to create installation token for installation ${installationId}: ${response.status} ${response.statusText}`);
-      return undefined;
-    }
-
-    const data = (await response.json()) as { token: string; expires_at: string };
-    if (!data.token) {
-      logger.error('GitHub API response does not contain a token');
-      return undefined;
-    }
-
-    return {
-      token: data.token,
-      expiresAt: new Date(data.expires_at).getTime(),
-    };
   }
 }

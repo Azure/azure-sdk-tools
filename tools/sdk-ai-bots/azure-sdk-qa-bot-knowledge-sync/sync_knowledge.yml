@@ -35,6 +35,12 @@ extends:
         name: azsdk-pool
         image: windows-2022
         os: windows
+      psscriptanalyzer:
+        enabled: false
+        justificationForDisabling: >-
+          This pipeline only runs Node.js/TypeScript code. PSScriptAnalyzer flags
+          pre-existing issues in shared repo PowerShell scripts (eng/, tools/feed-cleaner)
+          that are not owned or modified by this pipeline.
       sourceRepositoriesToScan:
         exclude:
           - repository: azure-sdk-docs-eng.ms

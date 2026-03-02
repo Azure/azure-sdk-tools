@@ -31,6 +31,10 @@ extends:
     settings:
       skipBuildTagsForGitHubPullRequests: true
     sdl:
+      sourceAnalysisPool:
+        name: azsdk-pool
+        image: windows-2022
+        os: windows
       sourceRepositoriesToScan:
         exclude:
           - repository: azure-sdk-docs-eng.ms

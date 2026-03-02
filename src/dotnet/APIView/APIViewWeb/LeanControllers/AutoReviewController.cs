@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
@@ -45,8 +46,16 @@ public class AutoReviewController : ControllerBase
     // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
     // regular CI pipeline will not send this flag in request
     [HttpPost("upload")]
-    public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, [FromForm] string label, [FromForm] bool compareAllRevisions = false, [FromForm] string packageVersion = null, [FromForm] bool setReleaseTag = false, [FromForm] string packageType = null)
+    public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, [FromForm] string label = null, [FromForm] bool compareAllRevisions = false, [FromForm] string packageVersion = null, [FromForm] bool setReleaseTag = false, [FromForm] string packageType = null)
     {
+        label ??= Request.Query["label"].FirstOrDefault();
+        packageVersion ??= Request.Query["packageVersion"].FirstOrDefault();
+        packageType ??= Request.Query["packageType"].FirstOrDefault();
+        if (!setReleaseTag && bool.TryParse(Request.Query["setReleaseTag"].FirstOrDefault(), out var qsReleaseTag))
+            setReleaseTag = qsReleaseTag;
+        if (!compareAllRevisions && bool.TryParse(Request.Query["compareAllRevisions"].FirstOrDefault(), out var qsCompareAll))
+            compareAllRevisions = qsCompareAll;
+
         try
         {
             if (file != null)

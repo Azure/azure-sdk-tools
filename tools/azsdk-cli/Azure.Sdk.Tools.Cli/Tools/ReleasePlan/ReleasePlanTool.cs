@@ -93,12 +93,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         {
             Description = "Service tree ID",
             Required = false,
+            DefaultValueFactory = _ => string.Empty,
         };
 
         private readonly Option<string> productTreeIdOpt = new("--product")
         {
             Description = "Product service tree ID",
             Required = false,
+            DefaultValueFactory = _ => string.Empty,
         };
 
         private readonly Option<string> apiVersionOpt = new("--api-version")
@@ -458,7 +460,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project, service, product. If TypeSpec path is unknown then service ID and product Id are required.")]
+        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project, service, product. Service ID and product Id are required if a previous release plan is not found for the TypeSpec project.")]
         public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string serviceTreeId = "", string productTreeId = "", string userEmail = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false)
         {
             try
@@ -503,6 +505,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogInformation("AZSDKTOOLS_AGENT_TESTING environment variable is set to true, creating test release plan");
                 }
 
+                // Get service and product id from previous release plan
+                if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
+                {
+                    logger.LogInformation("Service and product id are not available. Checking for a previous release plan with same TypeSpec project {specProject}", specProject);
+                    // Get product and service tree Id from existing release plan.
+                    var productDetails = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specProject);
+                    if (productDetails != null)
+                    {
+                        logger.LogInformation("Found product details for TypeSpec project {specProject} from previous release plans.", specProject);
+                        serviceTreeId = string.IsNullOrEmpty(serviceTreeId) ? productDetails?.ServiceId ?? string.Empty : serviceTreeId;
+                        productTreeId = string.IsNullOrEmpty(productTreeId) ? productDetails?.ProductServiceTreeId ?? string.Empty : productTreeId;
+                    }
+
+                    // Fail the request if service id and product id are still unknown
+                    if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
+                    {
+                        logger.LogWarning("Service id and product id in service tree are unknown for TypeSpec project. Release plan cannot be created without these details.");
+                        return new ReleasePlanResponse
+                        {
+                            TypeSpecProject = specProject,
+                            PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane,
+                            ResponseError = "Failed to identify product details using previous release plans for the TypeSpec project",
+                            NextSteps = ["Retry with valid service id and product id in service tree for the product/offer/feature"]
+                        };
+                    }
+                }
+
                 if (!forceCreateReleasePlan)
                 {
                     // Check for existing release plan for the given pull request URL.
@@ -530,60 +559,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
                         };
                     }
-                }
-
-                // Get service and product id from previous release plan
-                if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
-                {
-                    logger.LogInformation("Service and product id are not available. Checking for a previous release plan with same TypeSpec project {specProject}", specProject);
-                    // Get product and service tree Id from existing release plan.
-                    var productDetails = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specProject);
-                    if (productDetails != null)
-                    {
-                        logger.LogInformation("Found product details for TypeSpec project {specProject} from previous release plans.", specProject);
-                        serviceTreeId = string.IsNullOrEmpty(serviceTreeId) ? productDetails?.ServiceId ?? string.Empty : serviceTreeId;
-                        productTreeId = string.IsNullOrEmpty(productTreeId) ? productDetails?.ProductServiceTreeId ?? string.Empty : productTreeId;
-                    }
-
-                    // Fail the request if service id and product id are still unknown
-                    if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
-                    {
-                        logger.LogWarning("Service id and product id in service tree are unknown for TypeSpec project. Release plan cannot be created without these details.");
-                        return new ReleasePlanResponse
-                        {
-                            TypeSpecProject = specProject,
-                            PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane,
-                            Message = "Cannot find service and product id from TypeSpec project path. Retry with valid service id and product id in service tree for the product/offer/feature",
-                            ResponseError = "Failed to identify product details using previous release plans for the TypeSpec project"
-                        };
-                    }                        
-                }
-
-                // Get service and product id from previous release plan
-                if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
-                {
-                    logger.LogInformation("Service and product id are not available. Checking for a previous release plan with same TypeSpec project {specProject}", specProject);
-                    // Get product and service tree Id from existing release plan.
-                    var productDetails = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specProject);
-                    if (productDetails != null)
-                    {
-                        logger.LogInformation("Found product details for TypeSpec project {specProject} from previous release plans.", specProject);
-                        serviceTreeId = string.IsNullOrEmpty(serviceTreeId) ? productDetails?.ServiceId ?? string.Empty : serviceTreeId;
-                        productTreeId = string.IsNullOrEmpty(productTreeId) ? productDetails?.ProductServiceTreeId ?? string.Empty : productTreeId;
-                    }
-
-                    // Fail the request if service id and product id are still unknown
-                    if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
-                    {
-                        logger.LogWarning("Service id and product id in service tree are unknown for TypeSpec project. Release plan cannot be created without these details.");
-                        return new ReleasePlanResponse
-                        {
-                            TypeSpecProject = specProject,
-                            PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane,
-                            ResponseError = "Failed to identify product details using previous release plans for the TypeSpec project",
-                            NextSteps = ["Retry with valid service id and product id in service tree for the product/offer/feature"]
-                        };
-                    }                        
                 }
 
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";

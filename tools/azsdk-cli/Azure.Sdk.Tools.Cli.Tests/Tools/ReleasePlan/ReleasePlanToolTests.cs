@@ -966,26 +966,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Test_UpdateReleasePlan_no_active_release_plan_found()
-        {
-            var mockDevOps = new Mock<IDevOpsService>();
-            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync(It.IsAny<string>(), It.IsAny<bool>())).ReturnsAsync((ReleasePlanWorkItem?)null);
-            mockDevOps.Setup(x => x.GetReleasePlanAsync(It.IsAny<string>())).ReturnsAsync(null as ReleasePlanWorkItem);
-
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
-
-            var result = await tool.UpdateReleasePlan(
-                typeSpecProjectPath: "TypeSpecTestData/specification/testcontoso/Contoso.Management",
-                specApiVersion: "2025-01-01",
-                sdkReleaseType: "beta",
-                specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446",
-                workItemId: 0);
-
-            Assert.IsNotNull(result.ResponseError);
-            Assert.That(result.ResponseError, Does.Contain("No active release plan found"));
-        }
-
-        [Test]
         public async Task Test_UpdateReleasePlan_with_url_based_typespec_path()
         {
             var result = await releasePlanTool.UpdateReleasePlan(

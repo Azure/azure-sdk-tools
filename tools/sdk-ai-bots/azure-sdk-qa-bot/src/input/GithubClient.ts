@@ -1,7 +1,7 @@
-import { Octokit } from '@octokit/rest';
 import { components } from '@octokit/openapi-types';
 import { logger } from '../logging/logger.js';
 import { GitHubAppTokenProvider } from '../github/GitHubAppTokenProvider.js';
+import { OctokitWithRetry } from '../github/octokit.js';
 
 export interface PRDetails {
   comments: {
@@ -39,12 +39,12 @@ interface CommentEx {
 export class GithubClient {
   private readonly tokenProvider?: GitHubAppTokenProvider;
   private readonly perPage = 100;
-  private octokit: Octokit;
+  private octokit: InstanceType<typeof OctokitWithRetry>;
   private lastToken?: string;
 
   constructor(tokenProvider?: GitHubAppTokenProvider) {
     this.tokenProvider = tokenProvider;
-    this.octokit = new Octokit();
+    this.octokit = new OctokitWithRetry({ retry: { retries: 1 } });
   }
 
   /** Refreshes the Octokit instance if the token from the provider has changed. */
@@ -53,7 +53,7 @@ export class GithubClient {
       const token = await this.tokenProvider.getToken();
       if (token !== this.lastToken) {
         this.lastToken = token;
-        this.octokit = new Octokit({ auth: token });
+        this.octokit = new OctokitWithRetry({ auth: token, retry: { retries: 1 } });
       }
     }
   }
@@ -128,7 +128,6 @@ export class GithubClient {
     return { name: commentUser.login, type: commentUser.type, comment: commentBody };
   }
 
-  // TODO: add retry
   private async tryGetBasicInfo(
     owner: string,
     repo: string,
@@ -173,7 +172,6 @@ export class GithubClient {
     }
   }
 
-  // TODO: add retry
   private async tryListIssueComments(
     owner: string,
     repo: string,
@@ -193,7 +191,6 @@ export class GithubClient {
     }
   }
 
-  // TODO: add retry
   private async tryListReviewComments(
     owner: string,
     repo: string,
@@ -212,7 +209,7 @@ export class GithubClient {
       return undefined;
     }
   }
-  // TODO: add retry
+
   private async tryListReviews(
     owner: string,
     repo: string,
@@ -233,7 +230,6 @@ export class GithubClient {
     }
   }
 
-  // TODO: add retry
   private async tryGetPullDiff(owner: string, repo: string, id: number, prUrl: string): Promise<string | undefined> {
     try {
       const parameters = { owner, repo, pull_number: id, mediaType: { format: 'diff' } };

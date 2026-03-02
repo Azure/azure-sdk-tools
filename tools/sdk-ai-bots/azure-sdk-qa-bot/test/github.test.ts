@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Octokit } from '@octokit/rest';
 import { GithubClient } from '../src/input/GithubClient.js';
 
+vi.mock('@octokit/plugin-retry', () => ({ retry: vi.fn() }));
+
 // Mock the Octokit client
 vi.mock('@octokit/rest', () => {
   const createMockOctokit = () => ({
@@ -100,8 +102,11 @@ vi.mock('@octokit/rest', () => {
     },
   });
 
+  const MockOctokit: any = vi.fn().mockImplementation(() => createMockOctokit());
+  MockOctokit.plugin = vi.fn().mockReturnValue(MockOctokit);
+
   return {
-    Octokit: vi.fn().mockImplementation(() => createMockOctokit()),
+    Octokit: MockOctokit,
   };
 });
 

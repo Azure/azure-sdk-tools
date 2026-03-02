@@ -1,6 +1,6 @@
 import { CryptographyClient } from '@azure/keyvault-keys';
 import { TokenCredential } from '@azure/identity';
-import { Octokit } from '@octokit/rest';
+import { OctokitWithRetry } from './octokit.js';
 import { createHash } from 'crypto';
 import { logger } from '../logging/logger.js';
 
@@ -51,7 +51,8 @@ export class GitHubAppTokenProvider {
     try {
       logger.info('Generating new GitHub App JWT via Key Vault signing...');
       const jwt = await this.createAppJwt();
-      const octokit = new Octokit();
+      // Limit retries to 1 to keep user-facing latency low
+      const octokit = new OctokitWithRetry({ retry: { retries: 1 } });
       const headers = { authorization: `Bearer ${jwt}` };
 
       logger.info(`Fetching installation ID for owner: ${this.config.installOwner}...`);

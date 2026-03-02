@@ -101,6 +101,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             try
             {
+                // Find the typespec project directory
+                if (typeSpecProjectPath.EndsWith(TypeSpecProject.TSPCONFIG_FILENAME))
+                {
+                    typeSpecProjectPath = Path.GetDirectoryName(typeSpecProjectPath) ?? string.Empty;
+                }
+
                 if (!IsValidTypeSpecProjectPath(typeSpecProjectPath))
                 {
                     logger.LogWarning("Invalid TypeSpec project path: {typeSpecProjectPath}. Skipping metadata emitter.", typeSpecProjectPath);
@@ -185,7 +191,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                                 packageName = pkgName?.ToString() ?? string.Empty;
                             }
                         }
-
+                        languageName = languageName.Contains("csharp") ? ".NET" : languageName;
                         if (!string.IsNullOrEmpty(packageName))
                         {
                             packages.Add(new PackageInfo

@@ -538,6 +538,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
                 }
 
+                if(string.IsNullOrEmpty(specProject))
+                {
+                    logger.LogWarning("Failed to identify a TypeSpec project path from {typeSpecProjectPath}", typeSpecProjectPath);
+                    return new ReleasePlanResponse
+                    {
+                        ResponseError = $"Failed to find the TypeSpec project from {typeSpecProjectPath}",
+                        NextSteps = ["Retry with valid TypeSpec project path"]
+                    };
+                }
+
                 if (releasePlan == null)
                 {
                     // Try to find by TypeSpec project path
@@ -620,14 +630,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     logger.LogWarning("No package names resolved from TypeSpec metadata emitter for {typeSpecProjectPath}", typeSpecProjectPath);
                 }
-
+                releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlan.WorkItemId);
                 return new ReleasePlanResponse
                 {
                     Message = $"Successfully updated release plan {releasePlan.WorkItemId}.",
                     ReleasePlanDetails = releasePlan,
                     TypeSpecProject = specProject,
-                    PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane,
-                    NextSteps = [$"Get updated release plan details using work item ID: {releasePlan.WorkItemId}"]
+                    PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane
                 };
             }
             catch (Exception ex)

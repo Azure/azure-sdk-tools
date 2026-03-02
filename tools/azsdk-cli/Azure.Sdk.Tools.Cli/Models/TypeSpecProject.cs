@@ -1,13 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Models
 {
     public class TypeSpecProject
     {
-        static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
+        public static readonly string TSPCONFIG_FILENAME = "tspconfig.yaml";
         private string TypeSpecConfigYaml { get; set; }
 
         public string Name { get; set; }

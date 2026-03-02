@@ -14,7 +14,7 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 [McpServerToolType]
-[Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
+[Description("Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making TSP code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations.")]
 public class DelegateAPIViewFeedbackTool : MCPTool
 {
     private const string ToolName = "azsdk_typespec_delegate_apiview_feedback";
@@ -54,7 +54,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
     }
 
     protected override Command GetCommand() =>
-        new McpCommand("delegate-apiview-feedback", "Delegate APIView feedback to coding agent for TypeSpec customizations", ToolName)
+        new McpCommand("delegate-apiview-feedback", "Address/fix/delegate APIView feedback: creates a GitHub issue from reviewer comments and assigns Copilot to implement TypeSpec client customizations", ToolName)
         {
             _apiViewUrlArg,
             _repoOption,
@@ -71,7 +71,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
     }
 
     [McpServerTool(Name = ToolName)]
-    [Description("Delegate APIView feedback to GitHub Copilot coding agent for TypeSpec client customizations")]
+    [Description("Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations.")]
     public async Task<DefaultCommandResponse> DelegateAPIViewFeedbackAsync(
         string apiViewUrl,
         string? repo = null,

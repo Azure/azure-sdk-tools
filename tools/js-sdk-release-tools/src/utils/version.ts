@@ -84,8 +84,12 @@ export function getLatestStableVersion(
     if (!distTags) return undefined;
     const latestVersion = distTags["latest"];
     const betaVersion = distTags["beta"];
-    if (latestVersion) return latestVersion;
+    // A latestVersion with a non-beta prerelease identifier (e.g. alpha) is not
+    // suitable as a comparison baseline.  Prefer a published beta in that case.
+    const isLatestComparable = latestVersion && (!latestVersion.includes('-') || latestVersion.includes('beta'));
+    if (isLatestComparable) return latestVersion;
     if (betaVersion) return betaVersion;
+    if (latestVersion) return latestVersion;
     logger.warn(`Failed to find latest or beta version found in dist-tags.`);
     return undefined;
 }

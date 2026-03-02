@@ -68,7 +68,7 @@ export async function generateChangelogAndBumpVersion(
     const isFirstRelease = shouldTreatAsFirstRelease(npmViewResult, stableVersion, isStableRelease);
     if (isFirstRelease) {
         const isComparableStableVersion = !!stableVersion && (!stableVersion.includes('-') || stableVersion.includes('beta'));
-        const releaseType = !npmViewResult ? 'initial' : !isComparableStableVersion ? 'first comparable' : 'stable';
+        const releaseType = !npmViewResult ? 'initial' : !isComparableStableVersion ? 'comparable' : 'stable';
         logger.info(`Package ${packageName} is first ${releaseType} release, start to generate changelogs and set version for first ${releaseType} release.`);
         if (!npmViewResult || !isComparableStableVersion) {
             await makeChangesForFirstRelease(packageFolderPath, skdReleaseDate, false, updateMode);

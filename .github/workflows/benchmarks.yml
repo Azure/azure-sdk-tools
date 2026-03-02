@@ -9,31 +9,27 @@ on:
   workflow_dispatch:
     inputs:
       scenario:
-        description: "Scenario name to run (ignored when running all)"
+        description: "Run a single scenario by name (leave empty to run all)"
         required: false
         type: string
-      all:
-        description: "Run all scenarios"
+      tags:
+        description: "Filter scenarios by tags, comma-separated (ignored if scenario is specified)"
         required: false
-        type: boolean
-        default: true
+        type: string
       model:
         description: "Model to use for agent execution"
         required: false
         type: string
-      tags:
-        description: "Filter scenarios by tags (comma-separated)"
-        required: false
-        type: string
+        default: "claude-opus-4.5"
       cleanup:
         description: "Cleanup policy for workspaces"
         required: false
         type: choice
         options:
-          - on-success
-          - always
-          - never
-        default: "on-success"
+          - OnSuccess
+          - Always
+          - Never
+        default: "OnSuccess"
 
 jobs:
   run-benchmarks:
@@ -63,12 +59,14 @@ jobs:
         run: |
           [System.Collections.ArrayList]$runArgs = @("run")
 
-          if ('${{ inputs.all }}' -eq 'true') {
-            $runArgs.Add('--all') | Out-Null
-          } elseif ('${{ inputs.scenario }}') {
+          if ('${{ inputs.scenario }}') {
             $runArgs.Add('${{ inputs.scenario }}') | Out-Null
           } else {
             $runArgs.Add('--all') | Out-Null
+            if ('${{ inputs.tags }}') {
+              $runArgs.Add('--tags') | Out-Null
+              $runArgs.Add('${{ inputs.tags }}') | Out-Null
+            }
           }
 
           if ('${{ inputs.model }}') {
@@ -76,13 +74,17 @@ jobs:
             $runArgs.Add('${{ inputs.model }}') | Out-Null
           }
 
-          if ('${{ inputs.tags }}') {
-            $runArgs.Add('--tags') | Out-Null
-            $runArgs.Add('${{ inputs.tags }}') | Out-Null
-          }
-
           $runArgs.Add('--cleanup') | Out-Null
           $runArgs.Add('${{ inputs.cleanup }}') | Out-Null
 
           Write-Host "Running: dotnet run --configuration Release -- $($runArgs -join ' ')"
           & dotnet run --configuration Release -- @runArgs
+
+      - name: Upload workspaces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-workspaces
+          path: /tmp/azsdk-benchmarks/workspaces/
+          if-no-files-found: ignore
+          retention-days: 7

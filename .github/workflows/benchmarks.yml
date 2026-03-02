@@ -1,6 +1,11 @@
 name: Benchmarks
 
 on:
+  push:
+    branches:
+      - benchmarks-test
+    paths:
+      - .github/workflows/benchmarks.yml
   workflow_dispatch:
     inputs:
       scenario:

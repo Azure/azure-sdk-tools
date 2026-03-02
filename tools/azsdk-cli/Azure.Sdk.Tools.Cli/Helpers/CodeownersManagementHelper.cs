@@ -16,13 +16,13 @@ public class CodeownersManagementHelper(
     ITeamUserCache teamUserCache
 ) : ICodeownersManagementHelper
 {
-    public async Task<CodeownersViewResult> GetViewByUser(string alias, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByUser(string alias, string? repo)
     {
         var normalizedAlias = NormalizeGitHubAlias(alias);
         var ownerWi = await FindOwnerByGitHubAlias(normalizedAlias);
         if (ownerWi == null)
         {
-            return new CodeownersViewResult { ResponseError = $"No Owner work item found for alias '{normalizedAlias}'." };
+            return new CodeownersViewResponse { ResponseError = $"No Owner work item found for alias '{normalizedAlias}'." };
         }
 
         var (relatedPackages, relatedLabelOwners) = await FetchRelatedPackagesAndLabelOwners(ownerWi.RelatedIds, repo);
@@ -30,10 +30,10 @@ public class CodeownersManagementHelper(
         await HydratePackages(relatedPackages);
         await HydrateLabelOwners(relatedLabelOwners);
 
-        return new CodeownersViewResult(relatedPackages, relatedLabelOwners);
+        return new CodeownersViewResponse(relatedPackages, relatedLabelOwners);
     }
 
-    public async Task<CodeownersViewResult> GetViewByLabel(string[] labels, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByLabel(string[] labels, string? repo)
     {
         var labelWorkItems = new List<LabelWorkItem>();
         foreach (var label in labels)
@@ -41,7 +41,7 @@ public class CodeownersManagementHelper(
             var labelWi = await FindLabelByName(label);
             if (labelWi == null)
             {
-                return new CodeownersViewResult { ResponseError = $"No Label work item found for '{label}'." };
+                return new CodeownersViewResponse { ResponseError = $"No Label work item found for '{label}'." };
             }
             labelWorkItems.Add(labelWi);
         }
@@ -57,23 +57,23 @@ public class CodeownersManagementHelper(
         await HydratePackages(relatedPackages);
         await HydrateLabelOwners(relatedLabelOwners);
 
-        return new CodeownersViewResult(relatedPackages, relatedLabelOwners);
+        return new CodeownersViewResponse(relatedPackages, relatedLabelOwners);
     }
 
-    public async Task<CodeownersViewResult> GetViewByPath(string path, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByPath(string path, string? repo)
     {
         var labelOwners = await QueryLabelOwnersByPath(path, repo);
         await HydrateLabelOwners(labelOwners);
 
-        return new CodeownersViewResult([], labelOwners);
+        return new CodeownersViewResponse([], labelOwners);
     }
 
-    public async Task<CodeownersViewResult> GetViewByPackage(string packageName, string? repo = null)
+    public async Task<CodeownersViewResponse> GetViewByPackage(string packageName, string? repo = null)
     {
         var packageWi = await FindPackageByName(packageName, repo);
         if (packageWi == null)
         {
-            return new CodeownersViewResult { ResponseError = $"No Package work item found for '{packageName}'." };
+            return new CodeownersViewResponse { ResponseError = $"No Package work item found for '{packageName}'." };
         }
 
         await HydratePackages([packageWi]);
@@ -81,7 +81,7 @@ public class CodeownersManagementHelper(
         var relatedLabelOwners = await FetchRelatedLabelOwners(packageWi.RelatedIds, repo);
         await HydrateLabelOwners(relatedLabelOwners);
 
-        return new CodeownersViewResult([packageWi], relatedLabelOwners);
+        return new CodeownersViewResponse([packageWi], relatedLabelOwners);
     }
 
     public static string NormalizeGitHubAlias(string alias) => alias.Trim().TrimStart('@').Trim();

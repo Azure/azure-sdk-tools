@@ -642,9 +642,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (--github-user, --label, --package, or --path) must be specified. Multiple labels are treated as AND.")]
+        [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (githubUser, label, package, or path) must be specified. Multiple labels are treated as AND.")]
         public async Task<CommandResponse> ViewCodeowners(
-            string? user = null,
+            string? githubUser = null,
             string[] labels = null,
             string? package = null,
             string? path = null,
@@ -653,19 +653,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             try
             {
                 var hasLabels = labels?.Length > 0;
-                var axes = new[] { !string.IsNullOrEmpty(user), hasLabels, !string.IsNullOrEmpty(package), !string.IsNullOrEmpty(path) }.Count(a => a);
+                var axes = new[] { !string.IsNullOrEmpty(githubUser), hasLabels, !string.IsNullOrEmpty(package), !string.IsNullOrEmpty(path) }.Count(a => a);
                 if (axes == 0)
                 {
-                    return new DefaultCommandResponse { ResponseError = "Exactly one of --user, --label, --package, or --path must be specified." };
+                    return new DefaultCommandResponse { ResponseError = "Exactly one of github user, label, package, or path must be specified." };
                 }
                 if (axes > 1)
                 {
-                    return new DefaultCommandResponse { ResponseError = "Only one of --user, --label, --package, or --path can be specified at a time." };
+                    return new DefaultCommandResponse { ResponseError = "Only one of github user, label, package, or path can be specified at a time." };
                 }
 
-                if (!string.IsNullOrEmpty(user))
+                if (!string.IsNullOrEmpty(githubUser))
                 {
-                    return await codeownersManagementHelper.GetViewByUser(user, repo);
+                    return await codeownersManagementHelper.GetViewByUser(githubUser, repo);
                 }
                 if (hasLabels)
                 {

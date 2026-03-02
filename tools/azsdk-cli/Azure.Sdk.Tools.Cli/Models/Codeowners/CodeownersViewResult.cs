@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Codeowners;
 /// Structured result for the CODEOWNERS view command.
 /// Renders directly from the hydrated Azure DevOps model objects.
 /// </summary>
-public class CodeownersViewResult : CommandResponse
+public class CodeownersViewResponse : CommandResponse
 {
     [JsonPropertyName("packages")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -24,9 +24,9 @@ public class CodeownersViewResult : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<LabelOwnerWorkItem>? PathlessLabelOwners { get; set; }
 
-    public CodeownersViewResult() { }
+    public CodeownersViewResponse() { }
 
-    public CodeownersViewResult(List<PackageWorkItem> packages, List<LabelOwnerWorkItem> labelOwners)
+    public CodeownersViewResponse(List<PackageWorkItem> packages, List<LabelOwnerWorkItem> labelOwners)
     {
         if (packages.Count > 0)
         {

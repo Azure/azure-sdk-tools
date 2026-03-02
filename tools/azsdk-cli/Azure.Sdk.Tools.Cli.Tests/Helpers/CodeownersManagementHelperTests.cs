@@ -3,6 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
@@ -88,30 +89,30 @@ public class CodeownersManagementHelperTests
     // Assertion helpers
     // ========================
 
-    private static void AssertPackage(PackageWorkItem pkg, string expectedName, string[]? expectedOwners = null, string[]? expectedLabels = null)
+    private static void AssertPackage(PackageResponse pkg, string expectedName, string[]? expectedOwners = null, string[]? expectedLabels = null)
     {
         Assert.That(pkg.PackageName, Is.EqualTo(expectedName));
         if (expectedOwners != null)
         {
-            Assert.That(pkg.Owners.Select(o => o.GitHubAlias), Is.EquivalentTo(expectedOwners));
+            Assert.That(pkg.Owners!.Select(o => o.GitHubAlias), Is.EquivalentTo(expectedOwners));
         }
         if (expectedLabels != null)
         {
-            Assert.That(pkg.Labels.Select(l => l.LabelName), Is.EquivalentTo(expectedLabels));
+            Assert.That(pkg.Labels, Is.EquivalentTo(expectedLabels));
         }
     }
 
-    private static void AssertLabelOwner(LabelOwnerWorkItem lo, string expectedRepo, string expectedPath, string[]? expectedOwners = null, string[]? expectedLabels = null)
+    private static void AssertLabelOwner(LabelOwnerResponse lo, string expectedRepo, string expectedPath, string[]? expectedOwners = null, string[]? expectedLabels = null)
     {
-        Assert.That(lo.Repository, Is.EqualTo(expectedRepo));
-        Assert.That(lo.RepoPath, Is.EqualTo(expectedPath));
+        Assert.That(lo.Repo, Is.EqualTo(expectedRepo));
+        Assert.That(lo.Path, Is.EqualTo(expectedPath));
         if (expectedOwners != null)
         {
-            Assert.That(lo.Owners.Select(o => o.GitHubAlias), Is.EquivalentTo(expectedOwners));
+            Assert.That(lo.Owners!.Select(o => o.GitHubAlias), Is.EquivalentTo(expectedOwners));
         }
         if (expectedLabels != null)
         {
-            Assert.That(lo.Labels.Select(l => l.LabelName), Is.EquivalentTo(expectedLabels));
+            Assert.That(lo.Labels, Is.EquivalentTo(expectedLabels));
         }
     }
 
@@ -674,7 +675,7 @@ public class CodeownersManagementHelperTests
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
-        Assert.That(result.PathBasedLabelOwners![0].Repository, Is.EqualTo("Azure/azure-sdk-for-net"));
+        Assert.That(result.PathBasedLabelOwners![0].Repo, Is.EqualTo("Azure/azure-sdk-for-net"));
     }
 
     // ========================
@@ -722,8 +723,8 @@ public class CodeownersManagementHelperTests
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Packages, Has.Count.EqualTo(1));
 
-        var teamOwner = result.Packages![0].Owners.First(o => o.GitHubAlias == "azure/azure-sdk-team");
-        Assert.That(teamOwner.ExpandedMembers, Is.EquivalentTo(new[] { "owner1", "owner2", "owner3" }));
+        var teamOwner = result.Packages![0].Owners!.First(o => o.GitHubAlias == "azure/azure-sdk-team");
+        Assert.That(teamOwner.Members, Is.EquivalentTo(new[] { "owner1", "owner2", "owner3" }));
     }
 
     [Test]
@@ -758,7 +759,7 @@ public class CodeownersManagementHelperTests
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.PathBasedLabelOwners, Has.Count.EqualTo(1));
-        var teamOwner = result.PathBasedLabelOwners![0].Owners.First(o => o.GitHubAlias == "azure/sdk-storage-team");
-        Assert.That(teamOwner.ExpandedMembers, Is.EquivalentTo(new[] { "owner4", "owner5" }));
+        var teamOwner = result.PathBasedLabelOwners![0].Owners!.First(o => o.GitHubAlias == "azure/sdk-storage-team");
+        Assert.That(teamOwner.Members, Is.EquivalentTo(new[] { "owner4", "owner5" }));
     }
 }

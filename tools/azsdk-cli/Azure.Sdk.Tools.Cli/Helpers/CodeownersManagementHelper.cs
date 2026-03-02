@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 

@@ -102,57 +102,6 @@
         "overall_score": 8.866666666666667
     },
     {
-        "testcase": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR?",
-        "expected": {
-            "answer": "You need to get the necessary permissions, see here: https://aka.ms/azsdk/access",
-            "references": [
-                {
-                    "title": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR? | answer",
-                    "link": ""
-                },
-                {
-                    "title": "How to Re-evaluate `SDK Validation Status` Check",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
-                }
-            ]
-        },
-        "actual": {
-            "answer": "You are unable to view the workflow and validation check details for your Azure REST API PR because you do not have the necessary permissions. To resolve this, you need to:\n\n1. Ensure your GitHub account is a member of the Azure organization and that your membership is set to public (not private).\n2. Request access by following the instructions at https://aka.ms/azsdk/access. This will guide you through joining the appropriate Azure SDK groups and setting up your permissions.\n\nOnce you have the correct permissions and your membership is public, you will be able to view workflow logs and validation errors for your PRs, allowing you to debug and verify your changes before final review.",
-            "references": [
-                {
-                    "title": "Hi team, could someone please help grant me permission to view the workflow for my Azure REST API PR? | answer",
-                    "link": ""
-                },
-                {
-                    "title": "PR gateway pipelines not starting/waiting for long time | answer",
-                    "link": ""
-                },
-                {
-                    "title": "How to Re-evaluate `SDK Validation Status` Check",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/SDK-Validation"
-                }
-            ]
-        },
-        "similarity": 5.0,
-        "gpt_similarity": 5.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The response is fully supported by the context, covers all necessary steps, and does not add unsupported information or omit critical details.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 5.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response contains all the necessary information from the ground truth and expands on it with helpful, relevant details, but does not omit any required information.",
-        "reference_match": 1.0,
-        "reference_match_result": "pass",
-        "knowledge_match": 1.0,
-        "knowledge_match_result": "pass",
-        "overall_score": 9.0
-    },
-    {
         "testcase": "Service under conversation label",
         "expected": {
             "answer": "The label should not impact your previous PR, and , if this is a later api-version thatn the conversion PR, the conversion would normally be based on that version once checked in.",
@@ -496,36 +445,36 @@
     {
         "testcase": "In Resource provider, what is the type I should declare for an object or dictionary of string, string?",
         "expected": {
-            "answer": "For a property in a TypeSpec ARM resource provider model that represents a dictionary (object) mapping strings to strings, you should use the built-in `Record<string>` type.\nFor example:\n```\nmodel MyResourceProperties {\nmetadata?: Record<string>;\n}\n```\nThis models a property (`metadata`) that is an object/dictionary where all keys and values are strings, equivalent to `{ [key: string]: string }` in TypeScript or `Dictionary<string, string>` in .NET.\nYou should not use `{}` (empty model) or just `Record` (without specifying the value type) as these are either incomplete or invalid in TypeSpec. The correct, type-safe way is `Record<string>`, which will be emitted to OpenAPI/Swagger as an `object` with `additionalProperties: { type: \"string\" }`.\nIf your API spec review asks for a 'model', you can define a named type:\n```\nmodel MetadataModel is Record<string>;\nmodel MyResourceProperties {\nmetadata?: MetadataModel;\n}\n```\nBut `Record<string>` is the canonical, recommended approach for a string-to-string dictionary in TypeSpec ARM resource definitions.\nNote: While this is technically correct, ARM guidelines recommend against unbounded dictionary/object types unless absolutely necessary, as they can limit Azure Policy and ARG capabilities. Use with care, and document any supported/expected keys in your @doc comments if possible.",
+            "answer": "In an Azure Resource Provider (management-plane), you **should not use `Record<string>`** for arbitrary dictionaries. The `arm-no-record` rule requires ARM RPs to define types explicitly for better discoverability and SDK experience.\n\nSo this is **not allowed** in ARM specs:\n\n```typespec\nmetadata?: Record<string>; // \u274c Fails arm-no-record\n```\n\nAnd `{}` is invalid because TypeSpec requires a proper model type.\n\n\u2705 Correct approach for ARM\n\nYou must define an explicit model with concrete properties instead of a free-form dictionary:\n\n```typespec\nmodel Metadata {\n  key1?: string;\n  key2?: string;\n  // Define known properties explicitly\n}\n\nmodel MyResourceProperties {\n  metadata?: Metadata;\n}\n```\n\nARM requires explicit modeling of properties rather than open-ended dictionaries.\n\n---\n\nIf you truly need arbitrary key/value pairs\n\nFree-form dictionaries (`Record<string>`) are discouraged in ARM and will fail CI because of:\n\n`@azure-tools/typespec-azure-resource-manager/arm-no-record`\n\nIf there is a legitimate business need for arbitrary metadata:\n\n1. You must get architecture/review board approval.\n2. Then explicitly suppress the rule with justification.\n\nExample (only if approved):\n\n```typespec\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-no-record\" \"Approved free-form metadata bag\"\nmetadata?: Record<string>;\n```\n\nThis should be rare.\n\n---\n\nImportant: If this is actually resource \"tags\"\n\nDo NOT redefine them. Use the built-in ARM tags support instead:\n\n```typespec\nmodel MyResource is TrackedResource<MyProperties> {\n  ...ResourceNameParameter<MyResource>;\n  // tags already included in TrackedResource\n}\n```\n\nOr explicitly:\n\n```typespec\n...Foundations.ArmTagsProperty;\n```\n\n---\n\nSummary\n\nFor management-plane (ARM):\n\n- \u2705 Define an explicit model with named properties\n- \u2705 Use built-in `tags` if that\u2019s what you mean\n- \u26a0\ufe0f Only use `Record<string>` with approved suppression\n- \u274c Do not use open-ended dictionary types by default\n\nARM requires strongly modeled property bags for customer experience and SDK quality.",
             "references": [
+                {
+                    "title": "arm-no-record",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-no-record"
+                },
                 {
                     "title": "bad-record-type",
                     "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/bad-record-type"
                 },
                 {
-                    "title": "Built-in types | Other core types",
-                    "link": "https://typespec.io/docs/language-basics/built-in-types"
-                },
-                {
-                    "title": "Generated Types | Models | Models with additional properties of any type",
-                    "link": "https://azure.github.io/typespec-azure/docs/howtos/generate-client-libraries/08types"
+                    "title": "ARM Resource Types | Designing Resource-specific Properties",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type"
                 }
             ]
         },
         "actual": {
-            "answer": "In Azure Resource Provider TypeSpec, when you want to represent a property that is a dictionary (object) with string keys and string values (e.g., for metadata or tags), you should use `Record<string>`. This is the correct and recommended way to declare such a type in TypeSpec. \n\nFor example:\n\n```typespec\nmodel MyResourceProperties {\n  metadata?: Record<string>;\n}\n```\n\n- Do NOT use `{}` (empty object) as a type; TypeSpec expects a model or a valid type.\n- Do NOT use just `Record;` (without a type argument), as `Record` is a generic type and requires a value type argument.\n- `Record<string>` means an object with arbitrary string keys and string values, which matches the typical JSON object structure for metadata or tags in Azure APIs.\n\nThis pattern is widely used in Azure Resource Manager specs for properties like `tags` and `metadata`.\n\nIf you want to require the property, omit the `?` (optional marker):\n\n```typespec\nmodel MyResourceProperties {\n  metadata: Record<string>;\n}\n```\n\nThis will emit the correct OpenAPI schema for an object with string keys and string values.",
+            "answer": "In an Azure Resource Provider (management-plane), you **should not use `Record<string>`** for arbitrary dictionaries. The `arm-no-record` rule requires ARM RPs to define types explicitly for better discoverability and SDK experience.\n\nSo this is **not allowed** in ARM specs:\n\n```typespec\nmetadata?: Record<string>; // \u274c Fails arm-no-record\n```\n\nAnd `{}` is invalid because TypeSpec requires a proper model type.\n\n\u2705 Correct approach for ARM\n\nYou must define an explicit model with concrete properties instead of a free-form dictionary:\n\n```typespec\nmodel Metadata {\n  key1?: string;\n  key2?: string;\n  // Define known properties explicitly\n}\n\nmodel MyResourceProperties {\n  metadata?: Metadata;\n}\n```\n\nARM requires explicit modeling of properties rather than open-ended dictionaries.\n\n---\n\nIf you truly need arbitrary key/value pairs\n\nFree-form dictionaries (`Record<string>`) are discouraged in ARM and will fail CI because of:\n\n`@azure-tools/typespec-azure-resource-manager/arm-no-record`\n\nIf there is a legitimate business need for arbitrary metadata:\n\n1. You must get architecture/review board approval.\n2. Then explicitly suppress the rule with justification.\n\nExample (only if approved):\n\n```typespec\n#suppress \"@azure-tools/typespec-azure-resource-manager/arm-no-record\" \"Approved free-form metadata bag\"\nmetadata?: Record<string>;\n```\n\nThis should be rare.\n\n---\n\nImportant: If this is actually resource \"tags\"\n\nDo NOT redefine them. Use the built-in ARM tags support instead:\n\n```typespec\nmodel MyResource is TrackedResource<MyProperties> {\n  ...ResourceNameParameter<MyResource>;\n  // tags already included in TrackedResource\n}\n```\n\nOr explicitly:\n\n```typespec\n...Foundations.ArmTagsProperty;\n```\n\n---\n\nSummary\n\nFor management-plane (ARM):\n\n- \u2705 Define an explicit model with named properties\n- \u2705 Use built-in `tags` if that\u2019s what you mean\n- \u26a0\ufe0f Only use `Record<string>` with approved suppression\n- \u274c Do not use open-ended dictionary types by default\n\nARM requires strongly modeled property bags for customer experience and SDK quality.",
             "references": [
+                {
+                    "title": "arm-no-record",
+                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/rules/arm-no-record"
+                },
                 {
                     "title": "bad-record-type",
                     "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-core/rules/bad-record-type"
                 },
                 {
-                    "title": "Built-in types | Other core types",
-                    "link": "https://typespec.io/docs/language-basics/built-in-types"
-                },
-                {
-                    "title": "Usages for Illustrates various of dictionaries. | Scenario: Template to have dictionary operations",
-                    "link": "https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/type/dictionary/main.tsp"
+                    "title": "ARM Resource Types | Designing Resource-specific Properties",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/resource-type"
                 }
             ]
         },
@@ -1230,57 +1179,6 @@
         "knowledge_match": 0.8518518518518519,
         "knowledge_match_result": "pass",
         "overall_score": 8.851851851851851
-    },
-    {
-        "testcase": "Swagger LintDiff validation for certain models",
-        "expected": {
-            "answer": "You should not suppress this LintDiff validation error. The error `RequiredPropertiesMissingInResourceModel` indicates that your `SharingDetail` model is being interpreted as a resource model, but it does not contain the required ARM resource properties: `name`, `id`, and `type` (all marked as readOnly). According to Azure API and TypeSpec guidelines, all resource models must include these properties to be compliant.\nSuppressing this error is not the correct approach\u2014instead, you must fix your TypeSpec definition. Ensure that resource models either extend the appropriate common-types resource base model (such as `Resource`, `ProxyResource`, or `ExtensionResource`) or, if `SharingDetail` is not a resource, ensure it is not referenced in a way that causes it to be treated as one.\nFor suppressing LintDiff errors in general, you can add scoped suppressions in your `readme.md` following the guidance here: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions. However, for this particular error, you are expected to fix your TypeSpec spec to meet the ARM requirements\u2014not suppress it.\nTo resolve this:\nIf `SharingDetail` is a resource, extend from the correct base model and add `id`, `name`, `type` (all readOnly).\nIf it is not a resource, check where it is referenced in your operations or model hierarchy to ensure it is not being treated as a resource by the code generator.",
-            "references": [
-                {
-                    "title": "Swagger LintDiff Suppression via TypeSpec | question",
-                    "link": ""
-                },
-                {
-                    "title": "TypeSpec",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
-                }
-            ]
-        },
-        "actual": {
-            "answer": "Yes, you can suppress the LintDiff validation error 'RequiredPropertiesMissingInResourceModel' for the 'SharingDetail' model, but only in the OpenAPI (Swagger) validation layer, not directly in TypeSpec. According to Azure API guidelines and current tooling, LintDiff errors must be suppressed in the `readme.md` file of your spec, not in the TypeSpec source or suppressions.yaml.\n\nTo suppress this error:\n1. Open your `readme.md` file in the relevant folder (e.g., `specification/limit/resource-manager/Microsoft.Limit/Limit/readme.md`).\n2. Add a suppression directive for the specific error and path. The suppression should target the exact location in the generated OpenAPI where the error occurs (see the error message for the path).\n\nExample suppression directive:\n\n```yaml\n  - where:\n    - $.definitions.SharingDetail\n    suppress:\n      - RequiredPropertiesMissingInResourceModel\n    reason: 'SharingDetail is not a resource model and does not require id, name, type.'\n```\n\nMake sure the path (`$.definitions.SharingDetail`) matches the location in your generated OpenAPI where the error is reported. If the error is in a different location (e.g., inside a PATCH body or another definition), adjust the path accordingly.\n\n**Important:**\n- This suppression only affects LintDiff (Swagger) validation. TypeSpec validation errors must be fixed in the TypeSpec source itself.\n- Suppressions for LintDiff cannot be placed in TypeSpec files or suppressions.yaml\u2014they must be in `readme.md`.\n- Always provide a clear reason for the suppression, as reviewers will check for justification.\n\nFor more details and examples, see the official guidance: https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff#adding-scoped-suppressions",
-            "references": [
-                {
-                    "title": "Swagger LintDiff Suppression via TypeSpec | question",
-                    "link": ""
-                },
-                {
-                    "title": "Swagger LintDiff validation for certain models | question",
-                    "link": ""
-                },
-                {
-                    "title": "Swagger-LintDiff.md",
-                    "link": "https://github.com/Azure/azure-rest-api-specs/wiki/Swagger-LintDiff"
-                }
-            ]
-        },
-        "similarity": 5.0,
-        "gpt_similarity": 5.0,
-        "similarity_result": "pass",
-        "similarity_threshold": 4,
-        "groundedness": 5.0,
-        "gpt_groundedness": 5.0,
-        "groundedness_reason": "The RESPONSE is fully supported by the CONTEXT, covers all essential points, and does not add unsupported details or omit critical information.",
-        "groundedness_result": "pass",
-        "groundedness_threshold": 3.0,
-        "response_completeness": 5.0,
-        "response_completeness_result": "pass",
-        "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response contains all major and minor information from the ground truth, with only a very slight omission about the location for suppressions, but this does not affect the main completeness. It is fully complete.",
-        "reference_match": 0.5,
-        "reference_match_result": "fail",
-        "knowledge_match": 0.8518518518518519,
-        "knowledge_match_result": "pass",
-        "overall_score": 5.951851851851852
     },
     {
         "testcase": "How to make an interface internal ?",

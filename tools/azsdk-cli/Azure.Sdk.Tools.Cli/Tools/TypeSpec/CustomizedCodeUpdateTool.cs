@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -123,6 +124,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// Executes the update pipeline: classify → patch customizations → regen → build.
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
+    /// <param name="tspProjectPath"></param>
+    /// <param name="customizationRequest">Optional description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
     private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string? customizationRequest, CancellationToken ct)
@@ -142,60 +145,19 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Step 1: Classify
         var response = await Classify(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
 
-        if (response.Classifications == null || response.Classifications.Count == 0)
+        if (response.Classifications == null || response.Classifications.Count == 0) // TODO - do we want to fail if classification returns nothing?
         {
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                Message = $"Package path does not exist: {packagePath}",
+                Message = $"Feedback could not be classified.", // TODO - tune error message
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = $"Package path does not exist: {packagePath}"
+                BuildResult = $"Feedback could not be classified."
             };
         }
 
         // Step 2: Apply TypeSpec customizations
 
-        foreach (var feedback in response.Classifications)
-        {
-            if (feedback.Classification == "TSP_APPLICABLE")
-            {
-                var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(
-                tspProjectPath, feedback.Text, ct: ct);
-
-                if (!tspCustomizationResult.Success)
-                {
-                    logger.LogWarning("TypeSpec customization failed: {Reason}", tspCustomizationResult.FailureReason);
-                    return new CustomizedCodeUpdateResponse
-                    {
-                        Message = $"TypeSpec customization failed: {tspCustomizationResult.FailureReason}",
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed,
-                        ResponseError = tspCustomizationResult.FailureReason
-                    };
-                }
-
-                logger.LogInformation("TypeSpec customization succeeded. Changes: {Changes}", string.Join("; ", tspCustomizationResult.ChangesSummary));
-                var typeSpecChanges = tspCustomizationResult.ChangesSummary.ToList();
-            }
-            else if (feedback.Classification == "SUCCESS")
-            {
-                logger.LogInformation("Feedback '{text}' already been successfully addressed or requires no further action, reasoning: {reason}", feedback.Text, feedback.Reason);
-            }
-            else if (feedback.Classification == "REQUIRES_MANUAL_INTERVENTION")
-            {
-                logger.LogInformation("Feedback item classified as REQUIRES_MANUAL_INTERVENTION: {Text}", feedback.Text);
-            }
-        }
-
-        // Step 3: Regenerate
-
-        // Resolve the spec repo root from the TypeSpec project path.
-        // tsp-client's --local-spec-repo expects the repo root, not the project subdirectory.
-        var specRepoRoot = await gitHelper.DiscoverRepoRootAsync(tspProjectPath, ct);
-        logger.LogInformation("Resolved spec repo root: {RepoRoot} from project path: {ProjectPath}", specRepoRoot, typespecProjectPath);
-
-        // --- Regenerate SDK using local spec repo ---
-        var regenResult = await tspClientHelper.UpdateGenerationAsync(
-            packagePath, localSpecRepoPath: specRepoRoot, isCli: false, ct: ct);
 
         // Step 4: Move into language specific part of the pipeline
 
@@ -210,6 +172,21 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 BuildResult = "No language service available for this package type."
             };
         }
+
+        // Step 5: Build to determine if we need to try typespec repairs again
+        logger.LogInformation("Running initial build...");
+        var (initialBuildSuccess, initialBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+
+        if (initialBuildSuccess)
+        {
+            logger.LogInformation("Build passed - no repairs needed.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = true,
+                Message = "Build passed - no repairs needed."
+            };
+        }
+
 
         // Step 5: Build to get current errors
         logger.LogInformation("Running initial build...");
@@ -355,5 +332,61 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             logger.LogError(ex, "Classification failed");
             throw;
         }
+    }
+
+    private async Task<(bool, string? failureReason)> ApplyTypeSpecFixesAndRegenerate(string packagePath, string tspProjectPath, FeedbackClassificationResponse response, CancellationToken ct)
+    {
+        if (response.Classifications == null)
+        {
+            return (false, "No feedback was found to apply.");
+        }
+
+        StringBuilder tspApplicableFeedback = new();
+        foreach (var feedback in response.Classifications)
+        {
+            if (feedback.Classification == "TSP_APPLICABLE")
+            {
+                if (feedback.Text != null)
+                {
+                    logger.LogWarning("Received TSP_APPLICABLE classification but feedback text was null. Skipping this item.");
+                    continue;
+                }
+                tspApplicableFeedback.AppendLine(feedback.Text);
+            }
+            else if (feedback.Classification == "SUCCESS")
+            {
+                logger.LogInformation("Feedback '{text}' already been successfully addressed or requires no further action, reasoning: {reason}", feedback.Text, feedback.Reason);
+            }
+            else if (feedback.Classification == "REQUIRES_MANUAL_INTERVENTION")
+            {
+                logger.LogInformation("Feedback item classified as REQUIRES_MANUAL_INTERVENTION: {Text}", feedback.Text);
+            }
+        }
+
+        var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, tspApplicableFeedback.ToString(), ct: ct);
+
+        if (!tspCustomizationResult.Success)
+        {
+            logger.LogWarning("TypeSpec customization failed: {Reason}", tspCustomizationResult.FailureReason);
+            return (false, tspCustomizationResult.FailureReason);
+        }
+
+        logger.LogInformation("TypeSpec customization succeeded. Changes: {Changes}", string.Join("; ", tspCustomizationResult.ChangesSummary));
+        var typeSpecChanges = tspCustomizationResult.ChangesSummary.ToList();
+
+        // Resolve the spec repo root from the TypeSpec project path.
+        // tsp-client's --local-spec-repo expects the repo root, not the project subdirectory.
+        var specRepoRoot = await gitHelper.DiscoverRepoRootAsync(tspProjectPath, ct);
+        logger.LogInformation("Resolved spec repo root: {RepoRoot} from project path: {ProjectPath}", specRepoRoot, typespecProjectPath);
+
+        // --- Regenerate SDK using local spec repo ---
+        var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoRoot, isCli: false, ct: ct);
+
+        if (!regenResult.IsSuccessful)
+        {
+            logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
+            return (false, $"Regeneration failed: {regenResult.ResponseError}");
+        }
+        return (true, null);
     }
 }

@@ -45,7 +45,7 @@ public class AutoReviewController : ControllerBase
     // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
     // regular CI pipeline will not send this flag in request
     [HttpPost("upload")]
-    public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false, string packageType = null)
+    public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, [FromForm] string label, [FromForm] bool compareAllRevisions = false, [FromForm] string packageVersion = null, [FromForm] bool setReleaseTag = false, [FromForm] string packageType = null)
     {
         try
         {

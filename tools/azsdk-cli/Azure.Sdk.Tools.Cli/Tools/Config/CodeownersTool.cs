@@ -8,6 +8,7 @@ using Octokit;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
@@ -100,10 +101,45 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             DefaultValueFactory = _ => "Client Libraries",
         };
 
+        // Management command options
+        private readonly Option<string> githubUserOption = new("--github-user")
+        {
+            Description = "GitHub alias to look up",
+            Required = false,
+        };
+
+        private readonly Option<string[]> labelsOption = new("--label")
+        {
+            Description = "Label name(s). Can be specified multiple times.",
+            Required = false,
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+        private readonly Option<string> packageOption = new("--package")
+        {
+            Description = "Package name",
+            Required = false,
+        };
+
+        private readonly Option<string> pathOption = new("--path", "-p")
+        {
+            Description = "Repository path (e.g., sdk/formrecognizer/)",
+            Required = false,
+        };
+
+        private readonly Option<string> optionalRepoOption = new("--repo", "-r")
+        {
+            Description = "Repository name of the format <owner>/<repo> (e.g., Azure/azure-sdk-for-python).",
+            Required = false,
+        };
+
+
+
         private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTool> logger;
         private readonly ICodeownersValidatorHelper codeownersValidatorHelper;
         private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
+        private readonly ICodeownersManagementHelper codeownersManagementHelper;
         private readonly IGitHelper gitHelper;
 
         // URL constants
@@ -113,10 +149,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
         private const string generateCodeownersCommandName = "generate";
+        private const string viewCodeownersCommandName = "view";
+
 
         // MCP Tool Names
         private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
         private const string ValidateCodeownersEntryToolName = "azsdk_engsys_validate_codeowners_entry_for_service";
+        private const string CodeownerViewToolName = "azsdk_engsys_codeowner_view";
+
 
         public CodeownersTool(
             IGitHubService githubService,
@@ -124,13 +164,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ILoggerFactory? loggerFactory,
             ICodeownersValidatorHelper codeownersValidator,
             ICodeownersGenerateHelper codeownersGenerateHelper,
-            IGitHelper gitHelper
+            IGitHelper gitHelper,
+            ICodeownersManagementHelper codeownersManagementHelper
         )
         {
             this.githubService = githubService;
             this.logger = logger;
             this.codeownersValidatorHelper = codeownersValidator;
             this.codeownersGenerateHelper = codeownersGenerateHelper;
+            this.codeownersManagementHelper = codeownersManagementHelper;
             this.gitHelper = gitHelper;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
@@ -156,6 +198,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(generateCodeownersCommandName, "Generate CODEOWNERS file from Azure DevOps work items")
             {
                 repoRootOption, packageTypesOption, sectionOption,
+            },
+            new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
+            {
+                githubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption,
             }
         ];
 
@@ -210,6 +256,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var section = parseResult.GetValue(sectionOption);
                 var generateResult = await GenerateCodeowners(repoRoot, packageTypes, section, ct);
                 return generateResult;
+            }
+
+            if (command == viewCodeownersCommandName)
+            {
+                var user = parseResult.GetValue(githubUserOption);
+                var labels = parseResult.GetValue(labelsOption);
+                var package = parseResult.GetValue(packageOption);
+                var path = parseResult.GetValue(pathOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                return await ViewCodeowners(user, labels, package, path, repo);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -585,5 +641,48 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 };
             }
         }
+
+        [McpServerTool(Name = CodeownerViewToolName), Description("View CODEOWNERS associations for a user, label(s), package, or path. Exactly one axis (githubUser, label, package, or path) must be specified. Multiple labels are treated as AND.")]
+        public async Task<CommandResponse> ViewCodeowners(
+            string? githubUser = null,
+            string[] labels = null,
+            string? package = null,
+            string? path = null,
+            string? repo = null)
+        {
+            try
+            {
+                var hasLabels = labels?.Length > 0;
+                var axes = new[] { !string.IsNullOrEmpty(githubUser), hasLabels, !string.IsNullOrEmpty(package), !string.IsNullOrEmpty(path) }.Count(a => a);
+                if (axes == 0)
+                {
+                    return new DefaultCommandResponse { ResponseError = "Exactly one of github user, label, package, or path must be specified." };
+                }
+                if (axes > 1)
+                {
+                    return new DefaultCommandResponse { ResponseError = "Only one of github user, label, package, or path can be specified at a time." };
+                }
+
+                if (!string.IsNullOrEmpty(githubUser))
+                {
+                    return await codeownersManagementHelper.GetViewByUser(githubUser, repo);
+                }
+                if (hasLabels)
+                {
+                    return await codeownersManagementHelper.GetViewByLabel(labels, repo);
+                }
+                if (!string.IsNullOrEmpty(package))
+                {
+                    return await codeownersManagementHelper.GetViewByPackage(package, repo);
+                }
+                return await codeownersManagementHelper.GetViewByPath(path!, repo);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error viewing codeowners data");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
     }
 }

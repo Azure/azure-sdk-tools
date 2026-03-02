@@ -39,7 +39,8 @@ public static class WorkItemMappers
         return new OwnerWorkItem
         {
             WorkItemId = wi.Id!.Value,
-            GitHubAlias = GetFieldValue(wi, "Custom.GitHubAlias")
+            GitHubAlias = GetFieldValue(wi, "Custom.GitHubAlias"),
+            RelatedIds = wi.ExtractRelatedIds()
         };
     }
 
@@ -48,7 +49,8 @@ public static class WorkItemMappers
         return new LabelWorkItem
         {
             WorkItemId = wi.Id!.Value,
-            LabelName = GetFieldValue(wi, "Custom.Label")
+            LabelName = GetFieldValue(wi, "Custom.Label"),
+            RelatedIds = wi.ExtractRelatedIds()
         };
     }
 

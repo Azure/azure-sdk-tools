@@ -147,17 +147,12 @@ describe('GitHub PR Details Fetcher', () => {
     expect(details.basic.labels).toEqual(['TypeSpec', 'Service PR']);
   });
 
-  it('should throw an error for invalid GitHub PR URL', async () => {
+  it('should return undefined for invalid GitHub PR URL', async () => {
     const invalidUrl = 'https://github.com/invalid/url';
 
     const githubClient = new GithubClient();
     const res = await githubClient.getPullRequestDetails(invalidUrl, {});
-    expect(res).toEqual({
-      comments: { review: [], issue: [] },
-      reviews: [],
-      basic: { labels: [], title: '' },
-      diff: '',
-    });
+    expect(res).toBeUndefined();
   });
 
   it('should filter out Bot comments from PR comments', async () => {
@@ -209,18 +204,12 @@ describe('GitHub Issue Details Fetcher', () => {
     ]);
   });
 
-  it('should return empty details for invalid GitHub issue URL', async () => {
+  it('should return undefined for invalid GitHub issue URL', async () => {
     const invalidUrl = 'https://github.com/invalid/url';
 
     const githubClient = new GithubClient();
     const res = await githubClient.getIssueDetails(invalidUrl, {});
-    expect(res).toEqual({
-      title: '',
-      body: '',
-      state: '',
-      labels: [],
-      comments: [],
-    });
+    expect(res).toBeUndefined();
   });
 
   it('should handle issue URL with different repo format', async () => {

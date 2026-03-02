@@ -14,7 +14,7 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 [McpServerToolType]
-[Description("Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making TSP code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations.")]
+[Description("Address, fix, resolve, or delegate APIView feedback/comments from an APIView URL. Use this tool instead of making code changes directly: it reads the reviewer comments, creates a GitHub issue with the feedback, and assigns GitHub Copilot to determine and implement the required TypeSpec client customizations.")]
 public class DelegateAPIViewFeedbackTool : MCPTool
 {
     private const string ToolName = "azsdk_typespec_delegate_apiview_feedback";

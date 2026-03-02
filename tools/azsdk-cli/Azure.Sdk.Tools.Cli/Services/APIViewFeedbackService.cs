@@ -92,7 +92,7 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
 
         if (filteredComments.Count == 0)
         {
-            _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering (all resolved or questions)", revisionId);
+            _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering", revisionId);
             return new List<ConsolidatedComment>();
         }
 

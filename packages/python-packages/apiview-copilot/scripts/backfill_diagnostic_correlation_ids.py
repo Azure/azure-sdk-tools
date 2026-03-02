@@ -31,7 +31,6 @@ from azure.cosmos.exceptions import CosmosHttpResponseError
 # Add project root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from src._credential import get_credential
-from src._utils import get_language_pretty_name
 
 # Cosmos account mapping per environment
 APIVIEW_COSMOS_ACCOUNTS = {

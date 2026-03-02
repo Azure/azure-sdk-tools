@@ -3,7 +3,6 @@
 
 using System.ComponentModel;
 using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.Extensions.AI;
 

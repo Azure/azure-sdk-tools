@@ -146,14 +146,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         var languageService = await GetLanguageServiceAsync(packagePath, ct);
 
 
-        // Try tsp fixes
+        // Step 1: try tsp fixes
 
         var buildSucceeded = false;
         var buildError = string.Empty;
         var tries = 0;
+        var feedbackToAddress = customizationRequest;
         do
         {
-            var response = await Classify(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
+            var response = await Classify(tspProjectPath, plainTextFeedback: feedbackToAddress, ct: ct);
 
             if (response.Classifications == null || response.Classifications.Count == 0) // TODO - do we want to fail if classification returns nothing?
             {
@@ -185,6 +186,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             buildSucceeded = sucess;
             buildError = error;
             tries++;
+            feedbackToAddress = error; // for next iteration, feed build error back into classification to see if there are additional fixes that can be applied based on new build errors after tsp fixes
         } while (buildSucceeded == false && tries < 2);
 
         if (buildSucceeded)

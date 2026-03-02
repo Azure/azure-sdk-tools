@@ -505,7 +505,7 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task Classification_TspApplicableWithNullText_IsSkipped()
+    public async Task Classification_TspApplicableWithNullText_FailsWithError()
     {
         var (tool, mocks) = CreateTool(configureClassifier: c =>
             c.Setup(x => x.ClassifyItemsAsync(
@@ -525,7 +525,7 @@ public class CustomizedCodeUpdateToolAutoTests
                             ItemId = "1",
                             Classification = "TSP_APPLICABLE",
                             Reason = "Can be fixed",
-                            Text = null // Null text should be skipped
+                            Text = null // Null text should cause failure
                         }
                     ]
                 }));
@@ -533,9 +533,10 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        // Should not crash; null-text items are skipped
+        // Null feedback text on a classified item should fail
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
-        Assert.That(result.Success, Is.True);
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Does.Contain("feedback text was empty"));
     }
 
     [Test]

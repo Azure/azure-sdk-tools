@@ -62,14 +62,16 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
 
-    private readonly Option<string?> customizationRequestOption = new("--customization-request")
+    private readonly Option<string> customizationRequestOption = new("--customization-request")
     {
-        Description = "Optional description of requested customization to apply to the TypeSpec."
+        Description = "Description of the requested customization to apply to the TypeSpec.",
+        Arity = ArgumentArity.ExactlyOne
     };
 
-    private readonly Option<string?> typespecProjectPath = new("--tsp-project-path")
+    private readonly Option<string> typespecProjectPath = new("--tsp-project-path")
     {
-        Description = "Optional description of requested customization to apply to the TypeSpec."
+        Description = "Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied.",
+        Arity = ArgumentArity.ExactlyOne
     };
 
     protected override Command GetCommand() =>
@@ -166,7 +168,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     BuildResult = $"Feedback could not be classified."
                 };
             }
-
 
             var (succeeded, failureReason) = await ApplyTypeSpecFixesAndRegenerate(packagePath, tspProjectPath, response, ct);
 
@@ -351,17 +352,25 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return (false, "No feedback was found to apply.");
         }
 
-        StringBuilder tspApplicableFeedback = new();
         foreach (var feedback in response.Classifications)
         {
             if (feedback.Classification == "TSP_APPLICABLE")
             {
                 if (feedback.Text == null)
                 {
-                    logger.LogWarning("Received TSP_APPLICABLE classification but feedback text was null. Skipping this item.");
-                    continue;
+                    return (false, "Received TSP_APPLICABLE classification but feedback text was empty. Every classified item must include feedback text.");
                 }
-                tspApplicableFeedback.AppendLine(feedback.Text);
+
+                var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, feedback.Text.ToString(), ct: ct);
+
+                if (!tspCustomizationResult.Success)
+                {
+                    logger.LogWarning("TypeSpec customization failed: {Reason}", tspCustomizationResult.FailureReason);
+                    return (false, tspCustomizationResult.FailureReason);
+                }
+
+                logger.LogInformation("TypeSpec customization succeeded. Changes: {Changes}", string.Join("; ", tspCustomizationResult.ChangesSummary));
+                var typeSpecChanges = tspCustomizationResult.ChangesSummary.ToList();
             }
             else if (feedback.Classification == "SUCCESS")
             {
@@ -372,17 +381,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 logger.LogInformation("Feedback item classified as REQUIRES_MANUAL_INTERVENTION: {Text}", feedback.Text);
             }
         }
-
-        var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, tspApplicableFeedback.ToString(), ct: ct);
-
-        if (!tspCustomizationResult.Success)
-        {
-            logger.LogWarning("TypeSpec customization failed: {Reason}", tspCustomizationResult.FailureReason);
-            return (false, tspCustomizationResult.FailureReason);
-        }
-
-        logger.LogInformation("TypeSpec customization succeeded. Changes: {Changes}", string.Join("; ", tspCustomizationResult.ChangesSummary));
-        var typeSpecChanges = tspCustomizationResult.ChangesSummary.ToList();
 
         // Resolve the spec repo root from the TypeSpec project path.
         // tsp-client's --local-spec-repo expects the repo root, not the project subdirectory.

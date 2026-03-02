@@ -82,7 +82,7 @@ public class TspClientHelper : ITspClientHelper
     public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, string? localSpecRepoPath = null, CancellationToken ct = default)
     {
         var tspLocationPath = Path.Combine(tspLocationDirectory, "tsp-location.yaml");
-        logger.LogInformation("tsp-client update: {tspLocationDirectory}, commit: {commit}, localSpecRepo: {localSpecRepo}", tspLocationDirectory, commitSha ?? "(latest)", localSpecRepoPath ?? "(none)");
+        logger.LogDebug("tsp-client update: {tspLocationDirectory}, commit: {commit}, localSpecRepo: {localSpecRepo}", tspLocationDirectory, commitSha ?? "(latest)", localSpecRepoPath ?? "(none)");
 
         if (!File.Exists(tspLocationPath))
         {

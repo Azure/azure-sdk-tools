@@ -1,5 +1,17 @@
 # Release History
 
+## 0.6.1 (Unreleased)
+
+### Features Added
+
+- Added `azsdk_package_pack` tool to create package artifacts
+
+### Breaking Changes
+
+### Bugs Fixed
+
+### Other Changes
+
 ## 0.6.0 (2026-02-27)
 
 ### Features Added

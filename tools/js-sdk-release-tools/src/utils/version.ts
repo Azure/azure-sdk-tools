@@ -99,7 +99,7 @@ export function isBetaVersion(stableVersion: string) {
 }
 
 export function shouldTreatAsFirstRelease(
-    npmViewResult: object | undefined,
+    npmViewResult: Record<string, unknown> | undefined,
     stableVersion: string | undefined,
     isStableRelease: boolean
 ): boolean {

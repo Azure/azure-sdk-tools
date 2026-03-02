@@ -111,25 +111,24 @@ export class NavBarComponent implements OnInit {
   }
 
   private checkApproverStatus() {
-    if (!this.userProfile?.userName || !this.isLoggedIn) {
+    if (!this.userProfile || !this.isLoggedIn) {
       this.isApprover = false;
       return;
     }
 
-    this.http.get<string>(`${this.configService.apiUrl}/Reviews/allowedApprovers`, { withCredentials: true }).subscribe({
-      next: (allowedApprovers) => {
-        if (allowedApprovers) {
-          const approversList = allowedApprovers.split(',').map(username => username.trim());
-          this.isApprover = approversList.includes(this.userProfile?.userName || '');
-        } else {
+    if (this.userProfile.permissions) {
+      this.isApprover = this.permissionsService.isLanguageApprover(this.userProfile.permissions);
+    } else {
+      // Fallback: fetch permissions if not available in profile
+      this.permissionsService.getMyPermissions().subscribe({
+        next: (permissions) => {
+          this.isApprover = this.permissionsService.isLanguageApprover(permissions);
+        },
+        error: () => {
           this.isApprover = false;
         }
-      },
-      error: (error) => {
-        console.error('Failed to fetch allowed approvers:', error);
-        this.isApprover = false;
-      }
-    });
+      });
+    }
   }
 
   private checkAdminStatus(userProfile: UserProfile) {

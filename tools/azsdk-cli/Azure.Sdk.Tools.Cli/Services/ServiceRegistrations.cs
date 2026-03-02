@@ -9,14 +9,15 @@ using ModelContextProtocol.Server;
 using OpenAI;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 
 
@@ -37,6 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IAzureSdkKnowledgeBaseService, AzureSdkKnowledgeBaseService>();
+            services.AddSingleton<IUpgradeService, UpgradeService>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
@@ -59,6 +61,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
+            services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
+            services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
             if (outputMode == OutputHelper.OutputModes.Mcp)
@@ -73,6 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
+            services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
@@ -91,6 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
+            services.AddScoped<IVerifySetupService, VerifySetupService>();
 
             // Copilot SDK services for new agents (CopilotAgent<T> pattern)
             // CopilotClient is a singleton because it manages the CLI process connection.
@@ -159,6 +165,20 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // For standard OpenAI (OPENAI_API_KEY exists, no Azure endpoint)
                 return new OpenAIClient(new ApiKeyCredential(openAiApiKey!));
             });
+        }
+
+        // Update checking and upgrade management in MCP server mode
+        // requires sequencing events at specific points in the Host lifecycle
+        // orchestrated via HostedServices
+        public static void RegisterUpgradeServices(IServiceCollection services)
+        {
+            services
+                .AddSingleton<UpgradeShutdownCoordinator>()
+                .AddHostedService<UpgradeShutdownService>();
+
+#if !DEBUG
+            services.AddHostedService<UpgradeNotificationHostedService>();
+#endif
         }
 
         // Once middleware support is added to the MCP SDK this should be replaced

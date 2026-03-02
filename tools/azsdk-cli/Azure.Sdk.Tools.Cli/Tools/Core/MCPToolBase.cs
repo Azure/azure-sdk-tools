@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
@@ -26,13 +27,15 @@ public abstract class MCPToolBase
     private bool debug = false;
     private IOutputHelper output { get; set; }
     private ITelemetryService telemetryService { get; set; }
+    private IUpgradeService upgradeService { get; set; }
     public virtual CommandGroup[] CommandHierarchy { get; set; } = [];
 
-    public void Initialize(IOutputHelper outputHelper, ITelemetryService telemetryService, bool debug = false)
+    public void Initialize(IOutputHelper outputHelper, ITelemetryService telemetryService, IUpgradeService upgradeService, bool debug = false)
     {
         this.debug = debug;
         this.output = outputHelper;
         this.telemetryService = telemetryService;
+        this.upgradeService = upgradeService;
 
         this.initialized = true;
     }
@@ -62,6 +65,21 @@ public abstract class MCPToolBase
             AddCustomTelemetryFromResponse(activity, response);
 
             output.OutputCommandResponse(response);
+
+#if !DEBUG
+            // Show update notification after command output (skip for upgrade command itself)
+            if (command.Name != SharedCommandNames.UpgradeCommandName)
+            {
+                try
+                {
+                    await upgradeService.TryShowUpgradeNotification(cancellationToken);
+                }
+                catch
+                {
+                    // Ignore update notification errors - never affect command execution
+                }
+            }
+#endif
 
             return response.ExitCode;
         }

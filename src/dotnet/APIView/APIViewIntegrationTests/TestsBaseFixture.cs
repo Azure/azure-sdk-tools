@@ -113,8 +113,10 @@ namespace APIViewIntegrationTests
             var loggerMoq = new Mock<ILogger<NotificationManager>>();
             var userProfileManagerMoq = new Mock<IUserProfileManager>();
             var userProfileCache = new UserProfileCache(memoryCache, userProfileManagerMoq.Object, Mock.Of<ILogger<UserProfileCache>>());
+            var languageServicesMoq = new Mock<IEnumerable<LanguageService>>();
+            var notificationPermissionsManagerMoq = new Mock<IPermissionsManager>();
             
-            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, userProfileCache, telemetryClient.Object, emailTemplateServiceMoq.Object, httpClientFactoryMoq.Object, loggerMoq.Object);
+            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, userProfileCache, telemetryClient.Object, emailTemplateServiceMoq.Object, httpClientFactoryMoq.Object, loggerMoq.Object, languageServicesMoq.Object, notificationPermissionsManagerMoq.Object);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -129,9 +131,13 @@ namespace APIViewIntegrationTests
             var backgroundTaskQueueMoq = new Mock<IBackgroundTaskQueue>();
             var commentsLoggerMoq = new Mock<ILogger<CommentsManager>>();
             var copilotAuthServiceMoq = new Mock<ICopilotAuthenticationService>();
+            var permissionsManagerMoq = new Mock<IPermissionsManager>();
+
+            var diagnosticCommentService = new DiagnosticCommentService(CommentRepository);
             
             CommentsManager = new CommentsManager(
                 apiRevisionsManager: APIRevisionManager,
+                diagnosticCommentService: diagnosticCommentService,
                 authorizationService: authorizationServiceMoq.Object,
                 commentsRepository: CommentRepository,
                 reviewRepository: ReviewRepository,
@@ -143,19 +149,23 @@ namespace APIViewIntegrationTests
                 configuration: _config,
                 options: options.Object,
                 backgroundTaskQueue: backgroundTaskQueueMoq.Object,
+                permissionsManager: permissionsManagerMoq.Object,
                 copilotAuthService: copilotAuthServiceMoq.Object,
                 logger: commentsLoggerMoq.Object);
 
+            var codeFileManagerLoggerMoq = new Mock<ILogger<CodeFileManager>>();
             CodeFileManager = new CodeFileManager(
                 languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
-                originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
+                originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
+                logger: codeFileManagerLoggerMoq.Object);
 
             APIRevisionManager = new APIRevisionsManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
                 codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
+                diagnosticCommentService: diagnosticCommentService,
                 originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object, configuration: _config);
+                telemetryClient: telemetryClient.Object, projectsManager: Mock.Of<IProjectsManager>(), configuration: _config);
 
             var pollingJobQueueManagerMoq = new Mock<IPollingJobQueueManager>();
             var pullRequestsRepositoryMoq = new Mock<ICosmosPullRequestsRepository>();

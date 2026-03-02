@@ -30,19 +30,23 @@ namespace APIViewWeb.Managers
         private readonly ICosmosReviewRepository _reviewsRepository;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICosmosAPIRevisionsRepository _apiRevisionsRepository;
+        private readonly IDiagnosticCommentService _diagnosticCommentService;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly ICodeFileManager _codeFileManager;
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
+        private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IProjectsManager _projectsManager;
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
 
         public APIRevisionsManager(
             IAuthorizationService authorizationService,
             ICosmosReviewRepository reviewsRepository,
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
+            IDiagnosticCommentService diagnosticCommentService,
             IHubContext<SignalRHub> signalRHubContext,
             IEnumerable<LanguageService> languageServices,
             IDevopsArtifactRepository devopsArtifactRepository,
@@ -50,11 +54,14 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
             INotificationManager notificationManager,
+            ICosmosCommentsRepository commentsRepository,
             TelemetryClient telemetryClient,
+            IProjectsManager projectsManager,
             IConfiguration configuration)
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
+            _diagnosticCommentService = diagnosticCommentService;
             _authorizationService = authorizationService;
             _signalRHubContext = signalRHubContext;
             _codeFileManager = codeFileManager;
@@ -63,7 +70,9 @@ namespace APIViewWeb.Managers
             _devopsArtifactRepository = devopsArtifactRepository;
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
+            _commentsRepository = commentsRepository;
             _telemetryClient = telemetryClient;
+            _projectsManager = projectsManager;
             var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
             if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
             {
@@ -303,25 +312,14 @@ namespace APIViewWeb.Managers
             return (updateReview, apiRevision);
         }
 
-        /// <summary>
-        /// Copy approval status from a source revision to a target revision.
-        /// This is used by automated processes to copy approval from a previously approved revision
-        /// when the API surface is identical. No authorization check is performed since this is
-        /// copying an existing human approval, not creating a new one.
-        /// </summary>
-        /// <param name="targetRevision">The revision to copy approval to</param>
-        /// <param name="sourceRevision">The approved revision to copy from</param>
-        public async Task CopyApprovalFromAsync(APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision)
+      
+        private static void ApplyApprovalFrom(APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision)
         {
-            ArgumentNullException.ThrowIfNull(targetRevision);
-            ArgumentNullException.ThrowIfNull(sourceRevision);
-            
             if (!sourceRevision.IsApproved)
             {
                 throw new ArgumentException("Source revision must be approved to copy approval from", nameof(sourceRevision));
             }
 
-            // Use the last approver from the source revision
             string approver = sourceRevision.Approvers.LastOrDefault();
             if (string.IsNullOrEmpty(approver))
             {
@@ -333,9 +331,39 @@ namespace APIViewWeb.Managers
             targetRevision.ChangeHistory = changeUpdate.ChangeHistory;
             targetRevision.IsApproved = changeUpdate.ChangeStatus;
             targetRevision.Approvers.Add(approver);
-            
+        }
 
-            await _apiRevisionsRepository.UpsertAPIRevisionAsync(targetRevision);
+        /// <summary>
+        /// Carry forward revision data from a source revision to a target revision when they have the same API surface.
+        /// This copies properties that should be preserved 
+        /// across revisions with identical API surfaces.
+        /// </summary>
+        /// <param name="targetRevision">The revision to copy data to</param>
+        /// <param name="sourceRevision">The revision to copy data from</param>
+        public async Task CarryForwardRevisionDataAsync(APIRevisionListItemModel targetRevision, APIRevisionListItemModel sourceRevision)
+        {
+            ArgumentNullException.ThrowIfNull(targetRevision);
+            ArgumentNullException.ThrowIfNull(sourceRevision);
+
+            bool dataChanged = false;
+
+            // Copy approval if source is approved and target is not
+            if (!targetRevision.IsApproved && sourceRevision.IsApproved)
+            {
+                ApplyApprovalFrom(targetRevision, sourceRevision);
+                dataChanged = true;
+            }
+
+            if (!targetRevision.HasAutoGeneratedComments && sourceRevision.HasAutoGeneratedComments)
+            {
+                targetRevision.HasAutoGeneratedComments = true;
+                dataChanged = true;
+            }
+
+            if (dataChanged)
+            {
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(targetRevision);
+            }
         }
 
         /// <summary>
@@ -582,21 +610,38 @@ namespace APIViewWeb.Managers
                 createdBy: user.GetGitHubLogin(),
                 label: label);
 
-            var codeFile = await _codeFileManager.CreateCodeFileAsync(
+            APICodeFileModel codeFileModel = await _codeFileManager.CreateCodeFileAsync(
                 apiRevision.Id,
                 name,
                 true,
                 fileStream,
                 language);
 
-            apiRevision.Files.Add(codeFile);
+            apiRevision.Files.Add(codeFileModel);
 
             var languageService = language != null ? _languageServices.FirstOrDefault(l => l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
+            bool isPipelineGenerated = languageService != null && languageService.IsReviewGenByPipeline;
+            
             // Run pipeline to generate the review if sandbox is enabled
-            if (languageService != null && languageService.IsReviewGenByPipeline)
+            if (isPipelineGenerated)
             {
                 // Run offline review gen for review and reviewCodeFileModel
-                await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFile.FileId, name, language);
+                await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFileModel.FileId, name, language);
+            }
+            else
+            {
+                CodeFile codeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(apiRevision.Id, codeFileModel.FileId);
+                if (codeFile?.Diagnostics != null && codeFile.Diagnostics.Length > 0)
+                {
+                    DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                        review.Id,
+                        apiRevision.Id,
+                        null, // No existing hash for new revisions
+                        codeFile.Diagnostics,
+                        []);
+                    
+                    apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
+                }
             }
 
             // auto subscribe revision creation user
@@ -703,6 +748,8 @@ namespace APIViewWeb.Managers
         {
             if (!apiRevision.IsDeleted)
             {
+                _telemetryClient.TrackTrace($"Soft-deleting API revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}, User={userName}, Notes={notes}");
+
                 var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
                      changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
 
@@ -728,6 +775,36 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
         }
 
+        private static async Task<TypeSpecMetadata> ExtractTypeSpecMetadataForReviewAsync(
+            ZipArchive archive,
+            string targetReviewId,
+            string targetApiRevisionId,
+            string metadataFileName)
+        {
+            var metadataEntry = archive.Entries.FirstOrDefault(e =>
+                e.FullName.Split("/") is { Length: >= 4 } parts &&
+                parts[1].Equals(targetReviewId, StringComparison.OrdinalIgnoreCase) &&
+                parts[2].Equals(targetApiRevisionId, StringComparison.OrdinalIgnoreCase) &&
+                Path.GetFileName(e.FullName).Equals(metadataFileName, StringComparison.OrdinalIgnoreCase));
+
+            if (metadataEntry == null)
+                return null;
+
+            try
+            {
+                await using var metadataStream = metadataEntry.Open();
+                var jsonSerializerOptions = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                return await JsonSerializer.DeserializeAsync<TypeSpecMetadata>(metadataStream, jsonSerializerOptions);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
         /// <summary>
         /// UpdateAPIRevisionCodeFileAsync
         /// </summary>
@@ -735,17 +812,24 @@ namespace APIViewWeb.Managers
         /// <param name="buildId"></param>
         /// <param name="artifact"></param>
         /// <param name="project"></param>
+        /// <param name="metadataFileName">Optional TypeSpec metadata file name (e.g., "typespec-metadata.json").</param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project)
+        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project, string metadataFileName = null)
         {
             var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
             var archive = new ZipArchive(stream);
+
             foreach (var entry in archive.Entries)
             {
                 var reviewFilePath = entry.FullName;
                 var reviewDetails = reviewFilePath.Split("/");
 
                 if (reviewDetails.Length < 4 || !reviewFilePath.EndsWith(".json"))
+                    continue;
+
+                // Skip metadata files - they are processed on-demand for TypeSpec reviews
+                var fileName = Path.GetFileName(reviewFilePath);
+                if (!string.IsNullOrEmpty(metadataFileName) && fileName.Equals(metadataFileName, StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 var reviewId = reviewDetails[1];
@@ -777,6 +861,16 @@ namespace APIViewWeb.Managers
                         file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
                         await _reviewsRepository.UpsertReviewAsync(review);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+
+                        // Process TypeSpec metadata if available for this review (lazy load only for TypeSpec)
+                        if (!string.IsNullOrEmpty(metadataFileName) && !string.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.TypeSpecLanguage)
+                        {
+                            var typeSpecMetadata = await ExtractTypeSpecMetadataForReviewAsync(archive, reviewId, apiRevisionId, metadataFileName);
+                            if (typeSpecMetadata != null)
+                            {
+                                await _projectsManager.UpsertProjectFromMetadataAsync(ApiViewConstants.AzureSdkBotName, typeSpecMetadata, review);
+                            }
+                        }
 
                         if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
                         {
@@ -876,33 +970,267 @@ namespace APIViewWeb.Managers
 
         /// <summary>
         /// SoftDelete APIRevision if its not been updated after many months
+        /// Preserves the last approved stable release and last preview release for each review
         /// </summary>
         /// <param name="archiveAfterMonths"></param>
         /// <returns></returns>
         public async Task AutoArchiveAPIRevisions(int archiveAfterMonths)
         {
-            var lastUpdatedDate = DateTime.Now.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
+            var lastUpdatedDate = DateTime.UtcNow.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
             var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
 
-            // Find all inactive reviews
+            _telemetryClient.TrackTrace($"AutoArchive: Found {manualRevisions.Count()} manual revisions not updated since {lastUpdatedDate}");
+
+            // Group revisions by ReviewId to identify which revisions to preserve
+            var revisionsByReview = manualRevisions.GroupBy(r => r.ReviewId).ToList();
+            var revisionsToPreserve = new HashSet<string>();
+
+            // Fetch all revisions for affected reviews concurrently to avoid N+1 sequential calls
+            var reviewIds = revisionsByReview.Select(g => g.Key).ToList();
+            var revisionTasks = reviewIds
+                .Select(id => _apiRevisionsRepository.GetAPIRevisionsAsync(id))
+                .ToList();
+            var revisionResults = await Task.WhenAll(revisionTasks);
+            
+            var allRevisionsDict = new Dictionary<string, IEnumerable<APIRevisionListItemModel>>();
+            for (int i = 0; i < reviewIds.Count; i++)
+            {
+                allRevisionsDict[reviewIds[i]] = revisionResults[i];
+            }
+
+            foreach (var reviewGroup in revisionsByReview)
+            {
+                var allRevisionsForReview = allRevisionsDict[reviewGroup.Key];
+                
+                // Find the last approved stable release by creation date to avoid preserving edited old versions
+                var lastApprovedStable = allRevisionsForReview
+                    .Where(r => r.IsApproved && !IsPrerelease(r))
+                    .OrderByDescending(r => r.CreatedOn)
+                    .FirstOrDefault();
+                
+                if (lastApprovedStable != null)
+                {
+                    revisionsToPreserve.Add(lastApprovedStable.Id);
+                }
+
+                // Find the last preview release (approved or not) by creation date
+                var lastPreview = allRevisionsForReview
+                    .Where(r => IsPrerelease(r))
+                    .OrderByDescending(r => r.CreatedOn)
+                    .FirstOrDefault();
+                
+                if (lastPreview != null)
+                {
+                    revisionsToPreserve.Add(lastPreview.Id);
+                }
+            }
+
+            _telemetryClient.TrackTrace($"AutoArchive: Preserving {revisionsToPreserve.Count} revisions (last stable/preview per review)");
+
+            // Archive inactive revisions, excluding preserved ones
+            int preservedCount = 0;
+            int archivedCount = 0;
+            
             foreach (var apiRevision in manualRevisions)
             {
+                if (revisionsToPreserve.Contains(apiRevision.Id))
+                {
+                    preservedCount++;
+                    continue;
+                }
+
                 var requestTelemetry = new RequestTelemetry { Name = "Archiving Revision " + apiRevision.Id };
                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
                     await SoftDeleteAPIRevisionAsync(apiRevision: apiRevision, notes: "Auto archived");
+                    archivedCount++;
                     await Task.Delay(500);
                 }
                 catch (Exception e)
                 {
-                    _telemetryClient.TrackException(e);
+                    _telemetryClient.TrackException(e, new Dictionary<string, string>
+                    {
+                        { "RevisionId", apiRevision.Id },
+                        { "ReviewId", apiRevision.ReviewId },
+                        { "ErrorType", "AutoArchiveFailure" }
+                    });
                 }
                 finally
                 {
                     _telemetryClient.StopOperation(operation);
                 }
             }
+            
+            _telemetryClient.TrackTrace($"AutoArchive: Completed. Archived={archivedCount}, Preserved={preservedCount}, TotalProcessed={manualRevisions.Count()}");
+
+            // Log summary telemetry once per run instead of per revision
+            _telemetryClient.TrackEvent("AutoArchiveAPIRevisions", new Dictionary<string, string>
+            {
+                { "PreservedCount", preservedCount.ToString() },
+                { "ArchivedCount", archivedCount.ToString() },
+                { "TotalProcessed", manualRevisions.Count().ToString() }
+            });
+        }
+
+        /// <summary>
+        /// Permanently deletes (hard deletes) API revisions that have been soft-deleted for a specified period.
+        /// Only removes Manual and PullRequest revision types to preserve Automatic revisions for history.
+        /// Deletes both Cosmos DB entries and associated blob storage (code files and originals).
+        /// </summary>
+        /// <param name="purgeAfterMonths">Number of months a revision must be soft-deleted before being purged</param>
+        public async Task AutoPurgeAPIRevisions(int purgeAfterMonths)
+        {
+            const int DelayBetweenDeletionsMs = 500; // Rate limiting to avoid overwhelming services
+            
+            // AddMonths handles month-end edge cases correctly (e.g., Jan 31 minus 1 month = Dec 31)
+            // This ensures accurate grace period calculation regardless of month lengths
+            var deletedBeforeDate = DateTime.UtcNow.AddMonths(-purgeAfterMonths);
+
+            _telemetryClient.TrackTrace($"AutoPurge: Starting. Looking for revisions soft-deleted before {deletedBeforeDate} (purgeAfterMonths={purgeAfterMonths})");
+            
+            // Query for soft-deleted Manual revisions
+            var manualRevisions = await _apiRevisionsRepository.GetSoftDeletedAPIRevisionsAsync(
+                deletedBefore: deletedBeforeDate, 
+                apiRevisionType: APIRevisionType.Manual);
+            
+            // Query for soft-deleted PullRequest revisions
+            var pullRequestRevisions = await _apiRevisionsRepository.GetSoftDeletedAPIRevisionsAsync(
+                deletedBefore: deletedBeforeDate, 
+                apiRevisionType: APIRevisionType.PullRequest);
+            
+            // Combine both types
+            var revisionsToDelete = manualRevisions.Concat(pullRequestRevisions).ToList();
+
+            _telemetryClient.TrackTrace($"AutoPurge: Found {revisionsToDelete.Count} revisions to purge (Manual={manualRevisions.Count()}, PullRequest={pullRequestRevisions.Count()})");
+            
+            int successCount = 0;
+            int errorCount = 0;
+            
+            foreach (var apiRevision in revisionsToDelete)
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Purging Revision " + apiRevision.Id };
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    _telemetryClient.TrackTrace($"AutoPurge: Purging revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}, FileCount={apiRevision.Files?.Count ?? 0}");
+
+                    // Delete associated blobs (code files and originals)
+                    foreach (var file in apiRevision.Files ?? new List<APICodeFileModel>())
+                    {
+                        try
+                        {
+                            // Delete code file blob
+                            await _codeFileRepository.DeleteCodeFileAsync(apiRevision.Id, file.FileId);
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log but continue - blob may not exist
+                            _telemetryClient.TrackException(ex, new Dictionary<string, string>
+                            {
+                                { "RevisionId", apiRevision.Id },
+                                { "FileId", file.FileId },
+                                { "ErrorType", "CodeFileDeletion" }
+                            });
+                        }
+                        
+                        // Delete original file blob if it exists
+                        if (file.HasOriginal)
+                        {
+                            try
+                            {
+                                await _originalsRepository.DeleteOriginalAsync(file.FileId);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log but continue - blob may not exist
+                                _telemetryClient.TrackException(ex, new Dictionary<string, string>
+                                {
+                                    { "RevisionId", apiRevision.Id },
+                                    { "FileId", file.FileId },
+                                    { "ErrorType", "OriginalFileDeletion" }
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Delete Cosmos DB entry
+                    await _apiRevisionsRepository.DeleteAPIRevisionAsync(apiRevision.Id, apiRevision.ReviewId);
+                    
+                    successCount++;
+                    _telemetryClient.TrackTrace($"AutoPurge: Successfully purged revision. RevisionId={apiRevision.Id}, ReviewId={apiRevision.ReviewId}");
+                    
+                    // Small delay to avoid overwhelming services
+                    await Task.Delay(DelayBetweenDeletionsMs);
+                }
+                catch (Exception e)
+                {
+                    errorCount++;
+                    _telemetryClient.TrackException(e, new Dictionary<string, string>
+                    {
+                        { "RevisionId", apiRevision.Id },
+                        { "ReviewId", apiRevision.ReviewId },
+                        { "ErrorType", "PurgeFailure" }
+                    });
+                }
+                finally
+                {
+                    _telemetryClient.StopOperation(operation);
+                }
+            }
+            
+            _telemetryClient.TrackTrace($"AutoPurge: Completed. Success={successCount}, Errors={errorCount}, TotalProcessed={revisionsToDelete.Count}");
+
+            // Log summary telemetry
+            _telemetryClient.TrackEvent("AutoPurgeAPIRevisions", new Dictionary<string, string>
+            {
+                { "SuccessCount", successCount.ToString() },
+                { "ErrorCount", errorCount.ToString() },
+                { "TotalProcessed", revisionsToDelete.Count.ToString() },
+                { "PurgeAfterMonths", purgeAfterMonths.ToString() }
+            });
+        }
+
+        /// <summary>
+        /// Determines if a revision is a prerelease based on its package version
+        /// </summary>
+        /// <param name="revision">The API revision to check</param>
+        /// <returns>True if the revision is a prerelease, false otherwise</returns>
+        private bool IsPrerelease(APIRevisionListItemModel revision)
+        {
+            var packageVersion = GetPackageVersion(revision);
+            if (string.IsNullOrEmpty(packageVersion))
+            {
+                return false;
+            }
+
+            try
+            {
+                var semVer = new AzureEngSemanticVersion(packageVersion, revision.Language);
+                return semVer.IsSemVerFormat && semVer.IsPrerelease;
+            }
+            catch
+            {
+                // If version parsing fails, treat as non-prerelease to be conservative
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Safely extracts package version from a revision's files
+        /// </summary>
+        /// <param name="revision">The API revision</param>
+        /// <returns>Package version string or null if not available</returns>
+        private string GetPackageVersion(APIRevisionListItemModel revision)
+        {
+            if (revision.Files == null || !revision.Files.Any())
+            {
+                return null;
+            }
+
+            // Assume all files in a revision have the same package version
+            // (revisions are typically for a single package version)
+            return revision.Files.First().PackageVersion;
         }
 
         /// <summary>
@@ -937,6 +1265,15 @@ namespace APIViewWeb.Managers
             {
                 apiRevisionCodeFile.FileName = originalName;
             }
+
+            DiagnosticSyncResult diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                reviewId,
+                apiRevision.Id,
+                null, 
+                codeFile.Diagnostics,
+                []);
+            
+            apiRevision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
 
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;
@@ -1131,6 +1468,167 @@ namespace APIViewWeb.Managers
                 }
             }
             return revisionModel;
+        }
+
+        /// <summary>
+        /// Computes the quality score for an API revision based on unresolved comments.
+        /// Score starts at 100 and is degraded by severity-weighted comment counts.
+        /// AI-generated comment penalties are scaled by their individual confidence scores.
+        /// Penalties are also scaled relative to the size of the review (number of code lines).
+        /// </summary>
+        /// <param name="apiRevisionId">The API revision ID to calculate the score for.</param>
+        /// <returns>A ReviewQualityScore containing the calculated score and comment counts.</returns>
+        public async Task<ReviewQualityScore> GetReviewQualityScoreAsync(string apiRevisionId)
+        {
+            if (string.IsNullOrWhiteSpace(apiRevisionId))
+            {
+                throw new ArgumentException("API Revision ID cannot be null or empty.", nameof(apiRevisionId));
+            }
+
+            var revision = await GetAPIRevisionAsync(apiRevisionId);
+            if (revision == null)
+            {
+                throw new ArgumentException($"API Revision with ID '{apiRevisionId}' not found.", nameof(apiRevisionId));
+            }
+
+            // Get the code file to determine review size
+            var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+            
+            // Count total reviewable lines (excluding documentation, whitespace, etc.)
+            int totalReviewableLines = 0;
+            if (codeFile != null)
+            {
+                var renderedLines = codeFile.Render(showDocumentation: false);
+                if (renderedLines != null)
+                {
+                    totalReviewableLines = renderedLines.Count(line =>
+                        !line.IsDocumentation &&
+                        !string.IsNullOrWhiteSpace(line.DisplayString));
+                }
+            }
+
+            // Default to 100 lines if we can't determine size (prevents division by zero and overly harsh penalties)
+            if (totalReviewableLines == 0)
+            {
+                totalReviewableLines = 100;
+            }
+
+            // Sync diagnostic comments if necessary so the DB is up-to-date before scoring.
+            // This mirrors the sync that happens when the review page loads.
+            var allComments = (await _commentsRepository.GetCommentsAsync(revision.ReviewId, isDeleted: false, commentType: CommentType.APIRevision)).ToList();
+            if (codeFile != null && codeFile.CodeFile.Diagnostics != null && codeFile.CodeFile.Diagnostics.Length > 0)
+            {
+                var diagnosticResult = await _diagnosticCommentService.SyncDiagnosticCommentsAsync(
+                    revision.ReviewId,
+                    apiRevisionId,
+                    revision.DiagnosticsHash,
+                    codeFile.CodeFile.Diagnostics,
+                    allComments);
+
+                if (diagnosticResult.WasSynced)
+                {
+                    revision.DiagnosticsHash = diagnosticResult.DiagnosticsHash;
+                    await UpdateAPIRevisionAsync(revision);
+
+                    // Replace stale diagnostic comments with freshly synced ones
+                    allComments = allComments
+                        .Where(c => c.CommentSource != CommentSource.Diagnostic || c.APIRevisionId != apiRevisionId)
+                        .Concat(diagnosticResult.Comments)
+                        .ToList();
+                }
+            }
+
+            // Apply the shared visibility filter so that only comments relevant to this
+            // revision are considered. Same rules as the Conversations panel and code panel.
+            var visibleComments = CommentVisibilityHelper.GetVisibleComments(allComments, apiRevisionId);
+            
+            var unresolvedComments = visibleComments
+                .Where(c => !c.IsResolved)
+                .ToList();
+
+            // Group comments by conversation thread. Only the thread-starting comment's severity
+            // should be counted — replies within a thread do not carry their own severity and must
+            // not inflate the score. Use ThreadId when available, falling back to ElementId for
+            // legacy comments that predate thread support.
+            var threads = unresolvedComments
+                .GroupBy(c => !string.IsNullOrEmpty(c.ThreadId) ? c.ThreadId : c.ElementId)
+                .ToList();
+
+            // For each thread, pick the first comment (by creation date) as the representative.
+            // Its severity determines the thread's severity for scoring purposes.
+            var threadRepresentatives = threads
+                .Select(g => g.OrderBy(c => c.CreatedOn).First())
+                .ToList();
+
+            var score = new ReviewQualityScore();
+            double totalPenalty = 0.0;
+
+            // Calculate base scale factor: penalties are relative to review size
+            // For a 100-line review, use base penalties
+            // For larger reviews, penalties are proportionally smaller per comment
+            double scaleFactor = 100.0 / totalReviewableLines;
+
+            foreach (var comment in threadRepresentatives)
+            {
+                // Questions and Suggestions don't degrade the score
+                if (comment.Severity == CommentSeverity.Question || comment.Severity == CommentSeverity.Suggestion)
+                {
+                    if (comment.Severity == CommentSeverity.Question)
+                    {
+                        score.UnresolvedQuestionCount++;
+                    }
+                    else
+                    {
+                        score.UnresolvedSuggestionCount++;
+                    }
+                    continue;
+                }
+
+                // Calculate the penalty for this comment based on severity.
+                // Null (unknown) severity receives a ShouldFix-equivalent penalty to
+                // incentivize authors to set a proper severity on their comments.
+                double basePenalty = comment.Severity switch
+                {
+                    CommentSeverity.MustFix => ReviewQualityScore.MustFixPenalty,
+                    CommentSeverity.ShouldFix => ReviewQualityScore.ShouldFixPenalty,
+                    null => ReviewQualityScore.UnknownPenalty,
+                    _ => 0.0
+                };
+
+                // Scale penalty by review size
+                double scaledPenalty = basePenalty * scaleFactor;
+
+                // For AI-generated comments, further scale the penalty by confidence score
+                if (comment.CommentSource == CommentSource.AIGenerated)
+                {
+                    // Confidence score ranges from 0.0 to 1.0
+                    scaledPenalty *= comment.ConfidenceScore;
+                }
+
+                totalPenalty += scaledPenalty;
+
+                // Track counts by severity
+                switch (comment.Severity)
+                {
+                    case CommentSeverity.MustFix:
+                        score.UnresolvedMustFixCount++;
+                        break;
+                    case CommentSeverity.ShouldFix:
+                        score.UnresolvedShouldFixCount++;
+                        break;
+                    case null:
+                        score.UnresolvedUnknownCount++;
+                        break;
+                }
+            }
+
+            // Total unresolved count includes ALL unresolved threads (questions and null-severity included)
+            score.TotalUnresolvedCount = threadRepresentatives.Count;
+
+            // Calculate final score: start at 100 and subtract penalty, but never go below 0
+            score.Score = Math.Max(0, 100.0 - totalPenalty);
+
+            return score;
         }
     }
 }

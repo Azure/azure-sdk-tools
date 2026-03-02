@@ -25,6 +25,16 @@ public enum SdkLanguage
 public static class SdkLanguageHelpers
 {
 
+    public static string ToWorkItemString(this SdkLanguage value)
+    {
+        var field = value.GetType().GetField(value.ToString())
+            ?? throw new InvalidOperationException($"Unable to find JsonStringEnumMemberName field for SdkLanguage value '{value}'");
+
+        var attribute = field.GetCustomAttributes(typeof(JsonStringEnumMemberNameAttribute), false)
+                             .FirstOrDefault() as JsonStringEnumMemberNameAttribute;
+        return attribute?.Name ?? value.ToString();
+    }
+
     private static readonly ImmutableDictionary<string, SdkLanguage> RepoToLanguageMap = new Dictionary<string, SdkLanguage>()
     {
         { "azure-sdk-for-net", SdkLanguage.DotNet },

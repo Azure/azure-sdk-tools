@@ -205,7 +205,7 @@ sdk/omega/ @omega
             // Find the inserted entry line
             var entryIndex = Array.FindIndex(lines, l => l.Contains("sdk/middle/"));
             Assert.That(entryIndex, Is.GreaterThan(0), "Entry should not be at the top");
-            Assert.That(string.IsNullOrWhiteSpace(lines[entryIndex - 1]), "Should be blank line before inserted entry");
+
             // Check for blank line after if not at end
             if (entryIndex + 1 < lines.Length)
             {

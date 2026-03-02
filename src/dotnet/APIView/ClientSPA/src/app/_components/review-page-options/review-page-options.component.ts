@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToggleSwitchChangeEvent } from 'primeng/toggleswitch';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
@@ -14,9 +14,10 @@ import { PullRequestsService } from 'src/app/_services/pull-requests/pull-reques
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
 import { FormControl } from '@angular/forms';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
+import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { environment } from 'src/environments/environment';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
@@ -24,6 +25,7 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteNotificationDto';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
+import { ReviewQualityScore } from 'src/app/_models/reviewQualityScore';
 
 // Constants for AI review button text
 const AI_REVIEW_BUTTON_TEXT = {
@@ -38,7 +40,7 @@ const AI_REVIEW_BUTTON_TEXT = {
     styleUrls: ['./review-page-options.component.scss'],
     standalone: false
 })
-export class ReviewPageOptionsComponent implements OnInit, OnChanges {
+export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy {
   @Input() loadingStatus : 'loading' | 'completed' | 'failed' = 'loading';
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
@@ -47,7 +49,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
   @Input() diffAPIRevision : APIRevision | undefined = undefined;
-  @Input() preferredApprovers: string[] = [];
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasActiveConversation : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
@@ -92,6 +93,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   overrideActiveConversationforApproval : boolean = false;
   overrideFatalDiagnosticsforApproval : boolean = false;
 
+  get canApproveForReviewLanguage(): boolean {
+    if (!this.userProfile?.permissions || !this.review?.language) {
+      return false;
+    }
+    return this.permissionsService.isApproverFor(this.userProfile.permissions, this.review.language);
+  }
+
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
@@ -110,6 +118,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   codeLineSearchText: FormControl = new FormControl('');
 
+  qualityScore: ReviewQualityScore | undefined = undefined;
+  qualityScoreLoading: boolean = false;
+
   associatedPullRequests  : PullRequestModel[] = [];
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
@@ -118,6 +129,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   selectedApprovers: string[] = [];
   filteredApprovers: string[] = [];
   reviewerSearchText: string = '';
+  private languageApprovers: string[] = [];
 
   diffStyleOptions : any[] = [
     { label: 'Changed types only', value: TREE_DIFF_STYLE },
@@ -130,10 +142,17 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
     private signalRService: SignalRService, private notificationsService: NotificationsService,
-    private permissionsService: PermissionsService) { }
+    private permissionsService: PermissionsService, private reviewContextService: ReviewContextService, private confirmationService: ConfirmationService) { }
 
   async ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
+
+    // Subscribe to language approvers from context service
+    this.reviewContextService.getLanguageApprovers$().pipe(takeUntil(this.destroy$)).subscribe(approvers => {
+      this.languageApprovers = approvers;
+      this.filteredApprovers = this.sortSelectedFirst([...approvers]);
+      this.reviewerSearchText = '';
+    });
 
     // Load EnableNamespaceReview feature flag from Azure App Configuration
     this.reviewsService.getEnableNamespaceReview().pipe(take(1)).subscribe({
@@ -157,6 +176,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     });
     this.handleRealTimeAIReviewUpdates();
     this.handleSiteNotification();
+
+    this.commentsService.qualityScoreRefreshNeeded$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.fetchQualityScore();
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -170,17 +193,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.isAdmin = this.permissionsService.isAdmin(this.userProfile?.permissions);
     }
 
-    if (changes['preferredApprovers']) {
-      this.filteredApprovers = [...this.preferredApprovers];
-      this.reviewerSearchText = '';
-    }
-
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
       this.setNamespaceReviewStates();
+      this.fetchQualityScore();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
         this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.GENERATING;
@@ -292,18 +311,45 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   filterReviewers() {
     if (!this.reviewerSearchText) {
-      this.filteredApprovers = [...this.preferredApprovers];
+      this.filteredApprovers = this.sortSelectedFirst([...this.languageApprovers]);
     } else {
       const searchLower = this.reviewerSearchText.toLowerCase();
-      this.filteredApprovers = this.preferredApprovers.filter(approver =>
-        approver.toLowerCase().includes(searchLower)
+      this.filteredApprovers = this.sortSelectedFirst(
+        this.languageApprovers.filter(approver =>
+          approver.toLowerCase().includes(searchLower)
+        ),
+        searchLower
       );
     }
   }
 
   resetReviewerSearch() {
     this.reviewerSearchText = '';
-    this.filteredApprovers = [...this.preferredApprovers];
+    this.filteredApprovers = this.sortSelectedFirst([...this.languageApprovers]);
+  }
+
+  /**
+   * Merges selected approvers (who may not be language approvers) into the list,
+   * then sorts so selected reviewers appear first — matching GitHub's reviewer dropdown behavior.
+   */
+  private sortSelectedFirst(approvers: string[], searchFilter?: string): string[] {
+    // Ensure currently assigned reviewers always appear, even if not in languageApprovers
+    const merged = [...approvers];
+    for (const selected of this.selectedApprovers) {
+      if (!merged.includes(selected)) {
+        // When searching, only add selected reviewers that match the filter
+        if (!searchFilter || selected.toLowerCase().includes(searchFilter)) {
+          merged.push(selected);
+        }
+      }
+    }
+    return merged.sort((a, b) => {
+      const aSelected = this.selectedApprovers.includes(a);
+      const bSelected = this.selectedApprovers.includes(b);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
   }
 
   toggleReviewer(approver: string) {
@@ -391,6 +437,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     if (this.isMissingPackageVersion) {
       return "This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.";
     }
+    if (this.hasUnresolvedMustFix()) {
+      return "Cannot approve while unresolved Must Fix comments remain.";
+    }
     if (isReviewByCopilotRequired && !isVersionReviewedByCopilot) {
       return "To approve the current API revision, it must first be reviewed by Copilot";
     }
@@ -419,6 +468,30 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
     // Update button state
     this.updateNamespaceReviewButtonState();
+  }
+
+  fetchQualityScore() {
+    if (!this.activeAPIRevision?.id) return;
+    this.qualityScoreLoading = true;
+    this.apiRevisionsService.getQualityScore(this.activeAPIRevision.id).pipe(take(1)).subscribe({
+      next: (score: ReviewQualityScore) => {
+        this.qualityScore = score;
+        this.qualityScoreLoading = false;
+        // Re-evaluate approval states since must-fix count may have changed
+        this.setAPIRevisionApprovalStates();
+      },
+      error: () => {
+        this.qualityScore = undefined;
+        this.qualityScoreLoading = false;
+      }
+    });
+  }
+
+  getScoreColorClass(): string {
+    if (!this.qualityScore) return '';
+    if (this.qualityScore.score >= 80) return 'text-success';
+    if (this.qualityScore.score >= 50) return 'text-warning';
+    return 'text-danger';
   }
 
   setPullRequestsInfo() {
@@ -480,9 +553,21 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   clearAutoGeneratedComments() {
-    this.commentsService.clearAutoGeneratedComments(this.activeAPIRevision?.id!).pipe(take(1)).subscribe({
-      error: (error) => {
-        this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Comment Error', detail: 'Failed to clear auto-generated comments.', key: 'bc', life: 3000 });
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to clear all Copilot-generated comments? This action cannot be undone.',
+      header: 'Clear Copilot Comments',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text',
+      accept: () => {
+        this.commentsService.clearAutoGeneratedComments(this.activeAPIRevision?.id!).pipe(take(1)).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Comments Cleared', detail: 'All Copilot-generated comments have been cleared.', key: 'bc', life: 3000 });
+          },
+          error: (error) => {
+            this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Comment Error', detail: 'Failed to clear auto-generated comments.', key: 'bc', life: 3000 });
+          }
+        });
       }
     });
   }
@@ -621,9 +706,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {
-    // Determine base path - use /spa/browser/ if we're on spa.* hostname, otherwise use /
-    const basePath = window.location.hostname.startsWith('spa.') ? '/spa/browser/' : '/';
-    return `${window.location.protocol}//${window.location.host}${basePath}review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
+    return `${window.location.origin}/review/${pr.reviewId}?activeApiRevisionId=${pr.apiRevisionId}`;
   }
 
    /**
@@ -633,6 +716,58 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   updateRoute() {
     let newQueryParams = getQueryParams(this.route); // this automatically excludes the nId query parameter
     this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+  }
+
+  deleteReview() {
+    if (!this.review?.id) {
+      return;
+    }
+
+    // Get the revision count and show confirmation dialog
+    this.reviewsService.getReviewRevisionCount(this.review.id).pipe(take(1)).subscribe({
+      next: (revisionCount: number) => {
+        const message = `Are you sure you want to delete this review? It has ${revisionCount} revision(s) that will also be deleted. This action cannot be undone.`;
+
+        this.confirmationService.confirm({
+          message: message,
+          header: 'Delete Review',
+          icon: 'pi pi-exclamation-triangle',
+          acceptButtonStyleClass: 'p-button-danger',
+          rejectButtonStyleClass: 'p-button-text',
+          accept: () => {
+            this.reviewsService.deleteReview(this.review!.id).pipe(take(1)).subscribe({
+              next: () => {
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Review Deleted',
+                  detail: 'The review has been successfully deleted.',
+                  life: 3000
+                });
+                // Navigate to reviews list after successful deletion
+                this.router.navigate(['/']);
+              },
+              error: (error) => {
+                const errorMessage = error.error || 'Failed to delete the review. Please try again.';
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Delete Failed',
+                  detail: errorMessage,
+                  life: 5000
+                });
+              }
+            });
+          }
+        });
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to get revision count. Please try again.',
+          life: 3000
+        });
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -655,11 +790,16 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   private shouldDisableApproval(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): boolean {
     if (this.isMissingPackageVersion) return true;
+    if(this.activeAPIRevision?.isApproved) return false;
+    if (this.hasUnresolvedMustFix()) return true;
     if (!this.isCopilotReviewSupported) return false;
     if (this.isPreviewVersion()) return false;
-    if (this.activeAPIRevisionIsApprovedByCurrentUser) return false;
 
     return isReviewByCopilotRequired && !isVersionReviewedByCopilot;
+  }
+
+  private hasUnresolvedMustFix(): boolean {
+    return (this.qualityScore?.unresolvedMustFixCount ?? 0) > 0;
   }
 
   private isCopilotReviewSupportedForPackage(): boolean {

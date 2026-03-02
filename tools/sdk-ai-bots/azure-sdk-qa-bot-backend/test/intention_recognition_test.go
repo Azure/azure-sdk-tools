@@ -3,10 +3,10 @@ package test
 import (
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/agent"
+	"github.com/openai/openai-go/v3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -440,18 +440,14 @@ func TestIntentionRecognition_PlaneDetection_UnknownNoSignal(t *testing.T) {
 }
 
 // Helper function to convert model.Message to LLM message format
-func convertToLLMMessages(messages []model.Message) []azopenai.ChatRequestMessageClassification {
-	llmMessages := make([]azopenai.ChatRequestMessageClassification, 0, len(messages))
+func convertToLLMMessages(messages []model.Message) []openai.ChatCompletionMessageParamUnion {
+	llmMessages := make([]openai.ChatCompletionMessageParamUnion, 0, len(messages))
 	for _, msg := range messages {
 		switch msg.Role {
 		case model.Role_User:
-			llmMessages = append(llmMessages, &azopenai.ChatRequestUserMessage{
-				Content: azopenai.NewChatRequestUserMessageContent(msg.Content),
-			})
+			llmMessages = append(llmMessages, openai.UserMessage(msg.Content))
 		case model.Role_Assistant:
-			llmMessages = append(llmMessages, &azopenai.ChatRequestAssistantMessage{
-				Content: azopenai.NewChatRequestAssistantMessageContent(msg.Content),
-			})
+			llmMessages = append(llmMessages, openai.AssistantMessage(msg.Content))
 		}
 	}
 	return llmMessages

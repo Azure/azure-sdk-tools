@@ -19,6 +19,7 @@ public static class DotNetRequirements
         public override string Name => "Dotnet SDK";
         public override string? MinVersion => "9.0.306";
         public override string[] CheckCommand => ["dotnet", "--version"];
+        public override string? NotAutoInstallableReason => NotInstallableReasons.LanguageRuntime;
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.DotNet);

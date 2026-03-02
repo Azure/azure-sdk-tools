@@ -1,0 +1,42 @@
+@model APIViewWeb.Models.NamespaceReviewRequestEmailModel
+@{
+    Layout = "/EmailTemplates/_EmailLayout.cshtml";
+    ViewData["EmailTitle"] = "Namespace Review Request";
+}
+
+<p class="section">Hi Architects,</p>
+
+<p class="section">
+    A namespace review has been requested for <strong>@Model.PackageName</strong>.
+    Please review package naming across SDK languages and share feedback in APIView.
+</p>
+
+<div class="panel">
+    <div><strong>Package Name:</strong> @Model.PackageName</div>
+    <div><strong>TypeSpec API View:</strong> <a href="@Model.TypeSpecUrl">@Model.PackageName</a></div>
+</div>
+
+<p class="section"><strong>Language-specific API Views:</strong></p>
+<ul class="list">
+    @if (Model.LanguageReviews.Count == 0)
+    {
+        <li>No language-specific reviews available yet.</li>
+    }
+    else
+    {
+        @foreach (var review in Model.LanguageReviews)
+        {
+            <li><strong>@review.LanguageName:</strong> <a href="@review.ReviewUrl">@review.PackageName</a></li>
+        }
+    }
+</ul>
+
+@if (!string.IsNullOrWhiteSpace(Model.Notes))
+{
+    <div class="panel">
+        <div><strong>Additional Notes:</strong></div>
+        <div>@Model.Notes</div>
+    </div>
+}
+
+<p class="section">Thanks,<br /><strong>APIView Team</strong></p>

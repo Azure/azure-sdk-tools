@@ -106,6 +106,20 @@ p-contextmenusub {
     color: var(--base-text-color);
 }
 
+.p-confirmdialog {
+    max-width: 28rem !important;
+    border-radius: 0.75rem !important;
+    overflow: hidden;
+
+    .p-dialog-header {
+        padding: 0.5rem 1rem;
+    }
+
+    .p-dialog-footer {
+        padding: 0.5rem 1rem;
+    }
+}
+
 .p-sidebar {
     background: var(--base-fg-color);
     color: var(--base-text-color);

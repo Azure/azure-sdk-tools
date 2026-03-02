@@ -1,0 +1,34 @@
+@model APIViewWeb.Models.NamespaceReviewApprovedEmailModel
+@{
+    Layout = "/EmailTemplates/_EmailLayout.cshtml";
+    ViewData["EmailTitle"] = "Namespace Review Approved";
+}
+
+<p class="section">Hi All,</p>
+
+<p class="section">
+    Since no further objections were raised, the namespace review for <strong>@Model.PackageName</strong> is now approved.
+</p>
+
+<div class="panel">
+    <div><strong>TypeSpec API View:</strong> <a href="@Model.TypeSpecUrl">@Model.PackageName</a></div>
+</div>
+
+<p class="section"><strong>Final Package Names:</strong></p>
+<ul class="list">
+    @if (Model.LanguageReviews.Count == 0)
+    {
+        <li>No language-specific package names available yet.</li>
+    }
+    else
+    {
+        @foreach (var review in Model.LanguageReviews)
+        {
+            <li><strong>@review.LanguageName:</strong> @review.PackageName</li>
+        }
+    }
+</ul>
+
+<p class="section">Please reach out if you have any final comments or need clarification.</p>
+
+<p class="section">Thanks again for your review and feedback,<br /><strong>APIView Team</strong></p>

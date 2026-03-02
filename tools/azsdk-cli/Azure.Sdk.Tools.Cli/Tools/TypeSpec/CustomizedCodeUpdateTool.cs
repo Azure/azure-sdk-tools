@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -154,6 +155,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         var buildError = string.Empty;
         var tries = 0;
         var feedbackToAddress = customizationRequest;
+        var maxTries = 2;
         do
         {
             var response = await Classify(tspProjectPath, plainTextFeedback: feedbackToAddress, ct: ct);
@@ -169,7 +171,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 };
             }
 
-            var (succeeded, failureReason) = await ApplyTypeSpecFixesAndRegenerate(packagePath, tspProjectPath, response, ct);
+            var (succeeded, changesMade, failureReason) = await ApplyTypeSpecFixesAndRegenerate(packagePath, tspProjectPath, response, ct);
 
             if (!succeeded)
             {
@@ -187,8 +189,26 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             buildSucceeded = sucess;
             buildError = error;
             tries++;
-            feedbackToAddress = error; // for next iteration, feed build error back into classification to see if there are additional fixes that can be applied based on new build errors after tsp fixes
-        } while (buildSucceeded == false && tries < 2);
+
+            if (tries < maxTries) // Don't do this work if this is the last try
+            {
+                StringBuilder iterationContext = new();
+
+                iterationContext.AppendLine(customizationRequest);
+                iterationContext.AppendLine($"---- ITERATION {tries+1}-------");
+                if (changesMade is not null)
+                {
+                    iterationContext.AppendLine("CHANGES MADE:");
+                    foreach (var change in changesMade)
+                    {
+                        iterationContext.AppendLine(change);
+                    }
+                }
+                iterationContext.AppendLine($"BUILD OUTPUT: {error}");
+
+                feedbackToAddress = iterationContext.ToString(); // for next iteration, feed build error back into classification to see if there are additional fixes that can be applied based on new build errors after tsp fixes
+            }
+        } while (buildSucceeded == false && tries < maxTries);
 
         if (buildSucceeded)
         {
@@ -345,32 +365,19 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
     }
 
-    private async Task<(bool, string? failureReason)> ApplyTypeSpecFixesAndRegenerate(string packagePath, string tspProjectPath, FeedbackClassificationResponse response, CancellationToken ct)
+    private async Task<(bool, string[]? appliedChanges, string? failureReason)> ApplyTypeSpecFixesAndRegenerate(string packagePath, string tspProjectPath, FeedbackClassificationResponse response, CancellationToken ct)
     {
         if (response.Classifications == null)
         {
-            return (false, "No feedback was found to apply.");
+            return (false, null, "No feedback was found to apply.");
         }
 
+        StringBuilder feedbackToAddress = new();
         foreach (var feedback in response.Classifications)
         {
             if (feedback.Classification == "TSP_APPLICABLE")
             {
-                if (feedback.Text == null)
-                {
-                    return (false, "Received TSP_APPLICABLE classification but feedback text was empty. Every classified item must include feedback text.");
-                }
-
-                var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, feedback.Text.ToString(), ct: ct);
-
-                if (!tspCustomizationResult.Success)
-                {
-                    logger.LogWarning("TypeSpec customization failed: {Reason}", tspCustomizationResult.FailureReason);
-                    return (false, tspCustomizationResult.FailureReason);
-                }
-
-                logger.LogInformation("TypeSpec customization succeeded. Changes: {Changes}", string.Join("; ", tspCustomizationResult.ChangesSummary));
-                var typeSpecChanges = tspCustomizationResult.ChangesSummary.ToList();
+                feedbackToAddress.AppendLine(feedback.Text);
             }
             else if (feedback.Classification == "SUCCESS")
             {
@@ -381,6 +388,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 logger.LogInformation("Feedback item classified as REQUIRES_MANUAL_INTERVENTION: {Text}", feedback.Text);
             }
         }
+
+        var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, feedbackToAddress.ToString(), ct: ct);
+
+        if (!tspCustomizationResult.Success)
+        {
+            logger.LogWarning("TypeSpec customization failed: {Reason}", tspCustomizationResult.FailureReason);
+            return (false, null, tspCustomizationResult.FailureReason);
+        }
+
+        logger.LogInformation("TypeSpec customization succeeded. Changes: {Changes}", string.Join("; ", tspCustomizationResult.ChangesSummary));
+        var typeSpecChanges = tspCustomizationResult.ChangesSummary;
 
         // Resolve the spec repo root from the TypeSpec project path.
         // tsp-client's --local-spec-repo expects the repo root, not the project subdirectory.
@@ -393,8 +411,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (!regenResult.IsSuccessful)
         {
             logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
-            return (false, $"Regeneration failed: {regenResult.ResponseError}");
+            return (false, null, $"Regeneration failed: {regenResult.ResponseError}");
         }
-        return (true, null);
+
+        return (true, typeSpecChanges, null);
     }
 }

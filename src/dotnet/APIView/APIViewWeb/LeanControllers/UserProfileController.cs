@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
@@ -10,10 +11,12 @@ namespace APIViewWeb.LeanControllers
     public class UserProfileController : BaseApiController
     {
         private readonly UserProfileCache _userProfileCache;
+        private readonly IPermissionsManager _permissionsManager;
 
-        public UserProfileController(UserProfileCache userProfileCache)
+        public UserProfileController(UserProfileCache userProfileCache, IPermissionsManager permissionsManager)
         {
             _userProfileCache = userProfileCache;
+            _permissionsManager = permissionsManager;
         }
 
         [HttpGet]
@@ -23,6 +26,8 @@ namespace APIViewWeb.LeanControllers
             try
             {
                 var userProfile = await _userProfileCache.GetUserProfileAsync(userName, createIfNotExist: false);
+                userProfile.Permissions = await _permissionsManager.GetEffectivePermissionsAsync(userName);
+                
                 return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
             }
             catch

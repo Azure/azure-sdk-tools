@@ -1,0 +1,400 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
+using Moq;
+using Octokit;
+
+namespace Azure.Sdk.Tools.Cli.Tests.Tools.TypeSpec;
+
+[TestFixture]
+public class DelegateAPIViewFeedbackToolTests
+{
+    private DelegateAPIViewFeedbackTool _tool = null!;
+    private Mock<IAPIViewFeedbackService> _mockService = null!;
+    private Mock<IGitHubService> _mockGitHubService = null!;
+    private TestLogger<DelegateAPIViewFeedbackTool> _logger = null!;
+
+    [SetUp]
+    public void Setup()
+    {
+        _logger = new TestLogger<DelegateAPIViewFeedbackTool>();
+        _mockService = new Mock<IAPIViewFeedbackService>();
+        _mockGitHubService = new Mock<IGitHubService>();
+        _tool = new DelegateAPIViewFeedbackTool(_mockService.Object, _mockGitHubService.Object, _logger);
+    }
+
+    #region No Comments Tests
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithNoComments_ReturnsNoActionableComments()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
+        
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(new List<ConsolidatedComment>());
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+
+        // Not using dry run - should still not create issue when no comments
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
+
+        Assert.That(response.Message, Does.Contain("No actionable comments"));
+        _mockGitHubService.Verify(x => x.CreateIssueAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()), Times.Never);
+    }
+
+    #endregion
+
+    #region PR-based SHA Detection Tests
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithSpecsRepoPullRequest_DetectsCommitShaAndDirectory()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithPullRequest(prNumber: 12345, prRepo: "Azure/azure-rest-api-specs");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("abc123sha", "specification/widget/Widget", "Azure/azure-rest-api-specs"));
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
+
+        Assert.That(response.Message, Does.Contain("DRY RUN"));
+        Assert.That(response.Message, Does.Contain("abc123sha"));
+        Assert.That(response.Message, Does.Contain("specification/widget/Widget"));
+        Assert.That(response.Message, Does.Contain("Target: Azure/azure-rest-api-specs"));
+        
+        _mockService.Verify(x => x.DetectShaAndTspPath(metadata), Times.Once);
+    }
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithSpecsPRRepoPullRequest_CreatesIssueInSpecsPRRepo()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithPullRequest(prNumber: 12345, prRepo: "Azure/azure-rest-api-specs-pr");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("prsha789", "specification/widget/Widget", "Azure/azure-rest-api-specs-pr"));
+
+        var mockIssue = CreateMockIssue(99, "https://github.com/Azure/azure-rest-api-specs-pr/issues/99");
+        _mockGitHubService.Setup(x => x.CreateIssueAsync(
+            "Azure", 
+            "azure-rest-api-specs-pr", 
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<List<string>?>()))
+            .ReturnsAsync(mockIssue);
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
+
+        Assert.That(response.Message, Does.Contain("Issue created"));
+        Assert.That(response.Message, Does.Contain("https://github.com/Azure/azure-rest-api-specs-pr/issues/99"));
+        
+        _mockGitHubService.Verify(x => x.CreateIssueAsync(
+            "Azure", "azure-rest-api-specs-pr", It.IsAny<string>(), It.IsAny<string>(), 
+            It.Is<List<string>>(a => a != null && a.Count == 1 && a[0] == "copilot-swe-agent[bot]")), Times.Once);
+    }
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithSdkRepoPullRequest_GetsRepoFromTspLocation()
+    {
+        // PR is in azure-sdk-for-python, tsp-location.yaml points to specs repo
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithPullRequest(prNumber: 99999, prRepo: "Azure/azure-sdk-for-python");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        // Helper detects SHA, directory, and repo from tsp-location.yaml in SDK PR
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("sdksha456", "specification/widget/Widget", "Azure/azure-rest-api-specs"));
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
+
+        Assert.That(response.Message, Does.Contain("DRY RUN"));
+        Assert.That(response.Message, Does.Contain("sdksha456"));
+        Assert.That(response.Message, Does.Contain("specification/widget/Widget"));
+        // Target repo should be derived from tsp-location.yaml
+        Assert.That(response.Message, Does.Contain("Target: Azure/azure-rest-api-specs"));
+    }
+
+    #endregion
+
+    #region Branch-based SHA Detection Tests
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithSourceBranchLabel_DetectsCommitShaAndDirectory()
+    {
+        // RevisionLabel contains "Source Branch:" prefix that should be parsed
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithBranch(branchLabel: "Source Branch:main");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("branchsha456", "specification/widget/Widget.Management", "Azure/azure-rest-api-specs"));
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
+
+        Assert.That(response.Message, Does.Contain("branchsha456"));
+        Assert.That(response.Message, Does.Contain("specification/widget/Widget.Management"));
+        Assert.That(response.Message, Does.Contain("Target: Azure/azure-rest-api-specs"));
+    }
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithBranchLabel_NoShaDetected_FallsBackToDefault()
+    {
+        // Branch doesn't exist or can't find SHA - should still work with fallback
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithBranch(branchLabel: "nonexistent-branch");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync((null, null, null));
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
+
+        Assert.That(response.Message, Does.Contain("DRY RUN"));
+        Assert.That(response.Message, Does.Not.Contain("**Commit SHA**"));
+        // Falls back to default repo
+        Assert.That(response.Message, Does.Contain("Target: Azure/azure-rest-api-specs"));
+    }
+
+    #endregion
+
+    #region Multiple Comments Tests
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithMultipleCommentsInThread_ConsolidatesCorrectly()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        // Multiple comments in a single thread - simulates back-and-forth discussion
+        var comments = new List<ConsolidatedComment>
+        {
+            new ConsolidatedComment
+            {
+                ThreadId = "thread-1",
+                LineNo = 100,
+                LineId = "azure.test.package.models.TestModel",
+                LineText = "class TestModel:",
+                Comment = "Please rename this to FooModel for consistency\n\n---\n\nI agree, FooModel is better\n\n---\n\nActually, let's use BarModel instead"
+            }
+        };
+        var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
+
+        // Verify the consolidated comment appears in the output
+        Assert.That(response.Message, Does.Contain("FooModel"));
+        Assert.That(response.Message, Does.Contain("BarModel"));
+        // Should show as 1 unresolved comment (thread count, not individual messages)
+        Assert.That(response.Message, Does.Contain("1 unresolved"));
+    }
+
+    #endregion
+
+    #region Issue Creation Tests
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WithDryRun_DoesNotCreateIssue()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
+
+        _mockGitHubService.Verify(x => x.CreateIssueAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()), Times.Never);
+    }
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_CreatesIssue_WithCorrectTitleAndBody()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithPullRequest(prNumber: 555, prRepo: "Azure/azure-rest-api-specs");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("commitsha123", "specification/widget/Widget", "Azure/azure-rest-api-specs"));
+
+        var mockIssue = CreateMockIssue(42, "https://github.com/Azure/azure-rest-api-specs/issues/42");
+        _mockGitHubService.Setup(x => x.CreateIssueAsync(
+            "Azure", 
+            "azure-rest-api-specs", 
+            It.Is<string>(title => title.Contains("Address APIView feedback") && title.Contains("azure-test-package")),
+            It.Is<string>(body => 
+                body.Contains("**Package Name**: azure-test-package") &&
+                body.Contains("**Language**: Python") &&
+                body.Contains("**Commit SHA**: commitsha123") &&
+                body.Contains("## Feedback to Address") &&
+                body.Contains("## Constraints") &&
+                body.Contains("## Output Requirements") &&
+                body.Contains("| LineNo | Element | LineText | CommentText |")),
+            It.IsAny<List<string>?>()))
+            .ReturnsAsync(mockIssue);
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
+
+        Assert.That(response.Message, Does.Contain("Issue created"));
+        Assert.That(response.Message, Does.Contain("https://github.com/Azure/azure-rest-api-specs/issues/42"));
+        
+        _mockGitHubService.Verify(x => x.CreateIssueAsync(
+            "Azure", "azure-rest-api-specs", It.IsAny<string>(), It.IsAny<string>(), 
+            It.Is<List<string>>(a => a != null && a.Count == 1 && a[0] == "copilot-swe-agent[bot]")), Times.Once);
+    }
+
+    #endregion
+
+    #region Error Handling Tests
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WhenHelperThrowsException_ReturnsError()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>()))
+            .ThrowsAsync(new InvalidOperationException("APIView service unavailable"));
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl);
+
+        Assert.That(response.Message, Does.Contain("Error:"));
+        Assert.That(response.Message, Does.Contain("APIView service unavailable"));
+    }
+
+    [Test]
+    public async Task DelegateAPIViewFeedbackAsync_WhenGitHubServiceThrowsException_ReturnsError()
+    {
+        var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
+        var comments = CreateSampleComments();
+        var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
+
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+            .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
+        _mockGitHubService.Setup(x => x.CreateIssueAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()))
+            .ThrowsAsync(new Octokit.ApiException("GitHub API rate limit exceeded", System.Net.HttpStatusCode.Forbidden));
+
+        var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
+
+        Assert.That(response.Message, Does.Contain("Error:"));
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private List<ConsolidatedComment> CreateSampleComments()
+    {
+        return new List<ConsolidatedComment>
+        {
+            new ConsolidatedComment
+            {
+                ThreadId = "thread-1",
+                LineNo = 100,
+                LineId = "azure.test.package.models.TestModel",
+                LineText = "class TestModel:",
+                Comment = "Please rename this to FooModel for consistency"
+            },
+            new ConsolidatedComment
+            {
+                ThreadId = "thread-2",
+                LineNo = 200,
+                LineId = "azure.test.package.operations.TestOperations.get_item",
+                LineText = "def get_item(self, item_id: str) -> Item:",
+                Comment = "Consider adding pagination support"
+            }
+        };
+    }
+
+    private ReviewMetadata CreateMetadataWithPullRequest(int prNumber, string prRepo)
+    {
+        return new ReviewMetadata
+        {
+            ReviewId = "review-123",
+            PackageName = "azure-test-package",
+            Language = "Python",
+            Revision = new RevisionMetadata
+            {
+                RevisionId = "abc",
+                PullRequestNo = prNumber,
+                PullRequestRepository = prRepo,
+                RevisionLabel = null
+            }
+        };
+    }
+
+    private ReviewMetadata CreateMetadataWithBranch(string branchLabel)
+    {
+        return new ReviewMetadata
+        {
+            ReviewId = "review-123",
+            PackageName = "azure-test-package",
+            Language = "Python",
+            Revision = new RevisionMetadata
+            {
+                RevisionId = "abc",
+                PullRequestNo = null,
+                PullRequestRepository = null,
+                RevisionLabel = branchLabel
+            }
+        };
+    }
+
+    private Issue CreateMockIssue(int number, string htmlUrl)
+    {
+        return new Issue(
+            url: $"https://api.github.com/repos/Azure/azure-rest-api-specs/issues/{number}",
+            htmlUrl: htmlUrl,
+            commentsUrl: "",
+            eventsUrl: "",
+            number: number,
+            state: ItemState.Open,
+            title: "Test Issue",
+            body: "Test body",
+            closedBy: null,
+            user: null,
+            labels: new List<Label>(),
+            assignee: null,
+            assignees: new List<User>(),
+            milestone: null,
+            comments: 0,
+            pullRequest: null,
+            closedAt: null,
+            createdAt: DateTimeOffset.Now,
+            updatedAt: null,
+            id: number,
+            nodeId: $"node-{number}",
+            locked: false,
+            repository: null,
+            reactions: null,
+            activeLockReason: null,
+            stateReason: null
+        );
+    }
+
+    #endregion
+}

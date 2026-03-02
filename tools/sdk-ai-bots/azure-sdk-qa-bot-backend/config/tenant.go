@@ -39,55 +39,102 @@ var azureTypespecAuthoringSources = []model.Source{
 	model.Source_TypeSpecMigration,
 	model.Source_TypeSpecHttpSpecs,
 	model.Source_StaticAzureDocs,
+	model.Source_TypeSpecAzureResourceManagerLib,
 }
 
 var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
 	model.Source_TypeSpecQA:                     3,
 	model.Source_StaticTypeSpecToSwaggerMapping: 3,
+	model.Source_AzureOpenapiDiffDocs:           3,
 }
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{
 	model.TenantID_PythonChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng, model.Source_AzureSDKInternalWiki}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForPython,
+			model.Source_AzureSDKForPythonWiki,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AzureSDKDocsEng,
+			model.Source_AzureSDKInternalWiki,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('python_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-python*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_python/qa.md",
 		IntentionPromptTemplate: "language_python/intention.md",
 		AgenticSearchPrompt:     "language_python/agentic_search.md",
 	},
 	model.TenantID_DotnetChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForNetDocs, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForNetDocs,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AzureSDKDocsEng,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('dotnet_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-csharp*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_GolangChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForGo, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForGo,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AzureSDKDocsEng,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('golang_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-go*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_JavaChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForJava, model.Source_AzureSDKForJavaWiki, model.Source_AzureSDKGuidelines, model.Source_AutorestJava, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForJava,
+			model.Source_AzureSDKForJavaWiki,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AutorestJava,
+			model.Source_AzureSDKDocsEng,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('java_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-java*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
 		AgenticSearchPrompt:     "language_channel/agentic_search.md",
 	},
 	model.TenantID_JavaScriptChannelQaBot: {
-		Sources: append([]model.Source{model.Source_AzureSDKForJavaScript, model.Source_AzureSDKForJavaScriptWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		Sources: []model.Source{
+			model.Source_AzureSDKForJavaScript,
+			model.Source_AzureSDKForJavaScriptWiki,
+			model.Source_AzureSDKGuidelines,
+			model.Source_AzureSDKDocsEng,
+			model.Source_TypeSpecAzure,
+			model.Source_AzureRestAPISpec,
+		},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('typescript_*', 'title')",
+			model.Source_TypeSpecAzure:      "search.ismatch('typespec-ts*', 'title') or search.ismatch('generate*', 'title')",
+			model.Source_AzureRestAPISpec:   "search.ismatch('SDK*', 'title')",
 		},
 		PromptTemplate:          "language_channel/qa.md",
 		IntentionPromptTemplate: "language_channel/intention.md",
@@ -101,6 +148,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 		},
 		IntentionPromptTemplate: "typespec/intention.md",
 		AgenticSearchPrompt:     "typespec/agentic_search.md",
+		EnableRouting:           true,
 	},
 	model.TenantID_AzureSDKOnboarding: {
 		PromptTemplate:          "azure_sdk_onboarding/qa.md",
@@ -122,7 +170,7 @@ var tenantConfigMap = map[model.TenantID]TenantConfig{
 	},
 	model.TenantID_APISpecReviewBot: {
 		PromptTemplate: "api_spec_review/qa.md",
-		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_AzureRestAPISpec, model.Source_AzureSDKDocsEng},
+		Sources:        []model.Source{model.Source_StaticAzureDocs, model.Source_APISpecViewQA, model.Source_AzureRestAPISpec, model.Source_AzureRestAPISpecDocs, model.Source_AzureOpenapiDiffDocs, model.Source_AzureSDKDocsEng},
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKDocsEng: "search.ismatch('design*', 'title')",
 		},

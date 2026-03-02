@@ -377,13 +377,14 @@ class SearchManager:
         """Searches for items by their IDs in the Azure Search index."""
         if not ids:
             return []
-        escaped = ",".join(id.replace("'", "''") for id in ids)
-        filter = f"search.in(id, '{escaped}', ',')"
-        if self.filter_expression:
-            filter = f"({filter}) and ({self.filter_expression})"
+        # Convert IDs from web format (with .html#) to search format (with =html=)
+        search_ids = [id.replace(".html#", "=html=") for id in ids]
+        escaped = ",".join(id.replace("'", "''") for id in search_ids)
+        filter_expr = f"search.in(id, '{escaped}', ',')"
+        # Note: Don't apply language filter when searching by explicit IDs
         result = self.client.search(
             search_text="*",
-            filter=filter,
+            filter=filter_expr,
             query_type=QueryType.SIMPLE,
             top=len(ids),
         )

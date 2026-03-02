@@ -16,6 +16,7 @@ table th:nth-child(2) {
 | azsdk_analyze_log_file | `azsdk azp log analyze` | Analyzes a log file for errors and issues |
 | azsdk_analyze_pipeline | `azsdk azp analyze` | Analyze azure pipeline for failures. Set analyzeWithAgent to false unless requested otherwise by the user |
 | azsdk_apiview_get_comments | `azsdk apiview get-comments` | Get all the comments of an APIView API using the APIView URL |
+| azsdk_abandon_release_plan | `azsdk release-plan abandon` | Abandon a release plan by work item ID or release plan ID. Updates the release plan status to 'Abandoned'. |
 | azsdk_check_api_spec_ready_for_sdk | `azsdk release-plan check-api-readiness` | Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params. |
 | azsdk_check_service_label |  | Checks if a service label exists and returns its details |
 | azsdk_convert_swagger_to_typespec | `azsdk tsp convert` | Converts an existing Azure service swagger definition to a TypeSpec project. Returns path to the created project. |
@@ -54,7 +55,7 @@ table th:nth-child(2) {
 | azsdk_update_api_spec_pull_request_in_release_plan | `azsdk release-plan update-spec-pr` | Update TypeSpec pull request URL in a release plan using work item id or release plan id. |
 | azsdk_update_language_exclusion_justification |  | Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. Optionally pass a language name to explicitly request exclusion for a specific language. |
 | azsdk_update_sdk_details_in_release_plan |  | Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item. sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties. |
-| azsdk_verify_setup | `azsdk verify setup` | Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. |
+| azsdk_verify_setup | `azsdk verify setup check/install` | Verifies the developer environment for MCP release tool requirements. Use 'check' for verification-only mode or 'install' to auto-install missing requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. |
 |  | `azsdk mcp` | Starts the MCP server (stdio mode) |
 |  | `azsdk start` | Starts the MCP server (stdio mode) |
 |  | `azsdk config codeowners update` | Update codeowners in a repository |

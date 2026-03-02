@@ -80,22 +80,42 @@ function updateIgnoreLink(packageName: string) {
     const jsSdkRepoPath = String(shell.pwd());
     const ignoreLinksPath = path.join(jsSdkRepoPath, "eng", "ignore-links.txt");
     let content = fs.readFileSync(ignoreLinksPath, "utf8");
-    const newLine = `https://learn.microsoft.com/javascript/api/${packageName}?view=azure-node-preview`;
-
-    // Check if the link already exists in the file
-    if (content.includes(newLine)) {
-        logger.warn(
-            `Failed to add link for ${packageName} to ignore-links.txt as it already exists, skipping.`,
-        );
-        return;
-    }
+    const learnLink = `https://learn.microsoft.com/javascript/api/${packageName}?view=azure-node-preview`;
+    const npmLink = `https://www.npmjs.com/package/${packageName}`;
 
     // Ensure the content ends with a newline
     if (!content.endsWith("\n")) {
         content += "\n";
     }
 
-    const updatedContent = content + newLine + "\n";
-    fs.writeFileSync(ignoreLinksPath, updatedContent);
-    logger.info(`Added link for ${packageName} to ignore-links.txt`);
+    let linksAdded = 0;
+
+    // Add learn.microsoft.com link if it doesn't exist
+    if (!content.includes(learnLink)) {
+        content += learnLink + "\n";
+        linksAdded++;
+    } else {
+        logger.warn(
+            `Link ${learnLink} already exists in ignore-links.txt, skipping.`,
+        );
+    }
+
+    // Add npmjs.com link if it doesn't exist
+    if (!content.includes(npmLink)) {
+        content += npmLink + "\n";
+        linksAdded++;
+    } else {
+        logger.warn(
+            `Link ${npmLink} already exists in ignore-links.txt, skipping.`,
+        );
+    }
+
+    if (linksAdded > 0) {
+        fs.writeFileSync(ignoreLinksPath, content);
+        logger.info(`Added ${linksAdded} link(s) for ${packageName} to ignore-links.txt`);
+    } else {
+        logger.warn(
+            `All links for ${packageName} already exist in ignore-links.txt, no changes made.`,
+        );
+    }
 }

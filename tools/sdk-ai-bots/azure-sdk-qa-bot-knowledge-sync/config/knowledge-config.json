@@ -24,7 +24,7 @@
           "path": "/packages/http-specs/specs",
           "folder": "typespec_http_specs",
           "fileNameLowerCase": true,
-          "isSpectorTest": true,
+          "isGenerated": true,
           "metadata": {
             "scope": "unbranded"
           }
@@ -48,7 +48,7 @@
           },
           "overrides": [
             {
-              "pattern": "**/getstarted/azure-resource-manager/**",
+              "pattern": "**/azure-resource-manager/**",
               "metadata": {
                 "service_type": "management-plane"
               }
@@ -60,7 +60,7 @@
               }
             },
             {
-              "pattern": "**/howtos/arm/**",
+              "pattern": "**/arm/**",
               "metadata": {
                 "service_type": "management-plane"
               }
@@ -84,9 +84,20 @@
           "path": "/packages/azure-http-specs/specs",
           "folder": "typespec_azure_http_specs",
           "fileNameLowerCase": true,
-          "isSpectorTest": true,
+          "isGenerated": true,
           "metadata": {
             "scope": "branded"
+          }
+        },
+        {
+          "description": "TypeSpec Azure Resource Manager library",
+          "path": "/packages/typespec-azure-resource-manager/lib",
+          "folder": "typespec-azure-resource-manager-lib",
+          "isGenerated": true,
+          "ignoredPaths": ["legacy-types"],
+          "metadata": {
+            "scope": "branded",
+            "service_type": "management-plane"
           }
         }
       ]
@@ -385,6 +396,42 @@
         {
           "description": "Wiki documentation for Azure SDK for JavaScript",
           "folder": "azure_sdk_for_js_wiki",
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-rest-api-specs.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Azure REST API Breaking Change and Oad Rules Mapping",
+          "path": "/documentation/BreakingChange-Oad-Rules-Mapping.md",
+          "folder": "azure_rest_api_specs_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/openapi-diff.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "OpenAPI Diff (OAD) rules documentation",
+          "path": "/docs",
+          "folder": "azure_openapi_diff_docs",
+          "relativeByRepoPath": true,
           "metadata": {
             "scope": "branded"
           }

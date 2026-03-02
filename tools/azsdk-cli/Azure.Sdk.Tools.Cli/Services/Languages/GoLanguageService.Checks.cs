@@ -12,6 +12,13 @@ public partial class GoLanguageService : LanguageService
 {
     #region Go specific functions, not part of the LanguageRepoService
 
+    private string goUnix => "go";
+    private string goWin => "go.exe";
+    private string gofmtUnix => "gofmt";
+    private string gofmtWin => "gofmt.exe";
+    private string golangciLintUnix => "golangci-lint";
+    private string golangciLintWin => "golangci-lint.exe";
+
     public async Task<bool> CheckDependencies(CancellationToken ct)
     {
         try
@@ -85,7 +92,7 @@ public partial class GoLanguageService : LanguageService
 
                 if (goModVersion.Major == 1 && goModVersion.Minor == 23)
                 {
-                    // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules 
+                    // For compatibility, we'll ensure that the toolchain/go-version does not upgrade for modules
                     // that are still set at 1.23. See this issue for some context:
                     //   https://github.com/Azure/azure-sdk-for-go/issues/25407
                     goGetArgs.AddRange(["toolchain@none", "go@1.23.0"]);

@@ -1,24 +1,68 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+
+// Mock SimpleMDE to avoid ESM packaging issues in tests
+vi.mock('ngx-simplemde', () => ({
+  SimplemdeModule: class {
+    static ɵmod = { id: 'SimplemdeModule', type: this, declarations: [], imports: [], exports: [] };
+    static ɵinj = { imports: [], providers: [] };
+    static forRoot() { return { ngModule: this, providers: [] }; }
+  },
+  SimplemdeOptions: class {},
+  SimplemdeComponent: class { value = ''; options = {}; valueChange = { emit: vi.fn() }; }
+}));
+
+vi.mock('ngx-ui-scroll', () => ({
+  UiScrollModule: class {
+    static ɵmod = { id: 'UiScrollModule', type: this, declarations: [], imports: [], exports: [] };
+    static ɵinj = { imports: [], providers: [] };
+  }
+}));
+
+import { initializeTestBed } from '../../../../test-setup';
+import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
 import { RelatedCommentsDialogComponent, CommentResolutionData } from './related-comments-dialog.component';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { ReviewPageModule } from 'src/app/_modules/review-page.module';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('RelatedCommentsDialogComponent', () => {
   let component: RelatedCommentsDialogComponent;
   let fixture: ComponentFixture<RelatedCommentsDialogComponent>;
 
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
+    const mockNotificationsService = createMockNotificationsService();
+    const mockSignalRService = createMockSignalRService();
+    const mockWorkerService = createMockWorkerService();
+
     TestBed.configureTestingModule({
       imports: [
         RelatedCommentsDialogComponent,
         SharedAppModule,
         ReviewPageModule,
         NoopAnimationsModule
-      ]
+      ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: WorkerService, useValue: mockWorkerService }
+      ],
+      schemas: [NO_ERRORS_SCHEMA]
     });
     fixture = TestBed.createComponent(RelatedCommentsDialogComponent);
     component = fixture.componentInstance;
@@ -42,13 +86,13 @@ describe('RelatedCommentsDialogComponent', () => {
     });
 
     it('should toggle individual comment selection', () => {
-      expect(component.isCommentSelected('comment1')).toBeFalse();
+      expect(component.isCommentSelected('comment1')).toBeFalsy();
 
       component.toggleCommentSelection('comment1');
-      expect(component.isCommentSelected('comment1')).toBeTrue();
+      expect(component.isCommentSelected('comment1')).toBeTruthy();
 
       component.toggleCommentSelection('comment1');
-      expect(component.isCommentSelected('comment1')).toBeFalse();
+      expect(component.isCommentSelected('comment1')).toBeFalsy();
     });
 
     it('should select all comments when selectAll is checked', () => {
@@ -57,9 +101,9 @@ describe('RelatedCommentsDialogComponent', () => {
       component.onSelectAllChange({ checked: true });
 
       expect(component.getSelectedCount()).toBe(3);
-      expect(component.isCommentSelected('comment1')).toBeTrue();
-      expect(component.isCommentSelected('comment2')).toBeTrue();
-      expect(component.isCommentSelected('comment3')).toBeTrue();
+      expect(component.isCommentSelected('comment1')).toBeTruthy();
+      expect(component.isCommentSelected('comment2')).toBeTruthy();
+      expect(component.isCommentSelected('comment3')).toBeTruthy();
     });
 
     it('should deselect all comments when selectAll is unchecked', () => {
@@ -70,19 +114,19 @@ describe('RelatedCommentsDialogComponent', () => {
       component.onSelectAllChange({ checked: false });
 
       expect(component.getSelectedCount()).toBe(0);
-      expect(component.isCommentSelected('comment1')).toBeFalse();
-      expect(component.isCommentSelected('comment2')).toBeFalse();
+      expect(component.isCommentSelected('comment1')).toBeFalsy();
+      expect(component.isCommentSelected('comment2')).toBeFalsy();
     });
 
     it('should update selectAll state based on individual selections', () => {
       component.toggleCommentSelection('comment1');
       component.toggleCommentSelection('comment2');
       component.updateSelectAllState();
-      expect(component.selectAll).toBeFalse();
+      expect(component.selectAll).toBeFalsy();
 
       component.toggleCommentSelection('comment3');
       component.updateSelectAllState();
-      expect(component.selectAll).toBeTrue();
+      expect(component.selectAll).toBeTruthy();
     });
   });
 
@@ -92,8 +136,8 @@ describe('RelatedCommentsDialogComponent', () => {
 
       component.toggleBatchVote('up');
       expect(component.batchVote).toBe('up');
-      expect(component.hasBatchUpvote()).toBeTrue();
-      expect(component.hasBatchDownvote()).toBeFalse();
+      expect(component.hasBatchUpvote()).toBeTruthy();
+      expect(component.hasBatchDownvote()).toBeFalsy();
     });
 
     it('should toggle batch downvote correctly', () => {
@@ -101,8 +145,8 @@ describe('RelatedCommentsDialogComponent', () => {
 
       component.toggleBatchVote('down');
       expect(component.batchVote).toBe('down');
-      expect(component.hasBatchDownvote()).toBeTrue();
-      expect(component.hasBatchUpvote()).toBeFalse();
+      expect(component.hasBatchDownvote()).toBeTruthy();
+      expect(component.hasBatchUpvote()).toBeFalsy();
     });
 
     it('should switch from upvote to downvote', () => {
@@ -111,8 +155,8 @@ describe('RelatedCommentsDialogComponent', () => {
 
       component.toggleBatchVote('down');
       expect(component.batchVote).toBe('down');
-      expect(component.hasBatchUpvote()).toBeFalse();
-      expect(component.hasBatchDownvote()).toBeTrue();
+      expect(component.hasBatchUpvote()).toBeFalsy();
+      expect(component.hasBatchDownvote()).toBeTruthy();
     });
   });
 
@@ -129,7 +173,7 @@ describe('RelatedCommentsDialogComponent', () => {
     });
 
     it('should emit resolution data with selected comments', () => {
-      spyOn(component.resolveSelectedComments, 'emit');
+      vi.spyOn(component.resolveSelectedComments, 'emit');
       component.batchVote = 'up';
       component.resolutionComment = 'Test resolution comment';
       component.selectedDisposition = 'keepOpen';
@@ -148,7 +192,7 @@ describe('RelatedCommentsDialogComponent', () => {
     });
 
     it('should not emit resolution data when no comments selected', () => {
-      spyOn(component.resolveSelectedComments, 'emit');
+      vi.spyOn(component.resolveSelectedComments, 'emit');
       component.selectedCommentIds.clear();
 
       component.resolveSelected();
@@ -157,7 +201,7 @@ describe('RelatedCommentsDialogComponent', () => {
     });
 
     it('should hide dialog after successful resolution', () => {
-      spyOn(component, 'onHide');
+      vi.spyOn(component, 'onHide');
 
       component.resolveSelected();
 
@@ -217,8 +261,8 @@ describe('RelatedCommentsDialogComponent', () => {
     it('should identify triggering comment correctly', () => {
       component.selectedCommentId = 'trigger-comment';
 
-      expect(component.isTriggeringComment('trigger-comment')).toBeTrue();
-      expect(component.isTriggeringComment('other-comment')).toBeFalse();
+      expect(component.isTriggeringComment('trigger-comment')).toBeTruthy();
+      expect(component.isTriggeringComment('other-comment')).toBeFalsy();
     });
   });
 });

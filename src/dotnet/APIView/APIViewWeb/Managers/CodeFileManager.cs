@@ -1,13 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers
 {
@@ -17,19 +20,23 @@ namespace APIViewWeb.Managers
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
+        private readonly ILogger<CodeFileManager> _logger;
 
         public CodeFileManager(
             IEnumerable<LanguageService> languageServices, IBlobCodeFileRepository codeFileRepository,
-            IBlobOriginalsRepository originalsRepository, IDevopsArtifactRepository devopsArtifactRepository)
+            IBlobOriginalsRepository originalsRepository, IDevopsArtifactRepository devopsArtifactRepository,
+            ILogger<CodeFileManager> logger)
         {
             _originalsRepository = originalsRepository;
             _codeFileRepository = codeFileRepository;
             _languageServices = languageServices;
             _devopsArtifactRepository = devopsArtifactRepository;
+            _logger = logger;
         }
 
         /// <summary>
-        /// Get CodeFile
+        /// Downloads and extracts a CodeFile from an Azure DevOps build artifact.
+        /// For TypeSpec artifacts, also extracts metadata if a metadata file is provided.
         /// </summary>
         /// <param name="repoName"></param>
         /// <param name="buildId"></param>
@@ -42,8 +49,9 @@ namespace APIViewWeb.Managers
         /// <param name="baselineStream"></param>
         /// <param name="project"></param>
         /// <param name="language"></param>
-        /// <returns></returns>
-        public async Task<CodeFile> GetCodeFileAsync(string repoName,
+        /// <param name="metadataFileName">Optional TypeSpec metadata file name (e.g., "typespec-metadata.json").</param>
+        /// <returns>A CodeFileResult containing the CodeFile and optionally TypeSpec metadata.</returns>
+        public async Task<CodeFileResult> GetCodeFileAsync(string repoName,
             string buildId,
             string artifactName,
             string packageName,
@@ -53,10 +61,12 @@ namespace APIViewWeb.Managers
             string baselineCodeFileName = "",
             MemoryStream baselineStream = null,
             string project = "public",
-            string language = null
-            )
+            string language = null,
+            string metadataFileName = null)
         {
             CodeFile codeFile = null;
+            TypeSpecMetadata metadata = null;
+
             if (string.IsNullOrEmpty(codeFileName))
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
@@ -97,9 +107,29 @@ namespace APIViewWeb.Managers
                         codeFile = await CodeFile.DeserializeAsync(entryStream);
                     }
                 }
+
+                if (!string.IsNullOrEmpty(metadataFileName))
+                {
+                    var metadataEntry = archive.Entries.FirstOrDefault(e => Path.GetFileName(e.Name).Equals(metadataFileName, StringComparison.OrdinalIgnoreCase));
+                    if (metadataEntry != null)
+                    {
+                        try
+                        {
+                            await using var metadataStream = metadataEntry.Open();
+                            metadata = await JsonSerializer.DeserializeAsync<TypeSpecMetadata>(metadataStream, new JsonSerializerOptions
+                            {
+                                PropertyNameCaseInsensitive = true
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to deserialize TypeSpec metadata file '{MetadataFileName}'. Continuing without metadata.", metadataFileName);
+                        }
+                    }
+                }
             }
 
-            return codeFile;
+            return new CodeFileResult { CodeFile = codeFile, Metadata = metadata };
         }
 
         /// <summary>

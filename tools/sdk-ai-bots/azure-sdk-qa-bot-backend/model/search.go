@@ -232,7 +232,16 @@ type Index struct {
 	ContextID       Source  `json:"context_id"`
 	Scope           string  `json:"scope,omitempty"`
 	ServiceType     string  `json:"service_type,omitempty"`
+
+	SearchType SearchType `json:"search_type,omitempty"`
 }
+
+type SearchType string
+
+const (
+	SearchType_Vector  SearchType = "Vector Search"
+	SearchType_Agentic SearchType = "Agentic Search"
+)
 
 type Knowledge struct {
 	Source   Source `json:"document_source"`
@@ -311,6 +320,15 @@ func GetIndexLink(chunk Index) string {
 		path = TrimFileFormat(path)
 		wikiPath := strings.ReplaceAll(path, "#", "/")
 		return "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki?wikiVersion=GBwikiMaster&pagePath=/" + wikiPath
+	case Source_AzureRestAPISpecDocs:
+		// Handle documents from azure-rest-api-specs documentation
+		return "https://github.com/Azure/azure-rest-api-specs/blob/main/" + path
+	case Source_AzureOpenapiDiffDocs:
+		// Handle documents from openapi-diff/docs
+		return "https://github.com/Azure/openapi-diff/blob/main/" + path
+	case Source_TypeSpecAzureResourceManagerLib:
+		path = TrimFileFormat(path)
+		return "https://github.com/Azure/typespec-azure/blob/main/packages/typespec-azure-resource-manager/lib/" + path + ".tsp"
 	default:
 		return ""
 	}

@@ -1,23 +1,97 @@
 import 'reflect-metadata';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { RevisionOptionsComponent } from './revision-options.component';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { ReviewPageModule } from 'src/app/_modules/review-page.module';
-import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
+import { of } from 'rxjs';
+import { vi } from 'vitest';
+import { initializeTestBed } from '../../../test-setup';
+
+// Mock ngx-ui-scroll to avoid vscroll dependency error
+vi.mock('ngx-ui-scroll', () => {
+  const UiScrollModuleMock = class UiScrollModule {
+    static ɵmod = { 
+      id: 'UiScrollModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+  };
+  
+  return {
+    UiScrollModule: UiScrollModuleMock
+  };
+});
+
+// Mock ngx-simplemde to avoid ESM import error
+vi.mock('ngx-simplemde', () => {
+  const SimplemdeModuleMock = class SimplemdeModule {
+    static ɵmod = { 
+      id: 'SimplemdeModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+    static forRoot() {
+      return {
+        ngModule: SimplemdeModuleMock,
+        providers: []
+      };
+    }
+  };
+  
+  return {
+    SimplemdeModule: SimplemdeModuleMock,
+    SimplemdeOptions: class SimplemdeOptions {
+      constructor() {}
+    },
+    SimplemdeComponent: class SimplemdeComponent {
+      value = '';
+      options = {};
+      delay = 0;
+      valueChange = { emit: vi.fn() };
+    }
+  };
+});
+
+// All imports AFTER vi.mock() calls
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { WorkerService } from 'src/app/_services/worker/worker.service';
+import { createMockSignalRService, createMockNotificationsService, createMockWorkerService } from 'src/test-helpers/mock-services';
+import { RevisionOptionsComponent } from './revision-options.component';
 
 describe('ApiRevisionOptionsComponent', () => {
   let component: RevisionOptionsComponent;
   let fixture: ComponentFixture<RevisionOptionsComponent>;
 
+  const mockNotificationsService = createMockNotificationsService();
+  const mockSignalRService = createMockSignalRService();
+  const mockWorkerService = createMockWorkerService();
+
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [
-        RevisionOptionsComponent,
-        SharedAppModule,
-        ReviewPageModule
-      ],
+      schemas: [NO_ERRORS_SCHEMA],
+      imports: [RevisionOptionsComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: WorkerService, useValue: mockWorkerService },
         {
           provide: ActivatedRoute,
           useValue: {

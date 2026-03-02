@@ -1,5 +1,21 @@
 # Release History
 
+## 0.6.0 (2026-02-27)
+
+### Features Added
+
+- Added auto-install to `azsdk verify setup` MCP and CLI tool, enabling auto-installing of supported missing requirements
+- Changed the CLI interface for verifying setup to `azsdk verify setup check` for non-install mode, and `azsdk verify setup install`
+- Added `azsdk eng package-info` command for CI pipeline package manifest generation
+- Switch Go language service to use C# native package info generation
+- Customized code update tool now uses copilot sdk
+
+## 0.5.19 (2026-02-25)
+
+### Bugs Fixed
+
+- Override path extension variable to support running commands on Windows without extension.
+
 ## 0.5.18 (2026-02-24)
 
 ### Bugs Fixed

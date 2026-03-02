@@ -10,7 +10,7 @@ using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
-    internal class GoLanguageServiceTests
+    internal class GoLanguageServicesToolingTests
     {
         private TempDirectory tempDir = null!;
         private string packagePath = "";
@@ -39,6 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 new PowershellHelper(NullLogger<PowershellHelper>.Instance, Mock.Of<IRawOutputHelper>()),
                 new GitHelper(Mock.Of<IGitHubService>(), new GitCommandHelper(NullLogger<GitCommandHelper>.Instance, Mock.Of<IRawOutputHelper>()), NullLogger<GitHelper>.Instance),
                 NullLogger<GoLanguageService>.Instance, Mock.Of<ICommonValidationHelpers>(),
+                Mock.Of<IPackageInfoHelper>(),
                 Mock.Of<IFileHelper>(),
                 Mock.Of<ISpecGenSdkConfigHelper>(),
                 Mock.Of<IChangelogHelper>());
@@ -277,37 +278,53 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             return "";
         }
 
+        private static async Task CreateTestGoPackageAsync(string packageDirectory, string modulePath)
+        {
+            Directory.CreateDirectory(packageDirectory);
+            await File.WriteAllTextAsync(
+                Path.Combine(packageDirectory, "go.mod"),
+                $"module {modulePath}\ngo 1.24.0\n");
+
+            var internalDirectory = Path.Combine(packageDirectory, "internal");
+            Directory.CreateDirectory(internalDirectory);
+            await File.WriteAllTextAsync(
+                Path.Combine(internalDirectory, "version.go"),
+                "package internal\n\nconst Version = \"v1.2.3\"\n");
+        }
+
         #region HasCustomizations Tests
 
         [Test]
-        public void HasCustomizations_ReturnsTrue_WhenInternalGenerateDirectoryExists()
+        public void HasCustomizations_ReturnsPath_WhenInternalGenerateDirectoryExists()
         {
             var customizationDir = Path.Combine(packagePath, "internal", "generate");
             Directory.CreateDirectory(customizationDir);
 
             var result = LangService.HasCustomizations(packagePath, CancellationToken.None);
 
-            Assert.That(result, Is.True);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.EqualTo(customizationDir));
         }
 
         [Test]
-        public void HasCustomizations_ReturnsTrue_WhenTestdataGenerateDirectoryExists()
+        public void HasCustomizations_ReturnsPath_WhenTestdataGenerateDirectoryExists()
         {
             var customizationDir = Path.Combine(packagePath, "testdata", "generate");
             Directory.CreateDirectory(customizationDir);
 
             var result = LangService.HasCustomizations(packagePath, CancellationToken.None);
 
-            Assert.That(result, Is.True);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.EqualTo(customizationDir));
         }
 
         [Test]
-        public void HasCustomizations_ReturnsFalse_WhenNoCustomizationDirectoryExists()
+        public void HasCustomizations_ReturnsNull_WhenNoCustomizationDirectoryExists()
         {
             // packagePath is already created without customization directories
             var result = LangService.HasCustomizations(packagePath, CancellationToken.None);
 
-            Assert.That(result, Is.False);
+            Assert.That(result, Is.Null);
         }
 
         #endregion

@@ -138,6 +138,7 @@ export class CommentThreadComponent {
 
     const firstComment = this.codePanelRowData.comments[0];
     return firstComment.createdBy === this.userProfile?.userName ||
+           this.permissionsService.isAdmin(this.userProfile?.permissions) ||
            (firstComment.createdBy === 'azure-sdk' && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage()));
   }
 
@@ -157,6 +158,7 @@ export class CommentThreadComponent {
         { title: "csharp", label: ".NET", command: (event) => this.createGitHubIssue(event) },
         { title: "python", label: "Python", command: (event) => this.createGitHubIssue(event) },
         { title: "rust", label: "Rust", command: (event) => this.createGitHubIssue(event) },
+        { title: "apiview", label: "APIView", command: (event) => this.createGitHubIssue(event) },
       ]
     });
   }
@@ -215,9 +217,13 @@ export class CommentThreadComponent {
         { label: 'Edit', icon: 'pi pi-pencil', command: (event) => this.showEditEditor(event) },
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    }
-    // Add delete for architects on AI-generated comments
-    else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
+    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions)) {
+      // Admins can delete any comment but not edit others' comments
+      menu.push({ separator: true });
+      menu.push({ items: [
+        { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
+      ]});
+    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
@@ -279,6 +285,9 @@ export class CommentThreadComponent {
       case "rust":
         repo = "azure-sdk-for-rust";
         break;
+      case "apiview":
+        repo = "azure-sdk-tools";
+        break;
     }
 
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
@@ -307,15 +316,15 @@ export class CommentThreadComponent {
     if (!target) {
       return;
     }
-    
+
     const commentId = target.getAttribute("data-item-id");
     if (!commentId) {
       this.messageService.add({ severity: 'error', summary: 'Copy failed', detail: 'Unable to find comment ID', life: 3000 });
       return;
     }
-    
+
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
-    
+
     const nodeId: string = comment?.elementId || this.codePanelRowData?.nodeId || '';
 
     // Build URL that always points to the review page, preserving revision parameters
@@ -428,6 +437,9 @@ export class CommentThreadComponent {
       if (contentText.length === 0) {
         this.messageService.add(emptyCommentContentWarningMessage);
       } else {
+        // For replies (thread already has comments), severity and resolution settings
+        // are owned by the thread starter and must not be overridden by replies.
+        const isReply = this.codePanelRowData!.comments && this.codePanelRowData!.comments.length > 0;
         this.saveCommentActionEmitter.emit(
           {
             commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
@@ -435,11 +447,12 @@ export class CommentThreadComponent {
             nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
             threadId: this.codePanelRowData!.threadId,
             commentText: content,
-            allowAnyOneToResolve: this.allowAnyOneToResolve,
+            allowAnyOneToResolve: isReply ? undefined : this.allowAnyOneToResolve,
             associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
             elementId: elementIdValue,
             revisionId: revisionIdForConversationGroup,
-            severity: this.selectedSeverity
+            severity: isReply ? null : this.selectedSeverity,
+            isReply: isReply
           } as CommentUpdatesDto
         );
         this.selectedSeverity = null;
@@ -667,6 +680,8 @@ export class CommentThreadComponent {
       comment.severity = newSeverity;
       this.commentsService.updateCommentSeverity(this.reviewId, commentId, newSeverity).subscribe({
         next: (response) => {
+          this.commentsService.notifySeverityChanged(commentId, newSeverity);
+          this.commentsService.notifyQualityScoreRefresh();
         },
         error: (error) => {
           comment.severity = originalSeverity;
@@ -787,6 +802,9 @@ export class CommentThreadComponent {
         }
 
         this.emitCreationEvents(createdComments);
+
+        // Refresh quality score after batch operation completes
+        this.commentsService.notifyQualityScoreRefresh();
 
         this.showRelatedCommentsDialog = false;
       },

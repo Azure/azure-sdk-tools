@@ -351,8 +351,168 @@ export function processExcerptTokens(
  */
 function createIndentation(depth: number, deprecated?: boolean): ReviewToken | undefined {
   if (depth <= 0) return undefined;
-  const spaces = "  ".repeat(depth * 4); // depth * 8 spaces total (8 spaces per level)
+  const spaces = " ".repeat(depth * 4); // depth * 4 spaces total (4 spaces per level)
   return createToken(TokenKind.Text, spaces, { deprecated });
+}
+
+/**
+ * Handles union/intersection types that contain type literals by building
+ * proper multi-line structure. Returns undefined if no type literals are present,
+ * signaling the caller to use the simple inline handler.
+ */
+function buildCompositeTypeWithLiterals(
+  types: ts.NodeArray<ts.TypeNode>,
+  separator: "|" | "&",
+  tokens: ReviewToken[],
+  children: ReviewLine[],
+  deprecated: boolean | undefined,
+  depth: number,
+): ReviewLine[] | undefined {
+  const hasTypeLiterals = types.some((t) => ts.isTypeLiteralNode(t));
+  if (!hasTypeLiterals) return undefined;
+
+  let inChildrenMode = false;
+
+  types.forEach((typeNode, index) => {
+    const isFirst = index === 0;
+    const isLast = index === types.length - 1;
+    const prevIsLiteral = index > 0 && ts.isTypeLiteralNode(types[index - 1]);
+
+    if (ts.isTypeLiteralNode(typeNode)) {
+      if (!inChildrenMode) {
+        // First literal encountered: add separator and { to parent tokens
+        if (!isFirst) {
+          tokens.push(
+            createToken(TokenKind.Punctuation, separator, {
+              hasPrefixSpace: true,
+              hasSuffixSpace: true,
+              deprecated,
+            }),
+          );
+        }
+        tokens.push(createToken(TokenKind.Punctuation, "{", { hasSuffixSpace: true, deprecated }));
+        inChildrenMode = true;
+      } else if (prevIsLiteral) {
+        // Consecutive literals: add "} separator {" as child line
+        const sepTokens: ReviewToken[] = [];
+        const sepIndent = createIndentation(depth, deprecated);
+        if (sepIndent) sepTokens.push(sepIndent);
+        sepTokens.push(createToken(TokenKind.Text, " ", { deprecated }));
+        sepTokens.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
+        sepTokens.push(
+          createToken(TokenKind.Punctuation, separator, {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        sepTokens.push(
+          createToken(TokenKind.Punctuation, "{", { hasSuffixSpace: true, deprecated }),
+        );
+        children.push({ Tokens: sepTokens });
+      } else {
+        // After non-literal(s): append "separator {" to the last child line
+        const lastChild = children[children.length - 1];
+        lastChild.Tokens.push(
+          createToken(TokenKind.Punctuation, separator, {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        lastChild.Tokens.push(
+          createToken(TokenKind.Punctuation, "{", { hasSuffixSpace: true, deprecated }),
+        );
+      }
+
+      // Add members as children
+      for (const member of typeNode.members) {
+        const memberTokens: ReviewToken[] = [];
+        const indent = createIndentation(depth + 1, deprecated);
+        if (indent) memberTokens.push(indent);
+        const memberChildren = buildTypeElementTokens(member, memberTokens, deprecated, depth + 1);
+        const childLine: ReviewLine = { Tokens: memberTokens };
+        if (memberChildren?.length) {
+          childLine.Children = memberChildren;
+        }
+        children.push(childLine);
+      }
+
+      // If this is the last type, add closing "};
+      if (isLast) {
+        const closingTokens: ReviewToken[] = [];
+        const closingIndent = createIndentation(depth, deprecated);
+        if (closingIndent) closingTokens.push(closingIndent);
+        closingTokens.push(createToken(TokenKind.Text, " ", { deprecated }));
+        closingTokens.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
+        closingTokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+        children.push({ Tokens: closingTokens, IsContextEndLine: true });
+      }
+    } else {
+      // Non-literal type
+      if (prevIsLiteral) {
+        // After a literal: start a child line with "} separator" then render this type
+        const sepTokens: ReviewToken[] = [];
+        const sepIndent = createIndentation(depth, deprecated);
+        if (sepIndent) sepTokens.push(sepIndent);
+        sepTokens.push(createToken(TokenKind.Text, " ", { deprecated }));
+        sepTokens.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
+        sepTokens.push(
+          createToken(TokenKind.Punctuation, separator, {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        const nestedChildren = buildTypeNodeTokens(typeNode, sepTokens, deprecated, depth);
+        if (isLast) {
+          sepTokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+          children.push({ Tokens: sepTokens, IsContextEndLine: true });
+        } else {
+          children.push({ Tokens: sepTokens });
+        }
+        if (nestedChildren?.length) {
+          children.push(...nestedChildren);
+        }
+      } else if (inChildrenMode) {
+        // After another non-literal, but we're already in children mode:
+        // append "separator type" to the last child line
+        const lastChild = children[children.length - 1];
+        lastChild.Tokens.push(
+          createToken(TokenKind.Punctuation, separator, {
+            hasPrefixSpace: true,
+            hasSuffixSpace: true,
+            deprecated,
+          }),
+        );
+        const nestedChildren = buildTypeNodeTokens(typeNode, lastChild.Tokens, deprecated, depth);
+        if (isLast) {
+          lastChild.Tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+          lastChild.IsContextEndLine = true;
+        }
+        if (nestedChildren?.length) {
+          children.push(...nestedChildren);
+        }
+      } else {
+        // Before any literal: put on parent line
+        if (!isFirst) {
+          tokens.push(
+            createToken(TokenKind.Punctuation, separator, {
+              hasPrefixSpace: true,
+              hasSuffixSpace: true,
+              deprecated,
+            }),
+          );
+        }
+        const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated, depth);
+        if (nestedChildren?.length) {
+          children.push(...nestedChildren);
+        }
+      }
+    }
+  });
+
+  return children.length > 0 ? children : [];
 }
 
 /**
@@ -396,11 +556,11 @@ export function buildTypeNodeTokens(
     const closingTokens: ReviewToken[] = [];
     const closingIndent = createIndentation(depth, deprecated);
     if (closingIndent) closingTokens.push(closingIndent);
-    // NOTE: We intentionally add exactly 4 spaces here (in addition to createIndentation above)
+    // NOTE: We intentionally add exactly 2 spaces here (in addition to createIndentation above)
     // to keep the closing '}' visually aligned with the type members in APIView. This spacing
     // is part of the expected rendered output; do not change it to use createIndentation or a
     // different width without verifying the impact on existing reviews.
-    closingTokens.push(createToken(TokenKind.Text, "    ", { deprecated }));
+    closingTokens.push(createToken(TokenKind.Text, " ", { deprecated }));
     closingTokens.push(createToken(TokenKind.Punctuation, "}", { deprecated }));
     closingTokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 
@@ -413,7 +573,17 @@ export function buildTypeNodeTokens(
   }
 
   if (ts.isUnionTypeNode(node)) {
-    // Handle union types: TypeA | TypeB | { inline: string; }
+    const result = buildCompositeTypeWithLiterals(
+      node.types,
+      "|",
+      tokens,
+      children,
+      deprecated,
+      depth,
+    );
+    if (result !== undefined) return result;
+
+    // Simple union without type literals
     node.types.forEach((typeNode, index) => {
       if (index > 0) {
         tokens.push(
@@ -433,7 +603,17 @@ export function buildTypeNodeTokens(
   }
 
   if (ts.isIntersectionTypeNode(node)) {
-    // Handle intersection types: TypeA & TypeB & { inline: string; }
+    const result = buildCompositeTypeWithLiterals(
+      node.types,
+      "&",
+      tokens,
+      children,
+      deprecated,
+      depth,
+    );
+    if (result !== undefined) return result;
+
+    // Simple intersection without type literals
     node.types.forEach((typeNode, index) => {
       if (index > 0) {
         tokens.push(
@@ -525,11 +705,63 @@ export function buildTypeNodeTokens(
   }
 
   if (ts.isFunctionTypeNode(node)) {
+    if (node.typeParameters?.length) {
+      tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
+      node.typeParameters.forEach((typeParameter, index) => {
+        tokens.push(createToken(TokenKind.TypeName, typeParameter.name.getText(), { deprecated }));
+
+        if (typeParameter.constraint) {
+          tokens.push(
+            createToken(TokenKind.Keyword, "extends", {
+              hasPrefixSpace: true,
+              hasSuffixSpace: true,
+              deprecated,
+            }),
+          );
+          addTypeNodeTokensOrInlineLiteral(
+            typeParameter.constraint,
+            tokens,
+            children,
+            deprecated,
+            depth,
+          );
+        }
+
+        if (typeParameter.default) {
+          tokens.push(
+            createToken(TokenKind.Punctuation, "=", {
+              hasPrefixSpace: true,
+              hasSuffixSpace: true,
+              deprecated,
+            }),
+          );
+          addTypeNodeTokensOrInlineLiteral(
+            typeParameter.default,
+            tokens,
+            children,
+            deprecated,
+            depth,
+          );
+        }
+
+        if (index < node.typeParameters!.length - 1) {
+          tokens.push(
+            createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
+          );
+        }
+      });
+      tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
+    }
+
     tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
 
     node.parameters.forEach((param, index) => {
       if (index > 0) {
         tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+      }
+
+      if (param.dotDotDotToken) {
+        tokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
       }
 
       tokens.push(createToken(TokenKind.MemberName, param.name.getText(), { deprecated }));

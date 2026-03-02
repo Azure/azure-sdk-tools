@@ -837,7 +837,9 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelCo
 	promptParser := prompt.RoutingTenantPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	promptStr, err := promptParser.ParsePrompt(nil, "common/tenant_routing.md")
+	promptStr, err := promptParser.ParsePrompt(map[string]string{
+		"original_tenant": string(originalTenantID),
+	}, "common/tenant_routing.md")
 	if err != nil {
 		log.Printf("Failed to parse tenant routing prompt: %v", err)
 		return originalTenantID, false

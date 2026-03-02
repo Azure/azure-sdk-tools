@@ -137,7 +137,7 @@ public class TypeSpecCustomizationService : ITypeSpecCustomizationService
     {
         return
         [
-            FileTools.CreateReadFileTool(typespecProjectPath, "Read the contents of a file from the TypeSpec project directory"),
+            FileTools.CreateReadFileTool(typespecProjectPath, description: "Read the contents of a file from the TypeSpec project directory"),
             FileTools.CreateWriteFileTool(typespecProjectPath, "Write content to a file in the TypeSpec project directory"),
             TypeSpecTools.CreateCompileTypeSpecTool(typespecProjectPath, npxHelper)
         ];

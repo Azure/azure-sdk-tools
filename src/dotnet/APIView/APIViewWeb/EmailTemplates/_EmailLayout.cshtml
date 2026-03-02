@@ -1,0 +1,167 @@
+@{
+    var emailTitle = ViewData["EmailTitle"]?.ToString() ?? "APIView Notification";
+    var emailSubtitle = ViewData["EmailSubtitle"]?.ToString();
+    var emailLogoUrl = ViewData["EmailLogoUrl"]?.ToString() ?? "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/src/dotnet/APIView/APIViewWeb/wwwroot/icons/apiview.png";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@emailTitle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            background-color: #f3f2f1;
+            color: #323130;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+
+        .email-shell {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .email-header {
+            background-color: #0078d4;
+            color: #ffffff;
+            border-radius: 10px 10px 0 0;
+            padding: 18px 24px;
+        }
+
+        .header-top {
+            display: block;
+        }
+
+        .email-logo-badge {
+            width: auto;
+            height: auto;
+            border-radius: 6px;
+            background-color: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            display: inline-block;
+            vertical-align: middle;
+            padding: 4px;
+            line-height: 0;
+            margin-right: 8px;
+        }
+
+        .email-logo {
+            width: 18px;
+            height: 18px;
+            display: block;
+            margin: 0;
+            border: 0;
+            outline: none;
+            text-decoration: none;
+            -ms-interpolation-mode: bicubic;
+        }
+
+        .email-brand {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            opacity: 0.95;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .email-title {
+            margin-top: 4px;
+            font-size: 24px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .email-subtitle {
+            margin-top: 6px;
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .email-body {
+            background-color: #ffffff;
+            border: 1px solid #edebe9;
+            border-top: 0;
+            border-radius: 0 0 10px 10px;
+            padding: 24px;
+        }
+
+        .section {
+            margin: 0 0 18px 0;
+        }
+
+        .panel {
+            background-color: #f8fafd;
+            border-left: 4px solid #0078d4;
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin: 16px 0;
+        }
+
+        .list {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .list li {
+            margin: 6px 0;
+        }
+
+        .meta-note {
+            margin: 20px 0 0;
+            padding-top: 12px;
+            border-top: 1px solid #edebe9;
+            color: #605e5c;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        a {
+            color: #005a9e;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .email-footer {
+            margin-top: 18px;
+            background-color: #faf9f8;
+            border: 1px solid #edebe9;
+            border-radius: 8px;
+            padding: 14px 16px;
+            color: #605e5c;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-shell">
+        <div class="email-header">
+            <div class="header-top">
+                <span class="email-logo-badge">
+                    <img class="email-logo" src="@emailLogoUrl" alt="APIView logo" width="18" height="18" />
+                </span>
+                <div class="email-brand">APIView</div>
+            </div>
+            <div class="email-title">@emailTitle</div>
+            @if (!string.IsNullOrWhiteSpace(emailSubtitle))
+            {
+                <div class="email-subtitle">@emailSubtitle</div>
+            }
+        </div>
+        <div class="email-body">
+            @RenderBody()
+        </div>
+        <div class="email-footer">
+            This message was sent by APIView
+        </div>
+    </div>
+</body>
+</html>

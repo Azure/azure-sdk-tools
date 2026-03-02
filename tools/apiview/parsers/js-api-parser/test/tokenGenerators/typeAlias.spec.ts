@@ -390,6 +390,48 @@ describe("typeAliasTokenGenerator", () => {
       });
     });
 
+    it("generates correct multi-line structure for a union of type literals", () => {
+      const typeText =
+        "{ startTime: Date; endTime: Date; } | { startTime: Date; duration: string; } | { duration: string; endTime: Date; } | { duration: string; }";
+      const mockTypeAlias = createMockTypeAlias(
+        "QueryTimeInterval",
+        typeText,
+        createBasicExcerptTokens("QueryTimeInterval", typeText),
+      );
+
+      const result = typeAliasTokenGenerator.generate(mockTypeAlias, false);
+      const { tokens, children } = result;
+
+      // Parent line should have: export type QueryTimeInterval = {
+      // (only ONE opening brace on the parent line)
+      const openBraces = tokens.filter((t) => t.Value === "{");
+      expect(openBraces).toHaveLength(1);
+
+      // Should have children (multi-line structure)
+      expect(children).toBeDefined();
+      expect(children!.length).toBeGreaterThan(0);
+
+      // Children should contain "} | {" separator lines
+      const allChildTokenValues = children!.map((c) => c.Tokens.map((t) => t.Value).join(""));
+      const separatorLines = allChildTokenValues.filter((v) => v.includes("}") && v.includes("|") && v.includes("{"));
+      expect(separatorLines).toHaveLength(3); // 3 separators for 4 type literals
+
+      // Last child should be a closing line with "}" and ";"
+      const lastChild = children![children!.length - 1];
+      const lastValues = lastChild.Tokens.map((t) => t.Value);
+      expect(lastValues).toContain("}");
+      expect(lastValues).toContain(";");
+      expect(lastChild.IsContextEndLine).toBe(true);
+
+      // Member lines should exist (e.g., startTime, endTime, duration)
+      const memberValues = children!.flatMap((c) => c.Tokens.map((t) => t.Value));
+      expect(memberValues).toContain("startTime");
+      expect(memberValues).toContain("endTime");
+      expect(memberValues).toContain("duration");
+      expect(memberValues).toContain("Date");
+      expect(memberValues).toContain("string");
+    });
+
     it("generates correct tokens for an intersection type alias", () => {
       const mockTypeAlias = createMockTypeAlias(
         "IntersectionType",

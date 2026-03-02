@@ -24,7 +24,7 @@
           "path": "/packages/http-specs/specs",
           "folder": "typespec_http_specs",
           "fileNameLowerCase": true,
-          "isSpectorTest": true,
+          "isGenerated": true,
           "metadata": {
             "scope": "unbranded"
           }
@@ -84,9 +84,20 @@
           "path": "/packages/azure-http-specs/specs",
           "folder": "typespec_azure_http_specs",
           "fileNameLowerCase": true,
-          "isSpectorTest": true,
+          "isGenerated": true,
           "metadata": {
             "scope": "branded"
+          }
+        },
+        {
+          "description": "TypeSpec Azure Resource Manager library",
+          "path": "/packages/typespec-azure-resource-manager/lib",
+          "folder": "typespec-azure-resource-manager-lib",
+          "isGenerated": true,
+          "ignoredPaths": ["legacy-types"],
+          "metadata": {
+            "scope": "branded",
+            "service_type": "management-plane"
           }
         }
       ]

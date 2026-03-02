@@ -1,9 +1,9 @@
-name: Benchmarks
+name: azsdk-cli Benchmarks
 
 on:
   push:
     paths:
-      - .github/workflows/benchmarks.yml
+      - .github/workflows/azsdk-cli-benchmarks.yml
   workflow_dispatch:
     inputs:
       scenario:
@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run benchmarks
-        uses: ./eng/common/actions/run-benchmarks
+        uses: ./eng/common/actions/run-azsdk-cli-benchmarks
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
         with:

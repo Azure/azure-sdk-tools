@@ -91,7 +91,7 @@ See [docs/creating-scenarios.md](docs/creating-scenarios.md) for guidance on def
 
 ## Running in CI
 
-Benchmarks can be run via the **Benchmarks** GitHub Actions workflow, triggered manually from the Actions tab.
+Benchmarks can be run via the **azsdk-cli Benchmarks** GitHub Actions workflow, triggered manually from the Actions tab.
 
 ### Triggering a Run
 
@@ -106,4 +106,4 @@ Benchmarks can be run via the **Benchmarks** GitHub Actions workflow, triggered 
 
 ### Artifacts
 
-Execution logs (`<scenario>-benchmark-log.json`) are uploaded as the **benchmark-logs** artifact on each workflow run. These contain the full agent conversation, tool calls, git diff, validation results, and timing. Held for 7 days.
+Execution logs (`<scenario>-benchmark-log.json`) are uploaded as the **azsdk-cli-benchmark-logs** artifact on each workflow run. These contain the full agent conversation, tool calls, git diff, validation results, and timing. Held for 7 days.

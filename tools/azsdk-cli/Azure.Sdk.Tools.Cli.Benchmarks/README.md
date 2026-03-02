@@ -88,3 +88,22 @@ Azure.Sdk.Tools.Cli.Benchmarks/
 ## Creating Scenarios
 
 See [docs/creating-scenarios.md](docs/creating-scenarios.md) for guidance on defining new benchmark scenarios.
+
+## Running in CI
+
+Benchmarks can be run via the **Benchmarks** GitHub Actions workflow, triggered manually from the Actions tab.
+
+### Triggering a Run
+
+1. Go to **Actions** → **Benchmarks** → **Run workflow**
+2. Select the branch and fill in the inputs:
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `scenario` | Run a single scenario by name (leave empty to run all) | _(empty = run all)_ |
+| `tags` | Filter scenarios by tags, comma-separated (ignored if scenario is specified) | _(empty)_ |
+| `model` | Model to use for agent execution | `claude-opus-4.5` |
+
+### Artifacts
+
+Execution logs (`<scenario>-benchmark-log.json`) are uploaded as the **benchmark-logs** artifact on each workflow run. These contain the full agent conversation, tool calls, git diff, validation results, and timing. Held for 7 days.

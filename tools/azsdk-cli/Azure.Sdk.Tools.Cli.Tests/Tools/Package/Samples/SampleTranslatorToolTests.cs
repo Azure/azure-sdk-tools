@@ -3,7 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package.Samples;
@@ -16,7 +16,7 @@ public class SampleTranslatorToolTests
 {
     private TestLogger<SampleTranslatorTool> _logger;
     private Mock<IGitHelper> _mockGitHelper;
-    private Mock<IMicroagentHostService> _mockMicroagentHostService;
+    private Mock<ICopilotAgentRunner> _mockCopilotAgentRunner;
     private SampleTranslatorTool _sampleTranslatorTool;
 
     [SetUp]
@@ -24,14 +24,14 @@ public class SampleTranslatorToolTests
     {
         _logger = new TestLogger<SampleTranslatorTool>();
         _mockGitHelper = new Mock<IGitHelper>();
-        _mockMicroagentHostService = new Mock<IMicroagentHostService>();
+        _mockCopilotAgentRunner = new Mock<ICopilotAgentRunner>();
 
         // Create empty language services list - this will cause the tool to fail language detection
         // which is actually what we want to test since we're focusing on error paths
         var languageServices = new List<LanguageService>();
 
         _sampleTranslatorTool = new SampleTranslatorTool(
-            _mockMicroagentHostService.Object,
+            _mockCopilotAgentRunner.Object,
             _logger,
             _mockGitHelper.Object,
             languageServices);

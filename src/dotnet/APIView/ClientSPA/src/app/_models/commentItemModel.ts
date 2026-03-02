@@ -1,8 +1,8 @@
 import { ChangeHistory } from "./changeHistory";
 
 export enum CommentType {
-    APIRevision = 0,
-    SampleRevision
+    APIRevision = 'APIRevision',
+    SampleRevision = 'SampleRevision'
 }
 
 export enum CommentSeverity {

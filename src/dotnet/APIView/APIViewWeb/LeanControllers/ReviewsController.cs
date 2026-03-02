@@ -101,21 +101,6 @@ namespace APIViewWeb.LeanControllers
             return StatusCode(StatusCodes.Status404NotFound);
         }
 
-        [HttpGet("allowedApprovers", Name = "AllowedApprovers")]
-        public ActionResult<HashSet<string>> GetAllowedApproversAsync()
-        {
-            var allowedApprovers = _configuration["approvers"];
-            return new LeanJsonResult(allowedApprovers, StatusCodes.Status200OK);
-        }
-
-        [HttpGet("{reviewId}/preferredApprovers", Name = "PreferredApprovers")]
-        public async Task<ActionResult<HashSet<string>>> GetPreferredApproversAsync(string reviewId)
-        {
-            var review = await _reviewManager.GetReviewAsync(User, reviewId);
-            HashSet<string> preferredApprovers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, User, review);
-            return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
-        }
-
         [HttpGet("enableNamespaceReview", Name = "EnableNamespaceReview")]
         public ActionResult<bool> IsNamespaceReviewEnabled()
         {
@@ -274,13 +259,15 @@ namespace APIViewWeb.LeanControllers
                     activeRevisionReviewCodeFile.Diagnostics,
                     allCommentsFromDb);
 
-                // Combine non-diagnostic comments with synced diagnostic comments
-                List<CommentItemModel> allComments = allCommentsFromDb
+                // After sync, build the full comment set from non-diagnostic DB comments + freshly synced diagnostics,
+                // then apply the shared visibility filter (same rules as Conversations panel & quality score).
+                var allCommentsWithSyncedDiagnostics = allCommentsFromDb
                     .Where(c => c.CommentSource != CommentSource.Diagnostic)
-                    .Concat(diagnosticComments)
-                    .ToList();
+                    .Concat(diagnosticComments);
+                List<CommentItemModel> visibleComments = CommentVisibilityHelper.GetVisibleComments(allCommentsWithSyncedDiagnostics, activeApiRevisionId);
 
-                List<CommentItemModel> filteredComments = allComments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
+                // Code panel additionally excludes resolved comments from non-active revisions
+                List<CommentItemModel> filteredComments = visibleComments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
                 var codePanelRawData = new CodePanelRawData()
                 {
                     activeRevisionCodeFile = activeRevisionReviewCodeFile,

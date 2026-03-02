@@ -45,6 +45,25 @@ public class LanguageScopedRoleAssignment : RoleAssignment
     public string Language { get; set; }
 }
 
+public static class RoleAssignmentExtensions
+{
+    public static bool HasGlobalRole(this IEnumerable<RoleAssignment> roles, GlobalRole role) =>
+        roles.Any(r => r is GlobalRoleAssignment gra && gra.Role == role);
+
+    public static bool HasAnyLanguageRole(this IEnumerable<RoleAssignment> roles, string language, params LanguageScopedRole[] targetRoles) =>
+        roles.Any(r => r is LanguageScopedRoleAssignment lra &&
+            targetRoles.Contains(lra.Role) &&
+            string.Equals(lra.Language, language, StringComparison.OrdinalIgnoreCase));
+
+    public static bool GrantsApprovalFor(this IEnumerable<RoleAssignment> roles, string language) =>
+        roles.HasGlobalRole(GlobalRole.Admin) ||
+        roles.HasAnyLanguageRole(language, LanguageScopedRole.Architect, LanguageScopedRole.DeputyArchitect);
+
+    public static bool GrantsApprovalForAnyLanguage(this IEnumerable<RoleAssignment> roles) =>
+        roles.HasGlobalRole(GlobalRole.Admin) ||
+        roles.Any(r => r is LanguageScopedRoleAssignment { Role: LanguageScopedRole.Architect or LanguageScopedRole.DeputyArchitect });
+}
+
 public class GroupPermissionsModel
 {
     [JsonPropertyName("id")]
@@ -83,37 +102,9 @@ public class EffectivePermissions
     [JsonPropertyName("roles")]
     public List<RoleAssignment> Roles { get; set; } = new();
 
-    public bool IsAdmin => HasGlobalRole(GlobalRole.Admin);
-
-    public bool HasElevatedAccess => HasAnyGlobalRole(GlobalRole.SdkTeam, GlobalRole.Admin);
-
-    public bool HasGlobalRole(GlobalRole role)
-    {
-        return Roles.Exists(r => r is GlobalRoleAssignment gra && gra.Role == role);
-    }
-    public bool HasAnyGlobalRole(params GlobalRole[] roles)
-    {
-        return roles.Any(HasGlobalRole);
-    }
-
-    public bool HasLanguageRole(LanguageScopedRole role, string language)
-    {
-        return Roles.Exists(r =>
-            r is LanguageScopedRoleAssignment lra &&
-            lra.Role == role &&
-            string.Equals(lra.Language, language, StringComparison.OrdinalIgnoreCase));
-    }
-
-    public bool HasAnyLanguageRole(string language, params LanguageScopedRole[] roles)
-    {
-        return roles.Any(role => HasLanguageRole(role, language));
-    }
-
-    public bool CanApprove(string language)
-    {
-        return HasGlobalRole(GlobalRole.Admin) ||
-               HasAnyLanguageRole(language, LanguageScopedRole.Architect, LanguageScopedRole.DeputyArchitect);
-    }
+    public bool IsAdmin => Roles.HasGlobalRole(GlobalRole.Admin);
+    public bool IsLanguageApprover => Roles.GrantsApprovalForAnyLanguage();
+    public bool IsApproverFor(string language) => Roles.GrantsApprovalFor(language);
 }
 
 public class GroupPermissionsRequest

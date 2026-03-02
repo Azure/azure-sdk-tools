@@ -57,9 +57,9 @@ class TestClassParsing:
         actuals = _render_lines(tokens)
         expected = [
             "class ClassWithIvarsAndCvars:",
-            'ivar captain: str = "Picard"',
-            "ivar damage: int",
-            "cvar stats: ClassVar[Dict[str, int]] = {}",
+            'captain: str = "Picard"',
+            "damage: int",
+            "stats: ClassVar[Dict[str, int]] = {}",
         ]
         _check_all(actuals, expected, obj)
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
@@ -135,10 +135,10 @@ class TestClassParsing:
         actuals = _render_lines(tokens)
         expected = [
             "class FakeObject:",
-            'ivar PUBLIC_CONST: str = "SOMETHING"',
-            "ivar age: int",
-            "ivar name: str",
-            "ivar union: Union[bool, PetEnumPy3MetaclassAlt]",
+            'PUBLIC_CONST: str = "SOMETHING"',
+            "age: int",
+            "name: str",
+            "union: Union[bool, PetEnumPy3MetaclassAlt]",
         ]
         _check_all(actuals, expected, obj)
         expected = [
@@ -171,9 +171,9 @@ class TestClassParsing:
         actuals = _render_lines(tokens)
         expected = [
             "class PublicPrivateClass:",
-            "ivar public_datetime: datetime",
-            "ivar public_dict: dict = {'a': 'b'}",
-            'ivar public_var: str = "SOMEVAL"',
+            "public_datetime: datetime",
+            "public_dict: dict = {'a': 'b'}",
+            'public_var: str = "SOMEVAL"',
         ]
         _check_all(actuals, expected, obj)
         assert actuals[5].lstrip() == "def __init__(self)"
@@ -484,7 +484,7 @@ class TestClassParsing:
         actuals = _render_lines(tokens)
         expected = [
             "class PropertyWithNoNameAttr:",
-            "ivar schema: TypedDict",
+            "schema: TypedDict",
         ]
         _check_all(actuals, expected, obj)
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
@@ -615,8 +615,8 @@ class TestClassParsing:
         expected = [
             "class SomethingWithLiterals:",
             "property literal_property: Literal[\"read\", \"write\", \"admin\"]    # Read-only",
-            "cvar literal_cvar: ClassVar[Union[Literal[\"production\", \"development\"], bool]]",
-            "ivar literal_ivar: Literal[\"active\", \"inactive\", SomeEnum.ONE_ENUM]",
+            "literal_cvar: ClassVar[Union[Literal[\"production\", \"development\"], bool]]",
+            "literal_ivar: Literal[\"active\", \"inactive\", SomeEnum.ONE_ENUM]",
             "",
             "def literal_mixed(self, option: Literal[\"auto\", 42, True, SomeEnum.TWO_ENUM]) -> None",
             "",
@@ -629,3 +629,4 @@ class TestClassParsing:
         metadata = _count_review_line_metadata(tokens, metadata)
         assert metadata["RelatedToLine"] == 4
         assert metadata["IsContextEndLine"] == 1
+

@@ -2,7 +2,7 @@
     <div class="px-1 pt-4">
         <h6 class="mb-2 fw-semibold">Approval</h6>
         <div class="text-center py-2">
-            <ng-container *ngIf="userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName)">
+            <ng-container *ngIf="canApproveForReviewLanguage">
                 <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
                     <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
                     <div class="d-grid gap-2">
@@ -33,7 +33,7 @@
                 <span class="small text-muted mt-1" id="first-release-approval-message">Approved for first release by: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a></span>
             </ng-container>
             <ng-template #reviewIsNotApproved>
-                <div *ngIf="userProfile && userProfile.userName && preferredApprovers.includes(userProfile.userName); else userIsNotAPreferedApprover">
+                <div *ngIf="canApproveForReviewLanguage; else userIsNotAPreferredApprover">
                     <span class="small text-muted">Approves first release of the package</span>
                     <div class="d-grid gap-2">
                         <button class="btn btn-success" type="button" id="first-release-approval-button"
@@ -47,7 +47,7 @@
                     <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
                 </div>
             </ng-template>
-            <ng-template #userIsNotAPreferedApprover>
+            <ng-template #userIsNotAPreferredApprover>
                 <span class="small mt-2 text-muted" id="first-release-approval-message">First release approval pending</span>
             </ng-template>
         </div>
@@ -62,6 +62,49 @@
                 </button>
             </div>
             <span *ngIf="namespaceReviewMessage" class="small text-muted mt-2 d-block">{{namespaceReviewMessage}}</span>
+        </div>
+    </div>
+
+    <hr *ngIf="isAdmin" class="my-2">
+    <div *ngIf="isAdmin" class="px-1 py-2">
+        <h6 class="mb-2 fw-semibold">Quality Score</h6>
+        <div *ngIf="qualityScoreLoading" class="text-center py-2">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span class="small text-muted ms-2">Loading...</span>
+        </div>
+        <div *ngIf="!qualityScoreLoading && qualityScore">
+            <div class="text-center py-1">
+                <span class="fs-3 fw-bold" [ngClass]="getScoreColorClass()">{{qualityScore.score | number:'1.0-0'}}</span>
+                <span class="small text-muted"> / 100</span>
+            </div>
+            <div *ngIf="qualityScore.totalUnresolvedCount > 0" class="small text-muted mt-1">
+                <div *ngIf="qualityScore.unresolvedMustFixCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-exclamation-circle-fill text-danger me-1"></i>Must Fix</span>
+                    <span>{{qualityScore.unresolvedMustFixCount}}</span>
+                </div>
+                <div *ngIf="qualityScore.unresolvedShouldFixCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Should Fix</span>
+                    <span>{{qualityScore.unresolvedShouldFixCount}}</span>
+                </div>
+                <div *ngIf="qualityScore.unresolvedSuggestionCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-info-circle-fill text-info me-1"></i>Suggestion</span>
+                    <span>{{qualityScore.unresolvedSuggestionCount}}</span>
+                </div>
+                <div *ngIf="qualityScore.unresolvedQuestionCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-question-circle-fill text-secondary me-1"></i>Question</span>
+                    <span>{{qualityScore.unresolvedQuestionCount}}</span>
+                </div>
+                <div *ngIf="qualityScore.unresolvedUnknownCount > 0" class="d-flex justify-content-between">
+                    <span><i class="bi bi-dash-circle-fill text-secondary me-1"></i>Unknown</span>
+                    <span>{{qualityScore.unresolvedUnknownCount}}</span>
+                </div>
+            </div>
+            <div *ngIf="qualityScore.totalUnresolvedCount === 0" class="small text-muted text-center mt-1">
+                No unresolved comments
+            </div>
+        </div>
+        <div *ngIf="!qualityScoreLoading && !qualityScore" class="small text-muted text-center py-2">
+            Score unavailable
         </div>
     </div>
 
@@ -116,7 +159,8 @@
                         Nothing to show
                     </div>
                     <div *ngFor="let approver of filteredApprovers"
-                        class="d-flex align-items-center px-3 py-2 reviewer-item cursor-pointer"
+                        class="d-flex align-items-center px-3 py-2 reviewer-item"
+                        style="cursor: pointer;"
                         [class.selected]="selectedApprovers.includes(approver)"
                         role="checkbox"
                         [attr.aria-checked]="selectedApprovers.includes(approver)"

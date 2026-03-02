@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
 /// Utility for obtaining a normalized absolute path with symbolic link / reparse point resolution.
@@ -51,11 +52,11 @@ public static class RealPath
 {
     /// <summary>
     /// Returns an absolute, normalized path for <paramref name="path"/> with up to <paramref name="maxDepth"/>
-    /// symbolic link hops resolved.
+    /// symbolic link hops resolved. The returned path uses forward slashes for cross-platform consistency.
     /// </summary>
     /// <param name="path">The input path. May be relative or absolute. Must not be null, empty, or whitespace.</param>
     /// <param name="maxDepth">Maximum number of link hops to resolve. Acts as a guard against cyclic or excessive link chains. Default is 64.</param>
-    /// <returns>The fully qualified path with resolved link hops and normalized directory separators.</returns>
+    /// <returns>The fully qualified path with resolved link hops and normalized to forward slashes.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="path"/> is null, empty, or whitespace.</exception>
     /// <exception cref="IOException">
     /// Thrown when too many segments are processed (potential loop), when more than <paramref name="maxDepth"/> link hops
@@ -65,7 +66,7 @@ public static class RealPath
     /// Link resolution is performed one hop at a time; chains longer than <paramref name="maxDepth"/> trigger an <see cref="IOException"/>.
     /// Non-existent tail segments are appended without validation so callers can use this for paths being created.
     /// </remarks>
-    public static string GetRealPath(string path, int maxDepth = 64)
+    public static NormalizedPath GetRealPath(string path, int maxDepth = 64)
     {
         if (string.IsNullOrWhiteSpace(path))
         {

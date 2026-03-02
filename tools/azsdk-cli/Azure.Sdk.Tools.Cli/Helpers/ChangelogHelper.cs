@@ -26,6 +26,14 @@ public interface IChangelogHelper
     ChangelogData? ParseChangelog(string changelogPath);
 
     /// <summary>
+    /// Extracts the release status (date or "Unreleased") from the first version entry in CHANGELOG.md.
+    /// Format: ## [version] ([date]) or ## [version] (Unreleased)
+    /// </summary>
+    /// <param name="changelogPath">Absolute path to the CHANGELOG.md file.</param>
+    /// <returns>The release status string (e.g., "2022-04-26" or "Unreleased"), or empty string if not found.</returns>
+    Task<string> GetReleaseStatus(string changelogPath, CancellationToken ct);
+
+    /// <summary>
     /// Updates the release status (date) for a specific version entry.
     /// </summary>
     /// <param name="changelogPath">Path to the CHANGELOG.md file.</param>
@@ -129,7 +137,7 @@ public partial class ChangelogHelper : IChangelogHelper
     // Release title pattern: ## VERSION (STATUS) where VERSION is semver and STATUS is date or "Unreleased"
     // Compiled once at class level for performance
     private static readonly Regex ReleaseTitleRegex = new(
-        $@"^(?<headerLevel>#+)\s+(?<version>{SemVerPattern})(\s+(?<releaseStatus>\(.+\)))?",
+        $@"^(?<headerLevel>#+)\s+v?(?<version>{SemVerPattern})(\s+(?<releaseStatus>\(.+\)))?",
         RegexOptions.Compiled);
 
     public ChangelogHelper(ILogger<ChangelogHelper> logger)
@@ -168,6 +176,35 @@ public partial class ChangelogHelper : IChangelogHelper
             _logger.LogError(ex, "Error parsing changelog: {ChangelogPath}", changelogPath);
             return null;
         }
+    }
+
+    /// <inheritdoc/>
+    public async Task<string> GetReleaseStatus(string changelogPath, CancellationToken ct)
+    {
+        if (!File.Exists(changelogPath))
+        {
+            return string.Empty;
+        }
+
+        await foreach (var line in File.ReadLinesAsync(changelogPath, ct))
+        {
+            // Match lines like: ## 1.0.3-beta.20 (2022-04-26), ### 1.0.0 (Unreleased), ## v1.0.0 (...)
+            var match = ReleaseTitleRegex.Match(line);
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            if (!match.Groups["releaseStatus"].Success)
+            {
+                continue;
+            }
+
+            var status = match.Groups["releaseStatus"].Value.Trim().Trim('(', ')').Trim();
+            return status;
+        }
+
+        return string.Empty;
     }
 
     /// <inheritdoc/>

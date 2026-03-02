@@ -463,14 +463,14 @@ namespace APIViewUnitTests
                     It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>()))
                 .ReturnsAsync(newRevision);
 
-            _mockApiRevisionsManager.Setup(m => m.CopyApprovalFromAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()))
+            _mockApiRevisionsManager.Setup(m => m.CarryForwardRevisionDataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()))
                 .Returns(Task.CompletedTask);
 
             await _service.CreateAutomaticRevisionAsync(
                 _testUser, codeFile, "test-label", "test.json", memoryStream, null);
 
             // Approval should be /copied
-            _mockApiRevisionsManager.Verify(m => m.CopyApprovalFromAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()),
+            _mockApiRevisionsManager.Verify(m => m.CarryForwardRevisionDataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<APIRevisionListItemModel>()),
                 Times.Once);
         }
 

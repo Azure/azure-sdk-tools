@@ -553,30 +553,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         {
                             TypeSpecProject = specProject,
                             PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane,
-                            Message = "Cannot find service and product id from TypeSpec project path. Retry with valid service id and product id in service tree for the product/offer/feature",
-                            ResponseError = "Failed to identify product details using previous release plans for the TypeSpec project"
+                            ResponseError = "Failed to identify product details using previous release plans for the TypeSpec project",
+                            NextSteps = ["Retry with valid service id and product id in service tree for the product/offer/feature"]
                         };
                     }                        
-                }
-
-                // Handle both URLs and local paths for TypeSpec projects
-                bool isValidTypeSpec;
-                bool isMgmt;
-                string specProject;
-
-                if (typeSpecHelper.IsUrl(typeSpecProjectPath))
-                {
-                    // URL path
-                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectUrl(typeSpecProjectPath);
-                    isMgmt = typeSpecHelper.IsTypeSpecUrlForMgmtPlane(typeSpecProjectPath);
-                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePathFromUrl(typeSpecProjectPath);
-                }
-                else
-                {
-                    // Local file path
-                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath);
-                    isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
-                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
                 }
 
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";

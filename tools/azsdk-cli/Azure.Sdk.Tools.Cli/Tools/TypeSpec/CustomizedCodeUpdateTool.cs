@@ -158,14 +158,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         {
             var response = await Classify(tspProjectPath, plainTextFeedback: feedbackToAddress, ct: ct);
 
-            if (response.Classifications == null || response.Classifications.Count == 0) // TODO - do we want to fail if classification returns nothing?
+            if (response.Classifications == null || response.Classifications.Count == 0)
             {
                 if (tries == 0)
                 {
                     return new CustomizedCodeUpdateResponse
                     {
                         Success = false,
-                        Message = "Feedback could not be classified.", // TODO - tune error message
+                        Message = "Feedback could not be classified.",
                         ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                         BuildResult = "Feedback could not be classified."
                     };
@@ -208,16 +208,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
 
-            // On the first attempt, none of the attempted changes succeeded
-            // On later attempts, we already had successful changes, so move forward to build and attempt code customizations
+            // On the first attempt, if none of the attempted TSP changes succeeded, fail early.
+            // On later attempts we already had successful changes from a prior iteration, so
+            // we fall through to build and then attempt code customizations.
             if (succeeded == 0 && attempted > 0 && tries == 0)
             {
                 return new CustomizedCodeUpdateResponse
                 {
                     Success = false,
-                    Message = $"Failed to apply TypeSpec customizations: {failureReasons.ToString()}",
+                    Message = $"Failed to apply TypeSpec customizations: {failureReasons}",
                     ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed,
-                    BuildResult = $"Failed to apply TypeSpec customizations: {failureReasons.ToString()}",
+                    BuildResult = $"Failed to apply TypeSpec customizations: {failureReasons}",
                 };
             }
 
@@ -226,18 +227,37 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 logger.LogWarning("Some customizations failed to apply: {FailureReasons}", failureReasons.ToString());
             }
 
+            // Resolve the spec repo root from the TypeSpec project path.
+            // tsp-client's --local-spec-repo expects the repo root, not the project subdirectory.
+            var specRepoRoot = await gitHelper.DiscoverRepoRootAsync(tspProjectPath, ct);
+            logger.LogInformation("Resolved spec repo root: {RepoRoot} from project path: {ProjectPath}", specRepoRoot, tspProjectPath);
+
+            // Regenerate SDK using local spec repo
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoRoot, isCli: false, ct: ct);
+            if (!regenResult.IsSuccessful)
+            {
+                logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = $"Regeneration failed: {regenResult.ResponseError}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed,
+                    BuildResult = $"Regeneration failed: {regenResult.ResponseError}",
+                };
+            }
+
             var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
 
             buildSucceeded = success;
             buildError = error;
             tries++;
 
-            if (tries < maxTries) // Don't do this work if this is the last try
+            if (!buildSucceeded && tries < maxTries)
             {
                 StringBuilder iterationContext = new();
 
                 iterationContext.AppendLine(customizationRequest);
-                iterationContext.AppendLine($"---- ITERATION {tries + 1}-------");
+                iterationContext.AppendLine($"---- ITERATION {tries} -------");
                 if (changesMade.Length > 0)
                 {
                     iterationContext.AppendLine("CHANGES MADE:");
@@ -251,8 +271,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
                 iterationContext.AppendLine($"BUILD OUTPUT: {error}");
 
-                // for next iteration, feed build error back into classification to see if there are additional
-                // fixes that can be applied based on new build errors after tsp fixes
                 feedbackToAddress = iterationContext.ToString();
             }
         } while (buildSucceeded == false && tries < maxTries);

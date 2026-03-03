@@ -129,6 +129,12 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
             - Apply TypeSpec client customizations to resolve as many comments as possible
             - MUST consult: https://github.com/Azure/azure-rest-api-specs/blob/main/eng/common/knowledge/customizing-client-tsp.md
             - ONLY commit the client.tsp file(s). TypeSpec compilation regenerates output files (e.g. Swagger/OpenAPI JSON files in data-plane/) as a side effect - do NOT commit these generated files. Revert them before creating the pull request.
+            - Update ONLY the client.tsp file(s) for the spec directory referenced by this APIView. Do not modify other spec directories, even if feedback mentions related namespaces.
+              
+              Example of feedback that should only update `specification/ai/Azure.AI.Projects/client.tsp` and NOT `specification/ai/Azure.AI.Agents/client.tsp` even though they mention Agents-related elements:
+              - Package Name: azure-ai-projects
+                - LineNo 227: `azure.ai.projects.aio.operations.AgentsOperations.delete:async.returntype` | Return 'None' on delete.
+                - LineNo 10120: `azure.ai.projects.telemetry.trace_function` | Does this need to be a public function?
             """;
     }
 
@@ -137,14 +143,6 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
         return $"""
             - If a Commit SHA is provided, use it as the base for your changes
             - Include the APIView URL in PR description
-            - Update ONLY the client.tsp file(s) for the spec directory referenced by this APIView. Do not modify other spec directories, even if feedback mentions related namespaces.
-              
-              Example of feedback that should only update `specification/ai/Azure.AI.Projects/client.tsp`:
-              - Package Name: azure-ai-projects
-                - LineNo 227: `azure.ai.projects.aio.operations.AgentsOperations.delete:async.returntype` | Return 'None' on delete.
-                - LineNo 10120: `azure.ai.projects.telemetry.trace_function` | Does this need to be a public function?
-              
-              These should NOT also update `specification/ai/Azure.AI.Agents/client.tsp` even though they mention Agents-related elements.
             
             - CRITICAL: You MUST update the PR description with a summary table. The PR description MUST include a markdown table in EXACTLY this format (do not change column names):
               | LineNo | Addressed? | Summary |

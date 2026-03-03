@@ -128,6 +128,7 @@ public class APIViewFeedbackIssueTemplate : BasePromptTemplate
         return """
             - Apply TypeSpec client customizations to resolve as many comments as possible
             - MUST consult: https://github.com/Azure/azure-rest-api-specs/blob/main/eng/common/knowledge/customizing-client-tsp.md
+            - ONLY commit the client.tsp file(s). TypeSpec compilation regenerates output files (e.g. Swagger/OpenAPI JSON files in data-plane/) as a side effect - do NOT commit these generated files. Revert them before creating the pull request.
             """;
     }
 

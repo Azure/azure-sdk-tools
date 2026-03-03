@@ -131,16 +131,21 @@ def process_release(operation: OperationConfiguration, sdk: SdkConfiguration, re
             logging.info(f"Input JSON for worker: {input_json}")
             json.dump(input_json, f_out, indent=2)
 
-        # run script
-        logging.info(f"Running worker: {sdk.script.run}")
-        start = time.perf_counter()
-        subprocess.check_call([sdk.script.run, input_json_path, output_json_path], cwd=root_path)
-        end = time.perf_counter()
-        logging.info(f"Worker ran: {str(timedelta(seconds=end-start))}")
+        try:
+            # run script
+            logging.info(f"Running worker: {sdk.script.run}")
+            start = time.perf_counter()
+            subprocess.check_call([sdk.script.run, input_json_path, output_json_path], cwd=root_path)
+            end = time.perf_counter()
+            logging.info(f"Worker ran: {str(timedelta(seconds=end-start))}")
+        except Exception as e:
+            report.statuses[release.tag] = "failed at worker"
+            report.aggregated_error.errors.append(e)
+            return
 
         # parse output.json
         release_name = release.tag
-        succeeded = False
+        succeeded = True
         files = []
         if path.isfile(output_json_path):
             with open(output_json_path, "r", encoding="utf-8") as f_in:

@@ -14,6 +14,7 @@ public class WorkspaceManager
 {
     private readonly string _repoCachePath;
     private readonly string _workspacePath;
+    private readonly SemaphoreSlim _cloneLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WorkspaceManager"/> class.
@@ -44,8 +45,17 @@ public class WorkspaceManager
     /// <exception cref="InvalidOperationException">Thrown when git operations fail.</exception>
     public async Task<Workspace> PrepareAsync(RepoConfig repo, string scenarioId)
     {
-        // Ensure bare clone exists or fetch if it does
-        var barePath = await EnsureBareCloneAsync(repo);
+        // Serialize bare clone/fetch to prevent races on the same repo cache
+        await _cloneLock.WaitAsync();
+        string barePath;
+        try
+        {
+            barePath = await EnsureBareCloneAsync(repo);
+        }
+        finally
+        {
+            _cloneLock.Release();
+        }
 
         // Create a unique run ID using timestamp
         var runId = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff");

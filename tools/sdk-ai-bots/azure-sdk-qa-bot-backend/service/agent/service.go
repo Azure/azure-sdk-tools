@@ -394,6 +394,7 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 						log.Printf("Failed to analyze pipeline: %v", err)
 						// Fall back to regular link processing
 					} else {
+						// Use the pipeline analysis as content
 						content = analysisText
 						log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
 					}

@@ -197,10 +197,44 @@ namespace APIViewWeb.LeanControllers
         [HttpPost("{reviewId}/{apiRevisionId}/reviewers", Name = "AddReviewers")]
         public async Task<ActionResult<APIRevisionListItemModel>> AddReviewersAsync(string reviewId, string apiRevisionId, [FromBody] HashSet<string> reviewers)
         {
+            var currentApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
+            var existingReviewers = new HashSet<string>(
+                currentApiRevision.AssignedReviewers.Select(assignment => assignment.AssingedTo),
+                StringComparer.OrdinalIgnoreCase);
+
             var apiRevision = await _apiRevisionsManager.UpdateAPIRevisionReviewersAsync(User, apiRevisionId, reviewers);
-            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
+
+            var newlyAddedReviewers = reviewers
+                .Where(reviewer => !existingReviewers.Contains(reviewer))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            await _notificationManager.NotifyAssignedReviewersAsync(User, apiRevisionId, newlyAddedReviewers);
 
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA for getting the quality score of an API Revision
+        /// </summary>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        [HttpGet("{apiRevisionId}/qualityScore", Name = "GetQualityScore")]
+        public async Task<ActionResult<ReviewQualityScore>> GetQualityScoreAsync(string apiRevisionId)
+        {
+            try
+            {
+                var result = await _apiRevisionsManager.GetReviewQualityScoreAsync(apiRevisionId);
+                return new LeanJsonResult(result, StatusCodes.Status200OK);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error getting quality score: " + ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         [HttpPost("{reviewId}/generateReview", Name = "GenerateAIReview")]

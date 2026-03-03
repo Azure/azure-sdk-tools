@@ -57,13 +57,13 @@
                         [allComments]="comments"
                         [loadFailed]="loadFailed"
                         [loadFailedMessage]="loadFailedMessage"
+                        [loadingMessage]="loadingMessage"
                         [showLineNumbers]="showLineNumbers"
                         [showDocumentation]="userProfile?.preferences?.showDocumentation ?? true"
                         [scrollToNodeIdHashed]="scrollToNodeIdHashed"
                         [scrollToNodeId]="scrollToNodeId"
                         [codeLineSearchText]="codeLineSearchText"
                         [codeLineSearchInfo]="codeLineSearchInfo"
-                        [preferredApprovers]="preferredApprovers"
                         (hasActiveConversationEmitter)="handleHasActiveConversationEmitter($event)"
                         (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)">
                     </app-code-panel>
@@ -81,7 +81,6 @@
                     [review]="review"
                     [activeAPIRevision]="activeAPIRevision"
                     [diffAPIRevision]="diffAPIRevision"
-                    [preferredApprovers]="preferredApprovers"
                     [hasFatalDiagnostics]="hasFatalDiagnostics"
                     [hasActiveConversation]="hasActiveConversation"
                     [hasHiddenAPIs]="hasHiddenAPIs"
@@ -124,7 +123,6 @@
             [review]="review"
             [userProfile]="userProfile"
             [activeApiRevisionId]="activeApiRevisionId"
-            [preferredApprovers]="preferredApprovers"
             (scrollToNodeEmitter)="handleScrollToNodeEmitter($event)"
             (numberOfActiveThreadsEmitter)="handleNumberOfActiveThreadsEmitter($event)"
             (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">

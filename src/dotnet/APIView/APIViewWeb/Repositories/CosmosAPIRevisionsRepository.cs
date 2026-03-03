@@ -331,5 +331,48 @@ namespace APIViewWeb
             return reviewIds;
         }
 
+        /// <summary>
+        /// Get soft-deleted revisions that have been deleted before a specific date
+        /// </summary>
+        /// <param name="deletedBefore">Date before which revisions should have been soft-deleted</param>
+        /// <param name="apiRevisionType">Type of revisions to retrieve (Manual, PullRequest, etc.)</param>
+        /// <returns></returns>
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetSoftDeletedAPIRevisionsAsync(DateTime deletedBefore, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Revisions c WHERE c.IsDeleted = true");
+            
+            // Filter by LastUpdatedOn - revisions that were soft-deleted before the specified date
+            queryStringBuilder.Append(" AND c.LastUpdatedOn < @deletedBefore");
+            
+            if (apiRevisionType != APIRevisionType.All)
+            {
+                queryStringBuilder.Append(" AND c.APIRevisionType = @apiRevisionType");
+            }
+
+            var revisions = new List<APIRevisionListItemModel>();
+            QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@deletedBefore", deletedBefore.ToUniversalTime())
+                .WithParameter("@apiRevisionType", apiRevisionType.ToString());
+
+            using FeedIterator<APIRevisionListItemModel> feedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
+            while (feedIterator.HasMoreResults)
+            {
+                FeedResponse<APIRevisionListItemModel> response = await feedIterator.ReadNextAsync();
+                revisions.AddRange(response);
+            }
+            return revisions;
+        }
+
+        /// <summary>
+        /// Hard delete an API revision from Cosmos DB
+        /// </summary>
+        /// <param name="apiRevisionId">The ID of the revision to delete</param>
+        /// <param name="reviewId">The review ID (partition key)</param>
+        /// <returns></returns>
+        public async Task DeleteAPIRevisionAsync(string apiRevisionId, string reviewId)
+        {
+            await _apiRevisionContainer.DeleteItemAsync<APIRevisionListItemModel>(apiRevisionId, new PartitionKey(reviewId));
+        }
+
     }
 }

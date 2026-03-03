@@ -1,9 +1,9 @@
 import { Type } from "../../../rustdoc-types/output/rustdoc-types";
 import { ReviewToken, TokenKind } from "../../models/apiview-models";
 import { registerExternalItemReference } from "./externalReexports";
-import { replaceSuperPrefix } from "./pathUtils";
+import { getPath, replaceSuperPrefix } from "./pathUtils";
 import { processFunctionPointer } from "./processFunctionPointer";
-import { getCapturingArg, processGenericArgs } from "./processGenerics";
+import { processGenericArgs } from "./processGenerics";
 import { shouldElideLifetime } from "./shouldElideLifeTime";
 
 export function typeToReviewTokens(type: Type): ReviewToken[] {
@@ -17,7 +17,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
     // Create the base token for the type name
     const baseToken: ReviewToken = {
       Kind: TokenKind.TypeName,
-      Value: replaceSuperPrefix(type.resolved_path.path) || "unnamed_resolved_path",
+      Value: replaceSuperPrefix(getPath(type.resolved_path)) || "unnamed_resolved_path",
       HasSuffixSpace: false,
       NavigateToId: type.resolved_path.id.toString(),
     };
@@ -38,7 +38,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       ...type.dyn_trait.traits.flatMap((t, i) => [
         {
           Kind: TokenKind.TypeName,
-          Value: t.trait.path,
+          Value: getPath(t.trait),
           HasSuffixSpace: false,
           NavigateToId: t.trait.id.toString(),
         },
@@ -102,7 +102,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       ...type.impl_trait.flatMap((b, i) => {
         if ("trait_bound" in b) {
           return [
-            { Kind: TokenKind.TypeName, Value: b.trait_bound.trait.path, HasSuffixSpace: false },
+            { Kind: TokenKind.TypeName, Value: getPath(b.trait_bound.trait), HasSuffixSpace: false },
             ...processGenericArgs(b.trait_bound.trait.args),
             i < type.impl_trait.length - 1
               ? { Kind: TokenKind.Punctuation, Value: "+", HasSuffixSpace: false }
@@ -113,7 +113,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
         } else if ("use" in b) {
           return [
             ...b.use.flatMap((u, j) => [
-              { Kind: TokenKind.Text, Value: getCapturingArg(u), HasSuffixSpace: false },
+              { Kind: TokenKind.Text, Value: u, HasSuffixSpace: false },
               j < b.use.length - 1
                 ? { Kind: TokenKind.Punctuation, Value: "," }
                 : { Kind: TokenKind.Text, Value: "", HasSuffixSpace: false },
@@ -149,7 +149,7 @@ export function typeToReviewTokens(type: Type): ReviewToken[] {
       ...typeToReviewTokens(type.qualified_path.self_type),
       {
         Kind: TokenKind.TypeName,
-        Value: type.qualified_path.trait ? type.qualified_path.trait.path + "::" : "",
+        Value: type.qualified_path.trait ? getPath(type.qualified_path.trait) + "::" : "",
         HasSuffixSpace: false,
       },
       ...processGenericArgs(type.qualified_path.trait.args),

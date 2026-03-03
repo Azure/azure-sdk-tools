@@ -1,4 +1,4 @@
-pr: none
+﻿pr: none
 
 trigger: none
 
@@ -8,7 +8,7 @@ parameters:
     default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","SourceRepoName":"<RepoName>","FileName":"<fileName>","SourceBranchName":"<SourceBranchName>"}]'
   - name: APIViewURL
     type: string
-    default: 'https://apiview.dev'
+    default: 'https://apiview.org'
 
 pool:
   name: azsdk-pool

@@ -15,10 +15,11 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Services.Languages;
+using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
-
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -60,6 +61,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
+            services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
+            services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
+            services.AddSingleton<ITeamUserCache, TeamUserCache>();
+            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>(); 
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
             if (outputMode == OutputHelper.OutputModes.Mcp)
@@ -74,6 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
             services.AddSingleton<IAPIViewFeedbackService, APIViewFeedbackService>();
+            services.AddScoped<IFeedbackClassifierService, FeedbackClassifierService>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
@@ -92,6 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
+            services.AddScoped<IVerifySetupService, VerifySetupService>();
 
             // Copilot SDK services for new agents (CopilotAgent<T> pattern)
             // CopilotClient is a singleton because it manages the CLI process connection.

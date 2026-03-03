@@ -16,7 +16,7 @@ import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
-  private readonly promptGenerator: PromptGenerator;
+  private readonly promptGenerator = new PromptGenerator();
   private readonly channelConfigManager: ChannelConfigManager;
   private readonly tenantConfigManager: TenantConfigManager;
   private readonly credential: TokenCredential;
@@ -25,10 +25,9 @@ export class RAGModel implements PromptCompletionModel {
     conversationHandler: ConversationHandler,
     channelConfigManager: ChannelConfigManager,
     tenantConfigManager: TenantConfigManager,
-    credential: TokenCredential
+    credential: TokenCredential,
   ) {
     this.conversationHandler = conversationHandler;
-    this.promptGenerator = new PromptGenerator();
     this.channelConfigManager = channelConfigManager;
     this.tenantConfigManager = tenantConfigManager;
     this.credential = credential;

@@ -15,25 +15,31 @@ public sealed partial class JavaScriptLanguageService : LanguageService
     public JavaScriptLanguageService(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
-        IGitHelper gitHelper,        
+        IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
+        IPackageInfoHelper packageInfoHelper,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper,
         IChangelogHelper changelogHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.npxHelper = npxHelper;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.JavaScript;
     public override bool IsCustomizedCodeUpdateSupported => true;
 
+    /// <summary>
+    /// JavaScript packages are identified by package.json files.
+    /// </summary>
+    protected override string[] PackageManifestPatterns => ["package.json"];
+
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving JavaScript package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var (repoRoot, relativePath, fullPath) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
         var (packageName, packageVersion, sdkType) = await TryGetPackageInfoAsync(fullPath, ct);
-        
+
         if (packageName == null)
         {
             logger.LogWarning("Could not determine package name for JavaScript package at {fullPath}", fullPath);
@@ -42,11 +48,11 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         {
             logger.LogWarning("Could not determine package version for JavaScript package at {fullPath}", fullPath);
         }
-        if(sdkType == SdkType.Unknown)
+        if (sdkType == SdkType.Unknown)
         {
             logger.LogWarning("Could not determine SDK type for JavaScript package at {fullPath}", fullPath);
         }
-        
+
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -59,10 +65,10 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             Language = SdkLanguage.JavaScript,
             SamplesDirectory = Path.Combine(fullPath, "samples-dev")
         };
-        
-        logger.LogDebug("Resolved JavaScript package: {packageName} v{packageVersion} (type {sdkType}) at {relativePath}", 
+
+        logger.LogDebug("Resolved JavaScript package: {packageName} v{packageVersion} (type {sdkType}) at {relativePath}",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", sdkType, relativePath);
-        
+
         return model;
     }
 
@@ -71,12 +77,12 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         try
         {
             var path = Path.Combine(packagePath, "package.json");
-            if (!File.Exists(path)) 
+            if (!File.Exists(path))
             {
                 logger.LogWarning("No package.json file found at {path}", path);
-                return (null, null, SdkType.Unknown); 
+                return (null, null, SdkType.Unknown);
             }
-            
+
             logger.LogTrace("Reading package.json from {path}", path);
             await using var stream = File.OpenRead(path);
             using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions
@@ -92,8 +98,8 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             if (doc.RootElement.TryGetProperty("name", out var nameProp) && nameProp.ValueKind == JsonValueKind.String)
             {
                 var nameValue = nameProp.GetString();
-                if (!string.IsNullOrWhiteSpace(nameValue)) 
-                { 
+                if (!string.IsNullOrWhiteSpace(nameValue))
+                {
                     name = nameValue;
                     logger.LogTrace("Found package name: {name}", name);
                 }
@@ -106,8 +112,8 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             if (doc.RootElement.TryGetProperty("version", out var versionProp) && versionProp.ValueKind == JsonValueKind.String)
             {
                 var versionValue = versionProp.GetString();
-                if (!string.IsNullOrWhiteSpace(versionValue)) 
-                { 
+                if (!string.IsNullOrWhiteSpace(versionValue))
+                {
                     version = versionValue;
                     logger.LogTrace("Found version: {version}", version);
                 }
@@ -120,9 +126,10 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             if (doc.RootElement.TryGetProperty("sdk-type", out var sdkTypeProp) && sdkTypeProp.ValueKind == JsonValueKind.String)
             {
                 var sdkTypeValue = sdkTypeProp.GetString();
-                if (!string.IsNullOrWhiteSpace(sdkTypeValue)) 
-                { 
-                    sdkType = sdkTypeValue switch {
+                if (!string.IsNullOrWhiteSpace(sdkTypeValue))
+                {
+                    sdkType = sdkTypeValue switch
+                    {
                         "client" => SdkType.Dataplane,
                         "mgmt" => SdkType.Management,
                         _ => SdkType.Unknown,
@@ -157,7 +164,101 @@ public sealed partial class JavaScriptLanguageService : LanguageService
         return new TestRunResponse(result);
     }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing JavaScript SDK project at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}", null, null);
+            }
+
+            var packageInfo = await GetPackageInfo(fullPath, ct);
+
+            var args = new List<string> { "pack" };
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.AddRange(["--pack-destination", outputPath]);
+            }
+
+            var result = await processHelper.Run(new ProcessOptions(
+                    command: "pnpm",
+                    args: args.ToArray(),
+                    workingDirectory: fullPath,
+                    timeout: TimeSpan.FromMinutes(timeoutMinutes)
+                ),
+                ct
+            );
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"pnpm pack failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            // pnpm pack outputs the tarball filename to stdout
+            var artifactPath = ExtractTarballPath(result.Output, fullPath, outputPath);
+            logger.LogInformation("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing JavaScript SDK");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to extract the .tgz file path from pnpm pack output.
+    /// </summary>
+    private static string? ExtractTarballPath(string output, string packagePath, string? outputPath)
+    {
+        // pnpm pack typically outputs the tarball filename
+        var lines = output.Split('\n');
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (trimmed.EndsWith(".tgz", StringComparison.OrdinalIgnoreCase))
+            {
+                var dir = outputPath ?? packagePath;
+                var candidatePath = Path.Combine(dir, trimmed);
+                if (File.Exists(candidatePath))
+                {
+                    return candidatePath;
+                }
+                // The line itself might be a full path
+                if (File.Exists(trimmed))
+                {
+                    return trimmed;
+                }
+            }
+        }
+
+        // Fallback: look for .tgz files in the directory
+        var searchDir = outputPath ?? packagePath;
+        if (Directory.Exists(searchDir))
+        {
+            var tgzFiles = Directory.GetFiles(searchDir, "*.tgz", SearchOption.TopDirectoryOnly);
+            if (tgzFiles.Length > 0)
+            {
+                return tgzFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+            }
+        }
+
+        return null;
+    }
+
+    public override string? HasCustomizations(string packagePath, CancellationToken ct)
     {
         // In azure-sdk-for-js, the presence of a "generated" folder at the same level
         // as package.json indicates the package has customizations (code outside generated/).
@@ -167,17 +268,24 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             var generatedFolder = Path.Combine(packagePath, GeneratedFolderName);
             if (Directory.Exists(generatedFolder))
             {
-                logger.LogDebug("Found JavaScript generated folder at {GeneratedFolder}", generatedFolder);
-                return true;
+                // If generated folder exists, customizations are everything outside it
+                var srcDir = Path.Combine(packagePath, "src");
+                if (Directory.Exists(srcDir))
+                {
+                    logger.LogDebug("Found JavaScript customization root at {SrcDir}", srcDir);
+                    return srcDir;
+                }
+                // Fall back to package path if no src folder
+                return packagePath;
             }
 
             logger.LogDebug("No JavaScript generated folder found in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Error searching for JavaScript customization files in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
     }
 }

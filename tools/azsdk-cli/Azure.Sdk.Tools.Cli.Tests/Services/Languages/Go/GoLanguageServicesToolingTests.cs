@@ -10,7 +10,7 @@ using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
-    internal class GoLanguageServiceTests
+    internal class GoLanguageServicesToolingTests
     {
         private TempDirectory tempDir = null!;
         private string packagePath = "";
@@ -225,12 +225,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 package main
 
                 import (
-                    ""html""
-                    ""golang.org/x/net/html""
+                    "html"
+                    "golang.org/x/net/html"
                 )
 
                 func main() {
-                    _ = html.EscapeString(""hello"")
+                    _ = html.EscapeString("hello")
                 }
                 """);
 
@@ -306,10 +306,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             return "";
         }
 
+        private static async Task CreateTestGoPackageAsync(string packageDirectory, string modulePath)
+        {
+            Directory.CreateDirectory(packageDirectory);
+            await File.WriteAllTextAsync(
+                Path.Combine(packageDirectory, "go.mod"),
+                $"module {modulePath}\ngo 1.24.0\n");
+
+            var internalDirectory = Path.Combine(packageDirectory, "internal");
+            Directory.CreateDirectory(internalDirectory);
+            await File.WriteAllTextAsync(
+                Path.Combine(internalDirectory, "version.go"),
+                "package internal\n\nconst Version = \"v1.2.3\"\n");
+        }
+
         #region HasCustomizations Tests
 
         [Test]
-        public void HasCustomizations_ReturnsTrue_WhenInternalGenerateDirectoryExists()
+        public void HasCustomizations_ReturnsPath_WhenInternalGenerateDirectoryExists()
         {
             var customizationDir = Path.Combine(packagePath, "internal", "generate");
             Directory.CreateDirectory(customizationDir);
@@ -320,7 +334,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public void HasCustomizations_ReturnsTrue_WhenTestdataGenerateDirectoryExists()
+        public void HasCustomizations_ReturnsPath_WhenTestdataGenerateDirectoryExists()
         {
             var customizationDir = Path.Combine(packagePath, "testdata", "generate");
             Directory.CreateDirectory(customizationDir);
@@ -331,7 +345,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public void HasCustomizations_ReturnsFalse_WhenNoCustomizationDirectoryExists()
+        public void HasCustomizations_ReturnsNull_WhenNoCustomizationDirectoryExists()
         {
             // packagePath is already created without customization directories
             var result = LangService.HasCustomizations(packagePath, CancellationToken.None);

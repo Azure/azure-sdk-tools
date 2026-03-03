@@ -13,24 +13,18 @@ model:
     frequency_penalty: 0
     presence_penalty: 0
     max_completion_tokens: 80000
-    reasoning_effort: "high"
+    reasoning_effort: "low"
     response_format: ${file:correlation_ids_schema.json}
 sample:
   language: Python
   content: |
     {
-        2: "Star",
-        4: "Red",
-        6: "Dog",
-        8: "Cat",
-        10: "Planet",
-        12: "Green",
-        14: "Penguin",
-        16: "Octopus",
-        18: "Moon",
-        20: "Black",
-        21: "BOOP",
-        22: "BOOP",
+        1: "Consider using a more descriptive method name to convey its purpose.",
+        2: "This method name should be more descriptive to improve readability.",
+        3: "This parameter list is too long, consider using a builder or options pattern.",
+        4: "The class hierarchy could be simplified to reduce cognitive complexity.",
+        5: "The class hierarchy has unnecessary levels of inheritance.",
+        6: "This class has too many layers, consider flattening the hierarchy.",
     }
 ---
 system:
@@ -39,21 +33,26 @@ system:
   Each item starts with an index followed by a colon and a space, then the content of the comment. The comments may be multi-line, but each new comment will always start with an index followed by a colon and a space.
 
   Example:
-  1: "This is a comment."
+    1: "Enum values should use UPPER_SNAKE_CASE per Python conventions.",
+    2: "The return type annotation is missing on this public method.",
+    3: "Missing return type annotation on this function.",
+    4: "Enum members should follow UPPER_SNAKE_CASE naming.",
+    5: "Consider adding a docstring to this public class.",
+    6: "This public class is missing a docstring.",
 
   # OUTPUT REQUIREMENTS
   Output a list of tuples for which indices are similar and the theme of the comment. All indices should be included, even if they are in a tuple alone.
   Example:
     "results": [
       {
-        "result": (1, 2),
-        "theme": "Descriptive Method Names"
+        "result": (1, 4),
+        "theme": "Enum Naming Conventions"
       }, {
-        "result": (3,),
-        "theme": "Excessive Parameters"
+        "result": (2, 3),
+        "theme": "Missing Type Annotations"
       }, {
-        "result": (4, 5, 6),
-        "theme": "Logical Class Hierarchy"
+        "result": (5, 6),
+        "theme": "Missing Docstrings"
       }
     ]
 

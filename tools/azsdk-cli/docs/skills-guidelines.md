@@ -106,16 +106,29 @@ Skills that are specific to a particular language or repository should be stored
 
 Skills that apply to multiple repositories with the same instructions should be placed in the `.github/skills/common` directory within the azure-sdk-tools repository. This enables sharing of common automation patterns across all Azure SDK repositories.
 
-### How to sync skills across the repos
+### How to sync skills across azure sdk repositories
 
-Engineering system has a pipeline to sync all changes in the `eng/common` in azure-sdk-tools repo to `eng/common` in all repos. This can be enhanced to support the sync of skills to `.github/skills`.
+The `eng-skills-sync` pipeline syncs shared skills from `.github/skills/common/` in `azure-sdk-tools` to `.github/skills/common/` in all subscribed Azure SDK repositories. This works the same way as the `eng-common-sync` and `eng-workflows-sync` pipelines.
 
-To distribute Skills from azure-sdk-tools to individual Azure SDK repositories:
+The pipeline definition is at [`eng/pipelines/eng-skills-sync.yml`](../../eng/pipelines/eng-skills-sync.yml). It uses `FilePatterns` to sync only the `common/` subdirectory, leaving repo-specific skills untouched.
 
-- submit a PR to create or edit a skill in `Azure/azure-sdk-tools`.
-- Skills in `.github/skills/common` are synced to `.github/skills` in individual SDK repositories using engsys pipeline.
-- Changes to the engineering systems common sync framework are required to enable this synchronization.
-- The sync process ensures that all repositories benefit from centralized Skill updates.
+To distribute skills from azure-sdk-tools to individual Azure SDK repositories:
+
+1. Create or edit a skill in `.github/skills/common/` in the `azure-sdk-tools` repo.
+2. Update the skills index in `.github/skills/common/README.md` with the new skill's name, description, and path.
+3. Submit a PR — the sync pipeline triggers automatically when files under `.github/skills/common` change.
+4. The pipeline creates sync PRs in all subscribed repos following the standard sync workflow (see [common_engsys.md](../../doc/common/common_engsys.md) for details on the sync process).
+
+**Important:** Do **NOT** modify files in `.github/skills/common/` in individual language repos — they will be overwritten on the next sync.
+
+#### Progressive disclosure via the skills index
+
+`.github/skills/common/README.md` serves as a **progressive disclosure entrypoint** for AI tools. It lists all shared skills with descriptions and links to their `SKILL.md` files. AI tools read the index first to discover what's available, then selectively load individual skills as needed. This avoids loading all skill definitions into every prompt.
+
+Each target repo can reference the index from their AI tool configuration:
+- **GitHub Copilot**: Auto-discovers skills in `.github/skills/` natively.
+- **Claude**: Reference from `CLAUDE.md` (e.g., `See .github/skills/common/README.md for shared skills`).
+- **Other tools**: Point your AI tool's configuration to `.github/skills/common/README.md`.
 
 ## Service specific instruction
 

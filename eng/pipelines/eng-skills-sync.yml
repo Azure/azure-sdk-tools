@@ -1,0 +1,48 @@
+# Mirror shared skills from .github/skills/common to all subscribed repos.
+#
+# Shared skills live in .github/skills/common/ in azure-sdk-tools and are
+# synced to .github/skills/common/ in all target repos. Repo-specific skills
+# in .github/skills/<name>/ are not affected by this sync.
+#
+# For more information on this file, please see:
+# doc/common/common_engsys.md
+parameters:
+- name: DirectoryToSync
+  type: string
+  default: .github/skills
+- name: FilePatterns
+  type: object
+  default:
+    - 'common/*'
+- name: Repos
+  type: object
+  default:
+    - azure-sdk
+    - azure-sdk-for-ios
+    - azure-sdk-for-android
+    - azure-sdk-for-c
+    - azure-sdk-for-cpp
+    - azure-sdk-for-go
+    - azure-sdk-for-java
+    - azure-sdk-for-js
+    - azure-sdk-for-net
+    - azure-sdk-for-python
+    - azure-sdk-for-rust
+    - azure-rest-api-specs
+
+trigger: none
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - .github/skills/common
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml
+  parameters:
+    DirectoryToSync: ${{ parameters.DirectoryToSync }}
+    FilePatterns: ${{ parameters.FilePatterns }}
+    Repos: ${{ parameters.Repos }}

@@ -188,18 +188,17 @@ public class Workspace : IDisposable
 
         var json = JsonSerializer.Serialize(log, options);
 
-        // Always write to workspace for local inspection
+        // Write to override directory if set, otherwise write to workspace
+        var logDir = Environment.GetEnvironmentVariable("AZSDK_BENCHMARKS_LOG_DIR");
+        if (!string.IsNullOrEmpty(logDir))
+        {
+            Directory.CreateDirectory(logDir);
+            var logPath = Path.Combine(logDir, $"{scenarioName}-benchmark-log.json");
+            await File.WriteAllTextAsync(logPath, json);
+        }
+
         var logPath = Path.Combine(RootPath, "benchmark-log.json");
         await File.WriteAllTextAsync(logPath, json);
-
-        // In CI, also write to a persistent directory that survives workspace cleanup
-        if (Environment.GetEnvironmentVariable("CI") == "true")
-        {
-            var logsDir = Path.Combine(Path.GetTempPath(), "azsdk-benchmarks", "logs");
-            Directory.CreateDirectory(logsDir);
-            var persistentLogPath = Path.Combine(logsDir, $"{scenarioName}-benchmark-log.json");
-            await File.WriteAllTextAsync(persistentLogPath, json);
-        }
     }
 
     /// <summary>

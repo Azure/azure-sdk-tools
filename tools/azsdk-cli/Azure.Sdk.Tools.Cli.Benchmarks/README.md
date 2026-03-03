@@ -69,6 +69,7 @@ dotnet run -- run rename-client-property --model gpt-4o --cleanup never
 | `AZSDK_MCP_PATH` | Path to azsdk MCP server executable | Uses repo config or system PATH |
 | `AZSDK_BENCHMARKS_REPO_CACHE` | Directory for cached bare repository clones | `~/.cache/azsdk-benchmarks/repos` |
 | `AZSDK_BENCHMARKS_WORKSPACE_DIR` | Directory for isolated worktree workspaces | `/tmp/azsdk-benchmarks/workspaces` |
+| `AZSDK_BENCHMARKS_LOG_DIR` | Directory for benchmark execution logs. Overrides logs being written in workspace directory. | Writes to Workspace dir |
 
 ## Project Structure
 
@@ -93,9 +94,15 @@ See [docs/creating-scenarios.md](docs/creating-scenarios.md) for guidance on def
 
 Benchmarks can be run via the **azsdk-cli Benchmarks** GitHub Actions workflow, triggered manually from the Actions tab.
 
+### Prerequisites
+
+A `COPILOT_GITHUB_TOKEN` repository secret must be configured with a fine-grained PAT that has **Copilot Requests: Read** permission.
+
 ### Triggering a Run
 
-1. Go to **Actions** → **Benchmarks** → **Run workflow**
+From the GitHub UI:
+
+1. Go to **Actions** → **azsdk-cli Benchmarks** → **Run workflow**
 2. Select the branch and fill in the inputs:
 
 | Input | Description | Default |

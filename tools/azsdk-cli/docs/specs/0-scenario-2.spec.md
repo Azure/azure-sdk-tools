@@ -882,7 +882,7 @@ Use --auto-install flag to remediate issues automatically.
 
 ### 2. TypeSpec Generate Authoring Plan
 
-**Note:** This CLI command is used internally by the TypeSpec Authoring Skills in GitHub Copilot and is not intended for direct user invocation in Scenario 2. Users should interact with GitHub Copilot in Agent Mode, which will automatically invoke this skill when working with TypeSpec files.
+**Note:** This CLI command is not intended for direct user invocation in Scenario 2. Users should interact with GitHub Copilot in Agent Mode, which will automatically invoke this skill when working with TypeSpec files.
 
 **Command:**
 

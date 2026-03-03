@@ -208,8 +208,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
 
-            // None of the attempted changes succeeded
-            if (succeeded == 0 && attempted > 0)
+            // On the first attempt, none of the attempted changes succeeded
+            // On later attempts, we already had successful changes, so move forward to build and attempt code customizations
+            if (succeeded == 0 && attempted > 0 && tries == 0)
             {
                 return new CustomizedCodeUpdateResponse
                 {

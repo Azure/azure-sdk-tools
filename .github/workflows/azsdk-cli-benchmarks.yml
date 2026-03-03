@@ -15,10 +15,9 @@ on:
         required: false
         type: string
       model:
-        description: "Model to use for agent execution"
+        description: "Model to use for agent execution (leave empty for default)"
         required: false
         type: string
-        default: "claude-opus-4.5"
 
 jobs:
   run-benchmarks:

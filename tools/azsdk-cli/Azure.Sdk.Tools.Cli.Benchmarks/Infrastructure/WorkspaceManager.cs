@@ -45,17 +45,8 @@ public class WorkspaceManager
     /// <exception cref="InvalidOperationException">Thrown when git operations fail.</exception>
     public async Task<Workspace> PrepareAsync(RepoConfig repo, string scenarioId)
     {
-        // Serialize bare clone/fetch to prevent races on the same repo cache
-        await _cloneLock.WaitAsync();
-        string barePath;
-        try
-        {
-            barePath = await EnsureBareCloneAsync(repo);
-        }
-        finally
-        {
-            _cloneLock.Release();
-        }
+        // Ensure bare clone exists or fetch if it does
+        var barePath = await EnsureBareCloneAsync(repo);
 
         // Create a unique run ID using timestamp
         var runId = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff");
@@ -119,18 +110,26 @@ public class WorkspaceManager
     {
         var barePath = Path.Combine(_repoCachePath, repo.EffectiveOwner, repo.Name + ".git");
 
-        if (Directory.Exists(barePath))
+        await _cloneLock.WaitAsync();
+        try
         {
-            // Fetch latest changes (shallow to stay consistent with initial clone)
-            await RunGitCommandAsync(barePath, "fetch", "--all", "--prune", "--depth=1");
+            if (Directory.Exists(barePath))
+            {
+                // Fetch latest changes (shallow to stay consistent with initial clone)
+                await RunGitCommandAsync(barePath, "fetch", "--all", "--prune", "--depth=1");
+            }
+            else
+            {
+                // Create parent directory and clone
+                Directory.CreateDirectory(Path.GetDirectoryName(barePath)!);
+                await RunGitCommandAsync(
+                    Path.GetDirectoryName(barePath)!,
+                    "clone", "--bare", "--depth=1", repo.CloneUrl, barePath);
+            }
         }
-        else
+        finally
         {
-            // Create parent directory and clone
-            Directory.CreateDirectory(Path.GetDirectoryName(barePath)!);
-            await RunGitCommandAsync(
-                Path.GetDirectoryName(barePath)!,
-                "clone", "--bare", "--depth=1", repo.CloneUrl, barePath);
+            _cloneLock.Release();
         }
 
         return barePath;

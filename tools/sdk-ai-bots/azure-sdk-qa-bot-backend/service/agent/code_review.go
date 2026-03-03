@@ -10,14 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/prompt"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
 	"github.com/Azure/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/utils"
 	"github.com/google/uuid"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/shared"
 )
 
 type CodeReviewService struct {
@@ -155,18 +155,19 @@ func (s *CodeReviewService) buildCodeReviewPrompt(req *model.CodeReviewReq, guid
 }
 
 func getLLMReviewComments(ctx context.Context, promptStr string, requestID string) ([]model.ReviewComment, error) {
-	messages := []azopenai.ChatRequestMessageClassification{
-		&azopenai.ChatRequestSystemMessage{
-			Content: azopenai.NewChatRequestSystemMessageContent(promptStr),
+	messages := []openai.ChatCompletionMessageParamUnion{
+		openai.SystemMessage(promptStr),
+	}
+
+	options := openai.ChatCompletionNewParams{
+		Messages: messages,
+		Model:    openai.ChatModel(config.AppConfig.AOAI_CHAT_COMPLETIONS_MODEL),
+		ResponseFormat: openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
 		},
 	}
 
-	resp, err := config.OpenAIClient.GetChatCompletions(ctx, azopenai.ChatCompletionsOptions{
-		Messages:       messages,
-		DeploymentName: to.Ptr("gpt-5.1"),
-		ResponseFormat: &azopenai.ChatCompletionsJSONResponseFormat{},
-		// TopP:           to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
-	}, nil)
+	resp, err := config.OpenAIClient.Chat.Completions.New(ctx, options)
 
 	if err != nil {
 		return nil, model.NewLLMServiceFailureError(fmt.Errorf("failed to call LLM: %w", err))
@@ -176,7 +177,7 @@ func getLLMReviewComments(ctx context.Context, promptStr string, requestID strin
 		return nil, model.NewLLMServiceFailureError(fmt.Errorf("no response from LLM"))
 	}
 
-	content := *resp.Choices[0].Message.Content
+	content := resp.Choices[0].Message.Content
 	log.Printf("[RequestID: %s] LLM response: %s", requestID, content)
 
 	var reviewResp CodeReviewResponse

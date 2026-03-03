@@ -8,39 +8,17 @@ The `.prompty` prompt template files under `prompts/` are **kept as-is** (they'r
 
 ---
 
-## Bugs / Broken Code (must fix)
-
-### ~~1. `app.py` — broken `run_prompty` import~~ ✅ Fixed
-- Replaced `run_prompty` import/call with `run_prompt` from `src._prompt_runner`.
-
-### ~~2. `_prompt_runner.py` — `configuration` / `api_key` parameter is accepted but ignored~~ ✅ Fixed
-- Wired `configuration["api_key"]` into the `ChatCompletionsClient` via `AzureKeyCredential` so CI evals authenticate correctly. Falls back to `DefaultAzureCredential` when no key is provided.
-
----
-
 ## Cleanup Tasks (should fix)
 
-### ~~3. Uninstall `prompty` from `.venv`~~ ✅ Fixed
-- Ran `pip uninstall prompty -y`, verified imports still work.
-
-### ~~4. Update `.github/copilot-instructions.md`~~ ✅ Fixed
-- Removed `run_prompty` reference from `_utils.py` description.
-- Updated Prompt Execution section to describe custom `_prompt_runner.py` implementation using Azure AI Foundry `ChatCompletionsClient`.
-- Updated Evaluation Tests section to reference `_execute_prompt_template` instead of the prompty library.
-
-### 5. Update `evals/README.md`
+### 1. Update `evals/README.md`
 - **File:** `evals/README.md` lines 224–230, 236, 260
 - **Problem:** Code examples still show `prompty.execute(prompty_path, inputs=prompty_kwargs)` and reference `PromptyEvaluator`/`PromptySummaryEvaluator`.
 - **Fix:** Update examples to use `_execute_prompt_template` (the current implementation). The class names (`PromptyEvaluator` etc.) can optionally be renamed too — see item 6.
 
-### 6. Consider renaming evaluator classes in `evals/_custom.py` and `evals/_config_loader.py`
+### 2. Consider renaming evaluator classes in `evals/_custom.py` and `evals/_config_loader.py`
 - **Files:** `evals/_custom.py` lines 204, 363; `evals/_config_loader.py` lines 27–28, 153–154
 - **Problem:** Class names `PromptyEvaluator` and `PromptySummaryEvaluator` reference the old library name. They don't import or use the prompty library — just named after it.
 - **Fix (optional):** Rename to `PromptEvaluator` / `PromptSummaryEvaluator` or similar. Low priority since it's just naming.
-
-### ~~7. Tests — variable naming~~ ✅ Fixed
-- Renamed `mock_prompty` → `mock_run_prompt` at all 9 occurrences across 4 test methods in `tests/apiview_test.py`.
-- All 38 tests pass.
 
 ---
 
@@ -61,3 +39,55 @@ The `.prompty` prompt template files under `prompts/` are **kept as-is** (they'r
 | Fix `app.py` broken `run_prompty` import (Bug 1) | ✅ Done — replaced with `run_prompt` from `_prompt_runner` |
 | Remove unused `configuration`/`api_key` param (Bug 2) | ✅ Done — wired `api_key` into `AzureKeyCredential` for CI; falls back to `DefaultAzureCredential` |
 | Uninstall stale `prompty 0.1.49` from `.venv` (Cleanup 3) | ✅ Done |
+
+---
+
+## Manual Prompt File Testing
+
+Each `.prompty` file must be manually tested end-to-end through the custom `_prompt_runner.py` parser/executor to confirm it works correctly after the library removal. Mark each as verified once tested.
+
+### `prompts/api_review/`
+
+- [x] `context_diff_review.prompty`
+- [x] `context_review.prompty`
+- [x] `filter_comment_with_metadata.prompty`
+- [x] `filter_existing_comment.prompty`
+- [x] `filter_generic_comment.prompty`
+- [x] `generate_correlation_ids.prompty`
+- [x] `generic_diff_review.prompty`
+- [x] `generic_review.prompty`
+- [x] `guidelines_diff_review.prompty`
+- [x] `guidelines_review.prompty`
+- [x] `judge_comment_confidence.prompty`
+- [x] `merge_comments.prompty`
+
+### `prompts/evals/`
+
+- [x] `eval_judge_prompt.prompty`
+
+### `prompts/mention/`
+
+- [x] `deduplicate_guidelines_issue.prompty`
+- [x] `deduplicate_parser_issue.prompty`
+- [x] `parse_conversation_action.prompty`
+- [x] `parse_conversation_to_github_issue.prompty`
+- [x] `parse_conversation_to_memory.prompty`
+- [x] `summarize_actions.prompty`
+- [x] `summarize_github_actions.prompty`
+
+### `prompts/other/`
+
+- [x] `analyze_comment_themes.prompty` Unsure
+- [x] `resolve_package.prompty`
+- [x] `summarize_metrics.prompty`
+
+### `prompts/summarize/`
+
+- [x] `summarize_api.prompty`
+- [x] `summarize_diff.prompty`
+
+### `prompts/thread_resolution/`
+
+- [x] `parse_thread_resolution_action.prompty`
+- [x] `parse_thread_resolution_to_memory.prompty`
+- [x] `summarize_actions.prompty`

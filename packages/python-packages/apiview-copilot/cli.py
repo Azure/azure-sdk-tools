@@ -128,7 +128,44 @@ helps[
     short-summary: Commands for managing permissions.
 """
 
+helps[
+    "prompt"
+] = """
+    type: group
+    short-summary: Commands for testing and running prompty files.
+"""
+
 # COMMANDS
+
+
+def prompt_test(path: str):
+    """
+    Execute a .prompty file using its sample inputs and print the result.
+    """
+    from src._prompt_runner import _execute_prompt_template, _parse_prompty
+
+    prompty_path = pathlib.Path(path)
+    if not prompty_path.exists():
+        print(f"Error: File '{path}' does not exist.")
+        sys.exit(1)
+    if not prompty_path.suffix == ".prompty":
+        print(f"Error: File '{path}' is not a .prompty file.")
+        sys.exit(1)
+
+    config = _parse_prompty(str(prompty_path))
+    reasoning_effort = config.parameters.get("reasoning_effort")
+    print(f"Executing prompt: {path}")
+    info = f"Model: {config.azure_deployment}  API Version: {config.api_version}"
+    if reasoning_effort:
+        info += f"  Reasoning: {reasoning_effort}"
+    print(info)
+    print("-" * 60)
+    start = time.time()
+    result = _execute_prompt_template(str(prompty_path))
+    elapsed = time.time() - start
+    print(result)
+    print("-" * 60)
+    print(f"Completed in {elapsed:.2f}s")
 
 
 def _local_review(
@@ -1598,6 +1635,8 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "permissions", "__main__#{}") as g:
             g.command("grant", "grant_permissions")
             g.command("revoke", "revoke_permissions")
+        with CommandGroup(self, "prompt", "__main__#{}") as g:
+            g.command("test", "prompt_test")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -2065,6 +2104,13 @@ class CliCommandsLoader(CLICommandsLoader):
                 "remote",
                 action="store_true",
                 help="Use the remote API instead of local processing.",
+            )
+        with ArgumentsContext(self, "prompt test") as ac:
+            ac.argument(
+                "path",
+                type=str,
+                options_list=["--path", "-p"],
+                help="Path to the .prompty file to test.",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

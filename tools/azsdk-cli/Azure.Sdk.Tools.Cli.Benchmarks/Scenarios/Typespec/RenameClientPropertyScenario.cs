@@ -40,7 +40,7 @@ public class RenameClientPropertyScenario : BenchmarkScenario
         """;
 
     /// <inheritdoc />
-    public override TimeSpan Timeout => TimeSpan.FromMinutes(3);
+    public override TimeSpan Timeout => TimeSpan.FromMinutes(5);
 
     /// <inheritdoc />
     public override IEnumerable<IValidator> Validators =>

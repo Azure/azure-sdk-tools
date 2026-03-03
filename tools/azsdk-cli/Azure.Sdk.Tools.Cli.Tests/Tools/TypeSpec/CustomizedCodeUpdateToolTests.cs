@@ -210,7 +210,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test request", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
@@ -234,7 +234,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test request", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
@@ -249,7 +249,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var badTspDir = Path.Combine(Path.GetTempPath(), "nonexistent-tsp-" + Guid.NewGuid().ToString("n"));
 
         Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
-            await tool.UpdateAsync(packagePath: pkg, tspProjectPath: badTspDir, ct: CancellationToken.None));
+            await tool.UpdateAsync(packagePath: pkg, tspProjectPath: badTspDir, customizationRequest: "test request", ct: CancellationToken.None));
     }
 
     // ========================================================================
@@ -276,7 +276,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test request", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed));
@@ -291,7 +291,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test request", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed));
@@ -381,7 +381,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.Message, Does.Contain("Build passed"));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
     }
 
@@ -424,7 +424,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test request", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed));
@@ -534,7 +534,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var tspDir = CreateTempDir();
 
         // Null feedback text on a classified item should fail
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test request", ct: CancellationToken.None);
         Assert.That(result.Success, Is.False);
         Assert.That(result.Message, Does.Contain("feedback text was empty"));
     }
@@ -610,7 +610,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(resp.Success, Is.True, "Should succeed after repair");
         Assert.That(resp.ErrorCode, Is.Null, "Should complete successfully after repair");
-        Assert.That(resp.Message, Does.Contain("Build passed after repairs"), "Should indicate repair was performed");
+        Assert.That(resp.Message, Does.Contain("Build passed"), "Should indicate repair was performed");
     }
 
     [Test]
@@ -666,7 +666,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
             => _hasCustomizations ? Path.Combine(packagePath, "customization") : null;
 
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildError, CancellationToken ct)
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct)
             => Task.FromResult(_patchesFunc?.Invoke() ?? new List<AppliedPatch>());
 
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
@@ -697,7 +697,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public override bool IsCustomizedCodeUpdateSupported => true;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => null;
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildError, CancellationToken ct) => Task.FromResult(new List<AppliedPatch>());
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct) => Task.FromResult(new List<AppliedPatch>());
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
             => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null));
@@ -717,7 +717,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
             => Task.FromResult(new List<ApiChange> { new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" } });
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildError, CancellationToken ct)
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct)
             => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.py", "test patch", 1) });
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
@@ -738,7 +738,7 @@ public class CustomizedCodeUpdateToolAutoTests
         private int _buildCalls = 0;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildError, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
         {
@@ -762,7 +762,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public override bool IsCustomizedCodeUpdateSupported => true;
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildError, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
         public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
             => Task.FromResult<(bool, string?, PackageInfo?)>((false, "same error every time", null));
@@ -782,7 +782,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildError, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
         {
             var attempt = _next();

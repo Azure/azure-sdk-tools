@@ -269,7 +269,7 @@ public sealed partial class JavaLanguageService : LanguageService
     public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
-        string buildError,
+        string buildContext,
         CancellationToken ct)
     {
         try
@@ -299,7 +299,7 @@ public sealed partial class JavaLanguageService : LanguageService
 
             // Build error-driven prompt for patch agent
             var prompt = new JavaErrorDrivenPatchTemplate(
-                buildError,
+                buildContext,
                 packagePath,
                 customizationRoot,
                 customizationFiles,

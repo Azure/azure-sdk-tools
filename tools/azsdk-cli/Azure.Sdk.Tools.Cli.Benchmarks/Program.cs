@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
@@ -35,12 +36,14 @@ public class Program
             DefaultValueFactory = _ => CleanupPolicy.OnSuccess
         };
         var verboseOption = new Option<bool>("--verbose") { Description = "Show agent activity during execution" };
+        var parallelOption = new Option<int>("--parallel") { Description = $"Maximum number of scenarios to run concurrently (default: {BenchmarkDefaults.DefaultMaxParallelism})", DefaultValueFactory = _ => BenchmarkDefaults.DefaultMaxParallelism };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);
         runCommand.Options.Add(modelOption);
         runCommand.Options.Add(cleanupOption);
         runCommand.Options.Add(verboseOption);
+        runCommand.Options.Add(parallelOption);
 
         runCommand.SetAction(async (parseResult, _) =>
         {
@@ -49,7 +52,8 @@ public class Program
             var model = parseResult.GetValue(modelOption);
             var cleanup = parseResult.GetValue(cleanupOption);
             var verbose = parseResult.GetValue(verboseOption);
-            return await HandleRunCommand(name, all, model, cleanup, verbose);
+            var parallel = parseResult.GetValue(parallelOption);
+            return await HandleRunCommand(name, all, model, cleanup, verbose, parallel);
         });
         rootCommand.Subcommands.Add(runCommand);
 
@@ -85,7 +89,7 @@ public class Program
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string? model, CleanupPolicy cleanup, bool verbose)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string? model, CleanupPolicy cleanup, bool verbose, int parallel)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -98,6 +102,12 @@ public class Program
         if (!string.IsNullOrEmpty(name) && all)
         {
             Console.WriteLine("Error: Cannot specify both <name> and --all");
+            return 1;
+        }
+
+        if (parallel < 1)
+        {
+            Console.WriteLine("Error: --parallel must be at least 1");
             return 1;
         }
 
@@ -136,6 +146,7 @@ public class Program
         {
             Console.WriteLine("  (overridden via --model flag)");
         }
+        Console.WriteLine($"Parallelism: {parallel}");
         Console.WriteLine();
 
         var options = new BenchmarkOptions
@@ -145,38 +156,46 @@ public class Program
             Verbose = verbose
         };
 
-        var results = new List<(BenchmarkScenario Scenario, BenchmarkResult Result)>();
+        var results = new ConcurrentBag<(BenchmarkScenario Scenario, BenchmarkResult Result)>();
         using var runner = new BenchmarkRunner();
+        var consoleLock = new object();
 
-        foreach (var scenario in scenariosToRun)
+        await Parallel.ForEachAsync(scenariosToRun, new ParallelOptions { MaxDegreeOfParallelism = parallel }, async (scenario, ct) =>
         {
-            Console.WriteLine($"Running scenario: {scenario.Name}");
-            Console.WriteLine($"Description: {scenario.Description}");
-            Console.WriteLine($"Target repo: {scenario.Repo.CloneUrl}");
-            Console.WriteLine();
+            lock (consoleLock)
+            {
+                Console.WriteLine($"Running scenario: {scenario.Name}");
+                Console.WriteLine($"Description: {scenario.Description}");
+                Console.WriteLine($"Target repo: {scenario.Repo.CloneUrl}");
+                Console.WriteLine();
+            }
 
             var result = await runner.RunAsync(scenario, options);
             results.Add((scenario, result));
 
-            PrintResult(result);
-        }
+            lock (consoleLock)
+            {
+                PrintResult(result);
+            }
+        });
 
         // Summary for multiple scenarios
-        if (results.Count > 1)
+        var resultsList = results.ToList();
+        if (resultsList.Count > 1)
         {
             Console.WriteLine("\n=== Summary ===");
-            var passed = results.Count(r => r.Result.Passed);
-            var failed = results.Count - passed;
-            Console.WriteLine($"Passed: {passed}, Failed: {failed}, Total: {results.Count}");
+            var passed = resultsList.Count(r => r.Result.Passed);
+            var failed = resultsList.Count - passed;
+            Console.WriteLine($"Passed: {passed}, Failed: {failed}, Total: {resultsList.Count}");
 
-            foreach (var (scenario, result) in results)
+            foreach (var (scenario, result) in resultsList)
             {
                 var status = result.Passed ? "✓" : "✗";
                 Console.WriteLine($"  [{status}] {scenario.Name} ({result.Duration.TotalSeconds:F1}s)");
             }
         }
 
-        return results.All(r => r.Result.Passed) ? 0 : 1;
+        return resultsList.All(r => r.Result.Passed) ? 0 : 1;
     }
 
     private static void PrintResult(BenchmarkResult result)

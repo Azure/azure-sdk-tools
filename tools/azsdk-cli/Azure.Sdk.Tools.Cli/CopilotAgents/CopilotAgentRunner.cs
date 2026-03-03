@@ -92,7 +92,21 @@ public class CopilotAgentRunner(
             },
             // Disables copilot built-in tools
             // copilot built-in tools may be enabled in the future as needed
-            AvailableTools = [.. tools.Select(t => t.Name)]
+            AvailableTools = [.. tools.Select(t => t.Name)],
+            // Auto-approve all tool calls since agents run autonomously with no user interaction.
+            // Without this, the SDK defaults to asking the user for permission which fails
+            // with "Permission denied" because there is no interactive user to approve.
+            Hooks = new SessionHooks
+            {
+                OnPreToolUse = (input, invocation) =>
+                {
+                    logger.LogDebug("Auto-approving tool call: {ToolName}", input.ToolName);
+                    return Task.FromResult<PreToolUseHookOutput?>(new PreToolUseHookOutput
+                    {
+                        PermissionDecision = "allow"
+                    });
+                }
+            }
         };
 
         await using var session = await client.CreateSessionAsync(sessionConfig, ct);

@@ -30,17 +30,28 @@ extends:
   parameters:
     settings:
       skipBuildTagsForGitHubPullRequests: true
+      networkIsolationPolicy: Permissive
     sdl:
+      # Turn off the build warnings caused by disabling some sdl checks
+      createAdoIssuesForJustificationsForDisablement: false
       sourceAnalysisPool:
         name: azsdk-pool
         image: windows-2022
         os: windows
-      psscriptanalyzer:
+      eslint:
         enabled: false
-        justificationForDisabling: >-
-          This pipeline only runs Node.js/TypeScript code. PSScriptAnalyzer flags
-          pre-existing issues in shared repo PowerShell scripts (eng/, tools/feed-cleaner)
-          that are not owned or modified by this pipeline.
+        justificationForDisabling: 'ESLint injected task has failures because it uses an old version of mkdirp. We should not fail for tools not controlled by the repo. See: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=3499746'
+      codeql:
+        compiled:
+          enabled: false
+          justificationForDisabling: CodeQL times our pipelines out by running for 2+ hours before being force canceled.
+      componentgovernance:
+        enabled: false
+        justificationForDisabling: Manually enabling only on the main build job instead of running it on every job.
+      psscriptanalyzer:
+        compiled: true
+        break: true
+      policy: M365
       sourceRepositoriesToScan:
         exclude:
           - repository: azure-sdk-docs-eng.ms

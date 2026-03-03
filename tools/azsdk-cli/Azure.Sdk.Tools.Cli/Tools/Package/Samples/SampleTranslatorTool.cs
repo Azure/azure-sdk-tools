@@ -166,16 +166,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
                 var result = await TranslateSamplesInternalAsync(
                     fromPackagePath, toPackagePath, overwrite, model, batchSize, ct);
 
-                if (result.TranslatedCount == 0)
-                {
-                    return PackageOperationResponse.CreateSuccess(
+                var response = result.TranslatedCount == 0
+                    ? PackageOperationResponse.CreateSuccess(
                         $"No samples found to translate from {result.SourceLanguage}.",
-                        nextSteps: ["Verify the source package has sample files", "Check the samples directory exists"]);
-                }
+                        packageInfo: result.PackageInfo,
+                        nextSteps: ["Verify the source package has sample files", "Check the samples directory exists"])
+                    : PackageOperationResponse.CreateSuccess(
+                        $"Successfully translated {result.TranslatedCount} sample(s) from {result.SourceLanguage} to {result.TargetLanguage}: {result.FileNames}",
+                        packageInfo: result.PackageInfo,
+                        nextSteps: ["Review the translated samples", "Test the samples to ensure they compile and run correctly"]);
 
-                return PackageOperationResponse.CreateSuccess(
-                    $"Successfully translated {result.TranslatedCount} sample(s) from {result.SourceLanguage} to {result.TargetLanguage}: {result.FileNames}",
-                    nextSteps: ["Review the translated samples", "Test the samples to ensure they compile and run correctly"]);
+                // Set samples_count for telemetry tracking (including 0 for failed translations)
+                response.Result = new { samples_count = result.TranslatedCount };
+                return response;
             }
             catch (ArgumentException ex)
             {
@@ -194,7 +197,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             }
         }
 
-        private async Task<(int TranslatedCount, string OutputDirectory, string SourceLanguage, string TargetLanguage, string FileNames)> TranslateSamplesInternalAsync(
+        private async Task<(int TranslatedCount, string OutputDirectory, string SourceLanguage, string TargetLanguage, string FileNames, PackageInfo PackageInfo)> TranslateSamplesInternalAsync(
             string fromPackagePath,
             string toPackagePath,
             bool overwrite,
@@ -231,7 +234,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
             if (!sampleFiles.Any())
             {
                 logger.LogWarning("No sample files found at {samplesPath}", samplesPath);
-                return (0, outputDirectory, sourceLanguage, targetLanguage, "");
+                return (0, outputDirectory, sourceLanguage, targetLanguage, "", packageInfo);
             }
 
             logger.LogInformation("Found {count} sample files to translate", sampleFiles.Count);
@@ -276,7 +279,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package.Samples
 
             logger.LogInformation("Sample translation completed");
             var fileNames = string.Join(", ", allTranslatedSamples.Select(s => $"{s.OriginalFileName} -> {s.TranslatedFileName}"));
-            return (allTranslatedSamples.Count, outputDirectory, sourceLanguage, targetLanguage, fileNames);
+            return (allTranslatedSamples.Count, outputDirectory, sourceLanguage, targetLanguage, fileNames, packageInfo);
         }
 
         private async Task<List<SourceSampleFile>> DiscoverSampleFilesAsync(

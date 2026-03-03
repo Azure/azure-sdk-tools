@@ -1,6 +1,7 @@
-import { Octokit } from '@octokit/rest';
 import { components } from '@octokit/openapi-types';
 import { logger } from '../logging/logger.js';
+import { GitHubAppTokenProvider } from './GitHubAppTokenProvider.js';
+import { OctokitWithRetry } from './octokit.js';
 
 export interface PRDetails {
   comments: {
@@ -36,22 +37,37 @@ interface CommentEx {
 }
 
 export class GithubClient {
-  private readonly authToken?: string;
+  private readonly tokenProvider?: GitHubAppTokenProvider;
   private readonly perPage = 100;
-  private readonly octokit: Octokit;
+  private octokit: InstanceType<typeof OctokitWithRetry>;
+  private lastToken?: string;
 
-  constructor(authToken?: string) {
-    this.authToken = authToken;
-    this.octokit = new Octokit({ auth: this.authToken });
+  constructor() {
+    this.tokenProvider = GitHubAppTokenProvider.create();
+    this.octokit = new OctokitWithRetry({ retry: { retries: 1 } });
+  }
+
+  /** Refreshes the Octokit instance if the token from the provider has changed. */
+  private async refreshOctokit(): Promise<void> {
+    if (this.tokenProvider) {
+      const token = await this.tokenProvider.getToken();
+      if (token && token !== this.lastToken) {
+        this.lastToken = token;
+        this.octokit = new OctokitWithRetry({ auth: token, retry: { retries: 1 } });
+      }
+    }
   }
 
   public async getPullRequestDetails(prUrl: string, meta: object): Promise<PRDetails | undefined> {
+    await this.refreshOctokit();
     // 1. Parse owner, repo, pull_number from URL
     const match = prUrl.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/);
     if (!match) {
       logger.warn(`Invalid PR URL: ${prUrl}. Ignore`, { meta });
       return undefined;
     }
+
+    logger.info(`Fetching pull request details for URL: ${prUrl}`, { meta });
 
     const [, owner, repo, pullNumberStr] = match;
     const pullNumber = Number(pullNumberStr);
@@ -77,12 +93,15 @@ export class GithubClient {
   }
 
   public async getIssueDetails(issueUrl: string, meta: object): Promise<IssueDetails | undefined> {
+    await this.refreshOctokit();
     // Parse owner, repo, issue_number from URL
     const match = issueUrl.match(/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/);
     if (!match) {
       logger.warn(`Invalid Issue URL: ${issueUrl}. Ignore`, { meta });
       return undefined;
     }
+
+    logger.info(`Fetching issue details for URL: ${issueUrl}`, { meta });
 
     const [, owner, repo, issueNumberStr] = match;
     const issueNumber = Number(issueNumberStr);
@@ -109,7 +128,6 @@ export class GithubClient {
     return { name: commentUser.login, type: commentUser.type, comment: commentBody };
   }
 
-  // TODO: add retry
   private async tryGetBasicInfo(
     owner: string,
     repo: string,
@@ -154,7 +172,6 @@ export class GithubClient {
     }
   }
 
-  // TODO: add retry
   private async tryListIssueComments(
     owner: string,
     repo: string,
@@ -174,7 +191,6 @@ export class GithubClient {
     }
   }
 
-  // TODO: add retry
   private async tryListReviewComments(
     owner: string,
     repo: string,
@@ -193,7 +209,7 @@ export class GithubClient {
       return undefined;
     }
   }
-  // TODO: add retry
+
   private async tryListReviews(
     owner: string,
     repo: string,
@@ -214,7 +230,6 @@ export class GithubClient {
     }
   }
 
-  // TODO: add retry
   private async tryGetPullDiff(owner: string, repo: string, id: number, prUrl: string): Promise<string | undefined> {
     try {
       const parameters = { owner, repo, pull_number: id, mediaType: { format: 'diff' } };

@@ -43,6 +43,12 @@ describe('Modular Client (MLC) - getApiVersionType', () => {
         expect(version).toBe(ApiVersionType.Preview);
     });
 
+    test('fallback to src/rest/*Client.ts when no metadata.json and no src/api context', async () => {
+        const root = join(__dirname, 'testCases/new/');
+        const version = await getApiVersionType(root);
+        expect(version).toBe(ApiVersionType.Preview);
+    });
+
     test('model-only package gets version from npm', async () => {
         const mockNpmUtils = await import("../../common/npmUtils.js");
         let npmViewCount = 0;
@@ -83,6 +89,12 @@ describe('Rest client file fallbacks', () => {
     describe('Modular client', () => {
         test('src/api/xxxContext.ts exists', async () => {
             const root = join(__dirname, 'testCases/new-context/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+
+        test('only src/rest/*Client.ts exists (no metadata.json, no src/api context)', async () => {
+            const root = join(__dirname, 'testCases/new/');
             const version = await getApiVersionType(root);
             expect(version).toBe(ApiVersionType.Preview);
         });

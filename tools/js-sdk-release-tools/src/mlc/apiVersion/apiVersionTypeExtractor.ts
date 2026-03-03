@@ -25,7 +25,7 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
     }
 
     // NOTE: when there's customized code, emitter must put generated code in root/generated folder
-    const clientPatterns = ["src/api/*Context.ts"];
+    const clientPatterns = ["src/api/*Context.ts", "src/rest/*Client.ts"];
     for (const pattern of clientPatterns) {
         const typeFromClient = await getApiVersionTypeFromRestClient(packageRoot, pattern, tryFindRestClientPath);
         if (typeFromClient !== ApiVersionType.None) return typeFromClient;

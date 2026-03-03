@@ -641,7 +641,7 @@ public partial class TestClient
         string? capturedSpellingCheckPath = null;
         _commonValidationHelperMock
             .Setup(x => x.CheckSpelling(It.IsAny<string>(), _packagePath, false, It.IsAny<CancellationToken>()))
-            .Callback<string, string, bool, CancellationToken>((path, _, _, _) => capturedSpellingCheckPath = path)
+            .Callback<string, string, bool, CancellationToken>((path, packagePath, fix, token) => capturedSpellingCheckPath = path)
             .ReturnsAsync(new PackageCheckResponse(0, "No spelling errors found"));
 
         await _languageChecks.CheckSpelling(_packagePath, ct: CancellationToken.None);

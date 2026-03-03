@@ -1,5 +1,6 @@
 # regular requirements
 aiohttp==3.13.3
+azure-ai-agents==1.1.0
 azure-appconfiguration==1.7.1
 azure-cosmos==4.9.0
 azure-identity==1.21.0
@@ -19,7 +20,6 @@ pydantic==2.10.6
 PyJWT==2.10.1
 pyyaml==6.0.2
 pytest==7.4.2
-semantic-kernel==1.32.2
 uvicorn[standard]==0.29.0
 
 # evals requirements

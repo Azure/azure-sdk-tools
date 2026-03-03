@@ -18,8 +18,8 @@ importers:
         specifier: ^13.3.1
         version: 13.3.1
       '@azure/functions':
-        specifier: ^4.5.0
-        version: 4.8.0
+        specifier: ^4.11.2
+        version: 4.11.2
       '@azure/identity':
         specifier: ^4.5.0
         version: 4.12.0
@@ -128,9 +128,13 @@ packages:
     resolution: {integrity: sha512-jGk1s1SbAfy39zxArNn4HAmycmHF/+XtYYRZ6kakayxJNQeeuacSkLUioezOZIVI01i3Yvr4xzTMuKZpdKXf1Q==}
     engines: {node: '>=18.0.0'}
 
-  '@azure/functions@4.8.0':
-    resolution: {integrity: sha512-LNtl3xZNE40vE7+SIST+GYQX5cnnI1M65fXPi26l9XCdPakuQrz54lHv+qQQt1GG5JbqLfQk75iM7A6Y9O+2dQ==}
+  '@azure/functions-extensions-base@0.2.0':
+    resolution: {integrity: sha512-ncCkHBNQYJa93dBIh+toH0v1iSgCzSo9tr94s6SMBe7DPWREkaWh8cq33A5P4rPSFX1g5W+3SPvIzDr/6/VOWQ==}
     engines: {node: '>=18.0'}
+
+  '@azure/functions@4.11.2':
+    resolution: {integrity: sha512-U7qpPo0pUxDfdP3Q8gO5GLtust94nh8+RtIUvEKE4qU9yuDhL2vU1zzanuzkaV2j/TFv+EEmN8QDtchAgpeffw==}
+    engines: {node: '>=20.0'}
 
   '@azure/identity@4.12.0':
     resolution: {integrity: sha512-6vuh2R3Cte6SD6azNalLCjIDoryGdcvDVEV7IDRPtm5lHX5ffkDlIalaoOp5YJU08e4ipjJENel20kSMDLAcug==}
@@ -327,10 +331,6 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
-
-  '@fastify/busboy@2.1.1':
-    resolution: {integrity: sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==}
-    engines: {node: '>=14'}
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
@@ -782,9 +782,6 @@ packages:
   lodash.once@4.1.1:
     resolution: {integrity: sha512-Sb487aTOCr9drQVL8pIxOzVhafOjZN9UU54hiN8PU3uAiSV7lx1yYNpbNmex2PK6dSJoNTSJUUswT651yww3Mg==}
 
-  long@4.0.0:
-    resolution: {integrity: sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==}
-
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
 
@@ -1021,10 +1018,6 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
-  undici@5.29.0:
-    resolution: {integrity: sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==}
-    engines: {node: '>=14.0'}
-
   uuid@11.1.0:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
     hasBin: true
@@ -1251,11 +1244,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@azure/functions@4.8.0':
+  '@azure/functions-extensions-base@0.2.0': {}
+
+  '@azure/functions@4.11.2':
     dependencies:
+      '@azure/functions-extensions-base': 0.2.0
       cookie: 0.7.2
-      long: 4.0.0
-      undici: 5.29.0
 
   '@azure/identity@4.12.0':
     dependencies:
@@ -1447,8 +1441,6 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.12':
     optional: true
-
-  '@fastify/busboy@2.1.1': {}
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
@@ -1859,8 +1851,6 @@ snapshots:
 
   lodash.once@4.1.1: {}
 
-  long@4.0.0: {}
-
   loupe@3.2.1: {}
 
   lru-cache@11.2.6: {}
@@ -2065,10 +2055,6 @@ snapshots:
   typescript@5.9.2: {}
 
   undici-types@6.21.0: {}
-
-  undici@5.29.0:
-    dependencies:
-      '@fastify/busboy': 2.1.1
 
   uuid@11.1.0: {}
 

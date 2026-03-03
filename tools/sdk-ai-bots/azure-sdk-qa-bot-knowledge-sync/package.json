@@ -20,7 +20,7 @@
     "@azure/app-configuration": "^1.7.0",
     "@azure/arm-search": "^3.3.0",
     "@azure/data-tables": "^13.3.1",
-    "@azure/functions": "^4.5.0",
+    "@azure/functions": "^4.11.2",
     "@azure/identity": "^4.5.0",
     "@azure/keyvault-secrets": "^4.8.0",
     "@azure/search-documents": "^12.1.0",

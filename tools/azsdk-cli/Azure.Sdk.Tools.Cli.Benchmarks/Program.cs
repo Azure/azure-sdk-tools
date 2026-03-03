@@ -17,9 +17,12 @@ public class Program
 
         // list command
         var listCommand = new Command("list", "List all available scenarios");
-        listCommand.SetAction((_, _) =>
+        var listTagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
+        listCommand.Options.Add(listTagOption);
+        listCommand.SetAction((parseResult, _) =>
         {
-            HandleListCommand();
+            var tags = parseResult.GetValue(listTagOption);
+            HandleListCommand(tags);
             return Task.FromResult(0);
         });
         rootCommand.Subcommands.Add(listCommand);
@@ -37,6 +40,7 @@ public class Program
         };
         var verboseOption = new Option<bool>("--verbose") { Description = "Show agent activity during execution" };
         var parallelOption = new Option<int>("--parallel") { Description = $"Maximum number of scenarios to run concurrently (default: {BenchmarkDefaults.DefaultMaxParallelism})", DefaultValueFactory = _ => BenchmarkDefaults.DefaultMaxParallelism };
+        var tagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);
@@ -44,6 +48,7 @@ public class Program
         runCommand.Options.Add(cleanupOption);
         runCommand.Options.Add(verboseOption);
         runCommand.Options.Add(parallelOption);
+        runCommand.Options.Add(tagOption);
 
         runCommand.SetAction(async (parseResult, _) =>
         {
@@ -53,16 +58,17 @@ public class Program
             var cleanup = parseResult.GetValue(cleanupOption);
             var verbose = parseResult.GetValue(verboseOption);
             var parallel = parseResult.GetValue(parallelOption);
-            return await HandleRunCommand(name, all, model, cleanup, verbose, parallel);
+            var tags = parseResult.GetValue(tagOption);
+            return await HandleRunCommand(name, all, tags, model, cleanup, verbose, parallel);
         });
         rootCommand.Subcommands.Add(runCommand);
 
         return await rootCommand.Parse(args).InvokeAsync();
     }
 
-    private static void HandleListCommand()
+    private static void HandleListCommand(string[]? tags)
     {
-        var scenarios = ScenarioDiscovery.DiscoverAll().ToList();
+        var scenarios = FilterByTags(ScenarioDiscovery.DiscoverAll(), tags).ToList();
 
         if (scenarios.Count == 0)
         {
@@ -82,14 +88,14 @@ public class Program
         // Print rows
         foreach (var scenario in scenarios)
         {
-            var tags = string.Join(", ", scenario.Tags);
-            Console.WriteLine($"{scenario.Name.PadRight(nameWidth)} | {scenario.Description.PadRight(descWidth)} | {tags.PadRight(tagsWidth)}");
+            var tagDisplay = string.Join(", ", scenario.Tags);
+            Console.WriteLine($"{scenario.Name.PadRight(nameWidth)} | {scenario.Description.PadRight(descWidth)} | {tagDisplay.PadRight(tagsWidth)}");
         }
 
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string? model, CleanupPolicy cleanup, bool verbose, int parallel)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? model, CleanupPolicy cleanup, bool verbose, int parallel)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -105,6 +111,12 @@ public class Program
             return 1;
         }
 
+        if (tags is { Length: > 0 } && !all)
+        {
+            Console.WriteLine("Error: --tag can only be used with --all");
+            return 1;
+        }
+
         if (parallel < 1)
         {
             Console.WriteLine("Error: --parallel must be at least 1");
@@ -115,10 +127,13 @@ public class Program
 
         if (all)
         {
-            scenariosToRun.AddRange(ScenarioDiscovery.DiscoverAll());
+            scenariosToRun.AddRange(FilterByTags(ScenarioDiscovery.DiscoverAll(), tags));
             if (scenariosToRun.Count == 0)
             {
-                Console.WriteLine("No scenarios found.");
+                var message = tags is { Length: > 0 }
+                    ? $"No scenarios found matching tag(s): {string.Join(", ", tags)}"
+                    : "No scenarios found.";
+                Console.WriteLine(message);
                 return 1;
             }
         }
@@ -196,6 +211,14 @@ public class Program
         }
 
         return resultsList.All(r => r.Result.Passed) ? 0 : 1;
+    }
+
+    private static IEnumerable<BenchmarkScenario> FilterByTags(IEnumerable<BenchmarkScenario> scenarios, string[]? tags)
+    {
+        if (tags == null || tags.Length == 0)
+            return scenarios;
+
+        return scenarios.Where(s => tags.Any(t => s.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)));
     }
 
     private static void PrintResult(BenchmarkResult result)

@@ -77,7 +77,7 @@ internal class VerifySetupServiceTests
                     { "pip", "pip 24.0" },
                     { "java", "java 17.0.1" },
                     { "mvn", "Apache Maven 3.9.0" },
-                    { "dotnet", "8.0.100" },
+                    { "dotnet", "9.0.400" },
                     { "go", "go version go1.21.0" },
                     { "pnpm", "9.0.0" },
                     { "azpysdk", "azpysdk help" },
@@ -442,5 +442,87 @@ internal class VerifySetupServiceTests
         var tspClientResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp-client"));
         Assert.That(tspClientResult, Is.Not.Null);
         Assert.That(tspClientResult!.AutoInstallAttempted, Is.False);
+    }
+    // Exit code model tests
+
+    [Test]
+    public async Task ExitCode_IsZero_WhenAllRequirementsMet()
+    {
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.AllGood));
+    }
+
+    [Test]
+    public async Task ExitCode_IsBlocking_WhenNonAutoInstallableRequirementFails()
+    {
+        // Node.js is not auto-installable
+        SetupFailedProcessMock("node", 1, "node: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.Results?.Any(r => r.Requirement.Contains("Node") && !r.IsAutoInstallable), Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.Blocking));
+    }
+
+    [Test]
+    public async Task ExitCode_IsFixable_WhenOnlyAutoInstallableRequirementsFail()
+    {
+        // tsp is auto-installable
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        Assert.That(result.Results?.Any(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client") && r.IsAutoInstallable), Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.Fixable));
+    }
+
+    [Test]
+    public async Task ExitCode_IsBlocking_WhenMixOfFixableAndBlockingRequirementsFail()
+    {
+        // Node.js is not auto-installable (blocking), tsp is auto-installable (fixable)
+        SetupFailedProcessMock("node", 1, "node: command not found");
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.Blocking));
+    }
+
+    [Test]
+    public async Task ExitCode_IsZero_WhenAutoInstallSucceeds()
+    {
+        var tspCheckCount = 0;
+        mockProcessHelper
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(opt => opt.Command.Contains("tsp") || opt.Args.Any(a => a == "tsp")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                tspCheckCount++;
+                if (tspCheckCount <= 1)
+                {
+                    return new ProcessResult
+                    {
+                        ExitCode = 1,
+                        OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardError, "tsp: command not found") }
+                    };
+                }
+                return new ProcessResult
+                {
+                    ExitCode = 0,
+                    OutputDetails = new List<(StdioLevel, string)> { (StdioLevel.StandardOutput, "1.0.1") }
+                };
+            });
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet", requirementsToInstall: new List<string> { "tsp" });
+
+        var tspResult = result.Results?.FirstOrDefault(r => r.Requirement.Contains("tsp") && !r.Requirement.Contains("tsp-client"));
+        Assert.That(tspResult?.AutoInstallSucceeded, Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.AllGood));
     }
 }

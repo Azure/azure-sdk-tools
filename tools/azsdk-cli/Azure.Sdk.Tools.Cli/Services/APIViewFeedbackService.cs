@@ -81,14 +81,18 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
             return new List<ConsolidatedComment>();
         }
 
-        // 1. Filter out resolved, Question severity comments, and comments with no text
+        // 1. Filter out resolved, Question severity comments, comments with no text,
+        //    and azure-sdk bot comments that have been downvoted
         var filteredComments = comments
-            .Where(c => !c.IsResolved && c.Severity != "Question" && !string.IsNullOrWhiteSpace(c.CommentText))
+            .Where(c => !c.IsResolved
+                && c.Severity != "Question"
+                && !string.IsNullOrWhiteSpace(c.CommentText)
+                && !(c.CreatedBy == "azure-sdk" && c.Downvotes > 0))
             .ToList();
 
         if (filteredComments.Count == 0)
         {
-            _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering (all resolved or questions)", revisionId);
+            _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering", revisionId);
             return new List<ConsolidatedComment>();
         }
 

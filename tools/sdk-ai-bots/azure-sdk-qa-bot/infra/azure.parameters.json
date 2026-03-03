@@ -40,6 +40,18 @@
     },
     "dockerContainerName": {
       "value": "${{DOCKER_CONTAINER_NAME}}"
+    },
+    "githubAppId": {
+      "value": "${{GITHUB_APP_ID}}"
+    },
+    "githubAppKeyVaultName": {
+      "value": "${{GITHUB_APP_KEY_VAULT_NAME}}"
+    },
+    "githubAppKeyName": {
+      "value": "${{GITHUB_APP_KEY_NAME}}"
+    },
+    "githubAppInstallOwner": {
+      "value": "${{GITHUB_APP_INSTALL_OWNER}}"
     }
   }
 }

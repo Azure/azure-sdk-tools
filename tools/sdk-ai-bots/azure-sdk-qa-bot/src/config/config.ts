@@ -28,6 +28,11 @@ const config = {
   // Local RAG config
   localBackendEndpoint: process.env.LOCAL_BACKEND_ENDPOINT,
   localRagTenant: process.env.LOCAL_RAG_TENANT,
+  // GitHub App auth
+  githubAppId: process.env.GITHUB_APP_ID,
+  githubAppKeyVaultName: process.env.GITHUB_APP_KEY_VAULT_NAME,
+  githubAppKeyName: process.env.GITHUB_APP_KEY_NAME,
+  githubAppInstallOwner: process.env.GITHUB_APP_INSTALL_OWNER,
 };
 
 // Validate required environment variables at startup

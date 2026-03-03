@@ -10,6 +10,7 @@ namespace APIViewWeb.Repositories
     {
         public Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, FilterAndSortParams filterAndSortParams);
         public Task UpsertReviewAsync(ReviewListItemModel reviewModel);
+        public Task UpsertReviewsAsync(IEnumerable<ReviewListItemModel> reviews);
         public Task<ReviewListItemModel> GetReviewAsync(string reviewId);
         public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null);
         public Task<LegacyReviewModel> GetLegacyReviewAsync(string reviewId);

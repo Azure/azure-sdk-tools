@@ -251,5 +251,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             return Task.FromResult(new List<WorkItem>());
         }
+
+        public Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string type, string field, string value, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            return Task.FromResult(new List<WorkItem>());
+        }
     }
 }

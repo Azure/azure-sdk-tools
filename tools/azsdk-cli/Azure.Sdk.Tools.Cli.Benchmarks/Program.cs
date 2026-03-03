@@ -36,7 +36,7 @@ public class Program
             DefaultValueFactory = _ => CleanupPolicy.OnSuccess
         };
         var verboseOption = new Option<bool>("--verbose") { Description = "Show agent activity during execution" };
-        var parallelOption = new Option<int>("--parallel") { Description = "Maximum number of scenarios to run concurrently (default: 5)", DefaultValueFactory = _ => 5 };
+        var parallelOption = new Option<int>("--parallel") { Description = $"Maximum number of scenarios to run concurrently (default: {BenchmarkDefaults.DefaultMaxParallelism})", DefaultValueFactory = _ => BenchmarkDefaults.DefaultMaxParallelism };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);

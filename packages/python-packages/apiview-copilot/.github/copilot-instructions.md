@@ -24,7 +24,7 @@ APIView Copilot is an AI-powered automated reviewer for Azure SDK API surface re
   - `_credential.py` — Azure credential helpers (`DefaultAzureCredential`).
   - `_metrics.py` — Metrics reporting and aggregation.
   - `_retry.py` — Generic retry-with-backoff utility.
-  - `_utils.py` — Shared utilities including `run_prompty` and language name mapping.
+  - `_utils.py` — Shared utilities including language name mapping.
   - `agent/` — Azure AI Agent Service integration (read-only and read-write agents).
 - `prompts/` — All `.prompty` prompt template files organized by feature:
   - `api_review/` — Core review prompts (guideline, context, generic review; filtering; merging; scoring).
@@ -63,9 +63,9 @@ The review pipeline in `ApiViewReview.run()` follows these stages:
 ### Prompt Execution
 
 - Prompts are defined as `.prompty` files in the `prompts/` directory.
-- Executed via `run_prompty()` in `_utils.py` (uses the `prompty` library with `prompty.azure`).
+- Parsed and executed by a custom implementation in `_prompt_runner.py` using the Azure AI Foundry `ChatCompletionsClient`.
 - Retry logic is in `_prompt_runner.py` using `retry_with_backoff` from `_retry.py`.
-- In CI, an API key from settings is used; locally, `DefaultAzureCredential` is used.
+- In CI, an API key from settings is used via `AzureKeyCredential`; locally, `DefaultAzureCredential` is used.
 
 ### Data Models
 
@@ -106,7 +106,7 @@ The review pipeline in `ApiViewReview.run()` follows these stages:
 - Eval test cases are YAML files in `evals/tests/<workflow_name>/`.
 - Each workflow has a `test-config.yaml` defining name and kind.
 - Target functions are registered in `evals/_custom.py`.
-- Evals use the `prompty` library directly to execute prompts and compare results.
+- Evals use `_execute_prompt_template` from `_prompt_runner.py` to execute prompts and compare results.
 - Use `--use-recording` to cache LLM responses for faster iteration.
 
 ## Azure Resource Dependencies

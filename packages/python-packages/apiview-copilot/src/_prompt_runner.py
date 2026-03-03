@@ -161,7 +161,7 @@ def _parse_prompty(file_path: str | Path) -> PromptyConfig:
     return config
 
 
-def _execute_prompt_template(  # pylint: disable=unused-argument
+def _execute_prompt_template(
     file_path: str | Path,
     inputs: dict = None,
     configuration: dict = None,
@@ -172,7 +172,9 @@ def _execute_prompt_template(  # pylint: disable=unused-argument
     Args:
         file_path: Path to the .prompty file.
         inputs: Dictionary of input variables for template rendering.
-        configuration: Optional configuration dict (reserved for future use).
+        configuration: Optional configuration dict. If it contains an
+            ``api_key`` entry, an ``AzureKeyCredential`` is used instead
+            of ``DefaultAzureCredential``.
         **kwargs: Additional arguments (for compatibility).
 
     Returns:
@@ -184,6 +186,7 @@ def _execute_prompt_template(  # pylint: disable=unused-argument
     # azure.ai.inference is a transitive dependency of azure-ai-projects
     from azure.ai.inference import ChatCompletionsClient
     from azure.ai.inference.models import SystemMessage, UserMessage
+    from azure.core.credentials import AzureKeyCredential
     from azure.identity import DefaultAzureCredential
     from src._settings import SettingsManager
 
@@ -213,13 +216,22 @@ def _execute_prompt_template(  # pylint: disable=unused-argument
     # Format: {FOUNDRY_ENDPOINT}/models
     inference_endpoint = f"{foundry_endpoint.rstrip('/')}/models"
 
-    credential = DefaultAzureCredential()
-    # Specify the cognitive services scope for Azure AI
-    client = ChatCompletionsClient(
-        endpoint=inference_endpoint,
-        credential=credential,
-        credential_scopes=["https://cognitiveservices.azure.com/.default"],
-    )
+    # Authenticate — prefer an explicit API key (used in CI), fall back to DefaultAzureCredential
+    api_key = (configuration or {}).get("api_key")
+    if api_key:
+        credential = AzureKeyCredential(api_key)
+        client = ChatCompletionsClient(
+            endpoint=inference_endpoint,
+            credential=credential,
+        )
+    else:
+        credential = DefaultAzureCredential()
+        # Specify the cognitive services scope for Azure AI
+        client = ChatCompletionsClient(
+            endpoint=inference_endpoint,
+            credential=credential,
+            credential_scopes=["https://cognitiveservices.azure.com/.default"],
+        )
 
     # Build messages
     messages = []

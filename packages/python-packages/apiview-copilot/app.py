@@ -29,7 +29,8 @@ from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, run_prompty
+from src._prompt_runner import run_prompt
+from src._utils import get_language_pretty_name
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 # How long to keep completed jobs (seconds)
@@ -234,7 +235,7 @@ async def summarize_api(
 
         pretty_language = get_language_pretty_name(request.language)
         inputs = {"language": pretty_language, "content": summary_content}
-        summary = await asyncio.to_thread(run_prompty, folder="summarize", filename=summary_prompt_file, inputs=inputs)
+        summary = await asyncio.to_thread(run_prompt, folder="summarize", filename=summary_prompt_file, inputs=inputs)
         return SummarizeResponse(summary=summary)
     except Exception as e:
         logger.error("Error in /api-review/summarize: %s", e, exc_info=True)

@@ -30,6 +30,12 @@ public interface ITspClientHelper
     /// <param name="isCli">True when invoked from CLI flow (suppresses duplicate streamed output in error text).</param>
     /// <param name="localSpecRepoPath">Optional path to a local spec repo. When provided, tsp-client copies files from the local filesystem instead of cloning from a remote repo.</param>
     /// <param name="ct">Cancellation token.</param>
+    /// <remarks>
+    /// When both <paramref name="commitSha"/> and <paramref name="localSpecRepoPath"/> are null,
+    /// tsp-client falls back to the repo URL and commit SHA already recorded in tsp-location.yaml.
+    /// This is the expected behavior for re-generation scenarios where the spec source hasn't changed
+    /// (e.g., regenerating after patching SDK customization files).
+    /// </remarks>
     Task<TspToolResponse> UpdateGenerationAsync(string tspLocationDirectory, string? commitSha = null, bool isCli = false, string? localSpecRepoPath = null, CancellationToken ct = default);
 
     /// <summary>

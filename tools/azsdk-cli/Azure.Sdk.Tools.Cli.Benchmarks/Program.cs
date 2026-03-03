@@ -105,6 +105,12 @@ public class Program
             return 1;
         }
 
+        if (parallel < 1)
+        {
+            Console.WriteLine("Error: --parallel must be at least 1");
+            return 1;
+        }
+
         var scenariosToRun = new List<BenchmarkScenario>();
 
         if (all)

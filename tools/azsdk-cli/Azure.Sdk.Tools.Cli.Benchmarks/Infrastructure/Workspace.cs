@@ -196,9 +196,13 @@ public class Workspace : IDisposable
             var logPath = Path.Combine(logDir, $"{scenarioName}-benchmark-log.json");
             await File.WriteAllTextAsync(logPath, json);
         }
+        else
+        {
+            var logPath = Path.Combine(RootPath, "benchmark-log.json");
+            await File.WriteAllTextAsync(logPath, json);
+        }
 
-        var logPath = Path.Combine(RootPath, "benchmark-log.json");
-        await File.WriteAllTextAsync(logPath, json);
+        
     }
 
     /// <summary>

@@ -84,6 +84,12 @@ type GitHubArtifactsListResponse struct {
 	Artifacts  []GitHubArtifact `json:"artifacts"`
 }
 
+// GitHubCheckRunsListResponse wraps a list of check runs returned by the GitHub API.
+type GitHubCheckRunsListResponse struct {
+	TotalCount int                      `json:"total_count"`
+	CheckRuns  []GitHubCheckRunResponse `json:"check_runs"`
+}
+
 // GitHubPRResponse represents a GitHub pull request API response.
 type GitHubPRResponse struct {
 	Number int    `json:"number"`

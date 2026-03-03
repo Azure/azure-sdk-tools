@@ -140,7 +140,7 @@ def process_release(operation: OperationConfiguration, sdk: SdkConfiguration, re
 
         # parse output.json
         release_name = release.tag
-        succeeded = True
+        succeeded = False
         files = []
         if path.isfile(output_json_path):
             with open(output_json_path, "r", encoding="utf-8") as f_in:

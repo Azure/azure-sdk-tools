@@ -12,6 +12,7 @@ parameters:
   default: 
     - '*event*'
     - post-apiview.yml
+    - shared-github-aw-imports/*
 - name: Repos
   type: object
   default:
@@ -37,6 +38,7 @@ pr:
     include:
       - .github/workflows/*event*
       - .github/workflows/post-apiview.yml
+      - .github/workflows/shared-github-aw-imports/*
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml

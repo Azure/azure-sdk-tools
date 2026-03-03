@@ -24,9 +24,9 @@ This guidance applies to ARM (management plane) only.
 
 ## Use @useFinalStateVia to control LRO final-state resolution in ARM PUT operations
 
-`final-state-via: "original-uri"` means the original PUT request URI is polled to retrieve the final resource state. ARM defaults to `Azure-AsyncOperation` when that header is present, even for PUT operations.
+Final-state can be retrieved from `"original-uri"`, `"azure-async-operation"`, `"location"`. ARM defaults to `Azure-AsyncOperation` when that header is present, even for PUT operations.
 
-Use `@useFinalStateVia` to override the default:
+Use `@useFinalStateVia` to override the default. For example, to override to `original-uri`:
 
 ```typespec
 @armResourceOperations
@@ -35,8 +35,6 @@ interface Employees {
   create is ArmResourceCreateOrReplaceAsync<Employee>;
 }
 ```
-
-Valid values: `"original-uri"`, `"azure-async-operation"`, `"location"`. There is no special header type for `original-uri`; it refers to the original request URI directly.
 
 ## Async ARM resource action with no immediate body but final result on success
 

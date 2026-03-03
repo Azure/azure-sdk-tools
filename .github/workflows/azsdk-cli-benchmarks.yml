@@ -31,11 +31,43 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
       - name: Run benchmarks
-        uses: ./eng/common/actions/run-azsdk-cli-benchmarks
+        shell: pwsh
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+          AZSDK_BENCHMARKS_LOG_DIR: ${{ github.workspace }}/azsdk-cli-benchmark-logs
+        run: |
+          $ErrorActionPreference = 'Stop'
+          [System.Collections.ArrayList]$runArgs = @("run")
+
+          if ('${{ inputs.scenario }}') {
+            $runArgs.Add('${{ inputs.scenario }}') | Out-Null
+          } else {
+            $runArgs.Add('--all') | Out-Null
+            if ('${{ inputs.tags }}') {
+              $runArgs.Add('--tags') | Out-Null
+              $runArgs.Add('${{ inputs.tags }}') | Out-Null
+            }
+          }
+
+          if ('${{ inputs.model }}') {
+            $runArgs.Add('--model') | Out-Null
+            $runArgs.Add('${{ inputs.model }}') | Out-Null
+          }
+
+          Write-Host "Running: dotnet run -- $($runArgs -join ' ')"
+          & dotnet run --project tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks -- @runArgs
+
+      - name: Upload benchmark logs
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          scenario: ${{ inputs.scenario }}
-          tags: ${{ inputs.tags }}
-          model: ${{ inputs.model }}
+          name: azsdk-cli-benchmark-logs
+          path: ${{ github.workspace }}/azsdk-cli-benchmark-logs/
+          if-no-files-found: ignore
+          retention-days: 7

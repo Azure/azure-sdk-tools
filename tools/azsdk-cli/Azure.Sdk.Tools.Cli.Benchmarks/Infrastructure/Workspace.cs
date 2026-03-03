@@ -189,20 +189,14 @@ public class Workspace : IDisposable
         var json = JsonSerializer.Serialize(log, options);
 
         // Write to override directory if set, otherwise write to workspace
+        var logPath = Path.Combine(RootPath, "benchmark-log.json");
         var logDir = Environment.GetEnvironmentVariable("AZSDK_BENCHMARKS_LOG_DIR");
         if (!string.IsNullOrEmpty(logDir))
         {
             Directory.CreateDirectory(logDir);
-            var logPath = Path.Combine(logDir, $"{scenarioName}-benchmark-log.json");
-            await File.WriteAllTextAsync(logPath, json);
+            logPath = Path.Combine(logDir, $"{scenarioName}-benchmark-log.json");
         }
-        else
-        {
-            var logPath = Path.Combine(RootPath, "benchmark-log.json");
-            await File.WriteAllTextAsync(logPath, json);
-        }
-
-        
+        await File.WriteAllTextAsync(logPath, json);
     }
 
     /// <summary>

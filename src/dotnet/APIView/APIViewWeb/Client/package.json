@@ -16,7 +16,7 @@
     "core-js": "^3.3.2",
     "form-data": "^4.0.4",
     "jquery": "3.6.0",
-    "underscore": "^1.13.4"
+    "underscore": "^1.13.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",

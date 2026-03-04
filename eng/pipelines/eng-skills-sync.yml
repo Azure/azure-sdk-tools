@@ -1,8 +1,8 @@
-# Mirror shared skills from .github/skills/common to all subscribed repos.
+# Mirror shared skills to all subscribed repos.
 #
-# Shared skills live in .github/skills/common/ in azure-sdk-tools and are
-# synced to .github/skills/common/ in all target repos. Repo-specific skills
-# in .github/skills/<name>/ are not affected by this sync.
+# Shared skills use a azsdk-common- directory prefix and live in .github/skills/
+# in azure-sdk-tools. Only azsdk-common-* directories are synced to target repos.
+# Repo-specific skills in .github/skills/<name>/ are not affected by this sync.
 #
 # For more information on this file, please see:
 # doc/common/common_engsys.md
@@ -13,7 +13,7 @@ parameters:
 - name: FilePatterns
   type: object
   default:
-    - 'common/*'
+    - 'azsdk-common-*'
 - name: Repos
   type: object
   default:
@@ -38,7 +38,7 @@ pr:
       - main
   paths:
     include:
-      - .github/skills/common
+      - .github/skills/azsdk-common-*
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml

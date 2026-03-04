@@ -44,7 +44,7 @@ This process is set up in such a way to make it easier for changes to be tested 
 
 ## Skills Sync
 
-Shared AI skills in `.github/skills/common/` are synced to all subscribed repos via the [`eng-skills-sync` pipeline][skills-yml]. Only the `common/` subdirectory is synced — repo-specific skills in `.github/skills/<name>/` are not affected.
+Shared AI skills in `.github/skills/azsdk-common-*/` are synced to all subscribed repos via the [`eng-skills-sync` pipeline][skills-yml]. Only `azsdk-common-*` prefixed directories are synced — repo-specific skills in `.github/skills/<name>/` are not affected.
 
 The sync follows the same workflow as `eng/common` (see above). For details on creating and managing shared skills, see [skills-guidelines.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/skills-guidelines.md).
 

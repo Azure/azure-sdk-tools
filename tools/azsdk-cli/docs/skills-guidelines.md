@@ -104,31 +104,41 @@ Skills that are specific to a particular language or repository should be stored
 
 ### Multi-Repository Skills
 
-Skills that apply to multiple repositories with the same instructions should be placed in the `.github/skills/common` directory within the azure-sdk-tools repository. This enables sharing of common automation patterns across all Azure SDK repositories.
+Skills that apply to multiple repositories should be placed in the `.github/skills/` directory within the azure-sdk-tools repository, using a `azsdk-common-` directory name prefix. For example, a shared skill called `release-plan` would be at `.github/skills/azsdk-common-release-plan/SKILL.md`.
+
+The `azsdk-common-` prefix ensures shared skills sort together in a distinct block when browsing the skills directory, clearly separated from repo-specific skills. The skill `name` field inside `SKILL.md` should match the directory name (e.g., `name: azsdk-common-release-plan`).
 
 ### How to sync skills across azure sdk repositories
 
-The `eng-skills-sync` pipeline syncs shared skills from `.github/skills/common/` in `azure-sdk-tools` to `.github/skills/common/` in all subscribed Azure SDK repositories. This works the same way as the `eng-common-sync` and `eng-workflows-sync` pipelines.
+The `eng-skills-sync` pipeline syncs shared skills from `.github/skills/` in `azure-sdk-tools` to `.github/skills/` in all subscribed Azure SDK repositories. It uses `FilePatterns` to sync only `azsdk-common-*` directories, leaving repo-specific skills untouched. This works the same way as the `eng-common-sync` and `eng-workflows-sync` pipelines.
 
-The pipeline definition is at [`eng/pipelines/eng-skills-sync.yml`](../../eng/pipelines/eng-skills-sync.yml). It uses `FilePatterns` to sync only the `common/` subdirectory, leaving repo-specific skills untouched.
+The pipeline definition is at [`eng/pipelines/eng-skills-sync.yml`](../../eng/pipelines/eng-skills-sync.yml).
 
 To distribute skills from azure-sdk-tools to individual Azure SDK repositories:
 
-1. Create or edit a skill in `.github/skills/common/` in the `azure-sdk-tools` repo.
-2. Update the skills index in `.github/skills/common/README.md` with the new skill's name, description, and path.
-3. Submit a PR — the sync pipeline triggers automatically when files under `.github/skills/common` change.
+1. Create a new directory under `.github/skills/` with the `azsdk-common-` prefix (e.g., `azsdk-common-my-skill/`).
+2. Add a `SKILL.md` file using the following template. The `name` field should match the directory name.
+
+    ```markdown
+    ---
+    # SKILL.md Template - Copy this file to your skill directory and rename to SKILL.md
+    # Spec: https://agentskills.io/specification
+
+    # name: Max 64 characters. Lowercase letters, numbers, and hyphens only.
+    # Must not start or end with a hyphen. Must match parent directory name.
+    name: [azsdk-common-skill-name]
+    # Max 1024 chars in description
+    description: [One-line description of what the skill does.]
+    ---
+
+    # [Skill Title]
+
+    [Skill instructions and sub-sections here]
+    ```
+3. Submit a PR — the sync pipeline triggers automatically when files under `.github/skills/azsdk-common-*` change.
 4. The pipeline creates sync PRs in all subscribed repos following the standard sync workflow (see [common_engsys.md](../../doc/common/common_engsys.md) for details on the sync process).
 
-**Important:** Do **NOT** modify files in `.github/skills/common/` in individual language repos — they will be overwritten on the next sync.
-
-#### Progressive disclosure via the skills index
-
-`.github/skills/common/README.md` serves as a **progressive disclosure entrypoint** for AI tools. It lists all shared skills with descriptions and links to their `SKILL.md` files. AI tools read the index first to discover what's available, then selectively load individual skills as needed. This avoids loading all skill definitions into every prompt.
-
-Each target repo can reference the index from their AI tool configuration:
-- **GitHub Copilot**: Auto-discovers skills in `.github/skills/` natively.
-- **Claude**: Reference from `CLAUDE.md` (e.g., `See .github/skills/common/README.md for shared skills`).
-- **Other tools**: Point your AI tool's configuration to `.github/skills/common/README.md`.
+**Important:** Do **NOT** modify `azsdk-common-*` skill directories in individual language repos — they will be overwritten on the next sync.
 
 ## Service specific instruction
 

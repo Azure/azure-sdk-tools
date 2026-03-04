@@ -95,12 +95,6 @@ class StubGenerator:
                 default=False,
                 action="store_true",
             )
-            parser.add_argument(
-                "--md",
-                help=("Generate markdown output in addition to JSON."),
-                default=False,
-                action="store_true",
-            )
             self._args = parser.parse_args()
 
         pkg_path = self._parse_arg("pkg_path")
@@ -111,7 +105,6 @@ class StubGenerator:
         filter_namespace = self._parse_arg("filter_namespace")
         source_url = self._parse_arg("source_url")
         skip_pylint = self._parse_arg("skip_pylint")
-        md = self._parse_arg("md")
 
         if not os.path.exists(pkg_path):
             logging.error("Package path [{}] is invalid".format(pkg_path))
@@ -129,7 +122,6 @@ class StubGenerator:
         self.mapping_path = mapping_path
         self.filter_namespace = filter_namespace or ""
         self.namespace = ""
-        self.md = md if md is not None else False
         if verbose:
             logging.getLogger().setLevel(logging.DEBUG)
 

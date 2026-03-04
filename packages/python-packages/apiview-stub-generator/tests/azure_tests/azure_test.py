@@ -275,32 +275,8 @@ class TestApiViewAzure:
                 f"Differences will be shown in the assertion diff below."
             )
 
-    def _diff_markdown_file(self, old_file, new_file):
-        """
-        Compare two markdown files, ignoring version differences.
-        """
-        with open(old_file, 'r') as f1, open(new_file, 'r') as f2:
-            old_lines = f1.readlines()
-            new_lines = f2.readlines()
-
-            # Replace version information in the header (line 2)
-            # Format: "# Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x"
-            if len(old_lines) > 1 and old_lines[1].startswith("# Package is parsed"):
-                old_lines[1] = "# Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x\n"
-            if len(new_lines) > 1 and new_lines[1].startswith("# Package is parsed"):
-                new_lines[1] = "# Package is parsed using apiview-stub-generator(version:x.x.x), Python version: x.x.x\n"
-
-            old_content = "".join(old_lines)
-            new_content = "".join(new_lines)
-
-            assert old_content == new_content, (
-                f"Generated markdown file does not match the provided markdown file.\n"
-                f"Expected file: {old_file}\n"
-                f"Generated file: {new_file}"
-            )
-
     def _write_tokens(self, pkg_path, temp_path, mapping_file):
-        """Generate tokens using console_entry_point with --md flag to generate both JSON and markdown"""
+        """Generate tokens using console_entry_point"""
         import sys
 
         # Build command-line arguments
@@ -311,7 +287,6 @@ class TestApiViewAzure:
                 "--pkg-path", pkg_path,
                 "--temp-path", temp_path,
                 "--out-path", temp_path,
-                "--md"
             ]
             if mapping_file:
                 sys.argv.extend(["--mapping-path", mapping_file])
@@ -343,8 +318,3 @@ class TestApiViewAzure:
         provided_token_file = os.path.abspath(os.path.join(os.path.dirname(__file__), f"token_files/{outfile}"))
         self._diff_token_file(provided_token_file, generated_token_file)
 
-        # Compare the generated markdown file with the provided markdown file in package-specific folder
-        generated_md_file = os.path.join(temp_path, "api.md")
-        provided_md_file = os.path.abspath(os.path.join(os.path.dirname(__file__), f"md_files/{pkg_name}/api.md"))
-
-        self._diff_markdown_file(provided_md_file, generated_md_file)

@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         // Management command options
         private readonly Option<string> githubUserOption = new("--github-user")
         {
-            Description = "GitHub alias(es). Can be specified multiple times.",
+            Description = "GitHub alias.",
             Required = false,
         };
 
@@ -861,6 +861,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                             package!,
                             repo
                         ),
+                    // 3 and 4 have the same implementation
                     3 => await codeownersManagementHelper.AddOwnersAndLabelsToPath(
                             await FindOrCreateOwnerWorkItems(githubUsers!),
                             await FindLabels(labels!),
@@ -925,6 +926,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                             package!,
                             repo
                         ),
+                    // 3 and 4 have the same implementation
                     3 => await codeownersManagementHelper.RemoveOwnersFromLabelsAndPath(
                             await GetOwnerWorkItems(githubUsers!),
                             await FindLabels(labels!),

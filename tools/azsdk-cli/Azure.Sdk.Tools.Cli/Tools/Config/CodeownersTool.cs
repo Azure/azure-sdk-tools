@@ -104,7 +104,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         };
 
         // Management command options
-        private readonly Option<string[]> githubUserOption = new("--github-user")
+        private readonly Option<string> githubUserOption = new("--github-user")
+        {
+            Description = "GitHub alias(es). Can be specified multiple times.",
+            Required = false,
+        };
+
+        private readonly Option<string[]> multipleGithubUserOption = new("--github-user")
         {
             Description = "GitHub alias(es). Can be specified multiple times.",
             Required = false,
@@ -238,11 +244,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             },
             new(addCodeownersCommandName, "Add an ownership relationship in CODEOWNERS work items")
             {
-                githubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption, ownerTypeOption,
+                multipleGithubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption, ownerTypeOption,
             },
             new(removeCodeownersCommandName, "Remove an ownership relationship from CODEOWNERS work items")
             {
-                githubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption, ownerTypeOption,
+                multipleGithubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption, ownerTypeOption,
             },
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
@@ -305,8 +311,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             if (command == viewCodeownersCommandName)
             {
-                var users = parseResult.GetValue(githubUserOption);
-                var user = users?.Length > 0 ? users[0] : null;
+                var user = parseResult.GetValue(githubUserOption);
                 var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
                 var path = parseResult.GetValue(pathOption);

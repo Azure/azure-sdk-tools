@@ -274,6 +274,87 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
+        public async Task Test_Get_Release_Plan_by_spec_pull_request_url()
+        {
+            var releaseplan = await releasePlanTool.GetReleasePlan(specPullRequestUrl: "https://github.com/Azure/azure-rest-api-specs/pull/35446");
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError);
+            Assert.IsNotNull(releaseplan.ReleasePlanDetails);
+            Assert.That(releaseplan.Message, Does.Contain("Successfully retrieved release plan"));
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_by_typespec_project_path()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var expectedReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 777,
+                ReleasePlanId = 77,
+                IsDataPlane = true
+            };
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testservice/TestService", false))
+                .ReturnsAsync(expectedReleasePlan);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+
+            var releaseplan = await tool.GetReleasePlan(typeSpecProjectPath: "specification/testservice/TestService");
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNull(releaseplan.ResponseError);
+            Assert.IsNotNull(releaseplan.ReleasePlanDetails);
+            Assert.That(releaseplan.ReleasePlanDetails.WorkItemId, Is.EqualTo(777));
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_with_no_params_returns_error()
+        {
+            var releaseplan = await releasePlanTool.GetReleasePlan();
+            Assert.IsNotNull(releaseplan);
+            Assert.IsNotNull(releaseplan.ResponseError);
+            Assert.That(releaseplan.ResponseError, Does.Contain("At least one of the following options must be provided"));
+        }
+
+        [Test]
+        public async Task Test_GetReleasePlanForSpecPath_with_valid_path()
+        {
+            var mockDevOps = new Mock<IDevOpsService>();
+            var expectedReleasePlan = new ReleasePlanWorkItem
+            {
+                WorkItemId = 888,
+                ReleasePlanId = 88,
+                IsDataPlane = true
+            };
+            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testservice/TestService", false))
+                .ReturnsAsync(expectedReleasePlan);
+
+            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
+
+            var result = await tool.GetReleasePlanForSpecPath("specification/testservice/TestService");
+            Assert.IsNotNull(result);
+            Assert.IsNull(result.ResponseError);
+            Assert.IsNotNull(result.ReleasePlanDetails);
+            Assert.That(result.ReleasePlanDetails.WorkItemId, Is.EqualTo(888));
+        }
+
+        [Test]
+        public async Task Test_GetReleasePlanForSpecPath_with_empty_path_returns_error()
+        {
+            var result = await releasePlanTool.GetReleasePlanForSpecPath("");
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("TypeSpec project path cannot be empty"));
+        }
+
+        [Test]
+        public async Task Test_GetReleasePlanForSpecPath_with_no_matching_plan_returns_error()
+        {
+            var result = await releasePlanTool.GetReleasePlanForSpecPath("specification/nonexistent/Service");
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.ResponseError);
+            Assert.That(result.ResponseError, Does.Contain("No release plan found for TypeSpec project path"));
+        }
+
+        [Test]
         public async Task Test_Update_SDK_Details_In_Release_Plan()
         {
             string sdkDetails = "[{\"language\":\".NET\",\"packageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"com.azure.resourcemanager.contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";

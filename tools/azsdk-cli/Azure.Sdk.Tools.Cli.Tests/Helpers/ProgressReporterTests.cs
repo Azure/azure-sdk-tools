@@ -69,7 +69,7 @@ public class ProgressReporterTests
     }
 
     [Test]
-    public async Task RunWithProgressAsync_PropagatesException()
+    public void RunWithProgressAsync_PropagatesException()
     {
         // Arrange & Act
         var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>

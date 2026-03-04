@@ -5,6 +5,7 @@
 ### Features Added
 
 - Added `azsdk_package_pack` tool to create package artifacts
+- Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
 - Improved `azsdk_typespec_delegate_apiview_feedback` tool description to better recognize intent expressed as "address", "fix", or "resolve" APIView feedback
 
 ### Breaking Changes

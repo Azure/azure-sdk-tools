@@ -16,17 +16,23 @@ public interface ICodeownersManagementHelper
 
     // Find-or-create helpers
     Task<OwnerWorkItem> FindOrCreateOwnerAsync(string gitHubAlias);
-    Task<LabelOwnerWorkItem> FindOrCreateLabelOwnerAsync(string repo, string ownerType, string? repoPath, string label);
+    Task<LabelOwnerWorkItem> FindOrCreateLabelOwnerAsync(
+        string repo,
+        string ownerType,
+        string? repoPath,
+        LabelWorkItem[] labelWorkItems
+    );
+
+    Task<OwnerWorkItem?> FindOwnerByGitHubAlias(string alias);
+    Task<LabelWorkItem?> FindLabelByName(string labelName);
 
     // Add scenarios
-    Task<CodeownersModifyResponse> AddOwnerToPackageAsync(string ownerAlias, string packageName, string repo);
-    Task<CodeownersModifyResponse> AddLabelToPackageAsync(string label, string packageName, string repo);
-    Task<CodeownersModifyResponse> AddOwnerToLabelAsync(string ownerAlias, string label, string repo, string ownerType);
-    Task<CodeownersModifyResponse> AddOwnerAndLabelToPathAsync(string ownerAlias, string label, string repo, string path, string ownerType);
+    Task<CodeownersModifyResponse> AddOwnersToPackageAsync(OwnerWorkItem[] owners, string packageName, string repo);
+    Task<CodeownersModifyResponse> AddLabelsToPackageAsync(LabelWorkItem[] labels, string packageName, string repo);
+    Task<CodeownersModifyResponse> AddOwnersAndLabelsToPathAsync(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, string ownerType);
 
     // Remove scenarios
-    Task<CodeownersModifyResponse> RemoveOwnerFromPackageAsync(string ownerAlias, string packageName, string repo);
-    Task<CodeownersModifyResponse> RemoveLabelFromPackageAsync(string label, string packageName, string repo);
-    Task<CodeownersModifyResponse> RemoveOwnerFromLabelAsync(string ownerAlias, string label, string repo, string ownerType);
-    Task<CodeownersModifyResponse> RemoveOwnerAndLabelFromPathAsync(string ownerAlias, string label, string repo, string path, string ownerType);
+    Task<CodeownersModifyResponse> RemoveOwnersFromPackageAsync(OwnerWorkItem[] owners, string packageName, string repo);
+    Task<CodeownersModifyResponse> RemoveLabelsFromPackageAsync(LabelWorkItem[] labels, string packageName, string repo);
+    Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPathAsync(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, string ownerType);
 }

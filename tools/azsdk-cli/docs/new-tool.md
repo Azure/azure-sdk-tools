@@ -474,14 +474,14 @@ if (errors.Any())
 
 ## Prompt Template System
 
-For tools using AI models (microagents, LLMs), use the standardized Prompt Template System instead of ad-hoc string formatting. This provides consistent structure, built-in safety guidelines, and Microsoft policy compliance.
+For tools using AI models (copilot agents, LLMs), use the standardized Prompt Template System instead of ad-hoc string formatting. This provides consistent structure, built-in safety guidelines, and Microsoft policy compliance.
 
 ### Quick Start
 
 **Use built-in templates directly:**
 ```csharp
 // Common scenarios - spelling, README, log analysis
-var prompt = PromptTemplates.GetMicroagentSpellingFixPrompt(cspellOutput, "Azure SDK for .NET");
+var prompt = PromptTemplates.GetSpellingFixPrompt(cspellOutput, "Azure SDK for .NET");
 var prompt = PromptTemplates.GetReadMeGenerationPrompt(templateContent, serviceDocUrl, packagePath);
 var prompt = PromptTemplates.GetLogAnalysisPrompt(logContent, "Azure DevOps Pipeline", "json");
 ```
@@ -524,12 +524,11 @@ public class MyCustomTemplate : BasePromptTemplate
 var template = new MyCustomTemplate();
 var prompt = template.BuildPrompt(analysisData, "statistical");
 
-// Use with microagent
-var microagent = new Microagent<AnalysisResult>
+// Use with copilot agent
+var agent = new CopilotAgent<AnalysisResult>
 {
     Instructions = prompt,
-    Model = "gpt-4",
-    MaxToolCalls = 10
+    MaxIterations = 10
 };
 ```
 

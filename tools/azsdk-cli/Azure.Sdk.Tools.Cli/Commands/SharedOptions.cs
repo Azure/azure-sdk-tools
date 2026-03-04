@@ -34,6 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(PackageReleaseStatusTool),
             typeof(SpecWorkflowTool),
             typeof(SdkBuildTool),
+            typeof(PackTool),
             typeof(SdkGenerationTool),
             typeof(MetadataUpdateTool),
             typeof(ChangelogContentUpdateTool),

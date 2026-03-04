@@ -4,7 +4,6 @@
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Microsoft.Extensions.AI;
 
 namespace Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
@@ -133,7 +132,7 @@ public static class FileTools
 
                 var searchPattern = string.IsNullOrWhiteSpace(filter) ? "*" : filter;
 
-                // Use GetFileSystemEntries to return both files and directories (parity with Microagents)
+                // Use GetFileSystemEntries to return both files and directories
                 var entries = recursive
                     ? EnumerateFileSystemEntries(path, searchPattern)
                         .Select(f => Path.GetRelativePath(baseDir, f))

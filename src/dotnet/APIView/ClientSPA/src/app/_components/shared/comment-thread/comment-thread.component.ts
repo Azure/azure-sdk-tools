@@ -101,6 +101,7 @@ export class CommentThreadComponent {
   allowAnyOneToResolve : boolean = false; // Default to false since default severity is "Should fix"
 
   threadResolvedBy : string | undefined = '';
+  threadParticipants : string = '';
   threadResolvedStateToggleText : string = 'Show';
   threadResolvedStateToggleIcon : string = 'bi-arrows-expand';
   threadResolvedAndExpanded : boolean = false;
@@ -202,16 +203,19 @@ export class CommentThreadComponent {
     if (this.codePanelRowData?.isResolvedCommentThread) {
       this.threadResolvedBy = this.codePanelRowData?.commentThreadIsResolvedBy;
       if (!this.threadResolvedBy) {
-        const lastestResolvedComment = Array.from(this.codePanelRowData?.comments || []).reverse().find(comment => comment.isResolved && comment.changeHistory && comment.changeHistory.some(ch => ch.changeAction === 'resolved'));
-        if (lastestResolvedComment) {
-          this.threadResolvedBy = lastestResolvedComment.changeHistory.reverse().find(ch => ch.changeAction === 'resolved')?.changedBy;
+        const latestResolvedComment = Array.from(this.codePanelRowData?.comments || []).reverse().find(comment => comment.isResolved && comment.changeHistory && comment.changeHistory.some(ch => ch.changeAction === 'resolved'));
+        if (latestResolvedComment) {
+          this.threadResolvedBy = latestResolvedComment.changeHistory.slice().reverse().find(ch => ch.changeAction === 'resolved')?.changedBy;
         }
       }
+      const participants = Array.from(new Set((this.codePanelRowData?.comments || []).map(c => c.createdBy).filter(Boolean)));
+      this.threadParticipants = participants.join(', ');
       this.spacingBasedOnResolvedState = (this.instanceLocation === "code-panel") ? 'mb-2' : "";
       this.resolveThreadButtonText = 'Unresolve';
     }
     else {
       this.threadResolvedBy = '';
+      this.threadParticipants = '';
       this.spacingBasedOnResolvedState = (this.instanceLocation === "code-panel") ? 'my-2' : "";
       this.resolveThreadButtonText = 'Resolve';
     }

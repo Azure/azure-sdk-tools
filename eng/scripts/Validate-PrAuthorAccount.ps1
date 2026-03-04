@@ -46,6 +46,19 @@ Write-Host ""
 $user = Get-GitHubUser $Username
 $now = Get-Date
 
+# --- Auto-pass: Azure/Microsoft org members ---
+$TrustedOrgs = @('Azure', 'microsoft')
+$orgsJson = gh api "users/$Username/orgs" --jq '.[].login' 2>&1
+if ($LASTEXITCODE -eq 0 -and $orgsJson) {
+  $userOrgs = $orgsJson -split "`n"
+  foreach ($trustedOrg in $TrustedOrgs) {
+    if ($userOrgs -contains $trustedOrg) {
+      Write-Host "Account '$Username' is a member of the '$trustedOrg' GitHub organization. Auto-pass."
+      exit 0
+    }
+  }
+}
+
 # --- Hard fail: account age ---
 $createdAt = [DateTime]::Parse($user.created_at)
 $accountAgeDays = [int]($now - $createdAt).TotalDays

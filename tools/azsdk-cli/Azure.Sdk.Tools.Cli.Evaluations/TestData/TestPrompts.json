@@ -106,6 +106,16 @@
 
     { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new resource 'asset' for service widget with TypeSpec.", "category": "all" },
     { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new api version for service widget with TypeSpec.", "category": "all" },
-    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" }
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" },
+
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon my release plan", "category": "all" },
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel the release plan for my service", "category": "all" },
+
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Find product details for my typespec project", "category":  "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path",  "prompt": "What service does this TypeSpec project belong to?", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path",  "prompt": "Get service and service tree product details for a product using TypeSpec project path", "category": "all" },
+
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update my release plan", "category":  "all" },
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update TypeSpec project in release plan", "category":  "all" }
   ]
 }

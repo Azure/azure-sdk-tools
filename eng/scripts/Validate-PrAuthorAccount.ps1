@@ -28,18 +28,7 @@ function Get-GitHubPublicEvents([string]$login) {
   }
 
   $page1Full = $page1.Count -ge 100
-
-  # Walk forward to find the last non-empty page (max 10 pages per GitHub API).
-  $oldestEvents = $page1
-  for ($p = 2; $p -le 10; $p++) {
-    $pageJson = gh api "users/$login/events/public?per_page=100&page=$p" 2>&1
-    if ($LASTEXITCODE -ne 0) { break }
-    $page = $pageJson | ConvertFrom-Json
-    if ($page.Count -eq 0) { break }
-    $oldestEvents = $page
-  }
-
-  $oldestDate = ($oldestEvents | Select-Object -Last 1).created_at
+  $oldestDate = ($page1 | Select-Object -Last 1).created_at
   return @{ Events = $page1; OldestEventDate = $oldestDate; Page1Full = $page1Full }
 }
 

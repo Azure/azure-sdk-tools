@@ -1,13 +1,11 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
-import { MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
-import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
+import { REVIEW_ID_ROUTE_PARAM, ACTIVE_API_REVISION_ID_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
-import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { ReviewPageLayoutModule } from 'src/app/_modules/shared/review-page-layout.module';
 import { SharedAppModule } from 'src/app/_modules/shared/shared-app.module';
 import { CommonModule } from '@angular/common';
@@ -22,32 +20,17 @@ import { CommonModule } from '@angular/common';
 export class RevisionPageComponent {
   reviewId : string | null = null;
   review : Review | undefined = undefined;
-  sideMenu: MenuItem[] | undefined;
   apiRevisions: APIRevision[] = [];
+  activeApiRevisionId: string | null = null;
 
   private destroy$ = new Subject<void>();
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private apiRevisionsService: APIRevisionsService, private router: Router, private titleService: Title) {}
+  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private router: Router, private titleService: Title) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
-    this.createSideMenu();
+    this.activeApiRevisionId = this.route.snapshot.queryParamMap.get(ACTIVE_API_REVISION_ID_QUERY_PARAM);
     this.loadReview(this.reviewId!);
-  }
-
-  createSideMenu() {
-    this.sideMenu = [
-      {
-        icon: 'bi bi-braces',
-        tooltip: 'API',
-        command: () => this.openLatestAPIReivisonForReview()
-      },
-      {
-        icon: 'bi bi-chat-left-dots',
-        tooltip: 'Conversations',
-        command: () => this.router.navigate([`/conversation/${this.reviewId}`])
-      }
-    ];
   }
 
   loadReview(reviewId: string) {
@@ -60,10 +43,32 @@ export class RevisionPageComponent {
     });
   }
 
-  openLatestAPIReivisonForReview() {
-    const apiRevision = this.apiRevisions.find(x => x.apiRevisionType === "Automatic") ?? this.apiRevisions[0];
-    this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.route);
+  navigateToReview() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
+
+  navigateToSamples() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
+  }
+
+  navigateToConversations() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    queryParams['view'] = 'conversations';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+  }
+
+  noop() { }
 
   handleApiRevisionsEmitter(apiRevisions: APIRevision[]) {
     this.apiRevisions = apiRevisions as APIRevision[];

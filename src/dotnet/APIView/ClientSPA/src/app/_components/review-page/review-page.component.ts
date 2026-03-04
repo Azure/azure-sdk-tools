@@ -69,11 +69,14 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   hasActiveConversation: boolean = false;
   codeLineSearchInfo: CodeLineSearchInfo | undefined;
   numberOfActiveConversation: number = 0;
+  activeView: 'reviews' | 'revisions' | 'samples' | 'conversations' = 'reviews';
   hasHiddenAPIs: boolean = false;
   hasHiddenAPIThatIsDiff: boolean = false;
   loadFailed: boolean = false;
   loadFailedMessage: string = "API-Revision Content Load Failed...";
   loadingMessage: string | undefined = undefined;
+
+  samplesRevisionCount: number = 0;
 
   showLeftNavigation: boolean = true;
   showPageOptions: boolean = true;
@@ -134,20 +137,11 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     this.handleRealTimeReviewUpdates();
     this.handleRealTimeAPIRevisionUpdates();
     this.loadLatestSampleRevision(this.reviewId!);
+    this.loadSamplesCount(this.reviewId!);
   }
 
   createSideMenu() {
-    const menu: MenuItem[] = [
-      {
-        icon: 'bi bi-clock-history',
-        tooltip: 'Revisions',
-        command: () => {
-          if (this.getLoadingStatus() === 'completed') {
-            this.revisionSidePanel = !this.revisionSidePanel;
-          }
-        }
-      }
-    ];
+    const menu: MenuItem[] = [];
 
     if (this.activeAPIRevision?.files[0].crossLanguagePackageId && this.crossLanguageAPIRevisions.length > 0) {
       menu.push({
@@ -160,41 +154,18 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         }
       });
     }
-    menu.push(...[
-      {
-        id: 'conversations',
-        icon: 'bi bi-chat-left-dots',
-        tooltip: (this.numberOfActiveConversation > 0) ? `Conversations (${this.numberOfActiveConversation} unresolved)` : 'Conversations',
-        badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
-        command: () => {
-          if (this.getLoadingStatus() === 'completed') {
-            this.conversationSidePanel = !this.conversationSidePanel;
-          }
-        }
-      },
-      {
-        icon: 'bi bi-puzzle',
-        tooltip: 'Samples',
-        command: () => {
-          const queryParams: any = {};
-          if (this.latestSampleRevision) {
-            queryParams['activeSamplesRevisionId'] = this.latestSampleRevision?.id;
-          }
-          if (this.activeApiRevisionId) {
-            queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
-          }
-          if (this.diffApiRevisionId) {
-            queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
-          }
-          this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
-        }
-      }
-    ]);
     this.sideMenu = menu;
     this.changeDetectorRef.detectChanges();
   }
 
   updateStateBasedOnQueryParams(params: Params) {
+    const viewParam = params['view'];
+    if (viewParam === 'conversations') {
+      this.activeView = 'conversations';
+    } else {
+      this.activeView = 'reviews';
+    }
+
     this.activeApiRevisionId = params[ACTIVE_API_REVISION_ID_QUERY_PARAM];
     this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
     this.diffApiRevisionId = params[DIFF_API_REVISION_ID_QUERY_PARAM];
@@ -447,6 +418,67 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
           this.latestSampleRevision = sampleRevision;
         }
       });
+  }
+
+  loadSamplesCount(reviewId: string) {
+    this.samplesRevisionService.getSamplesRevisions(0, 1, reviewId)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (result) => {
+          this.samplesRevisionCount = result.pagination?.totalCount ?? 0;
+        }
+      });
+  }
+
+  navigateToRevisions() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/revision', this.reviewId], { queryParams: queryParams });
+  }
+
+  navigateToSamples() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    if (this.diffApiRevisionId) {
+      queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+    }
+    this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
+  }
+
+  navigateToConversations() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/conversation', this.reviewId], { queryParams: queryParams });
+  }
+
+  showConversationsView() {
+    this.activeView = 'conversations';
+    const currentParams = getQueryParams(this.route);
+    this.router.navigate([], {
+      queryParams: { ...currentParams, view: 'conversations' },
+      state: { skipStateUpdate: true }
+    });
+  }
+
+  showReviewView() {
+    this.activeView = 'reviews';
+    const currentParams = getQueryParams(this.route, ['nId', 'view']);
+    this.router.navigate([], {
+      queryParams: currentParams,
+      state: { skipStateUpdate: true }
+    });
+  }
+
+  handleConversationScrollToNode(elementId: string) {
+    this.activeView = 'reviews';
+    setTimeout(() => {
+      this.codePanelComponent.scrollToNode(undefined, elementId);
+    }, 100);
   }
 
   handlePageOptionsEmitter(showPageOptions: boolean) {
@@ -705,26 +737,14 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
       return;
     }
     this.numberOfActiveConversation = value;
-    if (this.sideMenu) {
-      const conversationsItem = this.sideMenu.find(item => item.id === 'conversations');
-      if (conversationsItem) {
-        conversationsItem.badge = (value > 0) ? value.toString() : undefined;
-        conversationsItem.tooltip = (value > 0) ? `Conversations (${value} unresolved)` : 'Conversations';
-        this.sideMenu = [...this.sideMenu];
-        this.changeDetectorRef.detectChanges();
-      }
-    } else {
-      this.createSideMenu();
-    }
   }
 
   handleScrollToNodeEmitter(value: string) {
-    this.conversationSidePanel = false;
     this.codePanelComponent.scrollToNode(undefined, value);
   }
 
   handleDismissSidebarAndNavigate(event: { revisionId: string, elementId: string }) {
-    this.conversationSidePanel = false;
+    this.activeView = 'reviews';
     const currentParams = getQueryParams(this.route);
     this.router.navigate(['/review', this.reviewId], {
       queryParams: {

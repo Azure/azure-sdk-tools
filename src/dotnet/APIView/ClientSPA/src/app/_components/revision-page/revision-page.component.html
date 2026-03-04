@@ -1,6 +1,10 @@
 <app-review-page-layout
     [review]="review"
-    [sideMenu]="sideMenu">
+    [activePage]="'revisions'"
+    (navigateToReviewsEmitter)="navigateToReview()"
+    (navigateToRevisionsEmitter)="noop()"
+    (navigateToSamplesEmitter)="navigateToSamples()"
+    (navigateToConversationsEmitter)="navigateToConversations()">
     <div class="revisions-panel overflow-auto border rounded">
         <app-revisions-list
             [review]="review"

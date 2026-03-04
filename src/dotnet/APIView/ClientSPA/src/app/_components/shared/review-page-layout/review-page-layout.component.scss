@@ -1,58 +1,85 @@
 :host ::ng-deep {
 
-    .side-menu {
-        width: 3.5rem !important;
-        min-width: unset !important;
-        background-color: var(--base-fg-color) !important;
+    .layout-body {
+        display: flex;
+        align-items: flex-start;
+        gap: 0;
+        margin-top: 4px;
+    }
 
-        .p-menuitem, .p-menuitem-content {
-            background: transparent !important;
-            transition: none !important;
-            border: none !important;
+    .layout-content {
+        flex: 1;
+        min-width: 0;
+    }
 
-            &:hover {
-                background: transparent !important;
-            }
+    .sidebar-rail {
+        display: flex;
+        flex-direction: column;
+        width: 4.2rem;
+        flex-shrink: 0;
+        background: var(--base-fg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.25rem 0;
+        margin-right: 5px;
+    }
+
+    .rail-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        padding: 0.45rem 0.25rem;
+        border: none;
+        background: transparent;
+        color: var(--text-muted-color);
+        cursor: pointer;
+        position: relative;
+        transition: color 0.15s, background 0.15s;
+        border-left: 2px solid transparent;
+
+        &:hover:not(.active) {
+            color: var(--base-text-color);
+            background: var(--surface-50);
         }
 
-        .p-menuitem-link {
-            padding: 0.8rem 0.5rem !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--base-fg-color) !important;
-            transition: none !important;
-
-            &:hover {
-                background-color: var(--base-bg-color) !important;
-            }
+        &.active {
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+            background: var(--surface-50);
         }
+    }
 
-        .icon-wrapper {
-            display: inline-flex;
-            position: relative;
-        }
+    .rail-icon-wrap {
+        position: relative;
+        display: inline-flex;
+        font-size: 1.25rem;
+        line-height: 1;
+    }
 
-        .menu-icon {
-            font-size: 1.5rem;
-        }
+    .rail-label {
+        font-size: 0.6rem;
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 3.8rem;
+    }
 
-        .menu-badge {
-            position: absolute !important;
-            top: -0.6rem !important;
-            right: -0.3rem !important;
-            left: auto !important;
-
-            width: 1.5rem !important;
-            height: 1.5rem !important;
-            padding: 0 !important;
-            border-radius: 50%;
-
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-
-            font-size: 0.75rem !important;
-        }
+    .rail-badge {
+        position: absolute;
+        top: -0.45rem;
+        right: -0.55rem;
+        font-size: 0.6rem;
+        font-weight: 700;
+        min-width: 1rem;
+        height: 1rem;
+        line-height: 1rem;
+        text-align: center;
+        border-radius: 50%;
+        background: var(--red-500, #ef4444);
+        color: #fff;
     }
 }

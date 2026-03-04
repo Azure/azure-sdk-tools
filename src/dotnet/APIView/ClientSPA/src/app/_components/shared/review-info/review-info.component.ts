@@ -9,7 +9,6 @@ import { map } from 'rxjs';
 import { REVIEW_PAGE_NAME, SAMPLES_PAGE_NAME } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
-import { SamplesRevision } from 'src/app/_models/samples';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { environment } from 'src/environments/environment';
 
@@ -28,9 +27,7 @@ import { environment } from 'src/environments/environment';
 })
 export class ReviewInfoComponent {
   @Input() apiRevisions: APIRevision[] = [];
-  @Input() samplesRevisions: SamplesRevision[] = [];
   @Input() activeApiRevisionId: string | null = '';
-  @Input() activeSamplesRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
   @Input() userProfile: UserProfile | undefined;
   @Input() showPageoptionsButton: boolean = false;

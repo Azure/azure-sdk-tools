@@ -99,6 +99,12 @@
     --severity-must-fix-bg: #FDF3F4;
     --severity-must-fix-text: #B10E1C;
     --severity-must-fix-border: #EEACB2;
+    /*----Revision Badges----------------------------------------*/
+    --revision-approved-color: #198754;
+    --revision-pending-color: #b58a00;
+    --revision-type-manual-color: #{bootstrap.$primary};
+    --revision-type-pr-color: #6f42c1;
+    --revision-type-auto-color: #0aa2c0;
     /*----Toggle Switch------------------------------------------*/
     --toggle-switch-off: #6c757d;
     --toggle-switch-on: #ffffff;
@@ -211,6 +217,12 @@
     --severity-must-fix-bg: #da3633;
     --severity-must-fix-text: #e6edf3;
     --severity-must-fix-border: #f85149;
+    /*----Revision Badges----------------------------------------*/
+    --revision-approved-color: #3fb950;
+    --revision-pending-color: #d29922;
+    --revision-type-manual-color: #58a6ff;
+    --revision-type-pr-color: #d2a8ff;
+    --revision-type-auto-color: #56d4dd;
     /*----Toggle Switch------------------------------------------*/
     --toggle-switch-off: #484f58;
     --toggle-switch-on: #ffffff;
@@ -325,6 +337,12 @@
     --severity-must-fix-bg: #991B1B;
     --severity-must-fix-text: #FECACA;
     --severity-must-fix-border: #EF4444;
+    /*----Revision Badges----------------------------------------*/
+    --revision-approved-color: #{bootstrap.$success};
+    --revision-pending-color: #{$warning-color};
+    --revision-type-manual-color: #{$primary-color};
+    --revision-type-pr-color: #BB86FC;
+    --revision-type-auto-color: #{$info-color};
     /*----Toggle Switch------------------------------------------*/
     --toggle-switch-off: #6c757d;
     --toggle-switch-on: #ffffff;

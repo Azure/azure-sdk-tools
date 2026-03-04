@@ -12,6 +12,7 @@ import { UiScrollModule  } from 'ngx-ui-scroll' ;
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
 import { ReviewPageLayoutModule } from './shared/review-page-layout.module';
 import { ReviewToolbarComponent } from 'src/app/_components/review-toolbar/review-toolbar.component';
+import { ConversationsComponent } from 'src/app/_components/conversations/conversations.component';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -33,6 +34,7 @@ const routes: Routes = [
     UiScrollModule,
     ReviewPageLayoutModule,
     ReviewToolbarComponent,
+    ConversationsComponent,
     RouterModule.forChild(routes),
   ]
 })

@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { TimeagoModule } from 'ngx-timeago';
 import { TimelineModule } from 'primeng/timeline';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
 import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
-import { CommentItemModel, CommentType, CommentSource } from 'src/app/_models/commentItemModel';
+import { CommentItemModel, CommentType, CommentSource, CommentSeverity } from 'src/app/_models/commentItemModel';
 import { APIRevision } from 'src/app/_models/revision';
 import { getTypeClass } from 'src/app/_helpers/common-helpers';
 import { getVisibleComments } from 'src/app/_helpers/comment-visibility.helper';
@@ -23,6 +24,7 @@ import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
     standalone: true,
     imports: [
         CommonModule,
+        FormsModule,
         TimeagoModule,
         TimelineModule,
         CommentThreadComponent,
@@ -36,6 +38,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   @Input() comments: CommentItemModel[] = [];
   @Input() review : Review | undefined = undefined;
   @Input() userProfile : UserProfile | undefined;
+  @Input() allCodePanelRowData: CodePanelRowData[] = [];
 
   @Output() scrollToNodeEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() numberOfActiveThreadsEmitter : EventEmitter<number> = new EventEmitter<number>();
@@ -56,6 +59,27 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   isLoading: boolean = true;
 
   destroy$ = new Subject<void>();
+
+  // --- Filter state ---
+  filterStatus: 'all' | 'active' | 'resolved' = 'active';
+  // Use string keys matching the JSON-serialized enum values from the C# backend
+  filterSeverities: Set<string> = new Set();
+  filterKinds: Set<'human' | 'ai' | 'diagnostic'> = new Set();
+
+  // Severity options for template iteration
+  // Keys are lowercase to match normalization used for comparison
+  readonly severityOptions = [
+    { key: 'question', label: 'Question', icon: 'bi-question-circle' },
+    { key: 'suggestion', label: 'Suggestion', icon: 'bi-lightbulb' },
+    { key: 'shouldfix', label: 'Should Fix', icon: 'bi-exclamation-triangle' },
+    { key: 'mustfix', label: 'Must Fix', icon: 'bi-exclamation-octagon-fill' },
+  ];
+
+  // Filtered view
+  filteredCommentThreads: Map<string, CodePanelRowData[]> = new Map();
+  filteredApiRevisionsWithComments: APIRevision[] = [];
+  filteredThreadCount: number = 0;
+  totalThreadCount: number = 0;
 
   constructor(private commentsService: CommentsService, private signalRService: SignalRService, private changeDetectorRef: ChangeDetectorRef) { }
 
@@ -193,11 +217,16 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       this.apiRevisionsWithComments = this.apiRevisions.filter(apiRevision => this.commentThreads.has(apiRevision.id));
 
+      this.applyFilters();
       this.isLoading = false;
       this.changeDetectorRef.markForCheck();
     }
     else if (this.apiRevisions.length > 0 && this.comments.length === 0) {
       this.apiRevisionsWithComments = [];
+      this.filteredApiRevisionsWithComments = [];
+      this.filteredCommentThreads = new Map();
+      this.filteredThreadCount = 0;
+      this.totalThreadCount = 0;
       this.numberOfActiveThreads = 0;
       this.numberOfActiveThreadsEmitter.emit(this.numberOfActiveThreads);
       setTimeout(() => {
@@ -215,17 +244,13 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     return getTypeClass(apiRevision.apiRevisionType);
   }
 
-  navigateToCommentThreadOnRevisionPage(event: Event) {
-    const target = event.target as Element;
-    const revisionIdForConversationGroup = target.closest(".conversation-group-revision-id")?.getAttribute("data-conversation-group-revision-id");
-    const elementIdForConversationGroup = (target.closest(".conversation-group-threads")?.getElementsByClassName("conversation-group-element-id")[0] as HTMLElement).innerText;
-
-    if (this.activeApiRevisionId && this.activeApiRevisionId === revisionIdForConversationGroup) {
-      this.scrollToNodeEmitter.emit(elementIdForConversationGroup);
+  navigateToElement(revisionId: string, elementId: string) {
+    if (this.activeApiRevisionId && this.activeApiRevisionId === revisionId) {
+      this.scrollToNodeEmitter.emit(elementId);
     } else {
       this.dismissSidebarAndNavigateEmitter.emit({
-        revisionId: revisionIdForConversationGroup!,
-        elementId: elementIdForConversationGroup
+        revisionId: revisionId,
+        elementId: elementId
       });
     }
   }
@@ -430,6 +455,110 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
           comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
         }
       }
+    }
+  }
+
+  // --- Filter methods ---
+
+  applyFilters() {
+    this.filteredCommentThreads = new Map();
+    this.totalThreadCount = 0;
+    this.filteredThreadCount = 0;
+
+    this.commentThreads.forEach((threads, revisionId) => {
+      this.totalThreadCount += threads.length;
+      const filtered = threads.filter(thread => this.threadMatchesFilters(thread));
+      if (filtered.length > 0) {
+        this.filteredCommentThreads.set(revisionId, filtered);
+      }
+      this.filteredThreadCount += filtered.length;
+    });
+
+    this.filteredApiRevisionsWithComments = this.apiRevisionsWithComments.filter(
+      rev => this.filteredCommentThreads.has(rev.id)
+    );
+  }
+
+  private threadMatchesFilters(thread: CodePanelRowData): boolean {
+    const firstComment = thread.comments?.[0];
+    if (!firstComment) return false;
+
+    // Status filter
+    if (this.filterStatus === 'active' && thread.isResolvedCommentThread) return false;
+    if (this.filterStatus === 'resolved' && !thread.isResolvedCommentThread) return false;
+
+    // Severity filter (empty set = show all)
+    // severity arrives as camelCase string from API (JsonStringEnumConverter with CamelCase policy)
+    // Normalize to lowercase for reliable comparison
+    if (this.filterSeverities.size > 0) {
+      const rawSev = firstComment.severity;
+      if (rawSev == null) return false;
+      const sev = String(rawSev).toLowerCase();
+      if (!this.filterSeverities.has(sev)) {
+        return false;
+      }
+    }
+
+    // Kind filter (empty set = show all)
+    if (this.filterKinds.size > 0) {
+      const kind = this.getThreadKind(firstComment);
+      if (!this.filterKinds.has(kind)) return false;
+    }
+
+    return true;
+  }
+
+  getThreadKind(comment: CommentItemModel): 'human' | 'ai' | 'diagnostic' {
+    if (comment.commentSource === CommentSource.Diagnostic) return 'diagnostic';
+    if (comment.commentSource === CommentSource.AIGenerated || comment.createdBy === 'azure-sdk') return 'ai';
+    return 'human';
+  }
+
+  setStatusFilter(status: 'all' | 'active' | 'resolved') {
+    this.filterStatus = status;
+    this.applyFilters();
+    this.changeDetectorRef.markForCheck();
+  }
+
+  toggleSeverityFilter(severityKey: string) {
+    if (this.filterSeverities.has(severityKey)) {
+      this.filterSeverities.delete(severityKey);
+    } else {
+      this.filterSeverities.add(severityKey);
+    }
+    this.applyFilters();
+    this.changeDetectorRef.markForCheck();
+  }
+
+  toggleKindFilter(kind: 'human' | 'ai' | 'diagnostic') {
+    if (this.filterKinds.has(kind)) {
+      this.filterKinds.delete(kind);
+    } else {
+      this.filterKinds.add(kind);
+    }
+    this.applyFilters();
+    this.changeDetectorRef.markForCheck();
+  }
+
+  clearAllFilters() {
+    this.filterStatus = 'active';
+    this.filterSeverities.clear();
+    this.filterKinds.clear();
+    this.applyFilters();
+    this.changeDetectorRef.markForCheck();
+  }
+
+  get hasActiveFilters(): boolean {
+    return this.filterStatus !== 'active' || this.filterSeverities.size > 0 || this.filterKinds.size > 0;
+  }
+
+  getSeverityLabel(severity: CommentSeverity): string {
+    switch (severity) {
+      case CommentSeverity.Question: return 'Question';
+      case CommentSeverity.Suggestion: return 'Suggestion';
+      case CommentSeverity.ShouldFix: return 'Should Fix';
+      case CommentSeverity.MustFix: return 'Must Fix';
+      default: return '';
     }
   }
 

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
-import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
+import { REVIEW_ID_ROUTE_PARAM, ACTIVE_API_REVISION_ID_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
@@ -30,12 +30,14 @@ export class ConversationPageComponent {
   sideMenu: MenuItem[] | undefined;
   comments: CommentItemModel[] = [];
   apiRevisions: APIRevision[] = [];
+  activeApiRevisionId: string | null = null;
+  numberOfActiveConversation: number = 0;
 
   apiRevisionPageSize = 50;
 
   private destroy$ = new Subject<void>();
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private userProfileService: UserProfileService,
+  constructor(private route: ActivatedRoute, private router: Router, private reviewsService: ReviewsService, private userProfileService: UserProfileService,
     private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService, private titleService: Title
   ) {}
 
@@ -46,20 +48,10 @@ export class ConversationPageComponent {
       }
     );
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
-    this.createSideMenu();
+    this.activeApiRevisionId = this.route.snapshot.queryParamMap.get(ACTIVE_API_REVISION_ID_QUERY_PARAM);
     this.loadReview(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
     this.loadComments();
-  }
-
-  createSideMenu() {
-    this.sideMenu = [
-      {
-        icon: 'bi bi-braces',
-        tooltip: 'API',
-        command: () => this.openLatestAPIReivisonForReview()
-      }
-    ];
   }
 
   loadReview(reviewId: string) {
@@ -92,9 +84,32 @@ export class ConversationPageComponent {
     });
   }
 
-  openLatestAPIReivisonForReview() {
-    const apiRevision = this.apiRevisions.find(x => x.apiRevisionType === "Automatic") ?? this.apiRevisions[0];
-    this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.route);
+  navigateToReview() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+  }
+
+  navigateToRevisions() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/revision', this.reviewId], { queryParams: queryParams });
+  }
+
+  navigateToSamples() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
+  }
+
+  handleNumberOfActiveThreadsEmitter(value: number) {
+    this.numberOfActiveConversation = value;
   }
 
   updatePageTitle() {

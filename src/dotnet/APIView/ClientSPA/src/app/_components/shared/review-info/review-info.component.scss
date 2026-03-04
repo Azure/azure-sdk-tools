@@ -8,6 +8,10 @@
         display: flex;
         align-items: center;
     }
+
+    .p-menubar-button {
+        display: none !important;
+    }
 }
 
 .sidebar-toggle-btn {

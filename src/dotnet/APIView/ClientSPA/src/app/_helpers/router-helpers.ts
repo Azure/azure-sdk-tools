@@ -6,6 +6,7 @@ export const ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM = "activeSamplesRevisionId";
 export const DIFF_API_REVISION_ID_QUERY_PARAM = "diffApiRevisionId";
 export const DIFF_STYLE_QUERY_PARAM = "diffStyle";
 export const SCROLL_TO_NODE_QUERY_PARAM = "nId";
+export const VIEW_QUERY_PARAM = "view";
 export const USER_NAME_ROUTE_PARAM = "userName";
 
 export const INDEX_PAGE_NAME = "Index";

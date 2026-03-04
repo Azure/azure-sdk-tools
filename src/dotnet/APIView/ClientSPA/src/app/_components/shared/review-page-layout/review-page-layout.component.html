@@ -3,29 +3,43 @@
     <app-review-info
         [review]="review"
         [apiRevisions]="apiRevisions"
-        [samplesRevisions]="samplesRevisions"
         [activeApiRevisionId]="activeApiRevisionId"
-        [activeSamplesRevisionId]="activeSamplesRevisionId"
         [diffApiRevisionId]="diffApiRevisionId"
         [userProfile]="userProfile"
         [showPageoptionsButton]="showPageoptionsButton"
         [showLeftNavigation]="showLeftNavigation"
         (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
         (showLeftNavigationEmitter)="handleLeftNavigationEmitter($event)"></app-review-info>
-    <div class="mt-1" style="display: flex; align-items: flex-start;">
-        <div>
-            <p-menu [model]="sideMenu" styleClass="side-menu">
-                <ng-template pTemplate="item" let-item>
-                    <a pRipple class="p-menuitem-link" pTooltip="{{item.tooltip}}" tooltipPosition="right">
-                        <div class="icon-wrapper">
-                            <span [class]="item.icon" class="menu-icon"></span>
-                            <p-badge *ngIf="item.badge" styleClass="menu-badge" [value]="item.badge" severity="danger" />
-                        </div>
-                    </a>
-                </ng-template>
-            </p-menu>
-        </div>
-        <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
+    <div class="layout-body">
+        <nav class="sidebar-rail" aria-label="Review navigation">
+            <button class="rail-item" [class.active]="activePage === 'reviews'" (click)="navigateToReviewsEmitter.emit()" title="View API review code">
+                <div class="rail-icon-wrap">
+                    <i class="bi bi-code-slash"></i>
+                </div>
+                <span class="rail-label">API</span>
+            </button>
+            <button class="rail-item" [class.active]="activePage === 'conversations'" (click)="navigateToConversationsEmitter.emit()" title="View comment threads ({{ conversationCount }} active)">
+                <div class="rail-icon-wrap">
+                    <i class="bi bi-chat-dots"></i>
+                    <span *ngIf="conversationCount > 0" class="rail-badge">{{ conversationCount }}</span>
+                </div>
+                <span class="rail-label">Comments</span>
+            </button>
+            <button class="rail-item" [class.active]="activePage === 'samples'" (click)="navigateToSamplesEmitter.emit()" title="View code samples ({{ samplesRevisionCount }} revisions)">
+                <div class="rail-icon-wrap">
+                    <i class="bi bi-journal-code"></i>
+                    <span *ngIf="samplesRevisionCount > 0" class="rail-badge">{{ samplesRevisionCount }}</span>
+                </div>
+                <span class="rail-label">Samples</span>
+            </button>
+            <button class="rail-item" [class.active]="activePage === 'revisions'" (click)="navigateToRevisionsEmitter.emit()" title="View API revisions history">
+                <div class="rail-icon-wrap">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <span class="rail-label">Revisions</span>
+            </button>
+        </nav>
+        <div class="layout-content">
             <ng-content></ng-content>
         </div>
     </div>

@@ -15,10 +15,7 @@
 
     .p-datatable .p-datatable-tbody > tr > td {
         padding: 0.5rem 0.5rem !important;
-    }
-
-    .p-fileupload-row > div:first-child {
-        display: none;
+        border: none !important;
     }
 
     .p-dropdown {
@@ -32,6 +29,55 @@
         img {
             border-radius: 50%;
             margin-right: 5px;
+        }
+    }
+
+    .details-table-data {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+
+    .detail-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        white-space: nowrap;
+
+        i {
+            font-size: 0.7rem;
+        }
+    }
+
+    .detail-approved {
+        background: color-mix(in srgb, var(--revision-approved-color) 12%, transparent);
+        color: var(--revision-approved-color);
+    }
+
+    .detail-pending {
+        background: color-mix(in srgb, var(--revision-pending-color) 15%, transparent);
+        color: var(--revision-pending-color);
+    }
+
+    .detail-type {
+        &.detail-type-manual {
+            background: color-mix(in srgb, var(--revision-type-manual-color) 12%, transparent);
+            color: var(--revision-type-manual-color);
+        }
+
+        &.detail-type-pr {
+            background: color-mix(in srgb, var(--revision-type-pr-color) 12%, transparent);
+            color: var(--revision-type-pr-color);
+        }
+
+        &.detail-type-automatic {
+            background: color-mix(in srgb, var(--revision-type-auto-color) 12%, transparent);
+            color: var(--revision-type-auto-color);
         }
     }
 }

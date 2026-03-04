@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { SamplesPageComponent } from '../_components/samples-page/samples-page.component';
 import { CodeEditorComponent } from '../_components/shared/code-editor/code-editor.component';
 import { DialogModule } from 'primeng/dialog';
+import { TableModule } from 'primeng/table';
 
 const routes: Routes = [
   { path: '', component: SamplesPageComponent }
@@ -18,6 +19,7 @@ const routes: Routes = [
   imports: [
     CommonModule,
     DialogModule,
+    TableModule,
     ReviewPageLayoutModule,
     RouterModule.forChild(routes),
   ]

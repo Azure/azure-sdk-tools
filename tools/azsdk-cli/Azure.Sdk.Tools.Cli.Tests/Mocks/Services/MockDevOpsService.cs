@@ -271,5 +271,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             return Task.FromResult(new List<WorkItem>());
         }
+
+        public Task<WorkItem> CreateWorkItemWithFieldsAsync(WorkItemBase workItem, string workItemType, string title)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task CreateRelatedLinkAsync(int sourceId, int targetId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RemoveRelatedLinkAsync(int sourceId, int targetId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

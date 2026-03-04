@@ -51,6 +51,7 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         public const string InvalidInput = "InvalidInput";
         public const string UnexpectedError = "UnexpectedError";
         public const string TypeSpecCustomizationFailed = "TypeSpecCustomizationFailed";
+        public const string ManualInterventionRequired = "ManualInterventionRequired";
     }
 
     [JsonPropertyName("message")]

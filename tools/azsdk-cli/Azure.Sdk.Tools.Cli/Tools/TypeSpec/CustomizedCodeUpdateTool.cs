@@ -163,11 +163,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         List<string> changesMade = new();
         StringBuilder noActionNeeded = new();
-        StringBuilder manualInterventions = new();
+        noActionNeeded.AppendLine("The following feedback items were classified as SUCCESS (no changes needed):");
+        List<string> manualInterventions = new();
         StringBuilder tspFixFailedReasons = new();
         do
         {
-            // TODO - need to fix this to avoid casting to/from list
+            // TODO - need to update this to avoid casting to/from list
             var response = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: "", tspProjectPath, ct: ct);
 
             if (response.Classifications == null || response.Classifications.Count == 0)
@@ -204,7 +205,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 if (itemDetails.Classification == "TSP_APPLICABLE")
                 {
                     tspApplicable++;
-                    var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, feedbackItem.Text, ct: ct);
+                    var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, itemDetails.Text, ct: ct);
 
                     if (tspCustomizationResult.Success)
                     {
@@ -222,10 +223,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 } else if (itemDetails.Classification == "REQUIRES_MANUAL_INTERVENTION")
                 {
                     manualChanges++;
-
-                    manualInterventions.Append(itemDetails.Text);
-                    manualInterventions.Append("' Reason: ");
-                    manualInterventions.AppendLine(itemDetails.Reason);
+                    manualInterventions.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
 
                     // Don't try and fix the same feedback again
                     feedbackDictionary.Remove(itemDetails.ItemId);
@@ -252,8 +250,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     return new CustomizedCodeUpdateResponse
                     {
                         Success = false,
-                        Message = CreateOutputString(manualInterventions, noActionNeeded),
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
+                        Message = "None of the requested changes could be fixed with TypeSpec customizations",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired,
+                        NextSteps = manualInterventions
                     };
                 }
 
@@ -263,12 +262,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     return new CustomizedCodeUpdateResponse
                     {
                         Success = true,
-                        Message = CreateOutputString(manualInterventions, noActionNeeded),
+                        Message = $"All feedback items were classified as SUCCESS (no changes needed):{Environment.NewLine}{noActionNeeded}"
                     };
                 }
 
                 // All tsp fixes failed to be applied - signaling a deeper error
-                if (tspFixSucceeded == 0)
+                if (tspFixSucceeded == 0 && tspFixFailed > 0)
                 {
                     return new CustomizedCodeUpdateResponse
                     {
@@ -284,19 +283,23 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 logger.LogWarning("Some customizations failed to apply: {FailureReasons}", tspFixFailedReasons);
             }
 
-            // Regenerate SDK using local spec repo
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
-            if (!regenResult.IsSuccessful)
+            // Don't waste time regenerating if no TSP files were successfully applied
+            if (tspFixSucceeded > 0)
             {
-                logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
-                return new CustomizedCodeUpdateResponse
+                // Regenerate SDK using local spec repo
+                var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
+                if (!regenResult.IsSuccessful)
                 {
-                    Success = false,
-                    Message = $"Regeneration failed: {regenResult.ResponseError}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
-                    BuildResult = $"Regeneration failed: {regenResult.ResponseError}",
-                    TypeSpecChangesSummary = changesMade
-                };
+                    logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Success = false,
+                        Message = $"Regeneration failed: {regenResult.ResponseError}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
+                        BuildResult = $"Regeneration failed: {regenResult.ResponseError}",
+                        TypeSpecChangesSummary = changesMade
+                    };
+                }
             }
 
             var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
@@ -317,11 +320,13 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = true,
-                Message = "Build passed after attempting Type"
+                Message = "Build passed after attempting TypeSpec customizations.",
+                TypeSpecChangesSummary = changesMade,
+                NextSteps = manualInterventions,
             };
         }
 
-        // Step 2: Start customized code update process
+        // Step 2: If the build failed, start customized code update process
 
         if (!languageService.IsCustomizedCodeUpdateSupported)
         {

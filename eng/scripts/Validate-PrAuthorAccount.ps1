@@ -1,10 +1,11 @@
+#!/usr/bin/env pwsh
+
 param(
   [Parameter(Mandatory = $true)]
   [string]$Username
 )
 
 $ErrorActionPreference = 'Stop'
-$PSNativeCommandUseErrorActionPreference = $true
 
 # Thresholds
 $MinAccountAgeDays = 14
@@ -28,8 +29,6 @@ function Get-GitHubPublicEvents([string]$login) {
 
   # Walk forward to find the last non-empty page (max 10 pages per GitHub API).
   $oldestEvents = $page1
-  $savedPref = $PSNativeCommandUseErrorActionPreference
-  $PSNativeCommandUseErrorActionPreference = $false
   for ($p = 2; $p -le 10; $p++) {
     $pageJson = gh api "users/$login/events/public?per_page=100&page=$p" 2>&1
     if ($LASTEXITCODE -ne 0) { break }
@@ -37,7 +36,6 @@ function Get-GitHubPublicEvents([string]$login) {
     if ($page.Count -eq 0) { break }
     $oldestEvents = $page
   }
-  $PSNativeCommandUseErrorActionPreference = $savedPref
 
   $oldestDate = ($oldestEvents | Select-Object -Last 1).created_at
   return @{ Events = $page1; OldestEventDate = $oldestDate }

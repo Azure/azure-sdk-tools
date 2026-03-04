@@ -1,4 +1,4 @@
-name: PR Author Account Age Check
+name: Validate PR Author Account
 
 on:
   pull_request_target:
@@ -8,13 +8,13 @@ permissions:
   contents: read
 
 jobs:
-  check-account-age:
-    name: Check PR author account age
+  validate-pr-author-account:
+    name: Validate PR Author Account
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - name: Validate PR author account
+      - name: Validate PR Author Account
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

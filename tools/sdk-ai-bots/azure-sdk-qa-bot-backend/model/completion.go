@@ -45,6 +45,7 @@ const (
 	Source_AzureOpenapiDiffDocs            Source = "azure_openapi_diff_docs"
 	Source_APISpecViewQA                   Source = "static_api_spec_view_qa"
 	Source_TypeSpecAzureResourceManagerLib Source = "typespec-azure-resource-manager-lib"
+	Source_CodeReviewForJS                 Source = "static_codereview_for_js"
 )
 
 type Role string

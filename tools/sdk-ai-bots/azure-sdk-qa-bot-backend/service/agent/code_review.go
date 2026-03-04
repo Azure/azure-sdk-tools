@@ -107,6 +107,7 @@ func (s *CodeReviewService) validateRequest(req *model.CodeReviewReq) error {
 
 func (s *CodeReviewService) retrieveGuidelines(language string, filePath string, code string) (string, error) {
 	sources, sourceFilter := config.GetLanguageSources(language)
+	log.Printf("=== Code Review Sources: %v ===", sources)
 
 	// Build search query from code context
 	query := s.buildSearchQuery(language, filePath, code)

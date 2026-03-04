@@ -35,7 +35,7 @@ var languageConfigMap = map[string]LanguageConfig{
 		},
 	},
 	"javascript": {
-		Sources: appendBaseLanguageSources(),
+		Sources: appendBaseLanguageSources(model.Source_AzureSDKForJavaScript, model.Source_AzureSDKForJavaScriptWiki, model.Source_CodeReviewForJS),
 		SourceFilter: map[model.Source]string{
 			model.Source_AzureSDKGuidelines: "search.ismatch('typescript_*', 'title') or search.ismatch('general_*', 'title')",
 		},

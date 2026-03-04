@@ -25,9 +25,14 @@ Analyze the code for these aspects:
 2. **Default Values**: Sensible defaults, required vs optional
 3. **Retry Configuration**: Retry policies, timeouts
 
+## For CHANGELOG Files:
+1. **Breaking Changes**: Carefully review the breaking parts and find solutions to mitigate them
+2. **Feature added**: New features or classes are added
+
 # SUB-QUERY GENERATION RULES
 - Generate focused search queries based on what you observe in the code
-- Each query should target ONE specific guideline topic
+- Keep each sub-query focused on one aspect
+- Search relevant cases when relevant
 - Different file types need different guidelines, always include ONE query about the whole file type guidelines
 - Don't contain specific method names, class names, and patterns from the code
 - Use terms likely to appear in SDK design guideline documentation

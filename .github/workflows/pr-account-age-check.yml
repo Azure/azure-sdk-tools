@@ -1,4 +1,4 @@
-name: PR Author Validity
+name: PR Author Account Age Check
 
 on:
   pull_request_target:
@@ -12,21 +12,11 @@ jobs:
     name: Check PR author account age
     runs-on: ubuntu-latest
     steps:
-      - name: Check account age
+      - uses: actions/checkout@v6
+
+      - name: Validate PR author account
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          created_at=$(gh api "users/${PR_AUTHOR}" --jq '.created_at')
-          created_epoch=$(date -d "${created_at}" +%s)
-          now_epoch=$(date +%s)
-          age_days=$(( (now_epoch - created_epoch) / 86400 ))
-
-          echo "Account '${PR_AUTHOR}' was created on ${created_at} (${age_days} days ago)"
-
-          if [ "${age_days}" -lt 14 ]; then
-            echo "::error::Account '${PR_AUTHOR}' is only ${age_days} day(s) old. Accounts less than 2 weeks old require an admin override to merge. This policy exists to protect against abuse."
-            exit 1
-          fi
-
-          echo "Account age check passed."
+          ./eng/scripts/Validate-PrAuthorAccount.ps1 -Username '${{ github.event.pull_request.user.login }}'

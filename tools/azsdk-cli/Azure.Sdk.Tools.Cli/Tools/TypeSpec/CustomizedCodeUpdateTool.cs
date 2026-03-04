@@ -202,7 +202,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             {
                 feedbackDictionary.TryGetValue(itemDetails.ItemId, out var feedbackItem);
 
-                // For now, if feedback item isn't found we just won't append context
+                if (feedbackItem == null)
+                {
+                    logger.LogDebug("Classifier returned non-existent feedback item ID '{ItemId}'. This may indicate an LLM hallucination.", itemDetails.ItemId);
+                }
+
                 feedbackItem?.AppendContext($"Iteration {tries+1}");
 
                 if (itemDetails.Classification == ClassificationTspApplicable)
@@ -289,14 +293,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 if (!regenResult.IsSuccessful)
                 {
                     logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
-                    return new CustomizedCodeUpdateResponse
-                    {
-                        Success = false,
-                        Message = $"Regeneration failed: {regenResult.ResponseError}",
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
-                        BuildResult = $"Regeneration failed: {regenResult.ResponseError}",
-                        TypeSpecChangesSummary = changesMade
-                    };
+
+                    // Append regen failure context so the classifier can re-classify for manual intervention
+                    var regenContext = $"Regeneration failed: {regenResult.ResponseError}";
+                    feedbackDictionary.Values.ToList().ForEach(item => item.AppendContext(regenContext, "Regeneration Result"));
+
+                    buildSucceeded = false;
+                    buildError = regenContext;
+                    tries++;
+                    continue;
                 }
             }
 

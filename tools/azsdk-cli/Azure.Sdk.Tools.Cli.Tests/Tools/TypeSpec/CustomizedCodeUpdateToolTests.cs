@@ -413,18 +413,47 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task TspRegeneration_Fails_ReturnsRegenerateFailed()
+    public async Task TspRegeneration_Fails_ContinuesLoopAndAppendsContext()
     {
+        var classifyCalls = 0;
         var failingTsp = new MockTspHelper(updateSuccess: false, updateError: "tsp-client failed: exit code 1");
-        var (tool, _) = CreateTool(tspHelper: failingTsp);
+        var (tool, _) = CreateTool(
+            tspHelper: failingTsp,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
+                        {
+                            classifyCalls++;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            return Task.FromResult(new FeedbackClassificationResponse
+                            {
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                        Reason = "fixable", Text = "rename X"
+                                    }
+                                ]
+                            });
+                        }));
+
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
 
+        // Regen failure should not short-circuit; loop continues for re-classification
         Assert.That(result.Success, Is.False);
-        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed));
-        Assert.That(result.Message, Does.Contain("Regeneration failed"));
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice (maxTries) even when regen fails");
     }
 
     // ========================================================================

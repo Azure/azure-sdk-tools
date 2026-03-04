@@ -204,7 +204,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
                 if (feedbackItem == null)
                 {
-                    logger.LogDebug("Classifier returned non-existent feedback item ID '{ItemId}'. This may indicate an LLM hallucination.", itemDetails.ItemId);
+                    logger.LogDebug("Classifier returned non-existent feedback item ID '{ItemId}'.", itemDetails.ItemId);
                 }
 
                 feedbackItem?.AppendContext($"Iteration {tries+1}");

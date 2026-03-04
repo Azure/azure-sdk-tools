@@ -36,11 +36,6 @@ export class CommentsService {
   }
 
   // Map numeric enum values to the string names expected by C# JsonStringEnumConverter
-  private readonly commentTypeNames: Record<number, string> = {
-    [CommentType.APIRevision]: 'APIRevision',
-    [CommentType.SampleRevision]: 'SampleRevision',
-  };
-
   private readonly severityNames: Record<number, string> = {
     [CommentSeverity.Question]: 'Question',
     [CommentSeverity.Suggestion]: 'Suggestion',
@@ -59,7 +54,7 @@ export class CommentsService {
     }
     formData.append('elementId', elementId);
     formData.append('commentText', commentText);
-    formData.append('commentType', this.commentTypeNames[commentType] ?? commentType.toString());
+    formData.append('commentType', commentType);
     formData.append('resolutionLocked', resolutionLocked.toString());
     if (severity !== null) {
       formData.append('severity', this.severityNames[severity] ?? severity.toString());

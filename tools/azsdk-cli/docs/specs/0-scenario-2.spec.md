@@ -127,7 +127,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
 
 1. **Environment Setup** → `azsdk_verify_setup`
    - Verify tools and versions (see [Scenario 1 – Environment Setup](./0-scenario-1.spec.md#1-environment-setup))
-   - Optionally remediate missing or out-of-date tools with `--auto-install` option
+   - Optionally remediate missing or out-of-date tools by using `install` subcommand instead of `check`
    - **Note**: This stage carries over from Scenario 1 and will need to be revisited to ensure it works correctly for [Brand New Packages](#brand-new-package)
 
 2. **TypeSpec Authoring** → `azsdk_typespec_authoring` **(Agent Mode only)**
@@ -190,8 +190,8 @@ Scenario 2 enhances `azsdk_verify_setup` with an **optional auto-install mode** 
 
 **Behavior:**
 
-- **Default mode (verify only)**: Detects and reports on tool presence, versions, and compatibility issues without making changes.
-- **Auto-install mode (`--auto-install` flag)**: When enabled, offers to remediate detected issues:
+- **Check mode (`check` subcommand)**: Detects and reports on tool presence, versions, and compatibility issues without making changes.
+- **Install mode (`install` subcommand)**: When used, offers to remediate detected issues:
   - For tools that can be installed/updated **without administrator permissions** (for example, language-specific package managers, command-line utilities installed via user-level package managers):
     - Performs the installation or upgrade using scripted, repeatable steps.
   - For tools that **require system-level installs or administrator permissions** (for example, full IDEs, system-wide SDK bundles, platform toolchains):
@@ -486,8 +486,8 @@ I need to create a new Health Deidentification SDK for all languages.
 3. Execute `azsdk_verify_setup` for selected languages to check prerequisites.
    - **Agent reports** environment check results (installed tools, missing tools, version mismatches)
    - **Agent prompts user** asking if they want to auto-install the detected issues
-   - If user confirms, execute `azsdk_verify_setup --auto-install` to remediate issues
-   - **Agent prompts user** for confirmation before installing or upgrading any tools in auto-install mode
+   - If user confirms, execute `azsdk_verify_setup install` to remediate issues
+   - **Agent prompts user** for confirmation before installing or upgrading any tools in install mode
 4. Invoke `azsdk_package_generate_code` to generate SDK code, along with tests and samples that can be generated from TypeSpec.
    - **Note**: For Brand New Packages, generation automatically bootstraps the complete language library project scaffolding including directory structure, package metadata files, and `README.md`
    - After generation completes, validation is performed (build and playback tests)
@@ -538,8 +538,8 @@ There are new changes in the Health Deidentification API spec. I need to regener
 3. Execute `azsdk_verify_setup` for selected languages to check prerequisites.
    - **Agent reports** environment check results (installed tools, missing tools, version mismatches)
    - **Agent prompts user** asking if they want to auto-install the detected issues
-   - If user confirms, execute `azsdk_verify_setup --auto-install` to remediate issues
-   - **Agent prompts user** for confirmation before installing or upgrading any tools in auto-install mode
+   - If user confirms, execute `azsdk_verify_setup install` to remediate issues
+   - **Agent prompts user** for confirmation before installing or upgrading any tools in install mode
 4. Invoke `azsdk_package_generate_code` to regenerate SDK code, along with tests and samples that can be generated from TypeSpec.
    - After generation completes, validation is performed (build and playback tests)
    - **Agent reports** generation results and any validation issues
@@ -803,17 +803,20 @@ Translate all Java samples for Health Deidentification to .NET.
 **Command:**
 
 ```bash
-azsdk verify setup --languages "Dotnet,Java,JavaScript,Python,Go" --auto-install
+# Auto-install mode
+azsdk verify setup install --languages "Dotnet,Java,JavaScript,Python,Go"
+
+# Verification-only mode
+azsdk verify setup check --languages "Dotnet,Java,JavaScript,Python,Go"
 ```
 
 **Options:**
 
 - `--languages <list>`: Space-separated list of languages to verify (default: language of current repository)
-- `--auto-install`: Enable auto-install mode to install missing tools and upgrade out-of-date tools (default: verify-only mode)
-- `--no-prompt`: Skip confirmation prompts and install automatically (for CI/automation, requires `--auto-install`)
+- `--no-prompt`: Skip confirmation prompts and install automatically (for CI/automation, only available with `install` subcommand)
 - `--verbose`: Show detailed output for each operation
 
-**Expected Output (with --auto-install):**
+**Expected Output (install mode):**
 
 ```text
 Verifying environment for 5 languages...
@@ -830,7 +833,7 @@ Verifying environment for 5 languages...
 Environment verification complete: 5/5 languages ready
 ```
 
-**Expected Output (verify-only mode):**
+**Expected Output (check mode):**
 
 ```text
 Verifying environment for 5 languages...
@@ -842,7 +845,7 @@ Verifying environment for 5 languages...
 ✗ Go not found - Install from: https://go.dev/doc/install
 
 Environment verification complete: 4/5 languages ready
-Use --auto-install flag to remediate issues automatically.
+Run 'azsdk verify setup install' to auto-install missing tools.
 ```
 
 ### 2. Run Tests
@@ -975,7 +978,7 @@ Scenario 2 also needs to consider **how the CLI tools will be used inside CI/CD 
 
 - `azsdk_verify_setup`:
   - Must support **exit codes** that cleanly distinguish "all good", "fixable issues", and "blocking failures".
-  - Should be configurable via flags or environment variables in CI (for example, default verify-only mode vs. `--fix` mode with `--auto-install`) to avoid surprise installations on shared agents.
+  - Should be configurable via subcommands in CI (for example, default check mode vs. install mode) to avoid surprise installations on shared agents.
   - In CI, verify-only mode (default) should be safe to run always; fix mode should be opt-in.
 - Customization and generation:
   - **Open Question**: Should `azsdk_package_customize_code` be used in CI at all, or is it primarily an agent-mode/interactive tool?

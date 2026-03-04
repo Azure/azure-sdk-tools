@@ -112,6 +112,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label);
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath);
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
+        Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations);
+        Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -1610,6 +1612,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
                 query += $" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
+                query += " ORDER BY [System.Id] DESC"; // In case there are multiple matches, get the most recently created one
 
                 var releasePlanWorkItems = await FetchWorkItemsAsync(query);
                 if (releasePlanWorkItems.Count == 0)
@@ -1679,6 +1682,32 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogError(ex, "Failed to get product info for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
                 throw new Exception($"Failed to get product info for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
             }
+        }
+
+        public async Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations)
+        {
+            var escapedValue = fieldValue.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = '{workItemType}' AND [{fieldName}] = '{escapedValue}'";
+            return await FetchWorkItemsPagedAsync(query, expand: expand);
+        }
+
+        public async Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            var idList = ids.ToList();
+            if (idList.Count == 0)
+            {
+                return [];
+            }
+
+            var workItemClient = connection.GetWorkItemClient();
+            var workItems = new List<WorkItem>();
+            for (int i = 0; i < idList.Count; i += batchSize)
+            {
+                var batchIds = idList.Skip(i).Take(batchSize).ToList();
+                var batch = await workItemClient.GetWorkItemsAsync(batchIds, expand: expand);
+                workItems.AddRange(batch);
+            }
+            return workItems;
         }
     }
 }

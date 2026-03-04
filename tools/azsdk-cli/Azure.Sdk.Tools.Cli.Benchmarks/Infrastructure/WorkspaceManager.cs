@@ -121,9 +121,9 @@ public class WorkspaceManager
             else
             {
                 // Create parent directory and clone
-                Directory.CreateDirectory(Path.GetDirectoryName(barePath)!);
+                var dir = Directory.CreateDirectory(Path.GetDirectoryName(barePath)!);
                 await RunGitCommandAsync(
-                    Path.GetDirectoryName(barePath)!,
+                    dir.FullName,
                     "clone", "--bare", "--depth=1", repo.CloneUrl, barePath);
             }
         }

@@ -347,7 +347,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 if (IsAgentTesting)
                 {
-                    logger.LogInformation("Agent testing is enabled. Seraching for a release plan with test tag");
+                    logger.LogInformation("Agent testing is enabled. Searching for a release plan with test tag");
                 }
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ActiveSpecPullRequestUrl] = '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned','Finished')";
                 query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
@@ -375,7 +375,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                             continue;
                         }
 
-                        // If agetn test mode is enabled then skip all test release plans.
+                        // If agent test mode is enabled then skip all non test release plans.
                         parentWorkItem.Fields.TryGetValue("System.Tags", out Object? tags);
                         var systemTag = tags?.ToString() ?? string.Empty;
                         if (IsAgentTesting && !systemTag.Contains(RELEASE_PLANNER_APP_TEST))

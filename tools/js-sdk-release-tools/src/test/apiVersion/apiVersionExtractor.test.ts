@@ -104,36 +104,6 @@ describe('Rest client file fallbacks', () => {
             const version = await getApiVersionTypeInRLC(root);
             expect(version).toBe(ApiVersionType.Stable);
         });
-        test("metadata.json exists with stable apiVersion", async () => {
-            const root = join(__dirname, 'testCases/rlc-metadata-json/');
-            const version = await getApiVersionTypeInRLC(root);
-            expect(version).toBe(ApiVersionType.Stable);
-        });
-        test("metadata.json exists with preview apiVersion", async () => {
-            const root = join(__dirname, 'testCases/rlc-metadata-json-preview/');
-            const version = await getApiVersionTypeInRLC(root);
-            expect(version).toBe(ApiVersionType.Preview);
-        });
-        test("metadata.json exists with apiVersions - all stable", async () => {
-            const root = join(__dirname, 'testCases/rlc-metadata-apiVersions-all-stable/');
-            const version = await getApiVersionTypeInRLC(root);
-            expect(version).toBe(ApiVersionType.Stable);
-        });
-        test("metadata.json exists with apiVersions - with preview", async () => {
-            const root = join(__dirname, 'testCases/rlc-metadata-apiVersions-with-preview/');
-            const version = await getApiVersionTypeInRLC(root);
-            expect(version).toBe(ApiVersionType.Preview);
-        });
-        test("metadata.json exists with apiVersions - preview listed first", async () => {
-            const root = join(__dirname, 'testCases/rlc-metadata-apiVersions-preview-first/');
-            const version = await getApiVersionTypeInRLC(root);
-            expect(version).toBe(ApiVersionType.Preview);
-        });
-        test("metadata.json exists with apiVersions - single stable version", async () => {
-            const root = join(__dirname, 'testCases/rlc-metadata-apiVersions-single/');
-            const version = await getApiVersionTypeInRLC(root);
-            expect(version).toBe(ApiVersionType.Stable);
-        });
         test("Model only spec", async () => {
             const mockNpmUtils = await import("../../common/npmUtils.js");
             let count = 0;

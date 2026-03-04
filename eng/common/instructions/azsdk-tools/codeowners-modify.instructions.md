@@ -49,7 +49,6 @@ Format: `Azure/azure-sdk-for-python` (owner/repo-name).
 ## Workflow
 1. Always use `azsdk_engsys_codeowner_view` first to show the current state.
 2. After add/remove, the tool returns the updated state automatically.
-3. Remind the user to run the `generate` command to update the CODEOWNERS file after making changes.
 
 ## Important Notes
 - Labels are never auto-created. If a label is not found, the operation will fail.

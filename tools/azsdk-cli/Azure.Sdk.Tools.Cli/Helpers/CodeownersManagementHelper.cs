@@ -350,7 +350,7 @@ public class CodeownersManagementHelper(
     // Find-or-create helpers
     // ========================
 
-    public async Task<OwnerWorkItem> FindOrCreateOwnerAsync(string gitHubAlias)
+    public async Task<OwnerWorkItem> FindOrCreateOwner(string gitHubAlias)
     {
         var alias = NormalizeGitHubAlias(gitHubAlias);
 
@@ -431,7 +431,7 @@ public class CodeownersManagementHelper(
     // Add scenarios
     // ========================
 
-    public async Task<CodeownersModifyResponse> AddOwnersToPackageAsync(
+    public async Task<CodeownersModifyResponse> AddOwnersToPackage(
         OwnerWorkItem[] owners,
         string packageName,
         string repo
@@ -463,7 +463,7 @@ public class CodeownersManagementHelper(
         };
     }
 
-    public async Task<CodeownersModifyResponse> AddLabelsToPackageAsync(LabelWorkItem[] labels, string packageName, string repo)
+    public async Task<CodeownersModifyResponse> AddLabelsToPackage(LabelWorkItem[] labels, string packageName, string repo)
     {
         var packageWi = await FindPackageByName(packageName, repo);
         if (packageWi == null)
@@ -490,7 +490,7 @@ public class CodeownersManagementHelper(
             View = await GetViewByPackage(packageName, repo)
         };
     }
-    public async Task<CodeownersModifyResponse> AddOwnersAndLabelsToPathAsync(
+    public async Task<CodeownersModifyResponse> AddOwnersAndLabelsToPath(
         OwnerWorkItem[] owners,
         LabelWorkItem[] labels,
         string repo,
@@ -525,7 +525,9 @@ public class CodeownersManagementHelper(
         return new CodeownersModifyResponse
         {
             Operation = string.Join(Environment.NewLine, operations),
-            View = await GetViewByPath(path, repo)
+            View = string.IsNullOrEmpty(path)
+                ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo)
+                : await GetViewByPath(path, repo)
         };
     }
 
@@ -533,7 +535,7 @@ public class CodeownersManagementHelper(
     // Remove scenarios
     // ========================
 
-    public async Task<CodeownersModifyResponse> RemoveOwnersFromPackageAsync(
+    public async Task<CodeownersModifyResponse> RemoveOwnersFromPackage(
         OwnerWorkItem[] owners,
         string packageName,
         string repo
@@ -566,7 +568,7 @@ public class CodeownersManagementHelper(
         };
     }
 
-    public async Task<CodeownersModifyResponse> RemoveLabelsFromPackageAsync(
+    public async Task<CodeownersModifyResponse> RemoveLabelsFromPackage(
         LabelWorkItem[] labels,
         string packageName,
         string repo
@@ -596,7 +598,7 @@ public class CodeownersManagementHelper(
         };
     }
 
-    public async Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPathAsync(
+    public async Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPath(
         OwnerWorkItem[] owners,
         LabelWorkItem[] labels,
         string repo,
@@ -629,7 +631,9 @@ public class CodeownersManagementHelper(
         return new CodeownersModifyResponse
         {
             Operation = string.Join(Environment.NewLine, operations),
-            View = await GetViewByPath(path, repo)
+            View = string.IsNullOrEmpty(path)
+                ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo)
+                : await GetViewByPath(path, repo)
         };
     }
 

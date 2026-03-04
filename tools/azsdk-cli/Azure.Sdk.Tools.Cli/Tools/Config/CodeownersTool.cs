@@ -851,28 +851,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                 return scenario switch
                 {
-                    1 => await codeownersManagementHelper.AddOwnersToPackageAsync(
+                    1 => await codeownersManagementHelper.AddOwnersToPackage(
                             await FindOrCreateOwnerWorkItems(githubUsers!),
                             package!,
                             repo
                         ),
-                    2 => await codeownersManagementHelper.AddLabelsToPackageAsync(
+                    2 => await codeownersManagementHelper.AddLabelsToPackage(
                             await FindLabels(labels!),
                             package!,
                             repo
                         ),
-                    3 => await codeownersManagementHelper.AddOwnersAndLabelsToPathAsync(
+                    3 => await codeownersManagementHelper.AddOwnersAndLabelsToPath(
                             await FindOrCreateOwnerWorkItems(githubUsers!),
                             await FindLabels(labels!),
                             repo,
-                            null,
-                            ownerType!
-                        ),
-                    4 => await codeownersManagementHelper.AddOwnersAndLabelsToPathAsync(
-                            await FindOrCreateOwnerWorkItems(githubUsers!),
-                            await FindLabels(labels!),
-                            repo,
-                            path!,
+                            path,
                             ownerType!
                         ),
                     _ => new CodeownersModifyResponse { ResponseError = GetScenarioError() }
@@ -922,28 +915,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                 return scenario switch
                 {
-                    1 => await codeownersManagementHelper.RemoveOwnersFromPackageAsync(
-                            await FindOrCreateOwnerWorkItems(githubUsers!),
+                    1 => await codeownersManagementHelper.RemoveOwnersFromPackage(
+                            await GetOwnerWorkItems(githubUsers!),
                             package!,
                             repo
                         ),
-                    2 => await codeownersManagementHelper.RemoveLabelsFromPackageAsync(
+                    2 => await codeownersManagementHelper.RemoveLabelsFromPackage(
                             await FindLabels(labels!),
                             package!,
                             repo
                         ),
-                    3 => await codeownersManagementHelper.RemoveOwnersFromLabelsAndPathAsync(
-                            await FindOrCreateOwnerWorkItems(githubUsers!),
+                    3 => await codeownersManagementHelper.RemoveOwnersFromLabelsAndPath(
+                            await GetOwnerWorkItems(githubUsers!),
                             await FindLabels(labels!),
                             repo,
-                            null,
-                            ownerType!
-                        ),
-                    4 => await codeownersManagementHelper.RemoveOwnersFromLabelsAndPathAsync(
-                            await FindOrCreateOwnerWorkItems(githubUsers!),
-                            await FindLabels(labels!),
-                            repo,
-                            path!,
+                            path,
                             ownerType!
                         ),
                     _ => new CodeownersModifyResponse { ResponseError = GetScenarioError() }
@@ -972,10 +958,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             if (hasUser && hasPackage && !hasLabel && !hasPath && !hasOwnerType) { return 1; }
             // Scenario 2: label + package only
             if (hasLabel && hasPackage && !hasUser && !hasPath && !hasOwnerType) { return 2; }
-            // Scenario 4: user(s) + label + path + ownerType (path takes priority over scenario 3)
-            if (hasUser && hasLabel && hasOwnerType && hasPath && !hasPackage) { return 4; }
-            // Scenario 3: user(s) + label + ownerType, no path
-            if (hasUser && hasLabel && hasOwnerType && !hasPath && !hasPackage) { return 3; }
+            // Scenario 3 & 4: user(s) + label + ownerType (may or may not have path)
+            if (hasUser && hasLabel && hasOwnerType && !hasPackage) { return 3; }
 
             return null;
         }
@@ -988,7 +972,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             "(4) --github-user + --label + --path + --owner-type.";
 
 
-        private async Task<List<OwnerWorkItem>> GetOwnerWorkItems(string[] ownerAliases)
+        private async Task<OwnerWorkItem[]> GetOwnerWorkItems(string[] ownerAliases)
         {
             var ownerWorkItems = new List<OwnerWorkItem>();
             foreach (var alias in ownerAliases)
@@ -1000,7 +984,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
                 ownerWorkItems.Add(ownerWorkItem);
             }
-            return ownerWorkItems;
+            return ownerWorkItems.ToArray();
         }
 
         private async Task<OwnerWorkItem[]> FindOrCreateOwnerWorkItems(string[] ownerAliases)

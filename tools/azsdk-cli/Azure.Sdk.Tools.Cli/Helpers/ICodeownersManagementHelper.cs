@@ -15,7 +15,7 @@ public interface ICodeownersManagementHelper
     Task<CodeownersViewResponse> GetViewByPackage(string packageName, string? repo = null);
 
     // Find-or-create helpers
-    Task<OwnerWorkItem> FindOrCreateOwnerAsync(string gitHubAlias);
+    Task<OwnerWorkItem> FindOrCreateOwner(string gitHubAlias);
     Task<LabelOwnerWorkItem> FindOrCreateLabelOwnerAsync(
         string repo,
         string ownerType,
@@ -27,12 +27,12 @@ public interface ICodeownersManagementHelper
     Task<LabelWorkItem?> FindLabelByName(string labelName);
 
     // Add scenarios
-    Task<CodeownersModifyResponse> AddOwnersToPackageAsync(OwnerWorkItem[] owners, string packageName, string repo);
-    Task<CodeownersModifyResponse> AddLabelsToPackageAsync(LabelWorkItem[] labels, string packageName, string repo);
-    Task<CodeownersModifyResponse> AddOwnersAndLabelsToPathAsync(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, string ownerType);
+    Task<CodeownersModifyResponse> AddOwnersToPackage(OwnerWorkItem[] owners, string packageName, string repo);
+    Task<CodeownersModifyResponse> AddLabelsToPackage(LabelWorkItem[] labels, string packageName, string repo);
+    Task<CodeownersModifyResponse> AddOwnersAndLabelsToPath(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, string ownerType);
 
     // Remove scenarios
-    Task<CodeownersModifyResponse> RemoveOwnersFromPackageAsync(OwnerWorkItem[] owners, string packageName, string repo);
-    Task<CodeownersModifyResponse> RemoveLabelsFromPackageAsync(LabelWorkItem[] labels, string packageName, string repo);
-    Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPathAsync(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, string ownerType);
+    Task<CodeownersModifyResponse> RemoveOwnersFromPackage(OwnerWorkItem[] owners, string packageName, string repo);
+    Task<CodeownersModifyResponse> RemoveLabelsFromPackage(LabelWorkItem[] labels, string packageName, string repo);
+    Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPath(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, string ownerType);
 }

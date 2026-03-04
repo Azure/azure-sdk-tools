@@ -10,35 +10,27 @@
         [showLeftNavigation]="showLeftNavigation"
         (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
         (showLeftNavigationEmitter)="handleLeftNavigationEmitter($event)"></app-review-info>
+    <nav class="page-tabs" aria-label="Review navigation">
+        <button class="page-tab" [class.active]="activePage === 'reviews'" (click)="navigateToReviewsEmitter.emit()" title="View API review code">
+            <i class="bi bi-code-slash"></i>
+            <span>API</span>
+        </button>
+        <button class="page-tab" [class.active]="activePage === 'conversations'" (click)="navigateToConversationsEmitter.emit()" title="View comment threads ({{ conversationCount }} active)">
+            <i class="bi bi-chat-dots"></i>
+            <span>Comments</span>
+            <span *ngIf="conversationCount > 0" class="tab-badge">{{ conversationCount }}</span>
+        </button>
+        <button class="page-tab" [class.active]="activePage === 'samples'" (click)="navigateToSamplesEmitter.emit()" title="View code samples ({{ samplesRevisionCount }} revisions)">
+            <i class="bi bi-journal-code"></i>
+            <span>Samples</span>
+            <span *ngIf="samplesRevisionCount > 0" class="tab-badge">{{ samplesRevisionCount }}</span>
+        </button>
+        <button class="page-tab" [class.active]="activePage === 'revisions'" (click)="navigateToRevisionsEmitter.emit()" title="View API revisions history">
+            <i class="bi bi-clock-history"></i>
+            <span>Revisions</span>
+        </button>
+    </nav>
     <div class="layout-body">
-        <nav class="sidebar-rail" aria-label="Review navigation">
-            <button class="rail-item" [class.active]="activePage === 'reviews'" (click)="navigateToReviewsEmitter.emit()" title="View API review code">
-                <div class="rail-icon-wrap">
-                    <i class="bi bi-code-slash"></i>
-                </div>
-                <span class="rail-label">API</span>
-            </button>
-            <button class="rail-item" [class.active]="activePage === 'conversations'" (click)="navigateToConversationsEmitter.emit()" title="View comment threads ({{ conversationCount }} active)">
-                <div class="rail-icon-wrap">
-                    <i class="bi bi-chat-dots"></i>
-                    <span *ngIf="conversationCount > 0" class="rail-badge">{{ conversationCount }}</span>
-                </div>
-                <span class="rail-label">Comments</span>
-            </button>
-            <button class="rail-item" [class.active]="activePage === 'samples'" (click)="navigateToSamplesEmitter.emit()" title="View code samples ({{ samplesRevisionCount }} revisions)">
-                <div class="rail-icon-wrap">
-                    <i class="bi bi-journal-code"></i>
-                    <span *ngIf="samplesRevisionCount > 0" class="rail-badge">{{ samplesRevisionCount }}</span>
-                </div>
-                <span class="rail-label">Samples</span>
-            </button>
-            <button class="rail-item" [class.active]="activePage === 'revisions'" (click)="navigateToRevisionsEmitter.emit()" title="View API revisions history">
-                <div class="rail-icon-wrap">
-                    <i class="bi bi-clock-history"></i>
-                </div>
-                <span class="rail-label">Revisions</span>
-            </button>
-        </nav>
         <div class="layout-content">
             <ng-content></ng-content>
         </div>

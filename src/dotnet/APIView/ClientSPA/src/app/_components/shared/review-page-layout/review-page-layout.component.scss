@@ -1,5 +1,74 @@
 :host ::ng-deep {
 
+    .page-tabs {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--base-fg-color);
+        padding: 0 0.5rem;
+    }
+
+    .page-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.75rem;
+        border: none;
+        background: transparent;
+        color: var(--text-muted-color);
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.15s;
+        white-space: nowrap;
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0.5rem;
+            right: 0.5rem;
+            height: 2px;
+            background: transparent;
+            border-radius: 2px 2px 0 0;
+            transition: background 0.15s;
+        }
+
+        &:hover:not(.active) {
+            color: var(--base-text-color);
+        }
+
+        &.active {
+            color: var(--primary-color);
+
+            &::after {
+                background: var(--primary-color);
+            }
+        }
+
+        i {
+            font-size: 0.85rem;
+        }
+    }
+
+    .tab-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        font-weight: 700;
+        min-width: 1.15rem;
+        height: 1.15rem;
+        line-height: 1;
+        text-align: center;
+        border-radius: 50%;
+        background: var(--red-500, #ef4444);
+        color: #fff;
+        margin-left: 0.1rem;
+    }
+
     .layout-body {
         display: flex;
         align-items: flex-start;
@@ -10,76 +79,5 @@
     .layout-content {
         flex: 1;
         min-width: 0;
-    }
-
-    .sidebar-rail {
-        display: flex;
-        flex-direction: column;
-        width: 4.2rem;
-        flex-shrink: 0;
-        background: var(--base-fg-color);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 0.25rem 0;
-        margin-right: 5px;
-    }
-
-    .rail-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1px;
-        padding: 0.45rem 0.25rem;
-        border: none;
-        background: transparent;
-        color: var(--text-muted-color);
-        cursor: pointer;
-        position: relative;
-        transition: color 0.15s, background 0.15s;
-        border-left: 2px solid transparent;
-
-        &:hover:not(.active) {
-            color: var(--base-text-color);
-            background: var(--surface-50);
-        }
-
-        &.active {
-            color: var(--primary-color);
-            border-left-color: var(--primary-color);
-            background: var(--surface-50);
-        }
-    }
-
-    .rail-icon-wrap {
-        position: relative;
-        display: inline-flex;
-        font-size: 1.25rem;
-        line-height: 1;
-    }
-
-    .rail-label {
-        font-size: 0.6rem;
-        font-weight: 500;
-        line-height: 1;
-        letter-spacing: 0.01em;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 3.8rem;
-    }
-
-    .rail-badge {
-        position: absolute;
-        top: -0.45rem;
-        right: -0.55rem;
-        font-size: 0.6rem;
-        font-weight: 700;
-        min-width: 1rem;
-        height: 1rem;
-        line-height: 1rem;
-        text-align: center;
-        border-radius: 50%;
-        background: var(--red-500, #ef4444);
-        color: #fff;
     }
 }

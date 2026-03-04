@@ -18,7 +18,7 @@ var typespecSources = []model.Source{
 	model.Source_AzureResourceManagerRPC,
 	model.Source_AzureAPIGuidelines,
 	model.Source_TypeSpecAzure,
-	model.Source_TypeSpecQA,
+	// model.Source_TypeSpecQA, // temporarily disabled
 	model.Source_TypeSpecAzureHttpSpecs,
 	model.Source_TypeSpec,
 	model.Source_AzureRestAPISpec,
@@ -32,7 +32,7 @@ var azureTypespecAuthoringSources = []model.Source{
 	model.Source_AzureAPIGuidelines,
 	model.Source_AzureResourceManagerRPC,
 	model.Source_TypeSpecAzure,
-	model.Source_TypeSpecQA,
+	// model.Source_TypeSpecQA, // temporarily disabled
 	model.Source_TypeSpecAzureHttpSpecs,
 	model.Source_TypeSpec,
 	model.Source_AzureRestAPISpec,
@@ -44,7 +44,7 @@ var azureTypespecAuthoringSources = []model.Source{
 
 var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
-	model.Source_TypeSpecQA:                     3,
+	// model.Source_TypeSpecQA:                     3, // temporarily disabled
 	model.Source_StaticTypeSpecToSwaggerMapping: 3,
 	model.Source_AzureOpenapiDiffDocs:           3,
 }

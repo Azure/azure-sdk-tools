@@ -59,8 +59,8 @@ union Source {
   @doc("Azure SDK for Python wiki")
   AzureSDKForPythonWiki: "azure_sdk_for_python_wiki",
   
-  @doc("Existed TypeSpec Q&A")
-  StaticTypeSpecQA: "static_typespec_qa",
+  // @doc("Existed TypeSpec Q&A") // temporarily disabled
+  // StaticTypeSpecQA: "static_typespec_qa",
   
   @doc("Azure API guidelines")
   AzureAPIGuidelines: "azure_api_guidelines",

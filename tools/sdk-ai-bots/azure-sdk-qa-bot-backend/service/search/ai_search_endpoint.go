@@ -245,7 +245,9 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	var chunks []model.Index
 	var err error
 	switch chunk.ContextID {
-	case model.Source_TypeSpecQA, model.Source_TypeSpecMigration:
+	// case model.Source_TypeSpecQA: // temporarily disabled
+	// 	chunks, err = s.CompleteChunkByHierarchy(chunk, model.HierarchyHeader1)
+	case model.Source_TypeSpecMigration:
 		chunks, err = s.CompleteChunkByHierarchy(chunk, model.HierarchyHeader1)
 	case model.Source_StaticTypeSpecToSwaggerMapping:
 		chunks, err = s.CompleteChunkByHierarchy(chunk, model.HierarchyHeader2)
@@ -517,7 +519,13 @@ func (s *SearchClient) DeduplicateExpansions(expansions []model.ChunkWithExpansi
 // DetermineChunkExpansion determines the expansion type for a given chunk based on its source and hierarchy
 func (s *SearchClient) DetermineChunkExpansion(chunk model.Index) model.ChunkWithExpansion {
 	// Static chunks specific expansion rules
-	if chunk.ContextID == model.Source_TypeSpecQA || chunk.ContextID == model.Source_TypeSpecMigration {
+	// if chunk.ContextID == model.Source_TypeSpecQA { // temporarily disabled
+	// 	return model.ChunkWithExpansion{
+	// 		Chunk:     chunk,
+	// 		Expansion: model.ExpansionQA,
+	// 	}
+	// }
+	if chunk.ContextID == model.Source_TypeSpecMigration {
 		return model.ChunkWithExpansion{
 			Chunk:     chunk,
 			Expansion: model.ExpansionQA,

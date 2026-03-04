@@ -23,7 +23,7 @@ const (
 	Source_AzureRestAPISpec                Source = "azure_rest_api_specs_wiki"
 	Source_AzureSDKForPython               Source = "azure_sdk_for_python_docs"
 	Source_AzureSDKForPythonWiki           Source = "azure_sdk_for_python_wiki"
-	Source_TypeSpecQA                      Source = "static_typespec_qa"
+	// Source_TypeSpecQA                      Source = "static_typespec_qa" // temporarily disabled
 	Source_AzureAPIGuidelines              Source = "azure_api_guidelines"
 	Source_AzureResourceManagerRPC         Source = "azure_resource_manager_rpc"
 	Source_TypeSpecMigration               Source = "static_typespec_migration_docs"

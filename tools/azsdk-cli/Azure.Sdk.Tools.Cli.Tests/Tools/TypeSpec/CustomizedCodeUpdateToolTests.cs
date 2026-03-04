@@ -234,10 +234,10 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task Classification_OnlyNonTspItems_BuildSucceeds_ReturnsSuccess()
+    public async Task Classification_OnlyNonTspItems_ReturnsSuccess()
     {
         // When all items are SUCCESS or REQUIRES_MANUAL_INTERVENTION,
-        // no TSP customizations are attempted, but build proceeds.
+        // no TSP customizations are attempted. Returns success with manual intervention info.
         var (tool, _) = CreateTool(configureClassifier: c =>
             c.Setup(x => x.ClassifyItemsAsync(
                     It.IsAny<List<FeedbackItem>>(),
@@ -269,6 +269,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
         Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("manual intervention"));
     }
 
     [Test]
@@ -351,7 +352,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed));
-        Assert.That(result.BuildResult, Does.Contain("Could not parse TypeSpec project"));
+        Assert.That(result.Message, Does.Contain("Could not parse TypeSpec project"));
     }
 
     [Test]
@@ -412,7 +413,7 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task TspRegeneration_Fails_ReturnsTypeSpecCustomizationFailed()
+    public async Task TspRegeneration_Fails_ReturnsRegenerateFailed()
     {
         var failingTsp = new MockTspHelper(updateSuccess: false, updateError: "tsp-client failed: exit code 1");
         var (tool, _) = CreateTool(tspHelper: failingTsp);
@@ -422,8 +423,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
-        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed));
-        Assert.That(result.BuildResult, Does.Contain("Regeneration failed"));
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed));
+        Assert.That(result.Message, Does.Contain("Regeneration failed"));
     }
 
     // ========================================================================
@@ -604,7 +605,7 @@ public class CustomizedCodeUpdateToolAutoTests
         // Build fails first time, so second iteration should include context
         var buildCalls = 0;
         var classifyCalls = 0;
-        string? secondCallFeedback = null;
+        string? secondCallContext = null;
 
         var svc = new ConfigurableLanguageService(buildFunc: () =>
         {
@@ -625,24 +626,26 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Callback<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
                         (items, _, _, _, _, _, _) =>
                         {
                             classifyCalls++;
                             if (classifyCalls == 2)
-                                secondCallFeedback = items.FirstOrDefault()?.Text;
-                        })
-                    .ReturnsAsync(new FeedbackClassificationResponse
-                    {
-                        Classifications =
-                        [
-                            new FeedbackClassificationResponse.ItemClassificationDetails
+                                secondCallContext = items.FirstOrDefault()?.Context;
+
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            return Task.FromResult(new FeedbackClassificationResponse
                             {
-                                ItemId = "1", Classification = "TSP_APPLICABLE",
-                                Reason = "fixable", Text = "rename FooClient"
-                            }
-                        ]
-                    }));
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                        Reason = "fixable", Text = "rename FooClient"
+                                    }
+                                ]
+                            });
+                        }));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
@@ -651,12 +654,11 @@ public class CustomizedCodeUpdateToolAutoTests
             customizationRequest: "Rename FooClient to BarClient", ct: CancellationToken.None);
 
         Assert.That(classifyCalls, Is.EqualTo(2));
-        Assert.That(secondCallFeedback, Does.Contain("ITERATION 1"));
-        Assert.That(secondCallFeedback, Does.Contain("CHANGES MADE:"));
-        Assert.That(secondCallFeedback, Does.Contain("Renamed FooClient to BarClient"));
-        Assert.That(secondCallFeedback, Does.Contain("BUILD OUTPUT:"));
-        Assert.That(secondCallFeedback, Does.Contain("error CS0246"));
-        Assert.That(secondCallFeedback, Does.Contain("Rename FooClient to BarClient")); // original request preserved
+        Assert.That(secondCallContext, Does.Contain("Iteration 1"));
+        Assert.That(secondCallContext, Does.Contain("Typespec changes applied"));
+        Assert.That(secondCallContext, Does.Contain("Renamed FooClient to BarClient"));
+        Assert.That(secondCallContext, Does.Contain("Build Result"));
+        Assert.That(secondCallContext, Does.Contain("error CS0246"));
     }
 
     [Test]
@@ -706,10 +708,9 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task Regeneration_UsesSpecRepoRootNotProjectPath()
+    public async Task Regeneration_UsesTspProjectPath()
     {
-        // Verify that DiscoverRepoRootAsync is called on the tsp project path
-        // and the result is passed to UpdateGenerationAsync as localSpecRepoPath
+        // Verify that UpdateGenerationAsync receives the tspProjectPath as localSpecRepoPath
         string? capturedLocalSpecRepo = null;
         var tsp = new Mock<ITspClientHelper>();
         tsp.Setup(t => t.UpdateGenerationAsync(
@@ -728,8 +729,8 @@ public class CustomizedCodeUpdateToolAutoTests
 
         await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
 
-        Assert.That(capturedLocalSpecRepo, Is.EqualTo("/mock/repo/root"),
-            "Should pass the discovered repo root as localSpecRepoPath, not the project directory");
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(tspDir),
+            "Should pass the tspProjectPath as localSpecRepoPath");
     }
 
     // ========================================================================

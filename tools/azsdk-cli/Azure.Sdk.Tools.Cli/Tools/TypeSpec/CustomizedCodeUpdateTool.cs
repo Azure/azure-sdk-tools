@@ -32,6 +32,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     private const string CustomizedCodeUpdateToolName = "azsdk_customized_code_update";
     private const int CommandTimeoutInMinutes = 30;
+
+    // Classification categories returned by the classifier
+    private const string ClassificationTspApplicable = "TSP_APPLICABLE";
+    private const string ClassificationRequiresManualIntervention = "REQUIRES_MANUAL_INTERVENTION";
+    private const string ClassificationSuccess = "SUCCESS";
     
     /// <summary>
     /// Initializes a new instance of the <see cref="CustomizedCodeUpdateTool"/> class.
@@ -162,8 +167,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
         List<string> changesMade = new();
-        StringBuilder noActionNeeded = new();
-        noActionNeeded.AppendLine("The following feedback items were classified as SUCCESS (no changes needed):");
         List<string> manualInterventions = new();
         StringBuilder tspFixFailedReasons = new();
         do
@@ -202,7 +205,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 // For now, if feedback item isn't found we just won't append context
                 feedbackItem?.AppendContext($"Iteration {tries+1}");
 
-                if (itemDetails.Classification == "TSP_APPLICABLE")
+                if (itemDetails.Classification == ClassificationTspApplicable)
                 {
                     tspApplicable++;
                     var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, itemDetails.Text, ct: ct);
@@ -220,7 +223,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                         tspFixFailedReasons.Append("; ");
                         tspFixFailed++;
                     }
-                } else if (itemDetails.Classification == "REQUIRES_MANUAL_INTERVENTION")
+                } else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
                 {
                     manualChanges++;
                     manualInterventions.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
@@ -228,13 +231,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     // Don't try and fix the same feedback again
                     feedbackDictionary.Remove(itemDetails.ItemId);
                 }
-                else if (itemDetails.Classification == "SUCCESS")
+                else if (itemDetails.Classification == ClassificationSuccess)
                 {
                     noChanges++;
-
-                    noActionNeeded.Append(itemDetails.Text);
-                    noActionNeeded.Append("' Reason: ");
-                    noActionNeeded.AppendLine(itemDetails.Reason);
 
                     // Don't try and fix the same feedback again
                     feedbackDictionary.Remove(itemDetails.ItemId);
@@ -249,9 +248,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 {
                     return new CustomizedCodeUpdateResponse
                     {
-                        Success = false,
-                        Message = "None of the requested changes could be fixed with TypeSpec customizations",
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired,
+                        Success = true,
+                        Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
                         NextSteps = manualInterventions
                     };
                 }
@@ -262,7 +260,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     return new CustomizedCodeUpdateResponse
                     {
                         Success = true,
-                        Message = $"All feedback items were classified as SUCCESS (no changes needed):{Environment.NewLine}{noActionNeeded}"
+                        Message = "No changes needed — the requested customizations are already in place."
                     };
                 }
 
@@ -283,7 +281,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 logger.LogWarning("Some customizations failed to apply: {FailureReasons}", tspFixFailedReasons);
             }
 
-            // Don't waste time regenerating if no TSP files were successfully applied
+            // Don't waste time regenerating if no TSP fixes were successfully applied
             if (tspFixSucceeded > 0)
             {
                 // Regenerate SDK using local spec repo
@@ -308,15 +306,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             buildError = error;
 
             // Append build result context to all remaining feedback items for the next iteration
-            var buildContext = success ? "Build succeeded." : (error ?? "Build failed with unknown error.");
-            feedbackDictionary.Values.ToList().ForEach(item => item.AppendContext(buildContext, "Build Result"));
+            if (tries + 1 < maxTries)
+            {
+                var buildContext = success ? "Build succeeded." : (error ?? "Build failed with unknown error.");
+                feedbackDictionary.Values.ToList().ForEach(item => item.AppendContext(buildContext, "Build Result"));
+            }
 
             tries++;
         } while (buildSucceeded == false && tries < maxTries);
 
         if (buildSucceeded)
         {
-            logger.LogInformation("Build passed - ");
+            logger.LogInformation("Build passed after Typespec customizations.");
             return new CustomizedCodeUpdateResponse
             {
                 Success = true,
@@ -466,10 +467,5 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             logger.LogError(ex, "Classification failed");
             throw;
         }
-    }
-
-    private string CreateOutputString(StringBuilder manualInterventionNeeded, StringBuilder noChangesNeeded)
-    {
-        return string.Empty;
     }
 }

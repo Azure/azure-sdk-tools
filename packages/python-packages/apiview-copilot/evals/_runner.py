@@ -343,9 +343,13 @@ class EvaluationRunner:
                 raw = result.raw_results[0]
                 for filename, eval_result in raw.items():
                     for res in eval_result["rows"]:
-                        testcase = res["inputs.testcase"]
-                        score = res["outputs.metrics.score"]
-                        success = res["outputs.metrics.success"]
+                        testcase = res.get("inputs.testcase", "unknown")
+                        score = res.get("outputs.metrics.score")
+                        success = res.get("outputs.metrics.success", False)
+
+                        if score is None:
+                            failed_tests.append((testcase, 0))
+                            continue
 
                         if success:
                             if score < 100:

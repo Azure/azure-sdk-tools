@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.Graph.Models;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
@@ -65,13 +66,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     private readonly Option<string> customizationRequestOption = new("--customization-request")
     {
         Description = "Description of the requested customization to apply to the TypeSpec.",
-        Arity = ArgumentArity.ExactlyOne
+        Arity = ArgumentArity.ExactlyOne,
+        Required = true
     };
 
     private readonly Option<string> typespecProjectPath = new("--tsp-project-path")
     {
         Description = "Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied.",
-        Arity = ArgumentArity.ExactlyOne
+        Arity = ArgumentArity.ExactlyOne,
+        Required = true
     };
 
     protected override Command GetCommand() =>
@@ -146,17 +149,26 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         // Get language info
         var languageService = await GetLanguageServiceAsync(packagePath, ct);
-
+        // TODO - do this once we add API view option
+        // var language = await feedbackService.GetLanguageAsync(apiViewUrl, ct);
 
         // Step 1: try tsp fixes
         var tries = 0;
-        var feedbackToAddress = customizationRequest;
         var maxTries = 2;
         bool buildSucceeded = false;
         string? buildError = null;
+
+        var feedbackItems = await GetFeedbackItems(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
+        var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
+
+        List<string> changesMade = new();
+        StringBuilder noActionNeeded = new();
+        StringBuilder manualInterventions = new();
+        StringBuilder tspFixFailedReasons = new();
         do
         {
-            var response = await Classify(tspProjectPath, plainTextFeedback: feedbackToAddress, ct: ct);
+            // TODO - need to fix this to avoid casting to/from list
+            var response = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: "", tspProjectPath, ct: ct);
 
             if (response.Classifications == null || response.Classifications.Count == 0)
             {
@@ -176,64 +188,104 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 break;
             }
 
-            var failed = 0;
-            var succeeded = 0;
-            var attempted = 0;
-            StringBuilder failureReasons = new();
-            StringBuilder changesMade = new();
+            var tspFixFailed = 0;
+            var tspFixSucceeded = 0;
+            var tspApplicable = 0;
+            var manualChanges = 0;
+            var noChanges = 0;
 
-            foreach (var feedbackItem in response.Classifications)
+            foreach (var itemDetails in response.Classifications)
             {
-                if (feedbackItem.Classification == "TSP_APPLICABLE")
+                feedbackDictionary.TryGetValue(itemDetails.ItemId, out var feedbackItem);
+
+                // For now, if feedback item isn't found we just won't append context
+                feedbackItem?.AppendContext($"Iteration {tries+1}");
+
+                if (itemDetails.Classification == "TSP_APPLICABLE")
                 {
-                    attempted++;
+                    tspApplicable++;
                     var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, feedbackItem.Text, ct: ct);
 
                     if (tspCustomizationResult.Success)
                     {
-                        var newChanges = string.Join("; ", tspCustomizationResult.ChangesSummary);
-                        if (changesMade.Length > 0)
-                        {
-                            changesMade.AppendLine();
-                        }
-                        changesMade.Append(newChanges);
-                        succeeded++;
+                        var changes = string.Join("; ", tspCustomizationResult.ChangesSummary);
+                        feedbackItem?.AppendContext(changes, "Typespec changes applied");
+                        changesMade.AddRange(tspCustomizationResult.ChangesSummary);
+                        tspFixSucceeded++;
                     }
                     else
                     {
-                        failureReasons.Append(tspCustomizationResult.FailureReason);
-                        failureReasons.Append("; ");
-                        failed++;
+                        tspFixFailedReasons.Append(tspCustomizationResult.FailureReason);
+                        tspFixFailedReasons.Append("; ");
+                        tspFixFailed++;
                     }
+                } else if (itemDetails.Classification == "REQUIRES_MANUAL_INTERVENTION")
+                {
+                    manualChanges++;
+
+                    manualInterventions.Append(itemDetails.Text);
+                    manualInterventions.Append("' Reason: ");
+                    manualInterventions.AppendLine(itemDetails.Reason);
+
+                    // Don't try and fix the same feedback again
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                }
+                else if (itemDetails.Classification == "SUCCESS")
+                {
+                    noChanges++;
+
+                    noActionNeeded.Append(itemDetails.Text);
+                    noActionNeeded.Append("' Reason: ");
+                    noActionNeeded.AppendLine(itemDetails.Reason);
+
+                    // Don't try and fix the same feedback again
+                    feedbackDictionary.Remove(itemDetails.ItemId);
                 }
             }
 
-            // On the first attempt, if none of the attempted TSP changes succeeded, fail early.
-            // On later attempts we already had successful changes from a prior iteration, so
-            // we fall through to build and then attempt code customizations.
-            if (succeeded == 0 && attempted > 0 && tries == 0)
+            // Exit cases for the first attempt
+            if (tries == 0)
             {
-                return new CustomizedCodeUpdateResponse
+                // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
+                if (tspApplicable == 0 && manualChanges > 0)
                 {
-                    Success = false,
-                    Message = $"Failed to apply TypeSpec customizations: {failureReasons}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed,
-                    BuildResult = $"Failed to apply TypeSpec customizations: {failureReasons}",
-                };
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Success = false,
+                        Message = CreateOutputString(manualInterventions, noActionNeeded),
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
+                    };
+                }
+
+                // Everything was classified as success
+                if (tspApplicable == 0 && noChanges > 0)
+                {
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Success = true,
+                        Message = CreateOutputString(manualInterventions, noActionNeeded),
+                    };
+                }
+
+                // All tsp fixes failed to be applied - signaling a deeper error
+                if (tspFixSucceeded == 0)
+                {
+                    return new CustomizedCodeUpdateResponse
+                    {
+                        Success = false,
+                        Message = $"Failed to apply any TypeSpec customizations: {tspFixFailedReasons}",
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed
+                    };
+                }
             }
 
-            if (failed > 0)
+            if (tspFixFailed > 0)
             {
-                logger.LogWarning("Some customizations failed to apply: {FailureReasons}", failureReasons.ToString());
+                logger.LogWarning("Some customizations failed to apply: {FailureReasons}", tspFixFailedReasons);
             }
-
-            // Resolve the spec repo root from the TypeSpec project path.
-            // tsp-client's --local-spec-repo expects the repo root, not the project subdirectory.
-            var specRepoRoot = await gitHelper.DiscoverRepoRootAsync(tspProjectPath, ct);
-            logger.LogInformation("Resolved spec repo root: {RepoRoot} from project path: {ProjectPath}", specRepoRoot, tspProjectPath);
 
             // Regenerate SDK using local spec repo
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: specRepoRoot, isCli: false, ct: ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
@@ -241,8 +293,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 {
                     Success = false,
                     Message = $"Regeneration failed: {regenResult.ResponseError}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed,
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed,
                     BuildResult = $"Regeneration failed: {regenResult.ResponseError}",
+                    TypeSpecChangesSummary = changesMade
                 };
             }
 
@@ -250,38 +303,21 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
             buildSucceeded = success;
             buildError = error;
+
+            // Append build result context to all remaining feedback items for the next iteration
+            var buildContext = success ? "Build succeeded." : (error ?? "Build failed with unknown error.");
+            feedbackDictionary.Values.ToList().ForEach(item => item.AppendContext(buildContext, "Build Result"));
+
             tries++;
-
-            if (!buildSucceeded && tries < maxTries)
-            {
-                StringBuilder iterationContext = new();
-
-                iterationContext.AppendLine(customizationRequest);
-                iterationContext.AppendLine($"---- ITERATION {tries} -------");
-                if (changesMade.Length > 0)
-                {
-                    iterationContext.AppendLine("CHANGES MADE:");
-                    iterationContext.Append(changesMade);
-                    iterationContext.AppendLine();
-                }
-                if (failureReasons.Length > 0)
-                {
-                    iterationContext.AppendLine($"CUSTOMIZATIONS THAT FAILED TO APPLY ({failed} of {attempted}):");
-                    iterationContext.AppendLine(failureReasons.ToString());
-                }
-                iterationContext.AppendLine($"BUILD OUTPUT: {error}");
-
-                feedbackToAddress = iterationContext.ToString();
-            }
         } while (buildSucceeded == false && tries < maxTries);
 
         if (buildSucceeded)
         {
-            logger.LogInformation("Build passed - no repairs needed.");
+            logger.LogInformation("Build passed - ");
             return new CustomizedCodeUpdateResponse
             {
                 Success = true,
-                Message = "Build passed - no repairs needed."
+                Message = "Build passed after attempting Type"
             };
         }
 
@@ -382,13 +418,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE
     /// (can be resolved with TSP customizations), SUCCESS (no action needed), or REQUIRES_MANUAL_INTERVENTION (requires manual code customizations).
     /// </summary>
-    private async Task<FeedbackClassificationResponse> Classify(
+    private async Task<List<FeedbackItem>> GetFeedbackItems(
         string tspProjectPath,
         string? apiViewUrl = default,
         string? plainTextFeedback = default,
         string? plainTextFeedbackFile = default,
-        string? language = default,
-        string? serviceName = default,
         CancellationToken ct = default)
     {
         try
@@ -414,19 +448,23 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (!string.IsNullOrWhiteSpace(apiViewUrl))
             {
                 feedbackItems = await feedbackService.GetFeedbackItemsAsync(apiViewUrl, ct);
-                language ??= await feedbackService.GetLanguageAsync(apiViewUrl, ct);
             }
             else if (!string.IsNullOrWhiteSpace(plainTextFeedback))
             {
                 feedbackItems = [new FeedbackItem { Text = plainTextFeedback, Context = string.Empty }];
             }
 
-            return await _classifierService.ClassifyItemsAsync(feedbackItems, globalContext: "", tspProjectPath, language, serviceName, ct: ct);
+            return feedbackItems;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Classification failed");
             throw;
         }
+    }
+
+    private string CreateOutputString(StringBuilder manualInterventionNeeded, StringBuilder noChangesNeeded)
+    {
+        return string.Empty;
     }
 }

@@ -45,7 +45,8 @@
     "yargs": "^17.7.2"
   },
   "overrides": {
-    "glob": "^9.0.0"
+    "glob": "^9.0.0",
+    "minimatch": "^10.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",

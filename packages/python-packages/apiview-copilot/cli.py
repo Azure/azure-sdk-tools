@@ -132,16 +132,14 @@ helps[
     "prompt"
 ] = """
     type: group
-    short-summary: Commands for testing and running prompty files.
+    short-summary: Commands for testing prompt template files.
 """
 
 # COMMANDS
 
 
 def prompt_test(path: str):
-    """
-    Execute a .prompty file using its sample inputs and print the result.
-    """
+    """Run a single prompt file with its sample inputs and print the result."""
     from src._prompt_runner import _execute_prompt_template
 
     prompty_path = pathlib.Path(path)
@@ -156,6 +154,91 @@ def prompt_test(path: str):
     print("-" * 60)
     result = _execute_prompt_template(str(prompty_path))
     print(result)
+
+
+def prompt_test_all(workers: int = 4):
+    """Smoke-test all prompt files to verify none throw exceptions.
+
+    NOTE: A passing result only means the prompt executed without errors.
+    It does NOT verify that the prompt produces correct or intended output.
+    Use 'avc prompt test -p <file>' to inspect individual outputs.
+    """
+    import glob
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    from src._prompt_runner import _execute_prompt_template
+
+    prompts_dir = pathlib.Path(__file__).parent / "prompts"
+    prompty_files = sorted(glob.glob(str(prompts_dir / "**" / "*.prompty"), recursive=True))
+
+    if not prompty_files:
+        print("No .prompty files found.")
+        return
+
+    BOLD = "\033[1m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RESET = "\033[0m"
+
+    print(f"{'=' * 60}")
+    print("prompt smoke test")
+    print(f"{'=' * 60}")
+    print(f"{YELLOW}NOTE: A passing result means the prompt executed without errors.")
+    print(f"It does NOT verify that the prompt produces correct or intended output.")
+    print(f"Use 'avc prompt test -p <file>' to inspect individual outputs.{RESET}")
+    print()
+    print(f"{BOLD}collected {len(prompty_files)} prompt files{RESET}")
+    print()
+
+    results = []
+
+    def _run_one(filepath: str) -> tuple[str, bool, str]:
+        rel = pathlib.Path(filepath).relative_to(pathlib.Path(__file__).parent)
+        try:
+            _execute_prompt_template(filepath)
+            return (str(rel), True, "")
+        except Exception as exc:
+            return (str(rel), False, str(exc))
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        future_to_file = {
+            executor.submit(_run_one, f): f for f in prompty_files
+        }
+        for future in as_completed(future_to_file):
+            rel_path, passed, error = future.result()
+            results.append((rel_path, passed, error))
+            status = f"{GREEN}PASS{RESET}" if passed else f"{RED}FAIL{RESET}"
+            print(f"  {status} {rel_path}")
+
+    # Sort results for consistent display in summary
+    results.sort(key=lambda r: r[0])
+    passed = [r for r in results if r[1]]
+    failed = [r for r in results if not r[1]]
+
+    # Summary
+    print()
+    if failed:
+        print(f"{RED}{BOLD}{'=' * 60}")
+        print("FAILURES")
+        print(f"{'=' * 60}{RESET}")
+        for rel_path, _, error in failed:
+            print(f"  {RED}{rel_path}{RESET}")
+            print(f"    {error}")
+            print()
+
+    print(f"{'=' * 60}")
+    print("smoke test summary")
+    print(f"{'=' * 60}")
+    summary_parts = []
+    if passed:
+        summary_parts.append(f"{GREEN}{len(passed)} passed{RESET}")
+    if failed:
+        summary_parts.append(f"{RED}{len(failed)} failed{RESET}")
+    print(f"{', '.join(summary_parts)}, {len(results)} total")
+
+    if failed:
+        sys.exit(1)
 
 
 def _local_review(
@@ -242,6 +325,24 @@ def run_evals(
         runner.show_results(results)
     finally:
         runner.cleanup()
+
+
+def run_all_evals(
+    num_runs: int = 1,
+    save: bool = False,
+    use_recording: bool = False,
+    style: str = "compact",
+):
+    """
+    Runs all evaluation workflows (equivalent to `avc eval run -p evals/tests`).
+    """
+    run_evals(
+        test_paths=[],
+        num_runs=num_runs,
+        save=save,
+        use_recording=use_recording,
+        style=style,
+    )
 
 
 def deploy_flask_app():
@@ -1606,6 +1707,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("run", "run_evals")
+            g.command("run-all", "run_all_evals")
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
@@ -1627,6 +1729,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("revoke", "revoke_permissions")
         with CommandGroup(self, "prompt", "__main__#{}") as g:
             g.command("test", "prompt_test")
+            g.command("test-all", "prompt_test_all")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -1772,6 +1875,24 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--test-paths", "-p"],
                 default=[],
                 help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
+            )
+            ac.argument(
+                "use_recording",
+                options_list=["--use-recording"],
+                action="store_true",
+                help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
+            )
+            ac.argument(
+                "style",
+                options_list=["--style", "-s"],
+                type=str,
+                choices=["compact", "verbose"],
+                default="compact",
+                help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
+            )
+        with ArgumentsContext(self, "eval run-all") as ac:
+            ac.argument(
+                "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run each test case."
             )
             ac.argument(
                 "use_recording",
@@ -2101,6 +2222,14 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 options_list=["--path", "-p"],
                 help="Path to the .prompty file to test.",
+            )
+        with ArgumentsContext(self, "prompt test-all") as ac:
+            ac.argument(
+                "workers",
+                type=int,
+                options_list=["--workers", "-w"],
+                default=4,
+                help="Number of parallel workers for executing prompts (default: 4).",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

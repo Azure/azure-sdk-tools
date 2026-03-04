@@ -201,7 +201,7 @@ class BaseEvaluator(ABC):
         pass
 
 
-class PromptyEvaluator(BaseEvaluator):
+class PromptEvaluator(BaseEvaluator):
     def __init__(self, config, jsonl_file=None):
         self.config = config
         self._jsonl_file = jsonl_file
@@ -243,7 +243,7 @@ class PromptyEvaluator(BaseEvaluator):
         actual_rationale = actual_data.get("rationale", "").strip() if isinstance(actual_data, dict) else ""
 
         if expected_rationale or actual_rationale:
-            similarity_result = SimilarityEvaluator(model_config=self._model_config)(
+            similarity_result = SimilarityEvaluator(model_config=self._model_config, is_reasoning_model=True)(
                 response=actual_rationale,
                 query="",  # not used for rationale
                 ground_truth=expected_rationale,
@@ -360,13 +360,13 @@ class PromptyEvaluator(BaseEvaluator):
         return workflow_targets[workflow_name]
 
 
-class PromptySummaryEvaluator(PromptyEvaluator):
-    """Evaluator for summarization prompts using Prompty."""
+class PromptSummaryEvaluator(PromptEvaluator):
+    """Evaluator for summarization prompts."""
 
     def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
         expected_summary = response.strip()
         actual_summary = actual.strip()
-        similarity_result = SimilarityEvaluator(model_config=self._model_config)(
+        similarity_result = SimilarityEvaluator(model_config=self._model_config, is_reasoning_model=True)(
             response=actual_summary,
             query=expected_summary,
             ground_truth=expected_summary,

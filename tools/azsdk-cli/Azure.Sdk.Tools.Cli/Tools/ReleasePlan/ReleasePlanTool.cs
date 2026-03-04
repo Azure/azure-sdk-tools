@@ -60,7 +60,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string UpdateApiSpecPullRequestToolName = "azsdk_update_api_spec_pull_request_in_release_plan";
         private const string GetServiceDetailsToolName = "azsdk_get_service_details_by_typespec_path";
         private const string AbandonReleasePlanToolName = "azsdk_abandon_release_plan";
-        private const string GetReleasePlanForSpecPathToolName = "azsdk_get_release_plan_for_spec_path";
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new("--release-plan-id", "--release-plan")
@@ -368,38 +367,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
 
         [McpServerTool(Name = GetReleasePlanForSpecPrToolName), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
-        public async Task<ReleaseWorkflowResponse> GetReleasePlanForPullRequest(string pullRequestLink)
+        public async Task<ReleasePlanResponse> GetReleasePlanForPullRequest(string pullRequestLink)
         {
             try
             {
                 ValidatePullRequestUrl(pullRequestLink);
-                var releasePlan = await devOpsService.GetReleasePlanAsync(pullRequestLink) ?? throw new Exception("No release plan associated with pull request link");
-                return new ReleaseWorkflowResponse
-                {
-                    Details = [$"Release Plan: {JsonSerializer.Serialize(releasePlan)}"]
-                };
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to get release plan details");
-                return new ReleaseWorkflowResponse { ResponseError = $"Failed to get release plan details: {ex.Message}" };
-            }
-        }
-
-        [McpServerTool(Name = GetReleasePlanForSpecPathToolName), Description("Get release plan for a TypeSpec project path. Provide relative path to TypeSpec project.")]
-        public async Task<ReleasePlanResponse> GetReleasePlanForSpecPath(string typeSpecProjectPath)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(typeSpecProjectPath))
-                {
-                    return new ReleasePlanResponse { ResponseError = "TypeSpec project path cannot be empty." };
-                }
-
-                var releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath);
+                var releasePlan = await devOpsService.GetReleasePlanAsync(pullRequestLink);
                 if (releasePlan == null)
                 {
-                    return new ReleasePlanResponse { ResponseError = $"No release plan found for TypeSpec project path: {typeSpecProjectPath}" };
+                    return new ReleasePlanResponse { ResponseError = "No release plan associated with pull request link." };
                 }
 
                 return new ReleasePlanResponse
@@ -410,12 +386,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to get release plan for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                logger.LogError(ex, "Failed to get release plan details");
                 return new ReleasePlanResponse { ResponseError = $"Failed to get release plan details: {ex.Message}" };
             }
         }
 
-        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id.")]
+        [McpServerTool(Name = GetReleasePlanToolName), Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id. If work item ID is not provided, finds the active release plan by TypeSpec project path or spec PR URL.")]
         public async Task<ReleasePlanResponse> GetReleasePlan(int workItem = 0, int releasePlanId = 0, string? specPullRequestUrl = null, string? typeSpecProjectPath = null)
         {
             try
@@ -432,15 +408,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 else if (!string.IsNullOrWhiteSpace(specPullRequestUrl))
                 {
-                    try
-                    {
-                        ValidatePullRequestUrl(specPullRequestUrl);
-                        releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogWarning(ex, "Failed to find release plan by spec PR URL: {specPullRequestUrl}", specPullRequestUrl);
-                    }
+                    ValidatePullRequestUrl(specPullRequestUrl);
+                    releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
 
                     // Fall back to TypeSpec project path if spec PR lookup failed
                     if (releasePlan == null && !string.IsNullOrWhiteSpace(typeSpecProjectPath))

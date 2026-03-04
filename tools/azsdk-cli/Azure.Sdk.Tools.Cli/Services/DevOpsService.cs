@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync();
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label);
         public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath);
-        public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool isTestReleasePlan = false);
+        public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath);
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
@@ -130,6 +130,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes() =>
             _cachedRelationTypes ??= await connection.GetWorkItemClient().GetRelationTypesAsync();
+
+        private bool IsAgentTesting => Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING") == "true";
 
         public async Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync()
         {
@@ -343,7 +345,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             // First find the API spec work item
             try
             {
+                if (IsAgentTesting)
+                {
+                    logger.LogInformation("Agent testing is enabled. Seraching for a release plan with test tag");
+                }
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ActiveSpecPullRequestUrl] = '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned','Finished')";
+                query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 var apiSpecWorkItems = await FetchWorkItemsAsync(query);
                 if (apiSpecWorkItems.Count == 0)
                 {
@@ -367,6 +374,16 @@ namespace Azure.Sdk.Tools.Cli.Services
                         {
                             continue;
                         }
+
+                        // If agetn test mode is enabled then skip all test release plans.
+                        parentWorkItem.Fields.TryGetValue("System.Tags", out Object? tags);
+                        var systemTag = tags?.ToString() ?? string.Empty;
+                        if (IsAgentTesting && !systemTag.Contains(RELEASE_PLANNER_APP_TEST))
+                        {
+                            logger.LogInformation("Agent test mode is enabled. Skipping release plans without testing tag.");
+                            continue;
+                        }
+
                         if (parentType.Equals("Release Plan"))
                         {
                             // Check if parent work item is in abandoned state
@@ -1637,7 +1654,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}/_workitems/edit/{workItemId}";
         }
 
-        public async Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool isTestReleasePlan = false)
+        public async Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath)
         {
             try
             {
@@ -1653,7 +1670,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
-                query += $" AND [System.Tags] {(isTestReleasePlan ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+                query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 query += "  ORDER BY [System.Id] DESC";
 
                 var releasePlanWorkItems = await FetchWorkItemsAsync(query);
@@ -1686,33 +1703,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 logger.LogInformation("Searching for release plan with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
 
-                // Query for release plans with the given TypeSpec project path
-                var escapedPath = typeSpecProjectPath?.Replace("'", "''");
-                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
-                query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
-                query += " AND [System.WorkItemType] = 'Release Plan'";
-                query += " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
-                query += $" AND [System.Tags] NOT CONTAINS '{RELEASE_PLANNER_APP_TEST}'";
-                query += " ORDER BY [System.Id] DESC"; // In case there are multiple matches, get the most recently created one
-
-                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
-                if (releasePlanWorkItems.Count == 0)
+                var releasePlan = await GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath);
+                if (releasePlan == null)
                 {
                     logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
                     return null;
                 }
 
-                if (releasePlanWorkItems.Count > 1)
-                {
-                    logger.LogWarning(
-                        "Multiple release plan work items ({count}) found for TypeSpec project path: {typeSpecProjectPath}. Using the first one.",
-                        releasePlanWorkItems.Count,
-                        typeSpecProjectPath);
-                }
-                // Get the first matching release plan
-                var releasePlanWorkItem = releasePlanWorkItems[0];
-                logger.LogInformation("Found release plan work item {workItemId}", releasePlanWorkItem.Id);
-
+                // Get work item relations
+                var releasePlanWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(releasePlan.WorkItemId, expand: WorkItemExpand.Relations);
                 // Get parent work item (Product/Epic work item)
                 if (releasePlanWorkItem.Relations == null || !releasePlanWorkItem.Relations.Any())
                 {

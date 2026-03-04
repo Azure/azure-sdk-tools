@@ -342,7 +342,7 @@ public class CodeownersManagementHelper(
         "service-owner" => "Service Owner",
         "azsdk-owner"   => "Azure SDK Owner",
         "pr-label"      => "PR Label",
-        _ => ownerType
+        _ => throw new ArgumentException($"Invalid owner type '{ownerType}'. Valid values are: service-owner, azsdk-owner, pr-label.")
     };
 
     // ========================

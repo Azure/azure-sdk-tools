@@ -773,11 +773,16 @@ public class CodeownersManagementHelperTests
     [TestCase("service-owner", "Service Owner")]
     [TestCase("azsdk-owner", "Azure SDK Owner")]
     [TestCase("pr-label", "PR Label")]
-    [TestCase("unknown-type", "unknown-type")]
     [TestCase("SERVICE-OWNER", "Service Owner")]
     public void MapOwnerType_ReturnsExpected(string input, string expected)
     {
         Assert.That(CodeownersManagementHelper.MapOwnerType(input), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void MapOwnerType_InvalidType_Throws()
+    {
+        Assert.Throws<ArgumentException>(() => CodeownersManagementHelper.MapOwnerType("unknown-type"));
     }
 
     // ========================

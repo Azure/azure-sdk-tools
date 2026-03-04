@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
@@ -103,10 +104,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         };
 
         // Management command options
-        private readonly Option<string> githubUserOption = new("--github-user")
+        private readonly Option<string[]> githubUserOption = new("--github-user")
         {
-            Description = "GitHub alias to look up",
+            Description = "GitHub alias(es). Can be specified multiple times.",
             Required = false,
+            AllowMultipleArgumentsPerToken = true,
         };
 
         private readonly Option<string[]> labelsOption = new("--label")
@@ -303,7 +305,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             if (command == viewCodeownersCommandName)
             {
-                var user = parseResult.GetValue(githubUserOption);
+                var users = parseResult.GetValue(githubUserOption);
+                var user = users?.Length > 0 ? users[0] : null;
                 var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
                 var path = parseResult.GetValue(pathOption);
@@ -313,7 +316,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             if (command == addCodeownersCommandName || command == removeCodeownersCommandName)
             {
-                var githubUser = parseResult.GetValue(githubUserOption);
+                var githubUsers = parseResult.GetValue(githubUserOption);
                 var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
                 var path = parseResult.GetValue(pathOption);
@@ -330,7 +333,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
 
                 var isAdd = command == addCodeownersCommandName;
-                return await ModifyCodeowners(githubUser, labels, package, path, ownerType, repo, isAdd);
+                return await ModifyCodeowners(githubUsers, labels, package, path, ownerType, repo, isAdd);
             }
 
             if (command == exportSectionCommandName)
@@ -804,12 +807,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// </summary>
         [McpServerTool(Name = CodeownerAddToolName), Description(
             "Add an ownership relationship in CODEOWNERS work items. " +
-            "Scenarios: (1) --github-user + --package: add user as source owner of package; " +
-            "(2) --label + --package: add PR label to package; " +
-            "(3) --github-user + --label + --owner-type: add user as service/SDK owner for label (pathless); " +
-            "(4) --github-user + --label + --path + --owner-type: add user and label to path.")]
+            "Scenarios: (1) githubUsers + package: add user(s) as source owner of package; " +
+            "(2) label + package: add PR label to package; " +
+            "(3) githubUsers + label + ownerType: add user(s) as service/SDK owner for label (pathless); " +
+            "(4) githubUsers + label + path + ownerType: add user(s) and label to path. " +
+            "Valid ownerType values: service-owner, azsdk-owner, pr-label.")]
         public async Task<CommandResponse> AddCodeowners(
-            string? githubUser = null,
+            string[]? githubUsers = null,
             string? label = null,
             string? package = null,
             string? path = null,
@@ -823,24 +827,62 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     repo = await gitHelper.GetRepoFullNameAsync(".");
                     if (string.IsNullOrEmpty(repo))
                     {
-                        return new DefaultCommandResponse { ResponseError = "Could not infer repository. Use --repo to specify it." };
+                        return new DefaultCommandResponse { ResponseError = "Could not infer repository. Use repo to specify it." };
                     }
                 }
 
-                var scenario = DetectScenario(githubUser, label, package, path, ownerType);
+                var firstUser = githubUsers?.Length > 0 ? githubUsers[0] : null;
+                var scenario = DetectScenario(githubUsers, label, package, path, ownerType);
                 if (scenario == null)
                 {
                     return new DefaultCommandResponse { ResponseError = GetScenarioError() };
                 }
 
-                return scenario switch
+                // Scenario 2 (label+package) does not involve users
+                if (scenario == 2)
                 {
-                    1 => await codeownersManagementHelper.AddOwnerToPackageAsync(githubUser!, package!, repo),
-                    2 => await codeownersManagementHelper.AddLabelToPackageAsync(label!, package!, repo),
-                    3 => await codeownersManagementHelper.AddOwnerToLabelAsync(githubUser!, label!, repo, ownerType!),
-                    4 => await codeownersManagementHelper.AddOwnerAndLabelToPathAsync(githubUser!, label!, repo, path!, ownerType!),
-                    _ => new DefaultCommandResponse { ResponseError = GetScenarioError() }
+                    return await codeownersManagementHelper.AddLabelToPackageAsync(label!, package!, repo);
+                }
+
+                // Scenarios 1, 3, 4 involve one or more users — loop over each
+                var operations = new List<string>();
+                var errors = new List<string>();
+                CodeownersViewResponse? lastView = null;
+
+                foreach (var user in githubUsers!)
+                {
+                    CodeownersModifyResponse result = scenario switch
+                    {
+                        1 => await codeownersManagementHelper.AddOwnerToPackageAsync(user, package!, repo),
+                        3 => await codeownersManagementHelper.AddOwnerToLabelAsync(user, label!, repo, ownerType!),
+                        4 => await codeownersManagementHelper.AddOwnerAndLabelToPathAsync(user, label!, repo, path!, ownerType!),
+                        _ => new CodeownersModifyResponse { ResponseError = GetScenarioError() }
+                    };
+
+                    if (!string.IsNullOrEmpty(result.ResponseError))
+                    {
+                        errors.Add(result.ResponseError);
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(result.Operation))
+                        {
+                            operations.Add(result.Operation);
+                        }
+                        lastView = result.View;
+                    }
+                }
+
+                var addResponse = new CodeownersModifyResponse
+                {
+                    Operation = string.Join(Environment.NewLine, operations),
+                    View = lastView,
                 };
+                if (errors.Count > 0)
+                {
+                    addResponse.ResponseErrors = errors;
+                }
+                return addResponse;
             }
             catch (Exception ex)
             {
@@ -854,12 +896,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// </summary>
         [McpServerTool(Name = CodeownerRemoveToolName), Description(
             "Remove an ownership relationship from CODEOWNERS work items. " +
-            "Scenarios: (1) --github-user + --package: remove user from package; " +
-            "(2) --label + --package: remove PR label from package; " +
-            "(3) --github-user + --label + --owner-type: remove user as service/SDK owner for label; " +
-            "(4) --github-user + --label + --path + --owner-type: remove user and label from path.")]
+            "Scenarios: (1) githubUsers + package: remove user(s) from package; " +
+            "(2) label + package: remove PR label from package; " +
+            "(3) githubUsers + label + ownerType: remove user(s) as service/SDK owner for label; " +
+            "(4) githubUsers + label + path + ownerType: remove user(s) and label from path. " +
+            "Valid ownerType values: service-owner, azsdk-owner, pr-label.")]
         public async Task<CommandResponse> RemoveCodeowners(
-            string? githubUser = null,
+            string[]? githubUsers = null,
             string? label = null,
             string? package = null,
             string? path = null,
@@ -873,24 +916,61 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     repo = await gitHelper.GetRepoFullNameAsync(".");
                     if (string.IsNullOrEmpty(repo))
                     {
-                        return new DefaultCommandResponse { ResponseError = "Could not infer repository. Use --repo to specify it." };
+                        return new DefaultCommandResponse { ResponseError = "Could not infer repository. Use repo to specify it." };
                     }
                 }
 
-                var scenario = DetectScenario(githubUser, label, package, path, ownerType);
+                var scenario = DetectScenario(githubUsers, label, package, path, ownerType);
                 if (scenario == null)
                 {
                     return new DefaultCommandResponse { ResponseError = GetScenarioError() };
                 }
 
-                return scenario switch
+                // Scenario 2 (label+package) does not involve users
+                if (scenario == 2)
                 {
-                    1 => await codeownersManagementHelper.RemoveOwnerFromPackageAsync(githubUser!, package!, repo),
-                    2 => await codeownersManagementHelper.RemoveLabelFromPackageAsync(label!, package!, repo),
-                    3 => await codeownersManagementHelper.RemoveOwnerFromLabelAsync(githubUser!, label!, repo, ownerType!),
-                    4 => await codeownersManagementHelper.RemoveOwnerAndLabelFromPathAsync(githubUser!, label!, repo, path!, ownerType!),
-                    _ => new DefaultCommandResponse { ResponseError = GetScenarioError() }
+                    return await codeownersManagementHelper.RemoveLabelFromPackageAsync(label!, package!, repo);
+                }
+
+                // Scenarios 1, 3, 4 involve one or more users — loop over each
+                var operations = new List<string>();
+                var errors = new List<string>();
+                CodeownersViewResponse? lastView = null;
+
+                foreach (var user in githubUsers!)
+                {
+                    CodeownersModifyResponse result = scenario switch
+                    {
+                        1 => await codeownersManagementHelper.RemoveOwnerFromPackageAsync(user, package!, repo),
+                        3 => await codeownersManagementHelper.RemoveOwnerFromLabelAsync(user, label!, repo, ownerType!),
+                        4 => await codeownersManagementHelper.RemoveOwnerAndLabelFromPathAsync(user, label!, repo, path!, ownerType!),
+                        _ => new CodeownersModifyResponse { ResponseError = GetScenarioError() }
+                    };
+
+                    if (!string.IsNullOrEmpty(result.ResponseError))
+                    {
+                        errors.Add(result.ResponseError);
+                    }
+                    else
+                    {
+                        if (!string.IsNullOrEmpty(result.Operation))
+                        {
+                            operations.Add(result.Operation);
+                        }
+                        lastView = result.View;
+                    }
+                }
+
+                var removeResponse = new CodeownersModifyResponse
+                {
+                    Operation = string.Join(Environment.NewLine, operations),
+                    View = lastView,
                 };
+                if (errors.Count > 0)
+                {
+                    removeResponse.ResponseErrors = errors;
+                }
+                return removeResponse;
             }
             catch (Exception ex)
             {
@@ -903,7 +983,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// Internal dispatcher used by HandleCommand for add/remove commands.
         /// </summary>
         internal async Task<CommandResponse> ModifyCodeowners(
-            string? githubUser,
+            string[]? githubUsers,
             string[]? labels,
             string? package,
             string? path,
@@ -915,30 +995,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             if (isAdd)
             {
-                return await AddCodeowners(githubUser, label, package, path, ownerType, repo);
+                return await AddCodeowners(githubUsers, label, package, path, ownerType, repo);
             }
-            return await RemoveCodeowners(githubUser, label, package, path, ownerType, repo);
+            return await RemoveCodeowners(githubUsers, label, package, path, ownerType, repo);
         }
 
         /// <summary>
         /// Detects the scenario number from the provided parameter combination.
         /// Returns null if the combination does not match any valid scenario.
         /// </summary>
-        public static int? DetectScenario(string? githubUser, string? label, string? package, string? path, string? ownerType)
+        public static int? DetectScenario(string[]? githubUsers, string? label, string? package, string? path, string? ownerType)
         {
-            var hasUser = !string.IsNullOrEmpty(githubUser);
+            var hasUser = githubUsers?.Length > 0;
             var hasLabel = !string.IsNullOrEmpty(label);
             var hasPackage = !string.IsNullOrEmpty(package);
             var hasPath = !string.IsNullOrEmpty(path);
             var hasOwnerType = !string.IsNullOrEmpty(ownerType);
 
-            // Scenario 1: user + package only
+            // Scenario 1: user(s) + package only
             if (hasUser && hasPackage && !hasLabel && !hasPath && !hasOwnerType) { return 1; }
             // Scenario 2: label + package only
             if (hasLabel && hasPackage && !hasUser && !hasPath && !hasOwnerType) { return 2; }
-            // Scenario 4: user + label + path + ownerType (path takes priority over scenario 3)
+            // Scenario 4: user(s) + label + path + ownerType (path takes priority over scenario 3)
             if (hasUser && hasLabel && hasOwnerType && hasPath && !hasPackage) { return 4; }
-            // Scenario 3: user + label + ownerType, no path
+            // Scenario 3: user(s) + label + ownerType, no path
             if (hasUser && hasLabel && hasOwnerType && !hasPath && !hasPackage) { return 3; }
 
             return null;

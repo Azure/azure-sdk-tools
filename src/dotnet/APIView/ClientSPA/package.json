@@ -89,7 +89,8 @@
     },
     "@angular/build": {
       "vitest": "^4.0.18"
-    }
+    },
+    "serialize-javascript": "^7.0.3"
   },
   "optionalDependencies": {
     "esbuild": "^0.27.2"

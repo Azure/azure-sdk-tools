@@ -107,23 +107,14 @@ Alternatively, consider RPaaS proxy resources which can simplify cross-scope sce
 **The core reason** is semantic, not tooling limitation. ResourceModelWithAllowedPropertySet exists as a legacy compatibility helper used in limited examples; it is not treated as an actual ARM resource type in TypeSpec. As a result, it cannot represent a true resource boundary and is intentionally rejected by ARM resource validation. Carrying this pattern forward would preserve Swagger-era modeling quirks and make the spec harder to evolve.
 **The correct approach** is to model the resource as a proper ARM resource type, typically TrackedResource, and reuse the legacy “allowed property set” via composition rather than inheritance. Resource-specific fields should live in a separate properties model and be spread or referenced, keeping the resource definition accurate and future-proof. This approach aligns with TypeSpec ARM guidelines, avoids invalid base types, and produces clearer, more maintainable specifications and SDKs.
 
-## Customizing Parent Resource Key Names for Child Operations
+## whether it’s supported to use a different path parameter name for the parent resource identifier only for a specific child operation, while keeping the originally defined one elsewhere
 
-1.  **How key names are determined**  
-    Child operations inherit the parent resource key name from the resource path template.  
-    The key is **not defined per operation**.
+**Scenario**  
+There is a parent resource `YourJob` with a key property `name`. There is a child resource `YourJobDetails`, and an operation to list `YourJobDetails` for a `YourJob`. In SDK reviews, it has been requested to use the parameter name `jobName` for this operation instead of `name`. The question is whether it’s supported to use a different path parameter name for the parent resource identifier only for this specific child operation, while keeping {name} elsewhere.
 
-2.  **Why per‑operation renaming doesn’t work**  
-    `@clientName` on an operation cannot rename a parent resource key.  
-    SDKs derive parameter names from the **resource key**, not from individual operations.
+1. There isn't a simple way to use a different key, because, by default, **the keys of the operation for a resource are derived from the parent keys and are not individually specified for each operation**. It would be easy to change the keyName for all operations, it is possible, but requires a different operation definition in which keys are explicitly specified for the operation to use a different parent key name from one operation to another.
 
-3.  **Recommended solution**  
-    If SDK reviews require a different key name (e.g. `jobName`), **rename the parent resource key globally** using the `@key` decorator on the resource property.  
-    This keeps all child operations consistent and avoids special cases.
-
-**Conclusion**  
-Using different key names for different child operations is not supported or recommended.  
-Rename the parent resource key once; all derived operations will follow.
+2. **Recommended solution**: Unless there is a blocking reason, changing the key name globally is the recommended approach. You can do this using the @key decorator on the name property of the resource.
 
 ## the typespec-providerhub emitter is about generating RPaaS extensions, not about generating APIs
 

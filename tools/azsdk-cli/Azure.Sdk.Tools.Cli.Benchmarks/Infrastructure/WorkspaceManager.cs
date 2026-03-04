@@ -14,6 +14,7 @@ public class WorkspaceManager
 {
     private readonly string _repoCachePath;
     private readonly string _workspacePath;
+    private readonly SemaphoreSlim _cloneLock = new(1, 1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="WorkspaceManager"/> class.
@@ -109,18 +110,26 @@ public class WorkspaceManager
     {
         var barePath = Path.Combine(_repoCachePath, repo.EffectiveOwner, repo.Name + ".git");
 
-        if (Directory.Exists(barePath))
+        await _cloneLock.WaitAsync();
+        try
         {
-            // Fetch latest changes (shallow to stay consistent with initial clone)
-            await RunGitCommandAsync(barePath, "fetch", "--all", "--prune", "--depth=1");
+            if (Directory.Exists(barePath))
+            {
+                // Fetch latest changes (shallow to stay consistent with initial clone)
+                await RunGitCommandAsync(barePath, "fetch", "--all", "--prune", "--depth=1");
+            }
+            else
+            {
+                // Create parent directory and clone
+                Directory.CreateDirectory(Path.GetDirectoryName(barePath)!);
+                await RunGitCommandAsync(
+                    Path.GetDirectoryName(barePath)!,
+                    "clone", "--bare", "--depth=1", repo.CloneUrl, barePath);
+            }
         }
-        else
+        finally
         {
-            // Create parent directory and clone
-            Directory.CreateDirectory(Path.GetDirectoryName(barePath)!);
-            await RunGitCommandAsync(
-                Path.GetDirectoryName(barePath)!,
-                "clone", "--bare", "--depth=1", repo.CloneUrl, barePath);
+            _cloneLock.Release();
         }
 
         return barePath;

@@ -12,4 +12,9 @@ public static class BenchmarkDefaults
     /// The default model to use for benchmark execution.
     /// </summary>
     public const string DefaultModel = "claude-opus-4.5";
+
+    /// <summary>
+    /// The default maximum number of scenarios to run concurrently.
+    /// </summary>
+    public const int DefaultMaxParallelism = 5;
 }

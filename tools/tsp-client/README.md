@@ -1,4 +1,4 @@
-# tsp-client
+# tsp-client - REVERT
 
 `tsp-client` is a simple command line tool to facilitate generating client libraries from TypeSpec.
 

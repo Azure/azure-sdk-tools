@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
+using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -60,11 +61,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var tspConfigPath = parseResult.GetValue(tspConfigPathOpt);
             var tspLocationPath = parseResult.GetValue(tspLocationPathOpt);
             var emitterOptions = parseResult.GetValue(emitterOpt);
-            return await GenerateSdkAsync(localSdkRepoPath, tspConfigPath, tspLocationPath, emitterOptions, ct);
+            return await GenerateSdkAsync(null, localSdkRepoPath, tspConfigPath, tspLocationPath, emitterOptions, ct);
         }
 
         [McpServerTool(Name = GenerateSdkToolName), Description("Generate SDK code locally or run code generation for a package from TypeSpec. Creates client library code for Azure services. Runs locally, not via pipeline.")]
         public async Task<PackageOperationResponse> GenerateSdkAsync(
+            IProgress<ProgressNotificationValue>? progress,
             [Description("Absolute path to the local Azure SDK repository. REQUIRED. Example: 'path/to/azure-sdk-for-net'. If not provided, the tool attempts to discover the repo from the current working directory.")]
             string localSdkRepoPath,
             [Description("Path to the 'tspconfig.yaml' file. Can be a local file path or a remote HTTPS URL. Optional if running inside a local cloned azure-sdk-for-{language} repository, for example, inside 'azure-sdk-for-net' repository.")]
@@ -77,6 +79,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
+                ProgressReporter.ReportProgress(progress, logger, 0, "Validating inputs", total: 3);
+
                 // Validate inputs
                 if (string.IsNullOrEmpty(tspConfigPath) && string.IsNullOrEmpty(tspLocationPath))
                 {
@@ -103,13 +107,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     string typeSpecProjectPath = GetTypeSpecProjectPathFromTspLocation(tspLocationPath);
                     logger.LogInformation("TypeSpec Project Path from tsp-location.yaml: {TypeSpecProjectPath}", typeSpecProjectPath);
 
+                    ProgressReporter.ReportProgress(progress, logger, 1, $"Discovered SDK repo '{sdkRepoName}', starting code re-generation", total: 3);
+
                     // Run tsp-client update using the existing tsp-location.yaml
-                    var tspResult = await tspClientHelper.UpdateGenerationAsync(tspLocationDirectory, ct: ct);
+                    var tspResult = await ProgressReporter.RunWithProgressAsync(
+                        progress,
+                        logger,
+                        "Running tsp-client update for code re-generation",
+                        async (token) => await tspClientHelper.UpdateGenerationAsync(tspLocationDirectory, ct: token),
+                        ct);
                     
                     if (!tspResult.IsSuccessful)
                     {
                         return PackageOperationResponse.CreateFailure(tspResult.ResponseError, sdkRepoName: sdkRepoName, typespecProjectPath: typeSpecProjectPath);
                     }
+
+                    ProgressReporter.ReportProgress(progress, logger, 2, "Code re-generation completed successfully", total: 3);
                     
                     return PackageOperationResponse.CreateSuccess(
                         $"SDK re-generation completed successfully using tsp-location.yaml.",
@@ -120,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Handle tspconfig.yaml case
-                return await GenerateSdkFromTspConfigAsync(localSdkRepoPath, tspConfigPath, emitterOptions, ct);
+                return await GenerateSdkFromTspConfigAsync(progress, localSdkRepoPath, tspConfigPath, emitterOptions, ct);
             }
             catch (Exception ex)
             {
@@ -130,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         // Run language-specific script to generate the SDK code from 'tspconfig.yaml'
-        private async Task<PackageOperationResponse> GenerateSdkFromTspConfigAsync(string localSdkRepoPath, string tspConfigPath, string emitterOptions, CancellationToken ct)
+        private async Task<PackageOperationResponse> GenerateSdkFromTspConfigAsync(IProgress<ProgressNotificationValue>? progress, string localSdkRepoPath, string tspConfigPath, string emitterOptions, CancellationToken ct)
         {
             string specRepoFullName = string.Empty;
 
@@ -139,6 +152,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             string typespecProjectPath = GetTypeSpecProjectRelativePath(tspConfigPath);
 
             // Validate inputs
+            ProgressReporter.ReportProgress(progress, logger, 1, $"Validating SDK repository at '{localSdkRepoPath}'", total: 4);
             logger.LogInformation("Generating SDK at repo: {LocalSdkRepoPath}", localSdkRepoPath);
             if (string.IsNullOrEmpty(localSdkRepoPath) || !Directory.Exists(localSdkRepoPath))
             {
@@ -172,6 +186,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
             }
 
+            ProgressReporter.ReportProgress(progress, logger, 2, $"Discovered SDK repo '{sdkRepoName}', preparing code generation", total: 4);
+
             // Build additional arguments for tsp-client init
             var additionalArgs = new List<string>();
             
@@ -188,16 +204,23 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Use the helper to initialize generation
-            var tspResult = await tspClientHelper.InitializeGenerationAsync(
-                localSdkRepoPath, 
-                tspConfigPath,
-                additionalArgs.Count > 0 ? additionalArgs.ToArray() : null,
+            var tspResult = await ProgressReporter.RunWithProgressAsync(
+                progress,
+                logger,
+                "Running tsp-client init for code generation",
+                async (token) => await tspClientHelper.InitializeGenerationAsync(
+                    localSdkRepoPath,
+                    tspConfigPath,
+                    additionalArgs.Count > 0 ? additionalArgs.ToArray() : null,
+                    token),
                 ct);
 
             if (!tspResult.IsSuccessful)
             {
                 return PackageOperationResponse.CreateFailure(tspResult.ResponseError, sdkRepoName: sdkRepoName, typespecProjectPath: typespecProjectPath);
             }
+
+            ProgressReporter.ReportProgress(progress, logger, 3, "Code generation completed successfully", total: 4);
 
             return PackageOperationResponse.CreateSuccess(
                 $"SDK generation completed successfully using tspconfig.yaml.",

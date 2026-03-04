@@ -86,7 +86,7 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_InvalidProjectPath_ReturnsFailure()
     {
         // Act
-        var result = await _tool.BuildSdkAsync("/nonexistent/path");
+        var result = await _tool.BuildSdkAsync(null, "/nonexistent/path");
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidProjectPathError));
@@ -96,7 +96,7 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_EmptyPath_ReturnsFailure()
     {
         // Act
-        var result = await _tool.BuildSdkAsync(string.Empty);
+        var result = await _tool.BuildSdkAsync(null, string.Empty);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("required and cannot be empty"));
@@ -126,7 +126,7 @@ public class SdkBuildToolTests
                 .ReturnsAsync(_tempDirectory.DirectoryPath);
 
             // Act - use relative path
-            var result = await _tool.BuildSdkAsync("./sdk/project");
+            var result = await _tool.BuildSdkAsync(null, "./sdk/project");
 
             // Assert - should successfully resolve and process
             Assert.That(result.Result, Is.EqualTo("noop")); // Python project skips build
@@ -155,7 +155,7 @@ public class SdkBuildToolTests
             .ReturnsAsync(_tempDirectory.DirectoryPath);
 
         // Act
-        var result = await _tool.BuildSdkAsync(pythonProjectPath);
+        var result = await _tool.BuildSdkAsync(null, pythonProjectPath);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("noop"));
@@ -175,7 +175,7 @@ public class SdkBuildToolTests
             .ThrowsAsync(new Exception(FailedToDiscoverRepoError));
 
         // Act
-        var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.BuildSdkAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(FailedToDiscoverRepoError));
@@ -194,7 +194,7 @@ public class SdkBuildToolTests
             .ThrowsAsync(new InvalidOperationException("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration."));
 
         // Act
-        var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.BuildSdkAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration"));
@@ -213,7 +213,7 @@ public class SdkBuildToolTests
             .ThrowsAsync(new InvalidOperationException("Error parsing JSON configuration: Invalid JSON"));
 
         // Act
-        var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.BuildSdkAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Error parsing JSON configuration: Invalid JSON"));
@@ -236,7 +236,7 @@ public class SdkBuildToolTests
             .ThrowsAsync(new FileNotFoundException("Configuration file not found"));
 
         // Act
-        var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.BuildSdkAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Configuration file not found"));

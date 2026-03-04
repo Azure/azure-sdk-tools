@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.ComponentModel;
+using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -34,17 +35,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public async override Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
-            return await BuildSdkAsync(packagePath, ct);
+            return await BuildSdkAsync(null, packagePath, ct);
         }
 
         [McpServerTool(Name = BuildSdkToolName), Description("Build/compile SDK code for a specified project locally.")]
         public async Task<PackageOperationResponse> BuildSdkAsync(
+            IProgress<ProgressNotificationValue>? progress,
             [Description("Absolute path to the SDK project.")]
             string packagePath,
             CancellationToken ct = default)
         {
             try
             {
+                ProgressReporter.ReportProgress(progress, logger, 0, "Validating package path", total: 4);
+
                 // Validate package path
                 if (string.IsNullOrWhiteSpace(packagePath))
                 {
@@ -53,6 +57,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 // Resolves relative paths to absolute
                 string fullPath = Path.GetFullPath(packagePath);
+
+                ProgressReporter.ReportProgress(progress, logger, 1, "Detecting SDK language", total: 4);
                 var languageService = await GetLanguageServiceAsync(fullPath, ct);
                 if (languageService == null)
                 {
@@ -60,7 +66,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Use the shared BuildAsync method from LanguageService
-                var (success, errorMessage, packageInfo) = await languageService.BuildAsync(fullPath, CommandTimeoutInMinutes, ct);
+                ProgressReporter.ReportProgress(progress, logger, 2, $"Starting {languageService.Language} SDK build", total: 4);
+                logger.LogInformation("Building SDK project at: {PackagePath} for language: {Language}", fullPath, languageService.Language);
+                var (success, errorMessage, packageInfo) = await ProgressReporter.RunWithProgressAsync(
+                    progress,
+                    logger,
+                    $"Building {languageService.Language} SDK project",
+                    async (token) => await languageService.BuildAsync(fullPath, CommandTimeoutInMinutes, token),
+                    ct);
+
+                ProgressReporter.ReportProgress(progress, logger, 3, success ? "Build completed successfully" : "Build failed", total: 4);
 
                 if (success)
                 {

@@ -99,7 +99,7 @@ public class PackToolTests
     public async Task PackAsync_EmptyPath_ReturnsFailure()
     {
         // Act
-        var result = await _tool.PackAsync(string.Empty);
+        var result = await _tool.PackAsync(null, string.Empty);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(EmptyPathError));
@@ -109,7 +109,7 @@ public class PackToolTests
     public async Task PackAsync_NullPath_ReturnsFailure()
     {
         // Act
-        var result = await _tool.PackAsync(null!);
+        var result = await _tool.PackAsync(null, null!);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(EmptyPathError));
@@ -119,7 +119,7 @@ public class PackToolTests
     public async Task PackAsync_WhitespacePath_ReturnsFailure()
     {
         // Act
-        var result = await _tool.PackAsync("   ");
+        var result = await _tool.PackAsync(null, "   ");
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(EmptyPathError));
@@ -129,7 +129,7 @@ public class PackToolTests
     public async Task PackAsync_NonexistentPath_ReturnsFailure()
     {
         // Act
-        var result = await _tool.PackAsync("/nonexistent/path");
+        var result = await _tool.PackAsync(null, "/nonexistent/path");
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidProjectPathError));
@@ -148,7 +148,7 @@ public class PackToolTests
             .ReturnsAsync("unknown-repo");
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidProjectPathError));
@@ -161,7 +161,7 @@ public class PackToolTests
         SetupGoRepo();
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert - Go pack is a no-op handled in GoLanguageService, returns success
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -194,7 +194,7 @@ public class PackToolTests
         File.WriteAllText(Path.Combine(releaseDir, "MyPackage.1.0.0.nupkg"), "fake nupkg");
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -219,7 +219,7 @@ public class PackToolTests
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath, outputDir);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath, outputDir);
 
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -244,7 +244,7 @@ public class PackToolTests
             });
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("dotnet pack failed"));
@@ -262,7 +262,7 @@ public class PackToolTests
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
 
         // Act
-        await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert - verify dotnet pack is called
         _mockProcessHelper.Verify(x => x.Run(
@@ -290,7 +290,7 @@ public class PackToolTests
         File.WriteAllText(Path.Combine(targetDir, "my-package-1.0.0.jar"), "fake jar");
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -314,7 +314,7 @@ public class PackToolTests
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath, outputDir);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath, outputDir);
 
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -338,7 +338,7 @@ public class PackToolTests
             });
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("mvn clean package failed"));
@@ -366,7 +366,7 @@ public class PackToolTests
         File.WriteAllText(Path.Combine(_tempDirectory.DirectoryPath, "my-package-1.0.0.tgz"), "fake tgz");
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -391,7 +391,7 @@ public class PackToolTests
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath, outputDir);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath, outputDir);
 
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -415,7 +415,7 @@ public class PackToolTests
             });
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("pnpm pack failed"));
@@ -442,7 +442,7 @@ public class PackToolTests
         File.WriteAllText(Path.Combine(artifactsDir, "my_package-1.0.0-py3-none-any.whl"), "fake wheel");
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -466,7 +466,7 @@ public class PackToolTests
             .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [] });
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath, outputDir);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath, outputDir);
 
         // Assert
         Assert.That(result.ResponseErrors, Is.Null.Or.Empty);
@@ -490,7 +490,7 @@ public class PackToolTests
             });
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("sdk_build command failed"));
@@ -511,7 +511,7 @@ public class PackToolTests
             .ThrowsAsync(new InvalidOperationException("Unexpected error"));
 
         // Act
-        var result = await _tool.PackAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.PackAsync(null, _tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Unexpected error"));

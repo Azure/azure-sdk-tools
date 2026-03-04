@@ -92,7 +92,15 @@ public class CopilotAgentRunner(
             },
             // Disables copilot built-in tools
             // copilot built-in tools may be enabled in the future as needed
-            AvailableTools = [.. tools.Select(t => t.Name)]
+            AvailableTools = [.. tools.Select(t => t.Name)],
+            // Auto-approve all permission requests since agents run autonomously with no user interaction.
+            // The CLI's permission system sends permission.request RPC calls for tool execution.
+            // Without this handler, the SDK cannot get user consent and returns "Permission denied".
+            OnPermissionRequest = (request, invocation) =>
+            {
+                logger.LogDebug("Auto-approving permission request for tool execution");
+                return Task.FromResult(new PermissionRequestResult { Kind = "approved" });
+            }
         };
 
         await using var session = await client.CreateSessionAsync(sessionConfig, ct);

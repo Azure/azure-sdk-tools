@@ -142,7 +142,7 @@ def prompt_test(path: str):
     """
     Execute a .prompty file using its sample inputs and print the result.
     """
-    from src._prompt_runner import _execute_prompt_template, _parse_prompty
+    from src._prompt_runner import _execute_prompt_template
 
     prompty_path = pathlib.Path(path)
     if not prompty_path.exists():
@@ -152,20 +152,10 @@ def prompt_test(path: str):
         print(f"Error: File '{path}' is not a .prompty file.")
         sys.exit(1)
 
-    config = _parse_prompty(str(prompty_path))
-    reasoning_effort = config.parameters.get("reasoning_effort")
     print(f"Executing prompt: {path}")
-    info = f"Model: {config.azure_deployment}  API Version: {config.api_version}"
-    if reasoning_effort:
-        info += f"  Reasoning: {reasoning_effort}"
-    print(info)
     print("-" * 60)
-    start = time.time()
     result = _execute_prompt_template(str(prompty_path))
-    elapsed = time.time() - start
     print(result)
-    print("-" * 60)
-    print(f"Completed in {elapsed:.2f}s")
 
 
 def _local_review(

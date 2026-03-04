@@ -69,8 +69,14 @@ def _json_default(obj):
     """JSON encoder for non-serializable types."""
     from datetime import date, datetime
 
+    from pydantic import BaseModel
+
+    if isinstance(obj, BaseModel):
+        return obj.model_dump(mode="json")
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()
+    if isinstance(obj, set):
+        return list(obj)
     raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
@@ -288,13 +294,6 @@ def _execute_prompt_template(
 
     # Extract content from response
     result_content = response.choices[0].message.content
-
-    # Try to parse as JSON if we have a response format
-    if config.response_format:
-        try:
-            return json.loads(result_content)
-        except json.JSONDecodeError:
-            pass
 
     return result_content
 

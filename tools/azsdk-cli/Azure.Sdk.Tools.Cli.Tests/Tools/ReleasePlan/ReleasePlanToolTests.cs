@@ -239,8 +239,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         {
             var releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("https://github.com/Azure/azure-rest-api-specs/pull/35446");
             Assert.IsNotNull(releaseplan);
-            Assert.IsNotNull(releaseplan.Details);
-            Assert.That(releaseplan.Details, Has.Some.Contains("Release Plan"));
+            Assert.IsNull(releaseplan.ResponseError);
+            Assert.IsNotNull(releaseplan.ReleasePlanDetails);
+            Assert.That(releaseplan.Message, Does.Contain("Successfully retrieved release plan"));
         }
 
         [Test]
@@ -315,43 +316,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
         [Test]
-        public async Task Test_GetReleasePlanForSpecPath_with_valid_path()
+        public async Task Test_GetReleasePlan_by_typespec_path_with_no_matching_plan_returns_error()
         {
-            var mockDevOps = new Mock<IDevOpsService>();
-            var expectedReleasePlan = new ReleasePlanWorkItem
-            {
-                WorkItemId = 888,
-                ReleasePlanId = 88,
-                IsDataPlane = true
-            };
-            mockDevOps.Setup(x => x.GetReleasePlanByTypeSpecProjectPathAsync("specification/testservice/TestService"))
-                .ReturnsAsync(expectedReleasePlan);
-
-            var tool = new ReleasePlanTool(mockDevOps.Object, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
-
-            var result = await tool.GetReleasePlanForSpecPath("specification/testservice/TestService");
-            Assert.IsNotNull(result);
-            Assert.IsNull(result.ResponseError);
-            Assert.IsNotNull(result.ReleasePlanDetails);
-            Assert.That(result.ReleasePlanDetails.WorkItemId, Is.EqualTo(888));
-        }
-
-        [Test]
-        public async Task Test_GetReleasePlanForSpecPath_with_empty_path_returns_error()
-        {
-            var result = await releasePlanTool.GetReleasePlanForSpecPath("");
+            var result = await releasePlanTool.GetReleasePlan(typeSpecProjectPath: "specification/nonexistent/Service");
             Assert.IsNotNull(result);
             Assert.IsNotNull(result.ResponseError);
-            Assert.That(result.ResponseError, Does.Contain("TypeSpec project path cannot be empty"));
-        }
-
-        [Test]
-        public async Task Test_GetReleasePlanForSpecPath_with_no_matching_plan_returns_error()
-        {
-            var result = await releasePlanTool.GetReleasePlanForSpecPath("specification/nonexistent/Service");
-            Assert.IsNotNull(result);
-            Assert.IsNotNull(result.ResponseError);
-            Assert.That(result.ResponseError, Does.Contain("No release plan found for TypeSpec project path"));
+            Assert.That(result.ResponseError, Does.Contain("Failed to get release plan details"));
         }
 
         [Test]

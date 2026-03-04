@@ -378,7 +378,7 @@ class FunctionNode(NodeEntityBase):
                 self.return_type, apiview=self.apiview, has_suffix_space=False
             )
 
-        # Add punctuation for better syntax coloring with .md rendering
+        # Add punctuation for closer alignment with syntactically correct Python file
         review_line.add_punctuation(": ...", has_suffix_space=False)
 
         review_line = self._reviewline_if_needed(

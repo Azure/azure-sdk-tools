@@ -1011,7 +1011,6 @@ public class CommentsManagerTests
             .Returns(Task.CompletedTask);
 
         Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["approvers"]).Returns("architect1");
         configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();
@@ -1274,7 +1273,6 @@ public class CommentsManagerTests
             .Returns(Task.CompletedTask);
 
         Mock<IConfiguration> configMock = new();
-        configMock.Setup(c => c["approvers"]).Returns("architect1");
         configMock.Setup(c => c["CopilotServiceEndpoint"]).Returns("https://dummy.api/endpoint");
 
         Mock<IOptions<OrganizationOptions>> orgOptionsMock = new();

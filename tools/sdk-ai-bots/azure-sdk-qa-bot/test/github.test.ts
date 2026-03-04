@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Octokit } from '@octokit/rest';
-import { GithubClient } from '../src/input/GithubClient.js';
+import { GithubClient } from '../src/github/GithubClient.js';
+
+vi.mock('@octokit/plugin-retry', () => ({ retry: vi.fn() }));
+vi.mock('../src/github/GitHubAppTokenProvider.js', () => ({
+  GitHubAppTokenProvider: { create: vi.fn().mockReturnValue(undefined) },
+}));
 
 // Mock the Octokit client
 vi.mock('@octokit/rest', () => {
@@ -100,8 +105,11 @@ vi.mock('@octokit/rest', () => {
     },
   });
 
+  const MockOctokit: any = vi.fn().mockImplementation(() => createMockOctokit());
+  MockOctokit.plugin = vi.fn().mockReturnValue(MockOctokit);
+
   return {
-    Octokit: vi.fn().mockImplementation(() => createMockOctokit()),
+    Octokit: MockOctokit,
   };
 });
 
@@ -117,8 +125,6 @@ describe('GitHub PR Details Fetcher', () => {
     const githubClient = new GithubClient();
     const details = await githubClient.getPullRequestDetails(prUrl, {});
 
-    // Verify Octokit was called with correct parameters
-    expect(Octokit).toHaveBeenCalledWith({ auth: undefined });
 
     // Check the returned data structure
     expect(details).toHaveProperty('reviews');
@@ -144,17 +150,12 @@ describe('GitHub PR Details Fetcher', () => {
     expect(details.basic.labels).toEqual(['TypeSpec', 'Service PR']);
   });
 
-  it('should throw an error for invalid GitHub PR URL', async () => {
+  it('should return undefined for invalid GitHub PR URL', async () => {
     const invalidUrl = 'https://github.com/invalid/url';
 
     const githubClient = new GithubClient();
     const res = await githubClient.getPullRequestDetails(invalidUrl, {});
-    expect(res).toEqual({
-      comments: { review: [], issue: [] },
-      reviews: [],
-      basic: { labels: [], title: '' },
-      diff: '',
-    });
+    expect(res).toBeUndefined();
   });
 
   it('should filter out Bot comments from PR comments', async () => {
@@ -186,9 +187,6 @@ describe('GitHub Issue Details Fetcher', () => {
     const githubClient = new GithubClient();
     const details = await githubClient.getIssueDetails(issueUrl, {});
 
-    // Verify Octokit was called with correct parameters
-    expect(Octokit).toHaveBeenCalledWith({ auth: undefined });
-
     // Check the returned data structure
     expect(details).toHaveProperty('title');
     expect(details).toHaveProperty('body');
@@ -209,18 +207,12 @@ describe('GitHub Issue Details Fetcher', () => {
     ]);
   });
 
-  it('should return empty details for invalid GitHub issue URL', async () => {
+  it('should return undefined for invalid GitHub issue URL', async () => {
     const invalidUrl = 'https://github.com/invalid/url';
 
     const githubClient = new GithubClient();
     const res = await githubClient.getIssueDetails(invalidUrl, {});
-    expect(res).toEqual({
-      title: '',
-      body: '',
-      state: '',
-      labels: [],
-      comments: [],
-    });
+    expect(res).toBeUndefined();
   });
 
   it('should handle issue URL with different repo format', async () => {

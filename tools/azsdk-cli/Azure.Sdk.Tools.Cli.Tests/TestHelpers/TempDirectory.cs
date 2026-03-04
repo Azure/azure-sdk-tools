@@ -18,7 +18,10 @@ public sealed class TempDirectory : IDisposable, IAsyncDisposable
 
     private TempDirectory(string directoryPath)
     {
-        DirectoryPath = RealPath.GetRealPath(directoryPath);
+        // RealPath.GetRealPath resolves symlinks but returns NormalizedPath (forward slashes).
+        // Wrap in Path.GetFullPath to convert back to platform-native separators so that
+        // test paths match assertions against Path.GetFullPath / Directory.GetFiles etc.
+        DirectoryPath = Path.GetFullPath((string)RealPath.GetRealPath(directoryPath));
         Directory.CreateDirectory(directoryPath);
     }
 

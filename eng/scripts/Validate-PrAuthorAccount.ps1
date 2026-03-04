@@ -24,8 +24,10 @@ function Get-GitHubPublicEvents([string]$login) {
   $page1 = $page1Json | ConvertFrom-Json
 
   if ($page1.Count -eq 0) {
-    return @{ Events = @(); OldestEventDate = $null }
+    return @{ Events = @(); OldestEventDate = $null; Page1Full = $false }
   }
+
+  $page1Full = $page1.Count -ge 100
 
   # Walk forward to find the last non-empty page (max 10 pages per GitHub API).
   $oldestEvents = $page1
@@ -38,7 +40,7 @@ function Get-GitHubPublicEvents([string]$login) {
   }
 
   $oldestDate = ($oldestEvents | Select-Object -Last 1).created_at
-  return @{ Events = $page1; OldestEventDate = $oldestDate }
+  return @{ Events = $page1; OldestEventDate = $oldestDate; Page1Full = $page1Full }
 }
 
 function Get-GitHubRepos([string]$login) {
@@ -74,8 +76,10 @@ $signals = @()
 # Heuristic 1: Dormant account reactivation
 # Account > 90 days old but the oldest available public event is within the last 30 days,
 # meaning all detectable activity started very recently.
+# Skip if page 1 was full (100 events) — that means the API is truncating an active user's
+# history, not that the account lacks older activity.
 $eventData = Get-GitHubPublicEvents $Username
-if ($eventData.OldestEventDate -and $accountAgeDays -gt 90) {
+if (-not $eventData.Page1Full -and $eventData.OldestEventDate -and $accountAgeDays -gt 90) {
   $oldestEventDate = [DateTime]::Parse($eventData.OldestEventDate)
   $oldestEventAgeDays = [int]($now - $oldestEventDate).TotalDays
   if ($oldestEventAgeDays -le 30) {
@@ -83,7 +87,7 @@ if ($eventData.OldestEventDate -and $accountAgeDays -gt 90) {
     $signals += @{ Name = "Dormant reactivation"; Points = 3; Detail = "Account is $accountAgeDays days old but oldest public event is only $oldestEventAgeDays days ago" }
   }
 }
-elseif ($eventData.Events.Count -eq 0 -and $accountAgeDays -gt 90) {
+elseif (-not $eventData.Page1Full -and $eventData.Events.Count -eq 0 -and $accountAgeDays -gt 90) {
   # No public events at all on an old account — also suspicious
   $score += 3
   $signals += @{ Name = "Dormant reactivation"; Points = 3; Detail = "Account is $accountAgeDays days old with zero public events" }

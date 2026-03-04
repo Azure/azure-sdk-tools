@@ -135,14 +135,13 @@ class StubGenerator:
             PylintParser.parse(self.wheel_path or self.pkg_path)
 
     def _parse_arg(self, name):
-        # Check if the argument was passed as a kwarg first
-        if name in self._kwargs:
-            return self._kwargs[name]
-        # Otherwise try to get it from parsed command-line arguments
-        try:
-            return getattr(self._args, name, None)
-        except AttributeError:
-            return None
+        value = self._kwargs.get(name, None)
+        if not value:
+            try:
+                value = getattr(self._args, name, None)
+            except AttributeError:
+                value = None
+        return value
 
     def install_extra_dependencies(self):
         for extra in self.extras_require:

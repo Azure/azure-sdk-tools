@@ -212,17 +212,20 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 if (itemDetails.Classification == ClassificationTspApplicable)
                 {
                     tspApplicable++;
+                    logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
                     var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, itemDetails.Text, ct: ct);
 
                     if (tspCustomizationResult.Success)
                     {
                         var changes = string.Join("; ", tspCustomizationResult.ChangesSummary);
+                        logger.LogInformation("Successfully applied tsp customization changes, changes applied: {changes}", changes);
                         feedbackItem?.AppendContext(changes, "Typespec changes applied");
                         changesMade.AddRange(tspCustomizationResult.ChangesSummary);
                         tspFixSucceeded++;
                     }
                     else
                     {
+                        logger.LogWarning("Some customizations failed to apply: {FailureReasons}", tspCustomizationResult.FailureReason);
                         tspFixFailedReasons.Append(tspCustomizationResult.FailureReason);
                         tspFixFailedReasons.Append("; ");
                         tspFixFailed++;
@@ -280,14 +283,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
 
-            if (tspFixFailed > 0)
-            {
-                logger.LogWarning("Some customizations failed to apply: {FailureReasons}", tspFixFailedReasons);
-            }
-
             // Don't waste time regenerating if no TSP fixes were successfully applied
             if (tspFixSucceeded > 0)
             {
+                logger.LogDebug("Regenerating {packagePath}", packagePath);
                 // Regenerate SDK using local spec repo
                 var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
                 if (!regenResult.IsSuccessful)
@@ -305,6 +304,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
 
+            logger.LogDebug("Building {packagePath}", packagePath);
             var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
 
             buildSucceeded = success;

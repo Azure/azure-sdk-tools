@@ -1,7 +1,8 @@
-import { ApiVersionType, SDKType } from "../../common/types.js";
+import { ApiVersionType, ModularSDKType, SDKType } from "../../common/types.js";
 import { getSDKType } from "../../common/utils.js";
 import { logger } from "../../utils/logger.js";
 import { isModelOnly } from "../apiVersion/apiVersionTypeExtractor.js";
+import { getModularSDKType } from '../../utils/generateInputUtils.js';
 
 import * as fs from "fs";
 import * as path from "path";
@@ -32,11 +33,17 @@ let packageName: string;
             })
             break;
         case SDKType.ModularClient:
-            // Check if it's a model-only package for MLC
-            const isModelOnlyForModularClient = await isModelOnly(packageFolderPath);
-            if (isModelOnlyForModularClient) {
-                logger.info(`Modular client package in ${packageFolderPath} is a model-only package, skipping user agent update.`);
-                break;
+            const modularSDKType = getModularSDKType(packageFolderPath);
+            // Only check isModelOnly for DataPlane packages, because the git commands in isModelOnly
+            // may fail for management plane packages (e.g. @azure/arm-*), and management plane
+            // packages are never model-only, so we can safely skip the check for them.
+            if (modularSDKType === ModularSDKType.DataPlane) {
+                // Check if it's a model-only package for MLC
+                const isModelOnlyForModularClient = await isModelOnly(packageFolderPath);
+                if (isModelOnlyForModularClient) {
+                    logger.info(`Modular client package in ${packageFolderPath} is a model-only package, skipping user agent update.`);
+                    break;
+                }
             }
 
             // Update version in src for Modular

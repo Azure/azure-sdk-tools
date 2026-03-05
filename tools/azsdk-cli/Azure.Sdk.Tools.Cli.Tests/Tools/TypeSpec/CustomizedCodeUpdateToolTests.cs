@@ -165,6 +165,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(
             packagePath: Path.Combine(Path.GetTempPath(), "nonexistent-" + Guid.NewGuid().ToString("n")),
             tspProjectPath: tspDir,
+            customizationRequest: "test customization",
             ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);

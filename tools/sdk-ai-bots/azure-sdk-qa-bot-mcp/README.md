@@ -139,6 +139,28 @@ The tool uses RAG (Retrieval-Augmented Generation) to provide accurate answers b
 | `history` | array | No | Previous conversation history for context |
 | `additional_context` | array | No | Additional context such as links, images, or text |
 
+---
+
+## HTTP API Key Authentication
+
+For HTTP/SSE deployment (`server_http.py`), you can enforce API key authentication using request headers.
+
+Set an API key for the server:
+
+```bash
+export MCP_API_KEY="your-strong-api-key"
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:MCP_API_KEY = "your-strong-api-key"
+```
+
+When `MCP_API_KEY` is set, all MCP HTTP endpoints (`/sse`, `/sse/messages/{session_id}`, `/messages`) require either:
+- `X-API-Key: <your-strong-api-key>`
+- `Authorization: Bearer <your-strong-api-key>`
+
 #### Example Usage
 
 ```
@@ -153,7 +175,7 @@ The tool uses RAG (Retrieval-Augmented Generation) to provide accurate answers b
 
 ## Configuration
 
-To change the API URLs, modify the constants in `server.py`:
+To change the backend API URLs, modify the constants in `server.py`:
 
 ```python
 CODE_REVIEW_API_URL = "http://localhost:8088/code_review"

@@ -15,6 +15,7 @@ import json
 import asyncio
 import logging
 import uuid
+import hmac
 from typing import Optional, Dict
 from contextlib import asynccontextmanager
 
@@ -44,6 +45,7 @@ COMPLETION_API_URL = os.getenv(
 BACKEND_CLIENT_ID = os.getenv("BACKEND_CLIENT_ID", "api://azure-sdk-qa-bot-dev")
 AZURE_CLIENT_ID = os.getenv("AZURE_CLIENT_ID")  # User-assigned managed identity client ID
 PORT = int(os.getenv("PORT", "8000"))
+MCP_API_KEY = os.getenv("MCP_API_KEY", "hello_world")
 
 # Fixed tenant for TypeSpec QA bot
 TENANT_ID = "azure_sdk_qa_bot"
@@ -51,6 +53,38 @@ TENANT_ID = "azure_sdk_qa_bot"
 http_client: Optional[httpx.AsyncClient] = None
 credential: Optional[DefaultAzureCredential] = None
 message_queues: Dict[str, asyncio.Queue] = {}
+
+
+def _is_api_key_valid(request: Request) -> bool:
+    """Validate incoming API key from request headers."""
+    if not MCP_API_KEY:
+        return True
+
+    provided_api_key = request.headers.get("x-api-key", "")
+
+    if not provided_api_key:
+        authorization = request.headers.get("authorization", "")
+        if authorization.lower().startswith("bearer "):
+            provided_api_key = authorization[7:].strip()
+
+    if not provided_api_key:
+        return False
+
+    return hmac.compare_digest(provided_api_key, MCP_API_KEY)
+
+
+def _enforce_api_key(request: Request) -> Optional[JSONResponse]:
+    """Return auth error response when API key is invalid."""
+    if _is_api_key_valid(request):
+        return None
+
+    return JSONResponse(
+        status_code=401,
+        content={
+            "error": "Unauthorized",
+            "message": "Valid API key is required in X-API-Key header"
+        }
+    )
 
 
 def _interesting_headers(headers) -> Dict[str, str]:
@@ -266,6 +300,10 @@ async def execute_typespec_question(arguments: dict) -> str:
 
 @app.get("/sse")
 async def sse_stream(request: Request):
+    auth_error = _enforce_api_key(request)
+    if auth_error:
+        return auth_error
+
     session_id = str(uuid.uuid4())
     queue: asyncio.Queue = asyncio.Queue()
     message_queues[session_id] = queue
@@ -328,6 +366,10 @@ async def sse_stream(request: Request):
 
 @app.post("/sse/messages/{session_id}")
 async def sse_message_endpoint(session_id: str, request: Request):
+    auth_error = _enforce_api_key(request)
+    if auth_error:
+        return auth_error
+
     queue = message_queues.get(session_id)
     if not queue:
         logger.warning(f"Received POST for unknown session {session_id}")
@@ -353,6 +395,10 @@ async def sse_message_endpoint(session_id: str, request: Request):
 
 @app.post("/sse")
 async def legacy_sse_post(request: Request):
+    auth_error = _enforce_api_key(request)
+    if auth_error:
+        return auth_error
+
     client_host = request.client.host if request.client else "unknown"
     logger.info(
         f"Received POST request to /sse from {client_host}, "
@@ -427,6 +473,10 @@ async def process_mcp_message(body: dict) -> Optional[dict]:
 
 @app.post("/messages")
 async def mcp_messages_direct(request: Request):
+    auth_error = _enforce_api_key(request)
+    if auth_error:
+        return auth_error
+
     try:
         body = await request.json()
         response = await process_mcp_message(body)

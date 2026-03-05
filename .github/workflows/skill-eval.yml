@@ -1,0 +1,114 @@
+name: Skill Evaluation
+
+on:
+  pull_request:
+    paths:
+      - '.github/skills/**'
+  workflow_dispatch:
+    inputs:
+      skill_name:
+        description: 'Specific skill to evaluate (leave empty for all)'
+        required: false
+        type: string
+
+jobs:
+  evaluate-skills:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install waza
+        run: |
+          pip install waza-sdk
+      
+      - name: Find changed skills
+        id: changed-skills
+        if: github.event_name == 'pull_request'
+        run: |
+          # Get list of changed skill directories
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          SKILLS=$(echo "$CHANGED_FILES" | grep '^.github/skills/' | cut -d'/' -f3 | sort -u)
+          echo "Changed skills: $SKILLS"
+          echo "skills<<EOF" >> $GITHUB_OUTPUT
+          echo "$SKILLS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Run evaluations
+        run: |
+          SKILLS_TO_EVAL="${{ inputs.skill_name }}"
+          
+          if [ -z "$SKILLS_TO_EVAL" ] && [ "${{ github.event_name }}" == "pull_request" ]; then
+            SKILLS_TO_EVAL="${{ steps.changed-skills.outputs.skills }}"
+          fi
+          
+          if [ -z "$SKILLS_TO_EVAL" ]; then
+            echo "Evaluating all skills"
+            SKILLS_TO_EVAL=$(ls .github/skills/)
+          fi
+          
+          mkdir -p eval-results
+          
+          for skill in $SKILLS_TO_EVAL; do
+            if [ -f ".github/skills/$skill/eval.yaml" ]; then
+              echo "Evaluating skill: $skill"
+              waza eval .github/skills/$skill/eval.yaml \
+                --output eval-results/$skill-results.json \
+                --verbose || echo "Evaluation failed for $skill"
+            else
+              echo "No eval.yaml found for $skill, skipping"
+            fi
+          done
+      
+      - name: Upload evaluation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-eval-results
+          path: eval-results/
+          retention-days: 30
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            let comment = '## Skill Evaluation Results\n\n';
+            const resultsDir = 'eval-results';
+            
+            if (fs.existsSync(resultsDir)) {
+              const files = fs.readdirSync(resultsDir);
+              
+              for (const file of files) {
+                if (file.endsWith('.json')) {
+                  const content = fs.readFileSync(path.join(resultsDir, file), 'utf8');
+                  const results = JSON.parse(content);
+                  
+                  comment += `### ${results.skill || file.replace('-results.json', '')}\n\n`;
+                  comment += `- Tasks: ${results.total_tasks || 0}\n`;
+                  comment += `- Passed: ${results.passed || 0}\n`;
+                  comment += `- Failed: ${results.failed || 0}\n`;
+                  comment += `- Success Rate: ${results.success_rate || 'N/A'}\n\n`;
+                }
+              }
+            } else {
+              comment += 'No evaluation results found.\n';
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

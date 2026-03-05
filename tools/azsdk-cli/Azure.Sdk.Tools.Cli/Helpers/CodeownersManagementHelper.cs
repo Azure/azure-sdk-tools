@@ -441,7 +441,6 @@ public class CodeownersManagementHelper(
         {
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
         }
-        await HydratePackages(new List<PackageWorkItem> { packageWi });
 
         var operations = new List<string>();
         foreach (var owner in owners)
@@ -545,10 +544,8 @@ public class CodeownersManagementHelper(
         {
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
         }
-        await HydratePackages(new List<PackageWorkItem> { packageWi });
 
         var operations = new List<string>();
-
         foreach (var ownerWi in owners)
         {
             if (!packageWi.RelatedIds.Contains(ownerWi.WorkItemId))
@@ -626,6 +623,7 @@ public class CodeownersManagementHelper(
                 continue;
             }
             await devOpsService.RemoveWorkItemRelationAsync(labelOwner.WorkItemId, "related", owner.WorkItemId);
+            operations.Add($"Removed @{owner.GitHubAlias} from owner of label(s) '{labelNames}' and path '{path}'.");
         }
 
         return new CodeownersModifyResponse

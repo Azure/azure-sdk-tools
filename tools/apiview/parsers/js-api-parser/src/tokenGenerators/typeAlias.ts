@@ -96,6 +96,10 @@ function generate(item: ApiTypeAlias, deprecated?: boolean): GeneratorResult {
     typeChildren = parseTypeText(typeText, collector.currentTarget, deprecated, 0, referenceMap);
     if (!typeChildren?.length) {
       collector.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+    } else {
+      typeChildren[typeChildren.length - 1].Tokens.push(
+        createToken(TokenKind.Punctuation, ";", { deprecated }),
+      );
     }
   } else {
     // Fallback: process excerpt tokens directly

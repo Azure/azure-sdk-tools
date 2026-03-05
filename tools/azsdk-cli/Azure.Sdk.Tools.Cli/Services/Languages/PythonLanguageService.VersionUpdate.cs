@@ -10,20 +10,24 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// </summary>
 public partial class PythonLanguageService : LanguageService
 {
-    // Regex patterns for matching version assignment in _version.py and the development status classifier in setup.py/pyproject.toml
+    // Regex pattern for matching version assignment in _version.py
     private static readonly Regex VersionRegex = new(
         @"^VERSION\s*=\s*['""]([^'""]*)['""]",
         RegexOptions.Multiline | RegexOptions.Compiled);
 
+    // Regex pattern for matching development status classifier in setup.py or pyproject.toml
     private static readonly Regex DevStatusRegex = new(
         @"(classifiers\s*=\s*\[(\s)*)(['""]Development Status :: [^'""\r\n]*['""])",
         RegexOptions.Compiled);
+
+    // Regex pattern for detecting Python pre-release versions (e.g. 1.0.0b2, 1.0.0a1, 1.0.0rc1, 1.0.0.dev20230101)
+    private static readonly Regex PreReleaseRegex = new(@"\d(a|b|rc|\.dev)\d", RegexOptions.Compiled);
 
     // Directories to skip when searching for version files (matches Python SDK's EXCLUDE set)
     private static readonly HashSet<string> ExcludedDirs = new(StringComparer.OrdinalIgnoreCase)
     {
         "venv", "__pycache__", "tests", "test", "generated_samples", "generated_tests",
-        "samples", "swagger", "stress", "docs", "doc", "local", "scripts", "images", ".tox"
+        "samples", "swagger", "stress", "docs", "doc", "local", "scripts", "images", ".tox", "build"
     };
 
     /// <summary>
@@ -38,7 +42,7 @@ public partial class PythonLanguageService : LanguageService
         var errors = new List<string>();
         bool versionFileUpdated = false;
 
-        // Step 1: Find and update _version.py or version.py
+        // Find and update _version.py or version.py
         var versionFilePath = FindVersionPy(packagePath);
         if (versionFilePath != null)
         {
@@ -67,11 +71,15 @@ public partial class PythonLanguageService : LanguageService
         }
         else
         {
+            if (packagePath.Contains("nspkg", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("No version file found in {PackagePath}, but this is expected for nspkg packages.", packagePath);
+            }
             logger.LogWarning("No _version.py or version.py found in {PackagePath}", packagePath);
             errors.Add("No _version.py or version.py found in package directory");
         }
 
-        // Step 2: Find and update development status classifier in setup.py or pyproject.toml
+        // Find and update development status classifier in setup.py or pyproject.toml
         var setupFilePath = FindSetupFile(packagePath);
         if (setupFilePath != null)
         {
@@ -106,7 +114,7 @@ public partial class PythonLanguageService : LanguageService
         }
         else
         {
-            logger.LogDebug("No setup.py or pyproject.toml found at package root {PackagePath}", packagePath);
+            logger.LogWarning("No setup.py or pyproject.toml found at package root {PackagePath}", packagePath);
         }
 
         if (errors.Count > 0 && !versionFileUpdated)
@@ -159,7 +167,6 @@ public partial class PythonLanguageService : LanguageService
                     if (dirName != null
                         && !dirName.StartsWith('_')
                         && !dirName.StartsWith('.')
-                        && dirName != "build"
                         && !dirName.EndsWith(".egg-info", StringComparison.OrdinalIgnoreCase)
                         && !ExcludedDirs.Contains(dirName))
                     {
@@ -209,6 +216,6 @@ public partial class PythonLanguageService : LanguageService
         }
 
         // Detect Python pre-release version patterns: e.g. 1.0.0b2, 1.0.0a1, 1.0.0rc1, 1.0.0.dev20230101
-        return Regex.IsMatch(version, @"\d(a|b|rc|\.dev)\d");
+        return PreReleaseRegex.IsMatch(version);
     }
 }

@@ -12,7 +12,7 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
 [TestFixture]
-internal class PythonLanguageServiceVersioningTests
+internal class PythonLanguageServiceVersionUpdateTests
 {
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<INpxHelper> _npxHelperMock = null!;

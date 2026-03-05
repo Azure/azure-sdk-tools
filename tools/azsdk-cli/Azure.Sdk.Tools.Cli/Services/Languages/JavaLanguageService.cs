@@ -227,6 +227,44 @@ public sealed partial class JavaLanguageService : LanguageService
 
     private static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5);
 
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        logger.LogInformation("Building Java project at: {PackagePath}", packagePath);
+
+        var pomPath = Path.Combine(packagePath, "pom.xml");
+        if (!File.Exists(pomPath))
+        {
+            return (false, $"pom.xml not found at: {pomPath}", null);
+        }
+        var args = new List<string>
+            {
+                "--no-transfer-progress",    // Reduce build log noise
+                "-DskipTests",              // Skip test execution for faster linting
+                "-Dgpg.skip",               // Skip GPG signing for faster builds
+                "-DtrimStackTrace=false",   // Full stack traces for better debugging
+                "-Dmaven.javadoc.skip=false", // Enable Javadoc generation for linting
+                "-Dcodesnippet.skip=true",  // Skip snippet processing during linting
+                "-Dspotless.skip=false",    // Ensure Spotless formatting runs
+                "-Djacoco.skip=true",       // Skip code coverage for faster builds
+                "-Dshade.skip=true",        // Skip JAR shading for faster builds
+                "-Dmaven.antrun.skip=true", // Skip Ant tasks for faster builds
+                "-Dcheckstyle.skip=true",   // Skip Checkstyle for faster builds
+                "-am"                       // Also build required modules automatically
+            };
+         var result = await mavenHelper.Run(new("install", [.. args], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), ct);
+
+
+        if (result.ExitCode == 0)
+        {
+            logger.LogInformation("Build completed successfully");
+            return (true, null, null);
+        }
+
+        var errorMessage = $"Build failed with exit code {result.ExitCode}. Output:\n{(result.Output ?? string.Empty).Trim()}";
+        logger.LogWarning("Build failed: {ErrorMessage}", errorMessage);
+        return (false, errorMessage, null);
+    }
+
     public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         logger.LogInformation("Starting test execution for Java project at: {PackagePath}", packagePath);

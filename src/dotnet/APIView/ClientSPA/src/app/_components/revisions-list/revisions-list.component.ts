@@ -464,19 +464,46 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    */
   onRevisionFileDrop(event: DragEvent) {
     const file = event.dataTransfer?.files[0];
-    if (file) {
+    if (file && this.isAcceptedRevisionFile(file.name)) {
       this.revisionUploadFile = file;
       this.createRevisionForm.get('selectedFile')?.setValue(file);
+    } else if (file) {
+      this.messageService.add({
+        severity: 'error',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Invalid file type',
+        detail: `Only ${this.acceptedFilesForReviewUpload} files are accepted.`,
+        key: 'bc',
+        life: 3000
+      });
     }
   }
 
   onRevisionFileInputChange(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) {
+    if (file && this.isAcceptedRevisionFile(file.name)) {
       this.revisionUploadFile = file;
       this.createRevisionForm.get('selectedFile')?.setValue(file);
+    } else if (file) {
+      this.revisionUploadFile = undefined;
+      this.createRevisionForm.get('selectedFile')?.reset();
+      this.messageService.add({
+        severity: 'error',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Invalid file type',
+        detail: `Only ${this.acceptedFilesForReviewUpload} files are accepted.`,
+        key: 'bc',
+        life: 3000
+      });
     }
+  }
+
+  private isAcceptedRevisionFile(fileName: string): boolean {
+    if (!this.acceptedFilesForReviewUpload) return true;
+    const extensions = this.acceptedFilesForReviewUpload.split(',').map(ext => ext.trim().toLowerCase());
+    const lowerName = fileName.toLowerCase();
+    return extensions.some(ext => lowerName.endsWith(ext));
   }
 
   removeRevisionFile() {

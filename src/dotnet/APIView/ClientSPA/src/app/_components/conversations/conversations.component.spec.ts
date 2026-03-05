@@ -521,4 +521,342 @@ describe('ConversationComponent', () => {
       expect(component.comments[0].severity).toBe(CommentSeverity.Question);
     });
   });
+
+  describe('Filter pipeline (applyFilters / threadMatchesFilters)', () => {
+    // Helper to build a minimal CodePanelRowData-like thread object
+    function makeThread(overrides: {
+      severity?: CommentSeverity | string | number | null;
+      commentSource?: CommentSource | null;
+      createdBy?: string;
+      isResolved?: boolean;
+    } = {}): any {
+      return {
+        isResolvedCommentThread: overrides.isResolved ?? false,
+        comments: [{
+          severity: overrides.severity ?? null,
+          commentSource: overrides.commentSource ?? CommentSource.UserGenerated,
+          createdBy: overrides.createdBy ?? 'user@test.com',
+        }],
+      };
+    }
+
+    function setThreads(comp: ConversationsComponent, threads: any[]) {
+      comp.commentThreads = new Map();
+      comp.commentThreads.set('rev-1', threads);
+      comp.apiRevisionsWithComments = [{ id: 'rev-1' } as APIRevision];
+    }
+
+    it('should show only active (unresolved) threads when filterStatus is "active"', () => {
+      const active = makeThread({ isResolved: false });
+      const resolved = makeThread({ isResolved: true });
+      setThreads(component, [active, resolved]);
+
+      component.filterStatus = 'active';
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+      expect(component.totalThreadCount).toBe(2);
+    });
+
+    it('should show only resolved threads when filterStatus is "resolved"', () => {
+      const active = makeThread({ isResolved: false });
+      const resolved = makeThread({ isResolved: true });
+      setThreads(component, [active, resolved]);
+
+      component.filterStatus = 'resolved';
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should show all threads when filterStatus is "all"', () => {
+      const active = makeThread({ isResolved: false });
+      const resolved = makeThread({ isResolved: true });
+      setThreads(component, [active, resolved]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(2);
+    });
+
+    it('should filter by severity when filterSeverities has entries (string values)', () => {
+      const suggestion = makeThread({ severity: 'suggestion' });
+      const mustFix = makeThread({ severity: 'mustFix' });
+      const question = makeThread({ severity: 'question' });
+      setThreads(component, [suggestion, mustFix, question]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['mustfix']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should handle camelCase severity from API (shouldFix -> shouldfix)', () => {
+      const shouldFix = makeThread({ severity: 'shouldFix' });
+      setThreads(component, [shouldFix]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['shouldfix']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should filter by severity when values are numeric enum (from severityChanged$)', () => {
+      const suggestion = makeThread({ severity: CommentSeverity.Suggestion }); // numeric 1
+      const mustFix = makeThread({ severity: CommentSeverity.MustFix }); // numeric 3
+      setThreads(component, [suggestion, mustFix]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['suggestion']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should match numeric CommentSeverity.Question (0) to filter key "question"', () => {
+      const q = makeThread({ severity: CommentSeverity.Question }); // numeric 0
+      setThreads(component, [q]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['question']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should match numeric CommentSeverity.ShouldFix (2) to filter key "shouldfix"', () => {
+      const sf = makeThread({ severity: CommentSeverity.ShouldFix }); // numeric 2
+      setThreads(component, [sf]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['shouldfix']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should show all severities when filterSeverities is empty', () => {
+      const suggestion = makeThread({ severity: 'suggestion' });
+      const question = makeThread({ severity: CommentSeverity.Question });
+      const noSeverity = makeThread({ severity: null });
+      setThreads(component, [suggestion, question, noSeverity]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(3);
+    });
+
+    it('should exclude threads with null severity when severity filter is active', () => {
+      const noSeverity = makeThread({ severity: null });
+      const mustFix = makeThread({ severity: 'mustFix' });
+      setThreads(component, [noSeverity, mustFix]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities = new Set(['mustfix']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should filter by kind "human" (UserGenerated source)', () => {
+      const human = makeThread({ commentSource: CommentSource.UserGenerated });
+      const ai = makeThread({ commentSource: CommentSource.AIGenerated });
+      const diag = makeThread({ commentSource: CommentSource.Diagnostic });
+      setThreads(component, [human, ai, diag]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities.clear();
+      component.filterKinds = new Set(['human']);
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should filter by kind "ai" (AIGenerated source or createdBy azure-sdk)', () => {
+      const ai = makeThread({ commentSource: CommentSource.AIGenerated });
+      const azureSdk = makeThread({ commentSource: CommentSource.UserGenerated, createdBy: 'azure-sdk' });
+      const human = makeThread({ commentSource: CommentSource.UserGenerated, createdBy: 'user@test.com' });
+      setThreads(component, [ai, azureSdk, human]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities.clear();
+      component.filterKinds = new Set(['ai']);
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(2);
+    });
+
+    it('should filter by kind "diagnostic"', () => {
+      const diag = makeThread({ commentSource: CommentSource.Diagnostic });
+      const human = makeThread({ commentSource: CommentSource.UserGenerated });
+      setThreads(component, [diag, human]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities.clear();
+      component.filterKinds = new Set(['diagnostic']);
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should show all kinds when filterKinds is empty', () => {
+      const human = makeThread({ commentSource: CommentSource.UserGenerated });
+      const ai = makeThread({ commentSource: CommentSource.AIGenerated });
+      const diag = makeThread({ commentSource: CommentSource.Diagnostic });
+      setThreads(component, [human, ai, diag]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(3);
+    });
+
+    it('should combine status + severity filters', () => {
+      const activeMust = makeThread({ severity: 'mustFix', isResolved: false });
+      const resolvedMust = makeThread({ severity: 'mustFix', isResolved: true });
+      const activeSuggestion = makeThread({ severity: 'suggestion', isResolved: false });
+      setThreads(component, [activeMust, resolvedMust, activeSuggestion]);
+
+      component.filterStatus = 'active';
+      component.filterSeverities = new Set(['mustfix']);
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+      expect(component.totalThreadCount).toBe(3);
+    });
+
+    it('should combine status + severity + kind filters', () => {
+      const activeHumanMust = makeThread({ severity: 'mustFix', isResolved: false, commentSource: CommentSource.UserGenerated });
+      const activeAiMust = makeThread({ severity: 'mustFix', isResolved: false, commentSource: CommentSource.AIGenerated });
+      const activeHumanSuggestion = makeThread({ severity: 'suggestion', isResolved: false, commentSource: CommentSource.UserGenerated });
+      setThreads(component, [activeHumanMust, activeAiMust, activeHumanSuggestion]);
+
+      component.filterStatus = 'active';
+      component.filterSeverities = new Set(['mustfix']);
+      component.filterKinds = new Set(['human']);
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('should exclude threads with no comments', () => {
+      const noComments = { isResolvedCommentThread: false, comments: [] };
+      const withComment = makeThread({ severity: 'suggestion' });
+      setThreads(component, [noComments, withComment]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('toggleSeverityFilter should add and remove severity keys', () => {
+      const thread = makeThread({ severity: 'mustFix' });
+      setThreads(component, [thread]);
+
+      component.filterStatus = 'all';
+      component.filterKinds.clear();
+      component.filterSeverities.clear();
+
+      component.toggleSeverityFilter('mustfix');
+      expect(component.filterSeverities.has('mustfix')).toBe(true);
+      expect(component.filteredThreadCount).toBe(1);
+
+      component.toggleSeverityFilter('mustfix');
+      expect(component.filterSeverities.has('mustfix')).toBe(false);
+      // Empty set = show all
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('toggleKindFilter should add and remove kind keys', () => {
+      const human = makeThread({ commentSource: CommentSource.UserGenerated });
+      const diag = makeThread({ commentSource: CommentSource.Diagnostic });
+      setThreads(component, [human, diag]);
+
+      component.filterStatus = 'all';
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+
+      component.toggleKindFilter('human');
+      expect(component.filterKinds.has('human')).toBe(true);
+      expect(component.filteredThreadCount).toBe(1);
+
+      component.toggleKindFilter('diagnostic');
+      expect(component.filteredThreadCount).toBe(2);
+
+      component.toggleKindFilter('human');
+      expect(component.filteredThreadCount).toBe(1);
+    });
+
+    it('clearAllFilters should reset to defaults and reapply', () => {
+      const thread = makeThread({ severity: 'mustFix', isResolved: true });
+      setThreads(component, [thread]);
+
+      component.filterStatus = 'resolved';
+      component.filterSeverities = new Set(['mustfix']);
+      component.filterKinds = new Set(['human']);
+
+      component.clearAllFilters();
+
+      expect(component.filterStatus).toBe('active');
+      expect(component.filterSeverities.size).toBe(0);
+      expect(component.filterKinds.size).toBe(0);
+    });
+
+    it('setStatusFilter should update status and reapply filters', () => {
+      const active = makeThread({ isResolved: false });
+      const resolved = makeThread({ isResolved: true });
+      setThreads(component, [active, resolved]);
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+
+      component.setStatusFilter('resolved');
+      expect(component.filterStatus).toBe('resolved');
+      expect(component.filteredThreadCount).toBe(1);
+
+      component.setStatusFilter('all');
+      expect(component.filteredThreadCount).toBe(2);
+    });
+
+    it('should only include revisions that have matching threads after filtering', () => {
+      component.commentThreads = new Map();
+      component.commentThreads.set('rev-1', [makeThread({ isResolved: false })]);
+      component.commentThreads.set('rev-2', [makeThread({ isResolved: true })]);
+      component.apiRevisionsWithComments = [
+        { id: 'rev-1' } as APIRevision,
+        { id: 'rev-2' } as APIRevision,
+      ];
+
+      component.filterStatus = 'active';
+      component.filterSeverities.clear();
+      component.filterKinds.clear();
+      component.applyFilters();
+
+      expect(component.filteredApiRevisionsWithComments).toHaveLength(1);
+      expect(component.filteredApiRevisionsWithComments[0].id).toBe('rev-1');
+    });
+  });
 });

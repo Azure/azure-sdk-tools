@@ -67,7 +67,6 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
   filterKinds: Set<'human' | 'ai' | 'diagnostic'> = new Set();
 
   // Severity options for template iteration
-  // Keys are lowercase to match normalization used for comparison
   readonly severityOptions = [
     { key: 'question', label: 'Question', icon: 'bi-question-circle' },
     { key: 'suggestion', label: 'Suggestion', icon: 'bi-lightbulb' },
@@ -493,8 +492,16 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
     if (this.filterSeverities.size > 0) {
       const rawSev = firstComment.severity;
       if (rawSev == null) return false;
-      const sev = String(rawSev).toLowerCase();
-      if (!this.filterSeverities.has(sev)) {
+      // Handle both numeric enum values and camelCase string values from the API
+      let normalizedSev: string;
+      if (typeof rawSev === 'number') {
+        const enumName = CommentSeverity[rawSev];
+        if (!enumName) return false;
+        normalizedSev = enumName.toLowerCase();
+      } else {
+        normalizedSev = String(rawSev).toLowerCase();
+      }
+      if (!this.filterSeverities.has(normalizedSev)) {
         return false;
       }
     }

@@ -286,15 +286,35 @@ export class SamplesPageComponent {
 
   onFileDrop(event: DragEvent) {
     const file = event.dataTransfer?.files[0];
-    if (file && file.name.endsWith('.md')) {
+    if (file && file.name.toLowerCase().endsWith('.md')) {
       this.samplesUploadFile = file;
+    } else if (file) {
+      this.messageService.add({
+        severity: 'error',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Invalid file type',
+        detail: 'Only Markdown (.md) files can be uploaded as samples.',
+        key: 'bc',
+        life: 3000
+      });
     }
   }
 
   onFileInputChange(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      this.samplesUploadFile = input.files[0];
+    const file = input.files?.[0];
+    if (file && file.name.toLowerCase().endsWith('.md')) {
+      this.samplesUploadFile = file;
+    } else if (file) {
+      this.samplesUploadFile = undefined;
+      this.messageService.add({
+        severity: 'error',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Invalid file type',
+        detail: 'Only Markdown (.md) files can be uploaded as samples.',
+        key: 'bc',
+        life: 3000
+      });
     }
   }
 

@@ -22,7 +22,7 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
-        var toolCalls = new List<object>();
+        var toolCalls = new List<ToolCallRecord>();
 
         try
         {
@@ -51,11 +51,11 @@ public class SessionExecutor : IDisposable
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
-                        toolCalls.Add(new
+                        toolCalls.Add(new ToolCallRecord
                         {
-                            input.ToolName,
-                            input.ToolArgs,
-                            input.ToolResult
+                            ToolName = input.ToolName,
+                            ToolArgs = input.ToolArgs,
+                            ToolResult = input.ToolResult
                         });
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }

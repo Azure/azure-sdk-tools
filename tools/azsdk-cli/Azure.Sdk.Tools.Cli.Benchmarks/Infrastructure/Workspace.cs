@@ -160,7 +160,7 @@ public class Workspace : IDisposable
     public async Task WriteExecutionLogAsync(
         string scenarioName,
         IReadOnlyList<object> messages,
-        IReadOnlyList<object> toolCalls,
+        IReadOnlyList<ToolCallRecord> toolCalls,
         string? gitDiff,
         TimeSpan duration,
         bool passed,

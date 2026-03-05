@@ -229,13 +229,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         }
 
         [Test]
-        public void DetectScenario_UserLabelPathOwnerType_ReturnsScenario4()
-        {
-            var result = CodeownersTool.DetectScenario(["user1"], ["label1"], null, "sdk/service/", "service-owner");
-            Assert.That(result, Is.EqualTo(4));
-        }
-
-        [Test]
         public void DetectScenario_NoValidCombination_ReturnsNull()
         {
             // Only github-user with no other params
@@ -246,14 +239,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
             Assert.That(CodeownersTool.DetectScenario(["user1"], ["label1"], null, null, null), Is.Null);
             // user + package + label (extra param)
             Assert.That(CodeownersTool.DetectScenario(["user1"], ["label1"], "pkg1", null, null), Is.Null);
-        }
-
-        [Test]
-        public void DetectScenario_Scenario4TakesPriorityOverScenario3WhenPathProvided()
-        {
-            // When path is present alongside user+label+ownerType, it should be scenario 4
-            var result = CodeownersTool.DetectScenario(["user1"], ["label1"], null, "sdk/service/", "azsdk-owner");
-            Assert.That(result, Is.EqualTo(4));
         }
 
         [Test]

@@ -6,6 +6,8 @@
 
 - Added `azsdk_package_pack` tool to create package artifacts
 - Improved `azsdk_typespec_delegate_apiview_feedback` tool description to better recognize intent expressed as "address", "fix", or "resolve" APIView feedback
+- Added a CLI command and MCP tool `azsdk_update_release_plan` to update release plan.
+- Added a CLI command to get release plan using API spec pull request or spec project path.
 
 ### Breaking Changes
 

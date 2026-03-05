@@ -345,12 +345,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // First find the API spec work item
             try
             {
-                if (IsAgentTesting)
-                {
-                    logger.LogInformation("Agent testing is enabled. Searching for a release plan with test tag");
-                }
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ActiveSpecPullRequestUrl] = '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned','Finished')";
-                query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
                 var apiSpecWorkItems = await FetchWorkItemsAsync(query);
                 if (apiSpecWorkItems.Count == 0)
                 {

@@ -1,7 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text.Json;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
@@ -22,7 +24,8 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
-        var toolCalls = new List<string>();
+        var toolCalls = new List<ToolCallRecord>();
+        var pendingStarts = new ConcurrentStack<(long Timestamp, string? ArgsJson)>();
 
         try
         {
@@ -47,11 +50,52 @@ public class SessionExecutor : IDisposable
                     OnPreToolUse = (input, invocation) =>
                     {
                         config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
+
+                        // Capture start timestamp and arguments for duration tracking
+                        string? argsJson = null;
+                        try
+                        {
+                            if (input.ToolArgs != null)
+                            {
+                                argsJson = JsonSerializer.Serialize(input.ToolArgs);
+                            }
+                        }
+                        catch { /* ignore serialization errors */ }
+
+                        pendingStarts.Push((input.Timestamp, argsJson));
+
                         return Task.FromResult<PreToolUseHookOutput?>(null);
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
-                        toolCalls.Add(input.ToolName);
+                        double? durationMs = null;
+                        string? args = null;
+
+                        if (pendingStarts.TryPop(out var startInfo))
+                        {
+                            // Timestamps are in milliseconds from the SDK
+                            durationMs = input.Timestamp - startInfo.Timestamp;
+                            args = startInfo.ArgsJson;
+                        }
+
+                        // Try to extract MCP server name from tool name convention (server__tool)
+                        string? mcpServerName = null;
+                        var toolName = input.ToolName;
+                        if (toolName.Contains("__"))
+                        {
+                            var parts = toolName.Split("__", 2);
+                            mcpServerName = parts[0];
+                        }
+
+                        toolCalls.Add(new ToolCallRecord
+                        {
+                            ToolName = input.ToolName,
+                            Arguments = args,
+                            DurationMs = durationMs,
+                            McpServerName = mcpServerName,
+                            Timestamp = DateTime.UtcNow
+                        });
+
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },

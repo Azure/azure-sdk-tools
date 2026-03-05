@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
+using Azure.Sdk.Tools.Cli.Benchmarks.Reporting;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks;
@@ -37,6 +38,7 @@ public class Program
         };
         var verboseOption = new Option<bool>("--verbose") { Description = "Show agent activity during execution" };
         var parallelOption = new Option<int>("--parallel") { Description = $"Maximum number of scenarios to run concurrently (default: {BenchmarkDefaults.DefaultMaxParallelism})", DefaultValueFactory = _ => BenchmarkDefaults.DefaultMaxParallelism };
+        var reportOption = new Option<bool>("--report") { Description = "Generate a markdown report after the run completes" };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);
@@ -44,6 +46,7 @@ public class Program
         runCommand.Options.Add(cleanupOption);
         runCommand.Options.Add(verboseOption);
         runCommand.Options.Add(parallelOption);
+        runCommand.Options.Add(reportOption);
 
         runCommand.SetAction(async (parseResult, _) =>
         {
@@ -53,9 +56,27 @@ public class Program
             var cleanup = parseResult.GetValue(cleanupOption);
             var verbose = parseResult.GetValue(verboseOption);
             var parallel = parseResult.GetValue(parallelOption);
-            return await HandleRunCommand(name, all, model, cleanup, verbose, parallel);
+            var report = parseResult.GetValue(reportOption);
+            return await HandleRunCommand(name, all, model, cleanup, verbose, parallel, report);
         });
         rootCommand.Subcommands.Add(runCommand);
+
+        // report command
+        var reportCommand = new Command("report", "Generate a report from existing benchmark log files");
+
+        var reportPathArgument = new Argument<string>("path") { Description = "Directory containing benchmark-log.json files" };
+        var reportOutputOption = new Option<string?>("--output") { Description = "Output file path for the report (default: report.md in the log directory)" };
+
+        reportCommand.Arguments.Add(reportPathArgument);
+        reportCommand.Options.Add(reportOutputOption);
+
+        reportCommand.SetAction(async (parseResult, _) =>
+        {
+            var path = parseResult.GetValue(reportPathArgument)!;
+            var output = parseResult.GetValue(reportOutputOption);
+            return await HandleReportCommand(path, output);
+        });
+        rootCommand.Subcommands.Add(reportCommand);
 
         return await rootCommand.Parse(args).InvokeAsync();
     }
@@ -89,7 +110,7 @@ public class Program
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string? model, CleanupPolicy cleanup, bool verbose, int parallel)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string? model, CleanupPolicy cleanup, bool verbose, int parallel, bool report)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -195,6 +216,26 @@ public class Program
             }
         }
 
+        // Generate report if requested
+        if (report)
+        {
+            Console.WriteLine("\n=== Generating Report ===");
+            try
+            {
+                var reportGenerator = new ReportGenerator();
+                var runName = $"benchmark-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
+                var reportContent = await reportGenerator.GenerateAsync(resultsList, runName, effectiveModel);
+
+                var reportPath = Path.Combine(Directory.GetCurrentDirectory(), $"{runName}-report.md");
+                await File.WriteAllTextAsync(reportPath, reportContent);
+                Console.WriteLine($"Report written to: {reportPath}");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Warning: Failed to generate report: {ex.Message}");
+            }
+        }
+
         return resultsList.All(r => r.Result.Passed) ? 0 : 1;
     }
 
@@ -212,7 +253,9 @@ public class Program
         Console.WriteLine($"\nTool calls ({result.ToolCalls.Count}):");
         foreach (var tool in result.ToolCalls)
         {
-            Console.WriteLine($"  - {tool}");
+            var duration = tool.DurationMs.HasValue ? $" ({tool.DurationMs:F0}ms)" : "";
+            var server = tool.McpServerName != null ? $" [{tool.McpServerName}]" : "";
+            Console.WriteLine($"  - {tool.ToolName}{server}{duration}");
         }
 
         if (result.WorkspacePath != null)
@@ -227,6 +270,33 @@ public class Program
             {
                 Console.WriteLine("  Status: preserved (available for inspection)");
             }
+        }
+    }
+
+    private static async Task<int> HandleReportCommand(string path, string? output)
+    {
+        if (!Directory.Exists(path))
+        {
+            Console.Error.WriteLine($"Error: Directory not found: {path}");
+            return 1;
+        }
+
+        Console.WriteLine($"Generating report from logs in: {path}");
+
+        try
+        {
+            var reportGenerator = new ReportGenerator();
+            var reportContent = await reportGenerator.GenerateFromLogsAsync(path);
+
+            var outputPath = output ?? Path.Combine(path, "report.md");
+            await File.WriteAllTextAsync(outputPath, reportContent);
+            Console.WriteLine($"Report written to: {outputPath}");
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error generating report: {ex.Message}");
+            return 1;
         }
     }
 }

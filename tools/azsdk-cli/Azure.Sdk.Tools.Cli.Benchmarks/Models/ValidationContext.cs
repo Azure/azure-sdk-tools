@@ -46,9 +46,9 @@ public class ValidationContext
     // === EXECUTION RESULTS ===
 
     /// <summary>
-    /// Gets the tool calls made during execution.
+    /// Gets the tool calls made during execution (with rich metadata).
     /// </summary>
-    public IReadOnlyList<string> ToolCalls { get; init; } = [];
+    public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
 
     /// <summary>
     /// Gets the conversation messages from the agent session.

@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// </summary>
 public partial class PythonLanguageService : LanguageService
 {
-    // Regex patterns matching Python SDK's version_shared.py
+    // Regex patterns for matching version assignment in _version.py and the development status classifier in setup.py/pyproject.toml
     private static readonly Regex VersionRegex = new(
         @"^VERSION\s*=\s*['""]([^'""]*)['""]",
         RegexOptions.Multiline | RegexOptions.Compiled);
@@ -28,7 +28,6 @@ public partial class PythonLanguageService : LanguageService
 
     /// <summary>
     /// Updates version.py (_version.py) and the development status classifier in setup.py or pyproject.toml.
-    /// Follows the logic of SetPackageVersion in azure-sdk-for-python/eng/scripts/Language-Settings.ps1.
     /// </summary>
     protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
         string packagePath, string version, string? releaseType, CancellationToken ct)

@@ -3,6 +3,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -11,7 +12,7 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
 [TestFixture]
-internal class PythonLanguageServiceVersionUpdateTests
+internal class PythonLanguageServiceVersioningTests
 {
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<INpxHelper> _npxHelperMock = null!;
@@ -123,7 +124,7 @@ internal class PythonLanguageServiceVersionUpdateTests
 
         // Assert
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
-        Assert.That(result.Message, Does.Contain("_version.py").Or.Contains("version.py"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("_version.py").Or.Contains("version.py"));
     }
 
     [Test]

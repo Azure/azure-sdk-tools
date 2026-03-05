@@ -20,7 +20,6 @@ Azure SDK repositories.
 | [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback" | Retrieve and resolve APIView review feedback |
 | [azsdk-common-pipeline-troubleshooting](azsdk-common-pipeline-troubleshooting/SKILL.md) | "pipeline failed", "build failure", "CI check failing" | Diagnose and resolve SDK CI and generation pipeline failures |
 | [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md) | "release SDK", "trigger release pipeline" | Check release readiness and trigger SDK releases |
-| [azsdk-common-report-test-bug](azsdk-common-report-test-bug/SKILL.md) | "file test bug", "report test failure" | File GitHub issues for integration test failures |
 
 ### Development & Meta Skills
 

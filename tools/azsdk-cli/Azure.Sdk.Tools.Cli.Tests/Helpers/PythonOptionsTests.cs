@@ -329,5 +329,33 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Assert.That(options.Timeout, Is.EqualTo(timeout));
             Assert.That(options.LogOutputStream, Is.False);
         }
+
+        [Test]
+        [Platform("Linux,MacOsX")]
+        public void ResolveFromVenvPath_OnUnix_ReturnsBinPath()
+        {
+            var venvPath = "/tmp/my-venv";
+            var result = PythonOptions.ResolveFromVenvPath(venvPath, "python");
+            Assert.That(result, Is.EqualTo(Path.Combine(venvPath, "bin", "python")));
+        }
+
+        [Test]
+        [Platform("Win")]
+        public void ResolveFromVenvPath_OnWindows_ReturnsScriptsPathWithExe()
+        {
+            var venvPath = @"C:\tmp\my-venv";
+            var result = PythonOptions.ResolveFromVenvPath(venvPath, "python");
+            Assert.That(result, Is.EqualTo(Path.Combine(venvPath, "Scripts", "python.exe")));
+        }
+
+        [Test]
+        [Platform("Win")]
+        public void ResolveFromVenvPath_OnWindows_DoesNotDoubleExe()
+        {
+            var venvPath = @"C:\tmp\my-venv";
+            var result = PythonOptions.ResolveFromVenvPath(venvPath, "python.exe");
+            Assert.That(result, Does.EndWith("python.exe"));
+            Assert.That(result, Does.Not.Contain(".exe.exe"));
+        }
     }
 }

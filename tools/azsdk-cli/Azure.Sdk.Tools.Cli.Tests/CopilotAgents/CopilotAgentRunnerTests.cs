@@ -608,7 +608,7 @@ internal class CopilotAgentRunnerTests
             UseStdio = true,
             AutoStart = true,
             UseLoggedInUser = false,
-            GithubToken = "invalid_token_that_will_not_work"
+            GitHubToken = "invalid_token_that_will_not_work"
         });
         var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
         var localTokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());

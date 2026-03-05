@@ -92,13 +92,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private readonly Option<string> serviceTreeIdOpt = new("--service-tree")
         {
             Description = "Service tree ID",
-            Required = true,
+            Required = false,
+            DefaultValueFactory = _ => string.Empty,
         };
 
         private readonly Option<string> productTreeIdOpt = new("--product")
         {
             Description = "Product service tree ID",
-            Required = true,
+            Required = false,
+            DefaultValueFactory = _ => string.Empty,
         };
 
         private readonly Option<string> apiVersionOpt = new("--api-version")
@@ -252,11 +254,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return await CreateReleasePlan(
                         typeSpecProjectPath,
                         targetReleaseMonthYear,
-                        serviceTreeId,
-                        productTreeId,
                         specApiVersion,
                         specPullRequestUrl,
                         sdkReleaseType,
+                        serviceTreeId: serviceTreeId,
+                        productTreeId: productTreeId,
                         userEmail: userEmail,
                         isTestReleasePlan: isTestReleasePlan,
                         forceCreateReleasePlan: forceCreateReleasePlan
@@ -447,19 +449,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
             }
 
-            if (!Guid.TryParse(serviceTreeId, out _))
+            if (!string.IsNullOrWhiteSpace(serviceTreeId) && !Guid.TryParse(serviceTreeId, out _))
             {
                 throw new Exception($"Service tree ID '{serviceTreeId}' is not a valid GUID.");
             }
 
-            if (!Guid.TryParse(productTreeId, out _))
+            if (!string.IsNullOrWhiteSpace(productTreeId) && !Guid.TryParse(productTreeId, out _))
             {
                 throw new Exception($"Product tree ID '{productTreeId}' is not a valid GUID.");
             }
         }
 
-        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan")]
-        public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false)
+        [McpServerTool(Name = CreateReleasePlanToolName), Description("Create Release Plan for a TypeSpec project, service, product. Service ID and product Id are required if a previous release plan is not found for the TypeSpec project.")]
+        public async Task<ReleasePlanResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string serviceTreeId = "", string productTreeId = "", string userEmail = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false)
         {
             try
             {
@@ -476,12 +478,58 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
 
+                // Handle both URLs and local paths for TypeSpec projects
+                bool isValidTypeSpec;
+                bool isMgmt;
+                string specProject;
+                if (typeSpecHelper.IsUrl(typeSpecProjectPath))
+                {
+                    // URL path
+                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectUrl(typeSpecProjectPath);
+                    isMgmt = typeSpecHelper.IsTypeSpecUrlForMgmtPlane(typeSpecProjectPath);
+                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePathFromUrl(typeSpecProjectPath);
+                }
+                else
+                {
+                    // Local file path
+                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath);
+                    isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
+                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                }
+
                 // Check environment variable to determine if this should be a test release plan
                 var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
                 if (isAgentTesting)
                 {
                     isTestReleasePlan = true;
                     logger.LogInformation("AZSDKTOOLS_AGENT_TESTING environment variable is set to true, creating test release plan");
+                }
+
+                // Get service and product id from previous release plan
+                if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
+                {
+                    logger.LogInformation("Service and product id are not available. Checking for a previous release plan with same TypeSpec project {specProject}", specProject);
+                    // Get product and service tree Id from existing release plan.
+                    var productDetails = await devOpsService.GetProductInfoByTypeSpecProjectPathAsync(specProject);
+                    if (productDetails != null)
+                    {
+                        logger.LogInformation("Found product details for TypeSpec project {specProject} from previous release plans.", specProject);
+                        serviceTreeId = string.IsNullOrEmpty(serviceTreeId) ? productDetails?.ServiceId ?? string.Empty : serviceTreeId;
+                        productTreeId = string.IsNullOrEmpty(productTreeId) ? productDetails?.ProductServiceTreeId ?? string.Empty : productTreeId;
+                    }
+
+                    // Fail the request if service id and product id are still unknown
+                    if (string.IsNullOrEmpty(serviceTreeId) || string.IsNullOrEmpty(productTreeId))
+                    {
+                        logger.LogWarning("Service id and product id in service tree are unknown for TypeSpec project. Release plan cannot be created without these details.");
+                        return new ReleasePlanResponse
+                        {
+                            TypeSpecProject = specProject,
+                            PackageType = isMgmt ? SdkType.Management : SdkType.Dataplane,
+                            ResponseError = "Failed to identify product details using previous release plans for the TypeSpec project",
+                            NextSteps = ["Retry with valid service id and product id in service tree for the product/offer/feature"]
+                        };
+                    }
                 }
 
                 if (!forceCreateReleasePlan)
@@ -511,26 +559,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                             NextSteps = ["Prompt user to confirm whether to use existing release plan or force create a new release plan."]
                         };
                     }
-                }
-
-                // Handle both URLs and local paths for TypeSpec projects
-                bool isValidTypeSpec;
-                bool isMgmt;
-                string specProject;
-
-                if (typeSpecHelper.IsUrl(typeSpecProjectPath))
-                {
-                    // URL path
-                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectUrl(typeSpecProjectPath);
-                    isMgmt = typeSpecHelper.IsTypeSpecUrlForMgmtPlane(typeSpecProjectPath);
-                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePathFromUrl(typeSpecProjectPath);
-                }
-                else
-                {
-                    // Local file path
-                    isValidTypeSpec = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath);
-                    isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
-                    specProject = typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
                 }
 
                 var specType = isValidTypeSpec ? "TypeSpec" : "OpenAPI";

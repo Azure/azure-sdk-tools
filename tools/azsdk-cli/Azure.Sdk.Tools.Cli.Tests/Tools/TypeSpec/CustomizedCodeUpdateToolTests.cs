@@ -87,7 +87,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var typeSpecHelper = new Mock<ITypeSpecHelper>();
 
-        var svc = languageService ?? new MockNoChangeLanguageService();
+        var svc = languageService ?? new ConfigurableLanguageService();
         var tsp = tspHelper ?? new MockTspHelper();
 
         var tool = new CustomizedCodeUpdateTool(
@@ -111,36 +111,19 @@ public class CustomizedCodeUpdateToolAutoTests
         Mock<ITypeSpecHelper> TypeSpecHelper);
 
     // ========================================================================
-    // Happy-path tests (TSP fix + build succeeds)
+    // Happy-path: TSP fix + build succeeds
     // ========================================================================
 
     [Test]
     public async Task TspFix_BuildPassesFirstIteration_ReturnsSuccess()
     {
-        var (tool, _) = CreateTool(languageService: new MockNoChangeLanguageService());
+        var (tool, _) = CreateTool();
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
 
-        Assert.That(result.Success, Is.True, "Should succeed when build passes on first try");
-        Assert.That(result.ErrorCode, Is.Null);
-        Assert.That(result.Message, Does.Contain("Build passed"));
-    }
-
-    [Test]
-    public async Task TspFix_BuildPassesFirstIteration_WithCustomizations_ReturnsSuccess()
-    {
-        var svc = new MockChangeLanguageService();
-        var (tool, _) = CreateTool(languageService: svc, configureGit: g =>
-            g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-python"));
-        var pkg = CreateTempDir();
-        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
-        var tspDir = CreateTempDir();
-
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
-
-        Assert.That(result.Success, Is.True, "Should succeed when build passes");
+        Assert.That(result.Success, Is.True);
         Assert.That(result.ErrorCode, Is.Null);
         Assert.That(result.Message, Does.Contain("Build passed"));
     }
@@ -148,7 +131,6 @@ public class CustomizedCodeUpdateToolAutoTests
     [Test]
     public async Task TspFix_BuildFailsFirstTry_PassesOnRetry_ReturnsSuccess()
     {
-        // Build fails first time (during first classify+fix+build loop), passes second time
         var buildCalls = 0;
         var svc = new ConfigurableLanguageService(buildFunc: () =>
         {
@@ -164,7 +146,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
 
-        Assert.That(result.Success, Is.True, "Should succeed after retry");
+        Assert.That(result.Success, Is.True);
         Assert.That(result.Message, Does.Contain("Build passed"));
         Assert.That(buildCalls, Is.EqualTo(2), "Should have attempted build twice");
     }
@@ -189,8 +171,19 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(result.Message, Does.Contain("does not exist"));
     }
 
+    [Test]
+    public void TspProjectPath_DoesNotExist_ThrowsDirectoryNotFoundException()
+    {
+        var (tool, _) = CreateTool();
+        var pkg = CreateTempDir();
+        var badTspDir = Path.Combine(Path.GetTempPath(), "nonexistent-tsp-" + Guid.NewGuid().ToString("n"));
+
+        Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
+            await tool.UpdateAsync(packagePath: pkg, tspProjectPath: badTspDir, ct: CancellationToken.None));
+    }
+
     // ========================================================================
-    // Classification failures
+    // Classification edge cases
     // ========================================================================
 
     [Test]
@@ -241,23 +234,102 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public void TspProjectPath_DoesNotExist_ThrowsDirectoryNotFoundException()
+    public async Task Classification_OnlyNonTspItems_ReturnsSuccess()
     {
-        // Classify checks Directory.Exists(tspProjectPath) and throws DirectoryNotFoundException
-        var (tool, _) = CreateTool();
-        var pkg = CreateTempDir();
-        var badTspDir = Path.Combine(Path.GetTempPath(), "nonexistent-tsp-" + Guid.NewGuid().ToString("n"));
+        // When all items are SUCCESS or REQUIRES_MANUAL_INTERVENTION,
+        // no TSP customizations are attempted. Returns success with manual intervention info.
+        var (tool, _) = CreateTool(configureClassifier: c =>
+            c.Setup(x => x.ClassifyItemsAsync(
+                    It.IsAny<List<FeedbackItem>>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<string?>(),
+                    It.IsAny<int?>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new FeedbackClassificationResponse
+                {
+                    Classifications =
+                    [
+                        new FeedbackClassificationResponse.ItemClassificationDetails
+                        {
+                            ItemId = "1", Classification = "SUCCESS",
+                            Reason = "Already addressed", Text = "Looks good"
+                        },
+                        new FeedbackClassificationResponse.ItemClassificationDetails
+                        {
+                            ItemId = "2", Classification = "REQUIRES_MANUAL_INTERVENTION",
+                            Reason = "Complex change", Text = "Restructure hierarchy"
+                        }
+                    ]
+                }));
 
-        Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
-            await tool.UpdateAsync(packagePath: pkg, tspProjectPath: badTspDir, customizationRequest: "test request", ct: CancellationToken.None));
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("manual intervention"));
+    }
+
+    [Test]
+    public async Task Classification_EmptyOnSecondIteration_BreaksLoop()
+    {
+        // First call returns TSP_APPLICABLE, second call returns empty (nothing more to fix)
+        var classifyCalls = 0;
+        var buildCalls = 0;
+        var svc = new ConfigurableLanguageService(buildFunc: () =>
+        {
+            buildCalls++;
+            return (false, "error: still broken", null);
+        });
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns(() =>
+                    {
+                        classifyCalls++;
+                        if (classifyCalls == 1)
+                        {
+                            return Task.FromResult(new FeedbackClassificationResponse
+                            {
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = "1", Classification = "TSP_APPLICABLE",
+                                        Reason = "fixable", Text = "rename X"
+                                    }
+                                ]
+                            });
+                        }
+                        return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                    }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(buildCalls, Is.EqualTo(1), "Should have only built once before second classify returned empty");
     }
 
     // ========================================================================
-    // ApplyTypeSpecFixesAndRegenerate failures
+    // TSP customization failures
     // ========================================================================
 
     [Test]
-    public async Task TspCustomization_Fails_ReturnsTypeSpecCustomizationFailed()
+    public async Task TspCustomization_AllFail_FirstIteration_ReturnsTypeSpecCustomizationFailed()
     {
         var (tool, _) = CreateTool(configureTspCustomization: t =>
             t.Setup(x => x.ApplyCustomizationAsync(
@@ -280,22 +352,108 @@ public class CustomizedCodeUpdateToolAutoTests
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed));
-        Assert.That(result.BuildResult, Does.Contain("Could not parse TypeSpec project"));
+        Assert.That(result.Message, Does.Contain("Could not parse TypeSpec project"));
     }
 
     [Test]
-    public async Task TspRegeneration_Fails_ReturnsTypeSpecCustomizationFailed()
+    public async Task TspCustomization_PartialFailure_ProceedsToBuild()
     {
+        // 2 TSP_APPLICABLE items: first succeeds, second fails.
+        // Should proceed to regeneration and build since at least one succeeded.
+        var customizeCalls = 0;
+        var (tool, _) = CreateTool(
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new FeedbackClassificationResponse
+                    {
+                        Classifications =
+                        [
+                            new FeedbackClassificationResponse.ItemClassificationDetails
+                            {
+                                ItemId = "1", Classification = "TSP_APPLICABLE",
+                                Reason = "fixable", Text = "rename X to Y"
+                            },
+                            new FeedbackClassificationResponse.ItemClassificationDetails
+                            {
+                                ItemId = "2", Classification = "TSP_APPLICABLE",
+                                Reason = "fixable", Text = "add decorator Z"
+                            }
+                        ]
+                    }),
+            configureTspCustomization: t =>
+                t.Setup(x => x.ApplyCustomizationAsync(
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns(() =>
+                    {
+                        customizeCalls++;
+                        return Task.FromResult(customizeCalls == 1
+                            ? new TypeSpecCustomizationServiceResult { Success = true, ChangesSummary = ["renamed X to Y"] }
+                            : new TypeSpecCustomizationServiceResult { Success = false, ChangesSummary = [], FailureReason = "unsupported" });
+                    }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+
+        // Build passes (default mock), so overall success
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("Build passed"));
+    }
+
+    [Test]
+    public async Task TspRegeneration_Fails_ContinuesLoopAndAppendsContext()
+    {
+        var classifyCalls = 0;
         var failingTsp = new MockTspHelper(updateSuccess: false, updateError: "tsp-client failed: exit code 1");
-        var (tool, _) = CreateTool(tspHelper: failingTsp);
+        var (tool, _) = CreateTool(
+            tspHelper: failingTsp,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
+                        {
+                            classifyCalls++;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            return Task.FromResult(new FeedbackClassificationResponse
+                            {
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                        Reason = "fixable", Text = "rename X"
+                                    }
+                                ]
+                            });
+                        }));
+
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test request", ct: CancellationToken.None);
 
+        // Regen failure should not short-circuit; loop continues for re-classification
         Assert.That(result.Success, Is.False);
-        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed));
-        Assert.That(result.BuildResult, Does.Contain("Regeneration failed"));
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice (maxTries) even when regen fails");
     }
 
     // ========================================================================
@@ -343,7 +501,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var svc = new ConfigurableLanguageService(
             buildFunc: () => (false, "error: unknown symbol", null),
             hasCustomizations: true,
-            patchesFunc: () => []); // No patches can be applied
+            patchesFunc: () => []);
 
         var (tool, _) = CreateTool(languageService: svc);
         var pkg = CreateTempDir();
@@ -370,8 +528,8 @@ public class CustomizedCodeUpdateToolAutoTests
                     : (true, null, null);
             },
             hasCustomizations: true,
-            patchesFunc: () => [new AppliedPatch("test.java", "Fixed variable conflict", 1)],
-            language: SdkLanguage.Python); // non-Java to skip Java regen
+            patchesFunc: () => [new AppliedPatch("test.py", "Fixed variable conflict", 1)],
+            language: SdkLanguage.Python);
 
         var (tool, _) = CreateTool(languageService: svc, configureGit: g =>
             g.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-python"));
@@ -418,7 +576,7 @@ public class CustomizedCodeUpdateToolAutoTests
             patchesFunc: () => [new AppliedPatch("test.java", "patch", 1)],
             language: SdkLanguage.Java);
 
-        // First 2 UpdateGenerationAsync calls succeed (TSP regen in loop), 3rd fails (Java regen after patches)
+        // TSP loop regen calls succeed (2x), Java regen-after-patches (3rd) fails
         var failingTspForJavaRegen = new CallCountMockTspHelper(failAfterCall: 2, failError: "regen failed: tsp-client error");
         var (tool, _) = CreateTool(languageService: svc, tspHelper: failingTspForJavaRegen);
         var pkg = CreateTempDir();
@@ -432,118 +590,14 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     // ========================================================================
-    // Classification branch coverage
+    // Iteration context & feedback flow
     // ========================================================================
-
-    [Test]
-    public async Task Classification_SuccessItems_AreLoggedAndSkipped()
-    {
-        var (tool, _) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(
-                    It.IsAny<List<FeedbackItem>>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string?>(),
-                    It.IsAny<string?>(),
-                    It.IsAny<int?>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new FeedbackClassificationResponse
-                {
-                    Classifications =
-                    [
-                        new FeedbackClassificationResponse.ItemClassificationDetails
-                        {
-                            ItemId = "1",
-                            Classification = "SUCCESS",
-                            Reason = "Already addressed",
-                            Text = "Looks good"
-                        }
-                    ]
-                }));
-
-        // TSP customization will receive empty text (no TSP_APPLICABLE items)
-        var pkg = CreateTempDir();
-        var tspDir = CreateTempDir();
-
-        // Should not crash; proceeds through the flow
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
-        // Result depends on build outcome (defaults to success via MockNoChangeLanguageService)
-        Assert.That(result.Success, Is.True);
-    }
-
-    [Test]
-    public async Task Classification_ManualInterventionItems_AreLoggedAndSkipped()
-    {
-        var (tool, _) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(
-                    It.IsAny<List<FeedbackItem>>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string?>(),
-                    It.IsAny<string?>(),
-                    It.IsAny<int?>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new FeedbackClassificationResponse
-                {
-                    Classifications =
-                    [
-                        new FeedbackClassificationResponse.ItemClassificationDetails
-                        {
-                            ItemId = "1",
-                            Classification = "REQUIRES_MANUAL_INTERVENTION",
-                            Reason = "Complex change needed",
-                            Text = "Restructure entire client hierarchy"
-                        }
-                    ]
-                }));
-
-        var pkg = CreateTempDir();
-        var tspDir = CreateTempDir();
-
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
-        Assert.That(result.Success, Is.True);
-    }
-
-    [Test]
-    public async Task Classification_TspApplicableWithNullText_FailsWithError()
-    {
-        var (tool, mocks) = CreateTool(configureClassifier: c =>
-            c.Setup(x => x.ClassifyItemsAsync(
-                    It.IsAny<List<FeedbackItem>>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string?>(),
-                    It.IsAny<string?>(),
-                    It.IsAny<int?>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new FeedbackClassificationResponse
-                {
-                    Classifications =
-                    [
-                        new FeedbackClassificationResponse.ItemClassificationDetails
-                        {
-                            ItemId = "1",
-                            Classification = "TSP_APPLICABLE",
-                            Reason = "Can be fixed",
-                            Text = null // Null text should cause failure
-                        }
-                    ]
-                }));
-
-        var pkg = CreateTempDir();
-        var tspDir = CreateTempDir();
-
-        // Null feedback text on a classified item should fail
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test request", ct: CancellationToken.None);
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.Message, Does.Contain("feedback text was empty"));
-    }
 
     [Test]
     public async Task CustomizationRequest_FlowsToClassifier()
     {
         string? capturedFeedbackText = null;
-        var (tool, mocks) = CreateTool(configureClassifier: c =>
+        var (tool, _) = CreateTool(configureClassifier: c =>
             c.Setup(x => x.ClassifyItemsAsync(
                     It.IsAny<List<FeedbackItem>>(),
                     It.IsAny<string>(),
@@ -560,10 +614,8 @@ public class CustomizedCodeUpdateToolAutoTests
                     [
                         new FeedbackClassificationResponse.ItemClassificationDetails
                         {
-                            ItemId = "1",
-                            Classification = "TSP_APPLICABLE",
-                            Reason = "test",
-                            Text = "Rename client"
+                            ItemId = "1", Classification = "TSP_APPLICABLE",
+                            Reason = "test", Text = "Rename client"
                         }
                     ]
                 }));
@@ -573,64 +625,145 @@ public class CustomizedCodeUpdateToolAutoTests
 
         await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "Please rename FooClient", ct: CancellationToken.None);
 
-        Assert.That(capturedFeedbackText, Is.EqualTo("Please rename FooClient"), "customizationRequest should flow as FeedbackItem text");
-    }
-
-    // ========================================================================
-    // Original tests (updated for new signatures)
-    // ========================================================================
-
-    [Test]
-    public async Task Validation_Failure_Provides_Guidance()
-    {
-        int calls = 0;
-        var svc = new TestLanguageServiceFailThenFix(() => calls++);
-        var (tool, _) = CreateTool(languageService: svc);
-        var pkg = CreateTempDir();
-        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
-        var tspDir = CreateTempDir();
-
-        var resp = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
-
-        Assert.That(resp.Success, Is.False, "Should not succeed when build fails");
-        Assert.That(resp.ErrorCode, Is.Not.Null, "Should have error code for build failure");
-        Assert.That(resp.BuildResult, Is.Not.Null, "Should have build result on failure");
+        Assert.That(capturedFeedbackText, Is.EqualTo("Please rename FooClient"));
     }
 
     [Test]
-    public async Task ErrorDrivenRepair_BuildFailsThenSucceeds_CompletesSuccessfully()
+    public async Task RetryLoop_SecondIteration_FeedbackIncludesContextFromFirstIteration()
     {
-        var svc = new TestLanguageServiceBuildFailThenPass();
-        var (tool, _) = CreateTool(languageService: svc);
+        // Build fails first time, so second iteration should include context
+        var buildCalls = 0;
+        var classifyCalls = 0;
+        string? secondCallContext = null;
+
+        var svc = new ConfigurableLanguageService(buildFunc: () =>
+        {
+            buildCalls++;
+            return buildCalls == 1
+                ? (false, "error CS0246: type 'FooClient' not found", null)
+                : (true, null, null);
+        });
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
+                        {
+                            classifyCalls++;
+                            if (classifyCalls == 2)
+                                secondCallContext = items.FirstOrDefault()?.Context;
+
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            return Task.FromResult(new FeedbackClassificationResponse
+                            {
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                        Reason = "fixable", Text = "rename FooClient"
+                                    }
+                                ]
+                            });
+                        }));
+
         var pkg = CreateTempDir();
-        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
         var tspDir = CreateTempDir();
 
-        var resp = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient", ct: CancellationToken.None);
 
-        Assert.That(resp.Success, Is.True, "Should succeed after repair");
-        Assert.That(resp.ErrorCode, Is.Null, "Should complete successfully after repair");
-        Assert.That(resp.Message, Does.Contain("Build passed"), "Should indicate repair was performed");
+        Assert.That(classifyCalls, Is.EqualTo(2));
+        Assert.That(secondCallContext, Does.Contain("Iteration 1"));
+        Assert.That(secondCallContext, Does.Contain("Typespec changes applied"));
+        Assert.That(secondCallContext, Does.Contain("Renamed FooClient to BarClient"));
+        Assert.That(secondCallContext, Does.Contain("Build Result"));
+        Assert.That(secondCallContext, Does.Contain("error CS0246"));
     }
 
     [Test]
-    public async Task ErrorDrivenRepair_MaxIterationsReached_ReturnsGuidance()
+    public async Task RetryLoop_MaxTriesRespected_DoesNotExceedTwoIterations()
     {
-        var svc = new TestLanguageServiceBuildAlwaysFails();
-        var (tool, _) = CreateTool(languageService: svc);
+        var buildCalls = 0;
+        var classifyCalls = 0;
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                return (false, "persistent error", null);
+            });
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Callback(() => classifyCalls++)
+                    .ReturnsAsync(new FeedbackClassificationResponse
+                    {
+                        Classifications =
+                        [
+                            new FeedbackClassificationResponse.ItemClassificationDetails
+                            {
+                                ItemId = "1", Classification = "TSP_APPLICABLE",
+                                Reason = "fixable", Text = "rename X"
+                            }
+                        ]
+                    }));
+
         var pkg = CreateTempDir();
-        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
         var tspDir = CreateTempDir();
 
-        var resp = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
 
-        Assert.That(resp.Success, Is.False, "Should not succeed when build keeps failing");
-        Assert.That(resp.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed), "Should have build failure error code");
-        Assert.That(resp.BuildResult, Is.Not.Null, "Should have build result");
+        Assert.That(result.Success, Is.False);
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify exactly 2 times (maxTries)");
+        Assert.That(buildCalls, Is.EqualTo(2), "Should build exactly 2 times (maxTries)");
+    }
+
+    [Test]
+    public async Task Regeneration_UsesTspProjectPath()
+    {
+        // Verify that UpdateGenerationAsync receives the tspProjectPath as localSpecRepoPath
+        string? capturedLocalSpecRepo = null;
+        var tsp = new Mock<ITspClientHelper>();
+        tsp.Setup(t => t.UpdateGenerationAsync(
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<string, string?, bool, string?, CancellationToken>(
+                (_, _, _, localSpec, _) => capturedLocalSpecRepo = localSpec)
+            .ReturnsAsync(new TspToolResponse { IsSuccessful = true, TypeSpecProject = "/pkg" });
+
+        var (tool, _) = CreateTool(tspHelper: tsp.Object);
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+
+        Assert.That(capturedLocalSpecRepo, Is.EqualTo(tspDir),
+            "Should pass the tspProjectPath as localSpecRepoPath");
     }
 
     // ========================================================================
-    // Mock language services
+    // Mock helpers
     // ========================================================================
 
     /// <summary>
@@ -688,115 +821,6 @@ public class CustomizedCodeUpdateToolAutoTests
                 Language = Language,
                 SdkType = SdkType.Dataplane
             });
-    }
-
-    // Language service that produces no API changes and no customizations
-    private class MockNoChangeLanguageService : LanguageService
-    {
-        public override SdkLanguage Language { get; } = SdkLanguage.Java;
-        public override bool IsCustomizedCodeUpdateSupported => true;
-        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => null;
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct) => Task.FromResult(new List<AppliedPatch>());
-        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
-        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-            => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null));
-        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
-        {
-            PackagePath = packagePath, RepoRoot = "/mock/repo", RelativePath = "sdk/mock/package",
-            PackageName = "mock-package", ServiceName = "mock", PackageVersion = "1.0.0",
-            SamplesDirectory = "/mock/samples", Language = SdkLanguage.Java, SdkType = SdkType.Dataplane
-        });
-    }
-
-    // Language service that has customizations and successful patch application
-    private class MockChangeLanguageService : LanguageService
-    {
-        public override SdkLanguage Language { get; } = SdkLanguage.Python;
-        public override bool IsCustomizedCodeUpdateSupported => true;
-        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
-            => Task.FromResult(new List<ApiChange> { new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" } });
-        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct)
-            => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.py", "test patch", 1) });
-        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
-        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-            => Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null));
-        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
-        {
-            PackagePath = packagePath, RepoRoot = "/mock/repo", RelativePath = "sdk/mock/package",
-            PackageName = "mock-package", ServiceName = "mock", PackageVersion = "1.0.0",
-            SamplesDirectory = "/mock/samples", Language = SdkLanguage.Python, SdkType = SdkType.Dataplane
-        });
-    }
-
-    // Language service that fails first build, then passes second build (successful repair)
-    private class TestLanguageServiceBuildFailThenPass : LanguageService
-    {
-        public override SdkLanguage Language { get; } = SdkLanguage.Java;
-        public override bool IsCustomizedCodeUpdateSupported => true;
-        private int _buildCalls = 0;
-        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
-        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
-        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-        {
-            _buildCalls++;
-            // First 2 builds fail (TSP loop), 3rd passes (final build after patches)
-            if (_buildCalls <= 2) return Task.FromResult<(bool, string?, PackageInfo?)>((false, "variable operationId is already defined", null));
-            return Task.FromResult<(bool, string?, PackageInfo?)>((true, null, null));
-        }
-        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
-        {
-            PackagePath = packagePath, RepoRoot = "/mock/repo", RelativePath = "sdk/mock/package",
-            PackageName = "mock-package", ServiceName = "mock", PackageVersion = "1.0.0",
-            SamplesDirectory = "/mock/samples", Language = SdkLanguage.Java, SdkType = SdkType.Dataplane
-        });
-    }
-
-    // Language service that always fails build with same error (stall scenario)
-    private class TestLanguageServiceBuildAlwaysFails : LanguageService
-    {
-        public override SdkLanguage Language { get; } = SdkLanguage.Java;
-        public override bool IsCustomizedCodeUpdateSupported => true;
-        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
-        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
-        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-            => Task.FromResult<(bool, string?, PackageInfo?)>((false, "same error every time", null));
-        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
-        {
-            PackagePath = packagePath, RepoRoot = "/mock/repo", RelativePath = "sdk/mock/package",
-            PackageName = "mock-package", ServiceName = "mock", PackageVersion = "1.0.0",
-            SamplesDirectory = "/mock/samples", Language = SdkLanguage.Java, SdkType = SdkType.Dataplane
-        });
-    }
-
-    private class TestLanguageServiceFailThenFix : LanguageService
-    {
-        public override SdkLanguage Language { get; } = SdkLanguage.Java;
-        public override bool IsCustomizedCodeUpdateSupported => true;
-        private Func<int> _next;
-        public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
-        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public override string? HasCustomizations(string packagePath, CancellationToken ct = default) => Path.Combine(packagePath, "customization");
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct) => Task.FromResult(new List<AppliedPatch> { new AppliedPatch("test.java", "Applied test patch", 1) });
-        public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)
-        {
-            var attempt = _next();
-            if (attempt == 0) return Task.FromResult(ValidationResult.CreateFailure("compile error"));
-            return Task.FromResult(ValidationResult.CreateSuccess());
-        }
-        public override Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
-            => Task.FromResult<(bool, string?, PackageInfo?)>((false, "Build failed for testing", null));
-        public override Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default) => Task.FromResult(new PackageInfo
-        {
-            PackagePath = packagePath, RepoRoot = "/mock/repo", RelativePath = "sdk/mock/package",
-            PackageName = "mock-package", ServiceName = "mock", PackageVersion = "1.0.0",
-            SamplesDirectory = "/mock/samples", Language = SdkLanguage.Java, SdkType = SdkType.Dataplane
-        });
     }
 }
 

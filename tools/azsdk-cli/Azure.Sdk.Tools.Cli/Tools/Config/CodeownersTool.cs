@@ -172,6 +172,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string generateCodeownersCommandName = "generate";
         private const string viewCodeownersCommandName = "view";
         private const string exportSectionCommandName = "export-section";
+        private const string releaseGateCommandName = "release-gate";
+
+        // Release gate command options
+        private readonly Option<string> releaseGatePackageOption = new("--package")
+        {
+            Description = "The package name to check",
+            Required = true,
+        };
+
+        private readonly Option<string> releaseGateRepoOption = new("--repo", "-r")
+        {
+            Description = "Repository in owner/repo format (e.g., Azure/azure-sdk-for-python). If omitted, inferred from git context.",
+            Required = false,
+        };
+
+        private readonly Option<string> packageDirectoryOption = new("--package-directory")
+        {
+            Description = "Path from the repo root to the package (e.g., sdk/formrecognizer/Azure.AI.FormRecognizer). Used for glob matching.",
+            Required = true,
+        };
 
         // MCP Tool Names
         private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
@@ -227,6 +247,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
                 codeownersPathOption, sectionsOption, outputFilePathOption,
+            },
+            new(releaseGateCommandName, "Check codeowners release gate for a package")
+            {
+                releaseGatePackageOption, releaseGateRepoOption, packageDirectoryOption,
             }
         ];
 
@@ -299,6 +323,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var sections = parseResult.GetValue(sectionsOption);
                 var output = parseResult.GetValue(outputFilePathOption);
                 return await ExportSection(codeownersPath!, sections!, output!);
+            }
+
+            if (command == releaseGateCommandName)
+            {
+                var package = parseResult.GetValue(releaseGatePackageOption);
+                var repo = parseResult.GetValue(releaseGateRepoOption);
+                var packageDirectory = parseResult.GetValue(packageDirectoryOption);
+
+                if (string.IsNullOrEmpty(repo))
+                {
+                    var repoName = await gitHelper.GetRepoFullNameAsync(".", ct: ct);
+                    repo = repoName;
+                }
+
+                return await codeownersManagementHelper.CheckReleaseGateAsync(package!, repo!, packageDirectory!);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };

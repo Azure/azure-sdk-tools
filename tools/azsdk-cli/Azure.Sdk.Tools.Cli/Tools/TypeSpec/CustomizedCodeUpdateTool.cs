@@ -6,7 +6,6 @@ using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -34,6 +33,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     // Classification categories returned by the classifier
     private const string ClassificationTspApplicable = "TSP_APPLICABLE";
+    private const string ClassificationCodeCustomization = "CODE_CUSTOMIZATION";
     private const string ClassificationRequiresManualIntervention = "REQUIRES_MANUAL_INTERVENTION";
     private const string ClassificationSuccess = "SUCCESS";
     
@@ -134,7 +134,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// Executes the update pipeline: classify → patch customizations → regen → build.
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
-    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory (containing client.tsp/main.tsp).</param>
+    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
     /// <param name="customizationRequest">Optional description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
@@ -149,17 +149,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Message = $"Package path does not exist: {packagePath}",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                 BuildResult = $"Package path does not exist: {packagePath}"
-            };
-        }
-
-        if (!Directory.Exists(tspProjectPath))
-        {
-            return new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                Message = $"TypeSpec project path does not exist: {tspProjectPath}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = $"TypeSpec project path does not exist: {tspProjectPath}"
             };
         }
 
@@ -185,19 +174,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         bool buildSucceeded = false;
         string? buildError = null;
 
-        var feedbackItems = await GetFeedbackItems(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
-
-        if (feedbackItems.Count == 0)
-        {
-            return new CustomizedCodeUpdateResponse
-            {
-                Success = false,
-                Message = "No feedback items provided. Please supply a customization request or API review URL.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = "No feedback items to process."
-            };
-        }
-
+        var feedbackItems = await GetFeedbackItems(plainTextFeedback: customizationRequest, ct: ct);
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
         List<string> changesMade = new();
@@ -230,6 +207,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             var tspFixFailed = 0;
             var tspFixSucceeded = 0;
             var tspApplicable = 0;
+            var codeCustomizations = 0;
             var manualChanges = 0;
             var noChanges = 0;
 
@@ -270,6 +248,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                         tspFixFailed++;
                     }
                 }
+                else if (itemDetails.Classification == ClassificationCodeCustomization)
+                {
+                    codeCustomizations++;
+                    logger.LogInformation("Item '{ItemId}' classified as CODE_CUSTOMIZATION — will be handled via code patching.", itemDetails.ItemId);
+
+                    // Don't try TSP fixes for code customization items
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                }
                 else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
                 {
                     manualChanges++;
@@ -291,19 +277,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (tries == 0)
             {
                 // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
-                if (tspApplicable == 0 && manualChanges > 0)
+                if (tspApplicable == 0 && codeCustomizations == 0 && manualChanges > 0)
                 {
                     return new CustomizedCodeUpdateResponse
                     {
                         Success = true,
                         Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
-                        NextSteps = manualInterventions,
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
+                        NextSteps = manualInterventions
                     };
                 }
 
                 // Everything was classified as success
-                if (tspApplicable == 0 && noChanges > 0)
+                if (tspApplicable == 0 && codeCustomizations == 0 && noChanges > 0)
                 {
                     return new CustomizedCodeUpdateResponse
                     {
@@ -504,15 +489,15 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Gathers feedback items from the provided sources: APIView URL, plain text feedback, or a file containing plain text feedback.
     /// </summary>
-    /// <param name="tspProjectPath">Absolute path to the TypeSpec project directory.</param>
     /// <param name="apiViewUrl">Optional APIView URL to extract feedback from.</param>
     /// <param name="plainTextFeedback">Optional plain text feedback string.</param>
     /// <param name="plainTextFeedbackFile">Optional path to a file containing plain text feedback.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A list of <see cref="FeedbackItem"/> instances extracted from the provided sources.</returns>
     private async Task<List<FeedbackItem>> GetFeedbackItems(
-        string tspProjectPath,
         string? apiViewUrl = default,
         string? plainTextFeedback = default,
         string? plainTextFeedbackFile = default,
@@ -530,11 +515,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
                 plainTextFeedback = await File.ReadAllTextAsync(plainTextFeedbackFile, ct);
                 logger.LogInformation("Read {length} characters from feedback file: {file}", plainTextFeedback.Length, plainTextFeedbackFile);
-            }
-
-            if (string.IsNullOrEmpty(tspProjectPath) || !Directory.Exists(tspProjectPath))
-            {
-                throw new DirectoryNotFoundException($"TypeSpec project path does not exist: {tspProjectPath}");
             }
 
             List<FeedbackItem> feedbackItems = [];

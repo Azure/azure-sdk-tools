@@ -1,5 +1,20 @@
 # Release History
 
+## 0.6.1 (Unreleased)
+
+### Features Added
+
+- Added `azsdk_package_pack` tool to create package artifacts
+- Improved `azsdk_typespec_delegate_apiview_feedback` tool description to better recognize intent expressed as "address", "fix", or "resolve" APIView feedback
+
+### Breaking Changes
+
+### Bugs Fixed
+
+- Filter out downvoted `azure-sdk` bot comments from APIView feedback to reduce noise in delegated issues
+
+### Other Changes
+
 ## 0.6.0 (2026-02-27)
 
 ### Features Added

@@ -42,6 +42,7 @@ table th:nth-child(2) {
 | azsdk_link_sdk_pull_request_to_release_plan | `azsdk release-plan link-sdk-pr` | Link SDK pull request to release plan work item |
 | azsdk_package_build_code | `azsdk pkg build` | Build/compile SDK code for a specified project locally. |
 | azsdk_package_generate_code | `azsdk pkg generate` | Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally. |
+| azsdk_package_pack | `azsdk pkg pack` | Create distributable artifacts (e.g. .nupkg, .jar, .tgz, .whl) for an SDK package. |
 | azsdk_package_run_check | `azsdk pkg validate` | Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors. |
 | azsdk_package_run_tests | `azsdk pkg test run` | Run tests for the specified SDK package. Provide package path. |
 | azsdk_package_update_changelog_content | `azsdk pkg update-changelog-content` | Updates the changelog content for a specified package. |

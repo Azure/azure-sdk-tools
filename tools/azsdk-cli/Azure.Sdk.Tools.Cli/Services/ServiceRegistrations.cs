@@ -9,7 +9,6 @@ using ModelContextProtocol.Server;
 using OpenAI;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -19,7 +18,7 @@ using Azure.Sdk.Tools.Cli.Services.SetupRequirements;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Telemetry;
-
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -63,6 +62,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<ICodeownersGenerateHelper, CodeownersGenerateHelper>();
             services.AddSingleton<IPackageInfoHelper, PackageInfoHelper>();
+            services.AddSingleton<ITeamUserCache, TeamUserCache>();
+            services.AddSingleton<ICodeownersManagementHelper, CodeownersManagementHelper>(); 
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<IMcpServerContextAccessor, McpServerContextAccessor>();
             if (outputMode == OutputHelper.OutputModes.Mcp)
@@ -93,7 +94,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
             services.AddScoped<ConversationLogger>();
             // Services depending on other scoped services
-            services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
             services.AddScoped<IVerifySetupService, VerifySetupService>();

@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -993,7 +994,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 // Assert
                 Assert.Multiple(() =>
                 {
-                    Assert.That(packageInfo.SdkType, Is.EqualTo(Models.SdkType.Management));
+                    Assert.That(packageInfo.SdkType, Is.EqualTo(SdkType.Management));
                     Assert.That(packageInfo.PackageName, Is.EqualTo("azure-resourcemanager-storage"));
                 });
             }
@@ -1051,7 +1052,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 // Assert
                 Assert.Multiple(() =>
                 {
-                    Assert.That(packageInfo.SdkType, Is.EqualTo(Models.SdkType.Dataplane));
+                    Assert.That(packageInfo.SdkType, Is.EqualTo(SdkType.Dataplane));
                     Assert.That(packageInfo.PackageName, Is.EqualTo("azure-storage-blob"));
                 });
             }
@@ -1109,7 +1110,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 // Assert
                 Assert.Multiple(() =>
                 {
-                    Assert.That(packageInfo.SdkType, Is.EqualTo(Models.SdkType.Spring));
+                    Assert.That(packageInfo.SdkType, Is.EqualTo(SdkType.Spring));
                     Assert.That(packageInfo.PackageName, Is.EqualTo("azure-spring-cloud-starter"));
                 });
             }
@@ -1167,7 +1168,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 // Assert
                 Assert.Multiple(() =>
                 {
-                    Assert.That(packageInfo.SdkType, Is.EqualTo(Models.SdkType.Management));
+                    Assert.That(packageInfo.SdkType, Is.EqualTo(SdkType.Management));
                     Assert.That(packageInfo.PackageName, Is.EqualTo("azure-keyvault-mgmt"));
                 });
             }

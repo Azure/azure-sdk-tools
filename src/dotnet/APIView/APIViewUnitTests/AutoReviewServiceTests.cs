@@ -20,6 +20,7 @@ namespace APIViewUnitTests
         private readonly Mock<IReviewManager> _mockReviewManager;
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
         private readonly Mock<ICommentsManager> _mockCommentsManager;
+        private readonly Mock<IProjectsManager> _mockProjectsManager;
         private readonly AutoReviewService _service;
         private readonly ClaimsPrincipal _testUser;
 
@@ -28,11 +29,13 @@ namespace APIViewUnitTests
             _mockReviewManager = new Mock<IReviewManager>();
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
             _mockCommentsManager = new Mock<ICommentsManager>();
+            _mockProjectsManager = new Mock<IProjectsManager>();
 
             _service = new AutoReviewService(
                 _mockReviewManager.Object,
                 _mockApiRevisionsManager.Object,
-                _mockCommentsManager.Object);
+                _mockCommentsManager.Object,
+                _mockProjectsManager.Object);
 
             var claims = new List<Claim>
             {

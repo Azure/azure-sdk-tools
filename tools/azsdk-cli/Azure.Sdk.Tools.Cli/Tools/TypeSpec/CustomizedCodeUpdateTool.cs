@@ -122,7 +122,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// regenerates code if needed (Java), builds, and returns success/failure with build result.
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
-    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory (containing main.tsp/client.tsp) where customizations will be applied.</param>
+    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
     /// <param name="customizationRequest">Optional description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
@@ -504,10 +504,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         return sb.ToString();
     }
 
-    /// <summary>
-    /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE
-    /// (can be resolved with TSP customizations), SUCCESS (no action needed), or REQUIRES_MANUAL_INTERVENTION (requires manual code customizations).
-    /// Gathers and constructs feedback items from various sources (APIView, plain text, file).
     /// </summary>
     /// <param name="tspProjectPath">Absolute path to the TypeSpec project directory.</param>
     /// <param name="apiViewUrl">Optional APIView URL to extract feedback from.</param>

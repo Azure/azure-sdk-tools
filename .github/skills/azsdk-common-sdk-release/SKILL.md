@@ -1,5 +1,5 @@
 ---
-name: shared-sdk-release
+name: azsdk-common-sdk-release
 license: MIT
 metadata:
   version: "1.0.0"
@@ -7,7 +7,7 @@ description: >-
   **UTILITY SKILL**
   Check SDK package release readiness and trigger the release pipeline for Azure SDK packages.
   USE FOR: "release SDK", "trigger release", "check release readiness", "release pipeline", "publish package", "ship SDK".
-  DO NOT USE FOR: release plan creation (use shared-prepare-release-plan), SDK generation.
+  DO NOT USE FOR: release plan creation (use azsdk-common-prepare-release-plan), SDK generation.
   INVOKES: azsdk_release_sdk.
   FOR SINGLE OPERATIONS: Use azsdk_release_sdk with checkReady=true for readiness check only.
 compatibility: >-
@@ -40,4 +40,4 @@ Azure SDK MCP server must be running. No CLI fallback — if MCP is unavailable,
 
 ## Related Skills
 
-- `shared-prepare-release-plan` — Create release plan work item
+- `azsdk-common-prepare-release-plan` — Create release plan work item

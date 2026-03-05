@@ -1,6 +1,6 @@
-name: shared-apiview-feedback-resolution-eval
-description: Evaluation suite for APIView feedback resolution skill.
-skill: shared-apiview-feedback-resolution
+name: azsdk-common-prepare-release-plan-eval
+description: Evaluation suite for release plan management skill.
+skill: azsdk-common-prepare-release-plan
 version: "1.0"
 config:
   trials_per_task: 1
@@ -10,14 +10,14 @@ config:
   model: claude-sonnet-4.6
 graders:
   - type: keyword
-    name: mentions_apiview
+    name: mentions_release_plan
     config:
-      keywords: ["APIView", "feedback", "comment"]
+      keywords: ["release plan", "Service Tree", "API version"]
       must_include_all: false
   - type: regex
     name: references_tools
     config:
-      pattern: "(?i)(azsdk_apiview_get_comments|azsdk_typespec_delegate_apiview_feedback|APIView)"
+      pattern: "(?i)(azsdk_create_release_plan|azsdk_get_release_plan|azsdk_update_sdk_details|release plan)"
   - type: code
     name: has_substantive_output
     config:

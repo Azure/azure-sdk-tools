@@ -1,6 +1,6 @@
-name: shared-sdk-release-eval
+name: azsdk-common-sdk-release-eval
 description: Evaluation suite for SDK release skill.
-skill: shared-sdk-release
+skill: azsdk-common-sdk-release
 version: "1.0"
 config:
   trials_per_task: 1

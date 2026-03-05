@@ -1,5 +1,5 @@
 ---
-name: shared-apiview-feedback-resolution
+name: azsdk-common-apiview-feedback-resolution
 license: MIT
 metadata:
   version: "1.0.0"

@@ -829,7 +829,7 @@ public class CodeownersManagementHelperTests
     }
 
     [Test]
-    public async Task FindOrCreateOwner_InvalidUser_Throws()
+    public void FindOrCreateOwner_InvalidUser_Throws()
     {
         _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
                 It.Is<string>(q => q.Contains("'Owner'") && q.Contains("baduser")),

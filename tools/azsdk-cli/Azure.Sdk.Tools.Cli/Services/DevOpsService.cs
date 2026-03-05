@@ -116,9 +116,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
         Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations);
         Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
-        Task<WorkItem> CreateWorkItemWithFieldsAsync(WorkItemBase workItem, string workItemType, string title);
-        Task CreateRelatedLinkAsync(int sourceId, int targetId);
-        Task RemoveRelatedLinkAsync(int sourceId, int targetId);
+        Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null);
+        Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null);
+        Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -465,7 +465,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null)
+        public async Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null)
         {
             workItem.Title = title;
             var workItemsFieldJson = JsonSerializer.Serialize(workItem);
@@ -497,16 +497,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return createdWorkItem;
         }
 
-        public async Task<WorkItem> CreateWorkItemWithFieldsAsync(WorkItemBase workItem, string workItemType, string title)
-            => await CreateWorkItemAsync(workItem, workItemType, title);
-
-        public async Task CreateRelatedLinkAsync(int sourceId, int targetId)
-            => await CreateWorkItemRelationAsync(sourceId, "related", targetId: targetId);
-
-        public async Task RemoveRelatedLinkAsync(int sourceId, int targetId)
-            => await RemoveWorkItemRelationAsync(sourceId, "related", targetId);
-
-        private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
+        public async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
         {
             // Create generic work item relation(s) based on target ID and/or URL
             if (targetId == null && string.IsNullOrWhiteSpace(targetUrl))
@@ -563,7 +554,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await workItemClient.UpdateWorkItemAsync(patchDocument, id);
         }
 
-        private async Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId)
+        public async Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId)
         {
             var workItemClient = connection.GetWorkItemClient();
 

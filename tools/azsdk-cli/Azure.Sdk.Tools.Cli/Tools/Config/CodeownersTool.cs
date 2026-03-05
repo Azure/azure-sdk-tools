@@ -1009,7 +1009,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
 
                 var ownerWi = new OwnerWorkItem { GitHubAlias = alias };
-                var created = await devOpsService.CreateWorkItemWithFieldsAsync(ownerWi, "Owner", alias);
+                var created = await devOpsService.CreateWorkItemAsync(ownerWi, "Owner", alias);
                 ownerWorkItems.Add(WorkItemMappers.MapToOwnerWorkItem(created));
             }
             return ownerWorkItems.ToArray();

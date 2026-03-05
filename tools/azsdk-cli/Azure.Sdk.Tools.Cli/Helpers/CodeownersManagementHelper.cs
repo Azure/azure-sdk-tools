@@ -369,7 +369,7 @@ public class CodeownersManagementHelper(
         }
 
         var ownerWi = new OwnerWorkItem { GitHubAlias = alias };
-        var created = await devOpsService.CreateWorkItemWithFieldsAsync(ownerWi, "Owner", alias);
+        var created = await devOpsService.CreateWorkItemAsync(ownerWi, "Owner", alias);
         return WorkItemMappers.MapToOwnerWorkItem(created);
     }
 
@@ -423,7 +423,7 @@ public class CodeownersManagementHelper(
             Repository = repo,
             RepoPath = normalizedPath
         };
-        var created = await devOpsService.CreateWorkItemWithFieldsAsync(labelOwnerWi, "Label Owner", title);
+        var created = await devOpsService.CreateWorkItemAsync(labelOwnerWi, "Label Owner", title);
         return WorkItemMappers.MapToLabelOwnerWorkItem(created);
     }
 
@@ -452,7 +452,7 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.CreateRelatedLinkAsync(packageWi.WorkItemId, owner.WorkItemId);
+            await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", owner.WorkItemId);
             operations.Add($"Added @{owner.GitHubAlias} to package '{packageName}'.");
         }
 
@@ -480,7 +480,7 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.CreateRelatedLinkAsync(packageWi.WorkItemId, label.WorkItemId);
+            await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", label.WorkItemId);
             operations.Add($"Added label '{label.LabelName}' to package '{packageName}'.");
         }
 
@@ -503,7 +503,7 @@ public class CodeownersManagementHelper(
         {
             if (!labelOwnerWi.RelatedIds.Contains(labelWi.WorkItemId))
             {
-                await devOpsService.CreateRelatedLinkAsync(labelOwnerWi.WorkItemId, labelWi.WorkItemId);
+                await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", labelWi.WorkItemId);
             }
         }
 
@@ -518,7 +518,7 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.CreateRelatedLinkAsync(labelOwnerWi.WorkItemId, ownerWorkItem.WorkItemId);
+            await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", ownerWorkItem.WorkItemId);
             operations.Add($"Added @{ownerWorkItem.GitHubAlias} and label(s) '{labelNames}' to path '{path}'.");
         }
 
@@ -557,7 +557,7 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.RemoveRelatedLinkAsync(packageWi.WorkItemId, ownerWi.WorkItemId);
+            await devOpsService.RemoveWorkItemRelationAsync(packageWi.WorkItemId, "related", ownerWi.WorkItemId);
             operations.Add($"Removed @{ownerWi.GitHubAlias} from package '{packageName}'.");
         }
 
@@ -587,7 +587,7 @@ public class CodeownersManagementHelper(
                 operations.Add($"Skipped removing label '{labelWi.LabelName}', not linked to package '{packageName}'.");
                 continue;
             }
-            await devOpsService.RemoveRelatedLinkAsync(packageWi.WorkItemId, labelWi.WorkItemId);
+            await devOpsService.RemoveWorkItemRelationAsync(packageWi.WorkItemId, "related", labelWi.WorkItemId);
             operations.Add($"Removed label '{labelWi.LabelName}' from package '{packageName}'.");
         }
 
@@ -625,7 +625,7 @@ public class CodeownersManagementHelper(
                 operations.Add($"Skipped removing @{owner.GitHubAlias}, not linked as owner for label(s) '{labelNames}' and path '{path}'.");
                 continue;
             }
-            await devOpsService.RemoveRelatedLinkAsync(labelOwner.WorkItemId, owner.WorkItemId);
+            await devOpsService.RemoveWorkItemRelationAsync(labelOwner.WorkItemId, "related", owner.WorkItemId);
         }
 
         return new CodeownersModifyResponse

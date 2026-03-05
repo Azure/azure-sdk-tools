@@ -12,7 +12,7 @@ parameters:
     default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","FileID":"<fileid>","FileName":"<fileName>"}]'
   - name: APIViewURL
     type: string
-    default: 'https://apiview.org'
+    default: 'https://apiview.dev'
   - name: StorageContainerUrl
     type: string
     default: ''

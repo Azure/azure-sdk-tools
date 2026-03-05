@@ -193,4 +193,38 @@ Describe 'Spell checking' -Tag 'UnitTest' {
         # Assert
         $LASTEXITCODE | Should -Be 0
     }
+
+    It 'Exits 1 when config has an invalid import' {
+        # Arrange
+        "correct spelling" > ./included/included-file.txt
+
+        $invalidConfigJsonContent = @"
+{
+    "version": "0.2",
+    "language": "en",
+    "import": [
+        "./non-existent-config.json"
+    ],
+    "ignorePaths": [
+        ".vscode/cspell.json",
+        "excluded/**"
+    ]
+}
+"@
+        $invalidConfigJsonContent > "./.vscode/cspell.json"
+
+        git add -A
+        git commit -m "One change"
+
+        # Act
+        &"$PSScriptRoot/../../common/scripts/check-spelling-in-changed-files.ps1" `
+            -CspellConfigPath "./.vscode/cspell.json" `
+            -SpellCheckRoot "./" `
+            -ExitWithError `
+            -SourceCommittish (git rev-parse HEAD) `
+            -TargetCommittish $initCommit
+
+        # Assert
+        $LASTEXITCODE | Should -Be 1
+    }
 }

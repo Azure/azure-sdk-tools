@@ -253,8 +253,7 @@ public class Program
         Console.WriteLine($"\nTool calls ({result.ToolCalls.Count}):");
         foreach (var tool in result.ToolCalls)
         {
-            var server = tool.McpServerName != null ? $" [{tool.McpServerName}]" : "";
-            Console.WriteLine($"  - {tool.ToolName}{server}");
+            Console.WriteLine($"  - {tool}");
         }
 
         if (result.WorkspacePath != null)

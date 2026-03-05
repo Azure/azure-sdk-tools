@@ -90,11 +90,10 @@ Azure.Sdk.Tools.Cli.Benchmarks/
 │   └── ...
 ├── Models/                   # Data models
 │   ├── BenchmarkResult.cs    # Result of a benchmark run
-│   ├── ToolCallRecord.cs     # Rich tool call metadata (name, args, duration, MCP server)
 │   └── ...
 ├── Reporting/                # Report generation
 │   ├── ReportGenerator.cs    # LLM-based report generation using Copilot SDK
-│   └── ReportTemplate.cs     # Markdown report template
+│   └── report-template.md    # Markdown report template
 ├── Scenarios/                # Benchmark scenario definitions
 │   ├── BenchmarkScenario.cs  # Base class for all scenarios
 │   └── ...

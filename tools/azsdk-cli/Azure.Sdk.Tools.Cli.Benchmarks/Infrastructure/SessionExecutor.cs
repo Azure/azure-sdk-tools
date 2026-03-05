@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
-using System.Text.Json;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
@@ -23,7 +22,7 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
-        var toolCalls = new List<ToolCallRecord>();
+        var toolCalls = new List<string>();
 
         try
         {
@@ -34,7 +33,7 @@ public class SessionExecutor : IDisposable
             _client = new CopilotClient();
 
             // Build MCP server config - try explicit path first, then load from workspace
-            var mcpServers = BuildMcpServers(config.AzsdkMcpPath) 
+            var mcpServers = BuildMcpServers(config.AzsdkMcpPath)
                 ?? await McpConfigLoader.LoadFromWorkspaceAsync(config.WorkingDirectory);
 
             var sessionConfig = new SessionConfig
@@ -52,29 +51,7 @@ public class SessionExecutor : IDisposable
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
-                        string? argsJson = null;
-                        try
-                        {
-                            if (input.ToolArgs != null)
-                            {
-                                argsJson = JsonSerializer.Serialize(input.ToolArgs);
-                            }
-                        }
-                        catch { /* ignore serialization errors */ }
-
-                        // Extract MCP server name from tool name convention (server__tool)
-                        var mcpServerName = input.ToolName.Contains("__")
-                            ? input.ToolName.Split("__", 2)[0]
-                            : null;
-
-                        toolCalls.Add(new ToolCallRecord
-                        {
-                            ToolName = input.ToolName,
-                            Arguments = argsJson,
-                            McpServerName = mcpServerName,
-                            Timestamp = DateTime.UtcNow
-                        });
-
+                        toolCalls.Add(input.ToolName);
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },

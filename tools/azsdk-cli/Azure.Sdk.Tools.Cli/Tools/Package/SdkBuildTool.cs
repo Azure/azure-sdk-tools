@@ -47,7 +47,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                ProgressReporter.ReportProgress(progress, logger, 0, "Validating package path", total: 4);
+                var reporter = new ProgressReporter(progress, logger, totalSteps: 4);
+
+                reporter.NextStep("Validating package path");
 
                 // Validate package path
                 if (string.IsNullOrWhiteSpace(packagePath))
@@ -58,7 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Resolves relative paths to absolute
                 string fullPath = Path.GetFullPath(packagePath);
 
-                ProgressReporter.ReportProgress(progress, logger, 1, "Detecting SDK language", total: 4);
+                reporter.NextStep("Detecting SDK language");
                 var languageService = await GetLanguageServiceAsync(fullPath, ct);
                 if (languageService == null)
                 {
@@ -66,16 +68,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Use the shared BuildAsync method from LanguageService
-                ProgressReporter.ReportProgress(progress, logger, 2, $"Starting {languageService.Language} SDK build", total: 4);
+                reporter.NextStep($"Starting {languageService.Language} SDK build");
                 logger.LogInformation("Building SDK project at: {PackagePath} for language: {Language}", fullPath, languageService.Language);
-                var (success, errorMessage, packageInfo) = await ProgressReporter.RunWithProgressAsync(
-                    progress,
-                    logger,
-                    $"Building {languageService.Language} SDK project",
-                    async (token) => await languageService.BuildAsync(fullPath, CommandTimeoutInMinutes, token),
-                    ct);
+                bool success;
+                string? errorMessage;
+                PackageInfo? packageInfo;
+                await using (reporter.StartHeartbeat($"Building {languageService.Language} SDK project", ct))
+                {
+                    (success, errorMessage, packageInfo) = await languageService.BuildAsync(fullPath, CommandTimeoutInMinutes, ct);
+                }
 
-                ProgressReporter.ReportProgress(progress, logger, 3, success ? "Build completed successfully" : "Build failed", total: 4);
+                reporter.NextStep(success ? "Build completed successfully" : "Build failed");
 
                 if (success)
                 {

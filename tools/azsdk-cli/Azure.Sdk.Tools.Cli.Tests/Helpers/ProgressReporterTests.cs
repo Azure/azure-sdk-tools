@@ -18,207 +18,304 @@ public class ProgressReporterTests
         _logger = new TestLogger<ProgressReporterTests>();
     }
 
-    #region Logging fallback tests (no IProgress — CLI mode)
+    #region Constructor validation
 
     [Test]
-    public async Task RunWithProgressAsync_FastTask_ReturnsResultWithoutHeartbeat()
+    public void Constructor_ZeroSteps_Throws()
     {
-        // Arrange — task completes immediately, no heartbeat should fire
-        var result = await ProgressReporter.RunWithProgressAsync(
-            progress: null,
-            _logger,
-            "Fast operation",
-            _ => Task.FromResult("done"),
-            CancellationToken.None,
-            heartbeatInterval: TimeSpan.FromSeconds(60));
-
-        // Assert
-        Assert.That(result, Is.EqualTo("done"));
-        // Only the initial "[Progress] Fast operation..." message should appear
-        Assert.That(_logger.Logs, Has.Count.EqualTo(1));
-        Assert.That(_logger.Logs[0].ToString(), Does.Contain("Fast operation"));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ProgressReporter(null, _logger, totalSteps: 0));
     }
 
     [Test]
-    public async Task RunWithProgressAsync_SlowTask_EmitsHeartbeats()
+    public void Constructor_NegativeSteps_Throws()
     {
-        // Arrange — task takes ~350ms, heartbeat every 100ms → expect initial + ~3 heartbeats
-        var result = await ProgressReporter.RunWithProgressAsync(
-            progress: null,
-            _logger,
-            "Slow operation",
-            async ct =>
-            {
-                await Task.Delay(350, ct);
-                return 42;
-            },
-            CancellationToken.None,
-            heartbeatInterval: TimeSpan.FromMilliseconds(100));
-
-        // Assert
-        Assert.That(result, Is.EqualTo(42));
-        // At least the initial message + 2 heartbeats (timing may vary slightly)
-        Assert.That(_logger.Logs.Count, Is.GreaterThanOrEqualTo(3));
-
-        // First message is the initial progress message (no elapsed)
-        Assert.That(_logger.Logs[0].ToString(), Does.Contain("Slow operation"));
-        Assert.That(_logger.Logs[0].ToString(), Does.Not.Contain("elapsed"));
-
-        // Subsequent messages include elapsed time
-        Assert.That(_logger.Logs[1].ToString(), Does.Contain("elapsed"));
-    }
-
-    [Test]
-    public void RunWithProgressAsync_PropagatesException()
-    {
-        // Arrange & Act
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
-        {
-            await ProgressReporter.RunWithProgressAsync<int>(
-                progress: null,
-                _logger,
-                "Failing operation",
-                _ => throw new InvalidOperationException("test error"),
-                CancellationToken.None);
-        });
-
-        // Assert
-        Assert.That(ex!.Message, Is.EqualTo("test error"));
-    }
-
-    [Test]
-    public async Task RunWithProgressAsync_Cancellation_StopsHeartbeat()
-    {
-        // Arrange
-        using var cts = new CancellationTokenSource();
-
-        var task = ProgressReporter.RunWithProgressAsync(
-            progress: null,
-            _logger,
-            "Cancellable operation",
-            async ct =>
-            {
-                await Task.Delay(TimeSpan.FromSeconds(30), ct);
-                return "should not reach";
-            },
-            cts.Token,
-            heartbeatInterval: TimeSpan.FromMilliseconds(50));
-
-        // Let a couple heartbeats fire, then cancel
-        await Task.Delay(200);
-        cts.Cancel();
-
-        // Assert — should throw OperationCanceledException from the work task
-        Assert.ThrowsAsync<TaskCanceledException>(async () => await task);
-
-        // Verify some heartbeat messages were logged before cancellation
-        Assert.That(_logger.Logs.Count, Is.GreaterThanOrEqualTo(2));
-    }
-
-    [Test]
-    public async Task RunWithProgressAsync_ReturnsComplexType()
-    {
-        // Arrange & Act — verify it works with tuple return types (like BuildAsync)
-        var (success, message) = await ProgressReporter.RunWithProgressAsync(
-            progress: null,
-            _logger,
-            "Complex return",
-            _ => Task.FromResult((true, "build succeeded")),
-            CancellationToken.None);
-
-        // Assert
-        Assert.That(success, Is.True);
-        Assert.That(message, Is.EqualTo("build succeeded"));
-    }
-
-    [Test]
-    public async Task RunWithProgressAsync_DefaultInterval_UsesDefaultHeartbeat()
-    {
-        // Arrange & Act — just verify it doesn't throw when no interval is specified
-        var result = await ProgressReporter.RunWithProgressAsync(
-            progress: null,
-            _logger,
-            "Default interval",
-            _ => Task.FromResult("ok"),
-            CancellationToken.None);
-
-        // Assert
-        Assert.That(result, Is.EqualTo("ok"));
-        Assert.That(ProgressReporter.DefaultHeartbeatInterval, Is.EqualTo(TimeSpan.FromSeconds(15)));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ProgressReporter(null, _logger, totalSteps: -1));
     }
 
     #endregion
 
-    #region ReportProgress unit tests
+    #region NextStep tests
 
     [Test]
-    public void ReportProgress_NoProgress_LogsMessage()
+    public void NextStep_ReportsStepsSequentially()
     {
-        // Act
-        ProgressReporter.ReportProgress(null, _logger, 0, "test message");
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 3);
 
-        // Assert — should fall back to logging
+        reporter.NextStep("Step one");
+        reporter.NextStep("Step two");
+        reporter.NextStep("Step three");
+
+        Assert.That(_logger.Logs, Has.Count.EqualTo(3));
+        Assert.That(_logger.Logs[0].ToString(), Does.Contain("Step one"));
+        Assert.That(_logger.Logs[1].ToString(), Does.Contain("Step two"));
+        Assert.That(_logger.Logs[2].ToString(), Does.Contain("Step three"));
+    }
+
+    [Test]
+    public void NextStep_ExceedsTotalSteps_Throws()
+    {
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 2);
+
+        reporter.NextStep("Step one");
+        reporter.NextStep("Step two");
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            reporter.NextStep("Step three"));
+        Assert.That(ex!.Message, Does.Contain("more steps"));
+    }
+
+    [Test]
+    public void NextStep_WithProgress_ReportsCorrectValues()
+    {
+        var reported = new List<ProgressNotificationValue>();
+        var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+        mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
+            .Callback<ProgressNotificationValue>(v => reported.Add(v));
+
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 3);
+
+        reporter.NextStep("First");
+        reporter.NextStep("Second");
+        reporter.NextStep("Third");
+
+        Assert.That(reported, Has.Count.EqualTo(3));
+
+        Assert.That(reported[0].Progress, Is.EqualTo(0));
+        Assert.That(reported[0].Total, Is.EqualTo(3));
+        Assert.That(reported[0].Message, Is.EqualTo("First"));
+
+        Assert.That(reported[1].Progress, Is.EqualTo(1));
+        Assert.That(reported[1].Total, Is.EqualTo(3));
+        Assert.That(reported[1].Message, Is.EqualTo("Second"));
+
+        Assert.That(reported[2].Progress, Is.EqualTo(2));
+        Assert.That(reported[2].Total, Is.EqualTo(3));
+        Assert.That(reported[2].Message, Is.EqualTo("Third"));
+    }
+
+    [Test]
+    public void NextStep_NoProgress_FallsBackToLogger()
+    {
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 1);
+
+        reporter.NextStep("test message");
+
         Assert.That(_logger.Logs, Has.Count.EqualTo(1));
         Assert.That(_logger.Logs[0].ToString(), Does.Contain("test message"));
     }
 
+    #endregion
+
+    #region EnsureComplete tests
+
     [Test]
-    public void ReportProgress_WithProgress_CallsReport()
+    public void EnsureComplete_AllStepsReported_DoesNotThrow()
     {
-        // Arrange
-        var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 2);
 
-        // Act
-        ProgressReporter.ReportProgress(mockProgress.Object, _logger, 15, "heartbeat message");
+        reporter.NextStep("Step one");
+        reporter.NextStep("Step two");
 
-        // Assert — should call Report on the IProgress, not log
-        mockProgress.Verify(p => p.Report(It.Is<ProgressNotificationValue>(v =>
-            v.Progress == 15 && v.Total == null && v.Message == "heartbeat message")), Times.Once);
-        Assert.That(_logger.Logs, Has.Count.EqualTo(0));
+        Assert.DoesNotThrow(() => reporter.EnsureComplete());
     }
 
     [Test]
-    public void ReportProgress_WithTotal_SetsTotal()
+    public void EnsureComplete_MissingSteps_Throws()
     {
-        // Arrange
-        var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 3);
 
-        // Act
-        ProgressReporter.ReportProgress(mockProgress.Object, _logger, 2, "step 2 of 4", total: 4);
+        reporter.NextStep("Step one");
 
-        // Assert — Total should be set on the notification value
-        mockProgress.Verify(p => p.Report(It.Is<ProgressNotificationValue>(v =>
-            v.Progress == 2 && v.Total == 4 && v.Message == "step 2 of 4")), Times.Once);
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            reporter.EnsureComplete());
+        Assert.That(ex!.Message, Does.Contain("Expected 3"));
+        Assert.That(ex.Message, Does.Contain("only 1"));
     }
 
+    #endregion
+
+    #region Heartbeat tests
+
     [Test]
-    public async Task RunWithProgressAsync_WithProgress_ReportsViaIProgress()
+    public async Task StartHeartbeat_EmitsHeartbeatsUntilDisposed()
     {
-        // Arrange — use a real IProgress to capture reported values
         var reported = new List<ProgressNotificationValue>();
-        var progress = new Progress<ProgressNotificationValue>(v => reported.Add(v));
+        var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+        mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
+            .Callback<ProgressNotificationValue>(v => reported.Add(v));
 
-        // Act — slow task with heartbeats
-        var result = await ProgressReporter.RunWithProgressAsync(
-            progress,
-            _logger,
-            "MCP operation",
-            async ct =>
-            {
-                await Task.Delay(250, ct);
-                return "ok";
-            },
-            CancellationToken.None,
-            heartbeatInterval: TimeSpan.FromMilliseconds(100));
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2);
 
-        // Assert
-        Assert.That(result, Is.EqualTo("ok"));
-        // Give a moment for Progress<T> callbacks (they run on SynchronizationContext)
-        await Task.Delay(50);
-        Assert.That(reported.Count, Is.GreaterThanOrEqualTo(1));
-        Assert.That(reported[0].Message, Does.Contain("MCP operation"));
-        // When IProgress is provided, we should NOT fall back to logger
-        Assert.That(_logger.Logs, Has.Count.EqualTo(0));
+        reporter.NextStep("Starting work");
+
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
+        {
+            await Task.Delay(200);
+        }
+
+        // Should have initial step report + at least 2 heartbeats
+        Assert.That(reported.Count, Is.GreaterThanOrEqualTo(3));
+
+        // First report is from NextStep
+        Assert.That(reported[0].Message, Is.EqualTo("Starting work"));
+
+        // Heartbeat messages include elapsed time
+        Assert.That(reported[1].Message, Does.Contain("elapsed"));
+    }
+
+    [Test]
+    public async Task StartHeartbeat_StopsAfterDispose()
+    {
+        var reported = new List<ProgressNotificationValue>();
+        var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+        mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
+            .Callback<ProgressNotificationValue>(v => reported.Add(v));
+
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2);
+
+        reporter.NextStep("Step 1");
+
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
+        {
+            await Task.Delay(150);
+        }
+
+        var countAfterDispose = reported.Count;
+
+        // Wait a bit more — no new heartbeats should appear
+        await Task.Delay(200);
+
+        Assert.That(reported.Count, Is.EqualTo(countAfterDispose));
+    }
+
+    [Test]
+    public async Task StartHeartbeat_NoProgress_FallsBackToLogger()
+    {
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 2);
+
+        reporter.NextStep("Step 1");
+
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
+        {
+            await Task.Delay(200);
+        }
+
+        // At least the step message + some heartbeats logged
+        Assert.That(_logger.Logs.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(_logger.Logs[0].ToString(), Does.Contain("Step 1"));
+    }
+
+    [Test]
+    public async Task StartHeartbeat_Cancellation_StopsHeartbeat()
+    {
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 2);
+        reporter.NextStep("Step 1");
+
+        using var cts = new CancellationTokenSource();
+
+        var heartbeat = reporter.StartHeartbeat("Working",
+            ct: cts.Token,
+            heartbeatInterval: TimeSpan.FromMilliseconds(50));
+
+        await Task.Delay(100);
+        cts.Cancel();
+
+        // DisposeAsync should complete without throwing
+        await heartbeat.DisposeAsync();
+
+        var countAfterCancel = _logger.Logs.Count;
+        await Task.Delay(200);
+
+        Assert.That(_logger.Logs.Count, Is.EqualTo(countAfterCancel));
+    }
+
+    [Test]
+    public async Task StartHeartbeat_FastTask_NoHeartbeats()
+    {
+        var reported = new List<ProgressNotificationValue>();
+        var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+        mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
+            .Callback<ProgressNotificationValue>(v => reported.Add(v));
+
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2);
+
+        reporter.NextStep("Fast step");
+
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromSeconds(60)))
+        {
+            // Task completes immediately — no heartbeats should fire
+        }
+
+        // Only the initial NextStep report
+        Assert.That(reported, Has.Count.EqualTo(1));
+        Assert.That(reported[0].Message, Is.EqualTo("Fast step"));
+    }
+
+    [Test]
+    public async Task StartHeartbeat_ReportsCorrectStepIndex()
+    {
+        var reported = new List<ProgressNotificationValue>();
+        var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+        mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
+            .Callback<ProgressNotificationValue>(v => reported.Add(v));
+
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 3);
+
+        reporter.NextStep("Step 1"); // step index 0
+        reporter.NextStep("Step 2"); // step index 1
+
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
+        {
+            await Task.Delay(150);
+        }
+
+        // Heartbeat messages should use step index 2 (current step after NextStep increments)
+        var heartbeats = reported.Where(r => r.Message!.Contains("elapsed")).ToList();
+        Assert.That(heartbeats.Count, Is.GreaterThanOrEqualTo(1));
+        Assert.That(heartbeats.All(h => h.Progress == 2 && h.Total == 3), Is.True);
+    }
+
+    #endregion
+
+    #region CurrentStep / TotalSteps properties
+
+    [Test]
+    public void CurrentStep_TracksProgress()
+    {
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 3);
+        Assert.That(reporter.CurrentStep, Is.EqualTo(0));
+
+        reporter.NextStep("First");
+        Assert.That(reporter.CurrentStep, Is.EqualTo(1));
+
+        reporter.NextStep("Second");
+        Assert.That(reporter.CurrentStep, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void TotalSteps_ReturnsConstructorValue()
+    {
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 5);
+        Assert.That(reporter.TotalSteps, Is.EqualTo(5));
+    }
+
+    #endregion
+
+    #region Progress reporting resilience
+
+    [Test]
+    public void NextStep_ProgressThrows_DoesNotPropagate()
+    {
+        var mockProgress = new Mock<IProgress<ProgressNotificationValue>>();
+        mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
+            .Throws<InvalidOperationException>();
+
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 1);
+
+        // Should not throw — progress reporting is best-effort
+        Assert.DoesNotThrow(() => reporter.NextStep("test"));
     }
 
     #endregion

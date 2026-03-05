@@ -5,126 +5,153 @@ using ModelContextProtocol;
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
-/// Provides progress reporting for long-running MCP tool operations using the
-/// MCP <c>notifications/progress</c> protocol. Sends periodic heartbeat
-/// notifications while a subprocess or long-running task executes, so the
-/// caller (client/agent) can see the operation is still alive.
+/// Provides stepped progress reporting for MCP tool operations using the
+/// MCP <c>notifications/progress</c> protocol. Automatically tracks the
+/// current step index and total, so callers only need to declare the total
+/// once and call <see cref="NextStep"/> for each phase.
+/// <para>
+/// For long-running phases, call <see cref="StartHeartbeat"/> to receive an
+/// <see cref="IAsyncDisposable"/> scope that sends periodic "still alive"
+/// notifications until the scope is disposed via <c>await using</c>.
+/// </para>
 /// </summary>
-public static class ProgressReporter
+public class ProgressReporter
 {
+    private readonly IProgress<ProgressNotificationValue>? _progress;
+    private readonly ILogger _logger;
+    private readonly int _totalSteps;
+    private int _currentStep;
+
     /// <summary>
     /// Default interval between heartbeat progress notifications.
     /// </summary>
     public static readonly TimeSpan DefaultHeartbeatInterval = TimeSpan.FromSeconds(15);
 
+    /// <summary>Current step index (0-based). Useful for testing.</summary>
+    public int CurrentStep => _currentStep;
+
+    /// <summary>Total number of declared steps.</summary>
+    public int TotalSteps => _totalSteps;
+
     /// <summary>
-    /// Executes a long-running task while sending periodic MCP progress
-    /// notifications to the client. Falls back to logging when progress
-    /// reporting is not available (e.g. CLI mode).
+    /// Creates a new <see cref="ProgressReporter"/> with a fixed number of steps.
     /// </summary>
-    /// <typeparam name="T">The return type of the work function.</typeparam>
     /// <param name="progress">
-    /// The progress reporter injected by the MCP framework. When running in
-    /// MCP mode with a progress token, this is a <c>TokenProgress</c> that
-    /// sends <c>notifications/progress</c>. When no token is provided, the
-    /// framework supplies a <c>NullProgress</c> (no-op). May be <c>null</c>
-    /// in CLI mode.
+    /// The MCP progress reporter, or <c>null</c> in CLI mode (falls back to logging).
     /// </param>
-    /// <param name="logger">Logger used as a fallback or supplement.</param>
-    /// <param name="activityMessage">
-    /// A human-readable description of the activity, e.g.
-    /// "Running code generation".
-    /// </param>
-    /// <param name="work">
-    /// The long-running work to execute. Receives a <see cref="CancellationToken"/>
-    /// that is cancelled when the caller's token is cancelled.
+    /// <param name="logger">Logger used as a fallback when <paramref name="progress"/> is <c>null</c>.</param>
+    /// <param name="totalSteps">The total number of steps that will be reported.</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="totalSteps"/> is less than 1.</exception>
+    public ProgressReporter(IProgress<ProgressNotificationValue>? progress, ILogger logger, int totalSteps)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(totalSteps, 1);
+        _progress = progress;
+        _logger = logger;
+        _totalSteps = totalSteps;
+    }
+
+    /// <summary>
+    /// Advances to the next step and reports it. The step index is
+    /// auto-incremented; callers do not need to track it manually.
+    /// </summary>
+    /// <param name="message">A human-readable description of this step.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when more steps are reported than the declared <see cref="TotalSteps"/>.
+    /// </exception>
+    public void NextStep(string message)
+    {
+        if (_currentStep >= _totalSteps)
+        {
+            throw new InvalidOperationException(
+                $"Reported more steps ({_currentStep + 1}) than declared total ({_totalSteps}).");
+        }
+
+        ReportProgress(_currentStep, message, _totalSteps);
+        _currentStep++;
+    }
+
+    /// <summary>
+    /// Starts a heartbeat scope that sends periodic progress notifications for
+    /// the current step. The heartbeat runs in the background until the returned
+    /// <see cref="IAsyncDisposable"/> is disposed via <c>await using</c>.
+    /// <para>
+    /// This does <b>not</b> advance the step counter. Call <see cref="NextStep"/>
+    /// before <see cref="StartHeartbeat"/> to advance to the long-running step,
+    /// then dispose the heartbeat scope when the work completes.
+    /// </para>
+    /// </summary>
+    /// <param name="message">
+    /// A human-readable description of the long-running activity.
     /// </param>
     /// <param name="ct">Cancellation token for the overall operation.</param>
     /// <param name="heartbeatInterval">
     /// Interval between heartbeat messages. Defaults to
     /// <see cref="DefaultHeartbeatInterval"/>.
     /// </param>
-    /// <returns>The result of the <paramref name="work"/> function.</returns>
-    public static async Task<T> RunWithProgressAsync<T>(
-        IProgress<ProgressNotificationValue>? progress,
-        ILogger logger,
-        string activityMessage,
-        Func<CancellationToken, Task<T>> work,
-        CancellationToken ct,
-        TimeSpan? heartbeatInterval = null)
+    /// <returns>
+    /// An <see cref="IAsyncDisposable"/> that stops the heartbeat when disposed.
+    /// Use with <c>await using</c> to ensure cleanup.
+    /// </returns>
+    public IAsyncDisposable StartHeartbeat(string message, CancellationToken ct = default, TimeSpan? heartbeatInterval = null)
     {
         var interval = heartbeatInterval ?? DefaultHeartbeatInterval;
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var stepAtStart = _currentStep;
 
-        ReportProgress(progress, logger, 0, activityMessage);
+        // Launch the heartbeat loop in the background
+        var loopTask = RunHeartbeatLoopAsync(message, stepAtStart, interval, cts.Token);
 
-        var workTask = work(ct);
-        var elapsed = TimeSpan.Zero;
-
-        while (!workTask.IsCompleted)
-        {
-            // Wait for either the work to complete or the heartbeat interval to elapse
-            try
-            {
-                await Task.WhenAny(workTask, Task.Delay(interval, ct));
-            }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
-            {
-                // Cancellation requested. Fail fast if work has not completed yet.
-                if (!workTask.IsCompleted)
-                {
-                    throw;
-                }
-
-                // If work already completed concurrently, exit the loop and
-                // propagate the actual work result/exception below.
-                break;
-            }
-
-            if (!workTask.IsCompleted)
-            {
-                elapsed += interval;
-                var elapsedSeconds = (float)elapsed.TotalSeconds;
-                var message = $"{activityMessage}... ({(int)elapsedSeconds}s elapsed)";
-                ReportProgress(progress, logger, elapsedSeconds, message);
-            }
-        }
-
-        // Propagate any exceptions from the work task
-        return await workTask;
+        return new HeartbeatScope(loopTask, cts);
     }
 
     /// <summary>
-    /// Reports a single progress update. If an <see cref="IProgress{T}"/> is
-    /// available, it delegates to the MCP framework (which sends
-    /// <c>notifications/progress</c> when a progress token is present, or
-    /// no-ops otherwise). Falls back to logging in CLI mode.
+    /// Validates that all declared steps were reported. Call at the end of an
+    /// operation to catch missing steps during testing or development.
     /// </summary>
-    /// <param name="progress">
-    /// The progress reporter injected by the MCP framework, or <c>null</c>
-    /// in CLI mode (falls back to logging).
-    /// </param>
-    /// <param name="logger">Logger used as a fallback when <paramref name="progress"/> is <c>null</c>.</param>
-    /// <param name="progressValue">
-    /// The current progress value (e.g. step number or elapsed seconds).
-    /// </param>
-    /// <param name="message">A human-readable description of the current progress state.</param>
-    /// <param name="total">
-    /// The optional total number of steps. When set, clients can display a
-    /// progress bar or percentage (e.g. <paramref name="progressValue"/> / <paramref name="total"/>).
-    /// Leave <c>null</c> for indeterminate progress such as heartbeat updates.
-    /// </param>
-    public static void ReportProgress(
-        IProgress<ProgressNotificationValue>? progress,
-        ILogger logger,
-        float progressValue,
-        string message,
-        float? total = null)
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when fewer steps were reported than the declared <see cref="TotalSteps"/>.
+    /// </exception>
+    public void EnsureComplete()
     {
-        if (progress is not null)
+        if (_currentStep != _totalSteps)
+        {
+            throw new InvalidOperationException(
+                $"Expected {_totalSteps} progress steps but only {_currentStep} were reported.");
+        }
+    }
+
+    private async Task RunHeartbeatLoopAsync(string message, int step, TimeSpan interval, CancellationToken ct)
+    {
+        var elapsed = TimeSpan.Zero;
+
+        try
+        {
+            using var timer = new PeriodicTimer(interval);
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                elapsed += interval;
+                var heartbeatMessage = $"{message}... ({(int)elapsed.TotalSeconds}s elapsed)";
+                ReportProgress(step, heartbeatMessage, _totalSteps);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when the heartbeat scope is disposed or outer ct is cancelled.
+        }
+        catch (Exception ex)
+        {
+            // Heartbeat is best-effort; log but never propagate.
+            _logger.LogDebug(ex, "Heartbeat loop terminated unexpectedly");
+        }
+    }
+
+    private void ReportProgress(float progressValue, string message, float? total)
+    {
+        if (_progress is not null)
         {
             try
             {
-                progress.Report(new ProgressNotificationValue
+                _progress.Report(new ProgressNotificationValue
                 {
                     Progress = progressValue,
                     Total = total,
@@ -134,13 +161,34 @@ public static class ProgressReporter
             catch (Exception ex)
             {
                 // Progress reporting is best-effort; never fail the tool operation.
-                logger.LogDebug(ex, "Failed to send MCP progress notification");
+                _logger.LogDebug(ex, "Failed to send MCP progress notification");
             }
         }
         else
         {
             // Fallback: log the progress message for CLI mode.
-            logger.LogInformation("[Progress] {Message}", message);
+            _logger.LogInformation("[Progress] {Message}", message);
+        }
+    }
+
+    /// <summary>
+    /// An <see cref="IAsyncDisposable"/> scope that stops the heartbeat loop
+    /// and waits for it to exit before returning.
+    /// </summary>
+    private sealed class HeartbeatScope(Task loopTask, CancellationTokenSource cts) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            await cts.CancelAsync();
+            try
+            {
+                await loopTask;
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected.
+            }
+            cts.Dispose();
         }
     }
 }

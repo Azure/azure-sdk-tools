@@ -61,7 +61,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                ProgressReporter.ReportProgress(progress, logger, 0, "Validating package path", total: 4);
+                var reporter = new ProgressReporter(progress, logger, totalSteps: 4);
+
+                reporter.NextStep("Validating package path");
 
                 // Validate package path
                 if (string.IsNullOrWhiteSpace(packagePath))
@@ -72,24 +74,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Resolves relative paths to absolute
                 string fullPath = Path.GetFullPath(packagePath);
 
-                ProgressReporter.ReportProgress(progress, logger, 1, "Detecting SDK language", total: 4);
+                reporter.NextStep("Detecting SDK language");
                 var languageService = await GetLanguageServiceAsync(fullPath, ct);
                 if (languageService == null)
                 {
                     return PackageOperationResponse.CreateFailure($"Failed to find the language from package path {packagePath}");
                 }
 
-                ProgressReporter.ReportProgress(progress, logger, 2, $"Starting {languageService.Language} SDK pack", total: 4);
+                reporter.NextStep($"Packing {languageService.Language} SDK project");
                 logger.LogInformation("Packing SDK project at: {PackagePath} for language: {Language}", fullPath, languageService.Language);
 
-                var (success, errorMessage, packageInfo, artifactPath) = await ProgressReporter.RunWithProgressAsync(
-                    progress,
-                    logger,
-                    $"Packing {languageService.Language} SDK project",
-                    async (token) => await languageService.PackAsync(fullPath, outputPath, CommandTimeoutInMinutes, token),
-                    ct);
+                bool success;
+                string? errorMessage;
+                PackageInfo? packageInfo;
+                string? artifactPath;
+                await using (reporter.StartHeartbeat($"Packing {languageService.Language} SDK project", ct))
+                {
+                    (success, errorMessage, packageInfo, artifactPath) = await languageService.PackAsync(fullPath, outputPath, CommandTimeoutInMinutes, ct);
+                }
 
-                ProgressReporter.ReportProgress(progress, logger, 3, success ? "Pack completed successfully" : "Pack failed", total: 4);
+                reporter.NextStep(success ? "Pack completed successfully" : "Pack failed");
 
                 if (success)
                 {

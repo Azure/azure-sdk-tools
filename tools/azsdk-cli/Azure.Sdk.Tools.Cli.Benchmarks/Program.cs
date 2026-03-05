@@ -253,9 +253,8 @@ public class Program
         Console.WriteLine($"\nTool calls ({result.ToolCalls.Count}):");
         foreach (var tool in result.ToolCalls)
         {
-            var duration = tool.DurationMs.HasValue ? $" ({tool.DurationMs:F0}ms)" : "";
             var server = tool.McpServerName != null ? $" [{tool.McpServerName}]" : "";
-            Console.WriteLine($"  - {tool.ToolName}{server}{duration}");
+            Console.WriteLine($"  - {tool.ToolName}{server}");
         }
 
         if (result.WorkspacePath != null)

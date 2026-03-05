@@ -20,11 +20,6 @@ public class ToolCallRecord
     public string? Arguments { get; init; }
 
     /// <summary>
-    /// Gets the duration of the tool call in milliseconds (null if not measured).
-    /// </summary>
-    public double? DurationMs { get; init; }
-
-    /// <summary>
     /// Gets the name of the MCP server that provided this tool (null for built-in tools).
     /// </summary>
     public string? McpServerName { get; init; }

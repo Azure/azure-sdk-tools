@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
 using GitHub.Copilot.SDK;
@@ -25,7 +24,6 @@ public class SessionExecutor : IDisposable
     {
         var stopwatch = Stopwatch.StartNew();
         var toolCalls = new List<ToolCallRecord>();
-        var pendingStarts = new ConcurrentStack<(long Timestamp, string? ArgsJson)>();
 
         try
         {
@@ -50,8 +48,10 @@ public class SessionExecutor : IDisposable
                     OnPreToolUse = (input, invocation) =>
                     {
                         config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
-
-                        // Capture start timestamp and arguments for duration tracking
+                        return Task.FromResult<PreToolUseHookOutput?>(null);
+                    },
+                    OnPostToolUse = (input, invocation) =>
+                    {
                         string? argsJson = null;
                         try
                         {
@@ -62,22 +62,6 @@ public class SessionExecutor : IDisposable
                         }
                         catch { /* ignore serialization errors */ }
 
-                        pendingStarts.Push((input.Timestamp, argsJson));
-
-                        return Task.FromResult<PreToolUseHookOutput?>(null);
-                    },
-                    OnPostToolUse = (input, invocation) =>
-                    {
-                        double? durationMs = null;
-                        string? args = null;
-
-                        if (pendingStarts.TryPop(out var startInfo))
-                        {
-                            // Timestamps are in milliseconds from the SDK
-                            durationMs = input.Timestamp - startInfo.Timestamp;
-                            args = startInfo.ArgsJson;
-                        }
-
                         // Extract MCP server name from tool name convention (server__tool)
                         var mcpServerName = input.ToolName.Contains("__")
                             ? input.ToolName.Split("__", 2)[0]
@@ -86,8 +70,7 @@ public class SessionExecutor : IDisposable
                         toolCalls.Add(new ToolCallRecord
                         {
                             ToolName = input.ToolName,
-                            Arguments = args,
-                            DurationMs = durationMs,
+                            Arguments = argsJson,
                             McpServerName = mcpServerName,
                             Timestamp = DateTime.UtcNow
                         });

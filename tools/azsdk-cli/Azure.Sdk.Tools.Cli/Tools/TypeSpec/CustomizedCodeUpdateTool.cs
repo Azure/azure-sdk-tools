@@ -152,14 +152,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
-        if (!Directory.Exists(tspProjectPath))
+        if (!typeSpecHelper.IsValidTypeSpecProjectPath(tspProjectPath))
         {
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                Message = $"TypeSpec project path does not exist: {tspProjectPath}",
+                Message = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = $"TypeSpec project path does not exist: {tspProjectPath}"
+                BuildResult = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml."
             };
         }
 
@@ -324,8 +324,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
 
-            logger.LogDebug("Compiling {packagePath}", packagePath);
-            var (success, error) = await languageService.CompileAsync(packagePath, CommandTimeoutInMinutes, ct);
+            logger.LogDebug("Building {packagePath}", packagePath);
+            var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
 
             buildSucceeded = success;
             buildError = error;

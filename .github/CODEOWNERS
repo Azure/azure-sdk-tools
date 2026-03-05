@@ -20,9 +20,14 @@
 /.config/1espt/                        @benbp @weshaggard
 
 ###########
+# Files used to manage spelling version and installation
+###########
+/eng/common/spelling @danieljurek @mikeharder
+
+###########
 # Files used to manage tsp-client version and installation
 ###########
-/eng/common/tsp-client @catalinaperalta @raych1
+/eng/common/tsp-client @catalinaperalta @raych1 @mikeharder
 
 ###########
 # Eng Sys Tools

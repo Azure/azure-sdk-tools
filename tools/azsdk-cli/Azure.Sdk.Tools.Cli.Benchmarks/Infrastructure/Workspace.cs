@@ -151,7 +151,7 @@ public class Workspace : IDisposable
     /// </summary>
     /// <param name="scenarioName">The name of the scenario that was executed.</param>
     /// <param name="messages">The messages from the Copilot SDK session.</param>
-    /// <param name="toolCalls">The list of tool names called during execution.</param>
+    /// <param name="toolCalls">The list of tool calls made during execution.</param>
     /// <param name="gitDiff">The git diff of changes made during execution.</param>
     /// <param name="duration">The duration of the execution.</param>
     /// <param name="passed">Whether the benchmark passed validation.</param>
@@ -160,7 +160,7 @@ public class Workspace : IDisposable
     public async Task WriteExecutionLogAsync(
         string scenarioName,
         IReadOnlyList<object> messages,
-        IReadOnlyList<string> toolCalls,
+        IReadOnlyList<object> toolCalls,
         string? gitDiff,
         TimeSpan duration,
         bool passed,

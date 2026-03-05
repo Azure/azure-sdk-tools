@@ -34,9 +34,9 @@ public class BenchmarkResult
     public string? GitDiff { get; init; }
 
     /// <summary>
-    /// Gets the list of tool names called during execution.
+    /// Gets the list of tool calls made during execution.
     /// </summary>
-    public IReadOnlyList<string> ToolCalls { get; init; } = [];
+    public IReadOnlyList<object> ToolCalls { get; init; } = [];
 
     /// <summary>
     /// Gets the path to the workspace where the benchmark was executed.

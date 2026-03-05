@@ -21,5 +21,5 @@ public class ExecutionResult
     public IReadOnlyList<object> Messages { get; init; } = [];
 
     /// <summary>Tool names called during execution.</summary>
-    public IReadOnlyList<string> ToolCalls { get; init; } = [];
+    public IReadOnlyList<object> ToolCalls { get; init; } = [];
 }

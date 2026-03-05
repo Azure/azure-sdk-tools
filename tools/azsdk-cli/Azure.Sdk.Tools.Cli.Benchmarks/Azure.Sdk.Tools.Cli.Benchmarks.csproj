@@ -12,4 +12,10 @@
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta5.25277.114" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Reporting\report-template.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

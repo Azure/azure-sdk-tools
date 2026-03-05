@@ -36,6 +36,7 @@ public class ReportGenerator
     {
         var reportData = BuildReportData(results, runName, model);
         var reportDataJson = JsonSerializer.Serialize(reportData, JsonOptions);
+        var template = ReportTemplate.LoadTemplate();
 
         var userPrompt = $"""
             Generate a benchmark report using the template and data below.
@@ -43,7 +44,7 @@ public class ReportGenerator
             
             ## Report Template
             
-            {ReportTemplate.Template}
+            {template}
             
             ## Benchmark Data (JSON)
             
@@ -82,6 +83,7 @@ public class ReportGenerator
         }
 
         var combinedData = $"[{string.Join(",\n", logsJson)}]";
+        var template = ReportTemplate.LoadTemplate();
 
         var userPrompt = $"""
             Generate a benchmark report using the template and data below.
@@ -90,7 +92,7 @@ public class ReportGenerator
             
             ## Report Template
             
-            {ReportTemplate.Template}
+            {template}
             
             ## Benchmark Log Data (JSON Array)
             

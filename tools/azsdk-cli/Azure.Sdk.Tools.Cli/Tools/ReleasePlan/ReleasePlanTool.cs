@@ -398,6 +398,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 ReleasePlanWorkItem? releasePlan = null;
 
+                // Normalize typeSpecProjectPath to relative spec path (e.g. specification/...)
+                // so it matches the Custom.ApiSpecProjectPath field stored in work items.
+                string? normalizedSpecPath = null;
+                if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                {
+                    normalizedSpecPath = typeSpecHelper.IsUrl(typeSpecProjectPath)
+                        ? typeSpecHelper.GetTypeSpecProjectRelativePathFromUrl(typeSpecProjectPath)
+                        : typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
+                }
+
                 if (workItem != 0)
                 {
                     releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItem);
@@ -412,14 +422,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
 
                     // Fall back to TypeSpec project path if spec PR lookup failed
-                    if (releasePlan == null && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                    if (releasePlan == null && !string.IsNullOrWhiteSpace(normalizedSpecPath))
                     {
-                        releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath);
+                        releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(normalizedSpecPath);
                     }
                 }
-                else if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
+                else if (!string.IsNullOrWhiteSpace(normalizedSpecPath))
                 {
-                    releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath);
+                    releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(normalizedSpecPath);
                 }
                 else
                 {

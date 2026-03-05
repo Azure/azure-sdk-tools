@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Reflection;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
@@ -9,16 +10,39 @@ using GitHub.Copilot.SDK;
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Reporting;
 
 /// <summary>
-/// Generates benchmark reports by sending log data and a template to an LLM.
+/// Generates benchmark reports by sending log data and a report template to an LLM.
 /// Reuses the Copilot SDK pattern from LlmJudge.
 /// </summary>
 public class ReportGenerator
 {
+    private const string DefaultModel = "claude-sonnet-4.5";
+    private const string TemplateFileName = "report-template.md";
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    private static readonly string SystemPrompt = """
+        You are a benchmark report generator. You will receive JSON data from benchmark test runs
+        and a report template. Your job is to analyze the data and fill in the template accurately.
+
+        Rules:
+        - Be precise with numbers and statistics. Do not hallucinate data.
+        - If data is missing or incomplete, clearly indicate "N/A" or "Data not available".
+        - For narrative sections, base your analysis strictly on the data provided.
+        - Use the exact template structure provided. Do not add or remove sections.
+        - For tool call analysis, group by tool name and MCP server when applicable.
+        - For areas of improvement, only cite issues that are directly evidenced in the data.
+        """;
+
+    private readonly string _template;
+
+    public ReportGenerator()
+    {
+        _template = LoadTemplate();
+    }
 
     /// <summary>
     /// Generates a markdown report from benchmark results.
@@ -29,9 +53,8 @@ public class ReportGenerator
         string model,
         CancellationToken cancellationToken = default)
     {
-        var reportDataJson = JsonSerializer.Serialize(BuildReportData(results, runName, model), JsonOptions);
-        var prompt = BuildPrompt(reportDataJson, "Benchmark Data (JSON)");
-        return await CallLlmAsync(ReportTemplate.SystemPrompt, prompt);
+        var dataJson = JsonSerializer.Serialize(BuildReportData(results, runName, model), JsonOptions);
+        return await CallLlmAsync(BuildPrompt(dataJson, "Benchmark Data (JSON)"));
     }
 
     /// <summary>
@@ -52,23 +75,18 @@ public class ReportGenerator
             logFiles.Select(f => File.ReadAllTextAsync(f, cancellationToken)));
 
         var combinedData = $"[{string.Join(",\n", logsJson)}]";
-        var prompt = BuildPrompt(combinedData, "Benchmark Log Data (JSON Array)");
-        return await CallLlmAsync(ReportTemplate.SystemPrompt, prompt);
+        return await CallLlmAsync(BuildPrompt(combinedData, "Benchmark Log Data (JSON Array)"));
     }
 
-    /// <summary>
-    /// Builds the user prompt from data and the template file.
-    /// </summary>
-    private static string BuildPrompt(string dataJson, string dataLabel)
+    private string BuildPrompt(string dataJson, string dataLabel)
     {
-        var template = ReportTemplate.LoadTemplate();
         return $"""
             Generate a benchmark report using the template and data below.
             Fill in every section of the template based on the provided data.
             
             ## Report Template
             
-            {template}
+            {_template}
             
             ## {dataLabel}
             
@@ -80,10 +98,7 @@ public class ReportGenerator
             """;
     }
 
-    /// <summary>
-    /// Calls the LLM using the Copilot SDK to generate report content.
-    /// </summary>
-    private static async Task<string> CallLlmAsync(string systemPrompt, string userPrompt)
+    private static async Task<string> CallLlmAsync(string userPrompt)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), $"report-gen-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
@@ -94,12 +109,12 @@ public class ReportGenerator
 
             var sessionConfig = new SessionConfig
             {
-                Model = ReportTemplate.DefaultReportModel,
+                Model = DefaultModel,
                 Streaming = false,
                 SystemMessage = new SystemMessageConfig
                 {
                     Mode = SystemMessageMode.Replace,
-                    Content = systemPrompt
+                    Content = SystemPrompt
                 },
                 AvailableTools = [],
                 McpServers = null,
@@ -122,9 +137,6 @@ public class ReportGenerator
         }
     }
 
-    /// <summary>
-    /// Builds a structured data object from benchmark results for the LLM.
-    /// </summary>
     private static object BuildReportData(
         IReadOnlyList<(BenchmarkScenario Scenario, BenchmarkResult Result)> results,
         string runName,
@@ -150,5 +162,19 @@ public class ReportGenerator
                 r.Result
             }).ToList()
         };
+    }
+
+    private static string LoadTemplate()
+    {
+        var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+        var templatePath = Path.Combine(assemblyDir, "Reporting", TemplateFileName);
+
+        if (!File.Exists(templatePath))
+        {
+            throw new FileNotFoundException(
+                $"Report template not found at '{templatePath}'. Ensure '{TemplateFileName}' is set as Content/CopyToOutputDirectory in the .csproj.");
+        }
+
+        return File.ReadAllText(templatePath);
     }
 }

@@ -1,6 +1,6 @@
-name: azsdk-common-sensei-evals
-description: Evaluations for the sensei skill compliance improver
-skill: azsdk-common-sensei
+name: skill-authoring-evals
+description: Evaluations for the skill authoring guide
+skill: skill-authoring
 config:
   timeout: 60
 graders:

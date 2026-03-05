@@ -1,6 +1,6 @@
-name: azsdk-common-skill-authoring-eval
-description: Evaluation suite for skill authoring skill.
-skill: azsdk-common-skill-authoring
+name: markdown-token-optimizer-eval
+description: Evaluation suite for markdown token optimizer skill.
+skill: markdown-token-optimizer
 version: "1.0"
 config:
   trials_per_task: 1
@@ -10,9 +10,9 @@ config:
   model: claude-sonnet-4.6
 graders:
   - type: text
-    name: mentions_authoring_concepts
+    name: mentions_optimization_concepts
     config:
-      contains: ["skill", "authoring", "frontmatter", "guidelines", "structure"]
+      contains: ["token", "markdown", "optimize", "reduce", "compression"]
   - type: code
     name: has_substantive_output
     config:

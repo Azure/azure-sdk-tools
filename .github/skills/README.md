@@ -11,26 +11,15 @@ Azure SDK repositories.
 
 ## Available Skills
 
-### Workflow Skills
-
-| Skill | Triggers | Description |
-| ----- | -------- | ----------- |
-| [azsdk-common-typespec-to-sdk-workflow](azsdk-common-typespec-to-sdk-workflow/SKILL.md) | "full SDK release workflow", "TypeSpec to SDK end to end" | Orchestrates the full TypeSpec → SDK release process |
-
-### Utility Skills
+### Workflow & Utility Skills
 
 | Skill | Triggers | Description |
 | ----- | -------- | ----------- |
 | [azsdk-common-generate-sdk-locally](azsdk-common-generate-sdk-locally/SKILL.md) | "generate SDK locally", "build SDK", "run SDK tests" | Generate, build, and test Azure SDKs locally from TypeSpec |
 | [azsdk-common-prepare-release-plan](azsdk-common-prepare-release-plan/SKILL.md) | "create release plan", "link SDK PR to plan" | Create and manage release plan work items |
-| [azsdk-common-package-release-readiness](azsdk-common-package-release-readiness/SKILL.md) | "is package ready for release", "release SDK package" | Check SDK package release readiness and trigger releases |
 | [azsdk-common-apiview-feedback-resolution](azsdk-common-apiview-feedback-resolution/SKILL.md) | "APIView comments", "resolve API review feedback" | Retrieve and resolve APIView review feedback |
 | [azsdk-common-pipeline-troubleshooting](azsdk-common-pipeline-troubleshooting/SKILL.md) | "pipeline failed", "build failure", "CI check failing" | Diagnose and resolve SDK CI and generation pipeline failures |
 | [azsdk-common-sdk-release](azsdk-common-sdk-release/SKILL.md) | "release SDK", "trigger release pipeline" | Check release readiness and trigger SDK releases |
-| [azsdk-common-verify-setup](azsdk-common-verify-setup/SKILL.md) | "verify setup", "check environment", "missing tools" | Verify developer environment for SDK development |
-| [azsdk-common-validate-service-label](azsdk-common-validate-service-label/SKILL.md) | "check service label", "create service label" | Validate or create service labels for SDK repos |
-| [azsdk-common-validate-codeowners](azsdk-common-validate-codeowners/SKILL.md) | "validate codeowners", "check code owners" | Validate and manage CODEOWNERS entries |
-| [azsdk-common-check-package-validation](azsdk-common-check-package-validation/SKILL.md) | "run package check", "lint SDK", "format check" | Run SDK package validation checks |
 | [azsdk-common-report-test-bug](azsdk-common-report-test-bug/SKILL.md) | "file test bug", "report test failure" | File GitHub issues for integration test failures |
 
 ### Development & Meta Skills

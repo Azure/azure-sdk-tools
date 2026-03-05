@@ -14,7 +14,6 @@ All instruction files are reachable from `.github/copilot-instructions.md`:
 ├── .github/instructions/typespec-project.instructions.md
 ├── .github/instructions/language-emitter.instructions.md
 ├── .github/instructions/sdk-generation.instructions.md
-│   ├── eng/common/instructions/azsdk-tools/verify-setup.instructions.md
 │   ├── eng/common/instructions/azsdk-tools/typespec-to-sdk.instructions.md
 │   │   ├── eng/common/instructions/azsdk-tools/local-sdk-workflow.instructions.md
 │   │   └── eng/common/instructions/azsdk-tools/create-release-plan.instructions.md
@@ -25,16 +24,12 @@ All instruction files are reachable from `.github/copilot-instructions.md`:
 ├── .github/instructions/github-codingagent.instructions.md
 ├── .github/instructions/armapi-review.instructions.md
 ├── .github/instructions/openapi-review.instructions.md
-├── .github/instructions/github-actions.instructions.md
-└── eng/common/instructions/azsdk-tools/check-package-readiness.instructions.md
+└── .github/instructions/github-actions.instructions.md
 ```
 
 Additional instruction files exist but are **not linked** from the tree:
 
 - `eng/common/instructions/copilot/sdk-release.instructions.md`
-- `eng/common/instructions/azsdk-tools/validate-service-label.instructions.md`
-- `eng/common/instructions/azsdk-tools/validate-codeowners.instructions.md`
-- `eng/common/instructions/azsdk-tools/check-package-validation.instructions.md`
 
 ---
 
@@ -47,21 +42,16 @@ Additional instruction files exist but are **not linked** from the tree:
 | **typespec-authoring**          | Utility  | `typespec-project.instructions.md`, `typespec-docs.instructions.md`                                                               | Create/modify TypeSpec API specs, swagger conversion, validation |
 | **typespec-customization**      | Utility  | `customizing-client-tsp.md`                                                                                                       | Apply SDK-specific customizations via `client.tsp` decorators    |
 | **generate-sdk-locally**        | Utility  | `local-sdk-workflow.instructions.md`, `language-emitter.instructions.md`                                                          | Local SDK generation, build, test workflow                       |
-| **package-release-readiness**   | Utility  | `check-package-readiness.instructions.md`                                                                                         | Check SDK package release readiness and run validation           |
 | **prepare-release-plan**        | Utility  | `create-release-plan.instructions.md`, `sdk-details-in-release-plan.instructions.md`, `verify-namespace-approval.instructions.md` | Create/manage release plan work items                            |
 | **apiview-feedback-resolution** | Utility  | `typespec-to-sdk.instructions.md` (APIView sections)                                                                              | Retrieve and resolve APIView review comments                     |
 | **pipeline-troubleshooting**    | Utility  | `typespec-to-sdk.instructions.md` (pipeline sections)                                                                             | Diagnose and fix CI/SDK generation pipeline failures             |
-| **typespec-to-sdk-workflow**    | Workflow | `sdk-generation.instructions.md`, `typespec-to-sdk.instructions.md`, `github-codingagent.instructions.md`                         | End-to-end orchestration invoking all 7 utility skills           |
 
 ### Additional Skills (Supporting Utilities)
 
-| Skill                        | Type    | Source Instruction Files                   | Description                                                       |
-| ---------------------------- | ------- | ------------------------------------------ | ----------------------------------------------------------------- |
-| **verify-setup**             | Utility | `verify-setup.instructions.md`             | Verify developer environment for SDK tooling                      |
-| **validate-service-label**   | Utility | `validate-service-label.instructions.md`   | Validate or create service labels for SDK repos                   |
-| **validate-codeowners**      | Utility | `validate-codeowners.instructions.md`      | Validate and manage CODEOWNERS entries                            |
-| **check-package-validation** | Utility | `check-package-validation.instructions.md` | Run SDK package validation checks (lint, format, changelog, etc.) |
-| **sdk-release**              | Utility | `sdk-release.instructions.md`              | Check release readiness and trigger SDK release pipelines         |
+| Skill           | Type    | Source Instruction Files      | Description                                           |
+| --------------- | ------- | ----------------------------- | ----------------------------------------------------- |
+| **sdk-release** | Utility | `sdk-release.instructions.md` | Check release readiness and trigger SDK release pipelines |
+| **report-test-bug** | Utility | N/A | File GitHub issues for integration test failures |
 
 ### Instruction Files Not Converted to Skills
 
@@ -98,11 +88,9 @@ evals/<skill-name>/
 | typespec-authoring          | `authoring-steps.md`, `migration-checklist.md`      |
 | typespec-customization      | `customization-steps.md`, `decorators-reference.md` |
 | generate-sdk-locally        | `sdk-repos.md`                                      |
-| package-release-readiness   | `readiness-details.md`                              |
 | prepare-release-plan        | `release-plan-details.md`                           |
 | apiview-feedback-resolution | `feedback-resolution-steps.md`                      |
 | pipeline-troubleshooting    | `failure-patterns.md`                               |
-| typespec-to-sdk-workflow    | `workflow-details.md`                               |
 
 ---
 
@@ -156,30 +144,6 @@ Every eval includes three graders:
 **Keywords:** generate, build, SDK · **Regex:** `azsdk_package_generate_code|azsdk_package_build_code|azsdk_verify_setup`
 **Fixture:** `tspconfig.yaml` — sample TypeSpec config
 
-#### package-release-readiness (4 tasks, 300s timeout)
-
-| Task ID                  | Name                                  | Tests                                                   |
-| ------------------------ | ------------------------------------- | ------------------------------------------------------- |
-| `readiness-basic-001`    | Check Package Release Readiness       | Happy path: runs readiness check for a package          |
-| `readiness-edge-001`     | Package Not Ready - Missing Changelog | Edge case: handles missing changelog entries            |
-| `readiness-negative-001` | Should Not Trigger                    | Negative: does not activate for SDK generation requests |
-| `readiness-release-001`  | Release SDK Package                   | Domain-specific: guides through actual release process  |
-
-**Keywords:** release, package, readiness · **Regex:** `azsdk_release_sdk|azsdk_package_run_check|changelog|validation`
-**Fixture:** `changelog.md` — sample changelog file
-
-#### prepare-release-plan (4 tasks, 300s timeout)
-
-| Task ID                     | Name                         | Tests                                                         |
-| --------------------------- | ---------------------------- | ------------------------------------------------------------- |
-| `release-plan-basic-001`    | Create New Release Plan      | Happy path: creates plan with Service Tree ID and API version |
-| `release-plan-edge-001`     | Invalid Package Name Format  | Edge case: validates package name formats                     |
-| `release-plan-negative-001` | Should Not Trigger           | Negative: does not activate for package release requests      |
-| `release-plan-link-001`     | Link SDK PRs to Release Plan | Domain-specific: links SDK pull requests to existing plan     |
-
-**Keywords:** release plan, Service Tree, API version · **Regex:** `azsdk_create_release_plan|azsdk_get_release_plan|azsdk_update_sdk_details`
-**Fixture:** `tspconfig.yaml` — sample TypeSpec config
-
 #### apiview-feedback-resolution (4 tasks, 300s timeout)
 
 | Task ID                   | Name                                 | Tests                                                 |
@@ -204,44 +168,6 @@ Every eval includes three graders:
 **Keywords:** pipeline, build, failure · **Regex:** `azsdk_analyze_pipeline|pipeline|build failure|CI`
 **Fixture:** `pipeline-error.log` — sample pipeline error log
 
-#### typespec-to-sdk-workflow (5 tasks, 600s timeout)
-
-| Task ID                   | Name                                       | Tests                                                               |
-| ------------------------- | ------------------------------------------ | ------------------------------------------------------------------- |
-| `workflow-basic-001`      | Full Release Workflow - New Service        | Happy path: full end-to-end workflow for new service                |
-| `workflow-edge-001`       | Resume Workflow - Existing Release Plan    | Edge case: detects existing plan and resumes mid-workflow           |
-| `workflow-negative-001`   | Should Not Trigger                         | Negative: does not activate for single-step tasks                   |
-| `workflow-experiment-001` | Experimentation Path                       | Domain-specific: experimentation mode (generate SDKs, skip release) |
-| `workflow-transition-001` | Transition from Experimentation to Release | Domain-specific: transition from experimentation to full release    |
-
-**Keywords:** TypeSpec, SDK, release, generate · **Regex:** `release plan|SDK generation|TypeSpec|API spec|pipeline`
-**Fixture:** `tspconfig.yaml` — sample TypeSpec config
-
----
-
-## Eval Run Results
-
-All 8 eval suites were run with `waza run --discover`. Results:
-
-| Skill                          | Pass Rate | Avg Score | Tasks | Notes                                                                    |
-| ------------------------------ | --------- | --------- | ----- | ------------------------------------------------------------------------ |
-| ✅ apiview-feedback-resolution | 100%      | 1.00      | 4/4   |                                                                          |
-| ✅ pipeline-troubleshooting    | 100%      | 1.00      | 4/4   |                                                                          |
-| ✅ prepare-release-plan        | 100%      | 1.00      | 4/4   |                                                                          |
-| ✅ typespec-authoring          | 100%      | 1.00      | 4/4   |                                                                          |
-| ✅ typespec-to-sdk-workflow    | 100%      | 1.00      | 5/5   |                                                                          |
-| ❌ generate-sdk-locally        | 75%       | 1.00      | 3/4   | "Generate Python SDK Locally" timed out at 300s (44 tool calls)          |
-| ❌ typespec-customization      | 75%       | 1.00      | 3/4   | "Split Into Multiple Clients" timed out at 300s (35 tool calls)          |
-| ❌ package-release-readiness   | 75%       | 0.92      | 3/4   | "Should Not Trigger" timed out at 300s (62 tool calls, truncated output) |
-
-**Overall: 30/33 tasks passed (91%). All 3 failures are execution timeouts, not grader failures.**
-
-All graders scored 1.00 on keyword and regex checks for the timed-out tasks — the agent responses were on-topic but exceeded the time budget because the agent attempted to actually perform the real operations (SDK generation, builds). Timeouts for the 3 affected suites have been bumped from 300s → 600s.
-
----
-
-## Sensei Improvement Results
-
 After the initial waza-based creation, sensei was used to score and improve all 8 skills through the Ralph loop pattern (READ → SCORE → CHECK → IMPROVE → TEST → TOKENS).
 
 ### Improvements Applied
@@ -261,25 +187,18 @@ After the initial waza-based creation, sensei was used to score and improve all 
 | typespec-authoring          | 493    | High       | 8/8 ✅ | 2/4 | 🌟 module-count, 🌟 complexity |
 | typespec-customization      | 469    | High       | 8/8 ✅ | 2/4 | 🌟 module-count, 🌟 complexity |
 | generate-sdk-locally        | 420    | High       | 8/8 ✅ | 1/4 | 🌟 complexity                  |
-| package-release-readiness   | 449    | High       | 8/8 ✅ | 2/4 | 🌟 complexity                  |
 | prepare-release-plan        | 421    | High       | 8/8 ✅ | 3/4 | —                              |
 | apiview-feedback-resolution | 464    | High       | 8/8 ✅ | 2/4 | 🌟 complexity                  |
 | pipeline-troubleshooting    | 476    | High       | 8/8 ✅ | 2/4 | 🌟 complexity                  |
-| typespec-to-sdk-workflow    | 488    | High       | 8/8 ✅ | 2/4 | 🌟 complexity                  |
 
-### New Skills — Ralph Loop Results
+### Additional Skills
 
-The following 5 skills were added from previously-excluded instruction files and ran through the Ralph loop:
+| Skill           | Tokens | Compliance | Spec   | MCP        | Key Changes                                     |
+| --------------- | ------ | ---------- | ------ | ---------- | ----------------------------------------------- |
+| sdk-release     | 464    | High       | 8/8 ✅ | **4/4 ✅** | Added prerequisites section, tightened wording  |
+| report-test-bug | N/A    | High       | 8/8 ✅ | N/A        | File GitHub issues for integration test failures |
 
-| Skill                    | Initial Tokens | Final Tokens | Compliance | Spec   | MCP        | Key Changes                                                                |
-| ------------------------ | -------------- | ------------ | ---------- | ------ | ---------- | -------------------------------------------------------------------------- |
-| verify-setup             | 407            | 460          | High       | 8/8 ✅ | **4/4 ✅** | Added MCP prerequisites, CLI fallback, expanded compatibility              |
-| validate-service-label   | 476            | 419          | High       | 8/8 ✅ | **4/4 ✅** | Added MCP docs, removed verbose step, compressed descriptions (-84 tokens) |
-| validate-codeowners      | 446            | 445          | High       | 8/8 ✅ | **4/4 ✅** | Added MCP tools table, prerequisites, CLI fallback, removed hardcoded URL  |
-| check-package-validation | 465            | 491          | High       | 8/8 ✅ | **4/4 ✅** | Added CLI fallback step                                                    |
-| sdk-release              | 445            | 464          | High       | 8/8 ✅ | **4/4 ✅** | Added prerequisites section, tightened step wording                        |
-
-**Total tokens (all 13 skills):** ~5851
+**Total tokens (all 8 skills):** ~3707
 
 ### Remaining Advisory Notes
 

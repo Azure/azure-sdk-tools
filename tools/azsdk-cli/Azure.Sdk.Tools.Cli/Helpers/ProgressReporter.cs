@@ -27,7 +27,7 @@ public class ProgressReporter
     /// </summary>
     public static readonly TimeSpan DefaultHeartbeatInterval = TimeSpan.FromSeconds(15);
 
-    /// <summary>Current step index (0-based). Useful for testing.</summary>
+    /// <summary>Number of steps completed so far (0 before any step, equals <see cref="TotalSteps"/> when all steps are done).</summary>
     public int CurrentStep => _currentStep;
 
     /// <summary>Total number of declared steps.</summary>
@@ -66,8 +66,8 @@ public class ProgressReporter
                 $"Reported more steps ({_currentStep + 1}) than declared total ({_totalSteps}).");
         }
 
-        ReportProgress(_currentStep, message, _totalSteps);
         _currentStep++;
+        ReportProgress(_currentStep, message, _totalSteps);
     }
 
     /// <summary>
@@ -166,9 +166,28 @@ public class ProgressReporter
         }
         else
         {
-            // Fallback: log the progress message for CLI mode.
-            _logger.LogInformation("[Progress] {Message}", message);
+            // Fallback: render an ASCII progress bar for CLI mode.
+            var bar = FormatProgressBar(progressValue, total);
+            _logger.LogInformation("{Bar} {Message}", bar, message);
         }
+    }
+
+    /// <summary>
+    /// Formats an ASCII progress bar string, e.g. <c>[████████░░░░░░░░░░░░] 50%</c>.
+    /// </summary>
+    private static string FormatProgressBar(float progressValue, float? total, int barWidth = 20)
+    {
+        if (total is null or <= 0)
+        {
+            return $"[{"░".PadRight(barWidth, '░')}]  0%";
+        }
+
+        var fraction = Math.Clamp(progressValue / total.Value, 0f, 1f);
+        var filled = (int)Math.Round(fraction * barWidth);
+        var empty = barWidth - filled;
+        var percentage = (int)Math.Round(fraction * 100);
+
+        return $"[{new string('█', filled)}{new string('░', empty)}] {percentage,3}%";
     }
 
     /// <summary>

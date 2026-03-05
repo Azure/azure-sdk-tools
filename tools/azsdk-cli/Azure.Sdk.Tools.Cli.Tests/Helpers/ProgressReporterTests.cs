@@ -82,15 +82,15 @@ public class ProgressReporterTests
 
         Assert.That(reported, Has.Count.EqualTo(3));
 
-        Assert.That(reported[0].Progress, Is.EqualTo(0));
+        Assert.That(reported[0].Progress, Is.EqualTo(1));
         Assert.That(reported[0].Total, Is.EqualTo(3));
         Assert.That(reported[0].Message, Is.EqualTo("First"));
 
-        Assert.That(reported[1].Progress, Is.EqualTo(1));
+        Assert.That(reported[1].Progress, Is.EqualTo(2));
         Assert.That(reported[1].Total, Is.EqualTo(3));
         Assert.That(reported[1].Message, Is.EqualTo("Second"));
 
-        Assert.That(reported[2].Progress, Is.EqualTo(2));
+        Assert.That(reported[2].Progress, Is.EqualTo(3));
         Assert.That(reported[2].Total, Is.EqualTo(3));
         Assert.That(reported[2].Message, Is.EqualTo("Third"));
     }
@@ -263,8 +263,8 @@ public class ProgressReporterTests
 
         var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 3);
 
-        reporter.NextStep("Step 1"); // step index 0
-        reporter.NextStep("Step 2"); // step index 1
+        reporter.NextStep("Step 1"); // progress = 1
+        reporter.NextStep("Step 2"); // progress = 2
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
         {

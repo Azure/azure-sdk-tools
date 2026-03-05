@@ -47,13 +47,17 @@ public class ReportGenerator
     /// <summary>
     /// Generates a markdown report from benchmark results.
     /// </summary>
+    /// <param name="results">The benchmark results to report on.</param>
+    /// <param name="runName">Name for this benchmark run.</param>
+    /// <param name="agentModel">The model used by the agent during the benchmark run (for metadata only).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<string> GenerateAsync(
         IReadOnlyList<(BenchmarkScenario Scenario, BenchmarkResult Result)> results,
         string runName,
-        string model,
+        string agentModel,
         CancellationToken cancellationToken = default)
     {
-        var dataJson = JsonSerializer.Serialize(BuildReportData(results, runName, model), JsonOptions);
+        var dataJson = JsonSerializer.Serialize(BuildReportData(results, runName, agentModel), JsonOptions);
         return await CallLlmAsync(BuildPrompt(dataJson, "Benchmark Data (JSON)"));
     }
 
@@ -140,12 +144,12 @@ public class ReportGenerator
     private static object BuildReportData(
         IReadOnlyList<(BenchmarkScenario Scenario, BenchmarkResult Result)> results,
         string runName,
-        string model)
+        string agentModel)
     {
         return new
         {
             RunName = runName,
-            Model = model,
+            Model = agentModel,
             TestDate = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC"),
             TotalScenarios = results.Count,
             TotalPassed = results.Count(r => r.Result.Passed),

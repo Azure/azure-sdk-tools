@@ -61,42 +61,31 @@ public class JavaErrorDrivenPatchTemplate(
         ## WORKFLOW
 
         ### Step 1 — Parse errors
+        - Read the Original Request and Classifier Analysis in the BUILD CONTEXT above.
+          These tell you WHAT was changed (e.g., a field was renamed) and WHY the build broke.
         - Extract each compiler error: failing symbol, file, line, error type.
-        - Identify the root cause (e.g., method signature changed, parameter added).
 
         ### Step 2 — Read relevant files
-        - Read the customization file(s) referenced in errors.
-        - Read the generated file(s) that the build errors reference to see the CURRENT
-          method signatures, parameter names, types, and Javadoc. These are READ-ONLY context.
-        - Identify what changed (new parameters, removed parameters, renamed methods, etc.).
+        - **ALWAYS read ALL customization files listed above first.** Customization code often
+          injects method bodies into generated files via `customizeAst()`/`parseBlock()`. When
+          a build error appears in a generated file, the root cause is usually a string literal
+          inside the customization file that references a renamed or removed symbol.
+        - Then read the generated file(s) referenced in errors to confirm current field names
+          and method signatures.
+        - Compare what the Original Request says was changed with what the customization code
+          still references.
 
-        ### Step 3 — Determine the correct fix
-        For each error, determine the semantically correct fix:
+        ### Step 3 — Apply safe patches
+        Apply patches ONLY when you can determine the CORRECT value with certainty:
+        - Method gained a new parameter → add the parameter with proper forwarding
+        - Method was renamed → update the method call
+        - Return type changed → update the cast/assignment
+        - Field renamed → update `this.oldName` references in string literals passed to
+          `parseBlock()` / `parseStatement()` to use `this.newName`. Keep JSON wire names
+          (e.g., `\"maxSpeakers\"` in `writeNumberField`) unchanged — only update Java
+          field references like `this.maxSpeakers`.
 
-        **Method gained a new parameter:**
-        1. Read the generated method signature to identify the new parameter's name and type.
-        2. Check if the Options class (e.g., `AnalyzeDocumentOptions`) already has a getter
-           for this parameter (look in both the generated code and the customization code).
-        3. If no getter exists, add a getter (and setter) to the Options class in the
-           customization file. Name it to match the parameter (e.g., parameter `outputFormat`
-           → `getOutputFormat()` / `setOutputFormat()`).
-        4. In the method body string, pass `options.getOutputFormat()` at the correct
-           argument position — NEVER pass `null`.
-
-        **Parameter removed from generated method:**
-        - Remove the extra argument from the method body string.
-        - Remove the corresponding getter/setter from the Options class customization.
-
-        **Method/type renamed:**
-        - Update all references (method calls, type names, imports).
-
-        **Return type changed:**
-        - Update the customization to match the new return type.
-
-        ### Step 4 — Apply safe patches
-        Apply patches ONLY when you can determine the CORRECT value with certainty.
-
-        ### Step 5 — Return summary
+        ### Step 4 — Return summary
         If you applied patches, return a brief summary of what was fixed.
         If no patches could be applied, return empty string.
 
@@ -111,20 +100,13 @@ public class JavaErrorDrivenPatchTemplate(
         ### 1. CUSTOMIZATION FILES ONLY
         You may patch ONLY the customization files provided. Never patch generated code.
 
-        ### 2. SAFE PATCHES ONLY — SEMANTIC CORRECTNESS
+        ### 2. SAFE PATCHES ONLY
         Apply patches only when the fix is obvious and correct.
         **DO NOT**:
-        - Pass `null` for a new parameter — this compiles but silently drops functionality,
-          which is WORSE than a build failure. Always thread the actual value via an Options
-          class getter (add the getter if it doesn't exist).
+        - Pass `null` for a new parameter whose correct value is unknown
         - Remove or comment out method calls to suppress errors
-        - Add placeholder/dummy values (empty strings, 0, false, etc.)
-        - Guess at correct values without reading the generated source
-
-        **ALWAYS**:
-        - Read the generated file to understand what a new parameter does before patching.
-        - Match the getter/setter name to the parameter name from the generated method.
-        - Place the new argument at the correct position in the method call string.
+        - Add placeholder/dummy values
+        - Guess at correct values
 
         ### 3. SURGICAL PATCHING
         The ClientCustomizationCodePatch tool uses **surgical text replacement**:
@@ -165,4 +147,5 @@ public class JavaErrorDrivenPatchTemplate(
         Keep it concise.
         """;
     }
+
 }

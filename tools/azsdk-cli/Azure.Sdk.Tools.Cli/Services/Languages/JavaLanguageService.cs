@@ -249,6 +249,7 @@ public sealed partial class JavaLanguageService : LanguageService
                 "-Dshade.skip=true",        // Skip JAR shading for faster builds
                 "-Dmaven.antrun.skip=true", // Skip Ant tasks for faster builds
                 "-Dcheckstyle.skip=true",   // Skip Checkstyle for faster builds
+                "-DskipTestCompile=true", // Skip test compilation for faster builds
                 "-am"                       // Also build required modules automatically
             };
          var result = await mavenHelper.Run(new("install", [.. args], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), ct);

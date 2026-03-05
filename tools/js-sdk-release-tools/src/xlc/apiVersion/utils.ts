@@ -171,10 +171,26 @@ export const getApiVersionTypeFromMetadata = async (
     try {
         const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
         const metadata = JSON.parse(metadataContent);
-        const apiVersion = metadata.apiVersion;
+
+        let apiVersion: string | undefined;
+
+        // Support new format: { "apiVersions": { "service": "version", ... } }
+        if (metadata.apiVersions != null && !Array.isArray(metadata.apiVersions) && typeof metadata.apiVersions === 'object') {
+            const values = Object.values(metadata.apiVersions).filter(
+                (v): v is string => typeof v === 'string'
+            );
+            if (values.length > 0) {
+                // If any version is preview, use a preview version; otherwise use the first stable version
+                // This ensures: any preview -> Preview, all stable -> Stable
+                apiVersion = values.find(v => v.indexOf('-preview') >= 0) || values[0];
+            }
+        } else {
+            // Support old format: { "apiVersion": "version" }
+            apiVersion = metadata.apiVersion;
+        }
         
         if (!apiVersion) {
-            logger.warn(`metadata.json exists at ${metadataPath} but does not contain apiVersion field`);
+            logger.warn(`metadata.json exists at ${metadataPath} but does not contain apiVersion or apiVersions field`);
             return ApiVersionType.None;
         }
         

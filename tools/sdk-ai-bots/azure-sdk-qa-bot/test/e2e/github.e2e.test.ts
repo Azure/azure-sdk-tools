@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest';
-import { GithubClient } from '../../src/input/GithubClient.js';
+import { GithubClient } from '../../src/github/GithubClient.js';
 
 // TODO: Add more tests to cover all branches and edge cases
 it('e2e test', async () => {

@@ -1026,16 +1026,36 @@ def get_apiview_comments(revision_id: str, environment: str = "production") -> d
 
 
 def get_active_reviews(
-    start_date: str, end_date: str, language: str, environment: str = "production", summary: bool = False
+    start_date: str,
+    end_date: str,
+    language: str,
+    environment: str = "production",
+    summary: bool = False,
+    approved_only: bool = False,
 ) -> list | None:
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
+    Use --approved-only to show only approved revisions (matching the metrics chart definition).
     """
     reviews = _get_active_reviews(start_date, end_date, environment=environment)
     _, pretty_language = resolve_language(language)
     pretty_language = pretty_language.lower()
 
     filtered = [r for r in reviews if r.language.lower() == pretty_language]
+
+    if approved_only:
+        # Filter to only revisions that have been approved during the period.
+        # This matches the "active_review_count" definition used in the metrics charts.
+        approved_filtered = []
+        for r in filtered:
+            approved_revs = [rev for rev in r.revisions if rev.approval is not None]
+            if approved_revs:
+                from copy import copy
+
+                r_copy = copy(r)
+                r_copy.revisions = approved_revs
+                approved_filtered.append(r_copy)
+        filtered = approved_filtered
 
     if summary:
         # Output summary format as a table: {package-name} {package-version} {APPROVED|unapproved}
@@ -1078,7 +1098,10 @@ def get_active_reviews(
                     f"{name:<{max_name_len}}\t{version:<{max_version_len}}\t{status:<{max_status_len}}\t{copilot_status:<{max_copilot_len}}\t{version_type:<{max_type_len}}\t{approval_date}"
                 )
 
-        print(f"\nFound {len(summary_data)} package versions in {pretty_language} between {start_date} and {end_date}.")
+        filter_label = " approved" if approved_only else ""
+        print(
+            f"\nFound {len(summary_data)}{filter_label} package versions in {pretty_language} between {start_date} and {end_date}."
+        )
         # Don't return anything in summary mode to avoid duplicate output
         return None
     else:

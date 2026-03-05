@@ -642,6 +642,19 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         {
             return Task.FromResult<(bool, string?, PackageInfo?, string?)>((false, $"Pack is not supported for {Language}.", null, null));
         }
+        /// <summary>
+        /// Performs a fast, minimal compilation check for the specified package.
+        /// Defaults to <see cref="BuildAsync"/> — override in language-specific services to provide a lighter-weight compile.
+        /// </summary>
+        /// <param name="packagePath">Absolute path to the SDK package directory.</param>
+        /// <param name="timeoutMinutes">Maximum time to wait for the compile process to complete.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>A tuple containing: Success (bool) and ErrorMessage (string? - null if successful).</returns>
+        public virtual async Task<(bool Success, string? ErrorMessage)> CompileAsync(string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+        {
+            var (success, errorMessage, _) = await BuildAsync(packagePath, timeoutMinutes, ct);
+            return (success, errorMessage);
+        }
 
         protected static string? GetSpecProjectPath(string packagePath)
         {

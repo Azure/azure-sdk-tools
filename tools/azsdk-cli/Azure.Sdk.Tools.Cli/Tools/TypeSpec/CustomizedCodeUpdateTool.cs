@@ -12,7 +12,6 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using Microsoft.Graph.Models;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
@@ -134,7 +133,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// Executes the update pipeline: classify → patch customizations → regen → build.
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
-    /// <param name="tspProjectPath"></param>
+    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory (containing client.tsp/main.tsp).</param>
     /// <param name="customizationRequest">Optional description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
@@ -152,6 +151,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
+        if (!Directory.Exists(tspProjectPath))
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = $"TypeSpec project path does not exist: {tspProjectPath}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = $"TypeSpec project path does not exist: {tspProjectPath}"
+            };
+        }
+
         // Get language info
         var languageService = await GetLanguageServiceAsync(packagePath, ct);
         // TODO - do this once we add API view option
@@ -164,6 +174,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? buildError = null;
 
         var feedbackItems = await GetFeedbackItems(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
+
+        if (feedbackItems.Count == 0)
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = "No feedback items provided. Please supply a customization request or API review URL.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = "No feedback items to process."
+            };
+        }
+
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
         List<string> changesMade = new();
@@ -257,7 +279,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         Success = true,
                         Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
-                        NextSteps = manualInterventions
+                        NextSteps = manualInterventions,
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
                     };
                 }
 
@@ -426,8 +449,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     }
 
     /// <summary>
-    /// Classifies feedback items from various sources (APIView, build errors, etc.) as TSP_APPLICABLE
-    /// (can be resolved with TSP customizations), SUCCESS (no action needed), or REQUIRES_MANUAL_INTERVENTION (requires manual code customizations).
+    /// Gathers and constructs feedback items from various sources (APIView, plain text, file).
     /// </summary>
     private async Task<List<FeedbackItem>> GetFeedbackItems(
         string tspProjectPath,
@@ -469,7 +491,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Classification failed");
+            logger.LogError(ex, "Failed to gather feedback items");
             throw;
         }
     }

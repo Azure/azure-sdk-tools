@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<string> pullRequestOpt = new("--pull-request", "--url")
+        private readonly Option<string> pullRequestOpt = new("--pull-request", "-p")
         {
             Description = "Api spec pull request URL",
             Required = true,
@@ -186,12 +186,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = true,
         };
 
-        private readonly Option<string> updatePullRequestOpt = new("--pull-request", "--url")
-        {
-            Description = "Api spec pull request URL",
-            Required = true,
-        };
-
         private readonly Option<string> updateSdkReleaseTypeOpt = new("--sdk-type")
         {
             Description = "SDK release type: beta or stable. If not provided, inferred from API version (preview → beta, otherwise stable).",
@@ -210,7 +204,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             Required = false,
         };
 
-        private readonly Option<string> optionalPullRequestOpt = new("--pull-request", "--url")
+        private readonly Option<string> optionalPullRequestOpt = new("--pull-request", "-p")
         {
             Description = "Api spec pull request URL (optional)",
             Required = false,
@@ -285,7 +279,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 workItemIdOpt,
                 updateApiVersionOpt,
                 updateSdkReleaseTypeOpt,
-                updatePullRequestOpt,
+                pullRequestOpt,
                 optionalServiceTreeIdOpt,
                 optionalProductTreeIdOpt,
             },
@@ -354,7 +348,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         workItemId: commandParser.GetValue(workItemIdOpt),
                         specApiVersion: commandParser.GetValue(updateApiVersionOpt),
                         sdkReleaseType: commandParser.GetValue(updateSdkReleaseTypeOpt),
-                        specPullRequestUrl: commandParser.GetValue(updatePullRequestOpt),
+                        specPullRequestUrl: commandParser.GetValue(pullRequestOpt),
                         serviceTreeId: commandParser.GetValue(optionalServiceTreeIdOpt),
                         productTreeId: commandParser.GetValue(optionalProductTreeIdOpt)
                     );
@@ -398,16 +392,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 ReleasePlanWorkItem? releasePlan = null;
 
-                // Normalize typeSpecProjectPath to relative spec path (e.g. specification/...)
-                // so it matches the Custom.ApiSpecProjectPath field stored in work items.
-                string? normalizedSpecPath = null;
-                if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
-                {
-                    normalizedSpecPath = typeSpecHelper.IsUrl(typeSpecProjectPath)
-                        ? typeSpecHelper.GetTypeSpecProjectRelativePathFromUrl(typeSpecProjectPath)
-                        : typeSpecHelper.GetTypeSpecProjectRelativePath(typeSpecProjectPath);
-                }
-
                 if (workItem != 0)
                 {
                     releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(workItem);
@@ -422,20 +406,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     releasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
 
                     // Fall back to TypeSpec project path if spec PR lookup failed
-                    if (releasePlan == null && !string.IsNullOrWhiteSpace(normalizedSpecPath))
+                    if (releasePlan == null && !string.IsNullOrWhiteSpace(typeSpecProjectPath))
                     {
-                        releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(normalizedSpecPath);
+                        releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath);
                     }
                 }
-                else if (!string.IsNullOrWhiteSpace(normalizedSpecPath))
+                else if (!string.IsNullOrWhiteSpace(typeSpecProjectPath))
                 {
-                    releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(normalizedSpecPath);
+                    releasePlan = await devOpsService.GetReleasePlanByTypeSpecProjectPathAsync(typeSpecProjectPath);
                 }
                 else
                 {
                     return new ReleasePlanResponse
                     {
-                        ResponseError = "At least one of the following options must be provided: --work-item-id, --release-plan-id, --pull-request, or --typespec-path."
+                        ResponseError = "At least one of the following options must be provided: Work item ID, Release plan ID, APi spec pull request or TypeSpec project path."
                     };
                 }
 

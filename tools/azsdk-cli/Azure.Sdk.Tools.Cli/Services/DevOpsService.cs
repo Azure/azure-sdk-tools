@@ -371,9 +371,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         }
 
                         // If agent test mode is enabled then skip all non test release plans.
-                        parentWorkItem.Fields.TryGetValue("System.Tags", out Object? tags);
-                        var systemTag = tags?.ToString() ?? string.Empty;
-                        if (IsAgentTesting && !systemTag.Contains(RELEASE_PLANNER_APP_TEST))
+                        if (IsAgentTesting && parentWorkItem.Fields.TryGetValue("System.Tags", out Object? value) && value is String tags && !tags.Contains(RELEASE_PLANNER_APP_TEST))
                         {
                             logger.LogInformation("Agent test mode is enabled. Skipping release plans without testing tag.");
                             continue;
@@ -727,13 +725,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var workItemClient = connection.GetWorkItemClient();
-                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query });
+                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, cancellationToken: default);
                 logger.LogInformation("Work item query result: {result}", result);
                 if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
                     var ids = result.WorkItems.Select(wi => wi.Id).ToList();
                     logger.LogInformation("Fetching work item details: {workItemIds}", string.Join(',', ids));
-                    return await workItemClient.GetWorkItemsAsync(ids, expand: WorkItemExpand.All);
+                    return await workItemClient.GetWorkItemsAsync(ids, expand: WorkItemExpand.All, cancellationToken: default);
                 }
                 else
                 {
@@ -752,7 +750,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var workItemClient = connection.GetWorkItemClient();
-                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, top: top);
+                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, top: top, cancellationToken: default);
                 logger.LogInformation("Work item query result: {result}", result);
                 if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
@@ -764,7 +762,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     for (int i = 0; i < ids.Count; i += batchSize)
                     {
                         var batchIds = ids.Skip(i).Take(batchSize).ToList();
-                        var batch = await workItemClient.GetWorkItemsAsync(batchIds, expand: expand);
+                        var batch = await workItemClient.GetWorkItemsAsync(batchIds, expand: expand, cancellationToken: default);
                         workItems.AddRange(batch);
                     }
                     return workItems;

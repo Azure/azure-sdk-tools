@@ -402,7 +402,7 @@ def generate_review(
             print(job_info)
             return
         for _ in range(1800):  # up to 30 minutes
-            status_info = review_job_get(job_id)
+            status_info = review_job_get(job_id, remote=True)
             status = status_info.get("status") if status_info else None
             if not status_info:
                 print(f"Error: Could not get status for job {job_id}")
@@ -477,19 +477,28 @@ def review_job_start(
         print(f"Error: {resp.status_code} {resp.text}")
 
 
-def review_job_get(job_id: str):
+def review_job_get(job_id: str, remote: bool = False):
     """Get the status/result of an API review job."""
-    settings = SettingsManager()
-    base_url = settings.get("WEBAPP_ENDPOINT")
-    api_endpoint = f"{base_url}/api-review"
-    url = f"{api_endpoint.rstrip('/')}/{job_id}"
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review"
+        url = f"{api_endpoint.rstrip('/')}/{job_id}"
 
-    headers = _build_auth_header()
-    resp = requests.get(url, headers=headers, timeout=10)
-    if resp.status_code == 200:
-        return resp.json()
+        headers = _build_auth_header()
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            print(f"Error: {resp.status_code} {resp.text}")
     else:
-        print(f"Error: {resp.status_code} {resp.text}")
+        db = DatabaseManager.get_instance()
+        try:
+            job = db.review_jobs.get(job_id)
+            print(json.dumps(job, indent=2))
+            return job
+        except Exception as e:
+            print(f"Error: Job '{job_id}' not found: {e}")
 
 
 def get_all_guidelines(language: str, markdown: bool = False):
@@ -577,23 +586,41 @@ def reindex_search(containers: Optional[list[str]] = None):
     return SearchManager.run_indexers(container_names=containers)
 
 
-def review_summarize(language: str, target: str, base: str = None):
+def review_summarize(language: str, target: str, base: str = None, remote: bool = False):
     """
-    Summarize an API or a diff of two APIs using the deployed API review service.
+    Summarize an API or a diff of two APIs.
     """
-    payload = {"language": language, "target": target}
-    if base:
-        payload["base"] = base
-    settings = SettingsManager()
-    base_url = settings.get("WEBAPP_ENDPOINT")
-    api_endpoint = f"{base_url}/api-review/summarize"
+    if remote:
+        payload = {"language": language, "target": target}
+        if base:
+            payload["base"] = base
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/summarize"
 
-    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
-    if response.status_code == 200:
-        summary = response.json().get("summary")
-        print(summary)
+        response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        if response.status_code == 200:
+            summary = response.json().get("summary")
+            print(summary)
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
     else:
-        print(f"Error: {response.status_code} - {response.text}")
+        from src._diff import create_diff_with_line_numbers
+
+        with open(target, "r", encoding="utf-8") as f:
+            target_content = f.read()
+
+        pretty_language = get_language_pretty_name(language)
+
+        if base:
+            with open(base, "r", encoding="utf-8") as f:
+                base_content = f.read()
+            content = create_diff_with_line_numbers(old=base_content, new=target_content)
+            summary = run_prompt(folder="summarize", filename="summarize_diff", inputs={"language": pretty_language, "content": content})
+        else:
+            summary = run_prompt(folder="summarize", filename="summarize_api", inputs={"language": pretty_language, "content": target_content})
+
+        print(summary)
 
 
 def handle_agent_chat(
@@ -1992,6 +2019,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The job ID to poll.",
                 options_list=["--job-id"],
             )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Query the remote API service instead of the local database.",
+            )
         with ArgumentsContext(self, "review summarize") as ac:
             ac.argument(
                 "language",
@@ -2007,6 +2039,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API service instead of local processing.",
             )
         with ArgumentsContext(self, "agent") as ac:
             ac.argument(

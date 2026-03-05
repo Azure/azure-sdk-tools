@@ -1,6 +1,6 @@
-name: shared-prepare-release-plan-eval
-description: Evaluation suite for release plan management skill.
-skill: shared-prepare-release-plan
+name: azsdk-common-pipeline-troubleshooting-eval
+description: Evaluation suite for pipeline troubleshooting skill.
+skill: azsdk-common-pipeline-troubleshooting
 version: "1.0"
 config:
   trials_per_task: 1
@@ -10,14 +10,14 @@ config:
   model: claude-sonnet-4.6
 graders:
   - type: keyword
-    name: mentions_release_plan
+    name: mentions_pipeline_concepts
     config:
-      keywords: ["release plan", "Service Tree", "API version"]
+      keywords: ["pipeline", "build", "failure"]
       must_include_all: false
   - type: regex
     name: references_tools
     config:
-      pattern: "(?i)(azsdk_create_release_plan|azsdk_get_release_plan|azsdk_update_sdk_details|release plan)"
+      pattern: "(?i)(azsdk_analyze_pipeline|pipeline|build failure|CI)"
   - type: code
     name: has_substantive_output
     config:

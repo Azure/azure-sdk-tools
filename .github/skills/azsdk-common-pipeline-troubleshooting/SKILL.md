@@ -1,5 +1,5 @@
 ---
-name: shared-pipeline-troubleshooting
+name: azsdk-common-pipeline-troubleshooting
 license: MIT
 metadata:
   version: "1.0.0"
@@ -7,7 +7,7 @@ description: >-
   **UTILITY SKILL**
   Diagnose and resolve failures in Azure SDK CI pipelines and SDK generation pipelines.
   USE FOR: "pipeline failed", "build failure", "CI check failing", "SDK generation error", "reproduce pipeline locally", "debug SDK pipeline".
-  DO NOT USE FOR: TypeSpec authoring, release plans, APIView feedback (use shared-apiview-feedback-resolution), package publishing.
+  DO NOT USE FOR: TypeSpec authoring, release plans, APIView feedback (use azsdk-common-apiview-feedback-resolution), package publishing.
   INVOKES: azsdk_analyze_pipeline, azsdk_verify_setup, azsdk_package_build_code, azsdk_package_run_check.
   FOR SINGLE OPERATIONS: Use azsdk_analyze_pipeline directly for quick failure analysis.
 compatibility: >-

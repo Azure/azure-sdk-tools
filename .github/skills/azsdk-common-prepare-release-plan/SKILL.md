@@ -1,5 +1,5 @@
 ---
-name: shared-prepare-release-plan
+name: azsdk-common-prepare-release-plan
 license: MIT
 metadata:
   version: "1.0.0"
@@ -7,7 +7,7 @@ description: >-
   **UTILITY SKILL**
   Create and manage release plan work items for Azure SDK releases across languages.
   USE FOR: "create release plan", "update release plan", "link SDK PR to plan", "namespace approval", "check release plan status".
-  DO NOT USE FOR: SDK generation, TypeSpec authoring, package validation, releasing packages (use shared-sdk-release).
+  DO NOT USE FOR: SDK generation, TypeSpec authoring, package validation, releasing packages (use azsdk-common-sdk-release).
   FOR SINGLE OPERATIONS: Use azsdk_get_release_plan directly to check plan status.
 compatibility: >-
   Requires: azure-sdk-mcp server, API spec pull request in Azure/azure-rest-api-specs.
@@ -41,4 +41,4 @@ compatibility: >-
 
 ## Related Skills
 
-- `shared-sdk-release` — Trigger release pipeline
+- `azsdk-common-sdk-release` — Trigger release pipeline

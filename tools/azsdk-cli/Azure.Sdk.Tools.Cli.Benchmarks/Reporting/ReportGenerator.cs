@@ -23,47 +23,20 @@ public class ReportGenerator
     /// <summary>
     /// Generates a markdown report from benchmark results.
     /// </summary>
-    /// <param name="results">The benchmark results to include in the report.</param>
-    /// <param name="runName">A name for this test run.</param>
-    /// <param name="model">The model used to run the benchmarks.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The generated markdown report.</returns>
     public async Task<string> GenerateAsync(
         IReadOnlyList<(BenchmarkScenario Scenario, BenchmarkResult Result)> results,
         string runName,
         string model,
         CancellationToken cancellationToken = default)
     {
-        var reportData = BuildReportData(results, runName, model);
-        var reportDataJson = JsonSerializer.Serialize(reportData, JsonOptions);
-        var template = ReportTemplate.LoadTemplate();
-
-        var userPrompt = $"""
-            Generate a benchmark report using the template and data below.
-            Fill in every section of the template based on the provided data.
-            
-            ## Report Template
-            
-            {template}
-            
-            ## Benchmark Data (JSON)
-            
-            ```json
-            {reportDataJson}
-            ```
-            
-            Generate the complete report now. Output only the filled-in markdown, no other text.
-            """;
-
-        return await CallLlmAsync(ReportTemplate.SystemPrompt, userPrompt, cancellationToken);
+        var reportDataJson = JsonSerializer.Serialize(BuildReportData(results, runName, model), JsonOptions);
+        var prompt = BuildPrompt(reportDataJson, "Benchmark Data (JSON)");
+        return await CallLlmAsync(ReportTemplate.SystemPrompt, prompt);
     }
 
     /// <summary>
     /// Generates a markdown report from existing log files.
     /// </summary>
-    /// <param name="logDirectory">Directory containing benchmark-log.json files.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The generated markdown report.</returns>
     public async Task<string> GenerateFromLogsAsync(
         string logDirectory,
         CancellationToken cancellationToken = default)
@@ -75,55 +48,49 @@ public class ReportGenerator
             throw new InvalidOperationException($"No benchmark-log.json files found in {logDirectory}");
         }
 
-        var logsJson = new List<string>();
-        foreach (var logFile in logFiles)
-        {
-            var content = await File.ReadAllTextAsync(logFile, cancellationToken);
-            logsJson.Add(content);
-        }
+        var logsJson = await Task.WhenAll(
+            logFiles.Select(f => File.ReadAllTextAsync(f, cancellationToken)));
 
         var combinedData = $"[{string.Join(",\n", logsJson)}]";
-        var template = ReportTemplate.LoadTemplate();
+        var prompt = BuildPrompt(combinedData, "Benchmark Log Data (JSON Array)");
+        return await CallLlmAsync(ReportTemplate.SystemPrompt, prompt);
+    }
 
-        var userPrompt = $"""
+    /// <summary>
+    /// Builds the user prompt from data and the template file.
+    /// </summary>
+    private static string BuildPrompt(string dataJson, string dataLabel)
+    {
+        var template = ReportTemplate.LoadTemplate();
+        return $"""
             Generate a benchmark report using the template and data below.
-            Fill in every section of the template based on the provided log data.
-            The data comes from benchmark execution logs. Extract all relevant information.
+            Fill in every section of the template based on the provided data.
             
             ## Report Template
             
             {template}
             
-            ## Benchmark Log Data (JSON Array)
+            ## {dataLabel}
             
             ```json
-            {combinedData}
+            {dataJson}
             ```
             
             Generate the complete report now. Output only the filled-in markdown, no other text.
             """;
-
-        return await CallLlmAsync(ReportTemplate.SystemPrompt, userPrompt, cancellationToken);
     }
 
     /// <summary>
     /// Calls the LLM using the Copilot SDK to generate report content.
-    /// Uses the same pattern as LlmJudge: temp directory, no tools, replace system message.
     /// </summary>
-    private static async Task<string> CallLlmAsync(
-        string systemPrompt,
-        string userPrompt,
-        CancellationToken cancellationToken)
+    private static async Task<string> CallLlmAsync(string systemPrompt, string userPrompt)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), $"report-gen-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
 
         try
         {
-            using var client = new CopilotClient(new CopilotClientOptions
-            {
-                Cwd = tempDir
-            });
+            using var client = new CopilotClient(new CopilotClientOptions { Cwd = tempDir });
 
             var sessionConfig = new SessionConfig
             {
@@ -140,9 +107,7 @@ public class ReportGenerator
             };
 
             await using var session = await client.CreateSessionAsync(sessionConfig);
-
-            var messageOptions = new MessageOptions { Prompt = userPrompt };
-            await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5));
+            await session.SendAndWaitAsync(new MessageOptions { Prompt = userPrompt }, TimeSpan.FromMinutes(5));
 
             var messages = await session.GetMessagesAsync();
             var lastAssistantMessage = messages
@@ -165,43 +130,6 @@ public class ReportGenerator
         string runName,
         string model)
     {
-        var scenarioData = results.Select((r, i) => new
-        {
-            Index = i + 1,
-            r.Scenario.Name,
-            r.Scenario.Description,
-            r.Scenario.Tags,
-            Prompt = r.Scenario.Prompt,
-            Repo = r.Scenario.Repo.CloneUrl,
-            r.Result.Passed,
-            r.Result.Error,
-            Duration = r.Result.Duration.ToString(),
-            DurationSeconds = r.Result.Duration.TotalSeconds,
-            ToolCalls = r.Result.ToolCalls.Select(tc => new
-            {
-                tc.ToolName,
-                tc.Arguments,
-                tc.DurationMs,
-                tc.McpServerName,
-                tc.Timestamp
-            }),
-            ToolCallCount = r.Result.ToolCalls.Count,
-            Validation = r.Result.Validation != null ? new
-            {
-                r.Result.Validation.Passed,
-                r.Result.Validation.PassedCount,
-                r.Result.Validation.FailedCount,
-                Results = r.Result.Validation.Results.Select(v => new
-                {
-                    v.ValidatorName,
-                    v.Passed,
-                    v.Message,
-                    v.Details
-                })
-            } : null,
-            r.Result.GitDiff
-        }).ToList();
-
         return new
         {
             RunName = runName,
@@ -211,7 +139,42 @@ public class ReportGenerator
             TotalPassed = results.Count(r => r.Result.Passed),
             TotalFailed = results.Count(r => !r.Result.Passed),
             TotalDurationSeconds = results.Sum(r => r.Result.Duration.TotalSeconds),
-            Scenarios = scenarioData
+            Scenarios = results.Select((r, i) => new
+            {
+                Index = i + 1,
+                r.Scenario.Name,
+                r.Scenario.Description,
+                r.Scenario.Tags,
+                Prompt = r.Scenario.Prompt,
+                Repo = r.Scenario.Repo.CloneUrl,
+                r.Result.Passed,
+                r.Result.Error,
+                Duration = r.Result.Duration.ToString(),
+                DurationSeconds = r.Result.Duration.TotalSeconds,
+                ToolCalls = r.Result.ToolCalls.Select(tc => new
+                {
+                    tc.ToolName,
+                    tc.Arguments,
+                    tc.DurationMs,
+                    tc.McpServerName,
+                    tc.Timestamp
+                }),
+                ToolCallCount = r.Result.ToolCalls.Count,
+                Validation = r.Result.Validation != null ? new
+                {
+                    r.Result.Validation.Passed,
+                    r.Result.Validation.PassedCount,
+                    r.Result.Validation.FailedCount,
+                    Results = r.Result.Validation.Results.Select(v => new
+                    {
+                        v.ValidatorName,
+                        v.Passed,
+                        v.Message,
+                        v.Details
+                    })
+                } : null,
+                r.Result.GitDiff
+            }).ToList()
         };
     }
 }

@@ -78,14 +78,10 @@ public class SessionExecutor : IDisposable
                             args = startInfo.ArgsJson;
                         }
 
-                        // Try to extract MCP server name from tool name convention (server__tool)
-                        string? mcpServerName = null;
-                        var toolName = input.ToolName;
-                        if (toolName.Contains("__"))
-                        {
-                            var parts = toolName.Split("__", 2);
-                            mcpServerName = parts[0];
-                        }
+                        // Extract MCP server name from tool name convention (server__tool)
+                        var mcpServerName = input.ToolName.Contains("__")
+                            ? input.ToolName.Split("__", 2)[0]
+                            : null;
 
                         toolCalls.Add(new ToolCallRecord
                         {

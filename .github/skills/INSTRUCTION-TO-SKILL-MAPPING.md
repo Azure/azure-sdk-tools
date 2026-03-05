@@ -51,7 +51,6 @@ Additional instruction files exist but are **not linked** from the tree:
 | Skill           | Type    | Source Instruction Files      | Description                                           |
 | --------------- | ------- | ----------------------------- | ----------------------------------------------------- |
 | **sdk-release** | Utility | `sdk-release.instructions.md` | Check release readiness and trigger SDK release pipelines |
-| **report-test-bug** | Utility | N/A | File GitHub issues for integration test failures |
 
 ### Instruction Files Not Converted to Skills
 
@@ -196,7 +195,6 @@ After the initial waza-based creation, sensei was used to score and improve all 
 | Skill           | Tokens | Compliance | Spec   | MCP        | Key Changes                                     |
 | --------------- | ------ | ---------- | ------ | ---------- | ----------------------------------------------- |
 | sdk-release     | 464    | High       | 8/8 ✅ | **4/4 ✅** | Added prerequisites section, tightened wording  |
-| report-test-bug | N/A    | High       | 8/8 ✅ | N/A        | File GitHub issues for integration test failures |
 
 **Total tokens (all 8 skills):** ~3707
 

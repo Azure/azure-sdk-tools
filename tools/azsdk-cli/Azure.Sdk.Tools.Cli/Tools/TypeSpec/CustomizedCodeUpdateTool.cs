@@ -162,6 +162,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
+        if (!typeSpecHelper.IsValidTypeSpecProjectPath(tspProjectPath))
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml."
+            };
+        }
+
         // Get language info
         var languageService = await GetLanguageServiceAsync(packagePath, ct);
         // TODO - do this once we add API view option

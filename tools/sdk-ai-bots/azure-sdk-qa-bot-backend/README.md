@@ -103,13 +103,3 @@ Before deploy, you need to install [Docker](https://docs.docker.com/engine/insta
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## How to deploy the MCP server to remote?
-
-1. remote instance: https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azure-sdk-code-review-mcp-dev/appServices
-2. remote logging: https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-server/slots/codereview/analytics
-3. local testing: https://github.com/Azure/azure-sdk-tools/blob/support_codereview/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/test/api_test.rest?plain=1
-4. trigger the deployment: https://dev.azure.com/azure-sdk/internal/_build?definitionId=7968&_a=summary
-- select your branch
-- select the codereview
-![alt text](image.png)

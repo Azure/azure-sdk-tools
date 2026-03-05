@@ -17,6 +17,7 @@ public class JavaLanguageServiceVersionUpdateTests
     private TempDirectory _tempDirectory = null!;
     private JavaLanguageService _javaLanguageService = null!;
     private Mock<IMavenHelper> _mockMavenHelper = null!;
+    private Mock<IPythonHelper> _mockPythonHelper = null!;
     private Mock<IPackageInfoHelper> _mockPackageInfoHelper = null!;
     private Mock<IProcessHelper> _mockProcessHelper = null!;
 
@@ -25,6 +26,7 @@ public class JavaLanguageServiceVersionUpdateTests
     {
         _tempDirectory = TempDirectory.Create("JavaLanguageServiceVersionUpdateTests");
         _mockMavenHelper = new Mock<IMavenHelper>();
+        _mockPythonHelper = new Mock<IPythonHelper>();
         _mockPackageInfoHelper = new Mock<IPackageInfoHelper>();
         _mockProcessHelper = new Mock<IProcessHelper>();
 
@@ -43,6 +45,7 @@ public class JavaLanguageServiceVersionUpdateTests
             _mockProcessHelper.Object,
             gitHelperMock.Object,
             _mockMavenHelper.Object,
+            _mockPythonHelper.Object,
             new Mock<ICopilotAgentRunner>().Object,
             NullLogger<JavaLanguageService>.Instance,
             new Mock<ICommonValidationHelpers>().Object,

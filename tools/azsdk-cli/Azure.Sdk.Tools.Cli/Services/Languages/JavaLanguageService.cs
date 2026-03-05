@@ -25,6 +25,7 @@ public sealed partial class JavaLanguageService : LanguageService
 
     private readonly ICopilotAgentRunner copilotAgentRunner;
     private readonly IMavenHelper mavenHelper;
+    private readonly IPythonHelper pythonHelper;
 
     private const string CustomizationDirName = "customization";
 
@@ -34,6 +35,7 @@ public sealed partial class JavaLanguageService : LanguageService
     /// <param name="processHelper">Process execution helper.</param>
     /// <param name="gitHelper">Git helper.</param>
     /// <param name="mavenHelper">Maven command helper.</param>
+    /// <param name="pythonHelper">Python command helper.</param>
     /// <param name="copilotAgentRunner">Copilot agent runner.</param>
     /// <param name="logger">Logger for language service operations.</param>
     /// <param name="commonValidationHelpers">Common validation helpers.</param>
@@ -45,6 +47,7 @@ public sealed partial class JavaLanguageService : LanguageService
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         IMavenHelper mavenHelper,
+        IPythonHelper pythonHelper,
         ICopilotAgentRunner copilotAgentRunner,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
@@ -56,6 +59,7 @@ public sealed partial class JavaLanguageService : LanguageService
     {
         this.copilotAgentRunner = copilotAgentRunner;
         this.mavenHelper = mavenHelper;
+        this.pythonHelper = pythonHelper;
     }
 
     /// <summary>
@@ -395,7 +399,7 @@ public sealed partial class JavaLanguageService : LanguageService
                     scriptResult.Message ?? "Failed to run Java versioning scripts.",
                     nextSteps:
                     [
-                        "Ensure Python is available in PATH",
+                        "Run 'azsdk verify setup' to verify Python is available",
                         "Ensure eng/versioning/set_versions.py and eng/versioning/update_versions.py exist",
                         "Run scripts manually and verify version propagation"
                     ]);
@@ -469,8 +473,8 @@ public sealed partial class JavaLanguageService : LanguageService
         var fullLibraryName = $"{groupId}:{artifactId}";
         logger.LogInformation("Running Java versioning scripts for {LibraryName}", fullLibraryName);
 
-        var setVersionsResult = await processHelper.Run(new ProcessOptions(
-            command: "python",
+        var setVersionsResult = await pythonHelper.Run(new PythonOptions(
+            executableName: "python",
             args:
             [
                 setVersionsScriptPath,
@@ -487,13 +491,12 @@ public sealed partial class JavaLanguageService : LanguageService
             return ScriptUpdateResult.Failed($"set_versions.py failed: {setVersionsResult.Output}");
         }
 
-        var updateVersionsResult = await processHelper.Run(new ProcessOptions(
-            command: "python",
+        var updateVersionsResult = await pythonHelper.Run(new PythonOptions(
+            executableName: "python",
             args:
             [
                 updateVersionsScriptPath,
-                "--library-list", fullLibraryName,
-                "--skip-readme"
+                "--library-list", fullLibraryName
             ],
             workingDirectory: repoRoot,
             timeout: versioningScriptTimeout), ct);

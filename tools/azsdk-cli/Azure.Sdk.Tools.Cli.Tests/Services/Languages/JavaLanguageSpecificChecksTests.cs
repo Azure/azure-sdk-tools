@@ -33,6 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 MockProcessHelper.Object,
                 gitHelperMock.Object,
                 MockMavenHelper.Object,
+                new Mock<IPythonHelper>().Object,
                 new Mock<ICopilotAgentRunner>().Object,
                 NullLogger<JavaLanguageService>.Instance,
                 new Mock<ICommonValidationHelpers>().Object,

@@ -33,7 +33,7 @@ As part of the scenario 1 work, we support running tests in **playback mode only
 
 ### Why This Matters
 
-Being able to run tests against live resources, and in record mode, is necessary step for brand new packages. Before tests can be run in playback mode, tests must be recorded and written.
+Being able to run tests against live resources, and in record mode, is a necessary step for brand new packages. Before tests can be run in playback mode, tests must be recorded and written.
 
 ---
 
@@ -81,11 +81,11 @@ Deployment of test resources involves many different variables depending on the 
 
 The skill will guide the agent through these steps:
 
-1. Ensure that the user has an active Azure PowerShell context (`Get-AzContext`), and, if not, guide them through logging in via Azure PowerShell (`Connect-AzureAccount`).
+1. Ensure that the user has an active Azure PowerShell context (`Get-AzContext`), and, if not, guide them through logging in via Azure PowerShell (`Connect-AzAccount`).
 2. Run the `eng/common/TestResources/New-TestResources.ps1` PowerShell script with the necessary parameters (service directory, resource group name, deployment region, any additional parameters provided by the user e.g. enableHsm for Key Vault...)
-3. Save the environment variables output by the script to a well-known location to be passed the run tests tool
+3. Save the environment variables output by the script to a well-known location to be passed to the run tests tool
 4. Invoke the test tool in the selected test mode with the test environment
-5. Clean up test resources when done using the `eng/common/TestResources/Remove-TestResources.ps1` script.
+5. Ask the user whether they want to clean up test resources. If yes, clean up using the `eng/common/TestResources/Remove-TestResources.ps1` script. If no, leave resources in place for subsequent test runs.
 
 The skill will also include troubleshooting steps. For example, for when test resource deployment fails, it will have information about potential causes and fixes (e.g. auth issues).
 
@@ -162,7 +162,7 @@ Deploy test resources and run live tests
 **Command:**
 
 ```bash
-azsdk package test run --mode <playback|record|live> [--package-path <path>] [--test-environment <path-to-.env>]
+azsdk package test run --mode <playback|record|live> [--package-path <path>] [--test-environment <path-to-.env>] [--timeout <seconds>]
 ```
 
 **Options:**
@@ -170,6 +170,7 @@ azsdk package test run --mode <playback|record|live> [--package-path <path>] [--
 - `-m, --mode <mode>`: Test mode - playback, record, or live (default: playback)
 - `-p, --package-path <path>`: Path to the package to test (optional)
 - `--test-environment <path>`: Path to a .env file containing deployment environment variables (optional)
+- `-t, --timeout <seconds>`: Maximum time in seconds to wait for the test run to complete. Each language sets a reasonable default which is increased for live and record modes. (optional)
 
 **Expected Output (success):**
 

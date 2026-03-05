@@ -130,7 +130,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	var prompt string
 	promptTemplate := tenantConfig.PromptTemplate
 
-	if intention != nil && !intention.NeedsRagProcessing {
+	if !intention.NeedsRagProcessing {
 		// Skip RAG workflow for non-technical messages
 		log.Printf("Skipping RAG workflow - non-technical message detected")
 		knowledges = []model.Knowledge{}
@@ -223,7 +223,7 @@ func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTe
 		return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 	}
 	result, err := promptParser.ParseResponse(resp.Choices[0].Message.Content, promptTemplate)
-	if err != nil {
+	if err != nil || result == nil {
 		respStr := resp.RawJSON()
 		log.Printf("Failed to parse intention response: %v, response:%s", err, respStr)
 		return nil, err
@@ -397,6 +397,27 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 						// Use the pipeline analysis as content
 						content = analysisText
 						log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				} else if utils.IsGitHubCheckLink(info.Link) {
+					// Fetch GitHub check logs so the LLM has actual error details
+					// before intention recognition and knowledge retrieval.
+					log.Printf("Detected GitHub check link: %s", info.Link)
+					checkContent, err := utils.GetGitHubClient().FetchCheckLogs(info.Link)
+					if err != nil {
+						log.Printf("Failed to fetch GitHub check logs: %v", err)
+					} else {
+						content = checkContent
+						log.Printf("GitHub check logs fetched successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				} else if utils.IsGitHubPRLink(info.Link) {
+					// Fetch GitHub PR check runs so the LLM can see CI failures.
+					log.Printf("Detected GitHub PR link: %s", info.Link)
+					prContent, err := utils.GetGitHubClient().FetchPRChecks(info.Link)
+					if err != nil {
+						log.Printf("Failed to fetch GitHub PR checks: %v", err)
+					} else {
+						content = prContent
+						log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
 					}
 				}
 
@@ -817,7 +838,9 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelCo
 	promptParser := prompt.RoutingTenantPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	promptStr, err := promptParser.ParsePrompt(nil, "common/tenant_routing.md")
+	promptStr, err := promptParser.ParsePrompt(map[string]string{
+		"original_tenant": string(originalTenantID),
+	}, "common/tenant_routing.md")
 	if err != nil {
 		log.Printf("Failed to parse tenant routing prompt: %v", err)
 		return originalTenantID, false

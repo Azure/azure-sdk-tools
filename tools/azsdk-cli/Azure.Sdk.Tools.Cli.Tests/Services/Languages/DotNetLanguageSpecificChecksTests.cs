@@ -34,6 +34,7 @@ internal class DotNetLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<DotnetLanguageService>.Instance,
             _commonValidationHelperMock.Object,
+            Mock.Of<IPackageInfoHelper>(),
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -305,10 +306,10 @@ internal class DotNetLanguageSpecificChecksTests
         var errorMessage = "ILLink : Trim analysis warning IL2026: Azure.Storage.Blobs.BlobClient.Upload: " +
             "Using member 'System.Reflection.Assembly.GetTypes()' which has 'RequiresUnreferencedCodeAttribute' " +
             "can break functionality when trimming application code.";
-        
+
         var processResult = new ProcessResult { ExitCode = 1 };
         processResult.AppendStdout(errorMessage);
-        
+
         _powerShellHelperMock
             .Setup(x => x.Run(
                 It.Is<PowershellOptions>(p => p.ScriptPath != null &&
@@ -412,12 +413,12 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            try 
-            { 
+            try
+            {
                 Directory.Delete(testPackagePath, true);
-                File.Delete(scriptPath); 
-                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); 
-            } 
+                File.Delete(scriptPath);
+                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true);
+            }
             catch { }
         }
     }
@@ -498,12 +499,12 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            try 
-            { 
+            try
+            {
                 Directory.Delete(testPackagePath, true);
-                File.Delete(scriptPath); 
-                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); 
-            } 
+                File.Delete(scriptPath);
+                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true);
+            }
             catch { }
         }
     }
@@ -537,7 +538,7 @@ internal class DotNetLanguageSpecificChecksTests
         using var tempDir = TempDirectory.Create("dotnet-customization-test");
         var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
         Directory.CreateDirectory(srcDir);
-        
+
         // Create a partial class file outside Generated folder
         File.WriteAllText(Path.Combine(srcDir, "CustomClient.cs"), @"
 namespace Azure.Test;
@@ -558,7 +559,7 @@ public partial class TestClient
         using var tempDir = TempDirectory.Create("dotnet-no-customization-test");
         var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
         Directory.CreateDirectory(srcDir);
-        
+
         // Create a regular class file (not partial)
         File.WriteAllText(Path.Combine(srcDir, "RegularClass.cs"), @"
 namespace Azure.Test;
@@ -579,7 +580,7 @@ public class RegularClass
         var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
         var generatedDir = Path.Combine(srcDir, "Generated");
         Directory.CreateDirectory(generatedDir);
-        
+
         // Create a partial class inside Generated folder
         File.WriteAllText(Path.Combine(generatedDir, "GeneratedClient.cs"), @"
 namespace Azure.Test;
@@ -603,10 +604,10 @@ public partial class TestClient
         using var tempDir = TempDirectory.Create("dotnet-test-directory-test");
         var testsDir = Path.Combine(tempDir.DirectoryPath, "tests");
         Directory.CreateDirectory(testsDir);
-        
+
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("Tests passed!");
-        
+
         _processHelperMock
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, testsDir)),
@@ -620,7 +621,7 @@ public partial class TestClient
             Assert.That(result.ExitCode, Is.EqualTo(0));
             Assert.That(result.TestRunOutput, Does.Contain("Tests passed!"));
         });
-        
+
         _processHelperMock.Verify(x => x.Run(
             It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, testsDir)),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -630,10 +631,10 @@ public partial class TestClient
     public async Task RunAllTests_UsesPackageDirectory_WhenTestsDirectoryDoesNotExist()
     {
         using var tempDir = TempDirectory.Create("dotnet-no-test-directory-test");
-        
+
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("Tests passed!");
-        
+
         _processHelperMock
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, tempDir.DirectoryPath)),
@@ -647,7 +648,7 @@ public partial class TestClient
             Assert.That(result.ExitCode, Is.EqualTo(0));
             Assert.That(result.TestRunOutput, Does.Contain("Tests passed!"));
         });
-        
+
         _processHelperMock.Verify(x => x.Run(
             It.Is<ProcessOptions>(p => IsDotNetTestCommand(p, tempDir.DirectoryPath)),
             It.IsAny<CancellationToken>()), Times.Once);

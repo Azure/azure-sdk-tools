@@ -49,7 +49,7 @@ public class JavaPatchGenerationTemplate : BasePromptTemplate
     /// <summary>
     /// Builds the complete Java patch generation prompt using the configured parameters.
     /// </summary>
-    /// <returns>Complete structured prompt for direct patch application using microagent tools</returns>
+    /// <returns>Complete structured prompt for direct patch application using copilot agent tools</returns>
     public override string BuildPrompt()
     {
         var taskInstructions = BuildTaskInstructions();

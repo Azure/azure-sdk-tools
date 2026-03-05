@@ -16,8 +16,15 @@ public sealed partial class JavaLanguageService : LanguageService
 {
     public override SdkLanguage Language { get; } = SdkLanguage.Java;
     public override bool IsCustomizedCodeUpdateSupported => true;
+
+    /// <summary>
+    /// Java packages are identified by pom.xml files.
+    /// </summary>
+    protected override string[] PackageManifestPatterns => ["pom.xml"];
+
     private readonly ICopilotAgentRunner copilotAgentRunner;
-    private readonly IMavenHelper _mavenHelper;
+    private readonly IMavenHelper mavenHelper;
+
     private const string CustomizationDirName = "customization";
 
     public JavaLanguageService(
@@ -27,21 +34,22 @@ public sealed partial class JavaLanguageService : LanguageService
         ICopilotAgentRunner copilotAgentRunner,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
+        IPackageInfoHelper packageInfoHelper,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper,
         IChangelogHelper changelogHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.copilotAgentRunner = copilotAgentRunner;
-        this._mavenHelper = mavenHelper;
+        this.mavenHelper = mavenHelper;
     }
 
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Java package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var (repoRoot, relativePath, fullPath) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
         var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
-        
+
         if (packageName == null)
         {
             logger.LogWarning("Could not determine package name for Java package at {fullPath}", fullPath);
@@ -50,9 +58,9 @@ public sealed partial class JavaLanguageService : LanguageService
         {
             logger.LogWarning("Could not determine package version for Java package at {fullPath}", fullPath);
         }
-        
+
         var sdkType = DetermineSdkType(packageName);
-        
+
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -65,10 +73,10 @@ public sealed partial class JavaLanguageService : LanguageService
             SamplesDirectory = BuildSamplesDirectory(fullPath),
             SdkType = sdkType
         };
-        
-        logger.LogDebug("Resolved Java package: {packageName} v{packageVersion} at {relativePath}", 
+
+        logger.LogDebug("Resolved Java package: {packageName} v{packageVersion} at {relativePath}",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
-        
+
         return model;
     }
 
@@ -90,10 +98,10 @@ public sealed partial class JavaLanguageService : LanguageService
     private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
     {
         var path = Path.Combine(packagePath, "pom.xml");
-        if (!File.Exists(path)) 
+        if (!File.Exists(path))
         {
             logger.LogWarning("No pom.xml file found at {path}", path);
-            return (null, null); 
+            return (null, null);
         }
         try
         {
@@ -101,20 +109,20 @@ public sealed partial class JavaLanguageService : LanguageService
             using var stream = File.OpenRead(path);
             var doc = await XDocument.LoadAsync(stream, LoadOptions.None, ct);
             var root = doc.Root;
-            if (root == null) 
+            if (root == null)
             {
                 logger.LogWarning("pom.xml has no root element at {path}", path);
-                return (null, null); 
+                return (null, null);
             }
             // Maven POM uses a default namespace; capture it to access elements.
             var ns = root.Name.Namespace;
 
             // Extract artifactId
             string? artifactId = root.Element(ns + "artifactId")?.Value?.Trim();
-            if (string.IsNullOrWhiteSpace(artifactId)) 
-            { 
+            if (string.IsNullOrWhiteSpace(artifactId))
+            {
                 logger.LogWarning("No artifactId found in pom.xml at {path}", path);
-                artifactId = null; 
+                artifactId = null;
             }
             else
             {
@@ -137,11 +145,11 @@ public sealed partial class JavaLanguageService : LanguageService
             {
                 logger.LogTrace("Found version: {version}", version);
             }
-            
-            if (string.IsNullOrWhiteSpace(version)) 
-            { 
+
+            if (string.IsNullOrWhiteSpace(version))
+            {
                 logger.LogWarning("No version found in pom.xml at {path}", path);
-                version = null; 
+                version = null;
             }
 
             return (artifactId, version);
@@ -158,12 +166,12 @@ public sealed partial class JavaLanguageService : LanguageService
         try
         {
             var moduleInfoPath = Path.Combine(packagePath, "src", "main", "java", "module-info.java");
-            if (!File.Exists(moduleInfoPath)) 
+            if (!File.Exists(moduleInfoPath))
             {
                 logger.LogTrace("No module-info.java found at {moduleInfoPath}", moduleInfoPath);
-                return null; 
+                return null;
             }
-            
+
             logger.LogTrace("Reading module-info.java from {moduleInfoPath}", moduleInfoPath);
             var content = File.ReadAllText(moduleInfoPath);
             var match = JavaModuleDeclarationRegex().Match(content);
@@ -196,17 +204,17 @@ public sealed partial class JavaLanguageService : LanguageService
         }
 
         // Following the logic from azure-sdk-for-java/eng/scripts/Language-Settings.ps1
-        if (artifactId.Contains("mgmt", StringComparison.OrdinalIgnoreCase) || 
+        if (artifactId.Contains("mgmt", StringComparison.OrdinalIgnoreCase) ||
             artifactId.Contains("resourcemanager", StringComparison.OrdinalIgnoreCase))
         {
             return SdkType.Management;
         }
-        
+
         if (artifactId.Contains("spring", StringComparison.OrdinalIgnoreCase))
         {
             return SdkType.Spring;
         }
-        
+
         // Default case - client SDKs
         return SdkType.Dataplane;
     }
@@ -225,7 +233,7 @@ public sealed partial class JavaLanguageService : LanguageService
 
         // Run Maven tests using consistent command pattern
         var pomPath = Path.Combine(packagePath, "pom.xml");
-        var result = await _mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: TestTimeout), ct);
+        var result = await mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: TestTimeout), ct);
 
         if (result.ExitCode == 0)
         {
@@ -238,6 +246,73 @@ public sealed partial class JavaLanguageService : LanguageService
             return new TestRunResponse(result);
         }
 
+    }
+
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing Java SDK project at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}", null, null);
+            }
+
+            var packageInfo = await GetPackageInfo(fullPath, ct);
+
+            var pomPath = Path.Combine(fullPath, "pom.xml");
+            var args = new List<string>
+            {
+                "package"
+            };
+
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.Add($"-DpackageOutputDirectory={outputPath}");
+            }
+
+            var result = await mavenHelper.Run(
+                new("clean", args.ToArray(), pomPath, workingDirectory: fullPath, timeout: TimeSpan.FromMinutes(timeoutMinutes)),
+                ct
+            );
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"mvn clean package failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            // Try to find artifact path in the output directory
+            var artifactDir = outputPath ?? Path.Combine(fullPath, "target");
+            string? artifactPath = null;
+            if (Directory.Exists(artifactDir))
+            {
+                var jarFiles = Directory.GetFiles(artifactDir, "*.jar", SearchOption.TopDirectoryOnly)
+                    .Where(f => !f.EndsWith("-sources.jar") && !f.EndsWith("-javadoc.jar") && !f.EndsWith("-tests.jar"))
+                    .ToArray();
+                if (jarFiles.Length > 0)
+                {
+                    artifactPath = jarFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+                }
+            }
+
+            logger.LogInformation("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing Java SDK");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
     }
 
     public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
@@ -274,7 +349,7 @@ public sealed partial class JavaLanguageService : LanguageService
 
             // Get the list of customization files
             var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
-            
+
             // Collect patches directly from the tool as they succeed
             var patchLog = new ConcurrentBag<AppliedPatch>();
 

@@ -77,6 +77,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Setup = new(
+            Verb: "setup",
+            Description: "Environment setup verification and installation"
+        );
+
         public static readonly CommandGroup APIView = new(
             Verb: "apiview",
             Description: "Commands for interacting with APIView services and functionality",

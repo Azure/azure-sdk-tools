@@ -25,6 +25,7 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteNotificationDto';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
+import { ReviewQualityScore } from 'src/app/_models/reviewQualityScore';
 
 // Constants for AI review button text
 const AI_REVIEW_BUTTON_TEXT = {
@@ -117,6 +118,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   codeLineSearchText: FormControl = new FormControl('');
 
+  qualityScore: ReviewQualityScore | undefined = undefined;
+  qualityScoreLoading: boolean = false;
+
   associatedPullRequests  : PullRequestModel[] = [];
   pullRequestsOfAssociatedAPIRevisions : PullRequestModel[] = [];
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
@@ -146,7 +150,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     // Subscribe to language approvers from context service
     this.reviewContextService.getLanguageApprovers$().pipe(takeUntil(this.destroy$)).subscribe(approvers => {
       this.languageApprovers = approvers;
-      this.filteredApprovers = [...approvers];
+      this.filteredApprovers = this.sortSelectedFirst([...approvers]);
       this.reviewerSearchText = '';
     });
 
@@ -172,6 +176,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     });
     this.handleRealTimeAIReviewUpdates();
     this.handleSiteNotification();
+
+    this.commentsService.qualityScoreRefreshNeeded$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.fetchQualityScore();
+    });
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -191,6 +199,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
       this.setNamespaceReviewStates();
+      this.fetchQualityScore();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
         this.generateAIReviewButtonText = AI_REVIEW_BUTTON_TEXT.GENERATING;
@@ -302,18 +311,45 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
   filterReviewers() {
     if (!this.reviewerSearchText) {
-      this.filteredApprovers = [...this.languageApprovers];
+      this.filteredApprovers = this.sortSelectedFirst([...this.languageApprovers]);
     } else {
       const searchLower = this.reviewerSearchText.toLowerCase();
-      this.filteredApprovers = this.languageApprovers.filter(approver =>
-        approver.toLowerCase().includes(searchLower)
+      this.filteredApprovers = this.sortSelectedFirst(
+        this.languageApprovers.filter(approver =>
+          approver.toLowerCase().includes(searchLower)
+        ),
+        searchLower
       );
     }
   }
 
   resetReviewerSearch() {
     this.reviewerSearchText = '';
-    this.filteredApprovers = [...this.languageApprovers];
+    this.filteredApprovers = this.sortSelectedFirst([...this.languageApprovers]);
+  }
+
+  /**
+   * Merges selected approvers (who may not be language approvers) into the list,
+   * then sorts so selected reviewers appear first — matching GitHub's reviewer dropdown behavior.
+   */
+  private sortSelectedFirst(approvers: string[], searchFilter?: string): string[] {
+    // Ensure currently assigned reviewers always appear, even if not in languageApprovers
+    const merged = [...approvers];
+    for (const selected of this.selectedApprovers) {
+      if (!merged.includes(selected)) {
+        // When searching, only add selected reviewers that match the filter
+        if (!searchFilter || selected.toLowerCase().includes(searchFilter)) {
+          merged.push(selected);
+        }
+      }
+    }
+    return merged.sort((a, b) => {
+      const aSelected = this.selectedApprovers.includes(a);
+      const bSelected = this.selectedApprovers.includes(b);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return 0;
+    });
   }
 
   toggleReviewer(approver: string) {
@@ -401,6 +437,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
     if (this.isMissingPackageVersion) {
       return "This API revision cannot be approved because it is missing a package version. Please ensure the package version is set.";
     }
+    if (this.hasUnresolvedMustFix()) {
+      return "Cannot approve while unresolved Must Fix comments remain.";
+    }
     if (isReviewByCopilotRequired && !isVersionReviewedByCopilot) {
       return "To approve the current API revision, it must first be reviewed by Copilot";
     }
@@ -429,6 +468,30 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
 
     // Update button state
     this.updateNamespaceReviewButtonState();
+  }
+
+  fetchQualityScore() {
+    if (!this.activeAPIRevision?.id) return;
+    this.qualityScoreLoading = true;
+    this.apiRevisionsService.getQualityScore(this.activeAPIRevision.id).pipe(take(1)).subscribe({
+      next: (score: ReviewQualityScore) => {
+        this.qualityScore = score;
+        this.qualityScoreLoading = false;
+        // Re-evaluate approval states since must-fix count may have changed
+        this.setAPIRevisionApprovalStates();
+      },
+      error: () => {
+        this.qualityScore = undefined;
+        this.qualityScoreLoading = false;
+      }
+    });
+  }
+
+  getScoreColorClass(): string {
+    if (!this.qualityScore) return '';
+    if (this.qualityScore.score >= 80) return 'text-success';
+    if (this.qualityScore.score >= 50) return 'text-warning';
+    return 'text-danger';
   }
 
   setPullRequestsInfo() {
@@ -728,10 +791,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges, OnDestroy 
   private shouldDisableApproval(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): boolean {
     if (this.isMissingPackageVersion) return true;
     if(this.activeAPIRevision?.isApproved) return false;
+    if (this.hasUnresolvedMustFix()) return true;
     if (!this.isCopilotReviewSupported) return false;
     if (this.isPreviewVersion()) return false;
 
     return isReviewByCopilotRequired && !isVersionReviewedByCopilot;
+  }
+
+  private hasUnresolvedMustFix(): boolean {
+    return (this.qualityScore?.unresolvedMustFixCount ?? 0) > 0;
   }
 
   private isCopilotReviewSupportedForPackage(): boolean {

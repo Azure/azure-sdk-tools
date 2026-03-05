@@ -34,6 +34,7 @@ internal class PythonLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
+            Mock.Of<IPackageInfoHelper>(),
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -47,8 +48,8 @@ internal class PythonLanguageSpecificChecksTests
         using var tempDir = TempDirectory.Create("python-customization-test");
         var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
         Directory.CreateDirectory(azureDir);
-        
-        File.WriteAllText(Path.Combine(azureDir, "_patch.py"), 
+
+        File.WriteAllText(Path.Combine(azureDir, "_patch.py"),
             "__all__ = [\"CustomClient\"]\n\nclass CustomClient:\n    pass");
 
         var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
@@ -63,8 +64,8 @@ internal class PythonLanguageSpecificChecksTests
         using var tempDir = TempDirectory.Create("python-multiline-test");
         var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
         Directory.CreateDirectory(azureDir);
-        
-        File.WriteAllText(Path.Combine(azureDir, "_patch.py"), 
+
+        File.WriteAllText(Path.Combine(azureDir, "_patch.py"),
             "__all__ = [\n    \"CustomClient\",\n]");
 
         var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
@@ -79,7 +80,7 @@ internal class PythonLanguageSpecificChecksTests
         using var tempDir = TempDirectory.Create("python-empty-patch-test");
         var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
         Directory.CreateDirectory(azureDir);
-        
+
         File.WriteAllText(Path.Combine(azureDir, "_patch.py"), "__all__: List[str] = []");
 
         var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
@@ -93,7 +94,7 @@ internal class PythonLanguageSpecificChecksTests
         using var tempDir = TempDirectory.Create("python-no-patch-test");
         var azureDir = Path.Combine(tempDir.DirectoryPath, "azure", "test");
         Directory.CreateDirectory(azureDir);
-        
+
         File.WriteAllText(Path.Combine(azureDir, "client.py"), "# Client code");
 
         var result = _languageService.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);

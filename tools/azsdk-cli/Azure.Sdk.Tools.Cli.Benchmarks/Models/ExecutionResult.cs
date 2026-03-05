@@ -20,6 +20,6 @@ public class ExecutionResult
     /// <summary>The conversation messages from the session.</summary>
     public IReadOnlyList<object> Messages { get; init; } = [];
 
-    /// <summary>Tool names called during execution.</summary>
+    /// <summary>Details of tool calls (name, arguments, results, etc.) made during execution.</summary>
     public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
 }

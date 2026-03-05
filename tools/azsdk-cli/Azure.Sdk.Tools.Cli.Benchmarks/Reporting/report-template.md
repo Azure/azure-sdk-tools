@@ -1,9 +1,9 @@
 # Benchmark Report
 
-**Test Run:** `{test-run-name}`
-**Date:** {test-date}
-**Report Generated:** {report-date}
-**Model Used:** `{model-name}`
+**Test Run:** `{runName}`
+**Date:** {testDate}
+**Report Generated:** {reportDate}
+**Model Used:** `{model}`
 
 ---
 

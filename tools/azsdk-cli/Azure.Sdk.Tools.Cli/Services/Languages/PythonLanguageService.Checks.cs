@@ -11,6 +11,13 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// </summary>
 public partial class PythonLanguageService : LanguageService
 {
+    // Common NextSteps messages for Python tool issues
+    private static readonly string[] pythonToolsInstallationNextSteps = [
+        "Run 'azsdk_verify_setup' to check and auto-install required Python tools",
+        "Ensure Python is installed and available in PATH",
+        "Navigate to the azure-sdk-for-python repository root and run: python -m pip install eng/tools/azure-sdk-tools"
+    ];
+
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
@@ -23,14 +30,27 @@ public partial class PythonLanguageService : LanguageService
             if (!File.Exists(scriptPath))
             {
                 logger.LogError("Python snippet updater script not found at: {ScriptPath}", scriptPath);
-                return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}");
+                return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}")
+                {
+                    NextSteps = [
+                        "Ensure you are running this command from within the azure-sdk-for-python repository",
+                        "Verify the eng/tools/azure-sdk-tools directory exists in the repository root"
+                    ]
+                };
             }
 
             var pythonCheckResult = await pythonHelper.Run(new PythonOptions("python", ["--version"]), cancellationToken);
             if (pythonCheckResult.ExitCode != 0)
             {
                 logger.LogError("Python is not installed or not available in PATH");
-                return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.");
+                return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.")
+                {
+                    NextSteps = [
+                        "Install Python 3.8+ and ensure it is added to your system PATH",
+                        "Verify installation by running 'python --version' in your terminal",
+                        "Run 'azsdk_verify_setup' to check and auto-install required Python tools"
+                    ]
+                };
             }
 
             var result = await pythonHelper.Run(new PythonOptions("python", [scriptPath, packagePath], workingDirectory: packagePath), cancellationToken);
@@ -43,13 +63,23 @@ public partial class PythonLanguageService : LanguageService
             else
             {
                 logger.LogWarning("Snippet update detected out-of-date snippets with exit code {ExitCode}", result.ExitCode);
-                return new PackageCheckResponse(result.ExitCode, result.Output, "Some snippets were updated or need attention");
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Some snippets were updated or need attention")
+                {
+                    NextSteps = [
+                        "Review the snippet update output to identify which snippets need changes",
+                        "Ensure the code examples in your documentation match the actual implementation",
+                        "Manually update any code snippets that reference outdated APIs or methods"
+                    ]
+                };
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating snippets for Python project at: {PackagePath}", packagePath);
-            return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}")
+            {
+                NextSteps = [.. pythonToolsInstallationNextSteps]
+            };
         }
     }
 
@@ -89,14 +119,31 @@ public partial class PythonLanguageService : LanguageService
                 
                 logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
                     failedTools.Count, allResults.Length, failedToolNames);
-                
-                return new PackageCheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
+
+                var nextSteps = new List<string>();
+                if (failedTools.Any(t => t.toolName == "pylint"))
+                {
+                    nextSteps.Add("pylint: Review and manually fix code quality violations - no auto-fix available");
+                }
+                if (failedTools.Any(t => t.toolName == "mypy"))
+                {
+                    nextSteps.Add("mypy: Review and manually fix type annotation issues - no auto-fix available");
+                }
+                nextSteps.Add("Run 'azsdk_verify_setup' to ensure azpysdk tools are properly installed");
+
+                return new PackageCheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}")
+                {
+                    NextSteps = nextSteps
+                };
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
-            return new PackageCheckResponse(1, "", $"Error running code linting: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error running code linting: {ex.Message}")
+            {
+                NextSteps = [.. pythonToolsInstallationNextSteps]
+            };
         }
     }
 
@@ -116,13 +163,23 @@ public partial class PythonLanguageService : LanguageService
             else
             {
                 logger.LogWarning("Dependency analysis found issues with exit code {ExitCode}", result.ExitCode);
-                return new PackageCheckResponse(result.ExitCode, result.Output, "Dependency analysis found issues with minimum dependency versions");
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Dependency analysis found issues with minimum dependency versions")
+                {
+                    NextSteps = [
+                        "Review and update the minimum dependency versions declared in setup.py or pyproject.toml",
+                        "Ensure that all dependent packages are compatible with the declared minimum versions",
+                        "Run 'pip install -e .' locally to test the package installation with minimum dependency constraints"
+                    ]
+                };
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error running dependency analysis for Python project at: {PackagePath}", packagePath);
-            return new PackageCheckResponse(1, "", $"Error running dependency analysis: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error running dependency analysis: {ex.Message}")
+            {
+                NextSteps = [.. pythonToolsInstallationNextSteps]
+            };
         }
     }
 
@@ -131,24 +188,47 @@ public partial class PythonLanguageService : LanguageService
         try
         {
             logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
-            
-            var result = await pythonHelper.Run(new PythonOptions("azpysdk", ["black", "--isolate", packagePath], workingDirectory: packagePath), cancellationToken);
+
+            // When not in fix mode, pass --check to black so it reports violations without modifying files
+            var blackArgs = fixCheckErrors
+                ? new[] { "black", "--isolate", packagePath }
+                : new[] { "black", "--check", "--isolate", packagePath };
+
+            var result = await pythonHelper.Run(new PythonOptions("azpysdk", blackArgs, workingDirectory: packagePath), cancellationToken);
 
             if (result.ExitCode == 0)
             {
-                logger.LogInformation("Code formatting completed successfully - no issues found");
-                return new PackageCheckResponse(result.ExitCode, "Code formatting completed successfully - no issues found");
+                var successMessage = fixCheckErrors
+                    ? "Code formatting applied successfully"
+                    : "Code formatting check passed - all files are properly formatted";
+                logger.LogInformation("{Message}", successMessage);
+                return new PackageCheckResponse(result.ExitCode, successMessage);
             }
             else
             {
-                logger.LogWarning("Code formatting found issues with exit code {ExitCode}", result.ExitCode);
-                return new PackageCheckResponse(result.ExitCode, result.Output, "Code formatting found issues that need attention");
+                var errorMessage = fixCheckErrors
+                    ? "Code formatting failed to apply"
+                    : "Code formatting check failed - some files need formatting";
+
+                logger.LogWarning("{ErrorMessage} with exit code {ExitCode}", errorMessage, result.ExitCode);
+
+                var nextSteps = fixCheckErrors
+                    ? "Review the error output - some formatting issues could not be auto-fixed by black"
+                    : "Run this check with the --fix flag to automatically format code using black, or run 'black <packagePath>' manually";
+
+                return new PackageCheckResponse(result.ExitCode, result.Output, errorMessage)
+                {
+                    NextSteps = [nextSteps]
+                };
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error running code formatting for Python project at: {PackagePath}", packagePath);
-            return new PackageCheckResponse(1, "", $"Error running code formatting: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error running code formatting: {ex.Message}")
+            {
+                NextSteps = [.. pythonToolsInstallationNextSteps]
+            };
         }
     }
 

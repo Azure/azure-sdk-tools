@@ -58,7 +58,7 @@ public class ReportGenerator
         CancellationToken cancellationToken = default)
     {
         var dataJson = JsonSerializer.Serialize(BuildReportData(results, runName, agentModel), JsonOptions);
-        return await CallLlmAsync(BuildPrompt(dataJson, "Benchmark Data (JSON)"));
+        return await CallLlmAsync(BuildPrompt(dataJson, "Benchmark Data (JSON)"), cancellationToken);
     }
 
     /// <summary>
@@ -79,7 +79,7 @@ public class ReportGenerator
             logFiles.Select(f => File.ReadAllTextAsync(f, cancellationToken)));
 
         var combinedData = $"[{string.Join(",\n", logsJson)}]";
-        return await CallLlmAsync(BuildPrompt(combinedData, "Benchmark Log Data (JSON Array)"));
+        return await CallLlmAsync(BuildPrompt(combinedData, "Benchmark Log Data (JSON Array)"), cancellationToken);
     }
 
     private string BuildPrompt(string dataJson, string dataLabel)
@@ -102,7 +102,7 @@ public class ReportGenerator
             """;
     }
 
-    private static async Task<string> CallLlmAsync(string userPrompt)
+    private static async Task<string> CallLlmAsync(string userPrompt, CancellationToken cancellationToken)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), $"report-gen-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
@@ -125,10 +125,10 @@ public class ReportGenerator
                 InfiniteSessions = new InfiniteSessionConfig { Enabled = false }
             };
 
-            await using var session = await client.CreateSessionAsync(sessionConfig);
-            await session.SendAndWaitAsync(new MessageOptions { Prompt = userPrompt }, TimeSpan.FromMinutes(5));
+            await using var session = await client.CreateSessionAsync(sessionConfig, cancellationToken);
+            await session.SendAndWaitAsync(new MessageOptions { Prompt = userPrompt }, TimeSpan.FromMinutes(5), cancellationToken);
 
-            var messages = await session.GetMessagesAsync();
+            var messages = await session.GetMessagesAsync(cancellationToken);
             var lastAssistantMessage = messages
                 .OfType<AssistantMessageEvent>()
                 .LastOrDefault();

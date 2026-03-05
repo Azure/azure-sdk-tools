@@ -11,4 +11,7 @@ public class ToolCallRecord
     public required string ToolName { get; init; }
     public object? ToolArgs { get; init; }
     public object? ToolResult { get; init; }
+    public double? DurationMs { get; init; }
+    public string? McpServerName { get; init; }
+    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 }

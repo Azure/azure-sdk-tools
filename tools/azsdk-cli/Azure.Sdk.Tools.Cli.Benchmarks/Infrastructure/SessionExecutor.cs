@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
@@ -23,6 +24,7 @@ public class SessionExecutor : IDisposable
     {
         var stopwatch = Stopwatch.StartNew();
         var toolCalls = new List<ToolCallRecord>();
+        var pendingTimestamps = new ConcurrentStack<long>();
 
         try
         {
@@ -47,15 +49,26 @@ public class SessionExecutor : IDisposable
                     OnPreToolUse = (input, invocation) =>
                     {
                         config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
+                        pendingTimestamps.Push(input.Timestamp);
                         return Task.FromResult<PreToolUseHookOutput?>(null);
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
+                        double? durationMs = pendingTimestamps.TryPop(out var startTs)
+                            ? input.Timestamp - startTs
+                            : null;
+
+                        var mcpServerName = input.ToolName.Contains("__")
+                            ? input.ToolName.Split("__", 2)[0]
+                            : null;
+
                         toolCalls.Add(new ToolCallRecord
                         {
                             ToolName = input.ToolName,
                             ToolArgs = input.ToolArgs,
-                            ToolResult = input.ToolResult
+                            ToolResult = input.ToolResult,
+                            DurationMs = durationMs,
+                            McpServerName = mcpServerName
                         });
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }

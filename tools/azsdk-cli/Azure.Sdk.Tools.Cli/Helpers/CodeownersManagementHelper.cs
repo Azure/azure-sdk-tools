@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
@@ -310,6 +311,101 @@ public class CodeownersManagementHelper(
             }
             ExpandTeamOwners(package.Owners);
         }
+    }
+
+    public async Task<DefaultCommandResponse> CheckReleaseGateAsync(string packageName, string repo, string packageDirectory)
+    {
+        var packageWi = await FindPackageByName(packageName, repo);
+        if (packageWi == null)
+        {
+            return new DefaultCommandResponse { ResponseError = $"Package work item not found for '{packageName}'." };
+        }
+
+        await HydratePackages([packageWi]);
+
+        var uniqueOwnerCount = CountUniqueOwners(packageWi.Owners);
+
+        if (uniqueOwnerCount >= 2)
+        {
+            return new DefaultCommandResponse { Message = $"PASS: Package '{packageName}' has {uniqueOwnerCount} owners." };
+        }
+
+        if (uniqueOwnerCount == 1)
+        {
+            return new DefaultCommandResponse { ResponseError = $"Package '{packageName}' has only 1 owner, minimum 2 required." };
+        }
+
+        // 0 owners on package — fallback to LabelOwners
+        var labelOwners = await QueryLabelOwnersByRepo(repo);
+
+        // Filter: LabelType is empty or "PR Label", and RepoPath is not empty
+        labelOwners = labelOwners
+            .Where(lo => !string.IsNullOrEmpty(lo.RepoPath)
+                && (string.IsNullOrEmpty(lo.LabelType) || lo.LabelType.Equals("PR Label", StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        await HydrateLabelOwners(labelOwners);
+
+        // Sort by RepoPath ascending, iterate backwards — last match wins (most specific)
+        labelOwners = labelOwners.OrderBy(lo => lo.RepoPath, StringComparer.Ordinal).ToList();
+
+        LabelOwnerWorkItem? matchingLabelOwner = null;
+        for (int i = labelOwners.Count - 1; i >= 0; i--)
+        {
+            if (DirectoryUtils.PathExpressionMatchesTargetPath(labelOwners[i].RepoPath, packageDirectory))
+            {
+                matchingLabelOwner = labelOwners[i];
+                break;
+            }
+        }
+
+        if (matchingLabelOwner == null)
+        {
+            return new DefaultCommandResponse { ResponseError = $"No matching LabelOwner found for package directory '{packageDirectory}'." };
+        }
+
+        var labelOwnerCount = CountUniqueOwners(matchingLabelOwner.Owners);
+        if (labelOwnerCount >= 2)
+        {
+            return new DefaultCommandResponse { Message = $"PASS: Package '{packageName}' has {labelOwnerCount} owners via LabelOwner path '{matchingLabelOwner.RepoPath}'." };
+        }
+
+        return new DefaultCommandResponse { ResponseError = $"Package '{packageName}' has only {labelOwnerCount} owner(s) via LabelOwner path '{matchingLabelOwner.RepoPath}', minimum 2 required." };
+    }
+
+    /// <summary>
+    /// Counts unique owners from a list of OwnerWorkItems, expanding teams to individual members.
+    /// Deduplication is case-insensitive by GitHub alias.
+    /// </summary>
+    public static int CountUniqueOwners(List<OwnerWorkItem> owners)
+    {
+        var uniqueAliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var owner in owners)
+        {
+            if (owner.IsGitHubTeam && owner.ExpandedMembers.Count > 0)
+            {
+                foreach (var member in owner.ExpandedMembers)
+                {
+                    uniqueAliases.Add(member);
+                }
+            }
+            else
+            {
+                uniqueAliases.Add(owner.GitHubAlias);
+            }
+        }
+        return uniqueAliases.Count;
+    }
+
+    /// <summary>
+    /// Queries all LabelOwner work items for a given repository.
+    /// </summary>
+    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByRepo(string repo)
+    {
+        var escapedRepo = repo.Replace("'", "''");
+        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{escapedRepo}'";
+        var rawWorkItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        return rawWorkItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
     }
 
     /// <summary>

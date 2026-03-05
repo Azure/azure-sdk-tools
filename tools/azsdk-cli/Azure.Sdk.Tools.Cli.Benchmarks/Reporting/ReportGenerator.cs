@@ -145,35 +145,9 @@ public class ReportGenerator
                 r.Scenario.Name,
                 r.Scenario.Description,
                 r.Scenario.Tags,
-                Prompt = r.Scenario.Prompt,
+                r.Scenario.Prompt,
                 Repo = r.Scenario.Repo.CloneUrl,
-                r.Result.Passed,
-                r.Result.Error,
-                Duration = r.Result.Duration.ToString(),
-                DurationSeconds = r.Result.Duration.TotalSeconds,
-                ToolCalls = r.Result.ToolCalls.Select(tc => new
-                {
-                    tc.ToolName,
-                    tc.Arguments,
-                    tc.DurationMs,
-                    tc.McpServerName,
-                    tc.Timestamp
-                }),
-                ToolCallCount = r.Result.ToolCalls.Count,
-                Validation = r.Result.Validation != null ? new
-                {
-                    r.Result.Validation.Passed,
-                    r.Result.Validation.PassedCount,
-                    r.Result.Validation.FailedCount,
-                    Results = r.Result.Validation.Results.Select(v => new
-                    {
-                        v.ValidatorName,
-                        v.Passed,
-                        v.Message,
-                        v.Details
-                    })
-                } : null,
-                r.Result.GitDiff
+                r.Result
             }).ToList()
         };
     }

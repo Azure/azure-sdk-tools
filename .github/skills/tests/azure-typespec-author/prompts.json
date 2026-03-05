@@ -1,0 +1,32 @@
+{
+  "skillName": "azure-typespec-author",
+  "source": {
+    "repo": "Azure/azure-rest-api-specs",
+    "path": ".github/skills/azure-typespec-author/SKILL.md"
+  },
+  "shouldTrigger": [
+    "Add a new ARM resource to my TypeSpec project",
+    "I need to modify the .tsp file for my service",
+    "Create a new preview API version for my TypeSpec spec",
+    "Add CRUD operations to my ARM resource definition",
+    "Help me define a new tracked resource in TypeSpec",
+    "I want to add a PATCH operation to my resource",
+    "Add a long-running operation to my TypeSpec API",
+    "How do I add a new property to my ARM resource?",
+    "Add a new stable API version and promote preview features",
+    "Help me troubleshoot my TypeSpec compilation errors",
+    "I need to add decorators to my TypeSpec resource definition",
+    "Author a new data-plane API specification in TypeSpec"
+  ],
+  "shouldNotTrigger": [
+    "Initialize a new TypeSpec project",
+    "Generate SDK from my TypeSpec project",
+    "Release my SDK package",
+    "Validate my TypeSpec project",
+    "Build my SDK package",
+    "Create a release plan for my service",
+    "Run tests for my SDK package",
+    "Convert my swagger to TypeSpec",
+    "Check if my API spec is ready for SDK generation"
+  ]
+}

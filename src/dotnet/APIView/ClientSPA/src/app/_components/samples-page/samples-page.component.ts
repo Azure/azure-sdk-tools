@@ -41,6 +41,7 @@ export class SamplesPageComponent {
   sideMenu: MenuItem[] | undefined;
   latestApiRevision: APIRevision | undefined = undefined;
   samplesRevisions: SamplesRevision[] = [];
+  samplesRevisionTotalCount: number = 0;
   userProfile : UserProfile | undefined;
   comments: CommentItemModel[] = [];
   commentThreads: Map<string, CodePanelRowData> =  new Map<string, CodePanelRowData>;
@@ -241,6 +242,7 @@ export class SamplesPageComponent {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (paginatedResult: PaginatedResult<SamplesRevision[]>) => {
           this.samplesRevisions = paginatedResult.result!;
+          this.samplesRevisionTotalCount = paginatedResult.pagination?.totalCount ?? this.samplesRevisions.length;
           this.activeSamplesRevision = this.samplesRevisions.filter(x => x.id === this.activeSamplesRevisionId)[0];
           this.loadActiveSampleRevisionData();
         }
@@ -428,6 +430,7 @@ export class SamplesPageComponent {
             this.backToList();
           } else {
             this.samplesRevisions = this.samplesRevisions.filter(s => s.id !== revisionId);
+            this.samplesRevisionTotalCount = Math.max(0, this.samplesRevisionTotalCount - 1);
             this.sampleToDelete = null;
           }
         },

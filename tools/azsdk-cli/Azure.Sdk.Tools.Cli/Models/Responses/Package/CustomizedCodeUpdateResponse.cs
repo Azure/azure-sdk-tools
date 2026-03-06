@@ -36,7 +36,6 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? BuildResult { get; set; }
 
-
     /// <summary>
     /// Error codes for classifier to parse programmatically.
     /// These define the contract between the tool and downstream processors.
@@ -51,6 +50,8 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         public const string NoLanguageService = "NoLanguageService";
         public const string InvalidInput = "InvalidInput";
         public const string UnexpectedError = "UnexpectedError";
+        public const string TypeSpecCustomizationFailed = "TypeSpecCustomizationFailed";
+        public const string ManualInterventionRequired = "ManualInterventionRequired";
     }
 
     [JsonPropertyName("message")]
@@ -60,6 +61,10 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     [JsonPropertyName("errorCode")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ErrorCode { get; set; }
+
+    [JsonPropertyName("typeSpecChangesSummary")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? TypeSpecChangesSummary { get; set; }
 
     protected override string Format()
     {
@@ -71,6 +76,14 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
+        }
+        if (TypeSpecChangesSummary is { Count: > 0 })
+        {
+            sb.AppendLine("TypeSpec Changes:");
+            foreach (var change in TypeSpecChangesSummary)
+            {
+                sb.AppendLine($"  - {change}");
+            }
         }
         return sb.ToString();
     }

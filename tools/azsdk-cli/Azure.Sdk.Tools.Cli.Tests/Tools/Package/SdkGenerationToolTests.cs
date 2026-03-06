@@ -93,7 +93,7 @@ public class SdkGenerationToolTests
             TypeSpecProject = Path.GetDirectoryName(tspLocationPath)!
         };
         _mockTspClientHelper
-            .Setup(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
         // Act
@@ -105,7 +105,7 @@ public class SdkGenerationToolTests
         Assert.That(result.NextSteps, Is.Not.Null);
         Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
         Assert.That(result.NextSteps?.First(), Does.Contain("build the code"));
-        _mockTspClientHelper.Verify(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockTspClientHelper.Verify(x => x.UpdateGenerationAsync(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]

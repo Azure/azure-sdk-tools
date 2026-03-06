@@ -31,7 +31,7 @@ function generate(item: ApiInterface, deprecated?: boolean): GeneratorResult {
     createToken(TokenKind.Keyword, "interface", { hasSuffixSpace: true, deprecated }),
   );
 
-  // Create interface name token with proper metadata (matching splitAndBuild behavior)
+  // Create interface name token with proper metadata
   const nameToken = createToken(TokenKind.TypeName, item.displayName, { deprecated });
   nameToken.NavigateToId = item.canonicalReference.toString();
   nameToken.NavigationDisplayName = item.displayName;

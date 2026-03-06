@@ -368,11 +368,7 @@ export function processExcerptTokens(
               deprecated,
             });
 
-      if (target instanceof TokenCollector) {
-        target.push(token);
-      } else {
-        target.push(token);
-      }
+      target.push(token);
     }
   }
 }

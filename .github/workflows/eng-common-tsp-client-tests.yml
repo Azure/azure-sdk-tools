@@ -42,26 +42,35 @@ jobs:
           sparse-checkout: |
             sdk/template
 
+      # - name: Setup node
+      #   uses: actions/setup-node@v6
+      #   with:
+      #     cache: "npm"
+      #     cache-dependency-path: tools/eng/common-tests/tsp-client/package-lock.json
+
+      # - run: npm ci --no-audit --no-fund --prefer-offline
+
+      # - run: npm ls -a
+
+      # - run: npm run lint
+
+      # - run: npm run format:check:ci
+
+      # - run: npm run test:ci
+
       - name: Setup node
         uses: actions/setup-node@v6
         with:
           cache: "npm"
-          cache-dependency-path: tools/eng/common-tests/tsp-client/package-lock.json
+          cache-dependency-path: tools/eng/common/tsp-client/package-lock.json
 
       - run: npm ci --no-audit --no-fund --prefer-offline
-
-      - run: npm ls -a
-
-      - run: npm run lint
-
-      - run: npm run format:check:ci
-
-      - run: npm run test:ci
+        working-directory: tools/eng/common/tsp-client
 
       - name: "[js] tsp-client update"
         run: |
           npm exec \
-            --prefix "${{ github.workspace }}/tools/eng/common-tests/tsp-client" \
+            --prefix "${{ github.workspace }}/tools/eng/common/tsp-client" \
             --no -- \
             tsp-client update
         working-directory: js/sdk/template/template

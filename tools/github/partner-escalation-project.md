@@ -2,6 +2,9 @@
 
 > Build on existing GitHub Event Processor, Issue Labeler, and MCP tooling to improve partner communication and issue triage, reduce manual handoffs, and introduce ICM only as a targeted escalation mechanism (post‑SLA breach).
 
+**Project board:** [Issue Resolution & Partner Enablement](https://github.com/orgs/Azure/projects/937)
+**Metrics reference:** [Azure/azure-sdk-pr#2550](https://github.com/Azure/azure-sdk-pr/issues/2550)
+
 ## Purpose
 
 Ongoing working series to identify concrete pain points around GitHub triage, partner communication, and SLA‑based escalation into ICM, and converge on a small, clearly scoped Phase 1.
@@ -39,38 +42,138 @@ Ongoing working series to identify concrete pain points around GitHub triage, pa
 
 ---
 
-## Proposed Areas to Explore
+## Epics
 
-### 1. Improve Issue Labeling & Routing
+### 1. Issue Labeling & Routing ([#14114](https://github.com/Azure/azure-sdk-tools/issues/14114))
 
-- Extend existing labeler approach to Azure SDK repos
-- Establish baseline metrics (accuracy, manual corrections)
+Improve the accuracy and coverage of automated issue labeling across repos, establish baseline metrics for label correctness, and determine the right balance between shared labels (for consistent SLA reporting) and repo‑specific labels (for local workflows).
 
-### 2. Partner Self‑Service Tooling
+**Key deliverables:**
+- Baseline labeling accuracy per repo using `Mcp.Evaluator`
+- Improved label model for pilot repo (e.g., Java)
+- Decision on shared vs. repo‑specific label taxonomy
 
-MCP / CLI tools for:
+**Proposed metrics:**
 
-- Issue queue visibility
-- Ownership lookup
-- SLA status (on track / approaching / breached)
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| Triage backlog | Open issues labeled `needs-triage`, per repo | ↓ Decrease |
+| Auto‑label rate | % of issues receiving a service label from automation | ↑ Increase |
+| Manual correction rate | % of auto‑labeled issues where a human changes the label within 48h | ↓ Decrease |
+| Offline model accuracy | Server + Tool label accuracy from `Mcp.Evaluator` against ground truth | ↑ Increase |
+| Time to first service label | Minutes from issue creation → first service label | ↓ Decrease |
 
-### 3. SLA‑Based Escalation via ICM
+### 2. Partner Self‑Service Tooling ([#14115](https://github.com/Azure/azure-sdk-tools/issues/14115))
 
-- GitHub remains system of record
-- ICM created only after SLA breach
-- Leverage existing scheduled event processing
+Build MCP/CLI tools that let partner and service teams independently check issue queues, look up ownership, and view SLA status — reducing the SDK team's role as intermediary.
 
-### 4. SLA Monitoring & Notifications
+**Key deliverables:**
+- `azsdk_issue_status` MCP tool — partners can query their issue queue directly
+- `azsdk_sla_report` MCP tool — proactive SLA visibility for partners
+- Ownership lookup integrated into existing MCP server
 
-- Automated detection of approaching / breached SLAs
-- Replace manual dashboards with lightweight signals
-- GitHub comments first; Teams notifications later
+**Proposed metrics:**
 
-### 5. Copilot Coding Agent (Exploratory)
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| Service Attention backlog | Open issues labeled `Service Attention`, per repo | ↓ Decrease |
+| Service Attention staleness | % of `Service Attention` issues with no update in 14+ days | ↓ Decrease |
+| MCP tool adoption | Unique users invoking partner‑facing MCP tools per week | ↑ Increase |
+| SDK‑as‑intermediary volume | Manual handoff actions by SDK team on behalf of partners | ↓ Decrease |
 
-- Initial issue investigation
-- Draft responses or low‑complexity fixes
-- Agent workflow integration
+### 3. SLA Monitoring & Notifications ([#14116](https://github.com/Azure/azure-sdk-tools/issues/14116))
+
+Automate detection of approaching and breached SLAs, and deliver actionable signals (GitHub comments, recurring summary emails, eventually Teams notifications) to replace underused manual dashboards.
+
+**Key deliverables:**
+- Automated SLA threshold detection integrated into Event Processor
+- GitHub comment notifications on approaching/breached SLAs
+- Recurring SLA summary emails (similar to existing Java team model)
+
+**Proposed metrics:**
+
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| `needs-team-attention` dwell time (P50/P90) | Duration an issue carries `needs-team-attention` before removal | ↓ Decrease |
+| `needs-team-attention` staleness | % of `needs-team-attention` issues with no update in 14+ days | ↓ Decrease |
+| Issue age distribution (P50/P90) | Age (days) of currently open issues | ↓ Decrease |
+| Stale issue rate | % of open issues with no activity in 90+ days | ↓ Decrease |
+| Resolution time (P50/P90) | Days from open → close for issues in measurement period | ↓ Decrease |
+| Notification delivery rate | % of SLA‑approaching issues that received automated notification | ↑ Increase |
+
+### 4. SLA‑Based Escalation via ICM ([#14117](https://github.com/Azure/azure-sdk-tools/issues/14117))
+
+Introduce ICM as a targeted escalation path triggered only after an SLA breach. Define the escalation contract (trigger criteria, required metadata, ownership) and ensure GitHub remains the system of record.
+
+**Key deliverables:**
+- Defined SLA breach threshold (e.g., "14 days in `Service Attention` with no partner response")
+- Escalation contract: trigger criteria, required ICM metadata, ownership rules
+- Integration with Event Processor scheduled processing
+
+**Proposed metrics:**
+
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| SLA breach rate | % of issues exceeding SLA threshold without resolution | ↓ Decrease |
+| ICM incidents created from GitHub | Count of auto‑created ICM incidents from SLA breaches | Controlled increase, then stabilize |
+| ICM → resolution time | Days from ICM creation to GitHub issue close | ↓ Decrease |
+| False escalation rate | % of ICM incidents closed without action (unnecessary) | ↓ Decrease |
+
+### 5. Triage Infra & Repo Playbooks ([#14118](https://github.com/Azure/azure-sdk-tools/issues/14118))
+
+Evaluate GitHub Event Processor vs. GitHub Actions for repo‑specific customization, and document per‑repo triage playbooks capturing each language repo's unique assumptions around ownership, escalation, and workflows.
+
+**Key deliverables:**
+- Assessment: Event Processor extensibility vs. GitHub Actions for repo‑specific rules
+- Documented triage playbooks for each language repo
+- Enhanced Event Processor escalation patterns (level 1‑2 escalation: nudge → team lead)
+
+**Proposed metrics:**
+
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| Repos with documented playbooks | Count of language repos with a formalized triage playbook | ↑ Increase to 5 |
+| Event Processor rule coverage | Number of active rules in `event-processor.config` per repo | Stable or growing |
+| Repo‑specific customization requests | Requests from language teams for triage behavior changes | Track, then ↓ |
+| Issue velocity by repo | Net new issues (opened − closed) per 30 days per repo | Net negative |
+
+### 6. Copilot Coding Agent — Exploratory ([#14119](https://github.com/Azure/azure-sdk-tools/issues/14119))
+
+Test whether AI‑powered agents can meaningfully assist with initial issue investigation, draft responses, or low‑complexity fixes by piloting one narrow use case before deciding on broader investment.
+
+**Key deliverables:**
+- Pilot: one narrow use case (issue summary / draft response)
+- Decision framework for broader investment based on pilot results
+
+**Proposed metrics:**
+
+| Metric | Definition | Target |
+|--------|-----------|--------|
+| Agent‑assisted issue count | Issues where the Copilot agent provided investigation or draft response | ↑ Increase |
+| Agent response acceptance rate | % of agent draft responses used (with or without edits) | ↑ Increase |
+| Time to first response (agent vs. manual) | Compare first‑response time on agent‑handled vs. manual issues | Agent faster |
+
+---
+
+## Metrics Collection Tiers
+
+| Tier | Description | Count | Effort |
+|------|-------------|-------|--------|
+| **Tier 1 — Snapshots** | GitHub Search API counts. No per‑issue calls. | 10 | Low — single scheduled script |
+| **Tier 2 — Timeline Sampling** | Per‑issue Timeline API calls on a sample. | 9 | Medium — sampling script + rate‑limit handling |
+| **Tier 3 — Instrumented** | Built into systems as they're delivered. | 7 | Baked into epic delivery |
+
+---
+
+## Repos in Scope
+
+| Repo | Notes |
+|------|-------|
+| `Azure/azure-sdk-for-python` | High volume, large stale backlog |
+| `Azure/azure-sdk-for-java` | Existing email‑based SLA summaries for reference |
+| `Azure/azure-sdk-for-js` | Low incoming volume but high staleness |
+| `Azure/azure-sdk-for-net` | Highest total volume, most Service Attention issues |
+| `Azure/azure-sdk-for-go` | Smallest repo, mostly security ICMs |
 
 ---
 

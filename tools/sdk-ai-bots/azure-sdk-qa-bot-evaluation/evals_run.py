@@ -237,7 +237,7 @@ if __name__ == "__main__":
                 with open(str(output_path), "w") as f:
                     json.dump(result, indent=4, fp=f)
             
-            # record down failed cases
+            # record failed cases
             for name, results in all_results.items():
                 failed_cases_file_name = f"{name.split('_')[0]}-failed-cases-{now.strftime('%Y-%m-%d-%H-%S')}.json"
                 failed_case_output_path = cache_result_path / failed_cases_file_name

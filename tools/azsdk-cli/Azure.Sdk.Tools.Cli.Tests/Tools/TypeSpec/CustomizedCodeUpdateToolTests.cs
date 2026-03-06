@@ -165,7 +165,6 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(
             packagePath: Path.Combine(Path.GetTempPath(), "nonexistent-" + Guid.NewGuid().ToString("n")),
             tspProjectPath: tspDir,
-            customizationRequest: "test customization",
             ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
@@ -544,7 +543,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.Message, Does.Contain("Build passed"));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
     }
 
@@ -804,7 +803,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
             => _hasCustomizations ? Path.Combine(packagePath, "customization") : null;
 
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildError, CancellationToken ct)
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct)
             => Task.FromResult(_patchesFunc?.Invoke() ?? new List<AppliedPatch>());
 
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)

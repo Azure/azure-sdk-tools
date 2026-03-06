@@ -21,6 +21,11 @@ public enum FeedbackStatus
     SUCCESS,
     
     /// <summary>
+    /// Item requires code-level customization changes (code patching)
+    /// </summary>
+    CODE_CUSTOMIZATION,
+
+    /// <summary>
     /// Item cannot be resolved and requires manual intervention
     /// </summary>
     REQUIRES_MANUAL_INTERVENTION

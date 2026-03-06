@@ -18,10 +18,16 @@ internal class VerifySetupServiceTests
     private TestLogger<VerifySetupService> serviceLogger;
     private VerifySetupService verifySetupService;
     private Mock<IGitHelper> _mockGitHelper;
+    private string? _savedVenvPath;
 
     [SetUp]
     public void Setup()
     {
+        // Isolate tests from host environment: clear the venv env var so
+        // PythonRequirementBase.ResolveVenvExecutable doesn't resolve to
+        // real paths that confuse the mock's substring-based matching.
+        _savedVenvPath = Environment.GetEnvironmentVariable("AZSDKTOOLS_PYTHON_VENV_PATH");
+        Environment.SetEnvironmentVariable("AZSDKTOOLS_PYTHON_VENV_PATH", null);
         mockProcessHelper = new Mock<IProcessHelper>();
         serviceLogger = new TestLogger<VerifySetupService>();
 
@@ -54,6 +60,12 @@ internal class VerifySetupServiceTests
             serviceLogger,
             _mockGitHelper.Object
         );
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        Environment.SetEnvironmentVariable("AZSDKTOOLS_PYTHON_VENV_PATH", _savedVenvPath);
     }
 
     private void SetupSuccessfulProcessMocks()

@@ -16,20 +16,31 @@ jobs:
 
     defaults:
       run:
-        working-directory: eng/common-tests/tsp-client
+        working-directory: tools/eng/common-tests/tsp-client
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout self
+        uses: actions/checkout@v6
         with:
+          path: tools
           sparse-checkout: |
             .github
             eng/common/tsp-client
             eng/common-tests/tsp-client
 
-      - uses: actions/setup-node@v6
+      - name: Checkout js
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-js
+          path: js
+          sparse-checkout: |
+            sdk/template
+
+      - name: Setup node
+        uses: actions/setup-node@v6
         with:
           cache: "npm"
-          cache-dependency-path: eng/common-tests/tsp-client/package-lock.json
+          cache-dependency-path: azure-sdk-tools/eng/common-tests/tsp-client/package-lock.json
 
       - run: npm ci --no-audit --no-fund
 

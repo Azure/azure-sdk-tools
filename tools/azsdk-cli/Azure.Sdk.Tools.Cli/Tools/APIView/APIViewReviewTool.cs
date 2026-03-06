@@ -66,7 +66,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     private readonly Option<string> repoNameOption = new("--repo-name")
     {
-        Description = "The repository name in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')",
+        Description = "The repository name (e.g., 'azure-sdk-for-python' or 'Azure/azure-sdk-for-python')",
         Required = true
     };
 
@@ -120,7 +120,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         Description = "The source branch for the build"
     };
 
-    // create-review-if-changes specific options
+    // create-api-revision-if-changes specific options
     private readonly Option<string> commitShaOption = new("--commit-sha")
     {
         Description = "The git commit SHA of the pull request head",
@@ -183,7 +183,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             GetCommentsCmd => await GetComments(parseResult, ct),
             GetContentCmd => await GetContent(parseResult, ct),
             CreateReviewCmd => await CreateReview(parseResult, ct),
-            CreateApiRevisionIfChangesCmd => await CreateReviewIfChanges(parseResult, ct),
+            CreateApiRevisionIfChangesCmd => await CreateApiRevisionIfChanges(parseResult, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
         };
         
@@ -319,7 +319,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
     }
 
-    private async Task<APIViewResponse> CreateReviewIfChanges(ParseResult parseResult, CancellationToken ct)
+    private async Task<APIViewResponse> CreateApiRevisionIfChanges(ParseResult parseResult, CancellationToken ct)
     {
         string? buildId = parseResult.GetValue(buildIdOption);
         string? artifactName = parseResult.GetValue(artifactNameOption);

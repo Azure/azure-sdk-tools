@@ -101,7 +101,7 @@ public class APIViewService : IAPIViewService
             $"repoName={Uri.EscapeDataString(repoName)}",
             $"packageName={Uri.EscapeDataString(packageName)}",
             $"project={Uri.EscapeDataString(project)}",
-            $"compareAllRevisions={compareAllRevisions.ToString().ToLower()}"
+            $"compareAllRevisions={(compareAllRevisions ? "true" : "false")}"
         };
 
         if (!string.IsNullOrEmpty(label))

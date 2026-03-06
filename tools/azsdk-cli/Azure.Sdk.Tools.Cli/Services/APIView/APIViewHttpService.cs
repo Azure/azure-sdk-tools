@@ -50,8 +50,9 @@ public class APIViewHttpService : IAPIViewHttpService
 
             if (!response.IsSuccessStatusCode)
             {
+                string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
                 _logger.LogError("API call failed during GET {Endpoint} with status code {StatusCode}: {Content}",
-                    endpoint, response.StatusCode, content);
+                    endpoint, response.StatusCode, truncated);
             }
 
             return (content, (int)response.StatusCode);
@@ -77,14 +78,15 @@ public class APIViewHttpService : IAPIViewHttpService
             HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
 
             string requestUrl = $"{baseUrl}{endpoint}";
-            using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, null);
+            using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty));
 
             string content = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
+                string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
                 _logger.LogError("API call failed during POST {Endpoint} with status code {StatusCode}: {Content}",
-                    endpoint, response.StatusCode, content);
+                    endpoint, response.StatusCode, truncated);
             }
 
             return (content, (int)response.StatusCode);

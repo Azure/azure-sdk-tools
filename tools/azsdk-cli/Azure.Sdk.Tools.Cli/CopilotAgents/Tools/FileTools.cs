@@ -36,7 +36,9 @@ public static class FileTools
             : "Read the contents of a file";
 
         return AIFunctionFactory.Create(
-            async ([Description("Relative path of the file to read")] string filePath) =>
+            async ([Description("Relative path of the file to read")] string filePath,
+                   [Description("Optional 1-based start line number to read from (default: read from beginning)")] int? startLine = null,
+                   [Description("Optional 1-based end line number to read to, inclusive (default: read to end)")] int? endLine = null) =>
             {
                 if (string.IsNullOrEmpty(filePath))
                 {
@@ -51,18 +53,32 @@ public static class FileTools
                     throw new ArgumentException($"{path} does not exist");
                 }
 
+                // Fast path: no line numbers and no line range — return raw content
+                if (!includeLineNumbers && startLine == null && endLine == null)
+                {
+                    return await File.ReadAllTextAsync(path);
+                }
+
+                var lines = await File.ReadAllLinesAsync(path);
+                var start = Math.Max(0, (startLine ?? 1) - 1);
+                var end = Math.Min(lines.Length, endLine ?? lines.Length);
+
+                var sb = new System.Text.StringBuilder();
                 if (includeLineNumbers)
                 {
-                    var lines = await File.ReadAllLinesAsync(path);
-                    var sb = new System.Text.StringBuilder();
-                    for (int i = 0; i < lines.Length; i++)
+                    for (int i = start; i < end; i++)
                     {
                         sb.Append(i + 1).Append(": ").AppendLine(lines[i]);
                     }
-                    return sb.ToString();
                 }
-
-                return await File.ReadAllTextAsync(path);
+                else
+                {
+                    for (int i = start; i < end; i++)
+                    {
+                        sb.AppendLine(lines[i]);
+                    }
+                }
+                return sb.ToString();
             },
             "ReadFile",
             description);

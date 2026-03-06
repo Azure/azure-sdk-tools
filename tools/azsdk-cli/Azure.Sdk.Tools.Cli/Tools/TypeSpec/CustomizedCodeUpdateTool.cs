@@ -24,7 +24,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 {
     private readonly ITspClientHelper tspClientHelper;
     private readonly IAPIViewFeedbackService feedbackService;
-    private readonly IFeedbackClassifierService classifierService;
+    private readonly IFeedbackClassifierService _classifierService;
     private readonly ITypeSpecCustomizationService typeSpecCustomizationService;
     private readonly ITypeSpecHelper typeSpecHelper;
 
@@ -60,7 +60,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     {
         this.tspClientHelper = tspClientHelper ?? throw new ArgumentNullException(nameof(tspClientHelper));
         this.feedbackService = feedbackService ?? throw new ArgumentNullException(nameof(feedbackService));
-        this.classifierService = classifierService ?? throw new ArgumentNullException(nameof(classifierService));
+        _classifierService = classifierService ?? throw new ArgumentNullException(nameof(classifierService));
         this.typeSpecCustomizationService = typeSpecCustomizationService ?? throw new ArgumentNullException(nameof(typeSpecCustomizationService));
         this.typeSpecHelper = typeSpecHelper ?? throw new ArgumentNullException(nameof(typeSpecHelper));
     }
@@ -99,6 +99,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         ArgumentException.ThrowIfNullOrWhiteSpace(tspProjectPath, nameof(tspProjectPath));
 
         var customizationRequest = parseResult.GetValue(customizationRequestOption);
+        ArgumentException.ThrowIfNullOrWhiteSpace(customizationRequest, nameof(customizationRequest));
         try
         {
             logger.LogInformation("Starting customized code update for {PackagePath}", packagePath);
@@ -123,11 +124,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
-    /// <param name="customizationRequest">Optional description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
+    /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
     [McpServerTool(Name = CustomizedCodeUpdateToolName), Description("Applies patches to customization files based on build errors, regenerates code if needed (Java), builds, and returns success/failure with build result.")]
-    public Task<CustomizedCodeUpdateResponse> UpdateAsync(string packagePath, string tspProjectPath, string? customizationRequest = null, CancellationToken ct = default)
+    public Task<CustomizedCodeUpdateResponse> UpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, CancellationToken ct = default)
         => RunUpdateAsync(packagePath, tspProjectPath, customizationRequest, ct);
 
     /// <summary>
@@ -135,10 +136,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
     /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
-    /// <param name="customizationRequest">Optional description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
+    /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
-    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string? customizationRequest, CancellationToken ct)
+    private async Task<CustomizedCodeUpdateResponse> RunUpdateAsync(string packagePath, string tspProjectPath, string customizationRequest, CancellationToken ct)
     {
         // Validate input
         if (!Directory.Exists(packagePath))
@@ -149,6 +150,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 Message = $"Package path does not exist: {packagePath}",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                 BuildResult = $"Package path does not exist: {packagePath}"
+            };
+        }
+
+        if (!Directory.Exists(tspProjectPath))
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = $"TypeSpec project path does not exist: {tspProjectPath}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = $"TypeSpec project path does not exist: {tspProjectPath}"
             };
         }
 
@@ -175,6 +187,16 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? buildError = null;
 
         var feedbackItems = await GetFeedbackItems(plainTextFeedback: customizationRequest, ct: ct);
+        if (feedbackItems.Count == 0)
+        {
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = "No feedback items provided. Please supply a customization request or API review URL.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = "No feedback items to process."
+            };
+        }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
         List<string> changesMade = new();
@@ -184,7 +206,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         do
         {
             // TODO - need to update this to avoid casting to/from list
-            var response = await classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath, ct: ct);
+            var response = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath, ct: ct);
 
             if (response.Classifications == null || response.Classifications.Count == 0)
             {
@@ -427,6 +449,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     Message = $"Regeneration failed after patches: {regenResult.ResponseError}",
                     ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
                     BuildResult = regenResult.ResponseError,
+                    TypeSpecChangesSummary = changesMade,
                     AppliedPatches = patches
                 };
             }
@@ -443,6 +466,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             {
                 Success = true,
                 Message = "Build passed after repairs.",
+                TypeSpecChangesSummary = changesMade,
                 AppliedPatches = patches
             };
         }
@@ -455,6 +479,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             Message = "Patches applied but build still failing.",
             ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
             BuildResult = finalBuildError,
+            TypeSpecChangesSummary = changesMade,
             AppliedPatches = patches
         };
     }

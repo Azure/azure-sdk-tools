@@ -5,9 +5,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses.TypeSpec;
 using Azure.Sdk.Tools.Cli.Services.Languages;
-using Microsoft.Extensions.Logging;
 using Moq;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
@@ -165,6 +163,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(
             packagePath: Path.Combine(Path.GetTempPath(), "nonexistent-" + Guid.NewGuid().ToString("n")),
             tspProjectPath: tspDir,
+            customizationRequest: "test customization",
             ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
@@ -543,7 +542,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed"));
+        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
     }
 

@@ -396,11 +396,13 @@ public sealed partial class JavaLanguageService : LanguageService
             var agentDefinition = new CopilotAgent<string>
             {
                 Instructions = prompt,
-                MaxIterations = 25,
+                MaxIterations = 10,
                 Tools =
                 [
                     FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,
-                        description: "Read files from the package directory (generated code, customization files, etc.)"),
+                        description: "Read files from the package directory (generated code, customization files, etc.). Use startLine/endLine to read specific sections of large files."),
+                    FileTools.CreateGrepSearchTool(packagePath,
+                        description: "Search for text or regex patterns in files. Use this to find specific symbols or references without reading entire files."),
                     CodePatchTools.CreateCodePatchTool(customizationRoot,
                         description: "Apply code patches to customization files only (never generated code)",
                         onPatchApplied: patchLog.Add)

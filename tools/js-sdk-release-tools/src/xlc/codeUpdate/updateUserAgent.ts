@@ -1,4 +1,4 @@
-import { ApiVersionType, ModularSDKType, SDKType } from "../../common/types.js";
+import { ModularSDKType, SDKType } from "../../common/types.js";
 import { getSDKType } from "../../common/utils.js";
 import { logger } from "../../utils/logger.js";
 import { isModelOnly } from "../apiVersion/apiVersionTypeExtractor.js";

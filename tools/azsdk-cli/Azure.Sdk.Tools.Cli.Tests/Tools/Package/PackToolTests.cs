@@ -83,7 +83,8 @@ public class PackToolTests
         _tool = new PackTool(
             _mockGitHelper.Object,
             _logger,
-            _languageServices
+            _languageServices,
+            Mock.Of<IRawOutputHelper>()
         );
     }
 

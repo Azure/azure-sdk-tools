@@ -16,7 +16,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SdkGenerationTool(
         IGitHelper gitHelper,
         ILogger<SdkGenerationTool> logger,
-        ITspClientHelper tspClientHelper
+        ITspClientHelper tspClientHelper,
+        IRawOutputHelper outputHelper
     ) : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
@@ -99,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         return PackageOperationResponse.CreateFailure($"The 'tsp-location.yaml' file does not exist at the specified path: {tspLocationPath}");
                     }
 
-                    var reporter = new ProgressReporter(progress, logger, totalSteps: 3);
+                    var reporter = new ProgressReporter(progress, logger, totalSteps: 3, outputHelper);
                     reporter.NextStep("Validating tsp-location.yaml inputs");
 
                     var tspLocationDirectory = Path.GetDirectoryName(tspLocationPath);
@@ -147,7 +148,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Run language-specific script to generate the SDK code from 'tspconfig.yaml'
         private async Task<PackageOperationResponse> GenerateSdkFromTspConfigAsync(IProgress<ProgressNotificationValue>? progress, string localSdkRepoPath, string tspConfigPath, string emitterOptions, CancellationToken ct)
         {
-            var reporter = new ProgressReporter(progress, logger, totalSteps: 4);
+            var reporter = new ProgressReporter(progress, logger, totalSteps: 4, outputHelper);
             string specRepoFullName = string.Empty;
 
             // white spaces will be added by agent when it's a URL

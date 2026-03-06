@@ -57,7 +57,8 @@ public class SdkGenerationToolTests
         _tool = new SdkGenerationTool(
             _mockGitHelper.Object,
             _logger,
-            _mockTspClientHelper.Object
+            _mockTspClientHelper.Object,
+            Mock.Of<IRawOutputHelper>()
         );
     }
 

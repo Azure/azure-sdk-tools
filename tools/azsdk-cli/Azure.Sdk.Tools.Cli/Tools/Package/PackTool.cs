@@ -16,12 +16,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType, Description("Create distributable artifacts for SDK packages")]
     public class PackTool : LanguageMcpTool
     {
+        private readonly IRawOutputHelper _outputHelper;
+
         public PackTool(
             IGitHelper gitHelper,
             ILogger<PackTool> logger,
-            IEnumerable<LanguageService> languageServices
+            IEnumerable<LanguageService> languageServices,
+            IRawOutputHelper outputHelper
         ) : base(languageServices, gitHelper, logger)
         {
+            _outputHelper = outputHelper;
         }
 
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
@@ -61,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                var reporter = new ProgressReporter(progress, logger, totalSteps: 4);
+                var reporter = new ProgressReporter(progress, logger, totalSteps: 4, _outputHelper);
 
                 reporter.NextStep("Validating package path");
 

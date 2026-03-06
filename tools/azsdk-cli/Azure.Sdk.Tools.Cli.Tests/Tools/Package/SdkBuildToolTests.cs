@@ -70,7 +70,8 @@ public class SdkBuildToolTests
         _tool = new SdkBuildTool(
             _mockGitHelper.Object,
             _logger,
-            _languageServices
+            _languageServices,
+            Mock.Of<IRawOutputHelper>()
         );
     }
 

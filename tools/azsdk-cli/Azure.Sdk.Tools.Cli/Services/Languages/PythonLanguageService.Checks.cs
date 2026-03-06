@@ -2,7 +2,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Microsoft.Extensions.Logging;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
@@ -98,6 +97,32 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error running code linting: {ex.Message}");
+        }
+    }
+
+    public override async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Starting dependency analysis for Python project at: {PackagePath}", packagePath);
+            
+            var result = await pythonHelper.Run(new PythonOptions("azpysdk", ["mindependency", "--isolate", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(5)), cancellationToken);
+
+            if (result.ExitCode == 0)
+            {
+                logger.LogInformation("Dependency analysis completed successfully - no issues found");
+                return new PackageCheckResponse(result.ExitCode, "Dependency analysis completed successfully - all minimum dependencies are compatible");
+            }
+            else
+            {
+                logger.LogWarning("Dependency analysis found issues with exit code {ExitCode}", result.ExitCode);
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Dependency analysis found issues with minimum dependency versions");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error running dependency analysis for Python project at: {PackagePath}", packagePath);
+            return new PackageCheckResponse(1, "", $"Error running dependency analysis: {ex.Message}");
         }
     }
 

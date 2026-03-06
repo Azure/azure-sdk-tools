@@ -24,12 +24,14 @@ public sealed partial class DotnetLanguageService: LanguageService
     public DotnetLanguageService(
         IProcessHelper processHelper,
         IPowershellHelper powershellHelper,
-        IGitHelper gitHelper,        
+        IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
+        IPackageInfoHelper packageInfoHelper,
         IFileHelper fileHelper,
-        ISpecGenSdkConfigHelper specGenSdkConfigHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper)
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+        IChangelogHelper changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.powershellHelper = powershellHelper;
     }
@@ -49,9 +51,9 @@ public sealed partial class DotnetLanguageService: LanguageService
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving .NET package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var (repoRoot, relativePath, fullPath) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
         var (packageName, packageVersion, sdkType) = await TryGetPackageInfoAsync(fullPath, ct);
-        
+
         if (packageName == null)
         {
             logger.LogWarning("Could not determine package name for .NET package at {fullPath}", fullPath);
@@ -64,7 +66,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         {
             logger.LogWarning("Could not determine SDK type for .NET package at {fullPath}", fullPath);
         }
-        
+
         var samplesDirectory = FindSamplesDirectory(fullPath);
 
         var parsedSdkType = sdkType switch
@@ -74,7 +76,7 @@ public sealed partial class DotnetLanguageService: LanguageService
             "functions" => SdkType.Functions,
             _ => SdkType.Unknown
         };
-        
+
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -87,10 +89,10 @@ public sealed partial class DotnetLanguageService: LanguageService
             SamplesDirectory = samplesDirectory,
             SdkType = parsedSdkType
         };
-        
-        logger.LogDebug("Resolved .NET package: {packageName} v{packageVersion} at {relativePath} (as {parsedSdkType})", 
+
+        logger.LogDebug("Resolved .NET package: {packageName} v{packageVersion} at {relativePath} (as {parsedSdkType})",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath, parsedSdkType.ToString() ?? "(unknown)");
-        
+
         return model;
     }
 
@@ -100,12 +102,12 @@ public sealed partial class DotnetLanguageService: LanguageService
         {
             var csproj = Directory.GetFiles(Path.Combine(packagePath, "src"), "*.csproj").FirstOrDefault();
 
-            if (csproj == null) 
+            if (csproj == null)
             {
                 logger.LogWarning("No .csproj file found in {packagePath}", packagePath);
-                return (null, null, null); 
+                return (null, null, null);
             }
-            
+
             logger.LogTrace("Getting package info via MSBuild for: {csproj}", csproj);
 
             var result = await processHelper.Run(new ProcessOptions(
@@ -142,7 +144,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                 // Validate we got actual values before returning
                 if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(version))
                 {
-                    logger.LogTrace("Found package info via MSBuild: {name} v{version} ({sdkType})", 
+                    logger.LogTrace("Found package info via MSBuild: {name} v{version} ({sdkType})",
                         name, version, sdkType);
 
                     return (name, version, sdkType);
@@ -177,7 +179,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 
             // Get all subdirectories under tests (sorted for consistent behavior across platforms)
             var testSubdirectories = Directory.GetDirectories(testsPath).OrderBy(d => d).ToArray();
-            
+
             foreach (var directory in testSubdirectories)
             {
                 // Look for .cs files containing "#region Snippet:" in their content
@@ -195,15 +197,15 @@ public sealed partial class DotnetLanguageService: LanguageService
                         }
                     })
                     .ToArray();
-                
+
                 if (sampleFiles.Length > 0)
                 {
-                    logger.LogTrace("Found samples directory at {directory} with {count} files containing snippet regions", 
+                    logger.LogTrace("Found samples directory at {directory} with {count} files containing snippet regions",
                         directory, sampleFiles.Length);
                     return directory;
                 }
             }
-            
+
             logger.LogTrace("No samples directory found under {testsPath}, using default", testsPath);
             return GetDefaultSamplesDirectory(packagePath);
         }
@@ -218,7 +220,7 @@ public sealed partial class DotnetLanguageService: LanguageService
     {
         var testsPath = Path.Combine(packagePath, "tests");
         var workingDirectory = Directory.Exists(testsPath) ? testsPath : packagePath;
-        
+
         var result = await processHelper.Run(new ProcessOptions(
                 command: "dotnet",
                 args: ["test"],
@@ -230,7 +232,98 @@ public sealed partial class DotnetLanguageService: LanguageService
         return new TestRunResponse(result);
     }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing .NET SDK project at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}", null, null);
+            }
+
+            var packageInfo = await GetPackageInfo(fullPath, ct);
+
+            var args = new List<string> { "pack" };
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.AddRange(["--output", outputPath]);
+            }
+
+            var result = await processHelper.Run(new ProcessOptions(
+                    command: DotNetCommand,
+                    args: args.ToArray(),
+                    workingDirectory: fullPath,
+                    timeout: TimeSpan.FromMinutes(timeoutMinutes)
+                ),
+                ct
+            );
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"dotnet pack failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            // Try to find the generated .nupkg path from the output
+            var artifactPath = ExtractNupkgPath(result.Output, fullPath, outputPath);
+            logger.LogInformation("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing .NET SDK");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to extract the .nupkg file path from dotnet pack output.
+    /// </summary>
+    private static string? ExtractNupkgPath(string output, string packagePath, string? outputPath)
+    {
+        // dotnet pack typically outputs a line like:
+        // Successfully created package '/path/to/Package.1.0.0.nupkg'.
+        var lines = output.Split('\n');
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (trimmed.Contains(".nupkg", StringComparison.OrdinalIgnoreCase))
+            {
+                // Try to extract the path between single quotes
+                var startIdx = trimmed.IndexOf('\'');
+                var endIdx = trimmed.LastIndexOf('\'');
+                if (startIdx >= 0 && endIdx > startIdx)
+                {
+                    return trimmed.Substring(startIdx + 1, endIdx - startIdx - 1);
+                }
+            }
+        }
+
+        // Fallback: look in the output directory for .nupkg files
+        var searchDir = outputPath ?? Path.Combine(packagePath, "bin", "Release");
+        if (Directory.Exists(searchDir))
+        {
+            var nupkgFiles = Directory.GetFiles(searchDir, "*.nupkg", SearchOption.TopDirectoryOnly);
+            if (nupkgFiles.Length > 0)
+            {
+                return nupkgFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+            }
+        }
+
+        return null;
+    }
+
+    public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {
         // In azure-sdk-for-net, generated code lives in the Generated folder.
         // Customizations are partial types defined outside the Generated folder.
@@ -240,10 +333,16 @@ public sealed partial class DotnetLanguageService: LanguageService
 
         try
         {
+            var srcDir = Path.Combine(packagePath, "src");
+            if (!Directory.Exists(srcDir))
+            {
+                return null;
+            }
+
             var generatedDirMarker = Path.DirectorySeparatorChar + GeneratedFolderName + Path.DirectorySeparatorChar;
-            var csFiles = Directory.GetFiles(packagePath, "*.cs", SearchOption.AllDirectories)
+            var csFiles = Directory.GetFiles(srcDir, "*.cs", SearchOption.AllDirectories)
                 .Where(file => !file.Contains(generatedDirMarker, StringComparison.OrdinalIgnoreCase));
-            
+
             foreach (var file in csFiles)
             {
                 try
@@ -253,7 +352,7 @@ public sealed partial class DotnetLanguageService: LanguageService
                         if (line.Contains("partial class"))
                         {
                             logger.LogDebug("Found .NET partial class in {FilePath}", file);
-                            return true;
+                            return srcDir;
                         }
                     }
                 }
@@ -264,12 +363,12 @@ public sealed partial class DotnetLanguageService: LanguageService
             }
 
             logger.LogDebug("No .NET partial classes found in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Error searching for .NET customization files in {PackagePath}", packagePath);
-            return false;
+            return null;
         }
     }
 }

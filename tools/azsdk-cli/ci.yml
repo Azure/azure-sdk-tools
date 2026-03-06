@@ -27,8 +27,10 @@ extends:
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
     ToolDirectory: $(ToolDir)
-    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests    
+    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
     VerifyChangelog: true
+    # GitHub.Copilot.SDK dependency is not strong name signed. Skip validation in order to sign azsdk cli.
+    RequireStrongNames: false
     StandaloneExeMatrix:
       - rid: linux-x64
         framework: net8.0
@@ -45,7 +47,7 @@ extends:
       - rid: win-x64
         framework: net8.0
         assembly: azsdk
-    ${{ if eq(variables['System.TeamProject'], 'internal') }}:    
+    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
       CustomJobs:
       - template: /eng/common/pipelines/templates/jobs/ai-eval-job.yml
         parameters:
@@ -58,4 +60,4 @@ extends:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:
           ToolDirectory: $(ToolDir)
-          
+

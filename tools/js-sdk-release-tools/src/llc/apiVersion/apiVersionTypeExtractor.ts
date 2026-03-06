@@ -67,7 +67,8 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
         return await getApiVersionTypeFromNpm(packageName);
     }
     
-    logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');
+    // Fall back to parameters.ts
+    logger.info('Fallback to get api version type from operation\'s parameter');
     const parametersPath = await resolveParameterPath(packageRoot);
     const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
     if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;

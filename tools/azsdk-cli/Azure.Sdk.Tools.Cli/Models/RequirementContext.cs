@@ -36,6 +36,12 @@ public class RequirementContext
     public IReadOnlySet<SdkLanguage> Languages { get; init; } = new HashSet<SdkLanguage>();
 
     /// <summary>
+    /// Names of requirements that have failed their check. Used to skip dependent requirements early.
+    /// Populated during the verification process.
+    /// </summary>
+    public HashSet<string> FailedRequirements { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
     /// True if running on Windows.
     /// </summary>
     public bool IsWindows => Platform == OSPlatform.Windows;

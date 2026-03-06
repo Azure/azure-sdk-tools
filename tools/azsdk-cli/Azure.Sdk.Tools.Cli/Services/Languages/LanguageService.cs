@@ -13,8 +13,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         protected readonly IGitHelper gitHelper;
         protected readonly ILogger<LanguageService> logger;
         protected readonly ICommonValidationHelpers commonValidationHelpers;
+        protected readonly IPackageInfoHelper packageInfoHelper;
         protected readonly IFileHelper fileHelper;
         protected readonly ISpecGenSdkConfigHelper specGenSdkConfigHelper;
+        protected readonly IChangelogHelper changelogHelper;
 
         /// <summary>
         /// Protected parameterless constructor for test mocking purposes.
@@ -25,8 +27,10 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             gitHelper = null!;
             logger = null!;
             commonValidationHelpers = null!;
+            packageInfoHelper = null!;
             fileHelper = null!;
             specGenSdkConfigHelper = null!;
+            changelogHelper = null!;
         }
 
         protected LanguageService(
@@ -34,25 +38,145 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             IGitHelper gitHelper,
             ILogger<LanguageService> logger,
             ICommonValidationHelpers commonValidationHelpers,
+            IPackageInfoHelper packageInfoHelper,
             IFileHelper fileHelper,
-            ISpecGenSdkConfigHelper specGenSdkConfigHelper)
+            ISpecGenSdkConfigHelper specGenSdkConfigHelper,
+            IChangelogHelper changelogHelper)
         {
             this.processHelper = processHelper;
             this.gitHelper = gitHelper;
             this.logger = logger;
             this.commonValidationHelpers = commonValidationHelpers;
+            this.packageInfoHelper = packageInfoHelper;
             this.fileHelper = fileHelper;
             this.specGenSdkConfigHelper = specGenSdkConfigHelper;
+            this.changelogHelper = changelogHelper;
         }
 
         public abstract SdkLanguage Language { get; }
         public virtual bool IsCustomizedCodeUpdateSupported => false;
+
 #pragma warning disable CS1998
         public async virtual Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException("GetPackageInfo is not implemented for this language.");
         }
 #pragma warning restore CS1998
+
+        /// <summary>
+        /// Discovers all packages in a service directory (or all services if empty).
+        /// Returns fully-populated PackageInfo including CI parameters and triggering paths.
+        /// Default implementation discovers package directories and calls GetPackageInfo for each.
+        /// </summary>
+        /// <param name="repoRoot">Absolute path to the repository root.</param>
+        /// <param name="serviceDirectory">Service directory under sdk/ (e.g., "storage"). Empty for all services.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>List of discovered packages with CI parameters populated.</returns>
+        public virtual async Task<IReadOnlyList<PackageInfo>> DiscoverPackagesAsync(
+            string repoRoot,
+            string? serviceDirectory,
+            CancellationToken ct = default)
+        {
+            var sdkRoot = Path.Combine(repoRoot, "sdk");
+            var normalizedServiceDirectory = serviceDirectory;
+            // Handle service directories passed with sdk like 'sdk/core'
+            if (!string.IsNullOrWhiteSpace(normalizedServiceDirectory))
+            {
+                normalizedServiceDirectory = NormalizedPath.Normalize(normalizedServiceDirectory);
+                if (normalizedServiceDirectory.StartsWith("sdk/", StringComparison.OrdinalIgnoreCase))
+                {
+                    normalizedServiceDirectory = normalizedServiceDirectory["sdk/".Length..];
+                }
+            }
+
+            var searchRoot = string.IsNullOrWhiteSpace(serviceDirectory)
+                ? sdkRoot
+                : Path.Combine(sdkRoot, normalizedServiceDirectory!);
+
+            if (!Directory.Exists(searchRoot))
+            {
+                return [];
+            }
+
+            var packageDirectories = DiscoverPackageDirectories(searchRoot, !string.IsNullOrWhiteSpace(normalizedServiceDirectory));
+            var packages = new List<PackageInfo>();
+
+            foreach (var packageDirectory in packageDirectories)
+            {
+                try
+                {
+                    var packageInfo = await GetPackageInfo(packageDirectory, ct);
+                    PopulateCiMetadata(packageInfo);
+                    packages.Add(packageInfo);
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogDebug(ex, "Failed to get package info for {directory}", packageDirectory);
+                }
+            }
+
+            return packages;
+        }
+
+        /// <summary>
+        /// Discovers package directories under the search root.
+        /// Override this to customize package discovery for a language.
+        /// </summary>
+        protected virtual IEnumerable<string> DiscoverPackageDirectories(string searchRoot, bool isServiceDirectory)
+        {
+            if (PackageManifestPatterns.Length == 0)
+            {
+                return [];
+            }
+
+
+            var packageRoots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var pattern in PackageManifestPatterns)
+            {
+                var enumerationOptions = new EnumerationOptions()
+                {
+                    RecurseSubdirectories = true,
+                    MaxRecursionDepth = 3
+                };
+
+                foreach (var filePath in Directory.EnumerateFiles(searchRoot, pattern, enumerationOptions))
+                {
+                    var packageRoot = GetPackageRootFromManifest(filePath);
+                    if (!string.IsNullOrEmpty(packageRoot))
+                    {
+                        packageRoots.Add(packageRoot);
+                    }
+                }
+            }
+
+            return packageRoots;
+        }
+
+        /// <summary>
+        /// File patterns used to identify package manifest files (e.g., "pom.xml", "package.json").
+        /// Override in derived classes to specify language-specific patterns.
+        /// </summary>
+        protected virtual string[] PackageManifestPatterns => [];
+
+        protected virtual void ApplyLanguageCiParameters(PackageInfo packageInfo)
+        {
+        }
+
+        protected void PopulateCiMetadata(PackageInfo packageInfo)
+        {
+            packageInfoHelper.PopulateCommonCiMetadata(packageInfo);
+            ApplyLanguageCiParameters(packageInfo);
+        }
+
+        /// <summary>
+        /// Gets the package root directory from a manifest file path.
+        /// Default implementation returns the directory containing the manifest.
+        /// Override in derived classes if the manifest is in a subdirectory (e.g., src/).
+        /// </summary>
+        protected virtual string? GetPackageRootFromManifest(string manifestPath)
+        {
+            return Path.GetDirectoryName(manifestPath);
+        }
 
         /// <summary>
         /// Analyzes dependencies for the specific package.
@@ -119,7 +243,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="packagePath">Path to the package directory</param>
         /// <param name="fixCheckErrors">Whether to automatically apply code formatting</param>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Result of the code formatting operation</returns>  
+        /// <returns>Result of the code formatting operation</returns>
         public virtual Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new PackageCheckResponse(0, "noop", "This is not an applicable operation for this language."));
@@ -194,32 +318,33 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
-        /// Determines whether the package has any hand-authored customizations.
+        /// Determines whether the package has customizations and returns their root directory.
         /// </summary>
         /// <param name="packagePath">Root folder of the package (e.g. SDK package directory).</param>
         /// <param name="ct">Cancellation token.</param>
-        /// <returns>True if customizations exist; false otherwise.</returns>
-        public virtual bool HasCustomizations(string packagePath, CancellationToken ct)
+        /// <returns>Path to customization root directory if customizations exist, null otherwise.</returns>
+        public virtual string? HasCustomizations(string packagePath, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(packagePath) || !Directory.Exists(packagePath))
-            {
-                logger?.LogDebug("Cannot check for customizations - package path does not exist: {PackagePath}", packagePath);
-                return false;
-            }
-            return false;
+            return null;
         }
 
         /// <summary>
-        /// Applies automated patches directly to customization code using intelligent analysis.
+        /// Applies patches to customization files based on build errors.
+        /// This is a mechanical worker - it applies safe patches and returns results.
+        /// The Classifier (Phase A) does the thinking and routing.
         /// </summary>
-        /// <param name="commitSha">The commit SHA from TypeSpec changes for context</param>
         /// <param name="customizationRoot">Path to the customization root directory</param>
         /// <param name="packagePath">Path to the package directory containing generated code</param>
+        /// <param name="buildError">The build error that triggered repair</param>
         /// <param name="ct">Cancellation token</param>
-        /// <returns>True if patches were successfully applied; false otherwise</returns>
-        public virtual Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string packagePath, CancellationToken ct)
+        /// <returns>List of applied patches</returns>
+        public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(
+            string customizationRoot,
+            string packagePath,
+            string buildError,
+            CancellationToken ct)
         {
-            return Task.FromResult(false);
+            return Task.FromResult(new List<AppliedPatch>());
         }
 
         /// <summary>
@@ -253,7 +378,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
             {
                 return ValidationResult.CreateFailure($"Validation exception: {ex.Message}");
             }
-        }               
+        }
 
         /// <summary>
         /// Updates the package metadata content for a specified package.
@@ -288,6 +413,9 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
         /// <summary>
         /// Updates the version for a specified package.
+        /// This method performs two steps:
+        /// 1. Updates the release date in the changelog (common across all languages)
+        /// 2. Calls language-specific version update logic via <see cref="UpdatePackageVersionInFilesAsync"/>
         /// </summary>
         /// <param name="packagePath">The absolute path to the package directory.</param>
         /// <param name="releaseType">Specifies whether the next version is 'beta' or 'stable'.</param>
@@ -295,16 +423,102 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="releaseDate">The date (YYYY-MM-DD) to write into the changelog.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
         /// <returns>A response indicating the result of the version update operation.</returns>
-        public virtual Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, string? releaseType, string? version, string? releaseDate, CancellationToken ct)
+        public virtual async Task<PackageOperationResponse> UpdateVersionAsync(string packagePath, string? releaseType, string? version, string? releaseDate, CancellationToken ct)
         {
-            this.logger.LogInformation("No language-specific package version update implementation found for package path: {packagePath}.", packagePath);
+            logger.LogInformation("Updating version for package at: {PackagePath}", packagePath);
+            var packageInfo = await GetPackageInfo(packagePath, ct);
+
+            // Use provided version or get current version from package
+            var targetVersion = version;
+            if (string.IsNullOrWhiteSpace(targetVersion))
+            {
+                targetVersion = packageInfo?.PackageVersion;
+                if (string.IsNullOrWhiteSpace(targetVersion))
+                {
+                    return PackageOperationResponse.CreateFailure(
+                        "Version is required. Unable to determine the current package version.",
+                        packageInfo: packageInfo,
+                        nextSteps: ["Provide the version parameter explicitly"]);
+                }
+            }
+
+            // Step 1: Update the changelog release date (common across all languages)
+            var changelogPath = changelogHelper.GetChangelogPath(packagePath);
+            if (changelogPath == null)
+            {
+                logger.LogWarning("No CHANGELOG.md found in package directory: {PackagePath}", packagePath);
+                return PackageOperationResponse.CreateFailure(
+                    "No CHANGELOG.md found in package directory.",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Ensure CHANGELOG.md exists in the package root directory",
+                        "Run another tool to update the changelog content"
+                    ]);
+            }
+
+            // releaseDate is already validated and defaulted by VersionUpdateTool
+            // Update the changelog with the release date
+            // This will also validate that an entry exists for the version
+            var changelogResult = changelogHelper.UpdateReleaseDate(changelogPath, targetVersion, releaseDate);
+            if (!changelogResult.Success)
+            {
+                logger.LogWarning("Failed to update changelog: {Message}", changelogResult.Message);
+                return PackageOperationResponse.CreateFailure(
+                    changelogResult.Message ?? "Failed to update changelog.",
+                    packageInfo: packageInfo,
+                    nextSteps: [
+                        "Run another tool to update the changelog content for this version first",
+                        "Then run this tool again to set the release date"
+                    ]);
+            }
+
+            logger.LogInformation("Changelog updated successfully: {Message}", changelogResult.Message);
+
+            // Step 2: Call language-specific version update logic
+            var versionUpdateResult = await UpdatePackageVersionInFilesAsync(packagePath, targetVersion, releaseType, ct);
+            if (versionUpdateResult.OperationStatus == Status.Failed)
+            {
+                // Changelog was updated but version files failed - report partial success
+                return PackageOperationResponse.CreateSuccess(
+                    $"Changelog release date updated to {releaseDate}, but version file update requires additional steps.",
+                    nextSteps: versionUpdateResult.NextSteps?.ToArray() ?? ["Manually update the package version in project files"],
+                    result: "partial",
+                    packageInfo: packageInfo);
+            }
+
+            // If version update returned partial success (e.g., not implemented by specific language),
+            // wrap the result to include packageInfo while preserving message and next steps
+            if (versionUpdateResult.Result is "partial")
+            {
+                return PackageOperationResponse.CreateSuccess(
+                    versionUpdateResult.Message,
+                    nextSteps: versionUpdateResult.NextSteps?.ToArray(),
+                    result: versionUpdateResult.Result as string,
+                    packageInfo: packageInfo);
+            }
+
+            return PackageOperationResponse.CreateSuccess(
+                $"Version {targetVersion} updated with release date {releaseDate}.",
+                nextSteps: ["Review the changes", "Run validation checks"],
+                packageInfo: packageInfo);
+        }
+
+        /// <summary>
+        /// Updates the package version in language-specific files (e.g., .csproj, pom.xml, package.json).
+        /// Override this method in derived classes to implement language-specific version update logic.
+        /// </summary>
+        /// <param name="packagePath">The absolute path to the package directory.</param>
+        /// <param name="version">The version to set.</param>
+        /// <param name="releaseType">Specifies whether the version is 'beta' or 'stable'.</param>
+        /// <param name="ct">Cancellation token for the operation.</param>
+        /// <returns>A response indicating the result of the version file update operation.</returns>
+        protected virtual Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(string packagePath, string version, string? releaseType, CancellationToken ct)
+        {
+            logger.LogInformation("No language-specific version file update implementation for {Language}. Only changelog was updated.", Language);
             return Task.FromResult(PackageOperationResponse.CreateSuccess(
-                "No version update performed.",
-                nextSteps: [
-                    "Manually update the version and release date in the changelog and metadata as needed when preparing a release",
-                    "Run validation checks"
-                    ],
-                result: "noop"));
+                "Changelog updated. Language-specific version file update not implemented.",
+                nextSteps: ["Manually update the package version in project files if needed"],
+                result: "partial"));
         }
 
         /// <summary>
@@ -341,7 +555,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 // Skip build for Python projects early (Python SDKs don't require compilation)
                 if (Language == SdkLanguage.Python)
                 {
-                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    logger.LogDebug("Python SDK - skipping build");
                     return (true, null, null);
                 }
 
@@ -362,7 +576,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 }
 
                 packagePath = fullPath;
-                logger.LogInformation("Resolved package path: {PackagePath}", packagePath);
 
                 // Get repository root path from project path
                 string sdkRepoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
@@ -370,8 +583,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 {
                     return (false, $"Failed to discover local sdk repo with project-path: {packagePath}.", null);
                 }
-
-                logger.LogInformation("Repository root path: {SdkRepoRoot}", sdkRepoRoot);
 
                 PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
 
@@ -381,7 +592,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                     return (false, "No build configuration found or failed to prepare the build command.", packageInfo);
                 }
 
-                logger.LogInformation("Found valid configuration for build process. Executing configured script...");
+                logger.LogDebug("Found valid configuration for build process. Executing configured script...");
 
                 // Prepare script parameters
                 var scriptParameters = new Dictionary<string, string>
@@ -403,11 +614,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 if (result.ExitCode != 0)
                 {
                     var errorMessage = $"Build failed with exit code {result.ExitCode}. Output:\n{trimmedOutput}";
-                    logger.LogError("Build failed: {ErrorMessage}", errorMessage);
+                    logger.LogDebug("Build failed: {ErrorMessage}", errorMessage);
                     return (false, errorMessage, packageInfo);
                 }
 
-                logger.LogInformation("Build completed successfully.");
+                logger.LogDebug("Build completed successfully.");
                 return (true, null, packageInfo);
             }
             catch (Exception ex)
@@ -415,6 +626,53 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
                 logger.LogError(ex, "Error occurred while building SDK code");
                 return (false, $"An error occurred: {ex.Message}", null);
             }
+        }
+
+        /// <summary>
+        /// Creates a distributable artifact (package) for the specified SDK package.
+        /// For example, this produces a .nupkg for .NET, a .jar for Java, a .tgz for JavaScript, or a wheel/sdist for Python.
+        /// </summary>
+        /// <param name="packagePath">Absolute path to the SDK package directory.</param>
+        /// <param name="outputPath">Optional output directory for the artifact. If null, a default location is used.</param>
+        /// <param name="timeoutMinutes">Maximum time to wait for the pack process to complete.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>A tuple containing: Success (bool), ErrorMessage (string? - null if successful), PackageInfo (PackageInfo? - package metadata if available), ArtifactPath (string? - path to the generated artifact).</returns>
+        public virtual Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+            string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+        {
+            return Task.FromResult<(bool, string?, PackageInfo?, string?)>((false, $"Pack is not supported for {Language}.", null, null));
+        }
+
+        protected static string? GetSpecProjectPath(string packagePath)
+        {
+            var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
+            if (!File.Exists(tspLocationPath))
+            {
+                return null;
+            }
+
+            try
+            {
+                using var reader = new StreamReader(tspLocationPath);
+                var tspLocation = TspLocationYamlDeserializer.Deserialize<TspLocation>(reader);
+                return tspLocation?.Directory;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static readonly YamlDotNet.Serialization.IDeserializer TspLocationYamlDeserializer =
+            new YamlDotNet.Serialization.DeserializerBuilder()
+                .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.NullNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
+                .Build();
+
+        private class TspLocation
+        {
+            [YamlDotNet.Serialization.YamlMember(Alias = "directory")]
+            public string? Directory { get; set; }
         }
     }
 }

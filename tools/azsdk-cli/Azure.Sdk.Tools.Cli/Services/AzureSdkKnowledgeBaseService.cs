@@ -15,13 +15,17 @@ namespace Azure.Sdk.Tools.Cli.Services
     /// </summary>
     public class AzureSdkKnowledgeBaseService : IAzureSdkKnowledgeBaseService
     {
+        private IPublicClientApplication? _msalApp;
+
         private readonly HttpClient _httpClient;
         private readonly ILogger<AzureSdkKnowledgeBaseService> _logger;
         private readonly AzureSdkKnowledgeBaseOptions _options;
         private readonly JsonSerializerOptions _jsonOptions;
-        private readonly IPublicClientApplication? _msalApp;
         private readonly IList<string> scopes = new List<string>();
         private const string authUrl = "https://login.microsoftonline.com/organizations/";
+
+        private readonly object _initializeLock = new();
+        private bool _initialized = false;
 
         private static readonly ServiceInfo DefaultAzureSdkKnowledgeService = new()
         {
@@ -38,13 +42,20 @@ namespace Azure.Sdk.Tools.Cli.Services
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
-
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
                 WriteIndented = _options.EnableDebugLogging
             };
+        }
+
+        /// <summary>
+        /// Initializes the service, including setting up authentication if necessary.
+        /// This is separate from the constructor to allow for lazy initialization.
+        /// </summary>
+        private void _initialize()
+        {
             if (string.IsNullOrEmpty(_options.Endpoint))
             {
                 _logger.LogInformation("Azure knowledge base service endpoint has not been configured. You can set the environment variable {EndpointEnvironmentVariable}.", AzureSdkKnowledgeBaseOptions.EndpointEnvironmentVariable);
@@ -54,7 +65,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 _options.ClientId = DefaultAzureSdkKnowledgeService.ClientId;
             }
 
-            if (!string.IsNullOrEmpty(_options.ClientId)) {
+            if (!string.IsNullOrEmpty(_options.ClientId))
+            {
                 _logger.LogInformation("Azure knowledge base service endpoint and client id are configured. Initializing authentication.");
 
                 var builder = PublicClientApplicationBuilder
@@ -68,26 +80,39 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ConfigureTokenCache(_msalApp);
             }
 
-            if (!string.IsNullOrEmpty(_options.AuthScope)) {
+            if (!string.IsNullOrEmpty(_options.AuthScope))
+            {
                 scopes.Add(_options.AuthScope);
             }
 
             ConfigureHttpClient();
+
+            _initialized = true;
+        }
+
+        private void Initialize()
+        {
+            lock (_initializeLock)
+            {
+                if (!_initialized)
+                {
+                    _initialize();
+                }
+            }
         }
 
         public async Task<CompletionResponse> SendCompletionRequestAsync(
             CompletionRequest request,
             CancellationToken cancellationToken = default)
         {
-            if (request == null)
-            {
-                throw new ArgumentNullException(nameof(request));
-            }
+            ArgumentNullException.ThrowIfNull(request);
 
             if (!ValidateRequest(request))
             {
                 throw new ArgumentException("Request validation failed", nameof(request));
             }
+
+            Initialize();
 
             try
             {
@@ -180,6 +205,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             return isValid;
         }
+
         private async Task<AuthenticationResult> RetrieveAiCompletionAccessTokenAsync(CancellationToken cancellationToken = default)
         {
             if (_msalApp != null)
@@ -231,12 +257,14 @@ namespace Azure.Sdk.Tools.Cli.Services
                     throw new Exception("Failed to acquire authentication token after interactive authentication attempt.");
                 }
                 return authResult;
-            } else
+            }
+            else
             {
                 _logger.LogInformation("Azure knowledge base service client id not configured, skipping authentication.");
                 return null;
             }
         }
+
         private async Task<CompletionResponse> HandleHttpResponse(
             HttpResponseMessage response,
             CancellationToken cancellationToken)

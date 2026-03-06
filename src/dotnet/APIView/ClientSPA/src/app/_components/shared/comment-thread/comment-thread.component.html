@@ -1,14 +1,14 @@
 <div *ngIf="codePanelRowData!.isResolvedCommentThread" class="resolution-info {{ floatItemStart }}">
-    <small class="d-flex align-items-center"><i class="bi bi-check-circle-fill" style="color: var(--primary-color); margin-right: 6px;"></i>Resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}</span>
+    <small class="d-flex align-items-center"><i class="bi bi-check-circle-fill" style="color: var(--primary-color); margin-right: 6px;"></i>Resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span *ngIf="threadParticipants" class="participants-info text-muted me-2">| Participants: {{ threadParticipants }}&nbsp;</span><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}</span>
     </small>
 </div>
 <div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded"
      class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container {{ floatItemStart }}"
      [class.thread-collapsed]="isThreadCollapsed">
-    <div *ngIf="instanceLocation === 'code-panel' && codePanelRowData!.comments && codePanelRowData!.comments.length > 0"
+    <div *ngIf="(instanceLocation === 'code-panel' || instanceLocation === 'conversations') && codePanelRowData!.comments && codePanelRowData!.comments.length > 0"
          class="comment-thread-header d-flex justify-content-between align-items-center p-2 pb-1 mb-2"
          [class.collapsed]="isThreadCollapsed">
-        <div class="d-flex align-items-center" (click)="toggleThreadCollapse()" style="cursor: pointer;">
+        <div *ngIf="instanceLocation === 'code-panel'" class="d-flex align-items-center" (click)="toggleThreadCollapse()" style="cursor: pointer;">
             <i class="bi"
                [class.bi-chevron-down]="!isThreadCollapsed"
                [class.bi-chevron-right]="isThreadCollapsed"
@@ -17,7 +17,7 @@
         </div>
         <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 &&
                     hasSeverity(codePanelRowData!.comments[0].severity)"
-             class="severity-header-container">
+             class="severity-header-container ms-auto">
             <div *ngIf="canEditSeverity">
                 <div *ngIf="isEditingSeverity === codePanelRowData!.comments[0].id" class="severity-edit-container">
                     <p-select
@@ -71,6 +71,12 @@
                         <span *ngIf="isAIGenerated(comment) && !hasAIInfo(comment)"
                               class="ai-badge-custom ms-2">
                             AI-generated
+                        </span>
+                        <!-- Diagnostic Badge -->
+                        <span *ngIf="isDiagnostic(comment)"
+                              class="diagnostic-badge-custom ms-2"
+                              title="System diagnostic">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Diagnostic
                         </span>
                     </div>
                 </ng-template>
@@ -150,6 +156,7 @@
             <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="!codePanelRowData!.draftCommentText || codePanelRowData!.draftCommentText.length === 0" (click)="saveCommentAction($event)">Add comment</button>
             <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
             <button
+                *ngIf="!codePanelRowData!.comments || codePanelRowData!.comments.length === 0"
                 type="button"
                 class="btn btn-sm btn-outline-secondary editor-action-btn"
                 [class.active]="allowAnyOneToResolve"
@@ -182,7 +189,6 @@
   [selectedCommentId]="selectedCommentId"
   [allCodePanelRowData]="allCodePanelRowData"
   [userProfile]="userProfile"
-  [preferredApprovers]="preferredApprovers"
   [(visible)]="showRelatedCommentsDialog"
   (resolveSelectedComments)="onResolveSelectedComments($event)">
 </app-related-comments-dialog>

@@ -121,7 +121,12 @@ To distribute Skills from azure-sdk-tools to individual Azure SDK repositories:
 
 If a service has additional service specific guidelines for a particular workflow then it can be included as a markdown in the service folder and reference it from the skill. For e.g. if a team wants to have specific instructions as part of preparing package for a release.
 
-## Testing Skills
+## How to Test
+
+We need to do mainly following two tests:
+
+- **Skill matching accuracy**: This test ensures correct skill is loaded by LLM for a prompt in a given context.
+The enhancement to Eval framework now supports to evaluate how LLM matches a prompt to skill.
 
 ### Test Format
 
@@ -160,6 +165,8 @@ Validation checks:
 - Positive prompts match skill in top-3 results with ≥40% confidence
 - Negative prompts do NOT match the skill
 - Every skill has both shouldTrigger and shouldNotTrigger arrays
+
+- **Skill workflow completion test**: [Not Implemented] This test is required to make sure LLM uses the steps in the workflow as expected. A scenario for this test contains all the commands and mcp tools expected to be used for an end to end skill completion and corresponding context and expected steps to be completed. Eval test will make sure LLM completed all expected steps and executed all mcp tools/commands.
 
 ## Copilot Instructions
 

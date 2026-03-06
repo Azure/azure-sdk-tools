@@ -1,17 +1,26 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { CrossLangViewComponent } from './cross-lang-view.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('CrossLangViewComponent', () => {
   let component: CrossLangViewComponent;
   let fixture: ComponentFixture<CrossLangViewComponent>;
 
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
-        CrossLangViewComponent,
-        HttpClientTestingModule
+        CrossLangViewComponent
+      ],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
       ]
     })
     .compileComponents();

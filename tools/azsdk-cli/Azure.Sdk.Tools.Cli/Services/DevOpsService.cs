@@ -102,6 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateReleasePlanSDKDetailsAsync(int workItemId, List<SDKInfo> sdkLanguages);
         public Task<bool> UpdateApiSpecStatusAsync(int workItemId, string status);
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
+        public Task<bool> UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
         public Task<List<PackageWorkitemResponse>> ListPartialPackageWorkItemAsync(string packageName, string language);
@@ -110,6 +111,11 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
         public Task<List<GitHubLableWorkItem>> GetGitHubLableWorkItemsAsync();
         public Task<GitHubLableWorkItem> CreateGitHubLableWorkItemAsync(string label);
+        public Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath);
+        public Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath);
+        Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
+        Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations);
+        Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -124,6 +130,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes() =>
             _cachedRelationTypes ??= await connection.GetWorkItemClient().GetRelationTypesAsync();
+
+        private bool IsAgentTesting => Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING") == "true";
 
         public async Task<List<ReleasePlanWorkItem>> ListOverdueReleasePlansAsync()
         {
@@ -361,8 +369,28 @@ namespace Azure.Sdk.Tools.Cli.Services
                         {
                             continue;
                         }
+
+                        // If agent test mode is enabled then skip all non test release plans.
+                        if (IsAgentTesting && parentWorkItem.Fields.TryGetValue("System.Tags", out Object? value) && value is String tags && !tags.Contains(RELEASE_PLANNER_APP_TEST))
+                        {
+                            logger.LogInformation("Agent test mode is enabled. Skipping release plans without testing tag.");
+                            continue;
+                        }
+
                         if (parentType.Equals("Release Plan"))
                         {
+                            // Check if parent work item is in abandoned state
+                            if (parentWorkItem.Fields.TryGetValue("System.State", out Object? parentState))
+                            {
+                                var state = parentState?.ToString();
+                                if (state != null && (state.Equals("Abandoned", StringComparison.OrdinalIgnoreCase) ||
+                                                      state.Equals("Closed", StringComparison.OrdinalIgnoreCase) ||
+                                                      state.Equals("Duplicate", StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    logger.LogInformation("Skipping release plan work item {WorkItemId} in {State} state", parentWorkItemId, state);
+                                    continue;
+                                }
+                            }
                             return await MapWorkItemToReleasePlanAsync(parentWorkItem);
                         }
                     }
@@ -697,13 +725,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var workItemClient = connection.GetWorkItemClient();
-                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query });
+                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, cancellationToken: default);
                 logger.LogInformation("Work item query result: {result}", result);
                 if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
                     var ids = result.WorkItems.Select(wi => wi.Id).ToList();
                     logger.LogInformation("Fetching work item details: {workItemIds}", string.Join(',', ids));
-                    return await workItemClient.GetWorkItemsAsync(ids, expand: WorkItemExpand.All);
+                    return await workItemClient.GetWorkItemsAsync(ids, expand: WorkItemExpand.All, cancellationToken: default);
                 }
                 else
                 {
@@ -717,12 +745,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200)
+        public async Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
         {
             try
             {
                 var workItemClient = connection.GetWorkItemClient();
-                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, top: top);
+                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, top: top, cancellationToken: default);
                 logger.LogInformation("Work item query result: {result}", result);
                 if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
@@ -734,7 +762,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     for (int i = 0; i < ids.Count; i += batchSize)
                     {
                         var batchIds = ids.Skip(i).Take(batchSize).ToList();
-                        var batch = await workItemClient.GetWorkItemsAsync(batchIds, expand: WorkItemExpand.All);
+                        var batch = await workItemClient.GetWorkItemsAsync(batchIds, expand: expand, cancellationToken: default);
                         workItems.AddRange(batch);
                     }
                     return workItems;
@@ -1117,6 +1145,42 @@ namespace Azure.Sdk.Tools.Cli.Services
             catch (Exception ex)
             {
                 throw new Exception($"Failed to update spec pull request to release plan [{releasePlanWorkItemId}]. Error: {ex.Message}");
+            }
+        }
+
+        public async Task<bool> UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion)
+        {
+            try
+            {
+                if (releasePlanWorkItemId == 0 || string.IsNullOrEmpty(apiVersion))
+                {
+                    throw new ArgumentException("Please provide the work item ID and an API version to update.");
+                }
+
+                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlanWorkItemId);
+                int apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
+                if (apiSpecWorkItemId == 0)
+                {
+                    throw new Exception($"API spec work item not found for release plan work item {releasePlanWorkItemId}.");
+                }
+
+                var jsonDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument()
+                {
+                    new JsonPatchOperation
+                    {
+                        Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                        Path = "/fields/Custom.APISpecversion",
+                        Value = apiVersion
+                    }
+                };
+
+                await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonDocument, apiSpecWorkItemId);
+                logger.LogInformation("Updated API spec version to {apiVersion} for release plan work item {releasePlanWorkItemId}", apiVersion, releasePlanWorkItemId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to update API spec version for release plan [{releasePlanWorkItemId}]. Error: {ex.Message}");
             }
         }
 
@@ -1581,6 +1645,157 @@ namespace Azure.Sdk.Tools.Cli.Services
         private static string GetWorkItemHtmlUrl(int workItemId)
         {
             return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}/_workitems/edit/{workItemId}";
+        }
+
+        /// <summary>
+        /// Fetches the raw release plan WorkItem for a given TypeSpec project path.
+        /// Returns null if no matching work item is found.
+        /// </summary>
+        private async Task<WorkItem?> FetchReleasePlanWorkItemByTypeSpecPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false)
+        {
+            if (string.IsNullOrEmpty(typeSpecProjectPath))
+            {
+                throw new ArgumentException("TypeSpec project path cannot be null or empty.", nameof(typeSpecProjectPath));
+            }
+
+            logger.LogInformation("Searching for active release plan with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+
+            var escapedPath = typeSpecProjectPath?.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'";
+            query += $" AND [Custom.ApiSpecProjectPath] = '{escapedPath}'";
+            query += " AND [System.WorkItemType] = 'Release Plan'";
+            query += includeFinishedPlans
+                ? " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')"
+                : " AND [System.State] NOT IN ('Closed','Duplicate','Abandoned','Finished')";
+            query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
+            query += "  ORDER BY [System.Id] DESC";
+
+            var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+            if (releasePlanWorkItems.Count == 0)
+            {
+                logger.LogInformation("No active release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                return null;
+            }
+
+            if (releasePlanWorkItems.Count > 1)
+            {
+                logger.LogWarning(
+                    "Multiple active release plan work items ({count}) found for TypeSpec project path: {typeSpecProjectPath}. Using the first one.",
+                    releasePlanWorkItems.Count,
+                    typeSpecProjectPath);
+            }
+
+            return releasePlanWorkItems[0];
+        }
+
+        public async Task<ReleasePlanWorkItem?> GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath)
+        {
+            try
+            {
+                var workItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath);
+                if (workItem == null)
+                {
+                    return null;
+                }
+
+                return await MapWorkItemToReleasePlanAsync(workItem);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get release plan for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                throw new Exception($"Failed to get release plan for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<ProductInfo?> GetProductInfoByTypeSpecProjectPathAsync(string typeSpecProjectPath)
+        {
+            try
+            {
+                logger.LogInformation("Searching for release plan with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+
+                var releasePlanWorkItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath, true);
+                if (releasePlanWorkItem == null)
+                {
+                    logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                    return null;
+                }
+
+                // Get parent work item (Product/Epic work item)
+                if (releasePlanWorkItem.Relations == null || !releasePlanWorkItem.Relations.Any())
+                {
+                    logger.LogWarning("Release plan {workItemId} has no relations", releasePlanWorkItem.Id);
+                    return null;
+                }
+
+                var parentRelation = releasePlanWorkItem.Relations.FirstOrDefault(r => r.Rel.Equals("System.LinkTypes.Hierarchy-Reverse"));
+                if (parentRelation == null)
+                {
+                    logger.LogWarning("Release plan {workItemId} has no parent work item", releasePlanWorkItem.Id);
+                    return null;
+                }
+
+                // Extract parent work item ID from the URL
+                var urlParts = parentRelation.Url.Split('/');
+                if (!int.TryParse(urlParts.Last(), out int parentWorkItemId))
+                {
+                    logger.LogError("Failed to parse parent work item ID from URL: {url}", parentRelation.Url);
+                    return null;
+                }
+                logger.LogInformation("Found parent work item {parentWorkItemId}", parentWorkItemId);
+
+                // Get parent work item details
+                var parentWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(parentWorkItemId, expand: WorkItemExpand.All);
+                if (parentWorkItem == null || parentWorkItem.Id == null)
+                {
+                    logger.LogError("Failed to retrieve parent work item {parentWorkItemId}", parentWorkItemId);
+                    return null;
+                }
+
+                // Extract product information from parent work item (Epic)
+                var productInfo = new ProductInfo
+                {
+                    WorkItemId = parentWorkItem.Id ?? 0,
+                    Title = parentWorkItem.Fields.TryGetValue("System.Title", out object? value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductServiceTreeId = parentWorkItem.Fields.TryGetValue("Custom.ProductServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ServiceId = parentWorkItem.Fields.TryGetValue("Custom.AssociatedServiceServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    PackageDisplayName = parentWorkItem.Fields.TryGetValue("Custom.PackageDisplayName", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                    ProductServiceTreeLink = parentWorkItem.Fields.TryGetValue("Custom.ProductServiceTreeLink", out value) ? value?.ToString() ?? string.Empty : string.Empty
+                };
+
+                logger.LogInformation("Successfully retrieved product info from work item {workItemId}", productInfo.WorkItemId);
+                return productInfo;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to get product info for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
+                throw new Exception($"Failed to get product info for TypeSpec project path '{typeSpecProjectPath}'. Error: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string workItemType, string fieldName, string fieldValue, WorkItemExpand expand = WorkItemExpand.Relations)
+        {
+            var escapedValue = fieldValue.Replace("'", "''");
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = '{workItemType}' AND [{fieldName}] = '{escapedValue}'";
+            return await FetchWorkItemsPagedAsync(query, expand: expand);
+        }
+
+        public async Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            var idList = ids.ToList();
+            if (idList.Count == 0)
+            {
+                return [];
+            }
+
+            var workItemClient = connection.GetWorkItemClient();
+            var workItems = new List<WorkItem>();
+            for (int i = 0; i < idList.Count; i += batchSize)
+            {
+                var batchIds = idList.Skip(i).Take(batchSize).ToList();
+                var batch = await workItemClient.GetWorkItemsAsync(batchIds, expand: expand);
+                workItems.AddRange(batch);
+            }
+            return workItems;
         }
     }
 }

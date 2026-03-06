@@ -35,13 +35,12 @@
 /tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/          @weshaggard
 /tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
-/tools/js-sdk-release-tools/            @qiaozha @MaryGao
+/tools/js-sdk-release-tools/            @qiaozha @MaryGao @JialinHuang803
 /tools/keyvault-mock-attestation/       @maorleger
 /tools/perf-automation/                 @mikeharder @benbp
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
 /tools/pipeline-witness/                @hallipr
-/tools/sdk-sample-generator             @deyaaeldeen
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @scbedd @mikeharder @benbp
@@ -91,7 +90,7 @@
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
 /tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
 /src/swift/                               @tjprescott
-/src/java/apiview-java-processor/         @JonathanGiles
+/src/java/apiview-java-processor/         @JonathanGiles @alzimmermsft @srnagar
 /src/go/                                  @jhendrixMSFT @chlowell @RickWinter
 
 ###########

@@ -1,19 +1,13 @@
-import {
-  ApiFunction,
-  ApiItem,
-  ApiItemKind,
-  Parameter,
-  TypeParameter,
-} from "@microsoft/api-extractor-model";
+import { ApiFunction, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { ReviewToken, TokenKind } from "../models";
-import { TokenGenerator } from "./index";
+import { TokenGenerator, GeneratorResult } from "./index";
 import { createToken, processExcerptTokens } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiFunction {
   return item.kind === ApiItemKind.Function;
 }
 
-function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
+function generate(item: ApiFunction, deprecated?: boolean): GeneratorResult {
   const tokens: ReviewToken[] = [];
   if (item.kind !== ApiItemKind.Function) {
     throw new Error(
@@ -39,7 +33,7 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
 
   // Add type parameters
   if (typeParameters?.length > 0) {
-    tokens.push(createToken(TokenKind.Text, "<", { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, "<", { deprecated }));
     typeParameters.forEach((tp, index) => {
       tokens.push(createToken(TokenKind.TypeName, tp.name, { deprecated }));
 
@@ -56,7 +50,7 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
 
       if (tp.defaultTypeExcerpt?.text.trim()) {
         tokens.push(
-          createToken(TokenKind.Text, "=", {
+          createToken(TokenKind.Punctuation, "=", {
             hasPrefixSpace: true,
             hasSuffixSpace: true,
             deprecated,
@@ -66,14 +60,14 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
       }
 
       if (index < typeParameters.length - 1) {
-        tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
+        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
       }
     });
-    tokens.push(createToken(TokenKind.Text, ">", { deprecated }));
+    tokens.push(createToken(TokenKind.Punctuation, ">", { deprecated }));
   }
 
   // Add parameters
-  tokens.push(createToken(TokenKind.Text, "(", { deprecated }));
+  tokens.push(createToken(TokenKind.Punctuation, "(", { deprecated }));
   if (parameters?.length > 0) {
     parameters.forEach((param, index) => {
       tokens.push(
@@ -84,23 +78,26 @@ function generate(item: ApiFunction, deprecated?: boolean): ReviewToken[] {
       );
 
       if (param.isOptional) {
-        tokens.push(createToken(TokenKind.Text, "?", { deprecated }));
+        tokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
       }
 
-      tokens.push(createToken(TokenKind.Text, ":", { hasSuffixSpace: true, deprecated }));
+      tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
       processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, tokens, deprecated);
 
       if (index < parameters.length - 1) {
-        tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
+        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
       }
     });
   }
 
   // Add return type
-  tokens.push(createToken(TokenKind.Text, "):", { hasSuffixSpace: true, deprecated }));
+  tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
+  tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
   processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
 
-  return tokens;
+  tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+
+  return { tokens };
 }
 
 export const functionTokenGenerator: TokenGenerator<ApiFunction> = {

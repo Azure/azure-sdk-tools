@@ -136,38 +136,36 @@ class UtilityTools(Tool):
         """
         Fetch APIView revision content directly from an APIView URL. **USE THIS** when the user
         provides an apiview.dev URL and wants to fetch, view, summarize, or analyze the API content.
-        
+
         This tool extracts the revision ID from the URL and fetches the content in one step,
         which is faster and more reliable than parsing the URL separately.
-        
+
         :param url: The APIView URL (e.g., https://spa.apiview.dev/review/{reviewId}?activeApiRevisionId={revisionId})
         :return: The API revision text content, or an error message
-        
+
         Example:
             url = "https://spa.apiview.dev/review/640b9bc30baa4050a4eccb6c1f6103a7?activeApiRevisionId=176a2e96bc514dcf8f69c8e551e2e124"
             Returns the full API text content for that revision
         """
         from urllib.parse import parse_qs
         from src._apiview import ApiViewClient
-        
+
         parsed = urlparse(url)
-        
+
         # Extract revisionId from query parameter
         query_params = parse_qs(parsed.query)
         revision_id = None
         if "activeApiRevisionId" in query_params:
             revision_id = query_params["activeApiRevisionId"][0]
-        
+
         if not revision_id:
             return json.dumps({"error": "Could not extract activeApiRevisionId from URL. Please check the URL format."})
-        
+
         try:
             client = ApiViewClient()
             content = asyncio.run(client.get_revision_text(revision_id=revision_id))
             return content
         except Exception as e:
-            return json.dumps({
-                "error": f"Failed to fetch revision content: {str(e)}", 
-                "revision_id": revision_id,
-                "url": url
-            })
+            return json.dumps(
+                {"error": f"Failed to fetch revision content: {str(e)}", "revision_id": revision_id, "url": url}
+            )

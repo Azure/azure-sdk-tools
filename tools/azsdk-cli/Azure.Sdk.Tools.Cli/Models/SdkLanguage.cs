@@ -4,26 +4,38 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SdkLanguage
 {
-    [JsonPropertyName("")]
     Unknown,
-    [JsonPropertyName(".NET")]
+    [JsonStringEnumMemberName("C++")]
+    Cpp,
+    [JsonStringEnumMemberName(".NET")]
     DotNet,
-    [JsonPropertyName("Java")]
+    [JsonStringEnumMemberName("Java")]
     Java,
-    [JsonPropertyName("JavaScript")]
+    [JsonStringEnumMemberName("JavaScript")]
     JavaScript,
-    [JsonPropertyName("Python")]
+    [JsonStringEnumMemberName("Python")]
     Python,
-    [JsonPropertyName("Go")]
+    [JsonStringEnumMemberName("Go")]
     Go,
-    [JsonPropertyName("Rust")]
+    [JsonStringEnumMemberName("Rust")]
     Rust
 }
 
 public static class SdkLanguageHelpers
 {
+
+    public static string ToWorkItemString(this SdkLanguage value)
+    {
+        var field = value.GetType().GetField(value.ToString())
+            ?? throw new InvalidOperationException($"Unable to find JsonStringEnumMemberName field for SdkLanguage value '{value}'");
+
+        var attribute = field.GetCustomAttributes(typeof(JsonStringEnumMemberNameAttribute), false)
+                             .FirstOrDefault() as JsonStringEnumMemberNameAttribute;
+        return attribute?.Name ?? value.ToString();
+    }
 
     private static readonly ImmutableDictionary<string, SdkLanguage> RepoToLanguageMap = new Dictionary<string, SdkLanguage>()
     {
@@ -32,7 +44,8 @@ public static class SdkLanguageHelpers
         { "azure-sdk-for-java", SdkLanguage.Java },
         { "azure-sdk-for-js", SdkLanguage.JavaScript },
         { "azure-sdk-for-python", SdkLanguage.Python },
-        { "azure-sdk-for-rust", SdkLanguage.Rust}
+        { "azure-sdk-for-rust", SdkLanguage.Rust},
+        {"azure-sdk-for-cpp", SdkLanguage.Cpp }
     }.ToImmutableDictionary();
 
     public static async Task<SdkLanguage> GetLanguageForRepoPathAsync(IGitHelper gitHelper, string pathInRepo, CancellationToken ct = default)
@@ -63,6 +76,9 @@ public static class SdkLanguageHelpers
     {
         switch (language.ToLower())
         {
+            case "c++":
+            case "cpp":
+                return SdkLanguage.Cpp;
             case ".net":
             case "dotnet":
             case "c#":

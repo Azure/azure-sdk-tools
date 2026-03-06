@@ -232,7 +232,16 @@ type Index struct {
 	ContextID       Source  `json:"context_id"`
 	Scope           string  `json:"scope,omitempty"`
 	ServiceType     string  `json:"service_type,omitempty"`
+
+	SearchType SearchType `json:"search_type,omitempty"`
 }
+
+type SearchType string
+
+const (
+	SearchType_Vector  SearchType = "Vector Search"
+	SearchType_Agentic SearchType = "Agentic Search"
+)
 
 type Knowledge struct {
 	Source   Source `json:"document_source"`
@@ -317,6 +326,9 @@ func GetIndexLink(chunk Index) string {
 	case Source_AzureOpenapiDiffDocs:
 		// Handle documents from openapi-diff/docs
 		return "https://github.com/Azure/openapi-diff/blob/main/" + path
+	case Source_TypeSpecAzureResourceManagerLib:
+		path = TrimFileFormat(path)
+		return "https://github.com/Azure/typespec-azure/blob/main/packages/typespec-azure-resource-manager/lib/" + path + ".tsp"
 	default:
 		return ""
 	}

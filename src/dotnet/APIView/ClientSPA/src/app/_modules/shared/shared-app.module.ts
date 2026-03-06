@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { NavBarComponent } from 'src/app/_components/shared/nav-bar/nav-bar.component';
 import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { LastUpdatedOnPipe } from 'src/app/_pipes/last-updated-on.pipe';
@@ -63,6 +64,7 @@ const monacoEditorConfig: NgxMonacoEditorConfig = {
   ],
   imports: [
     CommonModule,
+    RouterModule,
     BadgeModule,
     ContextMenuModule,
     TableModule,

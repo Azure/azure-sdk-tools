@@ -1,14 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReviewsService } from './reviews.service';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
 
+  beforeAll(() => {
+    initializeTestBed();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     service = TestBed.inject(ReviewsService);
   });

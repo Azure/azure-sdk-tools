@@ -1,50 +1,98 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { vi } from 'vitest';
+import { initializeTestBed } from '../../../test-setup';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { WorkerService } from 'src/app/_services/worker/worker.service';
+import { createMockSignalRService, createMockNotificationsService, createMockWorkerService, setupMatchMediaMock } from 'src/test-helpers/mock-services';
+
+// Mock ngx-ui-scroll to avoid vscroll dependency error
+vi.mock('ngx-ui-scroll', () => {
+  const UiScrollModuleMock = class UiScrollModule {
+    static ɵmod = { 
+      id: 'UiScrollModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+  };
+  
+  return {
+    UiScrollModule: UiScrollModuleMock
+  };
+});
+
+// Mock ngx-simplemde to avoid ESM import error
+vi.mock('ngx-simplemde', () => {
+  const SimplemdeModuleMock = class SimplemdeModule {
+    static ɵmod = { 
+      id: 'SimplemdeModule',
+      declarations: [],
+      imports: [],
+      exports: []
+    };
+    static ɵinj = { 
+      imports: [],
+      providers: []
+    };
+    static forRoot() {
+      return {
+        ngModule: SimplemdeModuleMock,
+        providers: []
+      };
+    }
+  };
+  
+  return {
+    SimplemdeModule: SimplemdeModuleMock,
+    SimplemdeOptions: class SimplemdeOptions {
+      constructor() {}
+    },
+    SimplemdeComponent: class SimplemdeComponent {
+      value = '';
+      options = {};
+      delay = 0;
+      valueChange = { emit: vi.fn() };
+    }
+  };
+});
 
 import { RevisionPageComponent } from './revision-page.component';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ReviewPageLayoutComponent } from '../shared/review-page-layout/review-page-layout.component';
-import { NavBarComponent } from '../shared/nav-bar/nav-bar.component';
-import { RevisionsListComponent } from '../revisions-list/revisions-list.component';
-import { MessageService } from 'primeng/api';
-import { ReviewInfoComponent } from '../shared/review-info/review-info.component';
-import { MenubarModule } from 'primeng/menubar';
-import { MenuModule } from 'primeng/menu';
-import { ContextMenuModule } from 'primeng/contextmenu';
-import { DrawerModule } from 'primeng/drawer';
-import { SelectModule } from 'primeng/select';
-import { TooltipModule } from 'primeng/tooltip';
-import { RippleModule } from 'primeng/ripple';
-import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 describe('RevisionPageComponent', () => {
   let component: RevisionPageComponent;
   let fixture: ComponentFixture<RevisionPageComponent>;
 
+  const mockNotificationsService = createMockNotificationsService();
+  const mockSignalRService = createMockSignalRService();
+  const mockWorkerService = createMockWorkerService();
+
+  beforeAll(() => {
+    initializeTestBed();
+    setupMatchMediaMock();
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [
-        RevisionPageComponent,
-        NavBarComponent,
-        ReviewInfoComponent,
-        RevisionsListComponent,
-        ReviewPageLayoutComponent,
-        LanguageNamesPipe,
-        BrowserAnimationsModule,
-        HttpClientTestingModule,
-        MenubarModule,
-        MenuModule,
-        ContextMenuModule,
-        SelectModule,
-        DrawerModule,
-        TooltipModule,
-        RippleModule,
-        ReactiveFormsModule,
-        FormsModule
-      ],
+      schemas: [NO_ERRORS_SCHEMA],
+      imports: [RevisionPageComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: WorkerService, useValue: mockWorkerService },
         {
           provide: ActivatedRoute,
           useValue: {

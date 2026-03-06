@@ -3,46 +3,8 @@ import { getApiVersionType } from '../../mlc/apiVersion/apiVersionTypeExtractor.
 import { getApiVersionType as getApiVersionTypeInRLC } from '../../llc/apiVersion/apiVersionTypeExtractor.js';
 import { join } from 'path';
 import { ApiVersionType } from '../../common/types.js';
-import { getApiVersionTypeFromNpm, tryFindApiVersionInRestClient } from '../../xlc/apiVersion/utils.js';
+import { getApiVersionTypeFromNpm } from '../../xlc/apiVersion/utils.js';
 import { generateTestNpmView } from '../utils/utils.js';
-
-describe('Modular client api-version Extractor', () => {
-    test('new createClient function', async () => {
-        const clientPath = join(__dirname, 'testCases/new/src/rest/newClient.ts');
-        const version = tryFindApiVersionInRestClient(clientPath);
-        expect(version).toBe('2024-03-01-preview');
-    });
-
-    test('get api version type from new createClient function', async () => {
-        const root = join(__dirname, 'testCases/new/');
-        const version = await getApiVersionType(root);
-        expect(version).toBe(ApiVersionType.Preview);
-    });
-
-    test('old createClient function 1', async () => {
-        const clientPath = join(__dirname, 'testCases/old1/src/rest/oldClient.ts');
-        const version = tryFindApiVersionInRestClient(clientPath);
-        expect(version).toBe('v1.1-preview.1');
-    });
-
-    test('get api version type from old createClient function 1', async () => {
-        const root = join(__dirname, 'testCases/old1/');
-        const version = await getApiVersionType(root);
-        expect(version).toBe(ApiVersionType.Preview);
-    });
-
-    test('old createClient function 2', async () => {
-        const clientPath = join(__dirname, 'testCases/old2/src/rest/oldClient.ts');
-        const version = tryFindApiVersionInRestClient(clientPath);
-        expect(version).toBe('2024-03-01');
-    });
-
-    test('get api version type from old createClient function 2', async () => {
-        const root = join(__dirname, 'testCases/old2/');
-        const version = await getApiVersionType(root);
-        expect(version).toBe(ApiVersionType.Stable);
-    });
-});
 
 describe('Rest client file fallbacks', () => {
     describe('Modular client', () => {
@@ -51,10 +13,35 @@ describe('Rest client file fallbacks', () => {
             const version = await getApiVersionType(root);
             expect(version).toBe(ApiVersionType.Preview);
         });
-        test("src/api/xxxContext.ts doesn't exists, fallback to src/rest/xxxClient.ts", async () => {
-            const root = join(__dirname, 'testCases/new/');
+        test("metadata.json exists with stable apiVersion", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-json/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Stable);
+        });
+        test("metadata.json exists with preview apiVersion", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-json-preview/');
             const version = await getApiVersionType(root);
             expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("metadata.json exists with apiVersions - all stable", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-apiVersions-all-stable/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Stable);
+        });
+        test("metadata.json exists with apiVersions - with preview", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-apiVersions-with-preview/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("metadata.json exists with apiVersions - preview listed first", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-apiVersions-preview-first/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Preview);
+        });
+        test("metadata.json exists with apiVersions - single stable version", async () => {
+            const root = join(__dirname, 'testCases/mlc-metadata-apiVersions-single/');
+            const version = await getApiVersionType(root);
+            expect(version).toBe(ApiVersionType.Stable);
         });
         test("Model only spec", async () => {
             const mockNpmUtils = await import("../../common/npmUtils.js");

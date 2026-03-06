@@ -11,6 +11,8 @@ import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { CommentItemModel, CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
+import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
 import { environment } from 'src/environments/environment';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { AI_COMMENT_FEEDBACK_REASONS } from 'src/app/_models/comment-feedback-reasons';
@@ -51,7 +53,6 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
   @Input() selectedCommentId: string = '';
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
   @Input() userProfile: UserProfile | undefined;
-  @Input() preferredApprovers: string[] = [];
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() resolveSelectedComments = new EventEmitter<CommentResolutionData>();
 
@@ -95,12 +96,15 @@ export class RelatedCommentsDialogComponent implements OnInit, OnChanges {
       ? this.relatedComments.filter(c => this.selectedCommentIds.has(c.id))
       : this.relatedComments;
 
-    // User can edit if they are the owner of ALL comments, or if they are an architect and ALL comments are from azure-sdk bot
+    // User can edit if they are the owner of ALL comments, or if they are an approver for this language and ALL comments are from azure-sdk bot
+    const isApprover = this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage());
     return commentsToCheck.every(comment =>
       comment.createdBy === this.userProfile?.userName ||
-      (comment.createdBy === 'azure-sdk' && this.preferredApprovers.includes(this.userProfile?.userName!))
+      (comment.createdBy === 'azure-sdk' && isApprover)
     );
   }
+
+  constructor(private permissionsService: PermissionsService, private reviewContextService: ReviewContextService) { }
 
   // Performance optimization: Cache for code context
   private codeContextCache = new Map<string, string>();

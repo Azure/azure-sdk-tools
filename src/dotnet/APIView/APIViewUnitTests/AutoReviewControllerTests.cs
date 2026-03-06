@@ -11,6 +11,7 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using FluentAssertions;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +28,7 @@ namespace APIViewUnitTests
         private readonly Mock<IAutoReviewService> _mockAutoReviewService;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly List<LanguageService> _languageServices;
+        private readonly TelemetryClient _telemetryClient;
         private readonly AutoReviewController _controller;
 
         public AutoReviewControllerTests()
@@ -40,13 +42,15 @@ namespace APIViewUnitTests
             {
                 new MockLanguageService("C#", false)
             };
+            _telemetryClient = new TelemetryClient();
 
             _controller = new AutoReviewController(
                 _mockCodeFileManager.Object,
                 _mockApiRevisionsManager.Object,
                 _mockAutoReviewService.Object,
                 _languageServices,
-                _mockConfiguration.Object);
+                _mockConfiguration.Object,
+                _telemetryClient);
 
             // Set up the HTTP context with a mock user principal
             SetupControllerContext();
@@ -196,6 +200,111 @@ namespace APIViewUnitTests
                 false,
                 null),
                 Times.Once);
+        }
+
+        [Fact]
+        public async Task UploadAutoReview_WhenFormParamsAreDefaults_FallsBackToQueryString()
+        {
+            _controller.ControllerContext.HttpContext.Request.QueryString = new QueryString(
+                "?label=qs-label&packageVersion=3.0.0&packageType=mgmt&setReleaseTag=true&compareAllRevisions=true");
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            SetupStandardMocks(codeFilePackageVersion: null);
+
+            await _controller.UploadAutoReview(mockFile.Object);
+
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<CodeFile>(),
+                "qs-label",
+                It.IsAny<string>(),
+                It.IsAny<MemoryStream>(),
+                "mgmt",
+                true,
+                It.IsAny<string>()),
+                Times.Once);
+
+            _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
+                It.IsAny<APIRevisionListItemModel>(),
+                "3.0.0",
+                It.IsAny<string>(),
+                true),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task UploadAutoReview_WhenFormParamsAreProvided_IgnoresQueryString()
+        {
+            _controller.ControllerContext.HttpContext.Request.QueryString = new QueryString(
+                "?label=qs-label&packageVersion=1.0.0&setReleaseTag=false");
+            var mockFile = CreateMockFormFile("test.json", "dummy content");
+            SetupStandardMocks();
+
+            await _controller.UploadAutoReview(mockFile.Object, label: "form-label", packageVersion: "2.0.0", setReleaseTag: true);
+
+            _mockAutoReviewService.Verify(m => m.CreateAutomaticRevisionAsync(
+                It.IsAny<ClaimsPrincipal>(),
+                It.IsAny<CodeFile>(),
+                "form-label",
+                It.IsAny<string>(),
+                It.IsAny<MemoryStream>(),
+                It.IsAny<string>(),
+                It.IsAny<bool>(),
+                It.IsAny<string>()),
+                Times.Once);
+
+            // Assert: form-data packageVersion and setReleaseTag win
+            _mockApiRevisionsManager.Verify(m => m.UpdateRevisionMetadataAsync(
+                It.IsAny<APIRevisionListItemModel>(),
+                "2.0.0",
+                It.IsAny<string>(),
+                true),
+                Times.Once);
+        }
+
+        private void SetupStandardMocks(string codeFilePackageVersion = "1.0.0")
+        {
+            var mockCodeFile = new CodeFile()
+            {
+                Name = "test",
+                Language = "C#",
+                PackageName = "TestPackage",
+                PackageVersion = codeFilePackageVersion
+            };
+
+            var mockReview = new ReviewListItemModel()
+            {
+                Id = "test-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                IsApproved = false
+            };
+
+            var mockApiRevision = new APIRevisionListItemModel()
+            {
+                Id = "test-revision-id",
+                ReviewId = "test-review-id",
+                Language = "C#",
+                IsApproved = false
+            };
+
+            _mockCodeFileManager.Setup(m => m.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(), It.IsAny<Stream>(), It.IsAny<string>()))
+                .ReturnsAsync(mockCodeFile);
+
+            _mockAutoReviewService.Setup(m => m.CreateAutomaticRevisionAsync(
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<CodeFile>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<MemoryStream>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<string>()))
+                .ReturnsAsync((mockReview, mockApiRevision));
+
+            _mockApiRevisionsManager.Setup(m => m.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                .ReturnsAsync(mockApiRevision);
+
+            _mockConfiguration.Setup(c => c["ReviewUrl"]).Returns("https://test.com");
         }
 
         [Fact]
@@ -716,8 +825,8 @@ namespace APIViewUnitTests
             _mockCodeFileManager.Setup(m => m.GetCodeFileAsync(
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                     It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                    It.IsAny<MemoryStream>(), It.IsAny<string>(), null, It.IsAny<string>(), null))
-                .ReturnsAsync(newCodeFile);
+                    It.IsAny<MemoryStream>(), It.IsAny<string>(), null, It.IsAny<string>(), null, null))
+                .ReturnsAsync(new CodeFileResult() { CodeFile = newCodeFile});
 
             _mockReviewManager.Setup(m => m.GetReviewAsync(language, packageName, null))
                 .ReturnsAsync(existingReview);

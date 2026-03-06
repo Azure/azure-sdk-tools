@@ -61,14 +61,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Check if skill files changed
         id: changes
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "SHOULD_RUN=true" >> $GITHUB_OUTPUT
-          elif git diff-tree --no-commit-id --name-only -r HEAD | grep -q "^\.github/skills/"; then
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Compare PR head against base branch to detect all changes in the PR
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            if git diff --name-only "$BASE_SHA"...HEAD | grep -q "^\.github/skills/"; then
+              echo "SHOULD_RUN=true" >> $GITHUB_OUTPUT
+            else
+              echo "SHOULD_RUN=false" >> $GITHUB_OUTPUT
+              echo "No skill file changes detected in PR — skipping evals"
+            fi
+          elif git diff --name-only HEAD~1 HEAD | grep -q "^\.github/skills/"; then
             echo "SHOULD_RUN=true" >> $GITHUB_OUTPUT
           else
             echo "SHOULD_RUN=false" >> $GITHUB_OUTPUT

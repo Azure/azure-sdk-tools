@@ -53,5 +53,9 @@ jobs:
       - run: npm run test:ci
 
       - name: "[js] tsp-client update"
-        run: npm exec --prefix tools/eng/common/tsp-client --no -- tsp-client update
+        run: |
+          npm exec \
+            --prefix "${{ github.workspace }}/tools/eng/common/tsp-client" \
+            --no -- \
+            tsp-client update
         working-directory: js/sdk/template/template

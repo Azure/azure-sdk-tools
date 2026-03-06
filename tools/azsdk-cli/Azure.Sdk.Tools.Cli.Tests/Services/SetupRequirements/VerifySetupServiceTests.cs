@@ -98,7 +98,8 @@ internal class VerifySetupServiceTests
                     { "pytest", "pytest 8.3.5" },
                     { "golangci-lint", "golangci-lint 1.55.0" },
                     { "goimports", "goimports" },
-                    { "generator", "generator 0.4.3" }
+                    { "generator", "generator 0.4.3" },
+                    { "core.longpaths", "true" }
                 };
                 foreach (var kvp in successfulCommands)
                 {

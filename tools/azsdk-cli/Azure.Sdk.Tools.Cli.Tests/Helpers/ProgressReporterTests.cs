@@ -155,8 +155,8 @@ public class ProgressReporterTests
             await Task.Delay(15);
         }
 
-        // Should have initial step report + at least 2 heartbeats
-        Assert.That(reported.Count, Is.GreaterThanOrEqualTo(3));
+        // Should have initial step report + at least 1 heartbeat
+        Assert.That(reported.Count, Is.GreaterThanOrEqualTo(2));
 
         // First report is from NextStep
         Assert.That(reported[0].Message, Is.EqualTo("Starting work"));

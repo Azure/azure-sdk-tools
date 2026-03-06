@@ -6,6 +6,19 @@ public interface IAPIViewService
     Task<string?> GetCommentsByRevisionAsync(string revisionId);
     Task<string?> GetMetadata(string revisionId);
     Task<string?> Resolve(string url);
+
+    Task<(string? content, int statusCode)> CreateReviewFromPipelineAsync(
+        string buildId, string artifactName, string originalFilePath, string reviewFilePath,
+        string repoName, string packageName, string project,
+        string? label = null, bool compareAllRevisions = false, string? packageVersion = null,
+        bool setReleaseTag = false, string? packageType = null, string? sourceBranch = null);
+
+    Task<(string? content, int statusCode)> CreateApiRevisionIfChangesAsync(
+        string buildId, string artifactName, string filePath, string commitSha,
+        string repoName, string packageName,
+        int pullRequestNumber = 0, string? codeFile = null, string? baselineCodeFile = null,
+        string? language = null, string? project = null, string? packageType = null,
+        string? metadataFile = null);
 }
 
 public class APIViewService : IAPIViewService
@@ -24,7 +37,7 @@ public class APIViewService : IAPIViewService
     public async Task<string?> GetCommentsByRevisionAsync(string revisionId)
     {
         string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint);
+        (string? result, _) = await _httpService.GetAsync(endpoint);
 
         if (result == null)
         {
@@ -37,7 +50,7 @@ public class APIViewService : IAPIViewService
     public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType)
     {
         string revisionContentEndpoint = $"/api/apirevisions/getRevisionContent?apiRevisionId={apiRevisionId}&reviewId={reviewId}&contentReturnType={contentReturnType}";
-        string? result = await _httpService.GetAsync(revisionContentEndpoint);
+        (string? result, _) = await _httpService.GetAsync(revisionContentEndpoint);
         if (string.IsNullOrWhiteSpace(result))
         {
             _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", apiRevisionId);
@@ -50,7 +63,7 @@ public class APIViewService : IAPIViewService
     public async Task<string?> GetMetadata(string revisionId)
     {
         string endpoint = $"/api/reviews/metadata?revisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint);
+        (string? result, _) = await _httpService.GetAsync(endpoint);
 
         if (result == null)
         {
@@ -63,7 +76,7 @@ public class APIViewService : IAPIViewService
     public async Task<string?> Resolve(string url)
     {
         string endpoint = $"/api/reviews/resolve?link={url}";
-        string? result = await _httpService.GetAsync(endpoint);
+        (string? result, _) = await _httpService.GetAsync(endpoint);
 
         if (result == null)
         {
@@ -71,5 +84,110 @@ public class APIViewService : IAPIViewService
         }
 
         return result;
+    }
+
+    public async Task<(string? content, int statusCode)> CreateReviewFromPipelineAsync(
+        string buildId, string artifactName, string originalFilePath, string reviewFilePath,
+        string repoName, string packageName, string project,
+        string? label = null, bool compareAllRevisions = false, string? packageVersion = null,
+        bool setReleaseTag = false, string? packageType = null, string? sourceBranch = null)
+    {
+        var queryParams = new List<string>
+        {
+            $"buildId={Uri.EscapeDataString(buildId)}",
+            $"artifactName={Uri.EscapeDataString(artifactName)}",
+            $"originalFilePath={Uri.EscapeDataString(originalFilePath)}",
+            $"reviewFilePath={Uri.EscapeDataString(reviewFilePath)}",
+            $"repoName={Uri.EscapeDataString(repoName)}",
+            $"packageName={Uri.EscapeDataString(packageName)}",
+            $"project={Uri.EscapeDataString(project)}",
+            $"compareAllRevisions={compareAllRevisions.ToString().ToLower()}"
+        };
+
+        if (!string.IsNullOrEmpty(label))
+        {
+            queryParams.Add($"label={Uri.EscapeDataString(label)}");
+        }
+
+        if (!string.IsNullOrEmpty(packageVersion))
+        {
+            queryParams.Add($"packageVersion={Uri.EscapeDataString(packageVersion)}");
+        }
+
+        if (setReleaseTag)
+        {
+            queryParams.Add("setReleaseTag=true");
+        }
+
+        if (!string.IsNullOrEmpty(packageType))
+        {
+            queryParams.Add($"packageType={Uri.EscapeDataString(packageType)}");
+        }
+
+        if (!string.IsNullOrEmpty(sourceBranch))
+        {
+            queryParams.Add($"sourceBranch={Uri.EscapeDataString(sourceBranch)}");
+        }
+
+        string endpoint = $"/autoreview/create?{string.Join("&", queryParams)}";
+
+        return await _httpService.PostAsync(endpoint);
+    }
+
+    public async Task<(string? content, int statusCode)> CreateApiRevisionIfChangesAsync(
+        string buildId, string artifactName, string filePath, string commitSha,
+        string repoName, string packageName,
+        int pullRequestNumber = 0, string? codeFile = null, string? baselineCodeFile = null,
+        string? language = null, string? project = null, string? packageType = null,
+        string? metadataFile = null)
+    {
+        var queryParams = new List<string>
+        {
+            $"buildId={Uri.EscapeDataString(buildId)}",
+            $"artifactName={Uri.EscapeDataString(artifactName)}",
+            $"filePath={Uri.EscapeDataString(filePath)}",
+            $"commitSha={Uri.EscapeDataString(commitSha)}",
+            $"repoName={Uri.EscapeDataString(repoName)}",
+            $"packageName={Uri.EscapeDataString(packageName)}"
+        };
+
+        if (pullRequestNumber > 0)
+        {
+            queryParams.Add($"pullRequestNumber={pullRequestNumber}");
+        }
+
+        if (!string.IsNullOrEmpty(codeFile))
+        {
+            queryParams.Add($"codeFile={Uri.EscapeDataString(codeFile)}");
+        }
+
+        if (!string.IsNullOrEmpty(baselineCodeFile))
+        {
+            queryParams.Add($"baselineCodeFile={Uri.EscapeDataString(baselineCodeFile)}");
+        }
+
+        if (!string.IsNullOrEmpty(language))
+        {
+            queryParams.Add($"language={Uri.EscapeDataString(language)}");
+        }
+
+        if (!string.IsNullOrEmpty(project))
+        {
+            queryParams.Add($"project={Uri.EscapeDataString(project)}");
+        }
+
+        if (!string.IsNullOrEmpty(packageType))
+        {
+            queryParams.Add($"packageType={Uri.EscapeDataString(packageType)}");
+        }
+
+        if (!string.IsNullOrEmpty(metadataFile))
+        {
+            queryParams.Add($"metadataFile={Uri.EscapeDataString(metadataFile)}");
+        }
+
+        string endpoint = $"/api/PullRequests/CreateAPIRevisionIfAPIHasChanges?{string.Join("&", queryParams)}";
+
+        return await _httpService.GetAsync(endpoint);
     }
 }

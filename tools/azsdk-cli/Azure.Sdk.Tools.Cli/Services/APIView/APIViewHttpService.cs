@@ -1,13 +1,11 @@
-using System.Net;
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Models.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewHttpService
 {
-    Task<string?> GetAsync(string endpoint);
+    Task<(string? content, int statusCode)> GetAsync(string endpoint);
+    Task<(string? content, int statusCode)> PostAsync(string endpoint);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -37,7 +35,7 @@ public class APIViewHttpService : IAPIViewHttpService
         return Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT") ?? "production";
     }
 
-    public async Task<string?> GetAsync(string endpoint)
+    public async Task<(string? content, int statusCode)> GetAsync(string endpoint)
     {
         try
         {
@@ -47,54 +45,58 @@ public class APIViewHttpService : IAPIViewHttpService
 
             string requestUrl = $"{baseUrl}{endpoint}";
             using HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
-            if (response.StatusCode == HttpStatusCode.Found || response.StatusCode == HttpStatusCode.Redirect)
-            {
-                string? location = response.Headers.Location?.ToString();
-                if (!string.IsNullOrEmpty(location) && (location.Contains("Login") || location.Contains("login")))
-                {
-                    _logger.LogError("Authentication required: Redirected to login page at {Location}", location);
-                    AuthenticationErrorResponse errorResponse = _authService.CreateAuthenticationErrorResponse(
-                        $"APIView requires authentication to access {endpoint}",
-                        baseUrl: baseUrl);
-                    return JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions { WriteIndented = true });
-                }
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError("API call failed during {Endpoint} with status code {StatusCode}: {ReasonPhrase}",
-                    endpoint, response.StatusCode, response.ReasonPhrase);
-
-                if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    _logger.LogError(
-                        "Authentication failed. Ensure you have a valid Azure credentials.");
-                }
-
-                return null;
-            }
 
             string content = await response.Content.ReadAsStringAsync();
 
-            if (APIViewAuthenticationService.IsAuthenticationFailure(content))
+            if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError("Authentication required: Received login page instead of {Endpoint} data", endpoint);
-                AuthenticationErrorResponse errorResponse = _authService.CreateAuthenticationErrorResponse(
-                    $"APIView requires authentication to access {endpoint}",
-                    baseUrl: baseUrl);
-                return JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions { WriteIndented = true });
+                _logger.LogError("API call failed during GET {Endpoint} with status code {StatusCode}: {Content}",
+                    endpoint, response.StatusCode, content);
             }
 
-            return content;
+            return (content, (int)response.StatusCode);
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "HTTP request failed during {Endpoint} call", endpoint);
+            _logger.LogError(ex, "HTTP request failed during GET {Endpoint}", endpoint);
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred during {Endpoint} call", endpoint);
+            _logger.LogError(ex, "Unexpected error during GET {Endpoint}", endpoint);
+            throw;
+        }
+    }
+
+    public async Task<(string? content, int statusCode)> PostAsync(string endpoint)
+    {
+        try
+        {
+            string environment = GetEnvironment();
+            string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
+            HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
+
+            string requestUrl = $"{baseUrl}{endpoint}";
+            using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, null);
+
+            string content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("API call failed during POST {Endpoint} with status code {StatusCode}: {Content}",
+                    endpoint, response.StatusCode, content);
+            }
+
+            return (content, (int)response.StatusCode);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP request failed during POST {Endpoint}", endpoint);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error during POST {Endpoint}", endpoint);
             throw;
         }
     }

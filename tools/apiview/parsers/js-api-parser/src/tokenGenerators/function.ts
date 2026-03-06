@@ -45,9 +45,7 @@ function generate(item: ApiFunction, deprecated?: boolean): GeneratorResult {
             deprecated,
           }),
         );
-        collector.push(
-          createToken(TokenKind.Text, tp.constraintExcerpt.text.trim(), { deprecated }),
-        );
+        processExcerptTokens(tp.constraintExcerpt.spannedTokens, collector, deprecated);
       }
 
       if (tp.defaultTypeExcerpt?.text.trim()) {

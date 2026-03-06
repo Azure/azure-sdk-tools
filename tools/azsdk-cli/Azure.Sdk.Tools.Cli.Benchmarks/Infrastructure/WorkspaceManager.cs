@@ -59,7 +59,7 @@ public class WorkspaceManager
         var worktreePath = Path.Combine(workspaceRoot, repo.Name);
 
         // Create worktree from bare clone at the specified ref
-        await CreateWorktreeAsync(barePath, worktreePath, repo.Ref);
+        await CreateWorktreeAsync(barePath, worktreePath, repo.Ref, repo.SparseCheckoutPaths);
 
         return new Workspace(workspaceRoot, repo.Name);
     }
@@ -137,14 +137,31 @@ public class WorkspaceManager
 
     /// <summary>
     /// Creates a worktree from a bare clone at the specified ref.
+    /// Supports sparse checkout when paths are specified.
     /// </summary>
-    private async Task CreateWorktreeAsync(string barePath, string worktreePath, string gitRef)
+    private async Task CreateWorktreeAsync(string barePath, string worktreePath, string gitRef, string[]? sparseCheckoutPaths = null)
     {
         // Fetch the specific ref to ensure it's available (needed for shallow clones)
         await RunGitCommandAsync(barePath, "fetch", "origin", gitRef, "--depth=1");
 
-        // Create the worktree
-        await RunGitCommandAsync(barePath, "worktree", "add", worktreePath, "FETCH_HEAD", "--detach");
+        if (sparseCheckoutPaths is { Length: > 0 })
+        {
+            // Create the worktree without checking out files
+            await RunGitCommandAsync(barePath, "worktree", "add", "--no-checkout", worktreePath, "FETCH_HEAD", "--detach");
+
+            // Configure sparse checkout in cone mode (includes root-level files automatically)
+            await RunGitCommandAsync(worktreePath, "sparse-checkout", "init", "--cone");
+            await RunGitCommandAsync(worktreePath,
+                new[] { "sparse-checkout", "set" }.Concat(sparseCheckoutPaths).ToArray());
+
+            // Checkout the sparse paths
+            await RunGitCommandAsync(worktreePath, "checkout");
+        }
+        else
+        {
+            // Full checkout (existing behavior)
+            await RunGitCommandAsync(barePath, "worktree", "add", worktreePath, "FETCH_HEAD", "--detach");
+        }
     }
 
     /// <summary>

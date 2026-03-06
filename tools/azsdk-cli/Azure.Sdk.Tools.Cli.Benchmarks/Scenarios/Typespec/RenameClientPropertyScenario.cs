@@ -29,7 +29,8 @@ public class RenameClientPropertyScenario : BenchmarkScenario
     {
         Owner = "Azure",
         Name = "azure-rest-api-specs",
-        Ref = "main"
+        Ref = "main",
+        SparseCheckoutPaths = ["specification/ai/Face"]
     };
 
     /// <inheritdoc />

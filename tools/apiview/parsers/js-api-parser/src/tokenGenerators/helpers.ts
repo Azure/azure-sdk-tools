@@ -423,9 +423,10 @@ export function buildTypeNodeTokens(
     if (result !== undefined) return result;
 
     // Simple union without type literals
+    let unionTarget = tokens;
     node.types.forEach((typeNode, index) => {
       if (index > 0) {
-        tokens.push(
+        unionTarget.push(
           createToken(TokenKind.Punctuation, "|", {
             hasPrefixSpace: true,
             hasSuffixSpace: true,
@@ -433,9 +434,10 @@ export function buildTypeNodeTokens(
           }),
         );
       }
-      const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated, depth, referenceMap);
+      const nestedChildren = buildTypeNodeTokens(typeNode, unionTarget, deprecated, depth, referenceMap);
       if (nestedChildren?.length) {
         children.push(...nestedChildren);
+        unionTarget = nestedChildren[nestedChildren.length - 1].Tokens;
       }
     });
     return children.length > 0 ? children : undefined;
@@ -453,9 +455,10 @@ export function buildTypeNodeTokens(
     if (result !== undefined) return result;
 
     // Simple intersection without type literals
+    let intersectionTarget = tokens;
     node.types.forEach((typeNode, index) => {
       if (index > 0) {
-        tokens.push(
+        intersectionTarget.push(
           createToken(TokenKind.Punctuation, "&", {
             hasPrefixSpace: true,
             hasSuffixSpace: true,
@@ -463,9 +466,10 @@ export function buildTypeNodeTokens(
           }),
         );
       }
-      const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated, depth, referenceMap);
+      const nestedChildren = buildTypeNodeTokens(typeNode, intersectionTarget, deprecated, depth, referenceMap);
       if (nestedChildren?.length) {
         children.push(...nestedChildren);
+        intersectionTarget = nestedChildren[nestedChildren.length - 1].Tokens;
       }
     });
     return children.length > 0 ? children : undefined;
@@ -746,6 +750,81 @@ export function buildTypeNodeTokens(
     }
 
     return children.length > 0 ? children : undefined;
+  }
+
+  if (ts.isTupleTypeNode(node)) {
+    if (node.elements.length === 0) {
+      tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+      tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+      return undefined;
+    }
+
+    tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+
+    for (let i = 0; i < node.elements.length; i++) {
+      const element = node.elements[i];
+      const isLast = i === node.elements.length - 1;
+      const memberTokens: ReviewToken[] = [];
+      const indent = createIndentation(depth + 1, deprecated);
+      if (indent) memberTokens.push(indent);
+
+      let memberChildren: ReviewLine[] | undefined;
+
+      if (ts.isNamedTupleMember(element)) {
+        if (element.dotDotDotToken) {
+          memberTokens.push(createToken(TokenKind.Punctuation, "...", { deprecated }));
+        }
+        memberTokens.push(
+          createToken(TokenKind.MemberName, element.name.getText(), { deprecated }),
+        );
+        if (element.questionToken) {
+          memberTokens.push(createToken(TokenKind.Punctuation, "?", { deprecated }));
+        }
+        memberTokens.push(
+          createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }),
+        );
+        memberChildren = buildTypeNodeTokens(
+          element.type,
+          memberTokens,
+          deprecated,
+          depth + 1,
+          referenceMap,
+        );
+      } else {
+        memberChildren = buildTypeNodeTokens(
+          element,
+          memberTokens,
+          deprecated,
+          depth + 1,
+          referenceMap,
+        );
+      }
+
+      if (!isLast) {
+        if (memberChildren?.length) {
+          memberChildren[memberChildren.length - 1].Tokens.push(
+            createToken(TokenKind.Punctuation, ",", { deprecated }),
+          );
+        } else {
+          memberTokens.push(createToken(TokenKind.Punctuation, ",", { deprecated }));
+        }
+      }
+
+      const childLine: ReviewLine = { Tokens: memberTokens };
+      if (memberChildren?.length) {
+        childLine.Children = memberChildren;
+      }
+      children.push(childLine);
+    }
+
+    const closingTokens: ReviewToken[] = [];
+    const closingIndent = createIndentation(depth, deprecated);
+    if (closingIndent) closingTokens.push(closingIndent);
+    closingTokens.push(createToken(TokenKind.Text, " ", { deprecated }));
+    closingTokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+    children.push({ Tokens: closingTokens, IsContextEndLine: true });
+
+    return children;
   }
 
   if (ts.isTemplateLiteralTypeNode(node)) {

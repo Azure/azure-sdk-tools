@@ -20,10 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install waza
+      - name: Install Azure Developer CLI
+        uses: Azure/setup-azd@v2
+
+      - name: Install waza extension
         run: |
-          curl -fsSL https://raw.githubusercontent.com/microsoft/waza/refs/tags/v0.12.0/install.sh | bash
-          echo "$HOME/bin" >> $GITHUB_PATH
+          azd config set alpha.extensions on
+          azd ext source add -n waza -t url -l https://raw.githubusercontent.com/microsoft/waza/main/registry.json
+          azd ext install microsoft.azd.waza
 
       - name: Check skill compliance
         run: |
@@ -34,7 +38,7 @@ jobs:
             skill_name=$(basename "$skill_dir")
             if [ -f "$skill_dir/SKILL.md" ]; then
               echo "### $skill_name" >> compliance.md
-              if ! waza check "$skill_dir" 2>&1 | tee -a compliance.md; then
+              if ! azd waza check "$skill_dir" 2>&1 | tee -a compliance.md; then
                 failed=1
               fi
               echo "" >> compliance.md
@@ -84,38 +88,30 @@ jobs:
             echo "No skill file changes detected — skipping evals"
           fi
 
-      - name: Install waza
+      - name: Install Azure Developer CLI
+        if: steps.changes.outputs.SHOULD_RUN == 'true'
+        uses: Azure/setup-azd@v2
+
+      - name: Install waza extension
         if: steps.changes.outputs.SHOULD_RUN == 'true'
         run: |
-          curl -fsSL https://raw.githubusercontent.com/microsoft/waza/refs/tags/v0.12.0/install.sh | bash
-          echo "$HOME/bin" >> $GITHUB_PATH
+          azd config set alpha.extensions on
+          azd ext source add -n waza -t url -l https://raw.githubusercontent.com/microsoft/waza/main/registry.json
+          azd ext install microsoft.azd.waza
 
       - name: Run evaluations
         if: steps.changes.outputs.SHOULD_RUN == 'true'
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Note: waza's copilot-sdk executor requires a live Copilot session.
-          # In CI, evals run best-effort. Use workflow_dispatch with proper
-          # credentials for full eval runs. The Skill Compliance Check job
-          # above is the blocking CI gate.
           mkdir -p results
-          failed=0
           for eval_file in .github/skills/*/eval.yaml; do
             if [ -f "$eval_file" ]; then
               skill_name=$(basename "$(dirname "$eval_file")")
               echo "=== Running evals for $skill_name ==="
-              waza run "$eval_file" \
-                --model "gpt-4o" \
-                --parallel \
-                -v \
-                -o "results/${skill_name}.json" || failed=1
+              azd waza run "$eval_file" --output-dir "results/${skill_name}"
             fi
           done
-          if [ "$failed" -eq 1 ]; then
-            echo "::warning::Some evaluations failed. This is expected in CI without a Copilot session."
-          fi
 
       - name: Upload eval results
         if: always() && steps.changes.outputs.SHOULD_RUN == 'true'

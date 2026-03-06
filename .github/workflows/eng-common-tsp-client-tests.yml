@@ -40,7 +40,7 @@ jobs:
           repository: Azure/azure-sdk-for-js
           path: js
           sparse-checkout: |
-            eng/*
+            eng
             sdk/template
 
       # - name: Setup node

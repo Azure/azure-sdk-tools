@@ -18,11 +18,14 @@ public class Program
         // list command
         var listCommand = new Command("list", "List all available scenarios");
         var listTagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
+        var listRepoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
         listCommand.Options.Add(listTagOption);
+        listCommand.Options.Add(listRepoOption);
         listCommand.SetAction((parseResult, _) =>
         {
             var tags = parseResult.GetValue(listTagOption);
-            HandleListCommand(tags);
+            var repo = parseResult.GetValue(listRepoOption);
+            HandleListCommand(tags, repo);
             return Task.FromResult(0);
         });
         rootCommand.Subcommands.Add(listCommand);
@@ -41,6 +44,7 @@ public class Program
         var verboseOption = new Option<bool>("--verbose") { Description = "Show agent activity during execution" };
         var parallelOption = new Option<int>("--parallel") { Description = $"Maximum number of scenarios to run concurrently (default: {BenchmarkDefaults.DefaultMaxParallelism})", DefaultValueFactory = _ => BenchmarkDefaults.DefaultMaxParallelism };
         var tagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
+        var repoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);
@@ -49,6 +53,7 @@ public class Program
         runCommand.Options.Add(verboseOption);
         runCommand.Options.Add(parallelOption);
         runCommand.Options.Add(tagOption);
+        runCommand.Options.Add(repoOption);
 
         runCommand.SetAction(async (parseResult, _) =>
         {
@@ -59,16 +64,17 @@ public class Program
             var verbose = parseResult.GetValue(verboseOption);
             var parallel = parseResult.GetValue(parallelOption);
             var tags = parseResult.GetValue(tagOption);
-            return await HandleRunCommand(name, all, tags, model, cleanup, verbose, parallel);
+            var repo = parseResult.GetValue(repoOption);
+            return await HandleRunCommand(name, all, tags, repo, model, cleanup, verbose, parallel);
         });
         rootCommand.Subcommands.Add(runCommand);
 
         return await rootCommand.Parse(args).InvokeAsync();
     }
 
-    private static void HandleListCommand(string[]? tags)
+    private static void HandleListCommand(string[]? tags, string? repo)
     {
-        var scenarios = FilterByTags(ScenarioDiscovery.DiscoverAll(), tags).ToList();
+        var scenarios = FilterScenarios(ScenarioDiscovery.DiscoverAll(), tags, repo).ToList();
 
         if (scenarios.Count == 0)
         {
@@ -95,7 +101,7 @@ public class Program
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? model, CleanupPolicy cleanup, bool verbose, int parallel)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? repo, string? model, CleanupPolicy cleanup, bool verbose, int parallel)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -111,9 +117,9 @@ public class Program
             return 1;
         }
 
-        if (tags is { Length: > 0 } && !all)
+        if ((tags is { Length: > 0 } || repo != null) && !all)
         {
-            Console.WriteLine("Error: --tag can only be used with --all");
+            Console.WriteLine("Error: --tag and --repo can only be used with --all");
             return 1;
         }
 
@@ -127,11 +133,14 @@ public class Program
 
         if (all)
         {
-            scenariosToRun.AddRange(FilterByTags(ScenarioDiscovery.DiscoverAll(), tags));
+            scenariosToRun.AddRange(FilterScenarios(ScenarioDiscovery.DiscoverAll(), tags, repo));
             if (scenariosToRun.Count == 0)
             {
-                var message = tags is { Length: > 0 }
-                    ? $"No scenarios found matching tag(s): {string.Join(", ", tags)}"
+                var filters = new List<string>();
+                if (tags is { Length: > 0 }) filters.Add($"tag(s): {string.Join(", ", tags)}");
+                if (repo != null) filters.Add($"repo: {repo}");
+                var message = filters.Count > 0
+                    ? $"No scenarios found matching {string.Join(" and ", filters)}"
                     : "No scenarios found.";
                 Console.WriteLine(message);
                 return 1;
@@ -213,12 +222,15 @@ public class Program
         return resultsList.All(r => r.Result.Passed) ? 0 : 1;
     }
 
-    private static IEnumerable<BenchmarkScenario> FilterByTags(IEnumerable<BenchmarkScenario> scenarios, string[]? tags)
+    private static IEnumerable<BenchmarkScenario> FilterScenarios(IEnumerable<BenchmarkScenario> scenarios, string[]? tags, string? repo)
     {
-        if (tags == null || tags.Length == 0)
-            return scenarios;
+        if (tags is { Length: > 0 })
+            scenarios = scenarios.Where(s => tags.Any(t => s.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)));
 
-        return scenarios.Where(s => tags.Any(t => s.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)));
+        if (!string.IsNullOrEmpty(repo))
+            scenarios = scenarios.Where(s => $"{s.Repo.Owner}/{s.Repo.Name}".Equals(repo, StringComparison.OrdinalIgnoreCase));
+
+        return scenarios;
     }
 
     private static void PrintResult(BenchmarkResult result)

@@ -4,17 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - '.github/skills/**/evals/**'
-      - '.github/skills/**/SKILL.md'
+      - '.github/skills/**'
   pull_request:
     paths:
-      - '.github/skills/**/evals/**'
-      - '.github/skills/**/SKILL.md'
+      - '.github/skills/**'
   workflow_dispatch:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   check-skills:
@@ -25,24 +22,32 @@ jobs:
 
       - name: Install waza
         run: |
-          curl -fsSL https://raw.githubusercontent.com/microsoft/waza/main/install.sh | bash
+          curl -fsSL https://raw.githubusercontent.com/microsoft/waza/refs/tags/v0.12.0/install.sh | bash
           echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Check skill compliance
         run: |
           echo "## Skill Compliance Report" > compliance.md
           echo "" >> compliance.md
+          failed=0
           for skill_dir in .github/skills/*/; do
             skill_name=$(basename "$skill_dir")
             if [ -f "$skill_dir/SKILL.md" ]; then
               echo "### $skill_name" >> compliance.md
-              waza check "$skill_dir" 2>&1 | tee -a compliance.md || true
+              if ! waza check "$skill_dir" 2>&1 | tee -a compliance.md; then
+                failed=1
+              fi
               echo "" >> compliance.md
             fi
           done
           cat compliance.md
+          if [ "$failed" -eq 1 ]; then
+            echo "::error::One or more skills failed compliance checks"
+            exit 1
+          fi
 
       - name: Upload compliance report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: skill-compliance
@@ -58,7 +63,7 @@ jobs:
 
       - name: Install waza
         run: |
-          curl -fsSL https://raw.githubusercontent.com/microsoft/waza/main/install.sh | bash
+          curl -fsSL https://raw.githubusercontent.com/microsoft/waza/refs/tags/v0.12.0/install.sh | bash
           echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Run evaluations
@@ -66,13 +71,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p results
-          for eval_file in .github/skills/*/evals/eval.yaml; do
+          failed=0
+          for eval_file in .github/skills/*/eval.yaml; do
             if [ -f "$eval_file" ]; then
-              skill_name=$(basename "$(dirname "$(dirname "$eval_file")")")
+              skill_name=$(basename "$(dirname "$eval_file")")
               echo "=== Running evals for $skill_name ==="
-              waza run "$eval_file" -v -o "results/${skill_name}.json" || true
+              if ! waza run "$eval_file" -v -o "results/${skill_name}.json"; then
+                failed=1
+              fi
             fi
           done
+          if [ "$failed" -eq 1 ]; then
+            echo "::error::One or more skill evaluations failed"
+            exit 1
+          fi
 
       - name: Upload eval results
         if: always()

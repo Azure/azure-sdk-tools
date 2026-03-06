@@ -207,16 +207,15 @@ After the initial waza-based creation, sensei was used to score and improve all 
 
 ## Summary
 
-| Metric                       | Count                                |
-| ---------------------------- | ------------------------------------ |
-| Instruction files analyzed   | 19                                   |
-| Skills created               | 13 (12 utility + 1 workflow)         |
-| Instructions excluded        | 3 (out-of-scope)                     |
-| Reference docs               | 10                                   |
-| Eval suites                  | 13                                   |
-| Total eval tasks             | 53 (33 original + 20 new)            |
-| Eval fixtures                | 8                                    |
-| Compliance level             | High (all 13 skills ✅)              |
-| Eval pass rate               | 91% (30/33 tasks, original 8 suites) |
-| Ralph Loop passes            | 2 (original 8 + new 5)               |
-| Total tokens (all 13 skills) | ~5851                                |
+| Metric                      | Count                               |
+| --------------------------- | ----------------------------------- |
+| Instruction files analyzed  | 19                                  |
+| Skills included in this PR  | 8 (5 shared + 3 meta)              |
+| Skills excluded             | See note below                      |
+| Instructions excluded       | 3 (out-of-scope)                    |
+
+> **Note:** This mapping documents the *original analysis* of all instruction files and the skills they map to.
+> Only 8 skills are included in this PR: 5 shared domain skills (`azsdk-common-*`) and 3 meta-skills.
+> Skills like `typespec-authoring` and `typespec-customization` were excluded because they are
+> not shared across repos. Others (`validate-service-label`, `verify-setup`, etc.) were removed
+> per reviewer feedback — see PR description for details.

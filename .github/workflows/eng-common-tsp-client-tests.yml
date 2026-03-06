@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   eng-common-tsp-client-tests:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
 
     defaults:
       run:

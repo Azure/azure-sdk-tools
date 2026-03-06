@@ -11,7 +11,8 @@ permissions:
 
 jobs:
   eng-common-tsp-client-tests:
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
 
     defaults:
       run:
@@ -26,12 +27,12 @@ jobs:
             eng/common/tsp-client
             eng/common-tests/tsp-client
 
-      - name: Use Node 24.x
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24.x
+      # - name: Use Node 24.x
+      #   uses: actions/setup-node@v6
+      #   with:
+      #     node-version: 24.x
 
-      - run: npm ci
+      - run: npm ci --no-audit --no-fund
 
       - run: npm ls -a
 

@@ -86,6 +86,7 @@ public class CustomizedCodeUpdateToolAutoTests
         configureTspCustomization?.Invoke(typeSpecCustomization);
 
         var typeSpecHelper = new Mock<ITypeSpecHelper>();
+        typeSpecHelper.Setup(t => t.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
 
         var svc = languageService ?? new ConfigurableLanguageService();
         var tsp = tspHelper ?? new MockTspHelper();
@@ -121,7 +122,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
         Assert.That(result.ErrorCode, Is.Null);
@@ -144,7 +145,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
         Assert.That(result.Message, Does.Contain("Build passed"));
@@ -172,14 +173,17 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public void TspProjectPath_DoesNotExist_ThrowsDirectoryNotFoundException()
+    public async Task TspProjectPath_DoesNotExist_ReturnsInvalidInput()
     {
         var (tool, _) = CreateTool();
         var pkg = CreateTempDir();
         var badTspDir = Path.Combine(Path.GetTempPath(), "nonexistent-tsp-" + Guid.NewGuid().ToString("n"));
 
-        Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
-            await tool.UpdateAsync(packagePath: pkg, tspProjectPath: badTspDir, ct: CancellationToken.None));
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: badTspDir, customizationRequest: "test customization", ct: CancellationToken.None);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
+        Assert.That(result.Message, Does.Contain("does not exist"));
     }
 
     // ========================================================================
@@ -203,7 +207,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
@@ -227,7 +231,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput));
@@ -267,7 +271,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
         Assert.That(result.Success, Is.True);
         Assert.That(result.Message, Does.Contain("manual intervention"));
     }
@@ -318,7 +322,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(buildCalls, Is.EqualTo(1), "Should have only built once before second classify returned empty");
@@ -348,7 +352,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed));
@@ -405,7 +409,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         // Build passes (default mock), so overall success
         Assert.That(result.Success, Is.True);
@@ -413,18 +417,47 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task TspRegeneration_Fails_ReturnsRegenerateFailed()
+    public async Task TspRegeneration_Fails_ContinuesLoopAndAppendsContext()
     {
+        var classifyCalls = 0;
         var failingTsp = new MockTspHelper(updateSuccess: false, updateError: "tsp-client failed: exit code 1");
-        var (tool, _) = CreateTool(tspHelper: failingTsp);
+        var (tool, _) = CreateTool(
+            tspHelper: failingTsp,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
+                        {
+                            classifyCalls++;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            return Task.FromResult(new FeedbackClassificationResponse
+                            {
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                        Reason = "fixable", Text = "rename X"
+                                    }
+                                ]
+                            });
+                        }));
+
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
+        // Regen failure should not short-circuit; loop continues for re-classification
         Assert.That(result.Success, Is.False);
-        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateFailed));
-        Assert.That(result.Message, Does.Contain("Regeneration failed"));
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice (maxTries) even when regen fails");
     }
 
     // ========================================================================
@@ -442,7 +475,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService));
@@ -459,7 +492,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed));
@@ -478,7 +511,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed));
@@ -507,10 +540,10 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.Message, Does.Contain("Build passed"));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
     }
 
@@ -526,7 +559,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed));
@@ -553,7 +586,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed));
@@ -700,7 +733,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
         Assert.That(classifyCalls, Is.EqualTo(2), "Should classify exactly 2 times (maxTries)");
@@ -727,7 +760,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
-        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, ct: CancellationToken.None);
+        await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(capturedLocalSpecRepo, Is.EqualTo(tspDir),
             "Should pass the tspProjectPath as localSpecRepoPath");
@@ -770,7 +803,7 @@ public class CustomizedCodeUpdateToolAutoTests
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
             => _hasCustomizations ? Path.Combine(packagePath, "customization") : null;
 
-        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildError, CancellationToken ct)
+        public override Task<List<AppliedPatch>> ApplyPatchesAsync(string customizationRoot, string packagePath, string buildContext, CancellationToken ct)
             => Task.FromResult(_patchesFunc?.Invoke() ?? new List<AppliedPatch>());
 
         public override Task<ValidationResult> ValidateAsync(string packagePath, CancellationToken ct)

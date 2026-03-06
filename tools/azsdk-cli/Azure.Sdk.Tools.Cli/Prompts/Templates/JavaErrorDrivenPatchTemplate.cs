@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts.Templates;
 /// Grounded in autorest.java customization framework capabilities it applies safe structural patches based on build errors.
 /// </summary>
 public class JavaErrorDrivenPatchTemplate(
-    string buildError,
+    string buildContext,
     string packagePath,
     string customizationRoot,
     List<string> customizationFiles,
@@ -35,9 +35,9 @@ public class JavaErrorDrivenPatchTemplate(
         You are a worker for the Java Azure SDK customization repair pipeline.
         Your job is to apply SAFE structural patches to fix build errors in customization files.
 
-        ## BUILD ERRORS
+        ## BUILD CONTEXT
         ```
-        {{buildError}}
+        {{buildContext}}
         ```
 
         ## INPUT STRUCTURE
@@ -61,19 +61,29 @@ public class JavaErrorDrivenPatchTemplate(
         ## WORKFLOW
 
         ### Step 1 — Parse errors
+        - Read the Original Request and Classifier Analysis in the BUILD CONTEXT above.
+          These tell you WHAT was changed (e.g., a field was renamed) and WHY the build broke.
         - Extract each compiler error: failing symbol, file, line, error type.
-        - Identify the root cause (e.g., method signature changed, parameter added).
 
         ### Step 2 — Read relevant files
-        - Read the customization file(s) referenced in errors.
-        - Read the generated file(s) to confirm current method signatures.
-        - Identify what changed (new parameters, renamed methods, etc.).
+        - **ALWAYS read ALL customization files listed above first.** Customization code often
+          injects method bodies into generated files via `customizeAst()`/`parseBlock()`. When
+          a build error appears in a generated file, the root cause is usually a string literal
+          inside the customization file that references a renamed or removed symbol.
+        - Then read the generated file(s) referenced in errors to confirm current field names
+          and method signatures.
+        - Compare what the Original Request says was changed with what the customization code
+          still references.
 
         ### Step 3 — Apply safe patches
         Apply patches ONLY when you can determine the CORRECT value with certainty:
         - Method gained a new parameter → add the parameter with proper forwarding
         - Method was renamed → update the method call
         - Return type changed → update the cast/assignment
+        - Field renamed → update `this.oldName` references in string literals passed to
+          `parseBlock()` / `parseStatement()` to use `this.newName`. Keep JSON wire names
+          (e.g., `\"maxSpeakers\"` in `writeNumberField`) unchanged — only update Java
+          field references like `this.maxSpeakers`.
 
         ### Step 4 — Return summary
         If you applied patches, return a brief summary of what was fixed.
@@ -137,4 +147,5 @@ public class JavaErrorDrivenPatchTemplate(
         Keep it concise.
         """;
     }
+
 }

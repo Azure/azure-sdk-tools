@@ -85,20 +85,4 @@ MCP / CLI tools for:
 | Repo‑specific differences / Playbooks | Language reps (Python: Xiang, .NET: Heaps, C/C++/Rust/Go: Anton Kolesnyk) | Each described materially different repo realities (Python issue growth, .NET labeler works but low service engagement, C/C++ mostly security ICMs) | Capture repo‑specific triage assumptions (GitHub vs ICM first, ownership, escalation) so automation doesn't assume one global flow |
 | Copilot Coding Agent (Exploratory) | Ronnie Geraghty / Anton | Has historical context on past AI attempts and explicitly framed this as exploratory only | Decide whether to revisit later by testing 1 narrow use case (issue summary / draft response) |
 
----
 
-## Feedback & Questions
-
-Comments from Ronnie Geraghty shared in our earlier sync:
-
-- **Labeling & triage work together** — While the current labeling infrastructure functions, it doesn't work equally well across all repos or scenarios. Improving one piece (e.g., labeling) without considering routing, escalation, and reporting together may limit impact.
-
-- **Event Processor vs GitHub Actions** — The current GitHub Event Processor (C# + Octokit) is powerful but not easily customizable. Some teams have asked whether GitHub Actions–based approaches would allow more repo‑specific customization.
-
-- **Shared vs repo‑specific labeling** — Today's auto‑triage assumes SDK‑style labels (plane + service). Other repos have different needs and may want custom label models. This creates a tradeoff:
-  - Flexibility for individual repos
-  - vs consistent SLA reporting across repos
-
-  A possible direction is a mix of shared labels (for reporting) and repo‑specific labels (for local workflows).
-
-- **Recurring SLA visibility** — In addition to dashboards or tools, recurring SLA/issue summary emails (similar to what exists for the Java team) may be a simple, high‑value way to improve visibility for Eng and PM owners tied to service tree IDs.

@@ -5,7 +5,7 @@
 # name: Max 64 characters. Lowercase letters, numbers, and hyphens only.
 # Must not start or end with a hyphen. Must match parent directory name.
 # Prefix skill and directory names with `azsdk-common-` if it should be synced
-# to all azure sdk repositories
+# to all Azure SDK repositories
 name: <azsdk-common-skill-name>
 # Max 1024 chars in description
 description: <One-line description of what the skill does>

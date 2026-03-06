@@ -38,7 +38,7 @@ pr:
       - main
   paths:
     include:
-      - .github/skills/azsdk-common-*
+      - .github/skills/azsdk-common-*/**
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml

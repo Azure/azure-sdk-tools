@@ -104,7 +104,7 @@ Skills that are specific to a particular language or repository should be stored
 
 ### Multi-Repository Skills
 
-Skills that apply to multiple repositories should be placed in the `.github/skills/` directory within the azure-sdk-tools repository, using a `azsdk-common-` directory name prefix. For example, a shared skill called `release-plan` would be at `.github/skills/azsdk-common-release-plan/SKILL.md`.
+Skills that apply to multiple repositories should be placed in the `.github/skills/` directory within the azure-sdk-tools repository, using an `azsdk-common-` directory name prefix. For example, a shared skill called `release-plan` would be at `.github/skills/azsdk-common-release-plan/SKILL.md`.
 
 The `azsdk-common-` prefix ensures shared skills sort together in a distinct block when browsing the skills directory, clearly separated from repo-specific skills. The skill `name` field inside `SKILL.md` should match the directory name (e.g., `name: azsdk-common-release-plan`).
 
@@ -126,14 +126,14 @@ To distribute skills from azure-sdk-tools to individual Azure SDK repositories:
 
     # name: Max 64 characters. Lowercase letters, numbers, and hyphens only.
     # Must not start or end with a hyphen. Must match parent directory name.
-    name: [azsdk-common-skill-name]
+    name: <azsdk-common-skill-name>
     # Max 1024 chars in description
-    description: [One-line description of what the skill does.]
+    description: <One-line description of what the skill does.>
     ---
 
-    # [Skill Title]
+    # <Skill Title>
 
-    [Skill instructions and sub-sections here]
+    <Skill instructions and sub-sections here>
     ```
 3. Submit a PR — the sync pipeline triggers automatically when files under `.github/skills/azsdk-common-*` change.
 4. The pipeline creates sync PRs in all subscribed repos following the standard sync workflow (see [common_engsys.md](../../doc/common/common_engsys.md) for details on the sync process).

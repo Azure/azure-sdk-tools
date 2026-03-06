@@ -1,7 +1,7 @@
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
-namespace Azure.Sdk.Tools.Cli.Tests.Microagents;
+namespace Azure.Sdk.Tools.Cli.Tests.CopilotAgents;
 
 internal class ToolHelpersTests
 {
@@ -18,58 +18,6 @@ internal class ToolHelpersTests
   {
     baseDir.Dispose();
   }
-
-    private class TestJsonSchemaObject
-    {
-        [System.ComponentModel.Description("Test description")]
-        public required string Name { get; set; }
-
-        public required string Description { get; set; }
-
-        public string? OptionalProperty { get; set; }
-
-        public bool AnotherProperty { get; set; }
-    }
-
-    [Test]
-    public void GetJsonSchemaRepresentation_CreatesCorrectSchema()
-    {
-
-        // Arrange
-        var expectedSchema = """
-        {
-          "type": "object",
-          "properties": {
-            "Name": {
-              "description": "Test description",
-              "type": "string"
-            },
-            "Description": {
-              "type": "string"
-            },
-            "OptionalProperty": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "AnotherProperty": {
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "Name",
-            "Description"
-          ]
-        }
-        """;
-
-        // Act
-        var schema = ToolHelpers.GetJsonSchemaRepresentation(typeof(TestJsonSchemaObject));
-
-        // Assert
-        Assert.That(schema, Is.EqualTo(expectedSchema));
-    }
 
     [Test]
     public void TryGetSafeFullPath_ProvidesCorrectPath()

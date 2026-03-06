@@ -9,7 +9,6 @@ using ModelContextProtocol.Server;
 using OpenAI;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools.Core;
@@ -95,7 +94,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
             services.AddScoped<ConversationLogger>();
             // Services depending on other scoped services
-            services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
             services.AddScoped<IVerifySetupService, VerifySetupService>();

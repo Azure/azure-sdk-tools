@@ -23,7 +23,7 @@ internal class ExampleToolTests
     private MockGitHubService? mockGitHubService;
     private Mock<IProcessHelper>? mockProcessHelper;
     private Mock<IPowershellHelper>? mockPowershellHelper;
-    private Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>? mockMicroagentHostService;
+    private Mock<Azure.Sdk.Tools.Cli.CopilotAgents.ICopilotAgentRunner>? mockCopilotAgentRunner;
 
     [SetUp]
     public void Setup()
@@ -34,7 +34,7 @@ internal class ExampleToolTests
         mockGitHubService = new MockGitHubService();
         mockProcessHelper = new Mock<IProcessHelper>();
         mockPowershellHelper = new Mock<IPowershellHelper>();
-        mockMicroagentHostService = new Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>();
+        mockCopilotAgentRunner = new Mock<Azure.Sdk.Tools.Cli.CopilotAgents.ICopilotAgentRunner>();
 
         // Set up Azure service mock to return a mock credential
         var mockCredential = new Mock<TokenCredential>();
@@ -57,7 +57,7 @@ internal class ExampleToolTests
             mockAzureService.Object,
             mockDevOpsService.Object,
             mockGitHubService,
-            mockMicroagentHostService.Object,
+            mockCopilotAgentRunner.Object,
             mockProcessHelper.Object,
             mockPowershellHelper.Object,
             tokenUsageHelper: new TokenUsageHelper(new OutputHelper()),
@@ -160,7 +160,7 @@ internal class ExampleToolTests
         Assert.That(subCommandNames, Does.Contain("error"));
         Assert.That(subCommandNames, Does.Contain("process"));
         Assert.That(subCommandNames, Does.Contain("powershell"));
-        Assert.That(subCommandNames, Does.Contain("microagent"));
+        Assert.That(subCommandNames, Does.Contain("agent"));
     }
 
     [Test]
@@ -244,12 +244,12 @@ internal class ExampleToolTests
     }
 
     [Test]
-    public async Task DemonstrateMicroagentFibonacci_Success()
+    public async Task DemonstrateAgentFibonacci_Success()
     {
-        mockMicroagentHostService!.Setup(m => m.RunAgentToCompletion(It.IsAny<Azure.Sdk.Tools.Cli.Microagents.Microagent<int>>(), It.IsAny<CancellationToken>()))
+        mockCopilotAgentRunner!.Setup(m => m.RunAsync(It.IsAny<Azure.Sdk.Tools.Cli.CopilotAgents.CopilotAgent<int>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(13);
 
-        var response = await tool.DemonstrateMicroagentFibonacci(7);
+        var response = await tool.DemonstrateAgentFibonacci(7);
 
         Assert.That(response.ResponseError, Is.Null);
         Assert.That(response.Result as string, Does.Contain("Fibonacci(7) = 13"));

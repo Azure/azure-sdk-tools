@@ -1,5 +1,5 @@
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
@@ -235,7 +235,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
             _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                          .ReturnsAsync(cspellErrorResult);
 
-            // Setup mock microagent service to return a successful spelling fix result
+            // Setup mock agent service to return a successful spelling fix result
             var mockSpellingFixResult = new CommonValidationHelpers.SpellingFixResult(
                 "Successfully fixed 4 spelling errors and added 0 words to cspell.json. Fixed 'contians' to 'contains', 'obvioius' to 'obvious', 'speling' to 'spelling', 'erors' to 'errors' in test_fix.md"
             );
@@ -263,7 +263,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package
                 // Normal result should fail since there are spelling errors
                 Assert.That(normalResult.ExitCode, Is.EqualTo(1));
 
-                // Fix result should succeed since the microagent fixed the issues
+                // Fix result should succeed since the agent fixed the issues
                 Assert.That(fixResult.ExitCode, Is.EqualTo(0));
 
                 // The fix result should contain details about what was fixed

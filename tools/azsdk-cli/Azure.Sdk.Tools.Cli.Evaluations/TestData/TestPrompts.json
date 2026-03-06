@@ -47,6 +47,9 @@
     { "toolName": "azsdk_package_update_changelog_content", "prompt": "Add release notes to the changelog", "category": "all" },
     { "toolName": "azsdk_package_update_metadata", "prompt": "Update the package metadata", "category": "all" },
     { "toolName": "azsdk_package_update_metadata", "prompt": "Change the package description and tags", "category": "all" },
+    { "toolName": "azsdk_package_pack", "prompt": "Pack my SDK package into a distributable artifact", "category": "all" },
+    { "toolName": "azsdk_package_pack", "prompt": "Create a .nupkg file from my SDK project", "category": "all" },
+    { "toolName": "azsdk_package_pack", "prompt": "Generate package artifacts for my SDK", "category": "all" },
     { "toolName": "azsdk_package_update_version", "prompt": "Update my package version", "category": "all" },
     { "toolName": "azsdk_package_update_version", "prompt": "Bump the version to 1.2.0", "category": "all" },
     { "toolName": "azsdk_release_sdk", "prompt": "Release my SDK package", "category": "all" },
@@ -96,13 +99,13 @@
     { "toolName": "azsdk_typespec_check_project_in_public_repo", "prompt": "Is my TypeSpec project in azure-rest-api-specs?", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_typespec_init_project", "prompt": "Initialize a new TypeSpec project", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_typespec_init_project", "prompt": "Create a new TypeSpec project for my service", "category": "azure-rest-api-specs" },
-    { "toolName": "azsdk_typespec_init_project", "prompt": "I want to onboard my Azure service to TypeSpec", "category": "azure-rest-api-specs" },
-    { "toolName": "azsdk_typespec_init_project", "prompt": "Start a new ARM resource provider definition", "category": "azure-rest-api-specs" },
-    { "toolName": "azsdk_typespec_init_project", "prompt": "Set up TypeSpec for a data plane API", "category": "azure-rest-api-specs" },
-    { "toolName": "azsdk_typespec_init_project", "prompt": "How do I bootstrap a TypeSpec project for Azure SDK?", "category": "azure-rest-api-specs" },
 
     { "toolName": "azsdk_verify_setup", "prompt": "Verify my environment setup", "category": "all" },
     { "toolName": "azsdk_verify_setup", "prompt": "Check if I have all required tools installed", "category": "all" },
-    { "toolName": "azsdk_verify_setup", "prompt": "Verify my MCP release tool setup", "category": "all" }
+    { "toolName": "azsdk_verify_setup", "prompt": "Verify my MCP release tool setup", "category": "all" },
+
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new resource 'asset' for service widget with TypeSpec.", "category": "all" },
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new api version for service widget with TypeSpec.", "category": "all" },
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" }
   ]
 }

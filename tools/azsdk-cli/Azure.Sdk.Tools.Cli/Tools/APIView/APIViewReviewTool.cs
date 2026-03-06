@@ -66,7 +66,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
     private readonly Option<string> repoNameOption = new("--repo-name")
     {
-        Description = "The repository name (e.g., 'azure-sdk-for-python' or 'Azure/azure-sdk-for-python')",
+        Description = "The repository name in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')",
         Required = true
     };
 
@@ -283,6 +283,11 @@ public class APIViewReviewTool : MCPMultiCommandTool
         string? sourceBranch = parseResult.GetValue(sourceBranchOption);
         label ??= !string.IsNullOrEmpty(sourceBranch) ? $"Source Branch:{sourceBranch}" : null;
 
+        if (string.IsNullOrEmpty(repoName) || !repoName.Contains('/'))
+        {
+            return new APIViewResponse { ResponseError = $"Invalid --repo-name '{repoName}'. Must be in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')." };
+        }
+
         try
         {
             (string? content, int statusCode) = await _apiViewService.CreateReviewFromPipelineAsync(
@@ -334,6 +339,11 @@ public class APIViewReviewTool : MCPMultiCommandTool
         string? codeFile = parseResult.GetValue(codeFileOption);
         string? baselineCodeFile = parseResult.GetValue(baselineCodeFileOption);
         string? metadataFile = parseResult.GetValue(metadataFileOption);
+
+        if (string.IsNullOrEmpty(repoName) || !repoName.Contains('/'))
+        {
+            return new APIViewResponse { ResponseError = $"Invalid --repo-name '{repoName}'. Must be in 'owner/repo' format (e.g., 'Azure/azure-sdk-for-python')." };
+        }
 
         try
         {

@@ -139,7 +139,7 @@ public class ApiViewReviewToolTests
         _mockApiViewService
             .Setup(x => x.CreateReviewFromPipelineAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
-                "azure-sdk-for-python", "azure-core", "internal",
+                "Azure/azure-sdk-for-python", "azure-core", "internal",
                 "CI Build", false, null, false, null, null))
             .ReturnsAsync((expectedContent, 200));
 
@@ -147,7 +147,7 @@ public class ApiViewReviewToolTests
         var parseResult = command.Parse(
             "create-review --build-id 12345 --artifact-name packages " +
             "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
-            "--label \"CI Build\" --repo-name azure-sdk-for-python --package-name azure-core --project internal");
+            "--label \"CI Build\" --repo-name Azure/azure-sdk-for-python --package-name azure-core --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedContent));
@@ -162,7 +162,7 @@ public class ApiViewReviewToolTests
         _mockApiViewService
             .Setup(x => x.CreateReviewFromPipelineAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
-                "azure-sdk-for-python", "azure-core", "internal",
+                "Azure/azure-sdk-for-python", "azure-core", "internal",
                 "Source Branch:main", false, null, false, null, "main"))
             .ReturnsAsync((expectedContent, 200));
 
@@ -170,7 +170,7 @@ public class ApiViewReviewToolTests
         var parseResult = command.Parse(
             "create-review --build-id 12345 --artifact-name packages --project internal " +
             "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
-            "--repo-name azure-sdk-for-python --package-name azure-core --source-branch main");
+            "--repo-name Azure/azure-sdk-for-python --package-name azure-core --source-branch main");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedContent));
@@ -184,7 +184,7 @@ public class ApiViewReviewToolTests
         _mockApiViewService
             .Setup(x => x.CreateReviewFromPipelineAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
-                "azure-sdk-for-python", "azure-core", "internal",
+                "Azure/azure-sdk-for-python", "azure-core", "internal",
                 "CI Build", true, "1.0.0", true, "client", "refs/heads/main"))
             .ReturnsAsync((expectedContent, 202));
 
@@ -192,7 +192,7 @@ public class ApiViewReviewToolTests
         var parseResult = command.Parse(
             "create-review --build-id 12345 --artifact-name packages " +
             "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
-            "--label \"CI Build\" --repo-name azure-sdk-for-python --package-name azure-core --project internal " +
+            "--label \"CI Build\" --repo-name Azure/azure-sdk-for-python --package-name azure-core --project internal " +
             "--compare-all-revisions --package-version 1.0.0 --set-release-tag --package-type client --source-branch refs/heads/main");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
 
@@ -214,7 +214,7 @@ public class ApiViewReviewToolTests
         var parseResult = command.Parse(
             "create-review --build-id 12345 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json " +
-            "--label test --repo-name repo --package-name pkg --project internal");
+            "--label test --repo-name Azure/repo --package-name pkg --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(response.ResponseError, Does.Contain("Invalid status code"));
@@ -235,7 +235,7 @@ public class ApiViewReviewToolTests
         var parseResult = command.Parse(
             "create-review --build-id 12345 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json " +
-            "--label test --repo-name repo --package-name pkg --project internal");
+            "--label test --repo-name Azure/repo --package-name pkg --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(response.ResponseError, Does.Contain("Failed to create API review"));
@@ -256,10 +256,23 @@ public class ApiViewReviewToolTests
         var parseResult = command.Parse(
             "create-review --build-id 12345 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json " +
-            "--label test --repo-name repo --package-name pkg --project internal");
+            "--label test --repo-name Azure/repo --package-name pkg --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
 
         Assert.That(response.ResponseError, Does.Contain("Invalid status code"));
+    }
+
+    [Test]
+    public async Task CreateReview_WithInvalidRepoNameFormat_ReturnsError()
+    {
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-review");
+        var parseResult = command.Parse(
+            "create-review --build-id 12345 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json " +
+            "--label test --repo-name azure-sdk-for-python --package-name pkg --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("owner/repo"));
     }
 
     // create-api-revision-if-changes tests
@@ -386,5 +399,19 @@ public class ApiViewReviewToolTests
 
         Assert.That(response.ResponseError, Does.Contain("Failed to create API revision"));
         Assert.That(response.ResponseError, Does.Contain("Connection refused"));
+    }
+
+    [Test]
+    public async Task CreateApiRevisionIfChanges_WithInvalidRepoNameFormat_ReturnsError()
+    {
+        var commands = apiViewReviewTool.GetCommandInstances();
+        var command = commands.First(c => c.Name == "create-api-revision-if-changes");
+        var parseResult = command.Parse(
+            "create-api-revision-if-changes --build-id 99999 --artifact-name packages " +
+            "--source-file-path file.whl --code-token-file-path file.json --commit-sha abc123 " +
+            "--repo-name azure-sdk-for-python --package-name pkg --pull-request-number 1 --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.ResponseError, Does.Contain("owner/repo"));
     }
 }

@@ -37,70 +37,52 @@ public class APIViewHttpService : IAPIViewHttpService
 
     public async Task<(string? content, int statusCode)> GetAsync(string endpoint)
     {
-        try
+        string environment = GetEnvironment();
+        string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
+
+        string requestUrl = $"{baseUrl}{endpoint}";
+        using HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
+
+        string content = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
         {
-            string environment = GetEnvironment();
-            string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
-            HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
-
-            string requestUrl = $"{baseUrl}{endpoint}";
-            using HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
-
-            string content = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
-                _logger.LogError("API call failed during GET {Endpoint} with status code {StatusCode}: {Content}",
-                    endpoint, response.StatusCode, truncated);
-            }
-
             return (content, (int)response.StatusCode);
         }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "HTTP request failed during GET {Endpoint}", endpoint);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error during GET {Endpoint}", endpoint);
-            throw;
-        }
+
+        string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
+        _logger.LogError("API call failed: GET {Endpoint} returned {StatusCode}: {Content}",
+            endpoint, response.StatusCode, truncated);
+        throw new HttpRequestException(
+            $"GET {endpoint} failed with status code {(int)response.StatusCode}",
+            null, response.StatusCode);
+
     }
 
     public async Task<(string? content, int statusCode)> PostAsync(string endpoint)
     {
-        try
+        string environment = GetEnvironment();
+        string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
+
+        string requestUrl = $"{baseUrl}{endpoint}";
+        using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty));
+
+        string content = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
         {
-            string environment = GetEnvironment();
-            string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
-            HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
-
-            string requestUrl = $"{baseUrl}{endpoint}";
-            using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty));
-
-            string content = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
-                _logger.LogError("API call failed during POST {Endpoint} with status code {StatusCode}: {Content}",
-                    endpoint, response.StatusCode, truncated);
-            }
-
             return (content, (int)response.StatusCode);
         }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "HTTP request failed during POST {Endpoint}", endpoint);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error during POST {Endpoint}", endpoint);
-            throw;
-        }
+
+        string truncated = content.Length > 500 ? content[..500] + "...[truncated]" : content;
+        _logger.LogError("API call failed: POST {Endpoint} returned {StatusCode}: {Content}",
+            endpoint, response.StatusCode, truncated);
+        throw new HttpRequestException(
+            $"POST {endpoint} failed with status code {(int)response.StatusCode}",
+            null, response.StatusCode);
+
     }
 
     private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync(string environment)

@@ -19,7 +19,7 @@ Links must point to actual files, not directories. Folder references don't trigg
 |------------|----------|
 | `[Recipes](references/recipes/)` | `[Recipes](references/recipes/README.md)` |
 | `[AZD](references/recipes/azd)` | `[AZD](references/recipes/azd/README.md)` |
-| `[Services](references/services)` | `[Services](references/services/README.md)` |
+- `https://docs.microsoft.com/en-us/rest/api/` → API documentation
 
 **Why this matters:**
 - Agent skills only load content from file links

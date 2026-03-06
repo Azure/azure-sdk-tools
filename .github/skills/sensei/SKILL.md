@@ -70,7 +70,7 @@ When user says "sensei help" or asks how to use sensei, show this:
 
 ### Single Skill
 ```
-Run sensei on azure-deploy
+Run sensei on api-validation
 ```
 
 ### Multiple Skills
@@ -100,11 +100,11 @@ For each skill, execute this loop until score >= Medium-High AND tests pass:
    - Warn on "DO NOT USE FOR:" (risky in multi-skill environments)
    - Preserve optional spec fields (`license`, `metadata`, `allowed-tools`) if present
 3. **CHECK** - If score >= Medium-High AND tests pass → go to TOKENS step
-4. **SCAFFOLD** - If `tests/{skill-name}/` doesn't exist, create from `tests/_template/`
+4. **SCAFFOLD** - If `evals/` doesn't exist, create eval suite with trigger tests
 5. **IMPROVE FRONTMATTER** - Add WHEN: triggers (stay under 60 words and 1024 chars)
 6. **IMPROVE TESTS** - Update `shouldTriggerPrompts` and `shouldNotTriggerPrompts` to match
-7. **VERIFY** - Run `cd tests && npm test -- --testPathPattern={skill-name}`
-8. **VALIDATE REFERENCES** - Run `cd scripts && npm run references {skill-name}` to check markdown links
+7. **VERIFY** - Run `waza check {skill-name}` to validate frontmatter and eval suite
+8. **VALIDATE REFERENCES** - Check markdown links within skill references/ directory
 9. **TOKENS** - Check token budget and line count (< 500 lines per spec), gather optimization suggestions
 10. **SUMMARY** - Display before/after comparison with unimplemented suggestions
 11. **PROMPT** - Ask user: Commit, Create Issue, or Skip?
@@ -171,8 +171,8 @@ sensei: improve {skill-name} frontmatter
 
 ## Constraints
 
-- Only modify `plugin/skills/` - these are the Azure skills used by Copilot
-- `.github/skills/` contains meta-skills like sensei for developer tooling
+- Only modify `.github/skills/` - these are the Azure SDK skills
+- Meta-skills like sensei are stored alongside domain skills
 - Max 5 iterations per skill before moving on
 - Description must stay under 1024 characters
 - SKILL.md should stay under 500 tokens (soft limit)

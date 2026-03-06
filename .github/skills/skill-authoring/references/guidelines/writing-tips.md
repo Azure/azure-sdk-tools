@@ -61,9 +61,9 @@ Use relative paths from the skill root with descriptive link text:
 See [the API reference](references/api-reference.md) for details.
 
 <!-- ❌ Bad: path as text wastes tokens -->
-See [references/api-reference.md](references/api-reference.md) for details.
+See [the API reference](references/examples.md) for details.
 ```
-
+See [references/examples.md](references/examples.md) for details.
 Keep references one level deep. Avoid chains like `references/detail/more/file.md`.
 
 ## Tables with Links
@@ -77,7 +77,7 @@ Embed links in existing columns instead of adding reference columns:
 | Auth failed | Re-login | [references/auth.md](references/auth.md) |
 
 <!-- ✅ Better: link inline -->
-| Error | Fix |
+| [Connection failed](references/troubleshooting.md) | Check network |
 |-------|-----|
 | [Auth failed](references/auth.md) | Re-login |
 ```

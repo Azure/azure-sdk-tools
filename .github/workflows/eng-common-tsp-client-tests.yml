@@ -32,7 +32,7 @@ jobs:
 
       - run: npm ci
 
-      - name: npm ls -a
+      - run: npm ls -a
 
       - run: npm run lint
 

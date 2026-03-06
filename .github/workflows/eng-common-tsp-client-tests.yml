@@ -40,7 +40,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           cache: "npm"
-          cache-dependency-path: azure-sdk-tools/eng/common-tests/tsp-client/package-lock.json
+          cache-dependency-path: tools/eng/common-tests/tsp-client/package-lock.json
 
       - run: npm ci --no-audit --no-fund --prefer-offline
 

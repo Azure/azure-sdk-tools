@@ -20,9 +20,14 @@
 /.config/1espt/                        @benbp @weshaggard
 
 ###########
+# Files used to manage spelling version and installation
+###########
+/eng/common/spelling @danieljurek @mikeharder
+
+###########
 # Files used to manage tsp-client version and installation
 ###########
-/eng/common/tsp-client @catalinaperalta @raych1
+/eng/common/tsp-client @catalinaperalta @mikeharder
 
 ###########
 # Eng Sys Tools
@@ -110,3 +115,6 @@
 
 # Add owners for notifications for specific pipelines
 /eng/common/pipelines/codeowners-linter.yml         @weshaggard
+
+# EngSys should own all package-lock.json under eng/common
+/eng/common/**/package-lock.json                    @mikeharder @danieljurek

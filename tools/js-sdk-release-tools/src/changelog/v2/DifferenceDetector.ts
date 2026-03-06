@@ -149,16 +149,11 @@ export class DifferenceDetector {
     });
   }
 
-  // Returns the operations group name for a baseline interface.
-  // If targetInterfaceNames is provided: try name+'Operations' first; if found in target return it,
-  // otherwise return the original name unchanged.
-  // If targetInterfaceNames is not provided: append 'Operations' unless the name already ends with it
-  // (except 'Operations' itself, which always gets the suffix).
-  private getOperationsGroupName(name: string, targetInterfaceNames?: Set<string>): string {
+  // Returns the target name for a baseline operations-group interface.
+  // Appends 'Operations' only if the resulting name exists in the target Modular interface set;
+  // otherwise keeps the original name unchanged.
+  private getOperationsGroupName(name: string, targetInterfaceNames: Set<string>): string {
     const nameWithOps = name + 'Operations';
-    if (!targetInterfaceNames) {
-      return nameWithOps;
-    }
     return targetInterfaceNames.has(nameWithOps) ? nameWithOps : name;
   }
 

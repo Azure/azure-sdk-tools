@@ -27,8 +27,9 @@ jobs:
             eng/common-tests/tsp-client
 
       - uses: actions/setup-node@v6
-        cache: "npm"
-        cache-dependency-path: eng/common-tests/tsp-client/package-lock.json
+        with:
+          cache: "npm"
+          cache-dependency-path: eng/common-tests/tsp-client/package-lock.json
 
       - run: npm ci --no-audit --no-fund
 

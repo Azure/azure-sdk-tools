@@ -10,31 +10,32 @@ permissions:
   contents: read
 
 jobs:
-  runs-on: ubuntu-latest
+  eng-common-tsp-client-tests:
+    runs-on: ubuntu-latest
 
-  defaults:
-    run:
-      working-directory: eng/common-tests/tsp-client
+    defaults:
+      run:
+        working-directory: eng/common-tests/tsp-client
 
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v6
-      with:
-        sparse-checkout: |
-          .github
-          eng/common/tsp-client
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github
+            eng/common/tsp-client
 
-    - name: Use Node 24.x
-      uses: actions/setup-node@v6
-      with:
-        node-version: 24.x
+      - name: Use Node 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
 
-    - run: npm ci
+      - run: npm ci
 
-    - name: npm ls -a
+      - name: npm ls -a
 
-    - run: npm run lint
+      - run: npm run lint
 
-    - run: npm run format:check:ci
+      - run: npm run format:check:ci
 
-    - run: npm run test:ci
+      - run: npm run test:ci

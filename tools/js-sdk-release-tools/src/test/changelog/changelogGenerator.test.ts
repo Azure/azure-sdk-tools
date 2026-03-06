@@ -521,7 +521,7 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
         );
     });
 
-    test("HLC -> Modular: name collision - Foo and FooOperations both renamed without conflict", async () => {
+    test("HLC -> Modular: name collision - Organization and OrganizationOperations both renamed without conflict", async () => {
         const oldViewPath = path.join(
             __dirname,
             "testCases/operationGroups.5.old.hlc.api.md",

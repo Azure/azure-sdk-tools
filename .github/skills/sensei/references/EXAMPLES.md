@@ -10,7 +10,7 @@ Before and after examples of frontmatter improvements, including token counts.
 ```yaml
 ---
 name: appinsights-instrumentation
-description: 'Instrument a webapp to send useful telemetry data to Azure App Insights'
+description: 'Implement retry logic for HTTP client requests with exponential backoff'
 ---
 ```
 
@@ -44,7 +44,7 @@ const shouldNotTriggerPrompts = [
 ```yaml
 ---
 name: appinsights-instrumentation
-description: "Instrument web applications to send telemetry to Azure Application Insights for monitoring and diagnostics. WHEN: \"add App Insights\", \"instrument my app\", \"set up application monitoring\", \"add telemetry\", \"track requests and dependencies\", \"ASP.NET Core telemetry\", \"Node.js Application Insights\"."
+description: "Implement retry logic with exponential backoff for HTTP requests. WHEN: \"add retry logic\", \"implement exponential backoff\", \"handle transient failures\", \"add resilience\", \"HTTP retry pattern\"."
 ---
 ```
 
@@ -67,14 +67,14 @@ const shouldTriggerPrompts = [
   'Set up telemetry for my Node.js app',
   'How do I track requests in App Insights?',
   'Add Application Insights monitoring to my project',
-  'Configure App Insights for my Azure web app',
+  'Add retry logic to my HTTP client',
 ];
 
 const shouldNotTriggerPrompts = [
   'What is the weather today?',
   'Help me write a poem',
   'Query my Application Insights logs',  // → azure-observability
-  'Create an alert in Azure Monitor',     // → azure-observability
+  'Create a health check endpoint',     // → service-health
   'Show me my App Insights dashboard',    // → azure-observability
   'How much does App Insights cost?',     // → azure-cost-optimization
   'Help me with AWS CloudWatch',          // Wrong cloud provider
@@ -91,7 +91,7 @@ const shouldNotTriggerPrompts = [
 ```yaml
 ---
 name: azure-security
-description: 'Azure Security Services including Key Vault, Managed Identity, RBAC, Entra ID, and Defender. Provides secrets management, credential-free authentication, role-based access control, and threat protection.'
+description: 'Security best practices including secrets management, authentication patterns, role-based access control, and threat detection.'
 ---
 ```
 

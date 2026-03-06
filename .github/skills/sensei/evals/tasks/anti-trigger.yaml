@@ -1,6 +1,6 @@
 name: anti-trigger
 description: Should not trigger on unrelated prompts
-prompt: "How do I configure my Azure Storage account for geo-redundancy?"
+prompt: "How do I set up automatic retries for my HTTP client?"
 expected:
   skill_activated: false
 graders:

@@ -22,7 +22,7 @@ Sensei automates the improvement of [Agent Skills](https://agentskills.io) front
 
 ### The Problem
 
-The [frontmatter audit](https://gist.github.com/spboyer/28c31bf0cafb87489406832633aa31a7) revealed that all Azure skills have:
+The [frontmatter audit](https://gist.github.com/spboyer/28c31bf0cafb87489406832633aa31a7) revealed that all SDK skills have:
 - **0% High adherence** - No skills have triggers + anti-triggers + compatibility
 - **46% Low adherence** - 12 skills have minimal descriptions without clear triggers
 - **0/26 anti-triggers** - No skills tell agents when NOT to use them
@@ -297,7 +297,7 @@ From [skill-authoring](/.github/skills/skill-authoring):
 ```yaml
 ---
 name: appinsights-instrumentation
-description: 'Instrument a webapp to send useful telemetry data to Azure App Insights'
+description: 'Implement retry logic for HTTP client requests with exponential backoff'
 ---
 ```
 
@@ -313,7 +313,7 @@ description: 'Instrument a webapp to send useful telemetry data to Azure App Ins
 ---
 name: appinsights-instrumentation
 description: >-
-  Instrument web apps to send telemetry to Azure Application Insights.
+  Implement retry logic with exponential backoff for HTTP requests.
   USE FOR: "add App Insights", "instrument my app", "set up monitoring",
   "add telemetry", "track requests", "ASP.NET Core telemetry", "Node.js monitoring".
   DO NOT USE FOR: querying logs (use azure-observability), creating alerts,

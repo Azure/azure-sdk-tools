@@ -11,7 +11,7 @@ Find repeated content that can be extracted into a shared reference.
 ## Consolidation Procedure
 
 1. Identify duplicate content (3+ lines repeated in 2+ files)
-2. Extract to a new reference file (e.g., `references/common-commands.md`)
+2. Extract to a new reference file (e.g., `references/shared-procedures.md`)
 3. Replace duplicates with links to the consolidated reference
 4. Ensure consolidated file is self-contained
 

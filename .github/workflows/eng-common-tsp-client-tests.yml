@@ -12,13 +12,9 @@ permissions:
 
 jobs:
   eng-common-tsp-client-tests:
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - ubuntu-slim
+    # todo: matrix over each lang
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-slim
 
     defaults:
       run:
@@ -43,22 +39,6 @@ jobs:
             eng
             sdk/template
 
-      # - name: Setup node
-      #   uses: actions/setup-node@v6
-      #   with:
-      #     cache: "npm"
-      #     cache-dependency-path: tools/eng/common-tests/tsp-client/package-lock.json
-
-      # - run: npm ci --no-audit --no-fund --prefer-offline
-
-      # - run: npm ls -a
-
-      # - run: npm run lint
-
-      # - run: npm run format:check:ci
-
-      # - run: npm run test:ci
-
       - name: Setup node
         uses: actions/setup-node@v6
         with:
@@ -75,3 +55,21 @@ jobs:
             --no -- \
             tsp-client update
         working-directory: js/sdk/template/template
+
+      # js-based tests
+
+      # - name: Setup node
+      #   uses: actions/setup-node@v6
+      #   with:
+      #     cache: "npm"
+      #     cache-dependency-path: tools/eng/common-tests/tsp-client/package-lock.json
+
+      # - run: npm ci --no-audit --no-fund --prefer-offline
+
+      # - run: npm ls -a
+
+      # - run: npm run lint
+
+      # - run: npm run format:check:ci
+
+      # - run: npm run test:ci

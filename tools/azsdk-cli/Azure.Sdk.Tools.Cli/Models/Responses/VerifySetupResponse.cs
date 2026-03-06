@@ -43,7 +43,10 @@ public class VerifySetupResponse : CommandResponse
                 ? ExitCodes.Fixable
                 : ExitCodes.Blocking;
         }
-        set => base.ExitCode = value;
+        // Setter is required by C# (base property is virtual get/set) but the getter
+        // always computes from Results/ResponseError, so setting a value would be silently ignored.
+        set => throw new NotSupportedException(
+            "Setting ExitCode on VerifySetupResponse is not supported; it is computed from verification results.");
     }
 
     [JsonPropertyName("results")]

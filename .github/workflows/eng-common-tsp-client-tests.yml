@@ -12,7 +12,13 @@ permissions:
 
 jobs:
   eng-common-tsp-client-tests:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-slim
+
+    runs-on: ${{ matrix.os }}
 
     defaults:
       run:

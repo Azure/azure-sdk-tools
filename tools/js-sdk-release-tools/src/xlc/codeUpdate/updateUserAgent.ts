@@ -2,7 +2,7 @@ import { ModularSDKType, SDKType } from "../../common/types.js";
 import { getSDKType } from "../../common/utils.js";
 import { logger } from "../../utils/logger.js";
 import { isModelOnly } from "../apiVersion/apiVersionTypeExtractor.js";
-import { getModularSDKType } from '../../utils/generateInputUtils.js';
+import { getModularSDKType } from "../../utils/generateInputUtils.js";
 
 import * as fs from "fs";
 import * as path from "path";

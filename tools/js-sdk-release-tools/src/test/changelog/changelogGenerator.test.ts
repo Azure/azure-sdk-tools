@@ -521,6 +521,69 @@ describe("Breaking change detection for v2 (compared to v1)", () => {
         );
     });
 
+    test("HLC -> Modular: name collision - Foo and FooOperations both renamed without conflict", async () => {
+        const oldViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.5.old.hlc.api.md",
+        );
+        const newViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.5.new.modular.api.md",
+        );
+
+        const changelogItems = await generateChangelogItems(
+            { path: oldViewPath, sdkType: SDKType.HighLevelClient },
+            { path: newViewPath, sdkType: SDKType.ModularClient },
+        );
+
+        // Old `Organization` → new `OrganizationOperations`
+        // Old `OrganizationOperations` → new `OrganizationOperationsOperations`
+        // Neither should appear as a removed operation group.
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupRemoved,
+            ),
+        ).toHaveLength(0);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupAdded,
+            ),
+        ).toHaveLength(0);
+    });
+
+    test("HLC -> Modular: 'Operations' maps to 'OperationsOperations'; 'XOperations' stays when 'XOperationsOperations' absent", async () => {
+        const oldViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.6.old.hlc.api.md",
+        );
+        const newViewPath = path.join(
+            __dirname,
+            "testCases/operationGroups.6.new.modular.api.md",
+        );
+
+        const changelogItems = await generateChangelogItems(
+            { path: oldViewPath, sdkType: SDKType.HighLevelClient },
+            { path: newViewPath, sdkType: SDKType.ModularClient },
+        );
+
+        // Old `Operations` → new `OperationsOperations` (target exists)
+        // Old `PrivateEndpointConnectionOperations` stays as-is (target `PrivateEndpointConnectionOperationsOperations` absent)
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupRemoved,
+            ),
+        ).toHaveLength(0);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.OperationGroupAdded,
+            ),
+        ).toHaveLength(0);
+    });
+
     test("Patch RLC -> RLC's basic breaking changes", async () => {
         const oldViewPath = path.join(
             __dirname,

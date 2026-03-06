@@ -1,6 +1,6 @@
 # Release History
 
-## 0.6.1 (Unreleased)
+## 0.6.1 (2026-03-05)
 
 ### Features Added
 
@@ -9,13 +9,9 @@
 - Added a CLI command `azsdk release-plan update` and MCP tool `azsdk_update_release_plan` to update release plan.
 - Updated CLI command `azsdk release-plan get` to get release plan using API spec pull request or spec project path.
 
-### Breaking Changes
-
 ### Bugs Fixed
 
 - Filter out downvoted `azure-sdk` bot comments from APIView feedback to reduce noise in delegated issues
-
-### Other Changes
 
 ## 0.6.0 (2026-02-27)
 

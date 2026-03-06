@@ -44,44 +44,7 @@ internal class VerifySetupToolTests
         _mockProcessHelper = new Mock<IProcessHelper>();
         _packageInfoHelper = new PackageInfoHelper(new TestLogger<PackageInfoHelper>(), _mockGitHelper.Object);
 
-        _mockGitHelper.Setup(x => x.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-        .ReturnsAsync((string path, CancellationToken _) =>
-        {
-            if (path.Contains("python", StringComparison.OrdinalIgnoreCase))
-            { return "azure-sdk-for-python"; }
-            if (path.Contains("dotnet", StringComparison.OrdinalIgnoreCase))
-            { return "azure-azure-sdk-for-net"; }
-            if (path.Contains("java", StringComparison.OrdinalIgnoreCase))
-            { return "azure-sdk-for-java"; }
-            if (path.Contains("js", StringComparison.OrdinalIgnoreCase))
-            { return "azure-sdk-for-js"; }
-            if (path.Contains("go", StringComparison.OrdinalIgnoreCase))
-            { return "azure-sdk-for-go"; }
-
-            return "unknown-repo"; // default fallback
-        });
-
-        // Mock DiscoverRepoRootAsync for PackagePathParser.ParseAsync
-        _mockGitHelper.Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-        .ReturnsAsync((string path, CancellationToken _) => path ?? "/test/repo");
-
-        languageServices = [
-            new PythonLanguageService(mockProcessHelper.Object, mockPythonHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, _packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new JavaLanguageService(mockProcessHelper.Object, _mockGitHelper.Object, new Mock<IMavenHelper>().Object, mockPythonHelper.Object, _mockMicrohostAgent.Object, _languageLogger, _commonValidationHelpers.Object, _packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new JavaScriptLanguageService(mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, _packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new GoLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, _packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>()),
-            new DotnetLanguageService(mockProcessHelper.Object, _mockPowerShellHelper.Object, _mockGitHelper.Object, _languageLogger, _commonValidationHelpers.Object, _packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>())
-        ];
-
-        SetupSuccessfulProcessMocks();
-    }
-
-    private void SetupSuccessfulProcessMocks()
-    {
-        mockProcessHelper
-            .Setup(x => x.Run(
-                    It.IsAny<ProcessOptions>(),
-                    It.IsAny<CancellationToken>()))
+        languageServices = []; // TODO is language service still needed
 
         // Default: service returns a successful empty response
         mockService

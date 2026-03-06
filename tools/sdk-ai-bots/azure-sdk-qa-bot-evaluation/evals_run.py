@@ -267,7 +267,7 @@ if __name__ == "__main__":
         if isPass == VerificationResult.PASS_WITH_WARNING:
             print("##vso[task.logissue type=warning]Evaluation succeeded with warning. Some tests failed but suppressed.")
         elif isPass == VerificationResult.FAIL:
-            logging.error("There are cases failed. please refer to the failed case artifact.")
+            logging.error("Evaluation failed; see the published failed-cases artifact for details.")
             sys.exit(1)
     except Exception as e:
         logging.info(f"❌ Error occurred: {str(e)}")

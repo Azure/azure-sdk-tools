@@ -240,10 +240,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 if (feedbackItem == null)
                 {
                     logger.LogWarning("Classifier returned non-existent feedback item ID '{ItemId}', skipping.", itemDetails.ItemId);
-                    continue;
                 }
 
-                feedbackItem.AppendContext($"Iteration {tries+1}");
+                feedbackItem?.AppendContext($"Iteration {tries+1}");
 
                 // Accumulate classifier analysis for downstream patch agent
                 classifierAnalysis.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
@@ -258,7 +257,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         var changes = string.Join("; ", tspCustomizationResult.ChangesSummary);
                         logger.LogInformation("Successfully applied tsp customization changes, changes applied: {changes}", changes);
-                        feedbackItem.AppendContext(changes, "Typespec changes applied");
+                        feedbackItem?.AppendContext(changes, "Typespec changes applied");
                         changesMade.AddRange(tspCustomizationResult.ChangesSummary);
                         tspFixSucceeded++;
                     }

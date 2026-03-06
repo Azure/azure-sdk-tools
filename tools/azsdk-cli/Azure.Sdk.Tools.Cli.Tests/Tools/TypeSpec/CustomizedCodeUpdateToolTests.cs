@@ -53,19 +53,24 @@ public class CustomizedCodeUpdateToolAutoTests
                 It.IsAny<string?>(),
                 It.IsAny<int?>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new FeedbackClassificationResponse
-            {
-                Classifications =
-                [
-                    new FeedbackClassificationResponse.ItemClassificationDetails
+            .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                (items, _, _, _, _, _, _) =>
+                {
+                    var actualId = items.FirstOrDefault()?.Id ?? "1";
+                    return Task.FromResult(new FeedbackClassificationResponse
                     {
-                        ItemId = "1",
-                        Classification = "TSP_APPLICABLE",
-                        Reason = "Can be fixed via TypeSpec",
-                        Text = "Rename FooClient to BarClient"
-                    }
-                ]
-            });
+                        Classifications =
+                        [
+                            new FeedbackClassificationResponse.ItemClassificationDetails
+                            {
+                                ItemId = actualId,
+                                Classification = "TSP_APPLICABLE",
+                                Reason = "Can be fixed via TypeSpec",
+                                Text = "Rename FooClient to BarClient"
+                            }
+                        ]
+                    });
+                });
         configureClassifier?.Invoke(classifierService);
 
         var typeSpecCustomization = new Mock<ITypeSpecCustomizationService>();
@@ -564,6 +569,84 @@ public class CustomizedCodeUpdateToolAutoTests
         Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed));
         Assert.That(result.BuildResult, Is.Not.Null);
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+    }
+
+    // ========================================================================
+    // CODE_CUSTOMIZATION classification route
+    // ========================================================================
+
+    [Test]
+    public async Task CodeCustomization_ClassifiedItem_SkipsTsp_PatchesApplied_BuildSucceeds()
+    {
+        // Scenario: classifier returns CODE_CUSTOMIZATION (not TSP_APPLICABLE).
+        // The item is removed from the feedback dictionary and no TSP fixes are attempted.
+        // Build fails → falls through to the patch pipeline → patches applied → Java regen → final build passes.
+        var buildCalls = 0;
+        var classifyCalls = 0;
+
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                // First build (in TSP loop) fails; second build (after patches) passes
+                return buildCalls <= 1
+                    ? (false, "error: cannot find symbol maxSpeakers", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () =>
+            [
+                new AppliedPatch("SpeechTranscriptionCustomization.java", "Renamed maxSpeakers to maxSpeakerCount", 2)
+            ],
+            language: SdkLanguage.Java);
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns(() =>
+                    {
+                        classifyCalls++;
+                        if (classifyCalls == 1)
+                        {
+                            return Task.FromResult(new FeedbackClassificationResponse
+                            {
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = "1",
+                                        Classification = "CODE_CUSTOMIZATION",
+                                        Reason = "Build error references generated code; fix is in the customization file",
+                                        Text = "Rename maxSpeakers to maxSpeakerCount in customization code"
+                                    }
+                                ]
+                            });
+                        }
+                        // Second iteration: feedback dictionary is empty → return empty
+                        return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                    }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir,
+            customizationRequest: "Rename maxSpeakers to maxSpeakerCount", ct: CancellationToken.None);
+
+        // Verify the CODE_CUSTOMIZATION route succeeded end-to-end
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
+        Assert.That(result.AppliedPatches![0].FilePath, Is.EqualTo("SpeechTranscriptionCustomization.java"));
+        Assert.That(result.AppliedPatches[0].ReplacementCount, Is.EqualTo(2));
+        Assert.That(result.ErrorCode, Is.Null);
     }
 
     // ========================================================================

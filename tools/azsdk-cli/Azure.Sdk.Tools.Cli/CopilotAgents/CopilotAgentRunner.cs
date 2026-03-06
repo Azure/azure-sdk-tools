@@ -127,7 +127,7 @@ public class CopilotAgentRunner(
                     logger.LogDebug("Assistant message: {Content}", msg.Data.Content?[..Math.Min(100, msg.Data.Content?.Length ?? 0)]);
                     break;
                 case ToolExecutionStartEvent toolStart:
-                    logger.LogDebug("Tool execution started: {ToolName}", toolStart.Data.ToolName);
+                    logger.LogDebug("Tool execution started: {ToolName} with arguments: {Arguments}", toolStart.Data.ToolName, toolStart.Data.Arguments);
                     break;
                 case ToolExecutionCompleteEvent toolComplete:
                     logger.LogDebug("Tool execution completed: {ToolCallId} success={Success}", toolComplete.Data.ToolCallId, toolComplete.Data.Success);

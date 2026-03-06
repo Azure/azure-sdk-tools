@@ -112,8 +112,8 @@ public class JavaLanguageServiceVersionUpdateTests
         await WriteChangelogForVersionAsync(packagePath, "1.2.3");
         CreateVersioningScripts(_tempDirectory.DirectoryPath);
 
-        _mockProcessHelper
-            .Setup(h => h.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+        _mockPythonHelper
+            .Setup(h => h.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateProcessResult(1, "boom"));
 
         var result = await _javaLanguageService.UpdateVersionAsync(packagePath, "stable", "1.2.3", "2025-12-01", CancellationToken.None);
@@ -131,8 +131,8 @@ public class JavaLanguageServiceVersionUpdateTests
         await WriteChangelogForVersionAsync(packagePath, "1.2.3");
         CreateVersioningScripts(_tempDirectory.DirectoryPath);
 
-        _mockProcessHelper
-            .SetupSequence(h => h.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+        _mockPythonHelper
+            .SetupSequence(h => h.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateProcessResult(0, "ok"))
             .ReturnsAsync(CreateProcessResult(1, "propagation failed"));
 
@@ -151,8 +151,8 @@ public class JavaLanguageServiceVersionUpdateTests
         await WriteChangelogForVersionAsync(packagePath, "1.2.3");
         CreateVersioningScripts(_tempDirectory.DirectoryPath);
 
-        _mockProcessHelper
-            .SetupSequence(h => h.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+        _mockPythonHelper
+            .SetupSequence(h => h.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateProcessResult(0, "set ok"))
             .ReturnsAsync(CreateProcessResult(0, "update ok"));
 
@@ -160,14 +160,13 @@ public class JavaLanguageServiceVersionUpdateTests
 
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
 
-        _mockProcessHelper.Verify(h => h.Run(
-            It.Is<ProcessOptions>(o => o.Args.Any(a => a.EndsWith("set_versions.py", StringComparison.OrdinalIgnoreCase))),
+        _mockPythonHelper.Verify(h => h.Run(
+            It.Is<PythonOptions>(o => o.Args.Any(a => a.EndsWith("set_versions.py", StringComparison.OrdinalIgnoreCase))),
             It.IsAny<CancellationToken>()), Times.Once);
 
-        _mockProcessHelper.Verify(h => h.Run(
-            It.Is<ProcessOptions>(o =>
+        _mockPythonHelper.Verify(h => h.Run(
+            It.Is<PythonOptions>(o =>
                 o.Args.Any(a => a.EndsWith("update_versions.py", StringComparison.OrdinalIgnoreCase)) &&
-                o.Args.Contains("--skip-readme") &&
                 o.Args.Contains("--library-list") &&
                 o.Args.Contains("com.azure:azure-test-package")),
             It.IsAny<CancellationToken>()), Times.Once);

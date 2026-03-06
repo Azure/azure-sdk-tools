@@ -54,10 +54,16 @@ jobs:
           path: compliance.md
           retention-days: 30
 
+  # Live evaluations require waza's copilot-sdk executor, which needs an active
+  # GitHub Copilot session.  This cannot be established in automated CI (push/PR),
+  # so we restrict this job to manual workflow_dispatch triggers where the caller
+  # can ensure a valid session exists.  Structural validation (waza check) still
+  # runs on every push and PR via the check-skills job above.
   run-evals:
     name: Run Skill Evaluations
     runs-on: ubuntu-latest
     needs: check-skills
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
 

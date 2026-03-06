@@ -260,7 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                     var truncated = prompt.Length > 50 ? prompt[..47] + "..." : prompt;
                     yield return new TestCaseData(skillName, prompt)
                         .SetName($"Skill_{skillName}_ShouldTrigger: {truncated}")
-                        .SetCategory("skills");
+                        .SetCategory("all");
                 }
             }
         }

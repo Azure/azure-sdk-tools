@@ -1,5 +1,5 @@
 {
-  "name": "@azure-tools/eng-common-tests-tsp-client",
+  "name": "@azure-tools/eng-common-tsp-client-tests",
   "private": "true",
   "type": "module",
   "devDependencies": {

@@ -49,18 +49,25 @@ public partial class PythonLanguageService : LanguageService
             try
             {
                 var content = await File.ReadAllTextAsync(versionFilePath, ct);
-                var newContent = VersionRegex.Replace(content, $@"VERSION = ""{version}""");
-
-                if (newContent != content)
+                if (!VersionRegex.IsMatch(content))
                 {
-                    await File.WriteAllTextAsync(versionFilePath, newContent, ct);
-                    logger.LogInformation("Updated VERSION in {VersionFile}", versionFilePath);
-                    versionFileUpdated = true;
+                    logger.LogWarning("VERSION pattern not found in {VersionFile}", versionFilePath);
+                    errors.Add($"Could not find VERSION pattern in {Path.GetFileName(versionFilePath)}");
                 }
                 else
                 {
-                    logger.LogWarning("VERSION pattern not found or already set in {VersionFile}", versionFilePath);
-                    errors.Add($"Could not find VERSION pattern in {Path.GetFileName(versionFilePath)}");
+                    var newContent = VersionRegex.Replace(content, $@"VERSION = ""{version}""");
+
+                    if (newContent != content)
+                    {
+                        await File.WriteAllTextAsync(versionFilePath, newContent, ct);
+                        logger.LogInformation("Updated VERSION in {VersionFile}", versionFilePath);
+                        versionFileUpdated = true;
+                    }
+                    else
+                    {
+                        logger.LogInformation("VERSION already set to {Version} in {VersionFile}; no change needed", version, versionFilePath);
+                    }
                 }
             }
             catch (Exception ex)
@@ -75,8 +82,11 @@ public partial class PythonLanguageService : LanguageService
             {
                 logger.LogInformation("No version file found in {PackagePath}, but this is expected for nspkg packages.", packagePath);
             }
-            logger.LogWarning("No _version.py or version.py found in {PackagePath}", packagePath);
-            errors.Add("No _version.py or version.py found in package directory");
+            else
+            {
+                logger.LogWarning("No _version.py or version.py found in {PackagePath}", packagePath);
+                errors.Add("No _version.py or version.py found in package directory");
+            }
         }
 
         // Find and update development status classifier in setup.py or pyproject.toml

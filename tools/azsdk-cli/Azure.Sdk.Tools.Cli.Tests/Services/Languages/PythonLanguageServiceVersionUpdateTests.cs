@@ -90,6 +90,49 @@ internal class PythonLanguageServiceVersionUpdateTests
     }
 
     [Test]
+    public async Task UpdateVersionInFiles_ReturnsFailure_WhenVersionPatternNotFound()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-version-pattern-missing-test");
+        var packageDir = Path.Combine(tempDir.DirectoryPath, "azure", "mypackage");
+        Directory.CreateDirectory(packageDir);
+
+        var versionPyPath = Path.Combine(packageDir, "_version.py");
+        await File.WriteAllTextAsync(versionPyPath, "__version__ = \"1.0.0\"\n");
+
+        // Act
+        var result = await InvokeUpdatePackageVersionInFilesAsync(
+            tempDir.DirectoryPath, "2.0.0", "stable");
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("VERSION pattern"));
+        var unchangedContent = await File.ReadAllTextAsync(versionPyPath);
+        Assert.That(unchangedContent, Does.Contain("__version__ = \"1.0.0\""));
+    }
+
+    [Test]
+    public async Task UpdateVersionInFiles_Succeeds_WhenVersionAlreadySet()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("python-version-already-set-test");
+        var packageDir = Path.Combine(tempDir.DirectoryPath, "azure", "mypackage");
+        Directory.CreateDirectory(packageDir);
+
+        var versionPyPath = Path.Combine(packageDir, "_version.py");
+        await File.WriteAllTextAsync(versionPyPath, "VERSION = \"2.0.0\"\n");
+
+        // Act
+        var result = await InvokeUpdatePackageVersionInFilesAsync(
+            tempDir.DirectoryPath, "2.0.0", "stable");
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+        var content = await File.ReadAllTextAsync(versionPyPath);
+        Assert.That(content, Does.Contain("VERSION = \"2.0.0\""));
+    }
+
+    [Test]
     public async Task UpdateVersionInFiles_PrefersUnderscoreVersionPy_WhenBothExist()
     {
         // Arrange

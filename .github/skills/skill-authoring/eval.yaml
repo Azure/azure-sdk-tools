@@ -1,7 +1,7 @@
 name: skill-authoring-eval
 description: Evaluation suite for skill authoring skill.
 skill: skill-authoring
-version: "1.0"
+version: '1.0'
 config:
   model: gpt-4o
   executor: mock
@@ -9,14 +9,19 @@ config:
   timeout_seconds: 300
   parallel: false
 graders:
-  - type: text
-    name: mentions_authoring_concepts
-    config:
-      contains: ["skill", "authoring", "frontmatter", "guidelines", "structure"]
-  - type: code
-    name: has_substantive_output
-    config:
-      assertions:
-        - "len(output) > 50"
+- type: regex
+  name: mentions_authoring_concepts
+  config:
+    must_match:
+    - "(?i)skill"
+    - "(?i)authoring"
+    - "(?i)frontmatter"
+    - "(?i)guidelines"
+    - "(?i)structure"
+- type: code
+  name: has_substantive_output
+  config:
+    assertions:
+    - len(output) > 50
 tasks:
-  - "tasks/*.yaml"
+- tasks/*.yaml

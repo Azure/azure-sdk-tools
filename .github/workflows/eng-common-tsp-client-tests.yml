@@ -12,13 +12,7 @@ permissions:
 
 jobs:
   eng-common-tsp-client-tests:
-    # todo: matrix over each lang
-
-    runs-on: ubuntu-slim
-
-    defaults:
-      run:
-        working-directory: tools/eng/common-tests/tsp-client
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout self
@@ -45,9 +39,32 @@ jobs:
           cache: "npm"
           cache-dependency-path: tools/eng/common/tsp-client/package-lock.json
 
-      - run: npm ci --no-audit --no-fund --prefer-offline
+      - name: Install deps for eng/common/tsp-client
+        run: npm ci --no-audit --no-fund --prefer-offline
         working-directory: tools/eng/common/tsp-client
 
+      - name: List deps for eng/common/tsp-client
+        run: npm ls -a
+        working-directory: tools/eng/common/tsp-client
+
+      - name: Install deps for tools/eng/common-tests/tsp-client
+        run: npm ci --no-audit --no-fund --prefer-offline
+        working-directory: tools/eng/common-tests/tsp-client
+
+      - name: List deps for tools/eng/common-tests/tsp-client
+      - run: npm ls -a
+        working-directory: tools/eng/common-tests/tsp-client
+
+      - run: npm run lint
+        working-directory: tools/eng/common-tests/tsp-client
+
+      - run: npm run format:check:ci
+        working-directory: tools/eng/common-tests/tsp-client
+
+      - run: npm run test:ci
+        working-directory: tools/eng/common-tests/tsp-client
+
+      # TODO: migrate test from bash to vitest
       - name: "[js] tsp-client update"
         run: |
           npm exec \
@@ -55,21 +72,3 @@ jobs:
             --no -- \
             tsp-client update
         working-directory: js/sdk/template/template
-
-      # js-based tests
-
-      # - name: Setup node
-      #   uses: actions/setup-node@v6
-      #   with:
-      #     cache: "npm"
-      #     cache-dependency-path: tools/eng/common-tests/tsp-client/package-lock.json
-
-      # - run: npm ci --no-audit --no-fund --prefer-offline
-
-      # - run: npm ls -a
-
-      # - run: npm run lint
-
-      # - run: npm run format:check:ci
-
-      # - run: npm run test:ci

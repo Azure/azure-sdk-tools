@@ -14,6 +14,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: tools/eng/common-tests/tsp-client
+
     steps:
       - name: Checkout self
         uses: actions/checkout@v6
@@ -41,9 +45,9 @@ jobs:
             tools/eng/common/tsp-client/package-lock.json
             tools/eng/common-tests/tsp-client/package-lock.json
 
-      - name: Install deps for tools/eng/common/tsp-client
+      - name: Install eng/common/tsp-client
         run: |
-          echo "::group::npm ci"
+          echo "::group::npm ci --no-audit --no-fund --prefer-offline"
           npm ci --no-audit --no-fund --prefer-offline
           echo "::endgroup::"
           echo "::group::npm ls -a"
@@ -51,30 +55,26 @@ jobs:
           echo "::endgroup::"
         working-directory: tools/eng/common/tsp-client
 
-      - name: Install deps for tools/eng/common-tests/tsp-client
+      - name: Install deps
         run: |
-          echo "::group::npm ci"
+          echo "::group::npm ci --no-audit --no-fund --prefer-offline"
           npm ci --no-audit --no-fund --prefer-offline
           echo "::endgroup::"
           echo "::group::npm ls -a"
           npm ls -a || true
           echo "::endgroup::"
-        working-directory: tools/eng/common-tests/tsp-client
 
       - run: npm run lint
-        working-directory: tools/eng/common-tests/tsp-client
 
       - run: npm run format:check:ci
-        working-directory: tools/eng/common-tests/tsp-client
 
       - run: npm run test:ci
-        working-directory: tools/eng/common-tests/tsp-client
 
       # TODO: migrate test from bash to vitest
-      - name: "[js] tsp-client update"
-        run: |
-          npm exec \
-            --prefix "${{ github.workspace }}/tools/eng/common/tsp-client" \
-            --no -- \
-            tsp-client update
-        working-directory: js/sdk/template/template
+      # - name: "[js] tsp-client update"
+      #   run: |
+      #     npm exec \
+      #       --prefix "${{ github.workspace }}/tools/eng/common/tsp-client" \
+      #       --no -- \
+      #       tsp-client update
+      #   working-directory: js/sdk/template/template

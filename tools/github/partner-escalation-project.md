@@ -22,20 +22,20 @@ Ongoing working series to identify concrete pain points around GitHub triage, pa
 
 ## What Already Exists (Baseline)
 
-### Issue Labeler Service
+### Issue Labeler Service ([tool docs](../issue-labeler/))
 
 - **OpenAI Labeler** — RAG‑based labeling
 - **Legacy ML.NET Labeler** — traditional ML approach
 - **TriageRag** — semantic + vector search
 - **Knowledge Agent** — answer generation
 
-### GitHub Event Processor
+### GitHub Event Processor ([tool docs](../github-event-processor/README.md))
 
-- Webhook‑based issue triage
+- GitHub Actions–based event‑driven issue triage
 - Scheduled processing (stale issues, lifecycle rules)
 - Service attention routing via CODEOWNERS
 
-### Azure SDK MCP Server
+### Azure SDK MCP Server ([tool docs](../../eng/common/mcp/README.md))
 
 - Existing tools: service label checks, CODEOWNERS lookup
 - Opportunity to extend with partner‑facing tools

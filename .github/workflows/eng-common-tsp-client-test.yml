@@ -28,15 +28,6 @@ jobs:
             eng/common/tsp-client
             eng/common-tests/tsp-client
 
-      - name: Checkout js
-        uses: actions/checkout@v6
-        with:
-          repository: Azure/azure-sdk-for-js
-          path: js
-          sparse-checkout: |
-            eng
-            sdk/template
-
       - name: Setup node
         uses: actions/setup-node@v6
         with:
@@ -67,6 +58,15 @@ jobs:
       - run: npm run lint
 
       - run: npm run format:check:ci
+
+      - name: Checkout js
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-js
+          path: js
+          sparse-checkout: |
+            eng
+            sdk/template
 
       - run: npm run test:ci
 

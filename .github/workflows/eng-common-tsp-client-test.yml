@@ -61,24 +61,16 @@ jobs:
       - name: npm run format:check:ci
         run: npm run format:check:ci
 
-      # TODO: migrate test from bash to vitest
-      #
-      # - name: Checkout js
-      #   uses: actions/checkout@v6
-      #   with:
-      #     repository: Azure/azure-sdk-for-js
-      #     path: js
-      #     sparse-checkout: |
-      #       eng
-      #       sdk/template
-      #
-      # - name: "[js] tsp-client update"
-      #   run: |
-      #     npm exec \
-      #       --prefix "${{ github.workspace }}/tools/eng/common/tsp-client" \
-      #       --no -- \
-      #       tsp-client update
-      #   working-directory: js/sdk/template/template
+      - name: Checkout js
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-js
+          path: js
+          sparse-checkout: |
+            eng
+            sdk/template
+
+      # TODO: checkout python
 
       - name: npm run test:ci
         run: |

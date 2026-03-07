@@ -15,7 +15,8 @@
     "semver": "^7.7.4",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.56.0",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.15",
+    "zod": "^4.3.6"
   },
   "scripts": {
     "check": "npm run lint && npm run format:check && npm run test:ci",

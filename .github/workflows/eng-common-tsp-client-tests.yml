@@ -52,7 +52,7 @@ jobs:
         working-directory: tools/eng/common-tests/tsp-client
 
       - name: List deps for tools/eng/common-tests/tsp-client
-      - run: npm ls -a
+        run: npm ls -a
         working-directory: tools/eng/common-tests/tsp-client
 
       - run: npm run lint

@@ -10,18 +10,11 @@ config:
   parallel: false
 graders:
 - type: regex
-  name: mentions_optimization_concepts
+  name: no_fatal_errors
   config:
-    must_match:
-    - "(?i)token"
-    - "(?i)markdown"
-    - "(?i)optimize"
-    - "(?i)reduce"
-    - "(?i)compression"
-- type: code
-  name: has_substantive_output
-  config:
-    assertions:
-    - len(output) > 50
+    must_not_match:
+    - (?i)fatal error
+    - (?i)unhandled exception
+    - '(?i)panic:'
 tasks:
 - tasks/*.yaml

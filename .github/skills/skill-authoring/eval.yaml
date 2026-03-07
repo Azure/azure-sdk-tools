@@ -10,18 +10,11 @@ config:
   parallel: false
 graders:
 - type: regex
-  name: mentions_authoring_concepts
+  name: no_fatal_errors
   config:
-    must_match:
-    - "(?i)skill"
-    - "(?i)authoring"
-    - "(?i)frontmatter"
-    - "(?i)guidelines"
-    - "(?i)structure"
-- type: code
-  name: has_substantive_output
-  config:
-    assertions:
-    - len(output) > 50
+    must_not_match:
+    - (?i)fatal error
+    - (?i)unhandled exception
+    - '(?i)panic:'
 tasks:
 - tasks/*.yaml

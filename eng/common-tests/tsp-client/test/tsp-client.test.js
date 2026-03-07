@@ -3,8 +3,8 @@ import { dirname, resolve } from "path";
 import semver from "semver";
 import { fileURLToPath } from "url";
 import { describe, expect, it } from "vitest";
-import { execNpmExec } from "../src/exec.js";
-import { debugLogger } from "../src/logger.js";
+import { execNpmExec } from "../shared/src/exec.js";
+import { debugLogger } from "../shared/src/logger.js";
 
 // TODO: Add language enum
 
@@ -35,7 +35,7 @@ async function getJsDir() {
 }
 
 // TODO: Use describe.concurrent.each() and it.sequential() to run langs in parallel,
-// but tests withing lang in sequence
+// but tests within lang in sequence
 
 describe("tsp-client", () => {
   it("version parses as semver", async () => {
@@ -46,6 +46,8 @@ describe("tsp-client", () => {
 
     expect(semver.parse(stdout.trim())).toBeTruthy();
   });
+
+  // TODO: skip JS tests if JS dir not exist
 
   it("finds JS repo directory", async () => {
     const jsDir = await getJsDir();

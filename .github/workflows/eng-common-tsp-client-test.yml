@@ -55,22 +55,23 @@ jobs:
           npm ls -a || true
           echo "::endgroup::"
 
-      - run: npm run lint
+      - name: npm run lint
+        run: npm run lint
 
-      - run: npm run format:check:ci
-
-      - name: Checkout js
-        uses: actions/checkout@v6
-        with:
-          repository: Azure/azure-sdk-for-js
-          path: js
-          sparse-checkout: |
-            eng
-            sdk/template
-
-      - run: npm run test:ci
+      - name: npm run format:check:ci
+        run: npm run format:check:ci
 
       # TODO: migrate test from bash to vitest
+      #
+      # - name: Checkout js
+      #   uses: actions/checkout@v6
+      #   with:
+      #     repository: Azure/azure-sdk-for-js
+      #     path: js
+      #     sparse-checkout: |
+      #       eng
+      #       sdk/template
+      #
       # - name: "[js] tsp-client update"
       #   run: |
       #     npm exec \
@@ -78,3 +79,21 @@ jobs:
       #       --no -- \
       #       tsp-client update
       #   working-directory: js/sdk/template/template
+
+      - name: npm run test:ci
+        run: |
+          set -o pipefail
+          npm run test:ci | tee vitest-output.txt
+          {
+            echo '## Vitest Summary'
+            echo '```text'
+            awk '/Test Files/{flag=1} flag{print} /Duration/{flag=0}' vitest-output.txt | sed 's/\x1b\[[0-9;]*m//g'
+            echo '```'
+            echo '<details>'
+            echo '<summary>Full Vitest Results</summary>'
+            echo ''
+            echo '```text'
+            sed 's/\x1b\[[0-9;]*m//g' vitest-output.txt
+            echo '```'
+            echo '</details>'
+          } >> "$GITHUB_STEP_SUMMARY"

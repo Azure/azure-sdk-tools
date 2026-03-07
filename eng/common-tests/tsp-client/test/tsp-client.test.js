@@ -3,8 +3,8 @@ import { dirname, resolve } from "path";
 import semver from "semver";
 import { fileURLToPath } from "url";
 import { describe, expect, it } from "vitest";
-import { execNpmExec } from "../shared/src/exec.js";
-import { debugLogger } from "../shared/src/logger.js";
+import { execNpmExec } from "../shared/exec.js";
+import { debugLogger } from "../shared/logger.js";
 
 // TODO: Add language enum
 

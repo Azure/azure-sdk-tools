@@ -1,7 +1,7 @@
 name: markdown-token-optimizer-eval
 description: Evaluation suite for markdown token optimizer skill.
 skill: markdown-token-optimizer
-version: "1.0"
+version: '1.0'
 config:
   model: gpt-4o
   executor: mock
@@ -9,14 +9,19 @@ config:
   timeout_seconds: 300
   parallel: false
 graders:
-  - type: text
-    name: mentions_optimization_concepts
-    config:
-      contains: ["token", "markdown", "optimize", "reduce", "compression"]
-  - type: code
-    name: has_substantive_output
-    config:
-      assertions:
-        - "len(output) > 50"
+- type: regex
+  name: mentions_optimization_concepts
+  config:
+    must_match:
+    - "(?i)token"
+    - "(?i)markdown"
+    - "(?i)optimize"
+    - "(?i)reduce"
+    - "(?i)compression"
+- type: code
+  name: has_substantive_output
+  config:
+    assertions:
+    - len(output) > 50
 tasks:
-  - "tasks/*.yaml"
+- tasks/*.yaml

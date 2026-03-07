@@ -4,9 +4,9 @@ skill: markdown-token-optimizer
 config:
   timeout: 60
 graders:
-  - type: text
-    name: skill-activated
-    config:
-      contains:
-        - "token"
+- type: regex
+  name: skill-activated
+  config:
+    must_match:
+    - "(?i)token"
 tasks: tasks/*.yaml

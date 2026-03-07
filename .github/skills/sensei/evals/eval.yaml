@@ -4,9 +4,9 @@ skill: sensei
 config:
   timeout: 60
 graders:
-  - type: text
-    name: skill-activated
-    config:
-      contains:
-        - "skill"
+- type: regex
+  name: skill-activated
+  config:
+    must_match:
+    - "(?i)skill"
 tasks: tasks/*.yaml

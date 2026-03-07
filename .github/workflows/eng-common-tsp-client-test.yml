@@ -87,6 +87,9 @@ jobs:
           {
             echo '## Vitest Summary'
             echo '```text'
+            sed 's/\x1b\[[0-9;]*m//g' vitest-output.txt | grep -E '^[[:space:]]*[✓×] .+ > .+ [0-9]+(ms|s)$' || true
+            echo '```'
+            echo '```text'
             awk '/Test Files/{flag=1} flag{print} /Duration/{flag=0}' vitest-output.txt | sed 's/\x1b\[[0-9;]*m//g'
             echo '```'
             echo '<details>'

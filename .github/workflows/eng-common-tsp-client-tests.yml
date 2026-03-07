@@ -37,7 +37,9 @@ jobs:
         uses: actions/setup-node@v6
         with:
           cache: "npm"
-          cache-dependency-path: tools/eng/common/tsp-client/package-lock.json
+          cache-dependency-path: |
+            tools/eng/common/tsp-client/package-lock.json
+            tools/eng/common-tests/tsp-client/package-lock.json
 
       - name: Install deps for eng/common/tsp-client
         run: npm ci --no-audit --no-fund --prefer-offline

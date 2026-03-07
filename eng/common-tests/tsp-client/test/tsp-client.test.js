@@ -6,9 +6,12 @@ import { describe, expect, it } from "vitest";
 import { execNpmExec } from "../src/exec.js";
 import { debugLogger } from "../src/logger.js";
 
+// TODO: Add language enum
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const engCommonTspClient = resolve(__dirname, "../../../common/tsp-client");
 
+// TODO: take language enum param
 async function getJsDir() {
   // TODO: Could fallback to env var, put I prefer convention over config
   const candidates = [
@@ -30,6 +33,9 @@ async function getJsDir() {
     `Unable to find JS repo clone. Checked: ${candidates.join(", ")}`,
   );
 }
+
+// TODO: Use describe.concurrent.each() and it.sequential() to run langs in parallel,
+// but tests withing lang in sequence
 
 describe("tsp-client", () => {
   it("version parses as semver", async () => {

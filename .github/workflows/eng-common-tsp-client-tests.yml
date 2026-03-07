@@ -41,20 +41,24 @@ jobs:
             tools/eng/common/tsp-client/package-lock.json
             tools/eng/common-tests/tsp-client/package-lock.json
 
-      - name: Install deps for eng/common/tsp-client
-        run: npm ci --no-audit --no-fund --prefer-offline
-        working-directory: tools/eng/common/tsp-client
-
-      - name: List deps for eng/common/tsp-client
-        run: npm ls -a
+      - name: Install deps for tools/eng/common/tsp-client
+        run: |
+          echo "::group::npm ci"
+          npm ci --no-audit --no-fund --prefer-offline
+          echo "::endgroup::"
+          echo "::group::npm ls -a"
+          npm ls -a || true
+          echo "::endgroup::"
         working-directory: tools/eng/common/tsp-client
 
       - name: Install deps for tools/eng/common-tests/tsp-client
-        run: npm ci --no-audit --no-fund --prefer-offline
-        working-directory: tools/eng/common-tests/tsp-client
-
-      - name: List deps for tools/eng/common-tests/tsp-client
-        run: npm ls -a
+        run: |
+          echo "::group::npm ci"
+          npm ci --no-audit --no-fund --prefer-offline
+          echo "::endgroup::"
+          echo "::group::npm ls -a"
+          npm ls -a || true
+          echo "::endgroup::"
         working-directory: tools/eng/common-tests/tsp-client
 
       - run: npm run lint

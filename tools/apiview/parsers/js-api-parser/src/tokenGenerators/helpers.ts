@@ -210,6 +210,7 @@ function buildCompositeTypeWithLiterals(
   children: ReviewLine[],
   deprecated: boolean | undefined,
   depth: number,
+  referenceMap?: ReferenceMap,
 ): ReviewLine[] | undefined {
   const hasTypeLiterals = types.some((t) => ts.isTypeLiteralNode(t));
   if (!hasTypeLiterals) return undefined;
@@ -273,7 +274,7 @@ function buildCompositeTypeWithLiterals(
         const memberTokens: ReviewToken[] = [];
         const indent = createIndentation(depth + 1, deprecated);
         if (indent) memberTokens.push(indent);
-        const memberChildren = buildTypeElementTokens(member, memberTokens, deprecated, depth + 1);
+        const memberChildren = buildTypeElementTokens(member, memberTokens, deprecated, depth + 1, referenceMap);
         const childLine: ReviewLine = { Tokens: memberTokens };
         if (memberChildren?.length) {
           childLine.Children = memberChildren;
@@ -306,7 +307,7 @@ function buildCompositeTypeWithLiterals(
             deprecated,
           }),
         );
-        const nestedChildren = buildTypeNodeTokens(typeNode, sepTokens, deprecated, depth);
+        const nestedChildren = buildTypeNodeTokens(typeNode, sepTokens, deprecated, depth, referenceMap);
         if (isLast) {
           children.push({ Tokens: sepTokens, IsContextEndLine: true });
         } else {
@@ -326,7 +327,7 @@ function buildCompositeTypeWithLiterals(
             deprecated,
           }),
         );
-        const nestedChildren = buildTypeNodeTokens(typeNode, lastChild.Tokens, deprecated, depth);
+        const nestedChildren = buildTypeNodeTokens(typeNode, lastChild.Tokens, deprecated, depth, referenceMap);
         if (isLast) {
           lastChild.IsContextEndLine = true;
         }
@@ -344,7 +345,7 @@ function buildCompositeTypeWithLiterals(
             }),
           );
         }
-        const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated, depth);
+        const nestedChildren = buildTypeNodeTokens(typeNode, tokens, deprecated, depth, referenceMap);
         if (nestedChildren?.length) {
           children.push(...nestedChildren);
         }
@@ -419,6 +420,7 @@ export function buildTypeNodeTokens(
       children,
       deprecated,
       depth,
+      referenceMap,
     );
     if (result !== undefined) return result;
 
@@ -451,6 +453,7 @@ export function buildTypeNodeTokens(
       children,
       deprecated,
       depth,
+      referenceMap,
     );
     if (result !== undefined) return result;
 

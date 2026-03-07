@@ -7,4 +7,7 @@ export default defineConfig({
     // @ts-expect-error: 'tsConfig' does not exist in type 'ESBuildOptions'
     tsConfig: false,
   },
+  test: {
+    testTimeout: 30_000,
+  },
 });

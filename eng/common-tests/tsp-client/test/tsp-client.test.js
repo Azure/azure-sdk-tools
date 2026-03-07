@@ -48,4 +48,14 @@ describe("tsp-client", () => {
     expect(jsDirStat.isDirectory()).toBe(true);
     console.log(`JS dir: ${jsDir}`);
   });
+
+  it("updates js/sdk/template/template", async () => {
+    const jsDir = await getJsDir();
+
+    await execNpmExec(["tsp-client", "update"], {
+      cwd: resolve(jsDir, "sdk", "template", "template"),
+      logger: debugLogger,
+      prefix: engCommonTspClient,
+    });
+  });
 });

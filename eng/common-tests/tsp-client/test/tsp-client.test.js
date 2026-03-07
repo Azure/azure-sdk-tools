@@ -10,6 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const engCommonTspClient = resolve(__dirname, "../../../common/tsp-client");
 
 async function getJsDir() {
+  // TODO: Could fallback to env var, put I prefer convention over config
   const candidates = [
     resolve(__dirname, "../../../../../azure-sdk-for-js"),
     resolve(__dirname, "../../../../../js"),

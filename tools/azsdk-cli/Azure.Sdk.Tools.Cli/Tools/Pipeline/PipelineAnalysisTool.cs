@@ -405,7 +405,7 @@ public class PipelineAnalysisTool(
             LogAnalysisResponse response = new() { Errors = [] };
             foreach (var log in logs)
             {
-                var localLogResult = await logAnalysisHelper.AnalyzeLogContent(log, null, null, null);
+                var localLogResult = await logAnalysisHelper.AnalyzeLogContent(log, null, null, null, ct);
                 response.Errors.AddRange(localLogResult);
             }
             return response;
@@ -468,7 +468,7 @@ public class PipelineAnalysisTool(
             var analysis = await analyzePipelineFailureLogs(project, buildId, query, failureLogIds, analyzeWithAgent, ct);
 
             var failedTests = new FailedTestRunListResponse();
-            var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId);
+            var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId, ct);
 
             foreach (var testFiles in failedTestArtifacts)
             {

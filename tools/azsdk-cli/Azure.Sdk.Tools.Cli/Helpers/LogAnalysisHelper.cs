@@ -107,7 +107,7 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
 
         var lineNumber = 0;
         string? line;
-        while ((line = await reader.ReadLineAsync()) != null)
+        while ((line = await reader.ReadLineAsync(ct)) != null)
         {
             lineNumber++;
             // check > not >= because an error match will take up an extra slot
@@ -121,7 +121,7 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
             if (matchedKeywords.Count > 0)
             {
                 logger.LogDebug("Found error matches at line {lineNumber}: {keywords}. Line: {line}", lineNumber, string.Join(", ", matchedKeywords), line);
-                while (after.Count < afterLines && (line = await reader.ReadLineAsync()) != null)
+                while (after.Count < afterLines && (line = await reader.ReadLineAsync(ct)) != null)
                 {
                     lineNumber++;
                     matchedKeywords = keywords.Where(k => k.Matches(line)).ToList();

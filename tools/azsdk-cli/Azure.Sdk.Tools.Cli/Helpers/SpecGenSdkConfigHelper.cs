@@ -94,7 +94,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             try
             {
                 // Read and parse the configuration file
-                var configContent = await File.ReadAllTextAsync(specToSdkConfigFilePath);
+                var configContent = await File.ReadAllTextAsync(specToSdkConfigFilePath, ct);
                 using var configJson = JsonDocument.Parse(configContent);
 
                 // Use helper method to navigate JSON path

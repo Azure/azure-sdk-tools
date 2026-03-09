@@ -140,7 +140,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     return project;
                 }
 
-                var metadataYaml = await File.ReadAllTextAsync(metadataFilePath);
+                var metadataYaml = await File.ReadAllTextAsync(metadataFilePath, ct);
                 logger.LogDebug("TypeSpec metadata YAML: {metadataYaml}", metadataYaml);
 
                 var packages = ParsePackageNamesFromMetadata(metadataYaml);

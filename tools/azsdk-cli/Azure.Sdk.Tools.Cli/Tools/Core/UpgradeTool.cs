@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.CliManagement;
 
@@ -142,7 +143,7 @@ public class UpgradeTool(
                 // Trigger server shutdown after the "restart required" response is sent back to the MCP client.
                 // This is so that the background process we spawn to replace the executable can complete
                 // without the current server locking the process until it times out.
-                await shutdownCoordinator.RequestShutdown();
+                await shutdownCoordinator.RequestShutdown(ct);
             }
 
             return result;

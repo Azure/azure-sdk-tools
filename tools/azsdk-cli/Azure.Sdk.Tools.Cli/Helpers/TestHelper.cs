@@ -46,7 +46,7 @@ public class TestHelper(ILogger<TestHelper> logger) : ITestHelper
             return failedTestRuns;
         }
 
-        var xmlContent = await File.ReadAllTextAsync(trxFilePath);
+        var xmlContent = await File.ReadAllTextAsync(trxFilePath, ct);
         var doc = new XmlDocument();
         doc.LoadXml(xmlContent);
         var unitTestResults = doc.GetElementsByTagName("UnitTestResult");

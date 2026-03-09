@@ -14,9 +14,9 @@ namespace Azure.Sdk.Tools.Cli.Telemetry;
 
 public interface ITelemetryService : IDisposable
 {
-    ValueTask<Activity?> StartActivity(string activityName);
+    ValueTask<Activity?> StartActivity(string activityName, CancellationToken ct);
 
-    ValueTask<Activity?> StartActivity(string activityName, Implementation? clientInfo);
+    ValueTask<Activity?> StartActivity(string activityName, Implementation? clientInfo, CancellationToken ct);
 
     bool? Flush();
 }
@@ -53,9 +53,9 @@ internal class TelemetryService : ITelemetryService
         Task.Factory.StartNew(InitializeTagList);
     }
 
-    public ValueTask<Activity?> StartActivity(string activityId) => StartActivity(activityId, null);
+    public ValueTask<Activity?> StartActivity(string activityId, CancellationToken ct) => StartActivity(activityId, null, ct);
 
-    public async ValueTask<Activity?> StartActivity(string activityId, Implementation? clientInfo)
+    public async ValueTask<Activity?> StartActivity(string activityId, Implementation? clientInfo, CancellationToken ct)
     {
         if (!_isEnabled)
         {
@@ -111,8 +111,8 @@ internal class TelemetryService : ITelemetryService
     {
         try
         {
-            var macAddressHash = await _informationProvider.GetMacAddressHash();
-            var deviceId = await _informationProvider.GetOrCreateDeviceId();
+            var macAddressHash = await _informationProvider.GetMacAddressHash(default);
+            var deviceId = await _informationProvider.GetOrCreateDeviceId(default);
 
             _tagsList.Add(new(TagName.MacAddressHash, macAddressHash));
             _tagsList.Add(new(TagName.DevDeviceId, deviceId));

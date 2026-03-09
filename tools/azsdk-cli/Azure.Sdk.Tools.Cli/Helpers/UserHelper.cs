@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public async Task<string> GetUserEmail(CancellationToken ct)
         {
             var graphClient = new GraphServiceClient(azureService.GetCredential(), scopes);
-            var user = await graphClient.Me.GetAsync();
+            var user = await graphClient.Me.GetAsync(cancellationToken: ct);
             if (user == null)
             {
                 throw new InvalidOperationException("User not found.");

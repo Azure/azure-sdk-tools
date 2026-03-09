@@ -311,7 +311,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="oldGenerationPath">Previous generation</param>
         /// <param name="newGenerationPath">New/current generation root.</param>
         /// <returns>List of detected API changes (empty if no differences).</returns>
-        public virtual Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+        public virtual Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath, CancellationToken ct)
         {
             List<ApiChange> result = [];
             return Task.FromResult(result);

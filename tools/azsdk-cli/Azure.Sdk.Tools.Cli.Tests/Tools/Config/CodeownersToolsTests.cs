@@ -201,73 +201,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         }
 
         // ========================
-        // DetectScenario tests (pure logic, no mocking)
+        // Individual add/remove tool tests
         // ========================
 
         [Test]
-        public void DetectScenario_UserAndPackage_ReturnsScenario1()
-        {
-            var result = CodeownersTool.DetectScenario(["user1"], null, "pkg1", null, null);
-            Assert.That(result, Is.EqualTo(1));
-        }
-
-        [Test]
-        public void DetectScenario_LabelAndPackage_ReturnsScenario2()
-        {
-            var result = CodeownersTool.DetectScenario(null, ["label1"], "pkg1", null, null);
-            Assert.That(result, Is.EqualTo(2));
-        }
-
-        [Test]
-        public void DetectScenario_UserLabelOwnerType_NoPath_ReturnsScenario3()
-        {
-            var result = CodeownersTool.DetectScenario(["user1"], ["label1"], null, null, "service-owner");
-            Assert.That(result, Is.EqualTo(3));
-        }
-
-        [Test]
-        public void DetectScenario_NoValidCombination_ReturnsNull()
-        {
-            // Only github-user with no other params
-            Assert.That(CodeownersTool.DetectScenario(["user1"], null, null, null, null), Is.Null);
-            // Only label
-            Assert.That(CodeownersTool.DetectScenario(null, ["label1"], null, null, null), Is.Null);
-            // user + label without owner-type
-            Assert.That(CodeownersTool.DetectScenario(["user1"], ["label1"], null, null, null), Is.Null);
-            // user + package + label (extra param)
-            Assert.That(CodeownersTool.DetectScenario(["user1"], ["label1"], "pkg1", null, null), Is.Null);
-        }
-
-        [Test]
-        public void DetectScenario_MultipleUsers_ReturnsCorrectScenario()
-        {
-            // Multiple users still match scenario 1
-            var result = CodeownersTool.DetectScenario(["user1", "user2"], null, "pkg1", null, null);
-            Assert.That(result, Is.EqualTo(1));
-        }
-
-        // ========================
-        // AddCodeowners / RemoveCodeowners parameter validation tests
-        // ========================
-
-        [Test]
-        public async Task AddCodeowners_NoValidScenario_ReturnsError()
-        {
-            var result = await _tool.AddCodeowners(
-                githubUsers: null, labels: null, package: null, path: null, ownerType: null, repo: "Azure/azure-sdk-for-net");
-            Assert.That(result.ToString(), Does.Contain("Invalid parameter combination"));
-        }
-
-        [Test]
-        public async Task RemoveCodeowners_NoValidScenario_ReturnsError()
-        {
-            var result = await _tool.RemoveCodeowners(
-                githubUsers: ["user1"], labels: null, package: null, path: null, ownerType: null, repo: "Azure/azure-sdk-for-net");
-            Assert.That(result.ToString(), Does.Contain("Invalid parameter combination"));
-        }
-
-        [Test]
-        public async Task AddCodeowners_Scenario1_CallsAddOwnerToPackage()
+        public async Task AddPackageOwner_CallsAddOwnersToPackage()
         {
             _mockCodeownersManagement
                 .Setup(m => m.FindOwnerByGitHubAlias("user1"))
@@ -277,15 +215,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 .Setup(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"))
                 .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
-            var result = await _tool.AddCodeowners(
-                githubUsers: ["user1"], labels: null, package: "pkg1", path: null, ownerType: null, repo: "Azure/azure-sdk-for-net");
+            var result = await _tool.AddPackageOwner(
+                githubUsers: ["user1"], package: "pkg1", repo: "Azure/azure-sdk-for-net");
 
             Assert.That(result, Is.Not.Null);
             _mockCodeownersManagement.Verify(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"), Times.Once);
         }
 
         [Test]
-        public async Task AddCodeowners_Scenario1_MultipleUsers_CallsOnce()
+        public async Task AddPackageOwner_MultipleUsers_CallsOnce()
         {
             _mockCodeownersManagement
                 .Setup(m => m.FindOwnerByGitHubAlias(It.IsAny<string>()))
@@ -295,15 +233,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 .Setup(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"))
                 .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
-            var result = await _tool.AddCodeowners(
-                githubUsers: ["user1", "user2"], labels: null, package: "pkg1", path: null, ownerType: null, repo: "Azure/azure-sdk-for-net");
+            var result = await _tool.AddPackageOwner(
+                githubUsers: ["user1", "user2"], package: "pkg1", repo: "Azure/azure-sdk-for-net");
 
             Assert.That(result, Is.Not.Null);
             _mockCodeownersManagement.Verify(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"), Times.Once);
         }
 
         [Test]
-        public async Task RemoveCodeowners_Scenario2_CallsRemoveLabelFromPackage()
+        public async Task RemovePackageLabel_CallsRemoveLabelsFromPackage()
         {
             _mockCodeownersManagement
                 .Setup(m => m.FindLabelByName("lbl1"))
@@ -313,15 +251,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 .Setup(m => m.RemoveLabelsFromPackage(It.IsAny<LabelWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"))
                 .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
-            var result = await _tool.RemoveCodeowners(
-                githubUsers: null, labels: ["lbl1"], package: "pkg1", path: null, ownerType: null, repo: "Azure/azure-sdk-for-net");
+            var result = await _tool.RemovePackageLabel(
+                labels: ["lbl1"], package: "pkg1", repo: "Azure/azure-sdk-for-net");
 
             Assert.That(result, Is.Not.Null);
             _mockCodeownersManagement.Verify(m => m.RemoveLabelsFromPackage(It.IsAny<LabelWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"), Times.Once);
         }
 
         [Test]
-        public async Task AddCodeowners_RepoInferredFromGit_WhenNotProvided()
+        public async Task AddPackageOwner_RepoInferredFromGit_WhenNotProvided()
         {
             _mockGitHelper.Setup(g => g.GetRepoFullNameAsync(".", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync("Azure/azure-sdk-for-net");
             _mockCodeownersManagement
@@ -331,20 +269,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 .Setup(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"))
                 .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
-            var result = await _tool.AddCodeowners(
-                githubUsers: ["user1"], labels: null, package: "pkg1", path: null, ownerType: null, repo: null);
+            var result = await _tool.AddPackageOwner(
+                githubUsers: ["user1"], package: "pkg1", repo: null);
 
             _mockGitHelper.Verify(g => g.GetRepoFullNameAsync(".", It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
             _mockCodeownersManagement.Verify(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"), Times.Once);
         }
 
         [Test]
-        public async Task AddCodeowners_GitRepoInferenceFails_ReturnsError()
+        public async Task AddPackageOwner_GitRepoInferenceFails_ReturnsError()
         {
             _mockGitHelper.Setup(g => g.GetRepoFullNameAsync(".", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(string.Empty);
 
-            var result = await _tool.AddCodeowners(
-                githubUsers: ["user1"], labels: null, package: "pkg1", path: null, ownerType: null, repo: null);
+            var result = await _tool.AddPackageOwner(
+                githubUsers: ["user1"], package: "pkg1", repo: null);
 
             Assert.That(result.ToString(), Does.Contain("Could not infer repository"));
         }

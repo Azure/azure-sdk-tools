@@ -5,3 +5,6 @@
 #
 # Allow relative links in specs/ directories (internal design documents).
 **/specs/**
+#
+# Allow relative links for all markdown files under the .github folder (e.g. copilot instructions).
+.github/**

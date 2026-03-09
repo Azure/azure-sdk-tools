@@ -30,9 +30,9 @@ When user says "sensei help" or asks how to use sensei, show this:
 ║    Run sensei on all skills                # All skills       ║
 ║                                                                  ║
 ║  EXAMPLES:                                                       ║
-║    Run sensei on appinsights-instrumentation                     ║
-║    Run sensei on azure-security --skip-integration               ║
-║    Run sensei on azure-security, azure-observability             ║
+║    Run sensei on azsdk-common-sdk-release                        ║
+║    Run sensei on azsdk-common-pipeline-troubleshooting --skip-integration  ║
+║    Run sensei on azsdk-common-sdk-release, azsdk-common-prepare-release-plan  ║
 ║    Run sensei on all Low-adherence skills                        ║
 ║                                                                  ║
 ║  WHAT IT DOES:                                                   ║
@@ -70,12 +70,12 @@ When user says "sensei help" or asks how to use sensei, show this:
 
 ### Single Skill
 ```
-Run sensei on api-validation
+Run sensei on azsdk-common-generate-sdk-locally
 ```
 
 ### Multiple Skills
 ```
-Run sensei on azure-security, azure-observability
+Run sensei on azsdk-common-apiview-feedback-resolution, azsdk-common-pipeline-troubleshooting
 ```
 
 ### By Adherence Level

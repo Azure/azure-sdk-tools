@@ -40,7 +40,6 @@ public partial class PythonLanguageService : LanguageService
             packagePath, version);
 
         var errors = new List<string>();
-        bool versionFileUpdated = false;
 
         // Find and update _version.py or version.py
         var versionFilePath = FindVersionPy(packagePath);
@@ -62,7 +61,6 @@ public partial class PythonLanguageService : LanguageService
                     {
                         await File.WriteAllTextAsync(versionFilePath, newContent, ct);
                         logger.LogInformation("Updated VERSION in {VersionFile}", versionFilePath);
-                        versionFileUpdated = true;
                     }
                     else
                     {
@@ -127,16 +125,11 @@ public partial class PythonLanguageService : LanguageService
             logger.LogWarning("No setup.py or pyproject.toml found at package root {PackagePath}", packagePath);
         }
 
-        if (errors.Count > 0 && !versionFileUpdated)
+        if (errors.Count > 0)
         {
             return PackageOperationResponse.CreateFailure(
                 string.Join("; ", errors),
-                nextSteps: ["Manually update _version.py or version.py with the new version"]);
-        }
-
-        if (errors.Count > 0)
-        {
-            logger.LogWarning("Version files partially updated. Errors: {Errors}", string.Join("; ", errors));
+                nextSteps: ["Manually update _version.py, version.py, setup.py, and/or pyproject.toml with the new version"]);
         }
 
         return PackageOperationResponse.CreateSuccess(

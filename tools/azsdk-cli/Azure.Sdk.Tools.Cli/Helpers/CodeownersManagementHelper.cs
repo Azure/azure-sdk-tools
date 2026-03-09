@@ -103,7 +103,7 @@ public class CodeownersManagementHelper(
     public async Task<OwnerWorkItem?> FindOwnerByGitHubAlias(string alias)
     {
         var normalizedAlias = NormalizeGitHubAlias(alias);
-        var escapedAlias = alias.Replace("'", "''");
+        var escapedAlias = normalizedAlias.Replace("'", "''");
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Owner' AND [Custom.GitHubAlias] = '{escapedAlias}'";
         var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
         if (workItems.Count == 0)

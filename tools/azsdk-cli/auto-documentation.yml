@@ -15,6 +15,12 @@ jobs:
     steps:
     - checkout: self
       displayName: 'Checkout current branch'
+
+    - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+      parameters:
+        TokenOwners:
+          - Azure
+          - azure-sdk
     
     - task: PowerShell@2
       displayName: 'Install Azure SDK MCP'
@@ -42,3 +48,5 @@ jobs:
         PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
         CommitMsg: "Update MCP tools documentation"
         WorkingDirectory: $(System.DefaultWorkingDirectory)
+        AuthToken: $(GH_TOKEN_Azure)
+        PushAuthToken: $(GH_TOKEN_azure-sdk)

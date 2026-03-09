@@ -35,6 +35,8 @@ stages:
                 Paths:
                   - ${{ parameters.DirectoryToSync }}
 
+            - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
             - pwsh: |
                 Set-PsDebug -Trace 1
                 $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
@@ -93,6 +95,8 @@ stages:
                       Paths:
                         - ${{ parameters.DirectoryToSync }}
 
+                  - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
                   - pwsh: |
                       New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
                     displayName: Create PRData Artifact
@@ -106,7 +110,7 @@ stages:
                         -RepoOwner "Azure"
                         -RepoName "azure-sdk-tools"
                         -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
-                        -AuthToken "$(azuresdk-github-pat)"
+                        -AuthToken "$(GH_TOKEN)"
                       pwsh: true
 
                   - ${{ each repo in parameters.Repos }}:
@@ -123,7 +127,7 @@ stages:
                           -BaseBranch $(system.pullRequest.targetBranch)
                           -PROwner "Azure"
                           -PRBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-                          -AuthToken "$(azuresdk-github-pat)"
+                          -AuthToken "$(GH_TOKEN)"
                           -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
                           -PRLabels "Central-EngSys,EngSys"
                           -UserReviewers $(System.PullRequest.Creator)
@@ -163,6 +167,8 @@ stages:
                       Paths:
                         - ${{ parameters.DirectoryToSync }}
 
+                  - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
                   - download: current
                     artifact: ${{parameters.ArtifactName}}
                     displayName: Download ${{ parameters.PRDataFileName }}
@@ -174,7 +180,7 @@ stages:
                       filePath: $(Build.SourcesDirectory)/eng/scripts/Verify-And-Merge-PRs.ps1
                       arguments: >
                         -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
-                        -AuthToken "$(azuresdk-github-pat)"
+                        -AuthToken "$(GH_TOKEN)"
                       pwsh: true
 
                   - ${{ each repo in parameters.Repos }}:
@@ -188,7 +194,7 @@ stages:
                         arguments: >
                           -RepoId "Azure/${{ repo }}"
                           -TargetBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
-                          -AuthToken $(azuresdk-github-pat)
+                          -AuthToken $(GH_TOKEN)
 
   - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
     - stage: CreateSync
@@ -201,6 +207,8 @@ stages:
             demands: ImageOverride -equals ubuntu-24.04
 
           steps:
+            - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
             - template: /eng/pipelines/templates/steps/sync-directory.yml
               parameters:
                 CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository

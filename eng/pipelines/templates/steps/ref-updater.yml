@@ -43,6 +43,8 @@ steps:
       PushArgs: -f
       WorkingDirectory: $(System.DefaultWorkingDirectory)/${{ repo.key }}
       ScriptDirectory: ${{ parameters.ToolsRepoPath }}/eng/common/scripts
+      AuthToken: $(GH_TOKEN_Azure)
+      PushAuthToken: $(GH_TOKEN_azure-sdk)
       ${{ if ne(repo.value.branch, '') }}:
         BaseBranchName: ${{ repo.value.branch }}
       ${{ if eq(repo.value.branch, '') }}:

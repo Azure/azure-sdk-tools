@@ -57,6 +57,13 @@ stages:
 
       - checkout: self
 
+      - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+        parameters:
+          ScriptDirectory: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts'
+          TokenOwners:
+            - Azure
+            - azure-sdk
+
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages
         inputs:
@@ -88,7 +95,7 @@ stages:
             filePath: '$(BuildToolScripts)/create-tags-and-git-release.ps1'
             arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
           env:
-            GH_TOKEN: $(azuresdk-github-pat)
+            GH_TOKEN: $(GH_TOKEN_Azure)
 
         - task: PowerShell@2
           displayName: 'Post to github release'
@@ -99,8 +106,7 @@ stages:
             arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
             pwsh: true
           env:
-            GH_TOKEN: $(azuresdk-github-pat)
-
+            GH_TOKEN: $(GH_TOKEN_Azure)
 
       # if we are verifying the changelog, we should definitely submit an increment version + changelog update PR
       - ${{ if eq(parameters.VerifyChangelog, true) }}:
@@ -130,6 +136,8 @@ stages:
             PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
             WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
             ScriptDirectory: azure-sdk-tools/eng/common/scripts/
+            AuthToken: $(GH_TOKEN_Azure)
+            PushAuthToken: $(GH_TOKEN_azure-sdk)
 
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'

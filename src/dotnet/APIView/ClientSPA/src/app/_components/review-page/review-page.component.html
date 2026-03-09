@@ -28,6 +28,20 @@
             (dismissSidebarAndNavigateEmitter)="handleDismissSidebarAndNavigate($event)">
         </app-conversations>
     </div>
+    <div *ngIf="revisionsActivated" [hidden]="activeView !== 'revisions'" class="revisions-panel">
+        <app-revisions-list
+            [review]="review"
+            [userProfile]="userProfile">
+        </app-revisions-list>
+    </div>
+    <div *ngIf="samplesActivated" [hidden]="activeView !== 'samples'" class="samples-panel">
+        <app-samples-page
+            [embedded]="true"
+            [embeddedReviewId]="reviewId"
+            [embeddedReview]="review"
+            [embeddedUserProfile]="userProfile">
+        </app-samples-page>
+    </div>
     <p-splitter [hidden]="activeView !== 'reviews'"
         [panelSizes]="panelSizes"
         [minSizes]="minSizes"

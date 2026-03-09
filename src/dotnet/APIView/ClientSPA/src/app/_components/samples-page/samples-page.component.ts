@@ -1,10 +1,15 @@
-import { ChangeDetectorRef, Component, ElementRef, Injector, Renderer2, SimpleChange, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Injector, Input, Renderer2, SimpleChange, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MenuItem, MessageService } from 'primeng/api';
 import { FileSelectEvent } from 'primeng/fileupload';
+import { DialogModule } from 'primeng/dialog';
+import { DrawerModule } from 'primeng/drawer';
+import { InputTextModule } from 'primeng/inputtext';
 import { Subject, take, takeUntil } from 'rxjs';
-import { ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
+import { ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { PaginatedResult } from 'src/app/_models/pagination';
@@ -20,15 +25,34 @@ import { SamplesRevisionService } from 'src/app/_services/samples/samples.servic
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { ReviewPageLayoutModule } from 'src/app/_modules/shared/review-page-layout.module';
+import { CodeEditorComponent } from '../shared/code-editor/code-editor.component';
+import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 
 @Component({
     selector: 'app-samples-page',
     templateUrl: './samples-page.component.html',
     styleUrls: ['./samples-page.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+      CommonModule,
+      FormsModule,
+      DialogModule,
+      DrawerModule,
+      InputTextModule,
+      ReviewPageLayoutModule,
+      CodeEditorComponent,
+      MarkdownToHtmlPipe,
+    ]
 })
 export class SamplesPageComponent {
   SAMPLES_CONTENT_PLACEHOLDER = "<!--- Enter Markdown Formated Content --->";
+
+  // Embedded mode inputs — when true, parent provides data and navigation uses query params
+  @Input() embedded = false;
+  @Input() embeddedReviewId: string | null = null;
+  @Input() embeddedReview: Review | undefined;
+  @Input() embeddedUserProfile: UserProfile | undefined;
 
   webAppUrl : string = this.configService.webAppUrl
 
@@ -83,26 +107,47 @@ export class SamplesPageComponent {
     private injector: Injector, private viewContainerRef: ViewContainerRef, private titleService: Title) {}
 
   ngOnInit() {
-    this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
-
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile : any) => {
-        this.userProfile = userProfile;
-    });
+    if (this.embedded) {
+      this.reviewId = this.embeddedReviewId;
+      this.review = this.embeddedReview;
+      this.userProfile = this.embeddedUserProfile;
+    } else {
+      this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
+      this.userProfileService.getUserProfile().subscribe(
+        (userProfile : any) => {
+          this.userProfile = userProfile;
+      });
+      this.loadReview(this.reviewId!);
+    }
 
     this.createSideMenu();
-    this.loadReview(this.reviewId!);
     this.loadLatestAPIRevision(this.reviewId!);
 
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const navigationState = this.router.currentNavigation()?.extras.state;
-      if (!navigationState || !navigationState['skipStateUpdate']) {
-        this.updateStateBasedOnQueryParams(params);
-      }
-    });
+    if (this.embedded) {
+      // In embedded mode, load the list once on init and only react to
+      // query-param changes that target the samples view (e.g. selecting a sample).
+      this.loadSamplesRevisions(0, this.samplesRevisionsPageSize);
+      this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+        if (params['view'] !== 'samples') return;
+        const navigationState = this.router.currentNavigation()?.extras.state;
+        if (!navigationState || !navigationState['skipStateUpdate']) {
+          this.updateStateBasedOnQueryParams(params);
+        }
+      });
+    } else {
+      this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+        const navigationState = this.router.currentNavigation()?.extras.state;
+        if (!navigationState || !navigationState['skipStateUpdate']) {
+          this.updateStateBasedOnQueryParams(params);
+        }
+      });
+    }
   }
 
   ngAfterViewChecked(): void {
+    if (!this.samplesContent || !this.commentsLoaded || this.commentableRegionsAdded) {
+      return;
+    }
     setTimeout(() => {
       if (this.samplesContent && this.commentsLoaded && !this.commentableRegionsAdded) {
         this.addCommentableRegions();
@@ -131,7 +176,8 @@ export class SamplesPageComponent {
     if (revisionId) {
       queryParams['activeApiRevisionId'] = revisionId;
     }
-    this.router.navigate(['/revision', this.reviewId], { queryParams: queryParams });
+    queryParams['view'] = 'revisions';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
   navigateToReview() {
@@ -150,14 +196,14 @@ export class SamplesPageComponent {
     const queryParams: any = { activeSamplesRevisionId: sample.id };
     if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
     if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
-    this.router.navigate(['/samples', this.reviewId], { queryParams });
+    this.navigateSamples(queryParams);
   }
 
   backToList() {
-    const queryParams: any = {};
+    const queryParams: any = { activeSamplesRevisionId: null };
     if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
     if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
-    this.router.navigate(['/samples', this.reviewId], { queryParams });
+    this.navigateSamples(queryParams);
   }
 
   navigateToSamplesList() {
@@ -168,6 +214,20 @@ export class SamplesPageComponent {
     event.stopPropagation();
     this.sampleToDelete = sample;
     this.showSamplesDeleteModal = true;
+  }
+
+  private navigateSamples(queryParams: any) {
+    if (this.embedded) {
+      const currentParams = getQueryParams(this.route);
+      this.router.navigate([], {
+        queryParams: { ...currentParams, ...queryParams, view: 'samples' },
+        state: { skipStateUpdate: true }
+      });
+      const merged = { ...currentParams, ...queryParams, view: 'samples' };
+      this.updateStateBasedOnQueryParams(merged);
+    } else {
+      this.router.navigate(['/samples', this.reviewId], { queryParams });
+    }
   }
 
   updateStateBasedOnQueryParams(params: Params) {
@@ -373,8 +433,7 @@ export class SamplesPageComponent {
           if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
           if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
 
-          this.router.navigate(['/samples', this.reviewId],
-           { queryParams: queryParams });
+          this.navigateSamples(queryParams);
         },
         error: (error: any) => {
           this.isCreatingSamples = false;
@@ -399,13 +458,13 @@ export class SamplesPageComponent {
           this.samplesUpdateSidePanel = false;
           this.isUpdatingSamples = false;
           this.updateSamplesButton = "Save";
-          // Reload the detail view by re-navigating
-          const queryParams: any = { activeSamplesRevisionId: this.activeSamplesRevisionId };
-          if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
-          if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
-          this.router.navigateByUrl('/temporary-route', { skipLocationChange: true }).then(() => {
-            this.router.navigate(['/samples', this.reviewId], { queryParams });
-          });
+          // Reload the detail view content
+          this.commentableRegionsAdded = false;
+          this.commentsLoaded = false;
+          this.samplesContent = undefined;
+          this.changeDetectorRef.detectChanges();
+          this.loadSamplesContent(this.reviewId!, this.activeSamplesRevisionId!);
+          this.loadComments();
         },
         error: (error: any) => {
           this.isUpdatingSamples = false;

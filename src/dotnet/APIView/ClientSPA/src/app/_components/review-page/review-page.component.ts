@@ -78,6 +78,10 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
   samplesRevisionCount: number = 0;
 
+  // Lazy-once flags: components are created on first visit, then stay alive via [hidden]
+  revisionsActivated = false;
+  samplesActivated = false;
+
   showLeftNavigation: boolean = true;
   showPageOptions: boolean = true;
   leftNavigationPanelSize = 14;
@@ -162,6 +166,12 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     const viewParam = params['view'];
     if (viewParam === 'conversations') {
       this.activeView = 'conversations';
+    } else if (viewParam === 'revisions') {
+      this.revisionsActivated = true;
+      this.activeView = 'revisions';
+    } else if (viewParam === 'samples') {
+      this.samplesActivated = true;
+      this.activeView = 'samples';
     } else {
       this.activeView = 'reviews';
     }
@@ -430,22 +440,23 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   }
 
   navigateToRevisions() {
-    const queryParams: any = {};
-    if (this.activeApiRevisionId) {
-      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
-    }
-    this.router.navigate(['/revision', this.reviewId], { queryParams: queryParams });
+    this.revisionsActivated = true;
+    this.activeView = 'revisions';
+    const currentParams = getQueryParams(this.route);
+    this.router.navigate([], {
+      queryParams: { ...currentParams, view: 'revisions' },
+      state: { skipStateUpdate: true }
+    });
   }
 
   navigateToSamples() {
-    const queryParams: any = {};
-    if (this.activeApiRevisionId) {
-      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
-    }
-    if (this.diffApiRevisionId) {
-      queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
-    }
-    this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
+    this.samplesActivated = true;
+    this.activeView = 'samples';
+    const currentParams = getQueryParams(this.route);
+    this.router.navigate([], {
+      queryParams: { ...currentParams, view: 'samples' },
+      state: { skipStateUpdate: true }
+    });
   }
 
   navigateToConversations() {

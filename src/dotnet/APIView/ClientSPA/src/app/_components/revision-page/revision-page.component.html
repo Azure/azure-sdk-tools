@@ -5,7 +5,7 @@
     (navigateToRevisionsEmitter)="noop()"
     (navigateToSamplesEmitter)="navigateToSamples()"
     (navigateToConversationsEmitter)="navigateToConversations()">
-    <div class="revisions-panel overflow-auto border rounded">
+    <div class="revision-panel border rounded">
         <app-revisions-list
             [review]="review"
             (apiRevisionsEmitter)="handleApiRevisionsEmitter($event)">

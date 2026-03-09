@@ -62,6 +62,7 @@
 
 .filter-toolbar {
     padding: 0rem 0.75rem 0.3rem;
+    margin-bottom: 0.75rem;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -169,7 +170,7 @@
     color: var(--base-text-color);
 
     &:hover:not(.sev-on) {
-        background: color-mix(in srgb, var(--base-text-color) 6%, transparent);
+        background: color-mix(in srgb, var(--base-text-color) 12%, transparent);
     }
 
     i { font-size: 0.7rem; }
@@ -222,7 +223,7 @@
     color: var(--base-text-color);
 
     &:hover:not(.src-on) {
-        background: color-mix(in srgb, var(--base-text-color) 6%, transparent);
+        background: color-mix(in srgb, var(--base-text-color) 12%, transparent);
     }
 
     i { font-size: 0.72rem; }

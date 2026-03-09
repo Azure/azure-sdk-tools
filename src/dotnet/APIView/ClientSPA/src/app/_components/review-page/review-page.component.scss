@@ -25,6 +25,11 @@
         height: var(--page-content-height);
         overflow: hidden;
 
+        // PrimeNG sets display:flex on the host, overriding [hidden]
+        &[hidden] {
+            display: none !important;
+        }
+
         .p-splitter {
             height: 100%;
         }
@@ -42,5 +47,16 @@
     .conversation-panel {
         height: var(--page-content-height);
         background-color: var(--base-fg-color);
+    }
+
+    .samples-panel {
+        height: var(--page-content-height);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .revisions-panel {
+        height: var(--page-content-height);
+        overflow: hidden;
     }
 }

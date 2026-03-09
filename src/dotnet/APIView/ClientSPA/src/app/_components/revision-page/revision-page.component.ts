@@ -56,7 +56,8 @@ export class RevisionPageComponent {
     if (this.activeApiRevisionId) {
       queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
     }
-    this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
+    queryParams['view'] = 'samples';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
   navigateToConversations() {

@@ -1,5 +1,5 @@
 <p-contextMenu #cm [model]="contextMenuItems"></p-contextMenu>
-<div *ngIf="review == null && revisions.length == 0" class="d-flex justify-content-center align-items-center" style="height: 90vh;">
+<div *ngIf="review == null && revisions.length == 0" class="d-flex justify-content-center align-items-center flex-grow-1">
     <div class="text-center">
         <h6>Select a Review on the left panel to view its APIRevisions</h6>
         <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
@@ -8,7 +8,7 @@
         </div>
     </div>
 </div>
-<div *ngIf="review != null && revisions.length == 0" class="d-flex justify-content-center align-items-center" style="height: 90vh;">
+<div *ngIf="review != null && revisions.length == 0" class="d-flex justify-content-center align-items-center flex-grow-1">
     <div class="text-center">
         <h6>There are no {{apiRevisionsListDetail}} {{review.packageName}}</h6>
         <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
@@ -24,7 +24,7 @@
     [value]="revisions"
     dataKey="id"
     [scrollable]="true"
-    scrollHeight="calc(100vh - 135px)"
+    scrollHeight="flex"
     [lazy]="true"
     [lazyLoadOnInit]="false"
     [virtualScroll]="true"

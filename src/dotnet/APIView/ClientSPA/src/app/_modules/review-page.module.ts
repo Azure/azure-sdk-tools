@@ -13,6 +13,8 @@ import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-opti
 import { ReviewPageLayoutModule } from './shared/review-page-layout.module';
 import { ReviewToolbarComponent } from 'src/app/_components/review-toolbar/review-toolbar.component';
 import { ConversationsComponent } from 'src/app/_components/conversations/conversations.component';
+import { RevisionsListComponent } from 'src/app/_components/revisions-list/revisions-list.component';
+import { SamplesPageComponent } from 'src/app/_components/samples-page/samples-page.component';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -35,6 +37,8 @@ const routes: Routes = [
     ReviewPageLayoutModule,
     ReviewToolbarComponent,
     ConversationsComponent,
+    RevisionsListComponent,
+    SamplesPageComponent,
     RouterModule.forChild(routes),
   ]
 })

@@ -97,7 +97,8 @@ export class ConversationPageComponent {
     if (this.activeApiRevisionId) {
       queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
     }
-    this.router.navigate(['/revision', this.reviewId], { queryParams: queryParams });
+    queryParams['view'] = 'revisions';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
   navigateToSamples() {
@@ -105,7 +106,8 @@ export class ConversationPageComponent {
     if (this.activeApiRevisionId) {
       queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
     }
-    this.router.navigate(['/samples', this.reviewId], { queryParams: queryParams });
+    queryParams['view'] = 'samples';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
   handleNumberOfActiveThreadsEmitter(value: number) {

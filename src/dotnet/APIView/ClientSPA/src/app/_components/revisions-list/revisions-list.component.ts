@@ -322,6 +322,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     if (table) {
       table.clear();
     }
+    this.selectedDetails = [];
     this.showAPIRevisionsAssignedToMe = false;
     this.showDeletedAPIRevisions = false;
     this.loadAPIRevisions(0, this.pageSize * 2, true);

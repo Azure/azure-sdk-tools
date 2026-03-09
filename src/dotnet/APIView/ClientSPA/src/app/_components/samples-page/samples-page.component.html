@@ -1,14 +1,4 @@
-<app-review-page-layout
-    [review]="review"
-    [userProfile]="userProfile"
-    [showPageoptionsButton]="false"
-    [activePage]="'samples'"
-    [samplesRevisionCount]="samplesRevisionTotalCount"
-    (navigateToReviewsEmitter)="navigateToReview()"
-    (navigateToRevisionsEmitter)="navigateToRevisions()"
-    (navigateToConversationsEmitter)="navigateToConversations()"
-    (navigateToSamplesEmitter)="navigateToSamplesList()">
-
+<ng-template #samplesTemplate>
     <!-- LOADING STATE -->
     <div *ngIf="isLoading" class="samples-panel d-flex justify-content-center align-items-center">
         <div class="spinner-border m-3" role="status">
@@ -100,7 +90,25 @@
             </div>
         </div>
     </div>
+</ng-template>
+
+<app-review-page-layout *ngIf="!embedded"
+    [review]="review"
+    [userProfile]="userProfile"
+    [showPageoptionsButton]="false"
+    [activePage]="'samples'"
+    [samplesRevisionCount]="samplesRevisionTotalCount"
+    (navigateToReviewsEmitter)="navigateToReview()"
+    (navigateToRevisionsEmitter)="navigateToRevisions()"
+    (navigateToConversationsEmitter)="navigateToConversations()"
+    (navigateToSamplesEmitter)="navigateToSamplesList()">
+    <ng-container *ngTemplateOutlet="samplesTemplate"></ng-container>
 </app-review-page-layout>
+
+<ng-container *ngIf="embedded">
+    <ng-container *ngTemplateOutlet="samplesTemplate"></ng-container>
+</ng-container>
+
 <p-drawer [(visible)]="samplesUpdateSidePanel" position="right" [modal]="true" [showCloseIcon]="false" styleClass="edit-samples-sidebar">
     <ng-template pTemplate="header">
         <div class="flex align-items-center gap-2">

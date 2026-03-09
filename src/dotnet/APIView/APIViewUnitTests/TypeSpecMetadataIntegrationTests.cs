@@ -161,7 +161,8 @@ public class TypeSpecMetadataIntegrationTests
         Assert.Equal("Azure.Analytics.Purview", capturedProject.ExpectedPackages["DotNet"].PackageName);
 
         Assert.Equal(capturedProject.Id, typeSpecReview.ProjectId);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(typeSpecReview), Times.Once);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(capturedProject), Times.Once);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(new List<ReviewListItemModel> { typeSpecReview }), Times.Once);
     }
 
     [Fact]

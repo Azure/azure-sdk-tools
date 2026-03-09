@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
 using Azure.Sdk.Tools.Cli.Tools.Config;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
@@ -43,8 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 _mockcodeownersGenerateHelper.Object,
                 _mockGitHelper.Object,
                 _mockCodeownersManagement.Object,
-                _mockDevOps.Object,
-                _mockCodeownersValidator.Object
+                _mockDevOps.Object
             );
         }
 
@@ -80,8 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 _mockcodeownersGenerateHelper.Object,
                 _mockGitHelper.Object,
                 _mockCodeownersManagement.Object,
-                _mockDevOps.Object,
-                _mockCodeownersValidator.Object
+                _mockDevOps.Object
             );
 
             var result = await tool.UpdateCodeowners("repo", false, "", "NonExistService", [], [], true);
@@ -133,8 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 _mockcodeownersGenerateHelper.Object,
                 _mockGitHelper.Object,
                 _mockCodeownersManagement.Object,
-                _mockDevOps.Object,
-                validator.Object
+                _mockDevOps.Object
             );
 
             var result = await tool.UpdateCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", ["@a", "@b"], ["@s1", "@s2"], true);
@@ -185,8 +183,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 generateHelper.Object,
                 _mockGitHelper.Object,
                 _mockCodeownersManagement.Object,
-                _mockDevOps.Object,
-                validator.Object
+                _mockDevOps.Object
             );
 
             var result = await tool.ValidateCodeownersEntryForService("test-repo", "Any", null);
@@ -278,12 +275,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 
             _mockCodeownersManagement
                 .Setup(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"))
-                .ReturnsAsync(new Azure.Sdk.Tools.Cli.Models.CodeownersModifyResponse { Operation = "Added @user1 to package 'pkg1'." });
+                .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
             var result = await _tool.AddCodeowners(
                 githubUsers: ["user1"], labels: null, package: "pkg1", path: null, ownerType: null, repo: "Azure/azure-sdk-for-net");
 
-            Assert.That(result.ToString(), Does.Contain("Added @user1"));
+            Assert.That(result, Is.Not.Null);
             _mockCodeownersManagement.Verify(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"), Times.Once);
         }
 
@@ -296,12 +293,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 
             _mockCodeownersManagement
                 .Setup(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"))
-                .ReturnsAsync(new Azure.Sdk.Tools.Cli.Models.CodeownersModifyResponse { Operation = "Added @user1 to package 'pkg1'.\nAdded @user2 to package 'pkg1'." });
+                .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
             var result = await _tool.AddCodeowners(
                 githubUsers: ["user1", "user2"], labels: null, package: "pkg1", path: null, ownerType: null, repo: "Azure/azure-sdk-for-net");
 
-            Assert.That(result.ToString(), Does.Contain("Added @user1").Or.Contain("Added @user2"));
+            Assert.That(result, Is.Not.Null);
             _mockCodeownersManagement.Verify(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"), Times.Once);
         }
 
@@ -314,12 +311,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
 
             _mockCodeownersManagement
                 .Setup(m => m.RemoveLabelsFromPackage(It.IsAny<LabelWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"))
-                .ReturnsAsync(new Azure.Sdk.Tools.Cli.Models.CodeownersModifyResponse { Operation = "Removed label 'lbl1' from package 'pkg1'." });
+                .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
             var result = await _tool.RemoveCodeowners(
                 githubUsers: null, labels: ["lbl1"], package: "pkg1", path: null, ownerType: null, repo: "Azure/azure-sdk-for-net");
 
-            Assert.That(result.ToString(), Does.Contain("Removed label"));
+            Assert.That(result, Is.Not.Null);
             _mockCodeownersManagement.Verify(m => m.RemoveLabelsFromPackage(It.IsAny<LabelWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"), Times.Once);
         }
 
@@ -332,7 +329,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 .ReturnsAsync(new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "user1" });
             _mockCodeownersManagement
                 .Setup(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"))
-                .ReturnsAsync(new Azure.Sdk.Tools.Cli.Models.CodeownersModifyResponse { Operation = "Added @user1 to package 'pkg1'." });
+                .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
             var result = await _tool.AddCodeowners(
                 githubUsers: ["user1"], labels: null, package: "pkg1", path: null, ownerType: null, repo: null);

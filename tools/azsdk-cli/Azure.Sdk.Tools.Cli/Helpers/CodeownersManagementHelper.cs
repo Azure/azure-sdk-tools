@@ -4,15 +4,16 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public class CodeownersManagementHelper(
+    ILogger<CodeownersManagementHelper> logger,
     IDevOpsService devOpsService,
     ITeamUserCache teamUserCache,
     ICodeownersValidatorHelper validatorHelper
@@ -442,22 +443,20 @@ public class CodeownersManagementHelper(
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
         }
 
-        var operations = new List<string>();
         foreach (var owner in owners)
         {
             if (packageWi.RelatedIds.Contains(owner.WorkItemId))
             {
-                operations.Add($"Skipped adding @{owner.GitHubAlias}, already a package owner for '{packageName}'.");
+                logger.LogInformation("Skipped adding @{GitHubAlias}, already a package owner for '{PackageName}'.", owner.GitHubAlias, packageName);
                 continue;
             }
 
             await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", owner.WorkItemId);
-            operations.Add($"Added @{owner.GitHubAlias} to package '{packageName}'.");
+            logger.LogInformation("Added @{GitHubAlias} to package '{PackageName}'.", owner.GitHubAlias, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            Operation = string.Join(Environment.NewLine, operations),
             View = await GetViewByPackage(packageName, repo)
         };
     }
@@ -470,25 +469,24 @@ public class CodeownersManagementHelper(
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
         }
 
-        var operations = new List<string>();
         foreach (var label in labels)
         {
             if (packageWi.RelatedIds.Contains(label.WorkItemId))
             {
-                operations.Add($"Skipped adding label '{label.LabelName}', already linked to package '{packageName}'.");
+                logger.LogInformation("Skipped adding label '{LabelName}', already linked to package '{PackageName}'.", label.LabelName, packageName);
                 continue;
             }
 
             await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", label.WorkItemId);
-            operations.Add($"Added label '{label.LabelName}' to package '{packageName}'.");
+            logger.LogInformation("Added label '{LabelName}' to package '{PackageName}'.", label.LabelName, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            Operation = string.Join(Environment.NewLine, operations),
             View = await GetViewByPackage(packageName, repo)
         };
     }
+
     public async Task<CodeownersModifyResponse> AddOwnersAndLabelsToPath(
         OwnerWorkItem[] owners,
         LabelWorkItem[] labels,
@@ -506,24 +504,22 @@ public class CodeownersManagementHelper(
             }
         }
 
-        var operations = new List<string>();
         var labelNames = string.Join("', '", labels.Select(l => l.LabelName));
 
         foreach (var ownerWorkItem in owners)
         {
             if (labelOwnerWi.RelatedIds.Contains(ownerWorkItem.WorkItemId))
             {
-                operations.Add($"Skipped adding @{ownerWorkItem.GitHubAlias}, already linked as owner for label(s) '{labelNames}' and path '{path}'.");
+                logger.LogInformation("Skipped adding @{GitHubAlias}, already linked as owner for label(s) '{LabelNames}' and path '{Path}'.", ownerWorkItem.GitHubAlias, labelNames, path);
                 continue;
             }
 
             await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", ownerWorkItem.WorkItemId);
-            operations.Add($"Added @{ownerWorkItem.GitHubAlias} and label(s) '{labelNames}' to path '{path}'.");
+            logger.LogInformation("Added @{GitHubAlias} and label(s) '{LabelNames}' to path '{Path}'.", ownerWorkItem.GitHubAlias, labelNames, path);
         }
 
         return new CodeownersModifyResponse
         {
-            Operation = string.Join(Environment.NewLine, operations),
             View = string.IsNullOrEmpty(path)
                 ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo)
                 : await GetViewByPath(path, repo)
@@ -545,22 +541,20 @@ public class CodeownersManagementHelper(
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
         }
 
-        var operations = new List<string>();
         foreach (var ownerWi in owners)
         {
             if (!packageWi.RelatedIds.Contains(ownerWi.WorkItemId))
             {
-                operations.Add($"Skipped removing @{ownerWi.GitHubAlias}, not linked to package '{packageName}'.");
+                logger.LogInformation("Skipped removing @{GitHubAlias}, not linked to package '{PackageName}'.", ownerWi.GitHubAlias, packageName);
                 continue;
             }
 
             await devOpsService.RemoveWorkItemRelationAsync(packageWi.WorkItemId, "related", ownerWi.WorkItemId);
-            operations.Add($"Removed @{ownerWi.GitHubAlias} from package '{packageName}'.");
+            logger.LogInformation("Removed @{GitHubAlias} from package '{PackageName}'.", ownerWi.GitHubAlias, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            Operation = string.Join(Environment.NewLine, operations),
             View = await GetViewByPackage(packageName, repo)
         };
     }
@@ -576,21 +570,19 @@ public class CodeownersManagementHelper(
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
         }
 
-        var operations = new List<string>();
         foreach (var labelWi in labels)
         {
             if (!packageWi.RelatedIds.Contains(labelWi.WorkItemId))
             {
-                operations.Add($"Skipped removing label '{labelWi.LabelName}', not linked to package '{packageName}'.");
+                logger.LogInformation("Skipped removing label '{LabelName}', not linked to package '{PackageName}'.", labelWi.LabelName, packageName);
                 continue;
             }
             await devOpsService.RemoveWorkItemRelationAsync(packageWi.WorkItemId, "related", labelWi.WorkItemId);
-            operations.Add($"Removed label '{labelWi.LabelName}' from package '{packageName}'.");
+            logger.LogInformation("Removed label '{LabelName}' from package '{PackageName}'.", labelWi.LabelName, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            Operation = string.Join(Environment.NewLine, operations),
             View = await GetViewByPackage(packageName, repo)
         };
     }
@@ -614,21 +606,19 @@ public class CodeownersManagementHelper(
             && lo.Labels.Select(l => l.WorkItemId).ToHashSet().SetEquals(labels.Select(l => l.WorkItemId))
         );
 
-        var operations = new List<string>();
         var labelNames = string.Join("', '", labels.Select(l => l.LabelName));
         foreach (var owner in owners) {
             if (!labelOwner.RelatedIds.Contains(owner.WorkItemId))
             {
-                operations.Add($"Skipped removing @{owner.GitHubAlias}, not linked as owner for label(s) '{labelNames}' and path '{path}'.");
+                logger.LogInformation("Skipped removing @{GitHubAlias}, not linked as owner for label(s) '{LabelNames}' and path '{Path}'.", owner.GitHubAlias, labelNames, path);
                 continue;
             }
             await devOpsService.RemoveWorkItemRelationAsync(labelOwner.WorkItemId, "related", owner.WorkItemId);
-            operations.Add($"Removed @{owner.GitHubAlias} from owner of label(s) '{labelNames}' and path '{path}'.");
+            logger.LogInformation("Removed @{GitHubAlias} from owner of label(s) '{LabelNames}' and path '{Path}'.", owner.GitHubAlias, labelNames, path);
         }
 
         return new CodeownersModifyResponse
         {
-            Operation = string.Join(Environment.NewLine, operations),
             View = string.IsNullOrEmpty(path)
                 ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo)
                 : await GetViewByPath(path, repo)

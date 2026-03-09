@@ -152,7 +152,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly ICodeownersManagementHelper codeownersManagementHelper;
         private readonly IGitHelper gitHelper;
         private readonly IDevOpsService devOpsService;
-        private readonly ICodeownersValidatorHelper validatorHelper;
 
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
@@ -208,8 +207,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ICodeownersGenerateHelper codeownersGenerateHelper,
             IGitHelper gitHelper,
             ICodeownersManagementHelper codeownersManagementHelper,
-            IDevOpsService devOpsService,
-            ICodeownersValidatorHelper validatorHelper
+            IDevOpsService devOpsService
         )
         {
             this.githubService = githubService;
@@ -219,7 +217,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             this.codeownersManagementHelper = codeownersManagementHelper;
             this.gitHelper = gitHelper;
             this.devOpsService = devOpsService;
-            this.validatorHelper = validatorHelper;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
         }
@@ -323,7 +320,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var package = parseResult.GetValue(packageOption);
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await ViewCodeowners(user, labels, package, path, repo);
+                return await ViewCodeowners(user, labels, package, path, repo, ct);
             }
 
             if (command == addCodeownersCommandName)
@@ -334,7 +331,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
                 var ownerType = parseResult.GetValue(ownerTypeOption);
-                return await AddCodeowners(users, labels, package, path, ownerType, repo);
+                return await AddCodeowners(users, labels, package, path, ownerType, repo, ct);
             }
 
             if (command == removeCodeownersCommandName)
@@ -345,7 +342,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
                 var ownerType = parseResult.GetValue(ownerTypeOption);
-                return await RemoveCodeowners(users, labels, package, path, ownerType, repo);
+                return await RemoveCodeowners(users, labels, package, path, ownerType, repo, ct);
             }
 
             if (command == exportSectionCommandName)
@@ -736,8 +733,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string[] labels = null,
             string? package = null,
             string? path = null,
-            string? repo = null)
-        {
+            string? repo = null,
+            CancellationToken ct = default
+        ) {
             try
             {
                 var hasLabels = labels?.Length > 0;
@@ -1001,7 +999,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     continue;
                 }
 
-                var validation = await validatorHelper.ValidateCodeOwnerAsync(alias, verbose: false);
+                var validation = await codeownersValidatorHelper.ValidateCodeOwnerAsync(alias, verbose: false);
                 if (!validation.IsValidCodeOwner)
                 {
                     throw new InvalidOperationException(

@@ -79,9 +79,23 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         /// <returns>A PackageOperationResponse indicating failure.</returns>
         public static PackageOperationResponse CreateFailure(string message, PackageInfo? packageInfo = null, string[]? nextSteps = null, string? sdkRepoName = null, string? typespecProjectPath = null)
         {
+            return CreateFailure([message], packageInfo, nextSteps, sdkRepoName, typespecProjectPath);
+        }
+
+        /// <summary>
+        /// Creates a failure response with the specified error messages and package info.
+        /// </summary>
+        /// <param name="errors">The error messages to include in the response.</param>
+        /// <param name="packageInfo">Optional package information to include in the response.</param>
+        /// <param name="nextSteps">Optional next steps to include in the response. If null, standard failure next steps will be used.</param>
+        /// <param name="sdkRepoName">Optional SDK repository name to include in the response.</param>
+        /// <param name="typespecProjectPath">Optional TypeSpec project path to include in the response.</param>
+        /// <returns>A PackageOperationResponse indicating failure.</returns>
+        public static PackageOperationResponse CreateFailure(List<string> errors, PackageInfo? packageInfo = null, string[]? nextSteps = null, string? sdkRepoName = null, string? typespecProjectPath = null)
+        {
             return new PackageOperationResponse
             {
-                ResponseErrors = [message],
+                ResponseErrors = errors?.ToList() ?? [],
                 PackageName = packageInfo?.PackageName ?? string.Empty,
                 Language = packageInfo?.Language ?? SdkLanguage.Unknown,
                 PackageType = packageInfo?.SdkType ?? SdkType.Unknown,

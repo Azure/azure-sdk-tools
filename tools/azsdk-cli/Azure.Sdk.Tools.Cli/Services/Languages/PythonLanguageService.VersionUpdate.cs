@@ -128,7 +128,7 @@ public partial class PythonLanguageService : LanguageService
         if (errors.Count > 0)
         {
             return PackageOperationResponse.CreateFailure(
-                string.Join("; ", errors),
+                errors,
                 nextSteps: ["Manually update _version.py, version.py, setup.py, and/or pyproject.toml with the new version"]);
         }
 

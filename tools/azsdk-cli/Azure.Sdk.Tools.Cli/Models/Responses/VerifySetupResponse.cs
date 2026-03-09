@@ -39,7 +39,7 @@ public class VerifySetupResponse : CommandResponse
                 return ExitCodes.AllGood;
             }
 
-            return unresolvedFailures.All(r => r.IsAutoInstallable)
+            return unresolvedFailures.All(r => r.IsAutoInstallable && !r.AutoInstallAttempted)
                 ? ExitCodes.Fixable
                 : ExitCodes.Blocking;
         }

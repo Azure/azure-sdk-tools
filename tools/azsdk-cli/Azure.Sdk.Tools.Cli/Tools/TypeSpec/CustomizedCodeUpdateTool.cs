@@ -244,9 +244,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
                 feedbackItem?.AppendContext($"Iteration {tries+1}");
 
-                // Accumulate classifier analysis for downstream patch agent
-                classifierAnalysis.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
-
                 if (itemDetails.Classification == ClassificationTspApplicable)
                 {
                     tspApplicable++;
@@ -273,8 +270,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 {
                     codeCustomizations++;
                     logger.LogInformation("Item '{ItemId}' classified as CODE_CUSTOMIZATION — will be handled via code patching.", itemDetails.ItemId);
+                    classifierAnalysis.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
 
-                    // Don't try TSP fixes for code customization items
+                    // Don't try and fix the same feedback again  
                     feedbackDictionary.Remove(itemDetails.ItemId);
                 }
                 else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
@@ -327,6 +325,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                         Message = $"Failed to apply any TypeSpec customizations: {tspFixFailedReasons}",
                         ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed
                     };
+                }
+
+                // All items are code customizations — no TSP changes were made, skip regen
+                // but still build to get error context for the patch agent
+                if (tspApplicable == 0 && codeCustomizations > 0)
+                {
+                    logger.LogInformation("All items classified as CODE_CUSTOMIZATION — skipping regen, building for error context.");
+                    var (codeCustSuccess, codeCustError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                    buildSucceeded = codeCustSuccess;
+                    buildError = codeCustError;
+                    break;
                 }
             }
 

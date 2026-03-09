@@ -83,7 +83,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         Classify ALL of the feedback items listed below. For each item, determine the appropriate classification: **TSP_APPLICABLE**, **CODE_CUSTOMIZATION**, **SUCCESS**, or **REQUIRES_MANUAL_INTERVENTION**.
         - If the feedback is non-actionable (discussion, informational, "keep as is", or about build/generation succeeding), classify as **SUCCESS**.
         - If the feedback is actionable AND TypeSpec client customization decorators can address it (based on the reference documentation below), classify as **TSP_APPLICABLE**.
-        - If the feedback is actionable, TypeSpec decorators CANNOT address it, but automated code patching could fix it (e.g., compile errors from method signature changes, parameter additions, renames in generated code), classify as **CODE_CUSTOMIZATION**. Include specific repair instructions in the Reason.
+        - If the feedback is actionable, TypeSpec decorators CANNOT address it, but automated code patching could fix it (e.g., compile errors from method signature changes, parameter additions/removals, symbol renames in generated code), classify as **CODE_CUSTOMIZATION**. Include specific repair instructions in the Reason.
         - If the feedback is actionable but requires complex manual work that cannot be automated (e.g., new feature implementation, architectural changes, custom business logic), classify as **REQUIRES_MANUAL_INTERVENTION**.
 
         Use the available tools to inspect the TypeSpec project files when needed to determine if decorators are applicable.
@@ -139,7 +139,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         **If Context is EMPTY** (first attempt):
         - Non-actionable (informational, "keep as is", past tense, build success, discussion, question) → **SUCCESS**
         - Actionable AND a TypeSpec decorator from the reference doc can address it → **TSP_APPLICABLE**
-        - Actionable, no TypeSpec decorator applies, but automated patching can fix (compile errors, signature changes, parameter additions) → **CODE_CUSTOMIZATION**
+        - Actionable, no TypeSpec decorator applies, but automated patching can fix (compile errors, signature changes, parameter additions/removals, symbol renames, linting or typing errors) → **CODE_CUSTOMIZATION**
         - Actionable BUT requires complex manual implementation → **REQUIRES_MANUAL_INTERVENTION**
 
         **What counts as "Non-actionable" (SUCCESS):**
@@ -168,7 +168,7 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
 
         **Automated Code Patching (CODE_CUSTOMIZATION):**
         If the feedback involves compile errors or straightforward code-level fixes that automated patching
-        can handle (e.g., method signature changes, parameter additions/removals, symbol renames),
+        can handle (e.g., method signature changes, parameter additions/removals, symbol renames, linting or typing errors),
         classify as CODE_CUSTOMIZATION.
 
         Build errors often reference GENERATED files, but those must NOT be edited directly — they

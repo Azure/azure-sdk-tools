@@ -580,7 +580,8 @@ public class CustomizedCodeUpdateToolAutoTests
     {
         // Scenario: classifier returns CODE_CUSTOMIZATION (not TSP_APPLICABLE).
         // The item is removed from the feedback dictionary and no TSP fixes are attempted.
-        // Build fails → falls through to the patch pipeline → patches applied → Java regen → final build passes.
+        // Regen is skipped (no TSP changes) → build runs for error context → falls through
+        // to the patch pipeline → patches applied → Java regen → final build passes.
         var buildCalls = 0;
         var classifyCalls = 0;
 
@@ -588,7 +589,7 @@ public class CustomizedCodeUpdateToolAutoTests
             buildFunc: () =>
             {
                 buildCalls++;
-                // First build (in TSP loop) fails; second build (after patches) passes
+                // First build (error context for patch agent) fails; second build (after patches) passes
                 return buildCalls <= 1
                     ? (false, "error: cannot find symbol maxSpeakers", null)
                     : (true, null, null);

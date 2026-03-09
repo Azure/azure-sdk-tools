@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Threading;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
@@ -18,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// Parses the TypeSpec project config and runs the metadata emitter to resolve SDK package names.
         /// Returns a fully populated <see cref="TypeSpecProject"/> with TypeSpec info and package list.
         /// </summary>
-        public Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger);
+        public Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct);
 
         /// <summary>
         /// Checks if the path is within either the azure-rest-api-specs repo.
@@ -97,7 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <inheritdoc/>
-        public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger)
+        public async Task<TypeSpecProject?> ParseTypeSpecProjectAsync(string typeSpecProjectPath, INpxHelper npxHelper, ILogger logger, CancellationToken ct)
         {
             try
             {
@@ -125,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     timeout: TimeSpan.FromMinutes(5)
                 );
 
-                var result = await npxHelper.Run(npxOptions, CancellationToken.None);
+                var result = await npxHelper.Run(npxOptions, ct);
                 if (result.ExitCode != 0)
                 {
                     logger.LogWarning("TypeSpec metadata emitter failed with exit code {ExitCode}. Output: {Output}", result.ExitCode, result.Output);

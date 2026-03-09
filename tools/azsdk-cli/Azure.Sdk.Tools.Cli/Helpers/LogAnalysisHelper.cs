@@ -1,11 +1,12 @@
 using System.Security.Policy;
+using System.Threading;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public interface ILogAnalysisHelper
 {
-    Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywords, int? beforeLines, int? afterLines);
+    Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywords, int? beforeLines, int? afterLines, CancellationToken ct);
 }
 
 public class Keyword
@@ -78,13 +79,13 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         "bad request"
     ];
 
-    public async Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywordOverrides, int? beforeLines, int? afterLines)
+    public async Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywordOverrides, int? beforeLines, int? afterLines, CancellationToken ct)
     {
         using var stream = new StreamReader(filePath);
-        return await AnalyzeLogContent(stream, keywordOverrides, beforeLines, afterLines, filePath: filePath);
+        return await AnalyzeLogContent(stream, keywordOverrides, beforeLines, afterLines, filePath: filePath, ct: ct);
     }
 
-    public async Task<List<LogEntry>> AnalyzeLogContent(StreamReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "")
+    public async Task<List<LogEntry>> AnalyzeLogContent(StreamReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "", CancellationToken ct = default)
     {
         var keywords = defaultErrorKeywords;
         if (keywordOverrides?.Count > 0)

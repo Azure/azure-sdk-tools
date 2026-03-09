@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
+
 ### Breaking Changes
 
 ### Bugs Fixed

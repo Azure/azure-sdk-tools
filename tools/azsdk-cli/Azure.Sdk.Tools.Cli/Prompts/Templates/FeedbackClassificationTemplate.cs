@@ -167,10 +167,15 @@ public class FeedbackClassificationTemplate : BasePromptTemplate
         test changes, documentation edits outside TypeSpec), classify as REQUIRES_MANUAL_INTERVENTION.
 
         **Automated Code Patching (CODE_CUSTOMIZATION):**
-        If the feedback involves compile errors or straightforward code-level fixes that automated patching
-        can handle (e.g., method signature changes, parameter additions/removals, type renames in
-        customization files), classify as CODE_CUSTOMIZATION. Include specific repair instructions
-        in the Reason describing what needs to change and where.
+        If the feedback involves compile/linting errors or straightforward code-level fixes that automated patching
+        can handle (e.g., method signature changes, parameter additions/removals, symbol renames),
+        classify as CODE_CUSTOMIZATION.
+
+        Build errors often reference GENERATED files, but those must NOT be edited directly — they
+        are regenerated from TypeSpec. The root cause is typically in a customization file that
+        references a renamed or removed symbol. In your Reason, identify the failing symbol and
+        what changed, but do NOT instruct editing the generated file. The automated patch agent
+        will locate and fix the correct customization file.
         """;
     }
 

@@ -8,7 +8,7 @@ parameters:
     default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","SourceRepoName":"<RepoName>","FileName":"<fileName>","SourceBranchName":"<SourceBranchName>"}]'
   - name: APIViewURL
     type: string
-    default: 'https://apiview.org'
+    default: 'https://apiview.dev'
 
 pool:
   name: azsdk-pool

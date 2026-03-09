@@ -185,6 +185,8 @@ public class ProjectsManager : IProjectsManager
             var reconciled = await ReconcileReviewLinksAsync(userName, project, typeSpecReview.Id);
 
             // Apply reconciliation results to project.
+            project.ReviewIds ??= [];
+            project.ChangeHistory ??= [];
             project.ReviewIds.ExceptWith(reconciled.ReviewIdsToRemove);
             project.HistoricalReviewIds ??= [];
             project.HistoricalReviewIds.UnionWith(reconciled.HistoricalReviewIdsToAdd);
@@ -303,6 +305,11 @@ public class ProjectsManager : IProjectsManager
             }
 
             string previousProjectId = candidate.ProjectId;
+
+            if (string.Equals(previousProjectId, projectId, StringComparison.Ordinal))
+            {
+                continue;
+            }
 
             candidate.ProjectId = projectId;
             reviewIds.Add(candidate.Id);

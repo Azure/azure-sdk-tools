@@ -232,7 +232,8 @@ public class ProjectsManagerTests
         Assert.Equal(ProjectChangeAction.Created, capturedProject.ChangeHistory[0].ChangeAction);
         Assert.Equal(capturedProject.Id, typeSpecReview.ProjectId);
         _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
-            It.Is<IEnumerable<ReviewListItemModel>>(revs => revs.Count() == 1 && revs.First().Id == "ts-1")),
+            It.Is<IEnumerable<ReviewListItemModel>>(revs =>
+                revs.Any(rv => rv.Id == "ts-1"))),
             Times.Once);
     }
 

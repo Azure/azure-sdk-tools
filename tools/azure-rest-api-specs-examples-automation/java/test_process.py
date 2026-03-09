@@ -413,10 +413,8 @@ additionalDirectories:
                 "enabled": true,
                 "updated": 1514941476
               },
-              {
-                "secretUri": "https://sample-vault.vault.azure.net/secrets/secret-name",
-                "secretUriWithVersion": "https://sample-vault.vault.azure.net/secrets/secret-name/40af42fbc10047f8a756a73211492f56"
-              }
+              "secretUri": "https://sample-vault.vault.azure.net/secrets/secret-name",
+              "secretUriWithVersion": "https://sample-vault.vault.azure.net/secrets/secret-name/40af42fbc10047f8a756a73211492f56"
             }
           },
           {

@@ -89,6 +89,354 @@ describe('CodePanelComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  describe('diff comment behavior', () => {
+    it('should allow adding comments on removed rows in diff mode when row has content', () => {
+      const removedRow = new CodePanelRowData();
+      removedRow.type = CodePanelRowDatatype.CodeLine;
+      removedRow.rowClasses = new Set<string>(['removed']);
+      removedRow.rowOfTokens = [{ value: 'removed line' } as any];
+
+      component.isDiffView = true;
+      component.userProfile = {} as any;
+
+      expect(component.canAddComment(removedRow)).toBe(true);
+    });
+
+    it('should route new comment creation from removed rows to diff revision', () => {
+      const commentsService = TestBed.inject(CommentsService);
+      const createCommentSpy = vi.spyOn(commentsService, 'createComment').mockReturnValue(of({ threadId: 'new-thread' } as CommentItemModel));
+      vi.spyOn(component as any, 'addCommentToCommentThread').mockImplementation(() => {});
+
+      component.reviewId = 'review-1';
+      component.activeApiRevisionId = 'active-rev';
+      component.diffApiRevisionId = 'diff-rev';
+      component.isDiffView = true;
+      component.codePanelData = {
+        nodeMetaData: {
+          'hash-1': {
+            codeLines: [{ rowClasses: new Set<string>(['removed']), nodeId: 'line-1' }]
+          }
+        }
+      } as any;
+
+      component.handleSaveCommentActionEmitter({
+        nodeId: 'line-1',
+        nodeIdHashed: 'hash-1',
+        associatedRowPositionInGroup: 0,
+        commentText: 'new comment',
+        allowAnyOneToResolve: false,
+        severity: undefined,
+        isReply: false,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+      } as CommentUpdatesDto);
+
+      expect(createCommentSpy).toHaveBeenCalledWith(
+        'review-1',
+        'diff-rev',
+        'line-1',
+        'new comment',
+        0,
+        true,
+        undefined,
+        undefined
+      );
+    });
+
+    it('should immediately display new comment on green row when red and green share same elementId', () => {
+      const commentsService = TestBed.inject(CommentsService);
+      vi.spyOn(commentsService, 'createComment').mockReturnValue(of({
+        id: 'comment-1',
+        threadId: 'thread-1',
+        elementId: 'shared-id'
+      } as CommentItemModel));
+
+      const addCommentSpy = vi.spyOn(component as any, 'addCommentToCommentThread').mockImplementation(() => {});
+      vi.spyOn(component as any, 'removeItemsFromScroller').mockImplementation(() => Promise.resolve());
+
+      component.reviewId = 'review-1';
+      component.activeApiRevisionId = 'active-rev';
+      component.diffApiRevisionId = 'diff-rev';
+      component.isDiffView = true;
+      component.codePanelData = {
+        nodeMetaData: {
+          redNode: {
+            codeLines: [{ rowClasses: new Set<string>(['removed']), nodeId: 'shared-id', nodeIdHashed: 'redNode', rowPositionInGroup: 0 }],
+            commentThread: {
+              0: [{
+                type: CodePanelRowDatatype.CommentThread,
+                nodeIdHashed: 'redNode',
+                associatedRowPositionInGroup: 0,
+                threadId: 'thread-1',
+                comments: []
+              }]
+            }
+          },
+          greenNode: {
+            codeLines: [{ rowClasses: new Set<string>(), nodeId: 'shared-id', nodeIdHashed: 'greenNode', rowPositionInGroup: 0 }],
+            commentThread: {}
+          }
+        }
+      } as any;
+
+      component.handleSaveCommentActionEmitter({
+        nodeId: 'shared-id',
+        nodeIdHashed: 'redNode',
+        associatedRowPositionInGroup: 0,
+        commentText: 'new comment',
+        threadId: 'thread-1',
+        allowAnyOneToResolve: false,
+        severity: undefined,
+        isReply: false,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+      } as CommentUpdatesDto);
+
+      const forwardedUpdates = addCommentSpy.mock.calls[0][0] as CommentUpdatesDto;
+      expect(forwardedUpdates.nodeIdHashed).toBe('greenNode');
+      expect(forwardedUpdates.associatedRowPositionInGroup).toBe(0);
+      expect(forwardedUpdates.nodeId).toBe('shared-id');
+    });
+
+    it('should keep non-diff comment creation on active revision', () => {
+      const commentsService = TestBed.inject(CommentsService);
+      const createCommentSpy = vi.spyOn(commentsService, 'createComment').mockReturnValue(of({ threadId: 'new-thread' } as CommentItemModel));
+      vi.spyOn(component as any, 'addCommentToCommentThread').mockImplementation(() => {});
+
+      component.reviewId = 'review-1';
+      component.activeApiRevisionId = 'active-rev';
+      component.diffApiRevisionId = 'diff-rev';
+      component.isDiffView = false;
+
+      component.handleSaveCommentActionEmitter({
+        nodeId: 'line-1',
+        nodeIdHashed: 'hash-1',
+        associatedRowPositionInGroup: 0,
+        commentText: 'new comment',
+        allowAnyOneToResolve: false,
+        severity: undefined,
+        isReply: false,
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+      } as CommentUpdatesDto);
+
+      expect(createCommentSpy).toHaveBeenCalledWith(
+        'review-1',
+        'active-rev',
+        'line-1',
+        'new comment',
+        0,
+        true,
+        undefined,
+        undefined
+      );
+    });
+  });
+
+  describe('orphan unresolved thread indicators', () => {
+    it('should create indicator for unresolved comment whose elementId is not visible', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'tjprescott',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.MustFix
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+      expect(component.orphanUnresolvedThreadIndicators[0].severityLabel).toBe('MUST FIX');
+      expect(component.orphanUnresolvedThreadIndicators[0].severityIconClass).toBe('severity-icon-must-fix');
+      expect(component.orphanUnresolvedThreadIndicators[0].elementId).toBe('deleted-id');
+      expect(component.orphanUnresolvedThreadIndicators[0].comments.length).toBe(1);
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(false);
+    });
+
+    it('should handle string-typed severity from JSON deserialization', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'AlitzelMendez',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: 'ShouldFix' as any
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+      expect(component.orphanUnresolvedThreadIndicators[0].severityLabel).toBe('SHOULD FIX');
+      expect(component.orphanUnresolvedThreadIndicators[0].severityIconClass).toBe('severity-icon-should-fix');
+    });
+
+    it('should navigate to diff context when showing orphan unresolved thread', () => {
+      const navigateSpy = vi.spyOn((component as any).router, 'navigate').mockResolvedValue(true);
+      component.activeApiRevisionId = 'active-rev';
+
+      component.showOrphanUnresolvedThread('deleted-id', 'old-rev');
+
+      expect(navigateSpy).toHaveBeenCalled();
+      const queryParams = navigateSpy.mock.calls[0][1].queryParams;
+      expect(queryParams.diffApiRevisionId).toBe('old-rev');
+      expect(queryParams.nId).toBe('deleted-id');
+      navigateSpy.mockRestore();
+    });
+
+    it('should toggle expanded state of orphan indicator', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'tjprescott',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          commentText: 'This needs fixing',
+          severity: CommentSeverity.MustFix
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(false);
+      expect(component.orphanUnresolvedThreadIndicators[0].commentThreadRowData).toBeNull();
+
+      component.toggleOrphanIndicator('thread-1');
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(true);
+      expect(component.orphanUnresolvedThreadIndicators[0].commentThreadRowData).not.toBeNull();
+      expect(component.orphanUnresolvedThreadIndicators[0].commentThreadRowData!.comments.length).toBe(1);
+      expect(component.orphanUnresolvedThreadIndicators[0].commentThreadRowData!.nodeId).toBe('deleted-id');
+
+      component.toggleOrphanIndicator('thread-1');
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(false);
+    });
+
+    it('should preserve expanded state when indicators are rebuilt', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'tjprescott',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.MustFix
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      component.toggleOrphanIndicator('thread-1');
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(true);
+
+      // Re-run the update (simulating data change)
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      expect(component.orphanUnresolvedThreadIndicators[0].expanded).toBe(true);
+    });
+
+    it('should remove orphan indicator when thread is resolved via applyCommentResolutionUpdate', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'author',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.ShouldFix
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+
+      // Simulate resolution via applyCommentResolutionUpdate (orphan path)
+      (component as any).applyCommentResolutionUpdate({
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+        nodeIdHashed: 'deleted-id',
+        threadId: 'thread-1',
+        elementId: 'deleted-id',
+        associatedRowPositionInGroup: 0,
+        resolvedBy: 'resolver'
+      } as CommentUpdatesDto);
+
+      // allComments should be marked resolved
+      expect(component.allComments[0].isResolved).toBe(true);
+      // Orphan indicator should be removed
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(0);
+    });
+
+    it('should resolve orphan with null threadId (legacy comments) by matching elementId', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: undefined,
+          elementId: 'deleted-id',
+          createdBy: 'author',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.Question
+        } as CommentItemModel
+      ];
+
+      (component as any).updateOrphanUnresolvedThreadIndicators();
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+      // actualThreadId should be undefined for legacy comments
+      expect(component.orphanUnresolvedThreadIndicators[0].actualThreadId).toBeUndefined();
+
+      // Expand and verify the row uses empty threadId (not the elementId fallback)
+      component.toggleOrphanIndicator('deleted-id');
+      const rowData = component.orphanUnresolvedThreadIndicators[0].commentThreadRowData!;
+      expect(rowData.threadId).toBe('');
+
+      // Simulate resolution with empty threadId (matching backend behavior)
+      (component as any).applyCommentResolutionUpdate({
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+        nodeIdHashed: 'deleted-id',
+        threadId: '',
+        elementId: 'deleted-id',
+        associatedRowPositionInGroup: 0,
+        resolvedBy: 'resolver'
+      } as CommentUpdatesDto);
+
+      expect(component.allComments[0].isResolved).toBe(true);
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(0);
+    });
+  });
+
   describe('copyReviewTextToClipBoard', () => {
     it('should copy formatted review text to clipboard', async () => {
       const token1 = new StructuredToken();
@@ -441,6 +789,53 @@ describe('CodePanelComponent', () => {
       commentsService.notifySeverityChanged('comment-999', CommentSeverity.ShouldFix);
 
       expect(row.comments[0].severity).toBe(CommentSeverity.Question);
+    });
+  });
+
+  describe('Unresolved markers refresh on quality score refresh', () => {
+    let commentsService: CommentsService;
+
+    beforeEach(() => {
+      commentsService = TestBed.inject(CommentsService);
+    });
+
+    it('should call refreshUnresolvedMarkers when unresolvedMarkersRefreshNeeded$ emits', () => {
+      const refreshSpy = vi.spyOn(component, 'refreshUnresolvedMarkers').mockImplementation(() => {});
+
+      component.ngOnInit();
+
+      commentsService.notifyQualityScoreRefresh();
+
+      expect(refreshSpy).toHaveBeenCalled();
+    });
+
+    it('should update orphan indicators and hasActiveConversation via refreshUnresolvedMarkers', () => {
+      component.activeApiRevisionId = 'active-rev';
+      component.codePanelRowData = [
+        { type: CodePanelRowDatatype.CodeLine, nodeId: 'visible-id', rowOfTokens: [{ value: 'line' }] } as any
+      ];
+      component.allComments = [
+        {
+          id: 'c1',
+          threadId: 'thread-1',
+          elementId: 'deleted-id',
+          createdBy: 'author',
+          apiRevisionId: 'old-rev',
+          isResolved: false,
+          isDeleted: false,
+          severity: CommentSeverity.ShouldFix
+        } as CommentItemModel
+      ];
+
+      component.refreshUnresolvedMarkers();
+
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(1);
+
+      // Simulate the conversations panel unresolving and then resolving
+      component.allComments[0].isResolved = true;
+      component.refreshUnresolvedMarkers();
+
+      expect(component.orphanUnresolvedThreadIndicators.length).toBe(0);
     });
   });
 });

@@ -5,8 +5,8 @@ import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow, DIFF_ADDED, DIFF_REMOVED, getCodePanelRowDataClass, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
-import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
-import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto } from 'src/app/_models/codePanelModels';
+import { DIFF_API_REVISION_ID_QUERY_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
+import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto, CrossLanguageRowDto, OrphanIndicatorData } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentItemModel, CommentSeverity, CommentSource, CommentType } from 'src/app/_models/commentItemModel';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -17,6 +17,7 @@ import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/comm
 import { Menu } from 'primeng/menu';
 import { CodeLineSearchInfo, CodeLineSearchMatch } from 'src/app/_models/codeLineSearchInfo';
 import { DoublyLinkedList } from 'src/app/_helpers/doubly-linkedlist';
+import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 
 @Component({
     selector: 'app-code-panel',
@@ -35,6 +36,7 @@ export class CodePanelComponent implements OnChanges {
   @Input() scrollToNodeId: string | undefined;
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
+  @Input() diffApiRevisionId: string | undefined;
   @Input() userProfile: UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
   @Input() showDocumentation: boolean = true;
@@ -68,6 +70,19 @@ export class CodePanelComponent implements OnChanges {
   diffNodeNavigationPointer: number | undefined = undefined;
 
   menuItemsLineActions: MenuItem[] = [];
+  orphanUnresolvedThreadIndicators: {
+    threadKey: string,
+    actualThreadId: string | undefined,
+    elementId: string,
+    createdBy: string,
+    severityLabel: string,
+    severityIconClass: string,
+    targetApiRevisionId: string,
+    comments: CommentItemModel[],
+    expanded: boolean,
+    commentThreadRowData: CodePanelRowData | null
+  }[] = [];
+  private orphanRowCount: number = 0;
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService,
     private signalRService: SignalRService, private route: ActivatedRoute, private router: Router,
@@ -95,17 +110,25 @@ export class CodePanelComponent implements OnChanges {
     this.commentsService.severityChanged$.pipe(takeUntil(this.destroy$)).subscribe(({ commentId, newSeverity }) => {
       this.updateCommentSeverity(commentId, newSeverity);
     });
+
+    this.commentsService.unresolvedMarkersRefreshNeeded$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.refreshUnresolvedMarkers();
+    });
   }
 
   async ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
       if (changes['codePanelRowData'].currentValue.length > 0) {
+        this.orphanRowCount = 0; // reset since we got fresh data
+        this.updateOrphanUnresolvedThreadIndicators();
         this.loadCodePanelViewPort();
         this.updateHasActiveConversations();
       } else {
         this.isLoading = true;
         this.codePanelRowSource = undefined;
       }
+    } else if (changes['allComments'] || changes['activeApiRevisionId']) {
+      this.updateOrphanUnresolvedThreadIndicators();
     }
 
     if (changes['loadFailed'] && changes['loadFailed'].currentValue) {
@@ -164,6 +187,78 @@ export class CodePanelComponent implements OnChanges {
 
   getTokenClassObject(token: StructuredToken) {
     return getStructuredTokenClass(token);
+  }
+
+  showOrphanUnresolvedThread(elementId: string, targetApiRevisionId: string) {
+    if (!targetApiRevisionId || targetApiRevisionId === this.activeApiRevisionId) {
+      this.scrollToNode(undefined, elementId);
+      return;
+    }
+
+    const queryParams = getQueryParams(this.route);
+    queryParams[DIFF_API_REVISION_ID_QUERY_PARAM] = targetApiRevisionId;
+    queryParams[SCROLL_TO_NODE_QUERY_PARAM] = elementId;
+    this.router.navigate([], { queryParams });
+  }
+
+  toggleOrphanIndicator(threadKey: string) {
+    const indicator = this.orphanUnresolvedThreadIndicators.find(i => i.threadKey === threadKey);
+    if (indicator) {
+      indicator.expanded = !indicator.expanded;
+      if (indicator.expanded && !indicator.commentThreadRowData) {
+        indicator.commentThreadRowData = this.buildOrphanCommentThreadRowData(indicator);
+      }
+    }
+  }
+
+  async toggleOrphanIndicatorRow(event: Event, item: CodePanelRowData) {
+    event.stopPropagation();
+    if (!item.orphanIndicatorData) return;
+
+    item.orphanIndicatorData.expanded = !item.orphanIndicatorData.expanded;
+    if (item.orphanIndicatorData.expanded && !item.orphanIndicatorData.commentThreadRowData) {
+      item.orphanIndicatorData.commentThreadRowData = this.buildOrphanCommentThreadRowData({
+        threadKey: item.orphanIndicatorData.threadKey,
+        actualThreadId: item.orphanIndicatorData.actualThreadId,
+        elementId: item.nodeId,
+        comments: item.comments
+      });
+    }
+
+    // Also sync into the indicators array
+    const indicator = this.orphanUnresolvedThreadIndicators.find(
+      i => i.threadKey === item.orphanIndicatorData!.threadKey
+    );
+    if (indicator) {
+      indicator.expanded = item.orphanIndicatorData.expanded;
+      indicator.commentThreadRowData = item.orphanIndicatorData.commentThreadRowData;
+    }
+
+    await this.codePanelRowSource?.adapter?.relax();
+    await this.codePanelRowSource?.adapter?.fix({
+      updater: ({ data }) => {
+        if (data === item) {
+          return true;
+        }
+        return true;
+      }
+    });
+  }
+
+  private buildOrphanCommentThreadRowData(indicator: {
+    threadKey: string, actualThreadId: string | undefined, elementId: string, comments: CommentItemModel[]
+  }): CodePanelRowData {
+    const row = new CodePanelRowData();
+    row.type = CodePanelRowDatatype.CommentThread;
+    row.nodeId = indicator.elementId;
+    row.nodeIdHashed = indicator.elementId;
+    row.threadId = indicator.actualThreadId || '';
+    row.rowClasses = new Set<string>(['user-comment-thread']);
+    row.associatedRowPositionInGroup = 0;
+    row.comments = [...indicator.comments];
+    row.showReplyTextBox = false;
+    row.isResolvedCommentThread = false;
+    return row;
   }
 
   getLineMenu(row: CodePanelRowData) {
@@ -227,19 +322,10 @@ export class CodePanelComponent implements OnChanges {
   canAddComment(item: CodePanelRowData): boolean {
     const hasNonWhitespaceContent = item.rowOfTokens &&
                                      item.rowOfTokens.some(token => token.value && token.value.trim().length > 0);
-
-    // Handle rowClasses being either a Set or an Array (can happen after JSON deserialization)
-    let isRemoved = false;
-    if (item.rowClasses) {
-      if (item.rowClasses instanceof Set) {
-        isRemoved = item.rowClasses.has('removed');
-      } else if (Array.isArray(item.rowClasses)) {
-        isRemoved = (item.rowClasses as unknown as string[]).includes('removed');
-      }
-    }
+    const isRemoved = this.isRemovedRow(item);
 
     return item.type === CodePanelRowDatatype.CodeLine &&
-           !isRemoved &&
+           (!isRemoved || this.isDiffView) &&
            this.userProfile !== undefined &&
            hasNonWhitespaceContent;
   }
@@ -745,13 +831,19 @@ export class CodePanelComponent implements OnChanges {
     else {
       const isNewThread = commentUpdates.isReply === false;
       const resolutionLocked = commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false;
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
+      const targetRevisionId = this.getTargetRevisionIdForComment(commentUpdates);
+      commentUpdates.revisionId = targetRevisionId;
+      this.commentsService.createComment(this.reviewId!, targetRevisionId, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, resolutionLocked, commentUpdates.severity, commentUpdates.threadId)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               if (!commentUpdates.threadId && response.threadId) {
                 commentUpdates.threadId = response.threadId;
               }
-              this.addCommentToCommentThread(commentUpdates, response);
+              const displayUpdates = this.getDisplayLocationForNewComment(commentUpdates, response);
+              this.addCommentToCommentThread(displayUpdates, response);
+              commentUpdates.nodeIdHashed = displayUpdates.nodeIdHashed;
+              commentUpdates.associatedRowPositionInGroup = displayUpdates.associatedRowPositionInGroup;
+              commentUpdates.nodeId = displayUpdates.nodeId;
               commentUpdates.comment = response;
               // Only refresh quality score for new threads, not replies
               if (isNewThread) {
@@ -761,6 +853,261 @@ export class CodePanelComponent implements OnChanges {
           }
         );
       }
+  }
+
+  private getTargetRevisionIdForComment(commentUpdates: CommentUpdatesDto): string {
+    if (!this.isDiffView) {
+      return this.activeApiRevisionId!;
+    }
+
+    const row = this.getAssociatedCodeLineRow(commentUpdates);
+    if (row && this.isRemovedRow(row)) {
+      return this.diffApiRevisionId || this.activeApiRevisionId!;
+    }
+
+    return this.activeApiRevisionId!;
+  }
+
+  private getDisplayLocationForNewComment(commentUpdates: CommentUpdatesDto, newComment: CommentItemModel): CommentUpdatesDto {
+    if (!this.isDiffView) {
+      return commentUpdates;
+    }
+
+    const sourceRow = this.getAssociatedCodeLineRow(commentUpdates);
+    if (!sourceRow || !this.isRemovedRow(sourceRow)) {
+      return commentUpdates;
+    }
+
+    const elementId = newComment.elementId || commentUpdates.nodeId;
+    const preferredGreenRow = this.findPreferredGreenRowByElementId(elementId);
+    if (!preferredGreenRow) {
+      return commentUpdates;
+    }
+
+    // Remove the temporary empty thread row from red so new comment appears where it will persist.
+    this.removePendingEmptyThread(commentUpdates);
+
+    return {
+      ...commentUpdates,
+      nodeIdHashed: preferredGreenRow.nodeIdHashed,
+      associatedRowPositionInGroup: preferredGreenRow.rowPositionInGroup,
+      nodeId: preferredGreenRow.nodeId
+    };
+  }
+
+  private findPreferredGreenRowByElementId(elementId: string | undefined): CodePanelRowData | undefined {
+    if (!elementId || !this.codePanelData?.nodeMetaData) {
+      return undefined;
+    }
+
+    for (const nodeMetaData of Object.values(this.codePanelData.nodeMetaData)) {
+      for (const row of nodeMetaData.codeLines ?? []) {
+        if (row.nodeId === elementId && !this.isRemovedRow(row)) {
+          return row;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private removePendingEmptyThread(commentUpdates: CommentUpdatesDto): void {
+    const nodeIdHashed = commentUpdates.nodeIdHashed;
+    const position = commentUpdates.associatedRowPositionInGroup;
+    if (!nodeIdHashed || position === undefined) {
+      return;
+    }
+
+    const nodeMetaData = this.codePanelData?.nodeMetaData?.[nodeIdHashed];
+    const threads = nodeMetaData?.commentThread?.[position];
+    if (!threads) {
+      return;
+    }
+
+    const pendingThread = this.findCommentThread(threads, commentUpdates.threadId);
+    if (!pendingThread || (pendingThread.comments && pendingThread.comments.length > 0)) {
+      return;
+    }
+
+    this.removeItemsFromScroller(nodeIdHashed, CodePanelRowDatatype.CommentThread, 'toggleCommentsClasses', 'show', 'can-show', position, commentUpdates.threadId);
+
+    const threadIndex = this.findCommentThreadIndex(threads, commentUpdates.threadId);
+    if (threadIndex > -1) {
+      threads.splice(threadIndex, 1);
+    }
+  }
+
+  private getAssociatedCodeLineRow(commentUpdates: CommentUpdatesDto): CodePanelRowData | undefined {
+    if (!commentUpdates.nodeIdHashed || commentUpdates.associatedRowPositionInGroup === undefined) {
+      return undefined;
+    }
+
+    return this.codePanelData?.nodeMetaData[commentUpdates.nodeIdHashed]?.codeLines[commentUpdates.associatedRowPositionInGroup];
+  }
+
+  private isRemovedRow(row: CodePanelRowData | undefined): boolean {
+    if (!row?.rowClasses) {
+      return false;
+    }
+
+    if (row.rowClasses instanceof Set) {
+      return row.rowClasses.has('removed');
+    }
+
+    if (Array.isArray(row.rowClasses)) {
+      return (row.rowClasses as unknown as string[]).includes('removed');
+    }
+
+    return false;
+  }
+
+  /**
+   * Single method to refresh all unresolved-marker state.
+   * Called whenever quality-score refresh fires so that orphan
+   * indicators, hasActiveConversation, and change detection all
+   * stay in sync with the latest comment resolution data.
+   */
+  refreshUnresolvedMarkers(): void {
+    this.updateOrphanUnresolvedThreadIndicators();
+    this.updateHasActiveConversations();
+    this.changeDetectorRef.detectChanges();
+  }
+
+  private updateOrphanUnresolvedThreadIndicators(): void {
+    const existingIndicators = new Map(
+      this.orphanUnresolvedThreadIndicators.map(i => [i.threadKey, i])
+    );
+
+    // Skip orphan rows when computing visible line IDs
+    const visibleLineIds = new Set(
+      (this.codePanelRowData || [])
+        .filter(row => row.type === CodePanelRowDatatype.CodeLine)
+        .map(row => row.nodeId)
+        .filter((id): id is string => !!id)
+    );
+
+    const activeComments = (this.allComments || []).filter(comment => !comment.isDeleted);
+    const grouped = activeComments.reduce((acc, comment) => {
+      const key = comment.threadId || comment.elementId;
+      if (!key) {
+        return acc;
+      }
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(comment);
+      return acc;
+    }, {} as { [key: string]: CommentItemModel[] });
+
+    this.orphanUnresolvedThreadIndicators = Object.entries(grouped)
+      .map(([threadKey, comments]) => {
+        const isResolvedThread = comments.some(c => c.isResolved);
+        if (isResolvedThread) {
+          return undefined;
+        }
+
+        const representative = comments[0];
+        if (!representative?.elementId || visibleLineIds.has(representative.elementId)) {
+          return undefined;
+        }
+
+        const nonActiveRevisionComment = comments.find(c => c.apiRevisionId && c.apiRevisionId !== this.activeApiRevisionId);
+        const targetApiRevisionId = nonActiveRevisionComment?.apiRevisionId || representative.apiRevisionId;
+
+        const wasExpanded = existingIndicators.get(threadKey);
+        return {
+          threadKey,
+          actualThreadId: representative.threadId,
+          elementId: representative.elementId,
+          createdBy: representative.createdBy,
+          severityLabel: this.getSeverityLabel(comments),
+          severityIconClass: this.getSeverityIconClass(comments),
+          targetApiRevisionId,
+          comments: [...comments],
+          expanded: !!wasExpanded?.expanded,
+          commentThreadRowData: wasExpanded?.commentThreadRowData || null
+        };
+      })
+      .filter((item) => !!item)
+      .sort((a, b) => a.threadKey.localeCompare(b.threadKey)) as typeof this.orphanUnresolvedThreadIndicators;
+
+    this.syncOrphanRowsInCodePanelData();
+  }
+
+  private syncOrphanRowsInCodePanelData(): void {
+    // Remove previously injected orphan rows from the beginning
+    if (this.orphanRowCount > 0) {
+      this.codePanelRowData.splice(0, this.orphanRowCount);
+    }
+
+    // Create new orphan rows from the indicators
+    const orphanRows: CodePanelRowData[] = this.orphanUnresolvedThreadIndicators.map(indicator => {
+      const row = new CodePanelRowData();
+      row.type = CodePanelRowDatatype.OrphanIndicator;
+      row.nodeId = indicator.elementId;
+      row.nodeIdHashed = `orphan-${indicator.threadKey}`;
+      row.rowClasses = new Set<string>(['orphan-indicator']);
+      row.comments = [...indicator.comments];
+      row.orphanIndicatorData = {
+        threadKey: indicator.threadKey,
+        actualThreadId: indicator.actualThreadId,
+        severityLabel: indicator.severityLabel,
+        severityIconClass: indicator.severityIconClass,
+        targetApiRevisionId: indicator.targetApiRevisionId,
+        expanded: indicator.expanded,
+        commentThreadRowData: indicator.commentThreadRowData
+      };
+      return row;
+    });
+
+    // Prepend orphan rows
+    this.codePanelRowData.unshift(...orphanRows);
+    this.orphanRowCount = orphanRows.length;
+
+    // If scroller is already initialized, reload it to pick up the changes
+    if (this.codePanelRowSource?.adapter?.isLoading === false) {
+      this.codePanelRowSource?.adapter?.reload(0);
+    }
+  }
+
+  private getSeverityLabel(comments: CommentItemModel[]): string {
+    const highestSeverity = this.getHighestSeverity(comments);
+
+    switch (highestSeverity) {
+      case CommentSeverity.MustFix:
+        return 'MUST FIX';
+      case CommentSeverity.ShouldFix:
+        return 'SHOULD FIX';
+      case CommentSeverity.Suggestion:
+        return 'SUGGESTION';
+      case CommentSeverity.Question:
+        return 'QUESTION';
+      default:
+        return '';
+    }
+  }
+
+  private getSeverityIconClass(comments: CommentItemModel[]): string {
+    const highestSeverity = this.getHighestSeverity(comments);
+    switch (CommentSeverityHelper.getSeverityBadgeClass(highestSeverity)) {
+      case 'severity-must-fix':
+        return 'severity-icon-must-fix';
+      case 'severity-should-fix':
+        return 'severity-icon-should-fix';
+      case 'severity-suggestion':
+        return 'severity-icon-suggestion';
+      case 'severity-question':
+        return 'severity-icon-question';
+      default:
+        return '';
+    }
+  }
+
+  private getHighestSeverity(comments: CommentItemModel[]): CommentSeverity | null {
+    return comments
+      .map(comment => CommentSeverityHelper.getSeverityEnumValue(comment.severity))
+      .filter((severity): severity is CommentSeverity => severity !== null)
+      .sort((a, b) => b - a)[0] ?? null;
   }
 
   handleDeleteCommentActionEmitter(commentUpdates: CommentUpdatesDto) {
@@ -780,6 +1127,9 @@ export class CodePanelComponent implements OnChanges {
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
           this.commentsService.notifyQualityScoreRefresh();
+        },
+        error: (err) => {
+          console.error('Failed to resolve comments:', err);
         }
       });
     }
@@ -788,6 +1138,9 @@ export class CodePanelComponent implements OnChanges {
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
           this.commentsService.notifyQualityScoreRefresh();
+        },
+        error: (err) => {
+          console.error('Failed to unresolve comments:', err);
         }
       });
     }
@@ -1346,6 +1699,9 @@ export class CodePanelComponent implements OnChanges {
         }
       }
     }
+    if (!hasActiveConversation && this.orphanUnresolvedThreadIndicators.length > 0) {
+      hasActiveConversation = true;
+    }
     this.hasActiveConversationEmitter.emit(hasActiveConversation);
   }
 
@@ -1574,7 +1930,14 @@ export class CodePanelComponent implements OnChanges {
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
     const nodeMetaData = this.codePanelData?.nodeMetaData?.[commentUpdates.nodeIdHashed!];
     if (!nodeMetaData?.commentThread?.[commentUpdates.associatedRowPositionInGroup!]) {
-      this.updateHasActiveConversations();
+      // Orphan thread: update global allComments isResolved state directly
+      const isResolved = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
+      (this.allComments || [])
+        .filter(c => c.elementId === commentUpdates.elementId
+          && (c.threadId || null) === (commentUpdates.threadId || null)
+          && !c.isDeleted)
+        .forEach(c => c.isResolved = isResolved);
+      this.refreshUnresolvedMarkers();
       return;
     }
     const commentThreads = nodeMetaData.commentThread[commentUpdates.associatedRowPositionInGroup!];
@@ -1593,7 +1956,7 @@ export class CodePanelComponent implements OnChanges {
 
       this.updateItemInScroller({ ...commentThread });
     }
-    this.updateHasActiveConversations();
+    this.refreshUnresolvedMarkers();
   }
 
   private toggleCommentUpVote(data: CommentUpdatesDto) {

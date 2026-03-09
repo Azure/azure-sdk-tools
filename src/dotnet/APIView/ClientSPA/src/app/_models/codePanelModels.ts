@@ -9,7 +9,18 @@ export enum CodePanelRowDatatype {
   Diagnostics = "diagnostics",
   CommentThread = "commentThread",
   CrossLanguage = "crossLanguage",
-  Separator = "separator"
+  Separator = "separator",
+  OrphanIndicator = "orphanIndicator"
+}
+
+export interface OrphanIndicatorData {
+  threadKey: string;
+  actualThreadId: string | undefined;
+  severityLabel: string;
+  severityIconClass: string;
+  targetApiRevisionId: string;
+  expanded: boolean;
+  commentThreadRowData: CodePanelRowData | null;
 }
 
 export class CodePanelRowData {
@@ -35,6 +46,7 @@ export class CodePanelRowData {
   commentThreadIsResolvedBy: string;
   isHiddenAPI: boolean;
   draftCommentText: string = '';
+  orphanIndicatorData?: OrphanIndicatorData;
   
   constructor(
     type: string = '',

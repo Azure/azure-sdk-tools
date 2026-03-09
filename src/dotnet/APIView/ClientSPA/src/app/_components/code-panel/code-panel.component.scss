@@ -139,6 +139,98 @@
             filter: var(--hidden-api-filter);
         }
 
+        &.orphan-indicator {
+            display: block;
+            padding: 4px 0;
+            color: var(--text-muted-color);
+
+            .orphan-indicator-content {
+                position: sticky;
+                left: 0;
+                width: fit-content;
+                max-width: 100cqw;
+
+                .indicator-label {
+                    margin-left: 42px;
+                    padding: 3px 8px;
+                    background-color: var(--base-fg-color);
+                    border-left: 2px solid var(--danger-color);
+                    border-radius: 2px;
+                    width: fit-content;
+                }
+
+                .bi-exclamation-circle-fill {
+                    color: var(--danger-color);
+                }
+
+                .severity-icon-must-fix {
+                    color: var(--severity-must-fix-text);
+                }
+
+                .severity-icon-should-fix {
+                    color: var(--severity-should-fix-text);
+                }
+
+                .severity-icon-suggestion {
+                    color: var(--severity-suggestion-text);
+                }
+
+                .severity-icon-question {
+                    color: var(--severity-question-text);
+                }
+
+                .unresolved-toggler {
+                    color: var(--danger-color);
+                    font-weight: bolder;
+                    cursor: pointer;
+                    text-decoration: none;
+                }
+
+                .unresolved-diff-link {
+                    color: var(--text-muted-color);
+                    cursor: pointer;
+                    font-weight: normal;
+                    &:hover {
+                        color: var(--primary-color);
+                    }
+                }
+
+                .orphan-expanded-section {
+                    margin-top: 6px;
+
+                    .orphan-removed-line {
+                        background-color: rgba(255, 0, 0, 0.25);
+                        padding: 2px 8px;
+                        padding-left: calc(42px + 8px);
+                        font-family: Consolas, monospace;
+                        font-size: 14px;
+                        line-height: 1.5;
+                        width: 100%;
+                        box-sizing: border-box;
+
+                        .removed-line-prefix {
+                            color: var(--text-muted-color);
+                            margin-right: 8px;
+                            user-select: none;
+                        }
+
+                        .removed-line-text {
+                            color: var(--base-text-color);
+                        }
+                    }
+
+                    .orphan-comment-wrapper {
+                        padding-left: calc(var(--max-line-number-width, 40px) + 10px);
+
+                        app-comment-thread {
+                            display: block;
+                            width: min(1000px, calc(100cqw - 100px));
+                        }
+                    }
+                }
+            }
+        }
+
         .diff-change {
             background-color: var(--dark-overlay);
             border-radius: 2px;
@@ -187,7 +279,7 @@
             content: '';
             display: inline-block;
             width: 28px; // padding (6px) + icon width (14px) + padding (6px) + borders (2px) = 28px
-            height: 26px; // matches button height
+            height: 21px; // matches line-height (14px * 1.5)
             margin-left: 6px; // matches button margin-left
         }
 

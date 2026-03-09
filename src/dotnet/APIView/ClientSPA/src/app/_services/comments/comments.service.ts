@@ -13,11 +13,15 @@ export class CommentsService {
   private _qualityScoreRefreshNeeded = new Subject<void>();
   qualityScoreRefreshNeeded$ = this._qualityScoreRefreshNeeded.asObservable();
 
+  private _unresolvedMarkersRefreshNeeded = new Subject<void>();
+  unresolvedMarkersRefreshNeeded$ = this._unresolvedMarkersRefreshNeeded.asObservable();
+
   private _severityChanged = new Subject<{ commentId: string, newSeverity: CommentSeverity }>();
   severityChanged$ = this._severityChanged.asObservable();
 
   notifyQualityScoreRefresh() {
     this._qualityScoreRefreshNeeded.next();
+    this._unresolvedMarkersRefreshNeeded.next();
   }
 
   notifySeverityChanged(commentId: string, newSeverity: CommentSeverity) {

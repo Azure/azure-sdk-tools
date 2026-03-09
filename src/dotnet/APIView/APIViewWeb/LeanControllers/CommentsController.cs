@@ -82,7 +82,20 @@ namespace APIViewWeb.LeanControllers
         {
             IEnumerable<CommentItemModel> comments =
                 await _commentsManager.GetCommentsAsync(reviewId, isDeleted, commentType);
-            return new LeanJsonResult(comments, StatusCodes.Status200OK);
+
+            // --- DIAGNOSTIC LOGGING: Comments endpoint type breakdown ---
+            var commentsList = comments.ToList();
+            var apiRevisionComments = commentsList.Where(c => c.CommentType == CommentType.APIRevision).ToList();
+            var sampleRevisionComments = commentsList.Where(c => c.CommentType == CommentType.SampleRevision).ToList();
+            _logger.LogWarning("[Comments] ReviewId={ReviewId}, Total={Total}, APIRevision={API}, SampleRevision={Sample}, RequestedType={Type}",
+                reviewId, commentsList.Count, apiRevisionComments.Count, sampleRevisionComments.Count, commentType?.ToString() ?? "(all)");
+            foreach (var sc in sampleRevisionComments)
+            {
+                _logger.LogWarning("[Comments] SampleRevision comment: Id={Id}, ThreadId={ThreadId}, ElementId={ElementId}, IsResolved={IsResolved}, Severity={Severity}, Text={Text}",
+                    sc.Id, sc.ThreadId ?? "(null)", sc.ElementId ?? "(null)", sc.IsResolved, sc.Severity?.ToString() ?? "(null)", sc.CommentText?.Substring(0, Math.Min(sc.CommentText?.Length ?? 0, 80)));
+            }
+
+            return new LeanJsonResult(commentsList, StatusCodes.Status200OK);
         }
 
         /// <summary>

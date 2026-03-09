@@ -627,7 +627,13 @@ export class CommentThreadComponent {
       {
         commentThreadUpdateAction: isResolving ? CommentThreadUpdateAction.CommentResolved : CommentThreadUpdateAction.CommentUnResolved,
         elementId: this.codePanelRowData!.comments[0].elementId,
-        threadId: this.codePanelRowData!.threadId,
+        // Use the actual DB threadId from the first comment, not the row's
+        // grouping key.  In the conversations panel the grouping key falls back
+        // to elementId for legacy comments (no threadId in DB), which causes the
+        // backend filter (c.ThreadId == threadId) to match nothing and silently
+        // skip the update.  The comment's own threadId is null for those legacy
+        // threads, which correctly maps to the backend's default parameter.
+        threadId: this.codePanelRowData!.comments[0]?.threadId,
         nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
         associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
         resolvedBy: this.userProfile?.userName

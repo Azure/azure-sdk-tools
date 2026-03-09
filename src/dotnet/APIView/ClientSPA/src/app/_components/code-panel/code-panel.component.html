@@ -65,6 +65,39 @@
         (closeCrossLanguageViewEmitter)="handleCloseCrossLanguageViewEmitter($event)"
       ></app-cross-lang-view>
     </ng-container>
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.OrphanIndicator">
+      <div class="orphan-indicator-content">
+        <small class="d-flex align-items-center indicator-label">
+          <i class="bi bi-exclamation-circle-fill me-1" [ngClass]="item.orphanIndicatorData?.severityIconClass"></i>
+          Unresolved <span *ngIf="item.orphanIndicatorData?.severityLabel">&nbsp;{{ item.orphanIndicatorData?.severityLabel }}&nbsp;</span> comment by&nbsp;<b>{{ item.comments?.[0]?.createdBy }}</b>
+          <span class="ms-1 unresolved-toggler" (click)="toggleOrphanIndicatorRow($event, item)"><i class="bi" [ngClass]="item.orphanIndicatorData?.expanded ? 'bi-arrows-collapse' : 'bi-arrows-expand'"></i>&nbsp;{{ item.orphanIndicatorData?.expanded ? 'Hide' : 'Show' }}</span>
+          <span class="ms-2 unresolved-diff-link" (click)="showOrphanUnresolvedThread(item.nodeId, item.orphanIndicatorData?.targetApiRevisionId || '')"><i class="bi bi-arrow-left-right"></i>&nbsp;View in diff</span>
+        </small>
+        <div *ngIf="item.orphanIndicatorData?.expanded" class="orphan-expanded-section">
+          <div class="orphan-removed-line">
+            <span class="removed-line-prefix">-</span>
+            <span class="removed-line-text">{{ item.nodeId }}</span>
+          </div>
+          <div class="orphan-comment-wrapper">
+            <app-comment-thread *ngIf="item.orphanIndicatorData?.commentThreadRowData"
+              [codePanelRowData]="item.orphanIndicatorData!.commentThreadRowData!"
+              [allComments]="allComments"
+              [allCodePanelRowData]="codePanelRowData"
+              [userProfile]="userProfile"
+              [reviewId]="reviewId || ''"
+              (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
+              (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
+              (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"
+              (commentResolutionActionEmitter)="handleCommentResolutionActionEmitter($event)"
+              (commentUpvoteActionEmitter)="handleCommentUpvoteActionEmitter($event)"
+              (commentDownvoteActionEmitter)="handleCommentDownvoteActionEmitter($event)"
+              (commentThreadNavigationEmitter)="handleCommentThreadNavigationEmitter($event)"
+              (batchResolutionActionEmitter)="handleBatchResolutionActionEmitter($event)">
+            </app-comment-thread>
+          </div>
+        </div>
+      </div>
+    </ng-container>
   </div>
 </div>
 <div class="pt-4 d-flex justify-content-center align-items-center" *ngIf="!isLoading && !codePanelRowSource">

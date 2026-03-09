@@ -57,4 +57,17 @@ describe('CommentsService', () => {
     expect(req.request.headers.has('Content-Type')).toBe(false);
     req.flush({}); // Mock response
   });
+
+  it('should emit on both qualityScoreRefreshNeeded$ and unresolvedMarkersRefreshNeeded$ when notifyQualityScoreRefresh is called', () => {
+    let qualityEmitted = false;
+    let markersEmitted = false;
+
+    service.qualityScoreRefreshNeeded$.subscribe(() => { qualityEmitted = true; });
+    service.unresolvedMarkersRefreshNeeded$.subscribe(() => { markersEmitted = true; });
+
+    service.notifyQualityScoreRefresh();
+
+    expect(qualityEmitted).toBe(true);
+    expect(markersEmitted).toBe(true);
+  });
 });

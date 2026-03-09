@@ -266,11 +266,47 @@ namespace APIViewWeb.LeanControllers
                     .Concat(diagnosticComments);
                 List<CommentItemModel> visibleComments = CommentVisibilityHelper.GetVisibleComments(allCommentsWithSyncedDiagnostics, activeApiRevisionId);
 
+                // --- DIAGNOSTIC LOGGING: Code Panel Pipeline ---
+                var allSyncedList = allCommentsWithSyncedDiagnostics.ToList();
+                _logger.LogWarning("[CodePanel] ReviewId={ReviewId}, ActiveRevisionId={RevisionId}", reviewId, activeApiRevisionId);
+                _logger.LogWarning("[CodePanel] Total comments from DB (pre-sync): {Count}", allCommentsFromDb.Count());
+                _logger.LogWarning("[CodePanel] After diagnostic sync + rebuild: {Count} (non-diagnostic: {NonDiag}, diagnostic: {Diag})",
+                    allSyncedList.Count,
+                    allSyncedList.Count(c => c.CommentSource != CommentSource.Diagnostic),
+                    allSyncedList.Count(c => c.CommentSource == CommentSource.Diagnostic));
+                _logger.LogWarning("[CodePanel] After GetVisibleComments: {Count}", visibleComments.Count);
+                foreach (var c in visibleComments)
+                {
+                    _logger.LogWarning("[CodePanel]   Comment Id={Id}, ThreadId={ThreadId}, ElementId={ElementId}, IsResolved={IsResolved}, Severity={Severity}, Source={Source}, Text={Text}",
+                        c.Id, c.ThreadId ?? "(null)", c.ElementId ?? "(null)", c.IsResolved, c.Severity?.ToString() ?? "(null)", c.CommentSource, c.CommentText?.Substring(0, Math.Min(c.CommentText?.Length ?? 0, 80)));
+                }
+
                 // Code panel additionally excludes resolved comments from non-active revisions
                 List<CommentItemModel> filteredComments = visibleComments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
+
+                _logger.LogWarning("[CodePanel] After code-panel filter (!IsResolved || same revision): {Count}", filteredComments.Count);
+                var droppedByCodePanelFilter = visibleComments.Where(c => c.IsResolved && c.APIRevisionId != activeApiRevisionId).ToList();
+                if (droppedByCodePanelFilter.Any())
+                {
+                    _logger.LogWarning("[CodePanel] Dropped by code-panel filter (resolved + different revision): {Count}", droppedByCodePanelFilter.Count);
+                    foreach (var d in droppedByCodePanelFilter)
+                    {
+                        _logger.LogWarning("[CodePanel]   Dropped Id={Id}, RevisionId={RevisionId}, IsResolved={IsResolved}", d.Id, d.APIRevisionId, d.IsResolved);
+                    }
+                }
+
+                // Log thread grouping to compare with quality score
+                var codePanelThreads = filteredComments
+                    .GroupBy(c => !string.IsNullOrEmpty(c.ThreadId) ? c.ThreadId : (!string.IsNullOrEmpty(c.ElementId) ? c.ElementId : c.Id))
+                    .ToList();
+                var codePanelUnresolvedThreads = codePanelThreads.Where(g => g.Any(c => !c.IsResolved)).Count();
+                _logger.LogWarning("[CodePanel] Thread groups: {Total}, Unresolved threads: {Unresolved}", codePanelThreads.Count, codePanelUnresolvedThreads);
+
                 var codePanelRawData = new CodePanelRawData()
                 {
                     activeRevisionCodeFile = activeRevisionReviewCodeFile,
+                    ActiveApiRevisionId = activeApiRevisionId,
+                    DiffApiRevisionId = diffApiRevisionId,
                     Comments = filteredComments
                 };
 

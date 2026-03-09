@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Check if the package is ready for release
-                var releaseReadiness = await CheckPackageReleaseReadinessAsync(packageName, language);
+                var releaseReadiness = await CheckPackageReleaseReadinessAsync(packageName, language, ct);
                 if (!releaseReadiness.IsPackageReady)
                 {
                     response.ReleaseStatusDetails = $"Package is not ready for release. {releaseReadiness.PackageReadinessDetails}";
@@ -191,11 +191,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
+        private async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language, CancellationToken ct)
         {
             try
             {
-                var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
+                var package = await devopsService.GetPackageWorkItemAsync(packageName, language, ct: ct);
                 if (package == null)
                 {
                     package = new PackageWorkitemResponse
@@ -254,7 +254,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Check last pipeline run status for the package and verify it completed successfully
-                package.LatestPipelineStatus = await GetPipelineRunDetails(package.LatestPipelineRun);
+                package.LatestPipelineStatus = await GetPipelineRunDetails(package.LatestPipelineRun, ct);
                 bool hasPipelineWarning = string.IsNullOrEmpty(package.LatestPipelineStatus) || !package.LatestPipelineStatus.Contains(Pipeline_Success_Status);
 
                 // Package release readiness status
@@ -287,7 +287,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<string> GetPipelineRunDetails(string pipelineRunUrl)
+        private async Task<string> GetPipelineRunDetails(string pipelineRunUrl, CancellationToken ct)
         {
             try
             {
@@ -296,7 +296,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     var buildId = int.Parse(pipelineRunUrl.Split("buildId=").LastOrDefault());
                     logger.LogInformation("Extracted build ID: {buildId}", buildId);
-                    var pipelineRun = await devopsService.GetPipelineRunAsync(buildId, default);
+                    var pipelineRun = await devopsService.GetPipelineRunAsync(buildId, ct);
                     if (pipelineRun != null)
                     {
                         logger.LogInformation(

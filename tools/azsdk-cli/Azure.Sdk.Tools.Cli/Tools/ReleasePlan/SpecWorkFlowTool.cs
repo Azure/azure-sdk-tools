@@ -120,7 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             };
         }
 
-        private async Task<ReleaseWorkflowResponse> IsSdkDetailsPresentInReleasePlanAsync(int workItemId, string language)
+        private async Task<ReleaseWorkflowResponse> IsSdkDetailsPresentInReleasePlanAsync(int workItemId, string language, CancellationToken ct)
         {
             var response = new ReleaseWorkflowResponse()
             {
@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, default);
+                var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId, ct);
 
                 var sdkInfoList = releasePlan?.SDKInfo;
 
@@ -236,7 +236,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 // Update SDK details in release plan if work item ID is provided
                 if (workItemId > 0)
                 {
-                    var readiness = await IsSdkDetailsPresentInReleasePlanAsync(workItemId, language);
+                    var readiness = await IsSdkDetailsPresentInReleasePlanAsync(workItemId, language, ct);
                     if (!readiness.Status.Equals("Success"))
                     {
                         response.ResponseErrors.AddRange(readiness.ResponseErrors);

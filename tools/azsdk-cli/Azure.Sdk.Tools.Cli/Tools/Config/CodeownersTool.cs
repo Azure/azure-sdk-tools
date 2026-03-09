@@ -418,9 +418,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             List<string> serviceOwners = null,
             List<string> sourceOwners = null,
             bool isAdding = false,
-            string workingBranch = "", CancellationToken ct = default
-        )
-        {
+            string workingBranch = "",
+            CancellationToken ct = default
+        ) {
             try
             {
                 // Validate atleast Service Label or Path.
@@ -523,8 +523,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string identifier,
             string workingBranch,
             CancellationToken ct
-        )
-        {
+        ) {
             List<string> resultMessages = new();
             var branchName = "";
 
@@ -662,7 +661,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
-                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false, ct: ct);
+                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false);
 
                 if (string.IsNullOrEmpty(result.Username))
                 {

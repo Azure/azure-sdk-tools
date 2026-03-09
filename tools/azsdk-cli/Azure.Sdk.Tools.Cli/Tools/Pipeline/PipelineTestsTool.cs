@@ -63,7 +63,7 @@ public class PipelineTestsTool(
         string project = "";
         try
         {
-            var build = await GetPipelineRun(buildId);
+            var build = await GetPipelineRun(buildId, ct: ct);
             project = build.Project.Name;
             logger.LogInformation("Fetching artifacts for build {buildId} in project {project}", buildId, project);
             var result = await devopsService.GetPipelineLlmArtifacts(project, buildId, ct);
@@ -79,7 +79,7 @@ public class PipelineTestsTool(
         }
     }
 
-    private async Task<Build> GetPipelineRun(int buildId, string? project = null)
+    private async Task<Build> GetPipelineRun(int buildId, string? project = null, CancellationToken ct = default)
     {
         if (!string.IsNullOrEmpty(project))
         {

@@ -707,7 +707,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion, CancellationToken ct)
         {
             ValidatePullRequestUrl(specPullRequestUrl);
 
@@ -735,7 +735,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
 
                 // Ensure a release plan is created only if the API specs pull request is in a public repository.
-                if (!await typeSpecHelper.IsRepoPathForPublicSpecRepoAsync(repoRoot))
+                if (!await typeSpecHelper.IsRepoPathForPublicSpecRepoAsync(repoRoot, ct))
                 {
                     throw new Exception("""
                         SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
@@ -772,7 +772,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     sdkReleaseType = mappedType;
                 }
 
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion, ct);
 
                 // Handle both URLs and local paths for TypeSpec projects
                 bool isValidTypeSpec;
@@ -1364,7 +1364,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 var sdkInfoInRelease = devOpsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl, "Completed");
-                var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan);
+                var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan, ct);
 
                 await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
                 if (releasePlan.IsManagementPlane)
@@ -1385,13 +1385,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlanWorkItem releasePlan)
+        private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlanWorkItem releasePlan, CancellationToken ct)
         {
             var repoOwner = parsedUrl.RepoOwner;
             var repoName = parsedUrl.RepoName;
             var prNumber = parsedUrl.PrNumber;
 
-            var pr = await githubService.GetPullRequestAsync(repoOwner, repoName, prNumber, default);
+            var pr = await githubService.GetPullRequestAsync(repoOwner, repoName, prNumber, ct);
             if (pr == null)
             {
                 throw new InvalidOperationException($"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}");
@@ -1418,7 +1418,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 : $"{pr.Body}\n{links}";
             try
             {
-                await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value, default);
+                await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value, ct);
             }
             catch (Exception ex)
             {
@@ -1440,7 +1440,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (notifyOwners)
                 {
-                    await NotifyOwnersOfOverdueReleasePlans(releasePlans, emailerUri);
+                    await NotifyOwnersOfOverdueReleasePlans(releasePlans, emailerUri, ct);
                 }
 
                 return new ReleasePlanListResponse
@@ -1456,7 +1456,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private async Task NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri)
+        private async Task NotifyOwnersOfOverdueReleasePlans(List<ReleasePlanWorkItem> releasePlans, string emailerUri, CancellationToken ct)
         {
             const string subject = "Action Required: Azure SDKs Not Yet Published for Your Release Plan";
 
@@ -1516,11 +1516,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     </html>
                 """;
 
-                await SendEmailNotification(emailerUri, releaseOwnerEmail, sdkApexEmail, subject, body);
+                await SendEmailNotification(emailerUri, releaseOwnerEmail, sdkApexEmail, subject, body, ct);
             }
         }
 
-        private async Task SendEmailNotification(string emailerUri, string to, string cc, string subject, string body)
+        private async Task SendEmailNotification(string emailerUri, string to, string cc, string subject, string body, CancellationToken ct)
         {
             var emailPayload = new
             {
@@ -1536,7 +1536,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogInformation("Sending Email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);
 
-                var response = await httpClient.PostAsync(emailerUri, httpContent);
+                var response = await httpClient.PostAsync(emailerUri, httpContent, ct);
                 response.EnsureSuccessStatusCode();
 
                 logger.LogInformation("Successfully sent email - To: {To}, CC: {CC}, Subject: {Subject}", to, cc, subject);

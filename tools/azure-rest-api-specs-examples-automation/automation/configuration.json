@@ -13,7 +13,8 @@
         "versionRegexGroup": ".*_(.*)"
       },
       "ignoredPackages": [
-        "azure-resourcemanager"
+        "azure-resourcemanager",
+        "com.azure.resourcemanager+azure-resourcemanager"
       ],
       "script": {
         "run": "java/main.sh"

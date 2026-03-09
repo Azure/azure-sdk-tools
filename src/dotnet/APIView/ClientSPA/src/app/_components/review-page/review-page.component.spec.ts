@@ -104,7 +104,7 @@ describe('ReviewPageComponent', () => {
     });
 
     it('should set loadFailed and loadFailedMessage when Review is deleted', () => {
-      var review = new Review();
+      let review = new Review();
       review.isDeleted = true;
       vi.spyOn(reviewsService, 'getReview').mockReturnValue(of(review));
       component.loadReview('testReviewId');
@@ -139,5 +139,21 @@ describe('ReviewPageComponent', () => {
       true,
       [activeApiRevisionId, diffApiRevisionId]
     );
+  });
+
+  describe('handleReviewApprovalEmitter', () => {
+    it('should call toggleReviewApproval when value is true', () => {
+      component.reviewId = 'test-review-id';
+      component.activeApiRevisionId = 'test-revision-id';
+      const spy = vi.spyOn(reviewsService, 'toggleReviewApproval').mockReturnValue(of(new Review()));
+      component.handleReviewApprovalEmitter(true);
+      expect(spy).toHaveBeenCalledWith('test-review-id', 'test-revision-id', true);
+    });
+
+    it('should not call toggleReviewApproval when value is false', () => {
+      const spy = vi.spyOn(reviewsService, 'toggleReviewApproval');
+      component.handleReviewApprovalEmitter(false);
+      expect(spy).not.toHaveBeenCalled();
+    });
   });
 });

@@ -19,7 +19,7 @@ public class ProgressReporter
 {
     private readonly IProgress<ProgressNotificationValue>? _progress;
     private readonly ILogger _logger;
-    private readonly IRawOutputHelper? _outputHelper;
+    private readonly IRawOutputHelper _outputHelper;
     private readonly int _totalSteps;
     private int _currentStep;
 
@@ -43,11 +43,11 @@ public class ProgressReporter
     /// <param name="logger">Logger used as a fallback when <paramref name="progress"/> is <c>null</c>.</param>
     /// <param name="totalSteps">The total number of steps that will be reported.</param>
     /// <param name="outputHelper">
-    /// Optional output helper for CLI mode. When provided, progress messages are
-    /// written to stderr without logging metadata. When <c>null</c>, falls back to <paramref name="logger"/>.
+    /// Output helper for CLI mode. Progress messages are written to stderr
+    /// without logging metadata.
     /// </param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="totalSteps"/> is less than 1.</exception>
-    public ProgressReporter(IProgress<ProgressNotificationValue>? progress, ILogger logger, int totalSteps, IRawOutputHelper? outputHelper = null)
+    public ProgressReporter(IProgress<ProgressNotificationValue>? progress, ILogger logger, int totalSteps, IRawOutputHelper outputHelper)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(totalSteps, 1);
         _progress = progress;
@@ -174,14 +174,7 @@ public class ProgressReporter
         {
             // Fallback: render an ASCII progress bar for CLI mode.
             var bar = FormatProgressBar(progressValue, total);
-            if (_outputHelper is not null)
-            {
-                _outputHelper.OutputConsoleInfo($"{bar} {message}");
-            }
-            else
-            {
-                _logger.LogInformation("{Bar} {Message}", bar, message);
-            }
+            _outputHelper.OutputConsoleInfo($"{bar} {message}");
         }
     }
 

@@ -11,11 +11,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 public class ProgressReporterTests
 {
     private TestLogger<ProgressReporterTests> _logger;
+    private Mock<IRawOutputHelper> _mockOutputHelper;
+    private List<string> _consoleOutput;
 
     [SetUp]
     public void Setup()
     {
         _logger = new TestLogger<ProgressReporterTests>();
+        _consoleOutput = new List<string>();
+        _mockOutputHelper = new Mock<IRawOutputHelper>();
+        _mockOutputHelper.Setup(o => o.OutputConsoleInfo(It.IsAny<string>()))
+            .Callback<string>(s => _consoleOutput.Add(s));
     }
 
     #region Constructor validation
@@ -24,14 +30,14 @@ public class ProgressReporterTests
     public void Constructor_ZeroSteps_Throws()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ProgressReporter(null, _logger, totalSteps: 0));
+            new ProgressReporter(null, _logger, totalSteps: 0, _mockOutputHelper.Object));
     }
 
     [Test]
     public void Constructor_NegativeSteps_Throws()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ProgressReporter(null, _logger, totalSteps: -1));
+            new ProgressReporter(null, _logger, totalSteps: -1, _mockOutputHelper.Object));
     }
 
     #endregion
@@ -41,22 +47,22 @@ public class ProgressReporterTests
     [Test]
     public void NextStep_ReportsStepsSequentially()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 3);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 3, _mockOutputHelper.Object);
 
         reporter.NextStep("Step one");
         reporter.NextStep("Step two");
         reporter.NextStep("Step three");
 
-        Assert.That(_logger.Logs, Has.Count.EqualTo(3));
-        Assert.That(_logger.Logs[0].ToString(), Does.Contain("Step one"));
-        Assert.That(_logger.Logs[1].ToString(), Does.Contain("Step two"));
-        Assert.That(_logger.Logs[2].ToString(), Does.Contain("Step three"));
+        Assert.That(_consoleOutput, Has.Count.EqualTo(3));
+        Assert.That(_consoleOutput[0], Does.Contain("Step one"));
+        Assert.That(_consoleOutput[1], Does.Contain("Step two"));
+        Assert.That(_consoleOutput[2], Does.Contain("Step three"));
     }
 
     [Test]
     public void NextStep_ExceedsTotalSteps_Throws()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 2);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 2, _mockOutputHelper.Object);
 
         reporter.NextStep("Step one");
         reporter.NextStep("Step two");
@@ -74,7 +80,7 @@ public class ProgressReporterTests
         mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
             .Callback<ProgressNotificationValue>(v => reported.Add(v));
 
-        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 3);
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 3, _mockOutputHelper.Object);
 
         reporter.NextStep("First");
         reporter.NextStep("Second");
@@ -98,12 +104,12 @@ public class ProgressReporterTests
     [Test]
     public void NextStep_NoProgress_FallsBackToLogger()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 1);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 1, _mockOutputHelper.Object);
 
         reporter.NextStep("test message");
 
-        Assert.That(_logger.Logs, Has.Count.EqualTo(1));
-        Assert.That(_logger.Logs[0].ToString(), Does.Contain("test message"));
+        Assert.That(_consoleOutput, Has.Count.EqualTo(1));
+        Assert.That(_consoleOutput[0], Does.Contain("test message"));
     }
 
     #endregion
@@ -113,7 +119,7 @@ public class ProgressReporterTests
     [Test]
     public void EnsureComplete_AllStepsReported_DoesNotThrow()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 2);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 2, _mockOutputHelper.Object);
 
         reporter.NextStep("Step one");
         reporter.NextStep("Step two");
@@ -124,7 +130,7 @@ public class ProgressReporterTests
     [Test]
     public void EnsureComplete_MissingSteps_Throws()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 3);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 3, _mockOutputHelper.Object);
 
         reporter.NextStep("Step one");
 
@@ -146,7 +152,7 @@ public class ProgressReporterTests
         mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
             .Callback<ProgressNotificationValue>(v => reported.Add(v));
 
-        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2);
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2, _mockOutputHelper.Object);
 
         reporter.NextStep("Starting work");
 
@@ -173,7 +179,7 @@ public class ProgressReporterTests
         mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
             .Callback<ProgressNotificationValue>(v => reported.Add(v));
 
-        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2);
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2, _mockOutputHelper.Object);
 
         reporter.NextStep("Step 1");
 
@@ -193,7 +199,7 @@ public class ProgressReporterTests
     [Test]
     public async Task StartHeartbeat_NoProgress_FallsBackToLogger()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 2);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 2, _mockOutputHelper.Object);
 
         reporter.NextStep("Step 1");
 
@@ -202,15 +208,15 @@ public class ProgressReporterTests
             await Task.Delay(15);
         }
 
-        // At least the step message + some heartbeats logged
-        Assert.That(_logger.Logs.Count, Is.GreaterThanOrEqualTo(2));
-        Assert.That(_logger.Logs[0].ToString(), Does.Contain("Step 1"));
+        // At least the step message + some heartbeats
+        Assert.That(_consoleOutput.Count, Is.GreaterThanOrEqualTo(2));
+        Assert.That(_consoleOutput[0], Does.Contain("Step 1"));
     }
 
     [Test]
     public async Task StartHeartbeat_Cancellation_StopsHeartbeat()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 2);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 2, _mockOutputHelper.Object);
         reporter.NextStep("Step 1");
 
         using var cts = new CancellationTokenSource();
@@ -225,10 +231,10 @@ public class ProgressReporterTests
         // DisposeAsync should complete without throwing
         await heartbeat.DisposeAsync();
 
-        var countAfterCancel = _logger.Logs.Count;
+        var countAfterCancel = _consoleOutput.Count;
         await Task.Delay(15);
 
-        Assert.That(_logger.Logs.Count, Is.EqualTo(countAfterCancel));
+        Assert.That(_consoleOutput.Count, Is.EqualTo(countAfterCancel));
     }
 
     [Test]
@@ -239,7 +245,7 @@ public class ProgressReporterTests
         mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
             .Callback<ProgressNotificationValue>(v => reported.Add(v));
 
-        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2);
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 2, _mockOutputHelper.Object);
 
         reporter.NextStep("Fast step");
 
@@ -261,7 +267,7 @@ public class ProgressReporterTests
         mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
             .Callback<ProgressNotificationValue>(v => reported.Add(v));
 
-        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 3);
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 3, _mockOutputHelper.Object);
 
         reporter.NextStep("Step 1"); // progress = 1
         reporter.NextStep("Step 2"); // progress = 2
@@ -284,7 +290,7 @@ public class ProgressReporterTests
     [Test]
     public void CurrentStep_TracksProgress()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 3);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 3, _mockOutputHelper.Object);
         Assert.That(reporter.CurrentStep, Is.EqualTo(0));
 
         reporter.NextStep("First");
@@ -297,7 +303,7 @@ public class ProgressReporterTests
     [Test]
     public void TotalSteps_ReturnsConstructorValue()
     {
-        var reporter = new ProgressReporter(null, _logger, totalSteps: 5);
+        var reporter = new ProgressReporter(null, _logger, totalSteps: 5, _mockOutputHelper.Object);
         Assert.That(reporter.TotalSteps, Is.EqualTo(5));
     }
 
@@ -312,7 +318,7 @@ public class ProgressReporterTests
         mockProgress.Setup(p => p.Report(It.IsAny<ProgressNotificationValue>()))
             .Throws<InvalidOperationException>();
 
-        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 1);
+        var reporter = new ProgressReporter(mockProgress.Object, _logger, totalSteps: 1, _mockOutputHelper.Object);
 
         // Should not throw — progress reporting is best-effort
         Assert.DoesNotThrow(() => reporter.NextStep("test"));

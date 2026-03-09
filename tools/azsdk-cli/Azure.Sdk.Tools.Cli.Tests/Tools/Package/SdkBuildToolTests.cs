@@ -191,7 +191,7 @@ public class SdkBuildToolTests
 
         // Mock the SpecGenSdkConfigHelper to throw an exception for missing config
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build))
+            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration."));
 
         // Act
@@ -210,7 +210,7 @@ public class SdkBuildToolTests
 
         // Mock the SpecGenSdkConfigHelper to throw a JSON parsing exception
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build))
+            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Error parsing JSON configuration: Invalid JSON"));
 
         // Act
@@ -233,7 +233,7 @@ public class SdkBuildToolTests
 
         // Mock the SpecGenSdkConfigHelper to throw when config file is not found
         _mockSpecGenSdkConfigHelper
-            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build))
+            .Setup(x => x.GetConfigurationAsync(It.IsAny<string>(), SpecGenSdkConfigType.Build, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new FileNotFoundException("Configuration file not found"));
 
         // Act
@@ -243,7 +243,7 @@ public class SdkBuildToolTests
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Configuration file not found"));
         _mockGitHelper.Verify(x => x.DiscoverRepoRootAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>()), Times.AtMost(2));
         _mockGitHelper.Verify(x => x.GetRepoNameAsync(_tempDirectory.DirectoryPath, It.IsAny<CancellationToken>()), Times.AtMost(2));
-        _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build), Times.Once);
+        _mockSpecGenSdkConfigHelper.Verify(x => x.GetConfigurationAsync(_tempDirectory.DirectoryPath, SpecGenSdkConfigType.Build, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

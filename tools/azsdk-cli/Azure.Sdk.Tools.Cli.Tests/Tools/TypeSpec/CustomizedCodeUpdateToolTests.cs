@@ -898,7 +898,7 @@ public class CustomizedCodeUpdateToolAutoTests
             _isCustomizedCodeUpdateSupported = isCustomizedCodeUpdateSupported;
         }
 
-        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+        public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath, CancellationToken ct)
             => Task.FromResult(new List<ApiChange>());
 
         public override string? HasCustomizations(string packagePath, CancellationToken ct = default)

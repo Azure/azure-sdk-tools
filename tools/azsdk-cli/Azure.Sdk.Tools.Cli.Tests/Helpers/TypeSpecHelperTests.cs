@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                     .ReturnsAsync(new ProcessResult { ExitCode = 0 });
 
-                var result = await typeSpecHelper.ParseTypeSpecProjectAsync(testCodeFilePath, mockNpxHelper.Object, logger);
+                var result = await typeSpecHelper.ParseTypeSpecProjectAsync(testCodeFilePath, mockNpxHelper.Object, logger, CancellationToken.None);
 
                 Assert.IsNotNull(result);
                 Assert.That(result.Packages.Count, Is.EqualTo(5));

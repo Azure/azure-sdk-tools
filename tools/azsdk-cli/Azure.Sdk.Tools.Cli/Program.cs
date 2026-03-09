@@ -18,13 +18,13 @@ public class Program
         return await Run(args);
     }
 
-    public static async Task<int> Run(string[] args, LogLevel? logLevel = null)
+    public static async Task<int> Run(string[] args, LogLevel? logLevel = null, CancellationToken ct = default)
     {
         var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
         logLevel ??= debug ? LogLevel.Debug : LogLevel.Information;
 
         ServerApp = CreateAppBuilder(args, outputFormat, logLevel.Value, debug).Build();
-        return await CommandRunner.BuildAndRun(args, ServerApp.Services, debug);
+        return await CommandRunner.BuildAndRun(args, ServerApp.Services, debug, ct);
     }
 
     // todo: make this honor subcommands of `start` and the like, instead of simply looking presence of `start` verb

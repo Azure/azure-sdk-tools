@@ -18,7 +18,7 @@ internal class WindowsMachineInformationProvider(ILogger<WindowsMachineInformati
 
     private readonly ILogger<WindowsMachineInformationProvider> _logger = logger;
 
-    public override Task<string?> GetOrCreateDeviceId()
+    public override Task<string?> GetOrCreateDeviceId(CancellationToken ct)
     {
         return Task.Run<string?>(() =>
         {

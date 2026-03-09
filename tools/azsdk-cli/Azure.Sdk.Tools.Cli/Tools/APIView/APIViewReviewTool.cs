@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
+using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.APIView;
 
@@ -73,13 +74,13 @@ public class APIViewReviewTool : MCPMultiCommandTool
     }
 
     [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review.")]
-    public async Task<APIViewResponse> GetComments(string apiViewUrl)
+    public async Task<APIViewResponse> GetComments(string apiViewUrl, CancellationToken ct = default)
     {
         try
         {
             (string revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
 
-            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
+            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, ct);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Failed to retrieve comments for API View: {apiViewUrl}" };
@@ -99,7 +100,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     private async Task<APIViewResponse> GetComments(ParseResult parseResult, CancellationToken ct)
     {
         string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        return await GetComments(apiViewUrl!);
+        return await GetComments(apiViewUrl!, ct);
     }
 
     private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)
@@ -117,7 +118,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl!);
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType, ct);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Content not found" };

@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
@@ -58,24 +59,24 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
 
         if (titlesOnly)
         {
-            var failed = await GetFailedTestCases(trxPath);
+            var failed = await GetFailedTestCases(trxPath, ct);
             return new ObjectCommandResponse() { Result = failed };
         }
 
         if (!string.IsNullOrEmpty(filterTitle))
         {
-            return await GetFailedTestCaseData(trxPath, filterTitle);
+            return await GetFailedTestCaseData(trxPath, filterTitle, ct);
         }
 
-        return await GetFailedTestRunDataFromTrx(trxPath);
+        return await GetFailedTestRunDataFromTrx(trxPath, ct);
     }
 
     [McpServerTool(Name = GetFailedTestCasesToolName), Description("Get list of all failed test case titles (names only) from a TRX file. Use this to quickly see which tests failed without details.")]
-    public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath)
+    public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, CancellationToken ct = default)
     {
         try
         {
-            return await testHelper.GetFailedTestCases(trxFilePath);
+            return await testHelper.GetFailedTestCases(trxFilePath, ct: ct);
         }
         catch (Exception ex)
         {
@@ -85,11 +86,11 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
     }
 
     [McpServerTool(Name = GetFailedTestCaseDataToolName), Description("Get detailed information (error messages, stack traces, output) for a specific failed test case by title from a TRX file. Use this to debug a particular test failure.")]
-    public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle)
+    public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle, CancellationToken ct = default)
     {
         try
         {
-            var failedTestRuns = await testHelper.GetFailedTestRunDataFromTrx(trxFilePath);
+            var failedTestRuns = await testHelper.GetFailedTestRunDataFromTrx(trxFilePath, ct);
             var testRun = failedTestRuns.Items.FirstOrDefault(run => run.TestCaseTitle.Equals(testCaseTitle, StringComparison.OrdinalIgnoreCase));
             if (testRun == null)
             {
@@ -111,11 +112,11 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
     }
 
     [McpServerTool(Name = GetFailedTestRunDataToolName), Description("Get complete details for all failed test cases from a TRX file. Returns full data including error messages, stack traces, and output for every failed test. Use this for comprehensive analysis.")]
-    public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath)
+    public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath, CancellationToken ct = default)
     {
         try
         {
-            return await testHelper.GetFailedTestRunDataFromTrx(trxFilePath);
+            return await testHelper.GetFailedTestRunDataFromTrx(trxFilePath, ct);
         }
         catch (Exception ex)
         {

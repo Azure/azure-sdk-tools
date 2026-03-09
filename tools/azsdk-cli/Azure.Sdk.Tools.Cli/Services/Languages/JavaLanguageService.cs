@@ -335,7 +335,7 @@ public sealed partial class JavaLanguageService : LanguageService
         }
     }
 
-    public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+    public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath, CancellationToken ct)
     {
         // TODO: implement file-level diff between oldGenerationPath and newGenerationPath.
         return Task.FromResult(new List<ApiChange>());

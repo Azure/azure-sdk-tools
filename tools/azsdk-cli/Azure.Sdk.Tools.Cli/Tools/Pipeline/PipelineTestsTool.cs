@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
@@ -37,7 +38,7 @@ public class PipelineTestsTool(
         var buildId = parseResult.GetValue(buildIdArg);
 
         logger.LogInformation("Getting test results for pipeline {buildId}...", buildId);
-        return await GetPipelineLlmArtifacts(buildId);
+        return await GetPipelineLlmArtifacts(buildId, ct);
     }
 
     private BuildHttpClient buildClient;
@@ -57,7 +58,7 @@ public class PipelineTestsTool(
     }
 
     [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
-    public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId)
+    public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId, CancellationToken ct = default)
     {
         string project = "";
         try
@@ -65,7 +66,7 @@ public class PipelineTestsTool(
             var build = await GetPipelineRun(buildId);
             project = build.Project.Name;
             logger.LogInformation("Fetching artifacts for build {buildId} in project {project}", buildId, project);
-            var result = await devopsService.GetPipelineLlmArtifacts(project, buildId);
+            var result = await devopsService.GetPipelineLlmArtifacts(project, buildId, ct);
             return new ObjectCommandResponse { Result = result };
         }
         catch (Exception ex)

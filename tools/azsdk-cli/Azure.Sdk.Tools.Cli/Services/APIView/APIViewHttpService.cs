@@ -2,12 +2,13 @@ using System.Net;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.APIView;
+using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewHttpService
 {
-    Task<string?> GetAsync(string endpoint);
+    Task<string?> GetAsync(string endpoint, CancellationToken ct);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -37,7 +38,7 @@ public class APIViewHttpService : IAPIViewHttpService
         return Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT") ?? "production";
     }
 
-    public async Task<string?> GetAsync(string endpoint)
+    public async Task<string?> GetAsync(string endpoint, CancellationToken ct)
     {
         try
         {
@@ -46,7 +47,7 @@ public class APIViewHttpService : IAPIViewHttpService
             HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
 
             string requestUrl = $"{baseUrl}{endpoint}";
-            using HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
+            using HttpResponseMessage response = await httpClient.GetAsync(requestUrl, ct);
             if (response.StatusCode == HttpStatusCode.Found || response.StatusCode == HttpStatusCode.Redirect)
             {
                 string? location = response.Headers.Location?.ToString();
@@ -74,7 +75,7 @@ public class APIViewHttpService : IAPIViewHttpService
                 return null;
             }
 
-            string content = await response.Content.ReadAsStringAsync();
+            string content = await response.Content.ReadAsStringAsync(ct);
 
             if (APIViewAuthenticationService.IsAuthenticationFailure(content))
             {

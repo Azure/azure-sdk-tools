@@ -18,8 +18,10 @@ public class CopilotSessionWrapper(CopilotSession session) : ICopilotSessionWrap
         return session.SendAsync(options, cancellationToken);
     }
 
+#pragma warning disable AZSDK001 // IAsyncDisposable.DisposeAsync has a fixed signature
     public ValueTask DisposeAsync()
     {
         return session.DisposeAsync();
     }
+#pragma warning restore AZSDK001
 }

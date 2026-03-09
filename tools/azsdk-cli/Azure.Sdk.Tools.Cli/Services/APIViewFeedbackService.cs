@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.APIView;
+using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -18,11 +19,11 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public interface IAPIViewFeedbackService
 {
-    Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId);
-    Task<ReviewMetadata> ParseReviewMetadata(string revisionId);
+    Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId, CancellationToken ct);
+    Task<ReviewMetadata> ParseReviewMetadata(string revisionId, CancellationToken ct);
     Task<List<FeedbackItem>> GetFeedbackItemsAsync(string apiViewUrl, CancellationToken ct = default);
     Task<string?> GetLanguageAsync(string apiViewUrl, CancellationToken ct = default);
-    Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata);
+    Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata, CancellationToken ct);
 }
 
 /// <summary>
@@ -50,12 +51,12 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
     /// <summary>
     /// Gets consolidated comments from an APIView revision by filtering, grouping, and consolidating comments
     /// </summary>
-    public async Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId)
+    public async Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId, CancellationToken ct)
     {
         _logger.LogInformation("Getting comments for revision {RevisionId}", revisionId);
 
         // Get comments from APIViewService - returns JSON string
-        var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
+        var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId, ct);
 
         if (string.IsNullOrWhiteSpace(commentsJson))
         {
@@ -275,12 +276,12 @@ Respond in JSON format:
     /// <summary>
     /// Gets complete metadata (language, packageName, PR info, etc.) for an APIView revision
     /// </summary>
-    public async Task<ReviewMetadata> ParseReviewMetadata(string revisionId)
+    public async Task<ReviewMetadata> ParseReviewMetadata(string revisionId, CancellationToken ct)
     {
         _logger.LogInformation("Getting metadata for revision {RevisionId}", revisionId);
 
         // Get metadata from APIViewService
-        var metadataJson = await _apiViewService.GetMetadata(revisionId);
+        var metadataJson = await _apiViewService.GetMetadata(revisionId, ct);
 
         if (string.IsNullOrWhiteSpace(metadataJson))
         {
@@ -333,7 +334,7 @@ Respond in JSON format:
         {
             string apiViewUrl = $"https://apiview.dev/review/{metadata.ReviewId}?activeApiRevisionId={revisionId}";
             _logger.LogInformation("Calling Resolve endpoint for URL: {Url}", apiViewUrl);
-            var resolveJson = await _apiViewService.Resolve(apiViewUrl);
+            var resolveJson = await _apiViewService.Resolve(apiViewUrl, default);
             if (!string.IsNullOrWhiteSpace(resolveJson))
             {
                 _logger.LogInformation("Resolve response received: {Response}", resolveJson);
@@ -373,7 +374,7 @@ Respond in JSON format:
     {
         _logger.LogInformation("Preprocessing APIView feedback from: {Url}", apiViewUrl);
         var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
-        var comments = await GetConsolidatedComments(revisionId);
+        var comments = await GetConsolidatedComments(revisionId, ct);
         var feedbackItems = comments.Select(c =>
         {
             var text = $"API Line {c.LineNo}: {c.LineId}, Code: {c.LineText.Trim()}, ReviewComment: {c.Comment}";
@@ -389,14 +390,14 @@ Respond in JSON format:
     public async Task<string?> GetLanguageAsync(string apiViewUrl, CancellationToken ct = default)
     {
         var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
-        var metadata = await ParseReviewMetadata(revisionId);
+        var metadata = await ParseReviewMetadata(revisionId, ct);
         return metadata.Language;
     }
 
     /// <summary>
     /// Detects commit SHA, TypeSpec project path, and TypeSpec repository that an APIView was generated from given review metadata, if available
     /// </summary>
-    public async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata)
+    public async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata, CancellationToken ct)
     {
         _logger.LogInformation("Detecting commit SHA and TypeSpec project path for {Package}", metadata.PackageName);
 
@@ -542,7 +543,7 @@ Respond in JSON format:
         try
         {
             _logger.LogInformation("Getting head SHA for PR #{PrNumber} in {Owner}/{Repo}", prNumber, owner, repo);
-            var sha = await _gitHubService.GetPullRequestHeadSha(owner, repo, prNumber);
+            var sha = await _gitHubService.GetPullRequestHeadSha(owner, repo, prNumber, default);
             _logger.LogInformation("Retrieved head SHA: {Sha}", sha);
             return sha;
         }
@@ -577,12 +578,12 @@ Respond in JSON format:
             if (prNumber.HasValue)
             {
                 _logger.LogInformation("Getting tsp-location.yaml from PR #{PrNumber} in {Owner}/{Repo}", prNumber.Value, owner, repo);
-                fileContent = await _gitHubService.GetFileFromPullRequest(owner, repo, prNumber.Value, tspLocationPath);
+                fileContent = await _gitHubService.GetFileFromPullRequest(owner, repo, prNumber.Value, tspLocationPath, default);
             }
             else if (!string.IsNullOrEmpty(branch))
             {
                 _logger.LogInformation("Getting tsp-location.yaml from branch {Branch} in {Owner}/{Repo}", branch, owner, repo);
-                fileContent = await _gitHubService.GetFileFromBranch(owner, repo, branch, tspLocationPath);
+                fileContent = await _gitHubService.GetFileFromBranch(owner, repo, branch, tspLocationPath, default);
             }
             else
             {
@@ -620,7 +621,7 @@ Respond in JSON format:
 
             _logger.LogInformation("Searching for tsp-location.yaml with query: {SearchQuery}", searchQuery);
 
-            var results = await _gitHubService.SearchFilesAsync(searchQuery);
+            var results = await _gitHubService.SearchFilesAsync(searchQuery, default);
 
             if (results.Items.Count == 0)
             {

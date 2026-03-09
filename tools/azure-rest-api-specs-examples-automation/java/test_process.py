@@ -412,7 +412,26 @@ additionalDirectories:
                 "created": 1514941476,
                 "enabled": true,
                 "updated": 1514941476
+              },
+              {
+                "secretUri": "https://sample-vault.vault.azure.net/secrets/secret-name",
+                "secretUriWithVersion": "https://sample-vault.vault.azure.net/secrets/secret-name/40af42fbc10047f8a756a73211492f56"
               }
+            }
+          },
+          {
+            "name": "secret-name2",
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/sample-group/providers/Microsoft.KeyVault/vaults/sample-vault/secrets/secret-name2",
+            "location": "westus",
+            "properties": {
+              "attributes": {
+                "created": 1514941476,
+                "enabled": true,
+                "updated": 1514941476
+              },
+              "secretUri": "https://sample-vault.vault.azure.net/secrets/secret-name2",
+              "secretUriWithVersion": "https://sample-vault.vault.azure.net/secrets/secret-name2/cd7264a6f56c44d1b594423c80609aae"
             }
           }
         ]

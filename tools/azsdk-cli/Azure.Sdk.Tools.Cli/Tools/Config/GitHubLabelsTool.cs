@@ -86,7 +86,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         {
             try
             {
-                var labelStatus = (await getServiceLabelInfo(serviceLabel)).ToString();
+                var labelStatus = (await getServiceLabelInfo(serviceLabel, ct)).ToString();
                 return new ServiceLabelResponse
                 {
                     Status = labelStatus,
@@ -103,9 +103,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
+        private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel, CancellationToken ct)
         {
-            var csvContents = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+            var csvContents = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, ct: ct);
 
             var result = LabelHelper.CheckServiceLabel(csvContents.Content, serviceLabel);
             if (result == LabelHelper.ServiceLabelStatus.Exists)
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 return result;
             }
 
-            var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
+            var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label", ct: ct);
             if (LabelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
             {
                 return LabelHelper.ServiceLabelStatus.InReview;
@@ -128,7 +128,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 var normalizedLabel = LabelHelper.NormalizeLabel(label);
 
-                var checkResult = await getServiceLabelInfo(normalizedLabel);
+                var checkResult = await getServiceLabelInfo(normalizedLabel, ct);
 
                 // Create a new branch
                 if (checkResult == LabelHelper.ServiceLabelStatus.Exists)

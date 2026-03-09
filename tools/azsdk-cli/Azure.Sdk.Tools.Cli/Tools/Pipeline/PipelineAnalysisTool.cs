@@ -193,17 +193,17 @@ public class PipelineAnalysisTool(
         initialized = true;
     }
 
-    private async Task<string> GetPipelineProject(int buildId, string? project = null)
+    private async Task<string> GetPipelineProject(int buildId, string? project = null, CancellationToken ct = default)
     {
         if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || string.IsNullOrEmpty(project))
         {
             var pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
             logger.LogDebug("Getting pipeline details from {url} via http", pipelineUrl);
-            var response = await httpClient.GetAsync(pipelineUrl);
+            var response = await httpClient.GetAsync(pipelineUrl, ct);
             // If project is not specified, try both public and internal projects
             if (string.IsNullOrEmpty(project) && !response.IsSuccessStatusCode)
             {
-                return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT);
+                return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, ct);
             }
             // Devops will return a sign-in html page if the user is not authorized
             if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
@@ -461,7 +461,7 @@ public class PipelineAnalysisTool(
         {
             if (string.IsNullOrEmpty(project))
             {
-                project = await GetPipelineProject(buildId, project);
+                project = await GetPipelineProject(buildId, project, ct);
             }
 
             var failureLogIds = await getPipelineFailureLogIds(project, buildId, ct);

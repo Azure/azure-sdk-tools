@@ -379,7 +379,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
 
                 // Validate the modified/created Entry
-                var (validationErrors, codeownersValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry);
+                var (validationErrors, codeownersValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry, ct);
 
                 var codeownersValidationResultMessage = string.Join("\n", codeownersValidationResults.Select(r => r.ToString()));
                 if (!string.IsNullOrEmpty(validationErrors))
@@ -397,7 +397,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     $"Update codeowners entry for {identifier}", // Description for commit message, PR title, and description
                     "update-codeowners-entry",                                             // Branch prefix for the action
                     identifier, // Identifier for the PR
-                    workingBranch);
+                    workingBranch,
+                    ct);
 
                 return new DefaultCommandResponse
                 {
@@ -417,13 +418,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string description, // used for commit message, PR title, and PR description
             string branchPrefix,
             string identifier,
-            string workingBranch)
+            string workingBranch,
+            CancellationToken ct)
         {
             List<string> resultMessages = new();
             var branchName = "";
 
             // Check if we have a working branch from SDK generation
-            if (!string.IsNullOrEmpty(workingBranch) && await githubService.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repo, workingBranch, default))
+            if (!string.IsNullOrEmpty(workingBranch) && await githubService.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repo, workingBranch, ct))
             {
                 branchName = workingBranch;
                 resultMessages.Add($"Using existing branch: {branchName}");
@@ -432,12 +434,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 // Create a new branch only if no working branch exists
                 branchName = CreateBranchName(branchPrefix, identifier);
-                var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName, "main");
+                var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName, "main", ct);
                 resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
             }
 
             // After branchName is set
-            var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, branchName);
+            var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, branchName, ct);
 
             if (codeownersFileContent == null)
             {
@@ -447,9 +449,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             var codeownersSha = codeownersFileContent.Sha;
 
             // Use codeownersSha in UpdateFileAsync
-            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName, default);
+            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName, ct);
 
-            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description);
+            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description, ct: ct);
             resultMessages.Add($"URL: {prInfoList.Url}");
             resultMessages.AddRange(prInfoList.Messages);
             return resultMessages;
@@ -520,7 +522,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 // Validate Owners
                 if (matchingEntry != null)
                 {
-                    var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry);
+                    var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry, ct);
                     string? validationErrors = validationResponse.validationErrors;
                     List<CodeownersValidationResult>? codeownersValidationResults = validationResponse.codeownersValidationResults;
 
@@ -549,14 +551,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        private async Task<List<CodeownersValidationResult>> ValidateOwners(IEnumerable<string> owners)
+        private async Task<List<CodeownersValidationResult>> ValidateOwners(IEnumerable<string> owners, CancellationToken ct)
         {
             var validatedOwners = new List<CodeownersValidationResult>();
 
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
-                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false);
+                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false, ct);
 
                 if (string.IsNullOrEmpty(result.Username))
                 {
@@ -569,11 +571,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             return validatedOwners;
         }
 
-        private async Task<(string validationErrors, List<CodeownersValidationResult> codeownersValidationResults)> ValidateMinimumOwnerRequirements(CodeownersEntry codeownersEntry)
+        private async Task<(string validationErrors, List<CodeownersValidationResult> codeownersValidationResults)> ValidateMinimumOwnerRequirements(CodeownersEntry codeownersEntry, CancellationToken ct)
         {
-            var validatedServiceOwners = await ValidateOwners(codeownersEntry.ServiceOwners);
-            var validatedSourceOwners = await ValidateOwners(codeownersEntry.SourceOwners);
-            var validatedAzureSdkOwners = await ValidateOwners(codeownersEntry.AzureSdkOwners);
+            var validatedServiceOwners = await ValidateOwners(codeownersEntry.ServiceOwners, ct);
+            var validatedSourceOwners = await ValidateOwners(codeownersEntry.SourceOwners, ct);
+            var validatedAzureSdkOwners = await ValidateOwners(codeownersEntry.AzureSdkOwners, ct);
 
             var validServiceOwnersCount = validatedServiceOwners.Count(owner => owner.IsValidCodeOwner);
             var validSourceOwnersCount = validatedSourceOwners.Count(owner => owner.IsValidCodeOwner);

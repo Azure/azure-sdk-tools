@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Threading;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
@@ -17,7 +18,7 @@ public class CodeownersManagementHelper(
     ITeamUserCache teamUserCache
 ) : ICodeownersManagementHelper
 {
-    public async Task<CodeownersViewResponse> GetViewByUser(string alias, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByUser(string alias, string? repo, CancellationToken ct)
     {
         var normalizedAlias = NormalizeGitHubAlias(alias);
         var ownerWi = await FindOwnerByGitHubAlias(normalizedAlias);
@@ -34,7 +35,7 @@ public class CodeownersManagementHelper(
         return new CodeownersViewResponse(relatedPackages, relatedLabelOwners);
     }
 
-    public async Task<CodeownersViewResponse> GetViewByLabel(string[] labels, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByLabel(string[] labels, string? repo, CancellationToken ct)
     {
         var labelWorkItems = new List<LabelWorkItem>();
         foreach (var label in labels)
@@ -61,7 +62,7 @@ public class CodeownersManagementHelper(
         return new CodeownersViewResponse(relatedPackages, relatedLabelOwners);
     }
 
-    public async Task<CodeownersViewResponse> GetViewByPath(string path, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByPath(string path, string? repo, CancellationToken ct)
     {
         var labelOwners = await QueryLabelOwnersByPath(path, repo);
         await HydrateLabelOwners(labelOwners);
@@ -69,7 +70,7 @@ public class CodeownersManagementHelper(
         return new CodeownersViewResponse([], labelOwners);
     }
 
-    public async Task<CodeownersViewResponse> GetViewByPackage(string packageName, string? repo = null)
+    public async Task<CodeownersViewResponse> GetViewByPackage(string packageName, string? repo = null, CancellationToken ct = default)
     {
         var packageWi = await FindPackageByName(packageName, repo);
         if (packageWi == null)

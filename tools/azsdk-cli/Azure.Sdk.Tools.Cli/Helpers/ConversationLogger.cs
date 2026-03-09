@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 using System.Text.Json;
@@ -27,7 +28,7 @@ public class ConversationLogger
         }
     }
 
-    public async Task InitializeAsync(string model, int maxIterations, string instructions)
+    public async Task InitializeAsync(string model, int maxIterations, string instructions, CancellationToken ct)
     {
         if (!isEnabled)
         {
@@ -68,7 +69,7 @@ public class ConversationLogger
         }
     }
 
-    public async Task LogConversationTurnAsync(int turnNumber, IList<ChatMessage> messages, string phase)
+    public async Task LogConversationTurnAsync(int turnNumber, IList<ChatMessage> messages, string phase, CancellationToken ct)
     {
         if (!isEnabled)
         {
@@ -146,7 +147,7 @@ public class ConversationLogger
         }
     }
 
-    public async Task LogToolResultAsync(string toolName, object? result, TimeSpan duration)
+    public async Task LogToolResultAsync(string toolName, object? result, TimeSpan duration, CancellationToken ct)
     {
         if (!isEnabled)
         {
@@ -178,7 +179,7 @@ public class ConversationLogger
         }
     }
 
-    public async Task LogConversationEndAsync(string status, string message)
+    public async Task LogConversationEndAsync(string status, string message, CancellationToken ct)
     {
         if (!isEnabled)
         {

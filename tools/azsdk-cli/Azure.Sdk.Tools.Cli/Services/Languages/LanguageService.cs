@@ -586,7 +586,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
                 PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
 
-                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
+                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build, ct);
                 if (configContentType == SpecGenSdkConfigContentType.Unknown || string.IsNullOrEmpty(configValue))
                 {
                     return (false, "No build configuration found or failed to prepare the build command.", packageInfo);

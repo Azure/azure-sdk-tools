@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Threading;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -18,8 +19,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public interface ISpecGenSdkConfigHelper
     {
         // Config value retrieval methods
-        Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath);
-        Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType);
+        Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath, CancellationToken ct);
+        Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType, CancellationToken ct);
 
         // Command processing methods
         string SubstituteCommandVariables(string command, Dictionary<string, string> variables);
@@ -79,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         // Gets a configuration value from the swagger_to_sdk_config.json file
-        public async Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath)
+        public async Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath, CancellationToken ct)
         {
             var specToSdkConfigFilePath = Path.Combine(repositoryRoot, SpecToSdkConfigPath);
 
@@ -120,14 +121,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         // Get configuration for a specific type (either command or script path)
-        public async Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType)
+        public async Task<(SpecGenSdkConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, SpecGenSdkConfigType configType, CancellationToken ct)
         {
             var (commandPath, scriptPath) = GetConfigPaths(configType);
             
             // Try command first
             try
             {
-                var command = await GetConfigValueFromRepoAsync<string>(repositoryRoot, commandPath);
+                var command = await GetConfigValueFromRepoAsync<string>(repositoryRoot, commandPath, ct);
                 if (!string.IsNullOrEmpty(command))
                 {
                     _logger.LogDebug("Found {ConfigType} command configuration", configType);
@@ -143,7 +144,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Try path
             try
             {
-                var path = await GetConfigValueFromRepoAsync<string>(repositoryRoot, scriptPath);
+                var path = await GetConfigValueFromRepoAsync<string>(repositoryRoot, scriptPath, ct);
                 if (!string.IsNullOrEmpty(path))
                 {
                     _logger.LogDebug("Found {ConfigType} script path configuration", configType);

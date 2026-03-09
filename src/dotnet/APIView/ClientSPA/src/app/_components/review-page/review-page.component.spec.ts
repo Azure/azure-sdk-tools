@@ -104,7 +104,7 @@ describe('ReviewPageComponent', () => {
     });
 
     it('should set loadFailed and loadFailedMessage when Review is deleted', () => {
-      let review = new Review();
+      var review = new Review();
       review.isDeleted = true;
       vi.spyOn(reviewsService, 'getReview').mockReturnValue(of(review));
       component.loadReview('testReviewId');

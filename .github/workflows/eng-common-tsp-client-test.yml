@@ -118,12 +118,5 @@ jobs:
             echo '```text'
             awk '/Test Files/{flag=1} flag{print} /Duration/{flag=0}' vitest-output.txt | sed 's/\x1b\[[0-9;]*m//g'
             echo '```'
-            echo '<details>'
-            echo '<summary>📋 Full Test Log (click to expand)</summary>'
-            echo ''
-            echo '```text'
-            sed 's/\x1b\[[0-9;]*m//g' vitest-output.txt
-            echo '```'
-            echo '</details>'
           } >> "$GITHUB_STEP_SUMMARY"
           exit ${TEST_EXIT:-0}

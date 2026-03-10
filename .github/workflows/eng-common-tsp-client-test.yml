@@ -113,6 +113,7 @@ jobs:
           path: rust
           sparse-checkout: |
             eng
+            sdk/core
             sdk/template
 
       - name: npm run test:ci

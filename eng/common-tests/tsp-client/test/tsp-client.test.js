@@ -1,10 +1,10 @@
 import debug from "debug";
-import { mkdtemp, stat } from "fs/promises";
+import { mkdtemp, rm, stat } from "fs/promises";
 import { tmpdir } from "os";
 import { join, resolve } from "path";
 import semver from "semver";
 import { simpleGit } from "simple-git";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { execNpmExec } from "../shared/exec.js";
 import { debugLogger } from "../shared/logger.js";
 import { SdkName } from "../shared/sdk-types.js";
@@ -44,8 +44,18 @@ describe.concurrent.each([
   /** @type {string} */
   let sdkDir;
 
-  beforeEach(async (ctx) => {
-    sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
+  beforeAll(async () => {
+    try {
+      sdkDir = await getSdkDir(sdkName);
+    } catch {
+      // if errors, leave undefined
+    }
+  });
+
+  beforeEach((ctx) => {
+    if (!sdkDir) {
+      ctx.skip();
+    }
   });
 
   it("finds sdk dir", async () => {
@@ -57,28 +67,57 @@ describe.concurrent.each([
 
   describe("worktree tests", () => {
     /** @type {string} */
-    let worktree;
+    let initWorktree;
 
-    beforeEach(async () => {
-      const lang = sdkName.replace("azure-sdk-for-", "");
-      worktree = await mkdtemp(join(tmpdir(), `tsp-client-test-${lang}-`));
+    /** @type {string} */
+    let updateWorktree;
 
-      await simpleGit(sdkDir).raw(["worktree", "add", worktree, "--detach"]);
+    // worktrees from the same source repo must be created/removed sequentially (not in parallel)
+    beforeAll(async () => {
+      if (sdkDir) {
+        const lang = sdkName.replace("azure-sdk-for-", "");
+
+        initWorktree = await mkdtemp(
+          join(tmpdir(), `tsp-client-test-${lang}-`),
+        );
+
+        const templateDir = templateDirs[sdkName];
+        if (templateDir.length > 0) {
+          updateWorktree = await mkdtemp(
+            join(tmpdir(), `tsp-client-test-${lang}-`),
+          );
+        }
+
+        for (const worktree of [initWorktree, updateWorktree]) {
+          if (worktree) {
+            await simpleGit(sdkDir).raw([
+              "worktree",
+              "add",
+              worktree,
+              "--detach",
+            ]);
+          }
+        }
+      }
     });
 
-    afterEach(async () => {
-      if (worktree) {
-        // try {
-        //   await simpleGit(sdkDir).raw([
-        //     "worktree",
-        //     "remove",
-        //     worktree,
-        //     "--force",
-        //   ]);
-        // } catch {
-        //   // Worktree may not have been created
-        // }
-        // await rm(worktree, { recursive: true, force: true });
+    afterAll(async () => {
+      if (sdkDir) {
+        for (const worktree of [initWorktree, updateWorktree]) {
+          if (worktree) {
+            try {
+              await simpleGit(sdkDir).raw([
+                "worktree",
+                "remove",
+                worktree,
+                "--force",
+              ]);
+            } catch {
+              // Worktree may not have been created
+            }
+            await rm(worktree, { recursive: true, force: true });
+          }
+        }
       }
     });
 
@@ -87,7 +126,7 @@ describe.concurrent.each([
         "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
       await execNpmExec(["tsp-client", "--debug", "init", "-c", url], {
-        cwd: worktree,
+        cwd: initWorktree,
         logger: debugLogger,
         prefix: engCommonTspClient,
       });
@@ -101,7 +140,7 @@ describe.concurrent.each([
       }
 
       await execNpmExec(["tsp-client", "--debug", "update"], {
-        cwd: join(worktree, ...templateDir),
+        cwd: join(updateWorktree, ...templateDir),
         logger: debugLogger,
         prefix: engCommonTspClient,
       });

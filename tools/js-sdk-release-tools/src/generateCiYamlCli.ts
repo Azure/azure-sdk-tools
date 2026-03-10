@@ -3,8 +3,7 @@
 import commandLineArgs from "command-line-args";
 import { createOrUpdateCiYaml } from "./common/ciYamlUtils.js";
 import { getNpmPackageInfo, getNpmPackageName } from "./common/npmUtils.js";
-import { SDKType, VersionPolicyName } from "./common/types.js";
-import { getSDKType } from "./common/utils.js";
+import { VersionPolicyName } from "./common/types.js";
 import { logger } from "./utils/logger.js";
 import path from "path";
 

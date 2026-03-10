@@ -178,6 +178,29 @@ describe("constructorTokenGenerator", () => {
       expect(tokens2[tokens2.length - 1].Value).toBe(";");
     });
 
+    it("skips destructured parameters and emits only the synthetic normalized parameter", () => {
+      // API Extractor reports destructured params as two entries: the raw destructuring pattern
+      // (name starting with "{", empty type) followed by the synthetic normalized parameter.
+      const mockConstructor = createMockConstructor({
+        parameters: [
+          createMockParameter(
+            "{ additionalAllowedHeaderNames: allowedHeaderNames, additionalAllowedQueryParameters: allowedQueryParameters, }",
+            "",
+            true,
+          ),
+          createMockParameter("input", "SanitizerOptions", true),
+        ],
+      });
+
+      const { tokens } = constructorTokenGenerator.generate(mockConstructor, false);
+      const values = tokens.map((t) => t.Value).join(" ");
+
+      expect(values).toContain("input");
+      expect(values).toContain("SanitizerOptions");
+      expect(values).not.toContain("{");
+      expect(tokens[tokens.length - 1].Value).toBe(";");
+    });
+
     it("marks tokens as deprecated", () => {
       const mockConstructor = createMockConstructor();
       const { tokens } = constructorTokenGenerator.generate(mockConstructor, true);

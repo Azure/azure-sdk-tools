@@ -175,7 +175,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
         private readonly Option<OwnerType> ownerTypeOption = new("--owner-type")
         {
-            Description = "Owner type: service-owner, azsdk-owner, or pr-label",
+            Description = "Owner type",
             Required = false,
         };
 

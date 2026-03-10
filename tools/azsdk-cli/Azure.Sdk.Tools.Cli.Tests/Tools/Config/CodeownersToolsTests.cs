@@ -261,7 +261,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
         [Test]
         public async Task AddPackageOwner_RepoInferredFromGit_WhenNotProvided()
         {
-            _mockGitHelper.Setup(g => g.GetRepoFullNameAsync(".", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync("Azure/azure-sdk-for-net");
+            var discoveredRoot = "/discovered/repo/root";
+            _mockGitHelper.Setup(g => g.DiscoverRepoRootAsync(".", It.IsAny<CancellationToken>())).ReturnsAsync(discoveredRoot);
+            _mockGitHelper.Setup(g => g.GetRepoFullNameAsync(discoveredRoot, It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync("Azure/azure-sdk-for-net");
             _mockCodeownersManagement
                 .Setup(m => m.FindOwnerByGitHubAlias("user1"))
                 .ReturnsAsync(new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "user1" });
@@ -270,16 +272,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Config
                 .ReturnsAsync(new CodeownersModifyResponse { View = new CodeownersViewResponse() });
 
             var result = await _tool.AddPackageOwner(
-                githubUsers: ["user1"], package: "pkg1", repo: null);
+                githubUsers: ["user1"], package: "pkg1", repo: null, ct: CancellationToken.None);
 
-            _mockGitHelper.Verify(g => g.GetRepoFullNameAsync(".", It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockGitHelper.Verify(g => g.DiscoverRepoRootAsync(".", CancellationToken.None), Times.Once);
+            _mockGitHelper.Verify(g => g.GetRepoFullNameAsync(discoveredRoot, It.IsAny<bool>(), CancellationToken.None), Times.Once);
             _mockCodeownersManagement.Verify(m => m.AddOwnersToPackage(It.IsAny<OwnerWorkItem[]>(), "pkg1", "Azure/azure-sdk-for-net"), Times.Once);
         }
 
         [Test]
         public async Task AddPackageOwner_GitRepoInferenceFails_ReturnsError()
         {
-            _mockGitHelper.Setup(g => g.GetRepoFullNameAsync(".", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(string.Empty);
+            _mockGitHelper.Setup(g => g.DiscoverRepoRootAsync(".", It.IsAny<CancellationToken>())).ReturnsAsync("/some/root");
+            _mockGitHelper.Setup(g => g.GetRepoFullNameAsync("/some/root", It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(string.Empty);
 
             var result = await _tool.AddPackageOwner(
                 githubUsers: ["user1"], package: "pkg1", repo: null);

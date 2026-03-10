@@ -2,33 +2,27 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 using Azure.Sdk.Tools.Cli.Evaluations.Models;
 using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
-using Azure.AI.OpenAI;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 {
     /// <summary>
     /// Evaluates how well a user prompt matches expected tool descriptions using
-    /// Azure OpenAI embeddings and cosine similarity.
-    /// 
-    /// Based on ToolDescriptionSimilarityEvaluator approach:
-    /// - Generates embeddings for the prompt and all tool descriptions
-    /// - Ranks tools by cosine similarity to the prompt
-    /// - Passes if the expected tool ranks in top K with sufficient confidence
+    /// keyword overlap matching, modeled after GHCP4A's TriggerMatcher.
+    ///
+    /// Approach:
+    /// - Extracts keywords from the prompt and all tool names/descriptions
+    /// - Ranks tools by keyword match count and overlap ratio
+    /// - Passes if the expected tool ranks in top K with sufficient keyword matches
+    ///
+    /// This is deterministic, requires zero API calls, and scales linearly with tool count.
     /// </summary>
     public class PromptToToolMatchEvaluator : IEvaluator
     {
         public const string MatchMetricName = "Prompt To Tool Match";
-        private readonly AzureOpenAIClient _openAIClient;
-        private readonly string _embeddingModelDeployment = "text-embedding-3-large";
 
         public IReadOnlyCollection<string> EvaluationMetricNames => [MatchMetricName];
 
-        public PromptToToolMatchEvaluator()
-        {
-            _openAIClient = TestSetup.GetAzureOpenAIClient();
-        }
-
-        public async ValueTask<EvaluationResult> EvaluateAsync(
+        public ValueTask<EvaluationResult> EvaluateAsync(
             IEnumerable<ChatMessage> messages,
             ChatResponse modelResponse,
             ChatConfiguration? chatConfiguration = null,
@@ -39,82 +33,54 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 
             try
             {
-                // Get context
                 if (additionalContext?.OfType<PromptToToolMatchEvaluatorContext>().FirstOrDefault()
                     is not PromptToToolMatchEvaluatorContext context)
                 {
                     MetricError($"A value of type {nameof(PromptToToolMatchEvaluatorContext)} was not found in the {nameof(additionalContext)} collection.", metric);
-                    return new EvaluationResult(metric);
+                    return ValueTask.FromResult(new EvaluationResult(metric));
                 }
 
                 var prompt = context.Prompt;
                 var expectedToolNames = context.ExpectedToolNames.ToHashSet(StringComparer.OrdinalIgnoreCase);
                 var tools = context.AvailableTools;
-                var minConfidence = context.MinConfidence;
                 var topK = context.TopK;
 
                 if (string.IsNullOrWhiteSpace(prompt))
                 {
                     MetricError("Prompt is empty or null.", metric);
-                    return new EvaluationResult(metric);
+                    return ValueTask.FromResult(new EvaluationResult(metric));
                 }
 
                 if (!expectedToolNames.Any())
                 {
                     MetricError("No expected tool names provided.", metric);
-                    return new EvaluationResult(metric);
+                    return ValueTask.FromResult(new EvaluationResult(metric));
                 }
 
                 if (!tools.Any())
                 {
                     MetricError("No tools available for comparison.", metric);
-                    return new EvaluationResult(metric);
+                    return ValueTask.FromResult(new EvaluationResult(metric));
                 }
 
-                // Generate embeddings for prompt and all tool descriptions
-                var textsToEmbed = new List<string> { prompt };
-                textsToEmbed.AddRange(tools.Select(t => t.Description ?? t.Name));
+                var rankedTools = KeywordMatcher.RankTools(prompt, tools);
 
-                var embeddings = await EvaluationHelper.GenerateEmbeddingsAsync(
-                    _openAIClient, _embeddingModelDeployment, textsToEmbed, cancellationToken);
-                var promptEmbedding = embeddings[0];
-
-                // Calculate similarity scores for all tools
-                var toolScores = new List<(string Name, double Score, string Description)>();
-                for (int i = 0; i < tools.Count; i++)
-                {
-                    var tool = tools[i];
-                    var toolEmbedding = embeddings[i + 1]; // +1 because prompt is at index 0
-                    var similarity = EvaluationHelper.CalculateCosineSimilarity(promptEmbedding, toolEmbedding);
-                    toolScores.Add((tool.Name, similarity, tool.Description ?? ""));
-                }
-
-                // Sort by score descending
-                var rankedTools = toolScores.OrderByDescending(t => t.Score).ToList();
-
-                // Find the rank and score of the expected tool(s)
+                // Find the best-ranked expected tool
                 int bestExpectedRank = int.MaxValue;
-                double bestExpectedScore = 0;
-                string? bestExpectedTool = null;
-                string? bestExpectedToolDescription = null;
+                ToolMatchResult? bestExpectedResult = null;
 
                 for (int rank = 0; rank < rankedTools.Count; rank++)
                 {
-                    var tool = rankedTools[rank];
-                    if (expectedToolNames.Contains(tool.Name))
+                    if (expectedToolNames.Contains(rankedTools[rank].Name) && rank < bestExpectedRank)
                     {
-                        if (rank < bestExpectedRank)
-                        {
-                            bestExpectedRank = rank;
-                            bestExpectedScore = tool.Score;
-                            bestExpectedTool = tool.Name;
-                            bestExpectedToolDescription = tool.Description;
-                        }
+                        bestExpectedRank = rank;
+                        bestExpectedResult = rankedTools[rank];
                     }
                 }
 
-                // Add diagnostics showing top results
+                // Diagnostics
                 metric.AddDiagnostics(EvaluationDiagnostic.Informational($"Prompt: \"{TruncateString(prompt, 100)}\""));
+                metric.AddDiagnostics(EvaluationDiagnostic.Informational($"Prompt keywords: [{string.Join(", ", KeywordMatcher.ExtractKeywords(prompt))}]"));
                 metric.AddDiagnostics(EvaluationDiagnostic.Informational($"Expected tool(s): {string.Join(", ", expectedToolNames)}"));
                 metric.AddDiagnostics(EvaluationDiagnostic.Informational($"Top {Math.Min(5, rankedTools.Count)} matches:"));
 
@@ -123,52 +89,51 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
                     var tool = rankedTools[i];
                     var isExpected = expectedToolNames.Contains(tool.Name) ? " ✓" : "";
                     metric.AddDiagnostics(EvaluationDiagnostic.Informational(
-                        $"  #{i + 1}: {tool.Name} ({tool.Score:P0}){isExpected}"));
+                        $"  #{i + 1}: {tool.Name} ({tool.MatchedCount} keywords, {tool.OverlapRatio:P0}){isExpected}"));
                 }
 
-                // Evaluate pass/fail
-                if (bestExpectedTool == null)
+                if (bestExpectedResult == null)
                 {
                     MetricError($"Expected tool(s) [{string.Join(", ", expectedToolNames)}] not found in available tools.", metric);
-                    return new EvaluationResult(metric);
+                    return ValueTask.FromResult(new EvaluationResult(metric));
                 }
 
-                var displayRank = bestExpectedRank + 1; // 1-indexed for display
+                var displayRank = bestExpectedRank + 1;
                 var passesRankCheck = displayRank <= topK;
-                var passesConfidenceCheck = bestExpectedScore >= minConfidence;
+                var passesMatchCheck = KeywordMatcher.IsMatch(bestExpectedResult);
 
                 if (!passesRankCheck)
                 {
                     metric.AddDiagnostics(EvaluationDiagnostic.Warning(
-                        $"Expected tool '{bestExpectedTool}' ranked #{displayRank}, but needs to be in top {topK}"));
+                        $"Expected tool '{bestExpectedResult.Name}' ranked #{displayRank}, but needs to be in top {topK}"));
                 }
 
-                if (!passesConfidenceCheck)
+                if (!passesMatchCheck)
                 {
                     metric.AddDiagnostics(EvaluationDiagnostic.Warning(
-                        $"Expected tool '{bestExpectedTool}' has {bestExpectedScore:P0} confidence, but needs ≥{minConfidence:P0}"));
+                        $"Expected tool '{bestExpectedResult.Name}' matched {bestExpectedResult.MatchedCount} keywords ({bestExpectedResult.OverlapRatio:P0}), needs ≥2 keywords or ≥20% overlap"));
                 }
 
-                // On failure, show the tool's description to help identify improvement areas
-                if (!passesRankCheck || !passesConfidenceCheck)
+                if (!passesRankCheck || !passesMatchCheck)
                 {
                     metric.AddDiagnostics(EvaluationDiagnostic.Informational(
-                        $"Tool description: {TruncateString(bestExpectedToolDescription ?? "(no description)", 200)}"));
+                        $"Tool description: {TruncateString(bestExpectedResult.Description, 200)}"));
+                    metric.AddDiagnostics(EvaluationDiagnostic.Informational(
+                        $"Matched keywords: [{string.Join(", ", bestExpectedResult.MatchedKeywords)}]"));
                 }
 
-                metric.Value = passesRankCheck && passesConfidenceCheck;
-                var truncatedDescription = TruncateString(bestExpectedToolDescription ?? "(no description)", 150);
+                metric.Value = passesRankCheck && passesMatchCheck;
                 metric.Reason = metric.Value == true
-                    ? $"Tool '{bestExpectedTool}' ranked #{displayRank} with {bestExpectedScore:P0} confidence"
-                    : $"Tool '{bestExpectedTool}' ranked #{displayRank} with {bestExpectedScore:P0} confidence (required: top {topK}, ≥{minConfidence:P0}). Description: \"{truncatedDescription}\"";
+                    ? $"Tool '{bestExpectedResult.Name}' ranked #{displayRank} with {bestExpectedResult.MatchedCount} keyword matches ({bestExpectedResult.OverlapRatio:P0})"
+                    : $"Tool '{bestExpectedResult.Name}' ranked #{displayRank} with {bestExpectedResult.MatchedCount} keyword matches ({bestExpectedResult.OverlapRatio:P0}) (required: top {topK}, ≥2 keywords or ≥20%). Description: \"{TruncateString(bestExpectedResult.Description, 150)}\"";
 
                 Interpret(metric);
-                return new EvaluationResult(metric);
+                return ValueTask.FromResult(new EvaluationResult(metric));
             }
             catch (Exception ex)
             {
                 MetricError($"Error during prompt-to-tool match evaluation: {ex.Message}", metric);
-                return new EvaluationResult(metric);
+                return ValueTask.FromResult(new EvaluationResult(metric));
             }
         }
 
@@ -176,7 +141,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
         {
             if (string.IsNullOrEmpty(s) || s.Length <= maxLength)
                 return s;
-            return s.Substring(0, maxLength) + "...";
+            return s[..maxLength] + "...";
         }
 
         private static void Interpret(BooleanMetric metric)
@@ -195,6 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
         {
             metric.AddDiagnostics(EvaluationDiagnostic.Error(message));
             metric.Value = false;
+            metric.Reason = message;
             Interpret(metric);
         }
     }

@@ -205,7 +205,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Step 1: try tsp fixes
         var tries = 0;
         var maxTries = 2;
-        const int MaxPatchIterations = 4;
+        const int MaxPatchIterations = 2;
         bool buildSucceeded = false;
         string? buildError = null;
 

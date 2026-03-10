@@ -59,6 +59,19 @@ public static class FileTools
                     return await File.ReadAllTextAsync(path);
                 }
 
+                if (startLine.HasValue && startLine.Value < 1)
+                {
+                    throw new ArgumentException("startLine must be >= 1.", nameof(startLine));
+                }
+                if (endLine.HasValue && endLine.Value < 1)
+                {
+                    throw new ArgumentException("endLine must be >= 1.", nameof(endLine));
+                }
+                if (startLine.HasValue && endLine.HasValue && endLine.Value < startLine.Value)
+                {
+                    throw new ArgumentException($"endLine ({endLine.Value}) must be >= startLine ({startLine.Value}).", nameof(endLine));
+                }
+
                 var lines = await File.ReadAllLinesAsync(path);
                 var start = Math.Max(0, (startLine ?? 1) - 1);
                 var end = Math.Min(lines.Length, endLine ?? lines.Length);

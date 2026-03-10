@@ -255,22 +255,27 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new FeedbackClassificationResponse
-                {
-                    Classifications =
-                    [
-                        new FeedbackClassificationResponse.ItemClassificationDetails
+                .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                    (items, _, _, _, _, _, _) =>
+                    {
+                        var actualId = items.FirstOrDefault()?.Id ?? "1";
+                        return Task.FromResult(new FeedbackClassificationResponse
                         {
-                            ItemId = "1", Classification = "SUCCESS",
-                            Reason = "Already addressed", Text = "Looks good"
-                        },
-                        new FeedbackClassificationResponse.ItemClassificationDetails
-                        {
-                            ItemId = "2", Classification = "REQUIRES_MANUAL_INTERVENTION",
-                            Reason = "Complex change", Text = "Restructure hierarchy"
-                        }
-                    ]
-                }));
+                            Classifications =
+                            [
+                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                {
+                                    ItemId = actualId, Classification = "REQUIRES_MANUAL_INTERVENTION",
+                                    Reason = "Complex change", Text = "Restructure hierarchy"
+                                },
+                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                {
+                                    ItemId = "next-id", Classification = "SUCCESS",
+                                    Reason = "Already addressed", Text = "Looks good"
+                                }
+                            ]
+                        });
+                    }));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
@@ -303,25 +308,27 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns(() =>
-                    {
-                        classifyCalls++;
-                        if (classifyCalls == 1)
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
                         {
-                            return Task.FromResult(new FeedbackClassificationResponse
+                            classifyCalls++;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            if (classifyCalls == 1)
                             {
-                                Classifications =
-                                [
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
-                                    {
-                                        ItemId = "1", Classification = "TSP_APPLICABLE",
-                                        Reason = "fixable", Text = "rename X"
-                                    }
-                                ]
-                            });
-                        }
-                        return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
-                    }));
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                            Reason = "fixable", Text = "rename X"
+                                        }
+                                    ]
+                                });
+                            }
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
@@ -379,22 +386,22 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .ReturnsAsync(new FeedbackClassificationResponse
-                    {
-                        Classifications =
-                        [
-                            new FeedbackClassificationResponse.ItemClassificationDetails
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
+                        {
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            return Task.FromResult(new FeedbackClassificationResponse
                             {
-                                ItemId = "1", Classification = "TSP_APPLICABLE",
-                                Reason = "fixable", Text = "rename X to Y"
-                            },
-                            new FeedbackClassificationResponse.ItemClassificationDetails
-                            {
-                                ItemId = "2", Classification = "TSP_APPLICABLE",
-                                Reason = "fixable", Text = "add decorator Z"
-                            }
-                        ]
-                    }),
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                        Reason = "fixable", Text = "rename X to Y"
+                                    }
+                                ]
+                            });
+                        }),
             configureTspCustomization: t =>
                 t.Setup(x => x.ApplyCustomizationAsync(
                         It.IsAny<string>(),
@@ -612,28 +619,30 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Returns(() =>
-                    {
-                        classifyCalls++;
-                        if (classifyCalls == 1)
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
                         {
-                            return Task.FromResult(new FeedbackClassificationResponse
+                            classifyCalls++;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            if (classifyCalls == 1)
                             {
-                                Classifications =
-                                [
-                                    new FeedbackClassificationResponse.ItemClassificationDetails
-                                    {
-                                        ItemId = "1",
-                                        Classification = "CODE_CUSTOMIZATION",
-                                        Reason = "Build error references generated code; fix is in the customization file",
-                                        Text = "Rename maxSpeakers to maxSpeakerCount in customization code"
-                                    }
-                                ]
-                            });
-                        }
-                        // Second iteration: feedback dictionary is empty → return empty
-                        return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
-                    }));
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = actualId,
+                                            Classification = "CODE_CUSTOMIZATION",
+                                            Reason = "Build error references generated code; fix is in the customization file",
+                                            Text = "Rename maxSpeakers to maxSpeakerCount in customization code"
+                                        }
+                                    ]
+                                });
+                            }
+                            // Second iteration: feedback dictionary is empty → return empty
+                            return Task.FromResult(new FeedbackClassificationResponse { Classifications = [] });
+                        }));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
@@ -693,19 +702,23 @@ public class CustomizedCodeUpdateToolAutoTests
                     It.IsAny<string?>(),
                     It.IsAny<int?>(),
                     It.IsAny<CancellationToken>()))
-                .Callback<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
-                    (items, _, _, _, _, _, _) => capturedFeedbackText = items.FirstOrDefault()?.Text)
-                .ReturnsAsync(new FeedbackClassificationResponse
-                {
-                    Classifications =
-                    [
-                        new FeedbackClassificationResponse.ItemClassificationDetails
+                .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                    (items, _, _, _, _, _, _) =>
+                    {
+                        capturedFeedbackText = items.FirstOrDefault()?.Text;
+                        var actualId = items.FirstOrDefault()?.Id ?? "1";
+                        return Task.FromResult(new FeedbackClassificationResponse
                         {
-                            ItemId = "1", Classification = "TSP_APPLICABLE",
-                            Reason = "test", Text = "Rename client"
-                        }
-                    ]
-                }));
+                            Classifications =
+                            [
+                                new FeedbackClassificationResponse.ItemClassificationDetails
+                                {
+                                    ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                    Reason = "test", Text = "Rename client"
+                                }
+                            ]
+                        });
+                    }));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
@@ -800,18 +813,23 @@ public class CustomizedCodeUpdateToolAutoTests
                         It.IsAny<string?>(),
                         It.IsAny<int?>(),
                         It.IsAny<CancellationToken>()))
-                    .Callback(() => classifyCalls++)
-                    .ReturnsAsync(new FeedbackClassificationResponse
-                    {
-                        Classifications =
-                        [
-                            new FeedbackClassificationResponse.ItemClassificationDetails
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
+                        {
+                            classifyCalls++;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            return Task.FromResult(new FeedbackClassificationResponse
                             {
-                                ItemId = "1", Classification = "TSP_APPLICABLE",
-                                Reason = "fixable", Text = "rename X"
-                            }
-                        ]
-                    }));
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                        Reason = "fixable", Text = "rename X"
+                                    }
+                                ]
+                            });
+                        }));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();

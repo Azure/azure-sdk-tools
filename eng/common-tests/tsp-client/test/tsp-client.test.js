@@ -35,8 +35,14 @@ const templateDir = {
 describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
   "%s",
   (sdkName) => {
-    it("finds sdk dir", async (ctx) => {
-      const sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
+    /** @type {string} */
+    let sdkDir;
+
+    beforeEach(async (ctx) => {
+      sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
+    });
+
+    it("finds sdk dir", async () => {
       const sdkDirStat = await stat(sdkDir);
 
       expect(sdkDirStat.isDirectory()).toBe(true);
@@ -45,13 +51,9 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
 
     describe("worktree tests", () => {
       /** @type {string} */
-      let sdkDir;
-      /** @type {string} */
       let worktree;
 
-      beforeEach(async (ctx) => {
-        sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
-
+      beforeEach(async () => {
         const lang = sdkName.replace("azure-sdk-for-", "");
         worktree = await mkdtemp(join(tmpdir(), `tsp-client-test-${lang}-`));
 

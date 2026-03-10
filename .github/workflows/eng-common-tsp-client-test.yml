@@ -70,6 +70,15 @@ jobs:
             eng
             sdk/template
 
+      - name: Checkout net
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-net
+          path: net
+          sparse-checkout: |
+            eng
+            sdk/template
+
       # TODO: checkout python
 
       - name: npm run test:ci

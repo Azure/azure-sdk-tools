@@ -44,7 +44,9 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
     });
 
     describe("worktree tests", () => {
-      it("inits from url", async (ctx) => {});
+      it("inits from url", async (ctx) => {
+        ctx.skip();
+      });
 
       it("updates template", async (ctx) => {
         const sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());

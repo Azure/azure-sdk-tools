@@ -82,7 +82,7 @@ describe.concurrent.each([
       }
     });
 
-    it.sequential("inits from url", async () => {
+    it("inits from url", async () => {
       const url =
         "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
@@ -93,7 +93,7 @@ describe.concurrent.each([
       });
     });
 
-    it.sequential("updates template", async (ctx) => {
+    it("updates template", async (ctx) => {
       const templateDir = templateDirs[sdkName];
 
       if (templateDir.length == 0) {

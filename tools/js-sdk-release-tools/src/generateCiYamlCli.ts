@@ -29,12 +29,6 @@ const generateCiYamlCli = async (
     logger.info(`Package Path (absolute): ${absolutePackagePath}`);
     logger.info(`Package Path (relative): ${relativePackagePath}`);
 
-    const sdkType = getSDKType(absolutePackagePath);
-    if (sdkType !== SDKType.ModularClient) {
-        logger.info(`Skipping CI yaml generation for non-ModularClient SDK type: ${sdkType}`);
-        return;
-    }
-
     const npmPackageInfo = await getNpmPackageInfo(absolutePackagePath);
     const packageName = getNpmPackageName(npmPackageInfo);
     const versionPolicyName: VersionPolicyName = packageName.includes("arm-") ? "management" : "client";

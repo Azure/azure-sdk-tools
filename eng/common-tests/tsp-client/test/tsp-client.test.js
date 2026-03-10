@@ -27,79 +27,84 @@ describe("tsp-client", () => {
 });
 
 const templateDirs = {
+  [SdkName.Go]: [],
+  [SdkName.Java]: [],
   [SdkName.Js]: ["sdk", "template", "template"],
   [SdkName.Net]: ["sdk", "template", "Azure.Template"],
   [SdkName.Python]: [],
 };
 
-describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
-  "%s",
-  (sdkName) => {
+describe.concurrent.each([
+  SdkName.Go,
+  SdkName.Java,
+  SdkName.Js,
+  SdkName.Net,
+  SdkName.Python,
+])("%s", (sdkName) => {
+  /** @type {string} */
+  let sdkDir;
+
+  beforeEach(async (ctx) => {
+    sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
+  });
+
+  it("finds sdk dir", async () => {
+    const sdkDirStat = await stat(sdkDir);
+
+    expect(sdkDirStat.isDirectory()).toBe(true);
+    console.log(`SDK dir: ${sdkDir}`);
+  });
+
+  describe("worktree tests", () => {
     /** @type {string} */
-    let sdkDir;
+    let worktree;
 
-    beforeEach(async (ctx) => {
-      sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
+    beforeEach(async () => {
+      const lang = sdkName.replace("azure-sdk-for-", "");
+      worktree = await mkdtemp(join(tmpdir(), `tsp-client-test-${lang}-`));
+
+      await simpleGit(sdkDir).raw(["worktree", "add", worktree, "--detach"]);
     });
 
-    it("finds sdk dir", async () => {
-      const sdkDirStat = await stat(sdkDir);
-
-      expect(sdkDirStat.isDirectory()).toBe(true);
-      console.log(`SDK dir: ${sdkDir}`);
-    });
-
-    describe("worktree tests", () => {
-      /** @type {string} */
-      let worktree;
-
-      beforeEach(async () => {
-        const lang = sdkName.replace("azure-sdk-for-", "");
-        worktree = await mkdtemp(join(tmpdir(), `tsp-client-test-${lang}-`));
-
-        await simpleGit(sdkDir).raw(["worktree", "add", worktree, "--detach"]);
-      });
-
-      afterEach(async () => {
-        if (worktree) {
-          try {
-            await simpleGit(sdkDir).raw([
-              "worktree",
-              "remove",
-              worktree,
-              "--force",
-            ]);
-          } catch {
-            // Worktree may not have been created
-          }
-          await rm(worktree, { recursive: true, force: true });
+    afterEach(async () => {
+      if (worktree) {
+        try {
+          await simpleGit(sdkDir).raw([
+            "worktree",
+            "remove",
+            worktree,
+            "--force",
+          ]);
+        } catch {
+          // Worktree may not have been created
         }
-      });
+        await rm(worktree, { recursive: true, force: true });
+      }
+    });
 
-      it("inits from url", async () => {
-        const url =
-          "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
+    it.sequential("inits from url", async () => {
+      const url =
+        "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
-        await execNpmExec(["tsp-client", "--debug", "init", "-c", url], {
-          cwd: worktree,
-          logger: debugLogger,
-          prefix: engCommonTspClient,
-        });
-      });
-
-      it("updates template", async (ctx) => {
-        const templateDir = templateDirs[sdkName];
-
-        if (templateDir.length == 0) {
-          ctx.skip();
-        }
-
-        await execNpmExec(["tsp-client", "--debug", "update"], {
-          cwd: join(worktree, ...templateDir),
-          logger: debugLogger,
-          prefix: engCommonTspClient,
-        });
+      await execNpmExec(["tsp-client", "--debug", "init", "-c", url], {
+        cwd: worktree,
+        logger: debugLogger,
+        prefix: engCommonTspClient,
       });
     });
-  },
-);
+
+    it.sequential("updates template", async (ctx) => {
+      const templateDir = templateDirs[sdkName];
+
+      if (templateDir.length == 0) {
+        ctx.skip();
+      }
+
+      await execNpmExec(["tsp-client", "--debug", "update"], {
+        cwd: join(worktree, ...templateDir),
+        logger: debugLogger,
+        prefix: engCommonTspClient,
+      });
+    });
+  });
+});

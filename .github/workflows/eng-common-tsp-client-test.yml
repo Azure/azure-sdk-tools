@@ -61,6 +61,24 @@ jobs:
       - name: npm run format:check:ci
         run: npm run format:check:ci
 
+      - name: Checkout go
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-go
+          path: go
+          sparse-checkout: |
+            eng
+            sdk/template
+
+      - name: Checkout java
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-java
+          path: java
+          sparse-checkout: |
+            eng
+            sdk/template
+
       - name: Checkout js
         uses: actions/checkout@v6
         with:

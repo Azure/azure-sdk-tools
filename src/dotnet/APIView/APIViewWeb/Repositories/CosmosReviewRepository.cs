@@ -140,7 +140,6 @@ namespace APIViewWeb
 
         public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
-            // First try exact match
             var exactQueryBuilder = new StringBuilder(
                 "SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language)" +
                 " AND LOWER(r.PackageName) = LOWER(@packageName)" +

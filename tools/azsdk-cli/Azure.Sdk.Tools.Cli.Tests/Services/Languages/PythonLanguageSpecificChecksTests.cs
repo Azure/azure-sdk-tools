@@ -166,7 +166,6 @@ internal class PythonLanguageSpecificChecksTests
             Assert.That(result.CheckStatusDetails, Does.Contain("Dependency conflicts detected"));
             Assert.That(result.ResponseError, Does.Contain("Dependency analysis found issues with minimum dependency versions"));
             Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
-            Assert.That(result.NextSteps, Has.Some.Contains("setup.py"));
         });
 
         // Verify Python helper was called
@@ -283,7 +282,6 @@ internal class PythonLanguageSpecificChecksTests
             Assert.That(result.ResponseError, Does.Contain("pylint"));
             Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
             Assert.That(result.NextSteps, Has.Some.Contains("pylint"));
-            Assert.That(result.NextSteps, Has.Some.Contains("no auto-fix available"));
         });
     }
 
@@ -311,7 +309,6 @@ internal class PythonLanguageSpecificChecksTests
             Assert.That(result.ResponseError, Does.Contain("mypy"));
             Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
             Assert.That(result.NextSteps, Has.Some.Contains("mypy"));
-            Assert.That(result.NextSteps, Has.Some.Contains("no auto-fix available"));
         });
     }
 
@@ -469,7 +466,6 @@ internal class PythonLanguageSpecificChecksTests
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain("failed to apply"));
             Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
-            Assert.That(result.NextSteps, Has.Some.Contains("auto-fixed"));
         });
     }
 

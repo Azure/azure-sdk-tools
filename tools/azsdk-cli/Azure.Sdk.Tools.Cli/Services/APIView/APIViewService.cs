@@ -1,4 +1,3 @@
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 

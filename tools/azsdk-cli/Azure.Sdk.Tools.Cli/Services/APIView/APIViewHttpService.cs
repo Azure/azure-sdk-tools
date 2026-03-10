@@ -2,7 +2,6 @@ using System.Net;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.APIView;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
@@ -44,7 +43,7 @@ public class APIViewHttpService : IAPIViewHttpService
         {
             string environment = GetEnvironment();
             string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
-            HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
+            HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment, ct);
 
             string requestUrl = $"{baseUrl}{endpoint}";
             using HttpResponseMessage response = await httpClient.GetAsync(requestUrl, ct);
@@ -100,7 +99,7 @@ public class APIViewHttpService : IAPIViewHttpService
         }
     }
 
-    private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync(string environment)
+    private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync(string environment, CancellationToken ct)
     {
         if (_cachedClient != null && 
             _cachedEnvironment == environment && 
@@ -109,7 +108,7 @@ public class APIViewHttpService : IAPIViewHttpService
             return _cachedClient;
         }
 
-        await _cacheLock.WaitAsync();
+        await _cacheLock.WaitAsync(ct);
         try
         {
             if (_cachedClient != null && 

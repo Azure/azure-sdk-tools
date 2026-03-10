@@ -7,7 +7,6 @@ using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.APIView;
 

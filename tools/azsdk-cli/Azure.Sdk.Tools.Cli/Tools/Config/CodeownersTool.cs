@@ -16,7 +16,6 @@ using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Config
 {

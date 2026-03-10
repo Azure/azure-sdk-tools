@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Threading;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.Extensions.Logging;

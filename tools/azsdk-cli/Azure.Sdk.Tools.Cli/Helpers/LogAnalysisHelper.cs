@@ -1,5 +1,4 @@
 using System.Security.Policy;
-using System.Threading;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;

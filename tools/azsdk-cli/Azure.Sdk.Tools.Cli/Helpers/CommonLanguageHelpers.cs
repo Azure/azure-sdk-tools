@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Threading;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.CopilotAgents;

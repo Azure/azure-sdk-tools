@@ -15,7 +15,6 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 using Octokit;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 {

@@ -18,7 +18,6 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using System.Globalization;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -129,8 +128,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
-        private async Task<List<WorkItemRelationType>> GetCachedRelationTypes() =>
-            _cachedRelationTypes ??= await connection.GetWorkItemClient().GetRelationTypesAsync();
+        private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct) =>
+            _cachedRelationTypes ??= await connection.GetWorkItemClient().GetRelationTypesAsync(ct);
 
         private bool IsAgentTesting => Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING") == "true";
 
@@ -145,7 +144,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += " AND [Custom.SDKReleasemonth] <> ''";
 
                 var releasePlanWorkItems = await FetchWorkItemsPagedAsync(query, ct: ct);
-                var releasePlans = await Task.WhenAll(releasePlanWorkItems.Select(workItem => MapWorkItemToReleasePlanAsync(workItem)));
+                var releasePlans = await Task.WhenAll(releasePlanWorkItems.Select(workItem => MapWorkItemToReleasePlanAsync(workItem, ct)));
 
                 var today = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
                 var overduePlans = releasePlans.Where(releasePlan =>
@@ -174,7 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
             }
-            var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+            var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
             return releasePlan;
@@ -184,12 +183,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             // First find the API spec work item
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
-            var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+            var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
             if (releasePlanWorkItems.Count == 0)
             {
                 throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
             }
-            return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
+            return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0], ct);
         }
 
         public async Task<List<ReleasePlanWorkItem>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion, string sdkReleaseType, bool isTestReleasePlan=false, CancellationToken ct = default)
@@ -202,7 +201,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += $" AND [Custom.SDKtypetobereleased] = '{sdkReleaseType}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] IN ('New','Not Started','In Progress')";
-                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
                 if (releasePlanWorkItems.Count == 0)
                 {
                     logger.LogInformation("Release plan does not exist for the given product id {productTreeId}",productTreeId);
@@ -213,7 +212,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 foreach (var workItem in releasePlanWorkItems)
                 {
-                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
                     if (releasePlan.SpecAPIVersion == specApiVersion)
                     {
                         releasePlans.Add(releasePlan);
@@ -240,7 +239,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 query += $" AND [Custom.{languageId}PackageName] = '{escapedPackageName}'";
                 query += " AND [System.WorkItemType] = 'Release Plan'";
                 query += " AND [System.State] = 'In Progress'";
-                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
                 if (releasePlanWorkItems.Count == 0)
                 {
                     logger.LogInformation("No in-progress release plans found for package {packageName} in {language}", packageName, language);
@@ -250,7 +249,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var releasePlans = new List<ReleasePlanWorkItem>();
                 foreach (var workItem in releasePlanWorkItems)
                 {
-                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem, ct);
                     releasePlans.Add(releasePlan);
                 }
 
@@ -263,7 +262,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem)
+        private async Task<ReleasePlanWorkItem> MapWorkItemToReleasePlanAsync(WorkItem workItem, CancellationToken ct)
         {
             var releasePlan = new ReleasePlanWorkItem()
             {
@@ -321,7 +320,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 logger.LogInformation("Fetching API spec work item for release plan work item {workItemId}", releasePlan.WorkItemId);
-                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId);
+                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlan.WorkItemId, ct);
                 if (apiSpecWorkItem != null && apiSpecWorkItem.Fields != null)
                 {
                     releasePlan.ActiveSpecPullRequest = apiSpecWorkItem.Fields.TryGetValue("Custom.ActiveSpecPullRequestUrl", out Object? specPr) ? specPr?.ToString() ?? string.Empty : string.Empty;
@@ -347,7 +346,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ActiveSpecPullRequestUrl] = '{pullRequestUrl}' AND [System.WorkItemType] = 'API Spec' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned','Finished')";
-                var apiSpecWorkItems = await FetchWorkItemsAsync(query);
+                var apiSpecWorkItems = await FetchWorkItemsAsync(query, ct);
                 if (apiSpecWorkItems.Count == 0)
                 {
                     logger.LogInformation("Release plan does not exist for the given pull request URL.");
@@ -392,7 +391,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                                     continue;
                                 }
                             }
-                            return await MapWorkItemToReleasePlanAsync(parentWorkItem);
+                            return await MapWorkItemToReleasePlanAsync(parentWorkItem, ct);
                         }
                     }
                 }
@@ -416,7 +415,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Create release plan work item
                 var releasePlanTitle = $"Release plan for {releasePlan.ProductName ?? releasePlan.ProductTreeId}";
                 logger.LogInformation("Creating release plan with title: {releasePlanTitle}", releasePlanTitle);
-                var releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle);
+                var releasePlanWorkItem = await CreateWorkItemAsync(releasePlan, "Release Plan", releasePlanTitle, ct: ct);
                 releasePlanWorkItemId = releasePlanWorkItem?.Id ?? 0;
                 if (releasePlanWorkItemId == 0)
                 {
@@ -426,7 +425,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Create API spec work item
                 var apiSpecTitle = $"API spec for {releasePlan.ProductName ?? releasePlan.ProductTreeId} - version {releasePlan.SpecAPIVersion}";
                 logger.LogInformation("Creating api spec with title: {apiSpecTitle}", apiSpecTitle);
-                var apiSpecWorkItem = await CreateWorkItemAsync(releasePlan.ToApiSpecWorkItem(), "API Spec", apiSpecTitle, parentId: releasePlanWorkItemId);
+                var apiSpecWorkItem = await CreateWorkItemAsync(releasePlan.ToApiSpecWorkItem(), "API Spec", apiSpecTitle, parentId: releasePlanWorkItemId, ct: ct);
                 apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
@@ -463,7 +462,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null)
+        private async Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default)
         {
             workItem.Title = title;
             var workItemsFieldJson = JsonSerializer.Serialize(workItem);
@@ -472,7 +471,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             logger.LogInformation("Creating {workItemType} work item", workItemType);
             logger.LogDebug("Sending work item request to DevOps: {@specDocument}", specDocument);
-            var createdWorkItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType);
+            var createdWorkItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType, cancellationToken: ct);
             if (createdWorkItem == null)
             {
                 throw new Exception("Failed to create Work Item");
@@ -483,19 +482,19 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (parentId != null)
                 {
                     // Create parent-child relation
-                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "parent", targetId: parentId);
+                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "parent", targetId: parentId, ct: ct);
                 }
 
                 if (relatedId != null)
                 { 
-                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "related", targetId: relatedId);
+                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "related", targetId: relatedId, ct: ct);
                 }
             }
 
             return createdWorkItem;
         }
 
-        private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
+        private async Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default)
         {
             // Create generic work item relation(s) based on target ID and/or URL
             if (targetId == null && string.IsNullOrWhiteSpace(targetUrl))
@@ -507,14 +506,14 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Resolve relation type system name/reference
             // ex: Child, Parent, Related, etc map to the appropriate name.
-            var relationTypeSystemName = await ResolveRelationTypeSystemName(relationType);
+            var relationTypeSystemName = await ResolveRelationTypeSystemName(relationType, ct);
 
             var patchDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
 
             // Handle target ID
             if (targetId != null)
             {
-                var targetWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(targetId.Value);
+                var targetWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(targetId.Value, cancellationToken: ct);
 
                 // Ensure the target work item exists before creating the relation
                 if (targetWorkItem == null)
@@ -549,17 +548,17 @@ namespace Azure.Sdk.Tools.Cli.Services
                 });
             }
 
-            return await workItemClient.UpdateWorkItemAsync(patchDocument, id);
+            return await workItemClient.UpdateWorkItemAsync(patchDocument, id, cancellationToken: ct);
         }
 
-        private async Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId)
+        private async Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct)
         {
             var workItemClient = connection.GetWorkItemClient();
 
-            var relationTypeSystemName = await ResolveRelationTypeSystemName(relationType);
+            var relationTypeSystemName = await ResolveRelationTypeSystemName(relationType, ct);
 
-            var workItem = await workItemClient.GetWorkItemAsync(id, expand: WorkItemExpand.Relations);
-            var targetWorkItem = await workItemClient.GetWorkItemAsync(targetId);
+            var workItem = await workItemClient.GetWorkItemAsync(id, expand: WorkItemExpand.Relations, cancellationToken: ct);
+            var targetWorkItem = await workItemClient.GetWorkItemAsync(targetId, cancellationToken: ct);
 
             if (workItem == null)
             {
@@ -591,12 +590,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Remove,
                 Path = $"/relations/{relationIndex}"
             });
-            await workItemClient.UpdateWorkItemAsync(patchDocument, id);
+            await workItemClient.UpdateWorkItemAsync(patchDocument, id, cancellationToken: ct);
         }
 
-        private async Task<string> ResolveRelationTypeSystemName(string relationType)
+        private async Task<string> ResolveRelationTypeSystemName(string relationType, CancellationToken ct)
         {
-            var relationTypes = await GetCachedRelationTypes();
+            var relationTypes = await GetCachedRelationTypes(ct);
 
             // Match service-provided relation type by display name (case-insensitive)
             var match = relationTypes.FirstOrDefault(rt => string.Equals(rt.Name, relationType, StringComparison.OrdinalIgnoreCase));
@@ -721,18 +720,18 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to update SDK generation details to work item [{workItemId}]. Error: {ex.Message}");
             }
         }
-        private async Task<List<WorkItem>> FetchWorkItemsAsync(string query)
+        private async Task<List<WorkItem>> FetchWorkItemsAsync(string query, CancellationToken ct)
         {
             try
             {
                 var workItemClient = connection.GetWorkItemClient();
-                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, cancellationToken: default);
+                var result = await workItemClient.QueryByWiqlAsync(new Wiql { Query = query }, cancellationToken: ct);
                 logger.LogInformation("Work item query result: {result}", result);
                 if (result != null && result.WorkItems != null && result.WorkItems.Any())
                 {
                     var ids = result.WorkItems.Select(wi => wi.Id).ToList();
                     logger.LogInformation("Fetching work item details: {workItemIds}", string.Join(',', ids));
-                    return await workItemClient.GetWorkItemsAsync(ids, expand: WorkItemExpand.All, cancellationToken: default);
+                    return await workItemClient.GetWorkItemsAsync(ids, expand: WorkItemExpand.All, cancellationToken: ct);
                 }
                 else
                 {
@@ -1042,9 +1041,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <summary>
         /// Get API spec work item for a given release plan work item.
         /// </summary>
-        private async Task<WorkItem> GetApiSpecWorkItemAsync(int releasePlanWorkItemId)
+        private async Task<WorkItem> GetApiSpecWorkItemAsync(int releasePlanWorkItemId, CancellationToken ct)
         {
-            var releasePlanWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(releasePlanWorkItemId, expand: WorkItemExpand.All);
+            var releasePlanWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(releasePlanWorkItemId, expand: WorkItemExpand.All, cancellationToken: ct);
             if (releasePlanWorkItem?.Id == null)
             {
                 throw new InvalidOperationException($"Work item {releasePlanWorkItemId} not found.");
@@ -1060,7 +1059,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 // Get parent work item and make sure it is release plan work item
                 var childWorkItemId = int.Parse(relation.Url.Split('/').Last());
-                var childWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(childWorkItemId);
+                var childWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(childWorkItemId, cancellationToken: ct);
                 if (childWorkItem == null || !childWorkItem.Fields.TryGetValue("System.WorkItemType", out Object? workItemType))
                 {
                     continue;
@@ -1092,7 +1091,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
 
                 // Find API spec work item
-                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlanWorkItemId);
+                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlanWorkItemId, ct);
                 int apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
@@ -1158,7 +1157,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     throw new ArgumentException("Please provide the work item ID and an API version to update.");
                 }
 
-                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlanWorkItemId);
+                var apiSpecWorkItem = await GetApiSpecWorkItemAsync(releasePlanWorkItemId, ct);
                 int apiSpecWorkItemId = apiSpecWorkItem.Id ?? 0;
                 if (apiSpecWorkItemId == 0)
                 {
@@ -1241,7 +1240,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             query += "  ORDER BY [System.Id] DESC"; // Order by package work item to find the most recently created
             logger.LogInformation("Fetching package work item with package name {packageName}, package version {packageVersion} and language {language}.", packageName, packageVersion, language);
 
-            var packageWorkItems = await FetchWorkItemsAsync(query);
+            var packageWorkItems = await FetchWorkItemsAsync(query, ct);
             if (packageWorkItems.Count == 0)
             {
                 return null;
@@ -1264,7 +1263,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             query += "  ORDER BY [System.Id] DESC"; // Order by package work item to find the most recently created
 
             logger.LogInformation("Fetching package work item with package name {packageName} and language {language}.", packageName, language);
-            var packageWorkItems = await FetchWorkItemsAsync(query);
+            var packageWorkItems = await FetchWorkItemsAsync(query, ct);
             return packageWorkItems.Select(workItem => MapPackageWorkItemToModel(workItem)).ToList();
         }
 
@@ -1325,11 +1324,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             return sdkReleaseInfo;
         }
 
-        private async Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId)
+        private async Task<Dictionary<string, List<string>>> GetLlmArtifactsAuthenticated(string project, int buildId, CancellationToken ct)
         {
             var buildClient = connection.GetBuildClient();
             var result = new Dictionary<string, List<string>>();
-            var artifacts = await buildClient.GetArtifactsAsync(project, buildId, cancellationToken: default);
+            var artifacts = await buildClient.GetArtifactsAsync(project, buildId, cancellationToken: ct);
             foreach (var artifact in artifacts)
             {
                 if (artifact.Name.StartsWith("LLM Artifacts", StringComparison.OrdinalIgnoreCase))
@@ -1343,7 +1342,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     var zipPath = Path.Combine(tempDir, "artifact.zip");
                     using (var fileStream = File.Create(zipPath))
                     {
-                        await stream.CopyToAsync(fileStream);
+                        await stream.CopyToAsync(fileStream, ct);
                     }
 
                     await Task.Factory.StartNew(() =>
@@ -1359,19 +1358,19 @@ namespace Azure.Sdk.Tools.Cli.Services
             return result;
         }
 
-        private async Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId)
+        private async Task<Dictionary<string, List<string>>> GetLlmArtifactsUnauthenticated(string project, int buildId, CancellationToken ct)
         {
             var result = new Dictionary<string, List<string>>();
             using var httpClient = new HttpClient();
             var artifactsUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
-            var artifactsResponse = await httpClient.GetAsync(artifactsUrl);
+            var artifactsResponse = await httpClient.GetAsync(artifactsUrl, ct);
             // Devops will return a sign-in html page if the user is not authorized
             if (artifactsResponse.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
             {
                 throw new Exception($"Not authorized to get artifacts from {artifactsUrl}");
             }
             artifactsResponse.EnsureSuccessStatusCode();
-            var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync();
+            var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync(ct);
             using var doc = JsonDocument.Parse(artifactsJson);
             var artifacts = doc.RootElement.GetProperty("value").EnumerateArray();
 
@@ -1428,7 +1427,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 using (var zipStream = await httpClient.GetStreamAsync(downloadUrl))
                 using (var fileStream = File.Create(zipPath))
                 {
-                    await zipStream.CopyToAsync(fileStream);
+                    await zipStream.CopyToAsync(fileStream, ct);
                 }
 
                 await Task.Factory.StartNew(() =>
@@ -1455,9 +1454,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
             {
-                return await GetLlmArtifactsUnauthenticated(project, buildId);
+                return await GetLlmArtifactsUnauthenticated(project, buildId, ct);
             }
-            return await GetLlmArtifactsAuthenticated(project, buildId);
+            return await GetLlmArtifactsAuthenticated(project, buildId, ct);
         }
 
         public async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields, CancellationToken ct)
@@ -1480,9 +1479,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             return workItem;
         }
 
-        private async Task<WorkItem> FindOrCreateServiceParent(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null)
+        private async Task<WorkItem> FindOrCreateServiceParent(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null, CancellationToken ct = default)
         {
-            var serviceParent = await FindServiceWorkItem(serviceName, ignoreReleasePlannerTests, tag);
+            var serviceParent = await FindServiceWorkItem(serviceName, ignoreReleasePlannerTests, tag, ct: ct);
             if (serviceParent != null)
             {
                 logger.LogDebug("Found existing service work item [{workItemId}]", serviceParent.Id);
@@ -1500,13 +1499,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 serviceWorkItem.Tag = tag;
             }
 
-            var workItem = await CreateWorkItemAsync(serviceWorkItem, "Epic", serviceName);
+            var workItem = await CreateWorkItemAsync(serviceWorkItem, "Epic", serviceName, ct: ct);
 
             logger.LogInformation("[{workItemId}] - Created service work item for {serviceName}", workItem.Id, serviceName);
             return workItem;
         }
 
-        private async Task<WorkItem?> FindEpicWorkItem(string serviceName, string? packageDisplayName = null, bool ignoreReleasePlannerTests = true, string? tag = null)
+        private async Task<WorkItem?> FindEpicWorkItem(string serviceName, string? packageDisplayName = null, bool ignoreReleasePlannerTests = true, string? tag = null, CancellationToken ct = default)
         {
             var serviceCondition = new StringBuilder();
 
@@ -1542,7 +1541,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             logger.LogDebug("Finding parent work item with query: {query}", query);
 
-            var workItems = await FetchWorkItemsAsync(query);
+            var workItems = await FetchWorkItemsAsync(query, ct);
 
             if (workItems.Count > 0)
             {
@@ -1556,13 +1555,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             return null;
         }
 
-        private async Task<WorkItem?> FindProductWorkItem(string serviceName, string packageDisplayName, bool ignoreReleasePlannerTests = true, string? tag = null)
-            => await FindEpicWorkItem(serviceName, packageDisplayName, ignoreReleasePlannerTests, tag);
+        private async Task<WorkItem?> FindProductWorkItem(string serviceName, string packageDisplayName, bool ignoreReleasePlannerTests = true, string? tag = null, CancellationToken ct = default)
+            => await FindEpicWorkItem(serviceName, packageDisplayName, ignoreReleasePlannerTests, tag, ct);
 
-        private async Task<WorkItem?> FindServiceWorkItem(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null)
-            => await FindEpicWorkItem(serviceName, null, ignoreReleasePlannerTests, tag);
+        private async Task<WorkItem?> FindServiceWorkItem(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null, CancellationToken ct = default)
+            => await FindEpicWorkItem(serviceName, null, ignoreReleasePlannerTests, tag, ct);
 
-        private async Task UpdateWorkItemParentAsync(WorkItemBase child, WorkItemBase parent)
+        private async Task UpdateWorkItemParentAsync(WorkItemBase child, WorkItemBase parent, CancellationToken ct)
         {
             if (child.ParentId == parent.WorkItemId)
             {
@@ -1573,10 +1572,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Child must have existing parent link
             if (child.ParentId != 0)
             {
-                await RemoveWorkItemRelationAsync(child.WorkItemId, "Parent", child.ParentId);
+                await RemoveWorkItemRelationAsync(child.WorkItemId, "Parent", child.ParentId, ct);
             }
             
-            await CreateWorkItemRelationAsync(child.WorkItemId, "Parent", parent.WorkItemId);
+            await CreateWorkItemRelationAsync(child.WorkItemId, "Parent", parent.WorkItemId, ct: ct);
         }
 
         /// <summary>
@@ -1652,7 +1651,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// Fetches the raw release plan WorkItem for a given TypeSpec project path.
         /// Returns null if no matching work item is found.
         /// </summary>
-        private async Task<WorkItem?> FetchReleasePlanWorkItemByTypeSpecPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false)
+        private async Task<WorkItem?> FetchReleasePlanWorkItemByTypeSpecPathAsync(string typeSpecProjectPath, bool includeFinishedPlans = false, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(typeSpecProjectPath))
             {
@@ -1671,7 +1670,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             query += $" AND [System.Tags] {(IsAgentTesting ? "CONTAINS" : "NOT CONTAINS")} '{RELEASE_PLANNER_APP_TEST}'";
             query += "  ORDER BY [System.Id] DESC";
 
-            var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+            var releasePlanWorkItems = await FetchWorkItemsAsync(query, ct);
             if (releasePlanWorkItems.Count == 0)
             {
                 logger.LogInformation("No active release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
@@ -1693,13 +1692,13 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             try
             {
-                var workItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath);
+                var workItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath, ct: ct);
                 if (workItem == null)
                 {
                     return null;
                 }
 
-                return await MapWorkItemToReleasePlanAsync(workItem);
+                return await MapWorkItemToReleasePlanAsync(workItem, ct);
             }
             catch (Exception ex)
             {
@@ -1714,7 +1713,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 logger.LogInformation("Searching for release plan with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
 
-                var releasePlanWorkItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath, true);
+                var releasePlanWorkItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath, true, ct);
                 if (releasePlanWorkItem == null)
                 {
                     logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);

@@ -334,7 +334,7 @@ public class GitConnection
             }
         }
 
-        private async Task<bool> IsDiffMergeableAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch)
+        private async Task<bool> IsDiffMergeableAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch, CancellationToken ct)
         {
             logger.LogInformation("Comparing the head branch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
@@ -368,7 +368,7 @@ public class GitConnection
             try
             {
                 response.Messages.Add($"Checking if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]...");
-                var isMergeable = await IsDiffMergeableAsync(repoOwner, repoName, baseBranch, headBranch);
+                var isMergeable = await IsDiffMergeableAsync(repoOwner, repoName, baseBranch, headBranch, ct);
                 if (!isMergeable)
                 {
                     response.Messages.Add($"Changes from [{repoOwner}] are not mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]. Please resolve the conflicts and try again.");

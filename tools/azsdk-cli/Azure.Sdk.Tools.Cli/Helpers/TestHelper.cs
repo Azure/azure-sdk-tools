@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Threading;
 using System.Xml;
 using Azure.Sdk.Tools.Cli.Models;
 

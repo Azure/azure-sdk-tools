@@ -13,7 +13,6 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 

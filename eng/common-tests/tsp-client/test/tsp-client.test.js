@@ -76,25 +76,25 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
         }
       });
 
-      it.sequential("inits from url", async () => {
+      it("inits from url", async () => {
         const url =
           "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
-        await execNpmExec(["tsp-client", "init", "-c", url], {
+        await execNpmExec(["tsp-client", "--debug", "init", "-c", url], {
           cwd: worktree,
           logger: debugLogger,
           prefix: engCommonTspClient,
         });
       });
 
-      it.sequential("updates template", async (ctx) => {
+      it("updates template", async (ctx) => {
         const templateDir = templateDirs[sdkName];
 
         if (templateDir.length == 0) {
           ctx.skip();
         }
 
-        await execNpmExec(["tsp-client", "update"], {
+        await execNpmExec(["tsp-client", "--debug", "update"], {
           cwd: join(worktree, ...templateDir),
           logger: debugLogger,
           prefix: engCommonTspClient,

@@ -1,11 +1,17 @@
-import { stat } from "fs/promises";
-import { resolve } from "path";
+import debug from "debug";
+import { mkdtemp, rm, stat } from "fs/promises";
+import { tmpdir } from "os";
+import { join, resolve } from "path";
 import semver from "semver";
+import { simpleGit } from "simple-git";
 import { describe, expect, it } from "vitest";
 import { execNpmExec } from "../shared/exec.js";
 import { debugLogger } from "../shared/logger.js";
 import { SdkName } from "../shared/sdk-types.js";
 import { getSdkDir } from "../src/fs.js";
+
+// Enable simple-git debug logging to improve console output
+debug.enable("simple-git");
 
 const engCommonTspClient = resolve("../../common/tsp-client");
 
@@ -40,12 +46,32 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
     it("updates template", async (ctx) => {
       const sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
 
-      // TODO: use "git worktree" to copy to temp folder before destructive operation
-      await execNpmExec(["tsp-client", "update"], {
-        cwd: resolve(sdkDir, ...templateDir[sdkName]),
-        logger: debugLogger,
-        prefix: engCommonTspClient,
-      });
+      const lang = sdkName.replace("azure-sdk-for-", "");
+
+      const worktree = await mkdtemp(
+        join(tmpdir(), `tsp-client-test-${lang}-`),
+      );
+      try {
+        await simpleGit(sdkDir).raw(["worktree", "add", worktree, "--detach"]);
+
+        await execNpmExec(["tsp-client", "update"], {
+          cwd: join(worktree, ...templateDir[sdkName]),
+          logger: debugLogger,
+          prefix: engCommonTspClient,
+        });
+      } finally {
+        try {
+          await simpleGit(sdkDir).raw([
+            "worktree",
+            "remove",
+            worktree,
+            "--force",
+          ]);
+        } catch {
+          // Worktree may not have been created
+        }
+        await rm(worktree, { recursive: true, force: true });
+      }
     });
   },
 );

@@ -12,8 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public partial class PythonLanguageService : LanguageService
 {
     // Common NextSteps messages for Python tool issues
-    private static readonly string VerifySetupNextStepInstruction = 
-    "Run 'azsdk_verify_setup' from the azure-sdk-for-python repo root to auto-install required Python tools";
+    private const string VerifySetupNextStepInstruction = "Run 'azsdk_verify_setup' from the azure-sdk-for-python repo root to auto-install required Python tools";
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {

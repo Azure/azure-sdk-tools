@@ -91,7 +91,7 @@ jobs:
       - name: npm run test:ci
         run: |
           set -o pipefail
-          npm run test:ci | tee vitest-output.txt
+          npm run test:ci | tee vitest-output.txt || TEST_EXIT=$?
           {
             echo '## Vitest Summary'
             echo '```text'
@@ -108,3 +108,4 @@ jobs:
             echo '```'
             echo '</details>'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit ${TEST_EXIT:-0}

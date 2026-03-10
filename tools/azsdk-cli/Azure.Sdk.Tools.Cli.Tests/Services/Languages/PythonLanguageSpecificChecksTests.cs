@@ -365,10 +365,10 @@ internal class PythonLanguageSpecificChecksTests
     #region FormatCode Tests
 
     [Test]
-    public async Task FormatCode_ReturnsSuccess_WhenCheckPassesWithoutFix()
+    public async Task FormatCode_ReturnsSuccess_WhenFormattingSucceeds()
     {
         // Arrange
-        using var tempDir = TempDirectory.Create("python-format-check-pass-test");
+        using var tempDir = TempDirectory.Create("python-format-success-test");
         var packagePath = tempDir.DirectoryPath;
 
         _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
@@ -381,16 +381,16 @@ internal class PythonLanguageSpecificChecksTests
         Assert.Multiple(() =>
         {
             Assert.That(result.ExitCode, Is.EqualTo(0));
-            Assert.That(result.CheckStatusDetails, Does.Contain("check passed"));
+            Assert.That(result.CheckStatusDetails, Does.Contain("formatting applied"));
             Assert.That(result.NextSteps, Is.Null.Or.Empty);
         });
     }
 
     [Test]
-    public async Task FormatCode_PassesCheckFlag_WhenFixCheckErrorsIsFalse()
+    public async Task FormatCode_NeverPassesCheckFlag()
     {
         // Arrange
-        using var tempDir = TempDirectory.Create("python-format-check-flag-test");
+        using var tempDir = TempDirectory.Create("python-format-no-check-flag-test");
         var packagePath = tempDir.DirectoryPath;
 
         _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
@@ -399,40 +399,21 @@ internal class PythonLanguageSpecificChecksTests
         // Act
         await _languageService.FormatCode(packagePath, false, CancellationToken.None);
 
-        // Assert - Verify --check flag was passed when not in fix mode
-        _pythonHelperMock.Verify(x => x.Run(
-            It.Is<PythonOptions>(p => p.Args.Contains("--check")),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Test]
-    public async Task FormatCode_DoesNotPassCheckFlag_WhenFixCheckErrorsIsTrue()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("python-format-fix-flag-test");
-        var packagePath = tempDir.DirectoryPath;
-
-        _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "reformatted")] });
-
-        // Act
-        await _languageService.FormatCode(packagePath, true, CancellationToken.None);
-
-        // Assert - Verify --check flag was NOT passed when in fix mode
+        // Assert - Verify --check flag is never passed
         _pythonHelperMock.Verify(x => x.Run(
             It.Is<PythonOptions>(p => !p.Args.Contains("--check")),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
-    public async Task FormatCode_ReturnsNextStepsWithFixGuidance_WhenCheckFails()
+    public async Task FormatCode_ReturnsNextSteps_WhenFormattingFails()
     {
         // Arrange
-        using var tempDir = TempDirectory.Create("python-format-check-fail-test");
+        using var tempDir = TempDirectory.Create("python-format-fail-test");
         var packagePath = tempDir.DirectoryPath;
 
         _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "would reformat file.py")] });
+            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "error: cannot format file.py")] });
 
         // Act
         var result = await _languageService.FormatCode(packagePath, false, CancellationToken.None);
@@ -441,9 +422,8 @@ internal class PythonLanguageSpecificChecksTests
         Assert.Multiple(() =>
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.ResponseError, Does.Contain("check failed"));
+            Assert.That(result.ResponseError, Does.Contain("failed to apply"));
             Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
-            Assert.That(result.NextSteps, Has.Some.Contains("--fix"));
         });
     }
 

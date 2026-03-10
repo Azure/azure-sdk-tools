@@ -185,36 +185,22 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
 
-            // When not in fix mode, pass --check to black so it reports violations without modifying files
-            var blackArgs = fixCheckErrors
-                ? new[] { "black", "--isolate", packagePath }
-                : new[] { "black", "--check", "--isolate", packagePath };
+            var blackArgs = new[] { "black", "--isolate", packagePath };
 
             var result = await pythonHelper.Run(new PythonOptions("azpysdk", blackArgs, workingDirectory: packagePath), cancellationToken);
 
             if (result.ExitCode == 0)
             {
-                var successMessage = fixCheckErrors
-                    ? "Code formatting applied successfully"
-                    : "Code formatting check passed - all files are properly formatted";
-                logger.LogInformation("{Message}", successMessage);
-                return new PackageCheckResponse(result.ExitCode, successMessage);
+                logger.LogInformation("Code formatting applied successfully");
+                return new PackageCheckResponse(result.ExitCode, "Code formatting applied successfully");
             }
             else
             {
-                var errorMessage = fixCheckErrors
-                    ? "Code formatting failed to apply"
-                    : "Code formatting check failed - some files need formatting";
+                logger.LogWarning("Code formatting failed to apply with exit code {ExitCode}", result.ExitCode);
 
-                logger.LogWarning("{ErrorMessage} with exit code {ExitCode}", errorMessage, result.ExitCode);
-
-                var nextSteps = fixCheckErrors
-                    ? "Review the error output - some formatting issues could not be auto-fixed by black"
-                    : "Run this check with the --fix flag to automatically format code using black, or run 'black <packagePath>' manually";
-
-                return new PackageCheckResponse(result.ExitCode, result.Output, errorMessage)
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Code formatting failed to apply")
                 {
-                    NextSteps = [nextSteps]
+                    NextSteps = ["Review the error output - some formatting issues could not be auto-fixed by black"]
                 };
             }
         }

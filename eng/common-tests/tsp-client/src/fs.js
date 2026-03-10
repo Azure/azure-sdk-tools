@@ -1,12 +1,11 @@
 import { stat } from "fs/promises";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
-import { SdkName } from "../shared/sdk-types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
- * @param {SdkName} sdkName
+ * @param {import("../shared/sdk-types.js").SdkName} sdkName
  */
 export async function getSdkDir(sdkName) {
   const lang = sdkName.replace("azure-sdk-for-", "");

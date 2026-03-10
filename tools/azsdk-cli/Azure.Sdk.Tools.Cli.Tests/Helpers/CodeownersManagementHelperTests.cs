@@ -18,7 +18,6 @@ public class CodeownersManagementHelperTests
 {
     private Mock<IDevOpsService> _mockDevOps;
     private Mock<ITeamUserCache> _mockTeamUserCache;
-    private Mock<ICodeownersValidatorHelper> _mockValidator;
     private CodeownersManagementHelper _helper;
 
     [SetUp]

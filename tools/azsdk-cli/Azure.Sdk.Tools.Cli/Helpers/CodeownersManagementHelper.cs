@@ -34,8 +34,7 @@ public static class OwnerTypeExtensions
 public class CodeownersManagementHelper(
     ILogger<CodeownersManagementHelper> logger,
     IDevOpsService devOpsService,
-    ITeamUserCache teamUserCache,
-    ICodeownersValidatorHelper validatorHelper
+    ITeamUserCache teamUserCache
 ) : ICodeownersManagementHelper
 {
     public async Task<CodeownersViewResponse> GetViewByUser(string alias, string? repo)

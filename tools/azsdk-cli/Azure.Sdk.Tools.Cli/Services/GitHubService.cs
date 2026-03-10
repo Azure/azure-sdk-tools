@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Microsoft.Extensions.Logging;
 using Octokit;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -20,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public List<string> Messages { get; set; } = new List<string>();
     }
 
-public class GitConnection
+    public class GitConnection
     {
         private GitHubClient? _gitHubClient; // Backing field for the property
 
@@ -82,6 +80,7 @@ public class GitConnection
             }
         }
     }
+
     public interface IGitHubService
     {
         public Task<User> GetGitUserDetailsAsync(CancellationToken ct);
@@ -109,6 +108,10 @@ public class GitConnection
         public Task<Octokit.SearchCodeResult> SearchFilesAsync(string searchQuery, CancellationToken ct);
     }
 
+    // We enforce cancellation token usage broadly via an analyzer across this codebase,
+    // therefore many methods in this class require a cancellation token that is unused.
+    // The Octokit SDK does not support cancellation tokens, but we should still pass them
+    // down in case this changes, and also to make all async code appear consistent with conventions.
     public class GitHubService : GitConnection, IGitHubService
     {
         private readonly ILogger<GitHubService> logger;
@@ -150,7 +153,7 @@ public class GitConnection
             {
                 Body = body
             };
-            
+
             if (assignees != null && assignees.Count > 0)
             {
                 foreach (var assignee in assignees)
@@ -158,7 +161,7 @@ public class GitConnection
                     newIssue.Assignees.Add(assignee);
                 }
             }
-            
+
             return await gitHubClient.Issue.Create(repoOwner, repoName, newIssue);
         }
 
@@ -188,14 +191,14 @@ public class GitConnection
                     logger.LogWarning("Could not get head SHA for PR #{PullRequestNumber}", pullRequestNumber);
                     return null;
                 }
-                
+
                 var contents = await gitHubClient.Repository.Content.GetAllContentsByRef(repoOwner, repoName, filePath, pr.Head.Sha);
                 if (contents == null || contents.Count == 0)
                 {
                     logger.LogInformation("File {FilePath} not found in PR #{PullRequestNumber}", filePath, pullRequestNumber);
                     return null;
                 }
-                
+
                 return contents[0].Content;
             }
             catch (Octokit.NotFoundException)
@@ -221,7 +224,7 @@ public class GitConnection
                     logger.LogInformation("File {FilePath} not found in branch {Branch}", filePath, branch);
                     return null;
                 }
-                
+
                 return contents[0].Content;
             }
             catch (Octokit.NotFoundException)

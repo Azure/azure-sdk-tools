@@ -13,6 +13,7 @@ All public and internal async methods (returning `Task`, `Task<T>`, `ValueTask`,
 ### Exclusions
 
 - **Override methods** — signature dictated by base class
+- **Interface implementations** — explicit and implicit (e.g. `IAsyncDisposable.DisposeAsync`); signature dictated by the interface
 - **`Main` entry points** — fixed signature
 - **Test methods** — `[Test]`, `[Fact]`, `[Theory]`, `[TestMethod]` attributes
 - **Generated code** — excluded automatically

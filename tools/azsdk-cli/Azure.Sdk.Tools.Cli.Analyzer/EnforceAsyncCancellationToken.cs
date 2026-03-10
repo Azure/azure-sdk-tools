@@ -38,13 +38,6 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 return;
             }
 
-            // Only analyze public or internal methods
-            if (methodSymbol.DeclaredAccessibility != Accessibility.Public &&
-                methodSymbol.DeclaredAccessibility != Accessibility.Internal)
-            {
-                return;
-            }
-
             // Skip overrides and interface implementations — their signature is dictated by the base/interface
             if (methodSymbol.IsOverride)
             {
@@ -53,6 +46,12 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
 
             // Skip explicit interface implementations
             if (methodSymbol.ExplicitInterfaceImplementations.Length > 0)
+            {
+                return;
+            }
+
+            // Skip implicit interface implementations — their signature is dictated by the interface
+            if (IsImplicitInterfaceImplementation(methodSymbol))
             {
                 return;
             }
@@ -114,6 +113,30 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                     return testAttributeNames.Any(t =>
                         name == t || name == t + "Attribute");
                 });
+        }
+
+        private static bool IsImplicitInterfaceImplementation(IMethodSymbol methodSymbol)
+        {
+            var containingType = methodSymbol.ContainingType;
+            if (containingType == null)
+            {
+                return false;
+            }
+
+            foreach (var iface in containingType.AllInterfaces)
+            {
+                foreach (var member in iface.GetMembers().OfType<IMethodSymbol>())
+                {
+                    if (SymbolEqualityComparer.Default.Equals(
+                            containingType.FindImplementationForInterfaceMember(member),
+                            methodSymbol))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static bool HasCancellationTokenParameter(IMethodSymbol methodSymbol)

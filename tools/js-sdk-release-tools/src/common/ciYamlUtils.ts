@@ -112,17 +112,100 @@ async function createManagementPlaneCiYaml(
     await writeCiYaml(ciMgmtPath, parsed);
 }
 
-async function writeCiYaml(ciMgmtPath: string, config: any) {
+async function writeCiYaml(ciPath: string, config: any) {
     const content = comment + stringify(config);
-    await writeFile(ciMgmtPath, content, { encoding: 'utf-8', flush: true });
-    logger.info(`Created Management CI file '${posix.resolve(ciMgmtPath)}' with content: \n${content}`);
+    await writeFile(ciPath, content, { encoding: 'utf-8', flush: true });
+    logger.info(`Created or updated CI file '${posix.resolve(ciPath)}' with content: \n${content}`);
+}
+
+async function updateDataPlaneCiYaml(
+    ciPath: string,
+    serviceDirToSdkRoot: string,
+    npmPackageInfo: NpmPackageInfo
+): Promise<void> {
+    const content = await readFile(ciPath, { encoding: 'utf-8' });
+    let parsed = parse(content.toString());
+
+    makeSureArrayAvailableInCiYaml(parsed, ['pr', 'branches', 'exclude']);
+    makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'include']);
+    makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'include']);
+    makeSureArrayAvailableInCiYaml(parsed, ['extends', 'parameters', 'Artifacts']);
+
+    const artifact: ArtifactInfo = getArtifact(npmPackageInfo);
+    const artifactInclude = (array: ArtifactInfo[], item: ArtifactInfo) => array.map((a) => a.name).includes(item.name);
+    const serviceDirectory = `${serviceDirToSdkRoot}/`;
+    const ciMgmtPath = posix.join(serviceDirToSdkRoot, 'ci.mgmt.yml');
+
+    let needUpdate = false;
+    needUpdate = tryAddItemInArray(parsed.pr.branches.exclude, 'feature/v4') || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, serviceDirectory) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.pr.paths.include, serviceDirectory) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
+
+    // Sync exclusions from ci.mgmt.yml if it exists
+    if (await existsAsync(ciMgmtPath)) {
+        const mgmtContent = await readFile(ciMgmtPath, { encoding: 'utf-8' });
+        const mgmtParsed = parse(mgmtContent.toString());
+        const mgmtPaths: string[] = [ciMgmtPath, ...(mgmtParsed?.trigger?.paths?.include ?? [])];
+        makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'exclude']);
+        makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'exclude']);
+        for (const p of mgmtPaths) {
+            needUpdate = tryAddItemInArray(parsed.trigger.paths.exclude, p) || needUpdate;
+            needUpdate = tryAddItemInArray(parsed.pr.paths.exclude, p) || needUpdate;
+        }
+    }
+
+    if (needUpdate) {
+        await writeCiYaml(ciPath, parsed);
+    }
+}
+
+async function createDataPlaneCiYaml(
+    ciPath: string,
+    serviceDirToSdkRoot: string,
+    npmPackageInfo: NpmPackageInfo
+): Promise<void> {
+    const artifact = getArtifact(npmPackageInfo);
+    const __dirname = import.meta.dirname || dirname(fileURLToPath(import.meta.url));
+    const templatePath = posix.join(__dirname, 'ciYamlTemplates/ci.template.yml');
+    const template = await readFile(templatePath, { encoding: 'utf-8' });
+    const parsed = parse(template.toString());
+    const serviceDirectory = `${serviceDirToSdkRoot}/`;
+    const ciMgmtPath = posix.join(serviceDirToSdkRoot, 'ci.mgmt.yml');
+
+    parsed.trigger.paths.include = [serviceDirectory];
+    parsed.pr.paths.include = [serviceDirectory];
+    parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot.split('/')[1];
+    parsed.extends.parameters.Artifacts = [artifact];
+
+    // Exclude management plane paths if ci.mgmt.yml exists
+    if (await existsAsync(ciMgmtPath)) {
+        const mgmtContent = await readFile(ciMgmtPath, { encoding: 'utf-8' });
+        const mgmtParsed = parse(mgmtContent.toString());
+        const mgmtPaths: string[] = [ciMgmtPath, ...(mgmtParsed?.trigger?.paths?.include ?? [])];
+        parsed.trigger.paths.exclude = mgmtPaths;
+        parsed.pr.paths.exclude = mgmtPaths;
+    } else {
+        parsed.trigger.paths.exclude = null;
+        parsed.pr.paths.exclude = null;
+    }
+
+    await writeCiYaml(ciPath, parsed);
 }
 
 async function createOrUpdateDataPlaneCiYaml(
     generatedPackageDirectory: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
-    throw new Error('Not implemented function');
+    const serviceDirToSDKDir = posix.join(generatedPackageDirectory, '..');
+    const ciPath = posix.join(serviceDirToSDKDir, 'ci.yml');
+
+    if (!(await existsAsync(ciPath))) {
+        await createDataPlaneCiYaml(ciPath, serviceDirToSDKDir, npmPackageInfo);
+        return ciPath;
+    }
+    await updateDataPlaneCiYaml(ciPath, serviceDirToSDKDir, npmPackageInfo);
+    return ciPath;
 }
 
 export async function createOrUpdateCiYaml(

@@ -1,15 +1,20 @@
 import { stat } from "fs/promises";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
+import { SdkName } from "../shared/sdk-types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// TODO: take language enum param
-export async function getJsDir() {
-  // TODO: Could fallback to env var, put I prefer convention over config
+/**
+ * @param {SdkName} sdkName
+ */
+export async function getSdkDir(sdkName) {
+  const lang = sdkName.replace("azure-sdk-for-", "");
+
+  // look for full name (eg "azure-sdk-for-js") or short name (eg "js")
   const candidates = [
-    resolve(__dirname, "../../../../../azure-sdk-for-js"),
-    resolve(__dirname, "../../../../../js"),
+    resolve(__dirname, `../../../../../${sdkName}`),
+    resolve(__dirname, `../../../../../${lang}`),
   ];
 
   for (const candidate of candidates) {
@@ -23,6 +28,6 @@ export async function getJsDir() {
   }
 
   throw new Error(
-    `Unable to find JS repo clone. Checked: ${candidates.join(", ")}`,
+    `Unable to find ${sdkName} repo clone. Checked: ${candidates.join(", ")}`,
   );
 }

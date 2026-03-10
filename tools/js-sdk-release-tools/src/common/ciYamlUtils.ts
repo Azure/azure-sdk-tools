@@ -134,7 +134,7 @@ async function updateDataPlaneCiYaml(
 
     const artifact: ArtifactInfo = getArtifact(npmPackageInfo);
     const artifactInclude = (array: ArtifactInfo[], item: ArtifactInfo) => array.map((a) => a.name).includes(item.name);
-    const serviceDirectory = `${serviceDirToSdkRoot}/`;
+    const serviceDirectory = serviceDirToSdkRoot;
     const ciMgmtPath = posix.join(serviceDirToSdkRoot, 'ci.mgmt.yml');
 
     let needUpdate = false;
@@ -179,7 +179,7 @@ async function createDataPlaneCiYaml(
     const templatePath = posix.join(__dirname, 'ciYamlTemplates/ci.template.yml');
     const template = await readFile(templatePath, { encoding: 'utf-8' });
     const parsed = parse(template.toString());
-    const serviceDirectory = `${serviceDirToSdkRoot}/`;
+    const serviceDirectory = serviceDirToSdkRoot;
     const ciMgmtPath = posix.join(serviceDirToSdkRoot, 'ci.mgmt.yml');
 
     parsed.trigger.paths.include = [serviceDirectory];

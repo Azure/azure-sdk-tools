@@ -3,7 +3,7 @@ name: eng/common/tsp-client - test
 on:
   pull_request:
     paths:
-      - .github/workflows/eng-common-tsp-client-tests.yml
+      - .github/workflows/eng-common-tsp-client-test.yml
       - eng/common/tsp-client/**
       - eng/common-tests/tsp-client/**
 

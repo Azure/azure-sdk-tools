@@ -1,10 +1,15 @@
 # Common Engineering System
 
+* [Code Structure](#code-structure)
+* [Updating](#updating)
+* [eng/common sync](#engcommon-sync)
+* [.github/workflows and .github/skills sync](#githubworkflows-and-githubskills-sync)
+
+## Code Structure
+
 The `eng/common` directory contains engineering files that are common across the various azure-sdk language repos.
 It should remain relatively small and only contain textual based files like scripts, configs, or templates. It
 should not contain binary files as they don't play well with git.
-
-## Code Structure
 
 To help keep the content of the `eng/common` directory as small as possible we should split the language specific parts of a common script out if possible.
 
@@ -19,7 +24,7 @@ All changes made will cause a PR to be created in all subscribed azure-sdk langu
 the `eng/common` directory in that repo. For that reason do **NOT** make changes to files in this directory in the individual azure-sdk
 languages repos as they will be overwritten the next time an update is taken from the common azure-sdk-tools repo.
 
-## Workflow
+## eng/common sync
 
 When you create a PR against `azure-sdk-tools` repo that changes contents of the `eng/common` directory, the PR
 triggers an [`azure-sdk-tools - sync - eng-common` pipeline][pipeline] that will mirror all changes in the `azure-sdk-tools eng/common` directory
@@ -42,10 +47,10 @@ This process is set up in such a way to make it easier for changes to be tested 
 [pipeline]: https://dev.azure.com/azure-sdk/internal/_build?definitionId=1372&_a=summary
 [yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/eng-common-sync.yml
 
-## Skills Sync
+## .github/workflows and .github/skills sync
 
-Shared AI skills in `.github/skills/azsdk-common-*/` are synced to all subscribed repos via the [`eng-skills-sync` pipeline][skills-yml]. Only `azsdk-common-*` prefixed directories are synced — repo-specific skills in `.github/skills/<name>/` are not affected.
+Shared AI skills in `.github/skills/azsdk-common-*/` are synced to all subscribed repos via the [`eng-github-config-sync` pipeline][eng-github-sync-yml]. Only `azsdk-common-*` prefixed directories are synced — repo-specific skills in `.github/skills/<name>/` are not affected.
 
 The sync follows the same workflow as `eng/common` (see above). For details on creating and managing shared skills, see [skills-guidelines.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/skills-guidelines.md).
 
-[skills-yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/eng-skills-sync.yml
+[eng-github-sync-yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/eng-github-config-sync.yml

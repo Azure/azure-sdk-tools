@@ -29,7 +29,7 @@ const templateDir = {
 describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
   "%s",
   (sdkName) => {
-    it("finds repo directory", async (ctx) => {
+    it("finds sdk dir", async (ctx) => {
       const sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
       const sdkDirStat = await stat(sdkDir);
 

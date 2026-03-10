@@ -43,35 +43,44 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
       console.log(`SDK dir: ${sdkDir}`);
     });
 
-    it("updates template", async (ctx) => {
-      const sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
+    describe("worktree tests", () => {
+      it("inits from url", async (ctx) => {});
 
-      const lang = sdkName.replace("azure-sdk-for-", "");
+      it("updates template", async (ctx) => {
+        const sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
 
-      const worktree = await mkdtemp(
-        join(tmpdir(), `tsp-client-test-${lang}-`),
-      );
-      try {
-        await simpleGit(sdkDir).raw(["worktree", "add", worktree, "--detach"]);
+        const lang = sdkName.replace("azure-sdk-for-", "");
+        const worktree = await mkdtemp(
+          join(tmpdir(), `tsp-client-test-${lang}-`),
+        );
 
-        await execNpmExec(["tsp-client", "update"], {
-          cwd: join(worktree, ...templateDir[sdkName]),
-          logger: debugLogger,
-          prefix: engCommonTspClient,
-        });
-      } finally {
         try {
           await simpleGit(sdkDir).raw([
             "worktree",
-            "remove",
+            "add",
             worktree,
-            "--force",
+            "--detach",
           ]);
-        } catch {
-          // Worktree may not have been created
+
+          await execNpmExec(["tsp-client", "update"], {
+            cwd: join(worktree, ...templateDir[sdkName]),
+            logger: debugLogger,
+            prefix: engCommonTspClient,
+          });
+        } finally {
+          try {
+            await simpleGit(sdkDir).raw([
+              "worktree",
+              "remove",
+              worktree,
+              "--force",
+            ]);
+          } catch {
+            // Worktree may not have been created
+          }
+          await rm(worktree, { recursive: true, force: true });
         }
-        await rm(worktree, { recursive: true, force: true });
-      }
+      });
     });
   },
 );

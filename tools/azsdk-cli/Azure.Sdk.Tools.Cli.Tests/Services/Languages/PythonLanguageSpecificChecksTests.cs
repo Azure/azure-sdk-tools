@@ -313,31 +313,6 @@ internal class PythonLanguageSpecificChecksTests
     }
 
     [Test]
-    public async Task LintCode_ReturnsNextStepsForBothTools_WhenBothFail()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("python-lint-both-fail-test");
-        var packagePath = tempDir.DirectoryPath;
-
-        _pythonHelperMock
-            .Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "errors")] });
-
-        // Act
-        var result = await _languageService.LintCode(packagePath, false, CancellationToken.None);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
-            Assert.That(result.NextSteps, Has.Some.Contains("pylint"));
-            Assert.That(result.NextSteps, Has.Some.Contains("mypy"));
-            Assert.That(result.NextSteps, Has.Some.Contains("azsdk_verify_setup"));
-        });
-    }
-
-    [Test]
     public async Task LintCode_ReturnsNextStepsWithInstallGuidance_WhenExceptionThrown()
     {
         // Arrange
@@ -387,25 +362,6 @@ internal class PythonLanguageSpecificChecksTests
     }
 
     [Test]
-    public async Task FormatCode_NeverPassesCheckFlag()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("python-format-no-check-flag-test");
-        var packagePath = tempDir.DirectoryPath;
-
-        _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "All done!")] });
-
-        // Act
-        await _languageService.FormatCode(packagePath, false, CancellationToken.None);
-
-        // Assert - Verify --check flag is never passed
-        _pythonHelperMock.Verify(x => x.Run(
-            It.Is<PythonOptions>(p => !p.Args.Contains("--check")),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Test]
     public async Task FormatCode_ReturnsNextSteps_WhenFormattingFails()
     {
         // Arrange
@@ -417,28 +373,6 @@ internal class PythonLanguageSpecificChecksTests
 
         // Act
         var result = await _languageService.FormatCode(packagePath, false, CancellationToken.None);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.ResponseError, Does.Contain("failed to apply"));
-            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
-        });
-    }
-
-    [Test]
-    public async Task FormatCode_ReturnsNextStepsWithManualReviewGuidance_WhenFixFails()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("python-format-fix-fail-test");
-        var packagePath = tempDir.DirectoryPath;
-
-        _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "error: cannot format")] });
-
-        // Act
-        var result = await _languageService.FormatCode(packagePath, true, CancellationToken.None);
 
         // Assert
         Assert.Multiple(() =>

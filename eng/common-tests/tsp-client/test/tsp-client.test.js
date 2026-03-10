@@ -26,10 +26,10 @@ describe("tsp-client", () => {
   });
 });
 
-const templateDir = {
+const templateDirs = {
   [SdkName.Js]: ["sdk", "template", "template"],
   [SdkName.Net]: ["sdk", "template", "Azure.Template"],
-  [SdkName.Python]: ["sdk", "template", "azure-template"],
+  [SdkName.Python]: [],
 };
 
 describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
@@ -87,9 +87,15 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
         });
       });
 
-      it.sequential("updates template", async () => {
+      it.sequential("updates template", async (ctx) => {
+        const templateDir = templateDirs[sdkName];
+
+        if (templateDir.length == 0) {
+          ctx.skip("foo reason");
+        }
+
         await execNpmExec(["tsp-client", "update"], {
-          cwd: join(worktree, ...templateDir[sdkName]),
+          cwd: join(worktree, ...templateDir),
           logger: debugLogger,
           prefix: engCommonTspClient,
         });

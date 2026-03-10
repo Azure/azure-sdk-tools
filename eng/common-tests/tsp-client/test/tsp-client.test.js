@@ -136,6 +136,10 @@ describe.concurrent.each([
       });
     });
 
+    it("inits from local", (ctx) => {
+      ctx.skip();
+    });
+
     it("updates template", async (ctx) => {
       const templateDir = templateDirs[sdkName];
 

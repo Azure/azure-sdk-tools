@@ -62,6 +62,14 @@ jobs:
       - name: npm run format:check:ci
         run: npm run format:check:ci
 
+      - name: Checkout specs
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-rest-api-specs
+          path: specs
+          sparse-checkout: |
+            specification/widget
+
       - name: Checkout go
         uses: actions/checkout@v6
         with:

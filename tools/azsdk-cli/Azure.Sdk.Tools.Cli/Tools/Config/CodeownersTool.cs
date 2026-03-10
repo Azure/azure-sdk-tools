@@ -349,7 +349,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var users = parseResult.GetValue(multipleGithubUserOption);
                 var package = parseResult.GetValue(packageOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await AddPackageOwner(users!, package!, repo);
+                return await AddPackageOwner(users!, package!, repo, ct);
             }
 
             if (command == addLabelToPackageCommandName)
@@ -357,7 +357,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await AddPackageLabel(labels!, package!, repo);
+                return await AddPackageLabel(labels!, package!, repo, ct);
             }
 
             if (command == addLabelOwnerCommandName)
@@ -367,7 +367,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var ownerType = parseResult.GetValue(ownerTypeOption);
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await AddLabelOwner(users!, labels!, ownerType!, path, repo);
+                return await AddLabelOwner(users!, labels!, ownerType!, path, repo, ct);
             }
 
             if (command == removeCodeownersToPackageCommandName)
@@ -375,7 +375,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var users = parseResult.GetValue(multipleGithubUserOption);
                 var package = parseResult.GetValue(packageOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await RemovePackageOwner(users!, package!, repo);
+                return await RemovePackageOwner(users!, package!, repo, ct);
             }
 
             if (command == removeLabelToPackageCommandName)
@@ -383,7 +383,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var labels = parseResult.GetValue(labelsOption);
                 var package = parseResult.GetValue(packageOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await RemovePackageLabel(labels!, package!, repo);
+                return await RemovePackageLabel(labels!, package!, repo, ct);
             }
 
             if (command == removeLabelOwnerCommandName)
@@ -393,7 +393,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var ownerType = parseResult.GetValue(ownerTypeOption);
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await RemoveLabelOwner(users!, labels!, ownerType!, path, repo);
+                return await RemoveLabelOwner(users!, labels!, ownerType!, path, repo, ct);
             }
 
             if (command == exportSectionCommandName)
@@ -867,11 +867,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<CommandResponse> AddPackageOwner(
             string[] githubUsers,
             string package,
-            string? repo = null
+            string? repo = null,
+            CancellationToken ct = default
         ) {
             try
             {
-                repo = await ResolveRepo(repo);
+                repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.AddOwnersToPackage(
                     await FindOrCreateOwnerWorkItems(githubUsers),
                     package,
@@ -888,11 +889,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<CommandResponse> AddPackageLabel(
             string[] labels,
             string package,
-            string? repo = null
+            string? repo = null,
+            CancellationToken ct = default
         ) {
             try
             {
-                repo = await ResolveRepo(repo);
+                repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.AddLabelsToPackage(
                     await FindLabels(labels),
                     package,
@@ -912,11 +914,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string[] labels,
             OwnerType ownerType,
             string? path = null,
-            string? repo = null
+            string? repo = null,
+            CancellationToken ct = default
         ) {
             try
             {
-                repo = await ResolveRepo(repo);
+                repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.AddOwnersAndLabelsToPath(
                     await FindOrCreateOwnerWorkItems(githubUsers),
                     await FindLabels(labels),
@@ -936,11 +939,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<CommandResponse> RemovePackageOwner(
             string[] githubUsers,
             string package,
-            string? repo = null
+            string? repo = null,
+            CancellationToken ct = default
         ) {
             try
             {
-                repo = await ResolveRepo(repo);
+                repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.RemoveOwnersFromPackage(
                     await GetOwnerWorkItems(githubUsers),
                     package,
@@ -958,11 +962,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<CommandResponse> RemovePackageLabel(
             string[] labels,
             string package,
-            string? repo = null
+            string? repo = null,
+            CancellationToken ct = default
         ) {
             try
             {
-                repo = await ResolveRepo(repo);
+                repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.RemoveLabelsFromPackage(
                     await FindLabels(labels),
                     package,
@@ -982,11 +987,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string[] labels,
             OwnerType ownerType,
             string? path = null,
-            string? repo = null
+            string? repo = null,
+            CancellationToken ct = default
         ) {
             try
             {
-                repo = await ResolveRepo(repo);
+                repo = await ResolveRepo(repo, ct);
                 return await codeownersManagementHelper.RemoveOwnersFromLabelsAndPath(
                     await GetOwnerWorkItems(githubUsers),
                     await FindLabels(labels),
@@ -1002,11 +1008,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        private async Task<string> ResolveRepo(string? repo)
+        private async Task<string> ResolveRepo(string? repo, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(repo))
             {
-                repo = await gitHelper.GetRepoFullNameAsync(".");
+                repo = await gitHelper.GetRepoFullNameAsync(
+                    await gitHelper.DiscoverRepoRootAsync(".", ct),
+                    ct: ct
+                );
                 if (string.IsNullOrEmpty(repo))
                 {
                     throw new InvalidOperationException("Could not infer repository. Use repo to specify it.");

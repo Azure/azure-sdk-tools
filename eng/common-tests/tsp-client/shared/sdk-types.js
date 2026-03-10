@@ -97,4 +97,11 @@ export const sdkLabels = {
     breakingChangeSuppressionApproved:
       "BreakingChange-Python-Sdk-Suppression-Approved",
   },
+  "azure-sdk-for-rust": {
+    breakingChange: "BreakingChange-Rust-Sdk",
+    breakingChangeApproved: "BreakingChange-Rust-Sdk-Approved",
+    breakingChangeSuppression: "BreakingChange-Rust-Sdk-Suppression",
+    breakingChangeSuppressionApproved:
+      "BreakingChange-Rust-Sdk-Suppression-Approved",
+  },
 };

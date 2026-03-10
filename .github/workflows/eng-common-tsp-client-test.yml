@@ -111,11 +111,6 @@ jobs:
         with:
           repository: Azure/azure-sdk-for-rust
           path: rust
-          sparse-checkout: |
-            eng
-            sdk/core
-            sdk/identity
-            sdk/template
 
       - name: npm run test:ci
         run: |

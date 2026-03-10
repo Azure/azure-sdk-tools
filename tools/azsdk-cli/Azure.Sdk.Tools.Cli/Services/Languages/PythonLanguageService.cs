@@ -288,12 +288,7 @@ public sealed partial class PythonLanguageService : LanguageService
             var readFilePaths = patchFiles.Select(f => Path.GetRelativePath(packagePath, f)).ToList();
             var patchLog = new ConcurrentBag<AppliedPatch>();
 
-            var prompt = new PythonErrorDrivenPatchTemplate(
-                buildContext,
-                packagePath,
-                customizationRoot,
-                readFilePaths,
-                patchFilePaths).BuildPrompt();
+            var prompt = new PythonErrorDrivenPatchTemplate(buildContext, packagePath, customizationRoot, readFilePaths, patchFilePaths).BuildPrompt();
 
             var agent = new CopilotAgent<string>
             {
@@ -301,13 +296,14 @@ public sealed partial class PythonLanguageService : LanguageService
                 MaxIterations = 25,
                 Tools =
                 [
-                    FileTools.CreateReadFileTool(customizationRoot, includeLineNumbers: true,
+                    FileTools.CreateGrepSearchTool(packagePath,
+                        description: "Search for text or regex patterns in files. Use this to find specific symbols or references without reading entire files."),
+                    FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,
                         description: "Read files from the package directory (generated code, _patch.py files, etc.)"),
                     CodePatchTools.CreateCodePatchTool(customizationRoot,
                         description: "Apply code patches to _patch.py customization files only",
                         onPatchApplied: patchLog.Add)
-                ]
-            };
+                ]            };
 
             try
             {

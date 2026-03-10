@@ -705,8 +705,8 @@ public class BuildTool(
 {
     [McpServerTool(Name = "azsdk_package_build"), Description("Compile the SDK")]
     public async Task<BuildResponse> BuildAsync(
+        IProgress<ProgressNotificationValue>? progress,
         string packagePath,
-        IProgress<ProgressNotificationValue>? progress = null,
         CancellationToken ct = default)
     {
         // Declare the total number of discrete steps up front

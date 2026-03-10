@@ -27,12 +27,10 @@ public class CodeownersManagementHelperTests
         _mockDevOps = new Mock<IDevOpsService>();
         _mockTeamUserCache = new Mock<ITeamUserCache>();
         _mockTeamUserCache.Setup(c => c.GetUsersForTeam(It.IsAny<string>())).Returns(new List<string>());
-        _mockValidator = new Mock<ICodeownersValidatorHelper>();
         _helper = new CodeownersManagementHelper(
             new TestLogger<CodeownersManagementHelper>(),
             _mockDevOps.Object,
-            _mockTeamUserCache.Object,
-            _mockValidator.Object
+            _mockTeamUserCache.Object
         );
     }
 

@@ -29,7 +29,7 @@ describe("tsp-client", () => {
 const templateDir = {
   [SdkName.Js]: ["sdk", "template", "template"],
   [SdkName.Net]: ["sdk", "template", "Azure.Template"],
-  [SdkName.Python]: ["TODO"],
+  [SdkName.Python]: ["sdk", "template", "azure-template"],
 };
 
 describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(

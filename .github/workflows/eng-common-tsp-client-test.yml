@@ -79,7 +79,14 @@ jobs:
             eng
             sdk/template
 
-      # TODO: checkout python
+      - name: Checkout python
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-python
+          path: python
+          sparse-checkout: |
+            eng
+            sdk/template
 
       - name: npm run test:ci
         run: |

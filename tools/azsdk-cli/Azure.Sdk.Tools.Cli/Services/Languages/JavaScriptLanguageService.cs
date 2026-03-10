@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -287,5 +289,159 @@ public sealed partial class JavaScriptLanguageService : LanguageService
             logger.LogWarning(ex, "Error searching for JavaScript customization files in {PackagePath}", packagePath);
             return null;
         }
+    }
+
+    /// <summary>
+    /// Updates the JavaScript package version in language-specific files.
+    /// Follows SetPackageVersion from azure-sdk-for-js/eng/scripts/Language-Settings.ps1,
+    /// excluding changelog updates because changelog changes are handled by the base language workflow.
+    /// Updates package.json version and any constant files listed in //metadata.constantPaths.
+    /// </summary>
+    protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
+        string packagePath,
+        string version,
+        string? releaseType,
+        CancellationToken ct)
+    {
+        logger.LogInformation("Updating JavaScript package version to {Version} in {PackagePath}", version, packagePath);
+
+        try
+        {
+            var packageJsonPath = Path.Combine(packagePath, "package.json");
+            if (!File.Exists(packageJsonPath))
+            {
+                return PackageOperationResponse.CreateFailure(
+                    $"No package.json found at {packageJsonPath}",
+                    nextSteps: ["Ensure the package path contains a valid npm package with package.json"]);
+            }
+
+            var packageJsonContent = await File.ReadAllTextAsync(packageJsonPath, ct);
+
+            JsonNode? packageJsonNode;
+            try
+            {
+                packageJsonNode = JsonNode.Parse(packageJsonContent, nodeOptions: null, documentOptions: new JsonDocumentOptions
+                {
+                    AllowTrailingCommas = true,
+                    CommentHandling = JsonCommentHandling.Skip
+                });
+            }
+            catch (JsonException ex)
+            {
+                logger.LogError(ex, "Failed to parse package.json at {PackageJsonPath}", packageJsonPath);
+                return PackageOperationResponse.CreateFailure(
+                    $"Failed to parse package.json: {ex.Message}",
+                    nextSteps: ["Ensure package.json is valid JSON"]);
+            }
+
+            if (packageJsonNode is null)
+            {
+                return PackageOperationResponse.CreateFailure(
+                    "package.json is empty or null",
+                    nextSteps: ["Ensure package.json contains valid content"]);
+            }
+
+            // Update the version field in package.json
+            packageJsonNode["version"] = version;
+
+            // Write back with 2-space indentation + trailing newline, matching JS JSON.stringify behavior
+            var updatedContent = packageJsonNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n";
+            await File.WriteAllTextAsync(packageJsonPath, updatedContent, ct);
+            logger.LogInformation("Updated version in package.json to {Version}", version);
+
+            // Update constant files referenced in //metadata.constantPaths (equivalent to updatePackageConstants in VersionUtils.js)
+            int updatedConstantFiles = await UpdatePackageConstantsAsync(packagePath, packageJsonNode, version, ct);
+
+            var message = updatedConstantFiles > 0
+                ? $"Version updated to {version} in package.json and {updatedConstantFiles} constant file(s)."
+                : $"Version updated to {version} in package.json.";
+
+            return PackageOperationResponse.CreateSuccess(message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to update JavaScript package version");
+            return PackageOperationResponse.CreateFailure(
+                $"Failed to update version: {ex.Message}",
+                nextSteps: ["Check the package.json file format", "Ensure the file is not locked by another process"]);
+        }
+    }
+
+    /// <summary>
+    /// Updates version strings in constant files listed in the //metadata.constantPaths section of package.json.
+    /// Equivalent to updatePackageConstants from azure-sdk-for-js/eng/tools/versioning/VersionUtils.js.
+    /// </summary>
+    /// <returns>The number of constant files that were updated.</returns>
+    private async Task<int> UpdatePackageConstantsAsync(string packagePath, JsonNode packageJsonNode, string newVersion, CancellationToken ct)
+    {
+        var metadataNode = packageJsonNode["//metadata"];
+        if (metadataNode is null)
+        {
+            return 0;
+        }
+
+        var constantPathsNode = metadataNode["constantPaths"];
+        if (constantPathsNode is not JsonArray constantPathsArray)
+        {
+            return 0;
+        }
+
+        int updatedCount = 0;
+        foreach (var entry in constantPathsArray)
+        {
+            if (entry is null)
+            {
+                continue;
+            }
+
+            var filePath = entry["path"]?.GetValue<string>();
+            var prefix = entry["prefix"]?.GetValue<string>();
+
+            if (string.IsNullOrEmpty(filePath) || string.IsNullOrEmpty(prefix))
+            {
+                logger.LogWarning("Skipping invalid constantPaths entry: path={FilePath}, prefix={Prefix}", filePath, prefix);
+                continue;
+            }
+
+            var targetPath = Path.Combine(packagePath, filePath.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(targetPath))
+            {
+                logger.LogWarning("Constant file not found, skipping: {TargetPath}", targetPath);
+                continue;
+            }
+
+            var fileContent = await File.ReadAllTextAsync(targetPath, ct);
+            var updatedContent = ReplaceVersionInContent(fileContent, prefix, newVersion);
+
+            if (updatedContent == fileContent)
+            {
+                logger.LogDebug("No version replacement needed in {TargetPath}", targetPath);
+                continue;
+            }
+
+            await File.WriteAllTextAsync(targetPath, updatedContent, ct);
+            logger.LogInformation("Updated version to {NewVersion} in {TargetPath}", newVersion, targetPath);
+            updatedCount++;
+        }
+
+        return updatedCount;
+    }
+
+    /// <summary>
+    /// Replaces a semver version string in the given content using a prefix-anchored pattern.
+    /// Equivalent to the regex-based replacement in updatePackageConstants from VersionUtils.js.
+    /// </summary>
+    internal static string ReplaceVersionInContent(string content, string prefix, string newVersion)
+    {
+        // Semver pattern from https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
+        // adapted to match within a line (no ^ or $ anchors), same as the JS VersionUtils.js
+        const string semverPattern =
+            @"(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)" +
+            @"(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))" +
+            @"?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?";
+
+        // Pattern: (prefix.*?)(semver) — matches prefix followed by non-greedy chars then a semver version
+        var pattern = $"({prefix}.*?)({semverPattern})";
+        return Regex.Replace(content, pattern, $"${{1}}{newVersion}");
     }
 }

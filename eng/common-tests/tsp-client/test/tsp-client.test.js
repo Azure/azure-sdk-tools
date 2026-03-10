@@ -96,7 +96,7 @@ describe.concurrent.each([
     it("updates template", async (ctx) => {
       const templateDir = templateDirs[sdkName];
 
-      if (templateDir.length == 0) {
+      if (templateDir.length === 0) {
         ctx.skip();
       }
 

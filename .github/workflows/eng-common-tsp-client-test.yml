@@ -114,6 +114,7 @@ jobs:
           sparse-checkout: |
             eng
             sdk/core
+            sdk/identity
             sdk/template
 
       - name: npm run test:ci

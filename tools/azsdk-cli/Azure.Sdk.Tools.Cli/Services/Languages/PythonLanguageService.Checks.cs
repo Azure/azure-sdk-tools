@@ -191,8 +191,8 @@ public partial class PythonLanguageService : LanguageService
 
             if (result.ExitCode == 0)
             {
-                logger.LogInformation("Code formatting applied successfully");
-                return new PackageCheckResponse(result.ExitCode, "Code formatting applied successfully");
+                logger.LogInformation("Code formatting completed successfully - no issues found");
+                return new PackageCheckResponse(result.ExitCode, "Code formatting completed successfully - no issues found");
             }
             else
             {

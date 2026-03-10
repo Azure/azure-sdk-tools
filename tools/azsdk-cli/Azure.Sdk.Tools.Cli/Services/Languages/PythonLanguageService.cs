@@ -1,8 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Collections.Concurrent;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -10,11 +14,13 @@ public sealed partial class PythonLanguageService : LanguageService
 {
     private readonly INpxHelper npxHelper;
     private readonly IPythonHelper pythonHelper;
+    private readonly ICopilotAgentRunner copilotAgentRunner;
 
     public PythonLanguageService(
         IProcessHelper processHelper,
         IPythonHelper pythonHelper,
         INpxHelper npxHelper,
+        ICopilotAgentRunner copilotAgentRunner,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
@@ -26,6 +32,7 @@ public sealed partial class PythonLanguageService : LanguageService
     {
         this.pythonHelper = pythonHelper;
         this.npxHelper = npxHelper;
+        this.copilotAgentRunner = copilotAgentRunner;
     }
     public override SdkLanguage Language { get; } = SdkLanguage.Python;
     public override bool IsCustomizedCodeUpdateSupported => true;
@@ -126,7 +133,7 @@ public sealed partial class PythonLanguageService : LanguageService
     public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {
         // Python SDKs can have _patch.py files in multiple locations within the package:
-        // e.g., azure/packagename/_patch.py, azure/packagename/models/_patch.py, azure/packagename/operations/_patch.py
+        // e.g., azure/packagename/_patch.py, azure/packagename/models/_patch.py, azure/packagename/operations/_patch.py, azure/packagename/_operations/_patch.py
         //
         // However, autorest.python generates empty _patch.py templates by default with:
         //   __all__: List[str] = []
@@ -247,6 +254,86 @@ public sealed partial class PythonLanguageService : LanguageService
     }
 
     /// <summary>
+    /// Runs pylint and mypy as the "build" step for Python packages (Python has no compiler).
+    /// </summary>
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo)> BuildAsync(
+        string packagePath, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        var packageInfo = await GetPackageInfo(packagePath, ct);
+        var check = await LintCode(packagePath, cancellationToken: ct);
+        return check.ExitCode == 0
+            ? (true, null, packageInfo)
+            : (false, check.CheckStatusDetails, packageInfo);
+    }
+
+    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+        string customizationRoot,
+        string packagePath,
+        string buildContext,
+        CancellationToken ct)
+    {
+        try
+        {
+            var patchFiles = Directory.GetFiles(customizationRoot, "_patch.py", SearchOption.AllDirectories)
+                .Where(HasNonEmptyAllExport)
+                .ToList();
+
+            if (patchFiles.Count == 0)
+            {
+                logger.LogDebug("No _patch.py files with customizations found in {Root}", customizationRoot);
+                return [];
+            }
+
+            var patchFilePaths = patchFiles.Select(f => Path.GetRelativePath(customizationRoot, f)).ToList();
+            var readFilePaths = patchFiles.Select(f => Path.GetRelativePath(packagePath, f)).ToList();
+            var patchLog = new ConcurrentBag<AppliedPatch>();
+
+            var prompt = new PythonErrorDrivenPatchTemplate(
+                buildContext,
+                packagePath,
+                customizationRoot,
+                readFilePaths,
+                patchFilePaths).BuildPrompt();
+
+            var agent = new CopilotAgent<string>
+            {
+                Instructions = prompt,
+                MaxIterations = 25,
+                Tools =
+                [
+                    FileTools.CreateReadFileTool(customizationRoot, includeLineNumbers: true,
+                        description: "Read files from the package directory (generated code, _patch.py files, etc.)"),
+                    CodePatchTools.CreateCodePatchTool(customizationRoot,
+                        description: "Apply code patches to _patch.py customization files only",
+                        onPatchApplied: patchLog.Add)
+                ]
+            };
+
+            try
+            {
+                await copilotAgentRunner.RunAsync(agent, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception agentEx)
+            {
+                logger.LogDebug(agentEx, "CopilotAgent terminated early");
+            }
+
+            var appliedPatches = patchLog.ToList();
+            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
+            return appliedPatches;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to apply patches");
+            return [];
+        }
+    }
+
+    /// <summary>
     /// Checks if a _patch.py file has a non-empty __all__ export list, indicating actual customizations.
     /// </summary>
     private bool HasNonEmptyAllExport(string patchFilePath)
@@ -263,8 +350,9 @@ public sealed partial class PythonLanguageService : LanguageService
                         return true;
                     }
 
-                    // If line has [ but not ] on same line, it's multiline = non-empty
-                    if (line.Contains('[') && !line.Contains(']'))
+                    // If line has [ but not ] on the same line after the =, it's multiline and non-empty.
+                    var valueAfterEquals = line[(line.LastIndexOf('=') + 1)..].Trim();
+                    if (valueAfterEquals.StartsWith('[') && !valueAfterEquals.StartsWith("[]"))
                     {
                         return true;
                     }

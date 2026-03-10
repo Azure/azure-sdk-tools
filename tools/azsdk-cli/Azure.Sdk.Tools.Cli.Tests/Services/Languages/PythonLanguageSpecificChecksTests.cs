@@ -31,6 +31,7 @@ internal class PythonLanguageSpecificChecksTests
             _processHelperMock.Object,
             _pythonHelperMock.Object,
             _npxHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,

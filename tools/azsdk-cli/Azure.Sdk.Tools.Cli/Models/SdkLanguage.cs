@@ -26,7 +26,6 @@ public enum SdkLanguage
 
 public static class SdkLanguageHelpers
 {
-
     public static string ToWorkItemString(this SdkLanguage value)
     {
         var field = value.GetType().GetField(value.ToString())

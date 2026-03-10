@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.ComponentModel;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -207,16 +208,27 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         bool buildSucceeded = false;
         string? buildError = null;
 
-        var feedbackItems = await GetFeedbackItems(plainTextFeedback: customizationRequest, ct: ct);
-        if (feedbackItems.Count == 0)
+        List<FeedbackItem> feedbackItems;
+        if (apiViewUrl != null)
         {
-            return new CustomizedCodeUpdateResponse
+            try
             {
-                Success = false,
-                Message = "No feedback items provided. Please supply a customization request or API review URL.",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
-                BuildResult = "No feedback items to process."
-            };
+                feedbackItems = await GetFeedbackItems(apiViewUrl: apiViewUrl, ct: ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to fetch feedback items from APIView URL.");
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = $"Failed to fetch feedback from APIView: {ex.Message}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError
+                };
+            }
+        }
+        else
+        {
+            feedbackItems = await GetFeedbackItems(plainTextFeedback: customizationRequest, ct: ct);
         }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
@@ -249,10 +261,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
             var tspFixFailed = 0;
             var tspFixSucceeded = 0;
-            var tspApplicable = 0;
-            var codeCustomizations = 0;
-            var manualChanges = 0;
-            var noChanges = 0;
+            var tspApplicable = response.Classifications.Count(c => c.Classification == ClassificationTspApplicable);
+            var codeCustomizations = response.Classifications.Count(c => c.Classification == ClassificationCodeCustomization);
+            var manualChanges = response.Classifications.Count(c => c.Classification == ClassificationRequiresManualIntervention);
+            var noChanges = response.Classifications.Count(c => c.Classification == ClassificationSuccess);
+
+            logger.LogInformation("Classification summary: TSP_APPLICABLE={TspApplicable}, CODE_CUSTOMIZATION={CodeCustomization}, REQUIRES_MANUAL_INTERVENTION={Manual}, SUCCESS={Success}", tspApplicable, codeCustomizations, manualChanges, noChanges);
+
+            tspApplicable = 0;
+            codeCustomizations = 0;
+            manualChanges = 0;
+            noChanges = 0;
 
             foreach (var itemDetails in response.Classifications)
             {
@@ -272,7 +291,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 {
                     tspApplicable++;
                     logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
-                    var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, itemDetails.Text, ct: ct);
+                    var languageTaggedRequest = $"For {languageService.Language}: {itemDetails.Text}";
+                    var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);
 
                     if (tspCustomizationResult.Success)
                     {
@@ -443,6 +463,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             patchContext,
             ct);
 
+        foreach (var patch in patches)
+        {
+            var patchDetail = patch.Description.StartsWith($"Patch applied to {patch.FilePath}: ")
+                ? patch.Description[$"Patch applied to {patch.FilePath}: ".Length..]
+                : patch.Description;
+            logger.LogInformation("Patch applied: {File} — {Detail}", patch.FilePath, patchDetail);
+        }
+
         if (patches.Count == 0)
         {
             logger.LogInformation("No patches applied.");
@@ -532,6 +560,22 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             sb.AppendLine(buildError);
         }
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if <paramref name="value"/> is an absolute HTTP/HTTPS URL
+    /// whose host matches a known APIView environment (production or staging).
+    /// Recognised hosts: <c>apiview.dev</c>, <c>apiview.org</c>, <c>apiviewstagingtest.com</c>.
+    /// </summary>
+    internal static bool IsApiViewUrl(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) { return false; }
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)) { return false; }
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) { return false; }
+        var host = uri.Host;
+        return host.EndsWith("apiview.dev", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith("apiview.org", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

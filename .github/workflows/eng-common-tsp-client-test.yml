@@ -106,6 +106,15 @@ jobs:
             eng
             sdk/template
 
+      - name: Checkout rust
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-rust
+          path: rust
+          sparse-checkout: |
+            eng
+            sdk/template
+
       - name: npm run test:ci
         run: |
           set -o pipefail

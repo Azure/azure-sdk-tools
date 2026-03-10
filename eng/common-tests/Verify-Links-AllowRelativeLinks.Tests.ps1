@@ -66,11 +66,11 @@ Describe "Test-PageUriMatchesRelativeLinkPattern" {
 
     Context "When no allow-relative-links patterns are loaded" {
         BeforeAll {
-            $script:savedPatterns = $allowRelativeLinkPatterns
-            $allowRelativeLinkPatterns = @()
+            $script:savedRegexes = $allowRelativeLinkRegexes
+            $allowRelativeLinkRegexes = @()
         }
         AfterAll {
-            $allowRelativeLinkPatterns = $script:savedPatterns
+            $allowRelativeLinkRegexes = $script:savedRegexes
         }
         It "Should return false for any URI when pattern list is empty" {
             $uri = [System.Uri]("file:///home/user/repo/specs/design.md")

@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
-using System.Text;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -11,7 +10,6 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 {
@@ -253,7 +251,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     logger.LogInformation("SDK generation failed with details: [{FailureDetails}]", failureDetails);
                     return response;
                 }
-                
+
                 string apiSpecBranchRef = "main";
                 if (pullRequestNumber > 0)
                 {

@@ -38,13 +38,6 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 return;
             }
 
-            // Only analyze public or internal methods
-            if (methodSymbol.DeclaredAccessibility != Accessibility.Public &&
-                methodSymbol.DeclaredAccessibility != Accessibility.Internal)
-            {
-                return;
-            }
-
             // Skip overrides and interface implementations — their signature is dictated by the base/interface
             if (methodSymbol.IsOverride)
             {
@@ -53,6 +46,12 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
 
             // Skip explicit interface implementations
             if (methodSymbol.ExplicitInterfaceImplementations.Length > 0)
+            {
+                return;
+            }
+
+            // Skip implicit interface implementations — their signature is dictated by the interface
+            if (IsImplicitInterfaceImplementation(methodSymbol))
             {
                 return;
             }
@@ -91,12 +90,13 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         {
             if (returnType is INamedTypeSymbol namedType)
             {
-                var fullName = namedType.ConstructedFrom?.ToDisplayString() ?? namedType.ToDisplayString();
+                var name = namedType.Name;
+                var namespaceName = namedType.ContainingNamespace?.ToDisplayString();
 
-                return fullName == "System.Threading.Tasks.Task" ||
-                       fullName == "System.Threading.Tasks.Task<TResult>" ||
-                       fullName == "System.Threading.Tasks.ValueTask" ||
-                       fullName == "System.Threading.Tasks.ValueTask<TResult>";
+                if (namespaceName == "System.Threading.Tasks")
+                {
+                    return name == "Task" || name == "ValueTask";
+                }
             }
 
             return false;
@@ -116,10 +116,36 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 });
         }
 
+        private static bool IsImplicitInterfaceImplementation(IMethodSymbol methodSymbol)
+        {
+            var containingType = methodSymbol.ContainingType;
+            if (containingType == null)
+            {
+                return false;
+            }
+
+            foreach (var iface in containingType.AllInterfaces)
+            {
+                foreach (var member in iface.GetMembers().OfType<IMethodSymbol>())
+                {
+                    if (SymbolEqualityComparer.Default.Equals(
+                            containingType.FindImplementationForInterfaceMember(member),
+                            methodSymbol))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private static bool HasCancellationTokenParameter(IMethodSymbol methodSymbol)
         {
             return methodSymbol.Parameters.Any(p =>
-                p.Type.ToDisplayString() == "System.Threading.CancellationToken");
+                p.Type is INamedTypeSymbol namedType &&
+                namedType.Name == "CancellationToken" &&
+                namedType.ContainingNamespace?.ToDisplayString() == "System.Threading");
         }
     }
 }

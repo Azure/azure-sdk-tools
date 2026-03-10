@@ -1,5 +1,5 @@
 import debug from "debug";
-import { mkdtemp, rm, stat } from "fs/promises";
+import { mkdtemp, stat } from "fs/promises";
 import { tmpdir } from "os";
 import { join, resolve } from "path";
 import semver from "semver";
@@ -68,17 +68,17 @@ describe.concurrent.each([
 
     afterEach(async () => {
       if (worktree) {
-        try {
-          await simpleGit(sdkDir).raw([
-            "worktree",
-            "remove",
-            worktree,
-            "--force",
-          ]);
-        } catch {
-          // Worktree may not have been created
-        }
-        await rm(worktree, { recursive: true, force: true });
+        // try {
+        //   await simpleGit(sdkDir).raw([
+        //     "worktree",
+        //     "remove",
+        //     worktree,
+        //     "--force",
+        //   ]);
+        // } catch {
+        //   // Worktree may not have been created
+        // }
+        // await rm(worktree, { recursive: true, force: true });
       }
     });
 

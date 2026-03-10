@@ -3,7 +3,6 @@
 * [Code Structure](#code-structure)
 * [Updating](#updating)
 * [eng/common sync](#engcommon-sync)
-* [.github/workflows and .github/skills sync](#githubworkflows-and-githubskills-sync)
 
 ## Code Structure
 
@@ -46,11 +45,3 @@ This process is set up in such a way to make it easier for changes to be tested 
 
 [pipeline]: https://dev.azure.com/azure-sdk/internal/_build?definitionId=1372&_a=summary
 [yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/eng-common-sync.yml
-
-## .github/workflows and .github/skills sync
-
-Shared AI skills in `.github/skills/azsdk-common-*/` are synced to all subscribed repos via the [`eng-github-config-sync` pipeline][eng-github-sync-yml]. Only `azsdk-common-*` prefixed directories are synced — repo-specific skills in `.github/skills/<name>/` are not affected.
-
-The sync follows the same workflow as `eng/common` (see above). For details on creating and managing shared skills, see [skills-guidelines.md](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/skills-guidelines.md).
-
-[eng-github-sync-yml]: https://github.com/Azure/azure-sdk-tools/blob/main/eng/pipelines/eng-github-config-sync.yml

@@ -19,11 +19,34 @@ const generateCiYamlCli = async (
         process.exit(1);
     }
 
-    // Calculate relative path from sdkRepoPath to packagePath (packagePath is always absolute)
+    // Calculate relative path from sdkRepoPath to packagePath
     const normalizedSdkRepoPath = path.resolve(sdkRepoPath);
     const absolutePackagePath = path.resolve(packageFolderPath);
     const relativePackagePath = path.relative(normalizedSdkRepoPath, absolutePackagePath);
 
+    // Validate that the package path is safely inside the SDK repo path.
+    // Reject obvious path traversal attempts such as absolute paths outside the repo
+    // or relative paths that start with "..".
+    const normalizedSdkRepoPathWithSep = normalizedSdkRepoPath.endsWith(path.sep)
+        ? normalizedSdkRepoPath
+        : normalizedSdkRepoPath + path.sep;
+
+    const isRelativeTraversal =
+        !path.isAbsolute(packageFolderPath) &&
+        (packageFolderPath === ".." || packageFolderPath.startsWith(".." + path.sep));
+
+    const isOutsideRepoByPrefix = !absolutePackagePath.startsWith(normalizedSdkRepoPathWithSep);
+
+    const isOutsideRepoByRelative =
+        relativePackagePath === ".." || relativePackagePath.startsWith(".." + path.sep);
+
+    if (isRelativeTraversal || isOutsideRepoByPrefix || isOutsideRepoByRelative) {
+        logger.error(
+            `The provided packagePath ("${packageFolderPath}") resolves outside the sdkRepoPath ("${sdkRepoPath}"). ` +
+                `Please provide a package path that is within the SDK repository root.`
+        );
+        process.exit(1);
+    }
     logger.info(`SDK Repo Path: ${normalizedSdkRepoPath}`);
     logger.info(`Package Path (absolute): ${absolutePackagePath}`);
     logger.info(`Package Path (relative): ${relativePackagePath}`);

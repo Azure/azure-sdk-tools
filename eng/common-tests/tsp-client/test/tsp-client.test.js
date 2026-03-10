@@ -61,17 +61,19 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
       });
 
       afterEach(async () => {
-        try {
-          await simpleGit(sdkDir).raw([
-            "worktree",
-            "remove",
-            worktree,
-            "--force",
-          ]);
-        } catch {
-          // Worktree may not have been created
+        if (worktree) {
+          try {
+            await simpleGit(sdkDir).raw([
+              "worktree",
+              "remove",
+              worktree,
+              "--force",
+            ]);
+          } catch {
+            // Worktree may not have been created
+          }
+          await rm(worktree, { recursive: true, force: true });
         }
-        await rm(worktree, { recursive: true, force: true });
       });
 
       it.sequential("inits from url", async () => {

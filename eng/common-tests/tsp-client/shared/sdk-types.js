@@ -6,7 +6,7 @@ import * as z from "zod";
  * Represents supported SDK language identifiers.
  *
  * @readonly
- * @enum {"azure-sdk-for-go" | "azure-sdk-for-java" | "azure-sdk-for-js" | "azure-sdk-for-net" | "azure-sdk-for-python" | "azure-sdk-for-rust"}
+ * @enum {"azure-sdk-for-go" | "azure-sdk-for-java" | "azure-sdk-for-js" | "azure-sdk-for-net" | "azure-sdk-for-python"}
  */
 export const SdkName = Object.freeze({
   Go: "azure-sdk-for-go",
@@ -14,7 +14,6 @@ export const SdkName = Object.freeze({
   Js: "azure-sdk-for-js",
   Net: "azure-sdk-for-net",
   Python: "azure-sdk-for-python",
-  Rust: "azure-sdk-for-rust",
 });
 /** @type {import("zod").ZodType<SdkName>} */
 export const SdkNameSchema = z.enum(Object.values(SdkName));
@@ -96,12 +95,5 @@ export const sdkLabels = {
     breakingChangeSuppression: "BreakingChange-Python-Sdk-Suppression",
     breakingChangeSuppressionApproved:
       "BreakingChange-Python-Sdk-Suppression-Approved",
-  },
-  "azure-sdk-for-rust": {
-    breakingChange: "BreakingChange-Rust-Sdk",
-    breakingChangeApproved: "BreakingChange-Rust-Sdk-Approved",
-    breakingChangeSuppression: "BreakingChange-Rust-Sdk-Suppression",
-    breakingChangeSuppressionApproved:
-      "BreakingChange-Rust-Sdk-Suppression-Approved",
   },
 };

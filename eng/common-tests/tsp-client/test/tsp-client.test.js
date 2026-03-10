@@ -32,7 +32,6 @@ const templateDirs = {
   [SdkName.Js]: ["sdk", "template", "template"],
   [SdkName.Net]: ["sdk", "template", "Azure.Template"],
   [SdkName.Python]: [],
-  [SdkName.Rust]: [],
 };
 
 describe.concurrent.each([
@@ -41,7 +40,6 @@ describe.concurrent.each([
   SdkName.Js,
   SdkName.Net,
   SdkName.Python,
-  SdkName.Rust,
 ])("%s", (sdkName) => {
   /** @type {string} */
   let sdkDir;

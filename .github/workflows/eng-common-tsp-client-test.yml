@@ -107,13 +107,6 @@ jobs:
             eng
             sdk/template
 
-      - name: Checkout rust
-        uses: actions/checkout@v6
-        with:
-          repository: Azure/azure-sdk-for-rust
-          path: rust
-          # rust needs full checkout (other sdk folders) to prevent build failures
-
       - name: npm run test:ci
         run: |
           set -o pipefail

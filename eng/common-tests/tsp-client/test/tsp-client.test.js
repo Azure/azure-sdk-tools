@@ -91,7 +91,7 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
         const templateDir = templateDirs[sdkName];
 
         if (templateDir.length == 0) {
-          ctx.skip("foo reason");
+          ctx.skip();
         }
 
         await execNpmExec(["tsp-client", "update"], {

@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
             switch (command)
             {
                 case getPipelineStatusCommandName:
-                    var pipelineRunStatus = await GetPipelineRunStatus(parseResult.GetValue(pipelineRunIdOpt));
+                    var pipelineRunStatus = await GetPipelineRunStatus(parseResult.GetValue(pipelineRunIdOpt), ct);
                     return new DefaultCommandResponse { Message = $"Pipeline run status: {pipelineRunStatus}" };
                 default:
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -49,12 +49,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
         /// <param name="buildId">Build ID for the pipeline run</param>
         /// <returns></returns>
         [McpServerTool(Name = GetPipelineStatusToolName), Description("Get pipeline status for a given pipeline build ID")]
-        public async Task<DefaultCommandResponse> GetPipelineRunStatus(int buildId)
+        public async Task<DefaultCommandResponse> GetPipelineRunStatus(int buildId, CancellationToken ct = default)
         {
             try
             {
                 var response = new DefaultCommandResponse();
-                var pipeline = await devopsService.GetPipelineRunAsync(buildId);
+                var pipeline = await devopsService.GetPipelineRunAsync(buildId, ct);
                 if (pipeline != null)
                 {
                     response.Result = pipeline.Result?.ToString() ?? pipeline.Status?.ToString() ?? "Not available";

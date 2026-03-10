@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers;
 
 public interface ILogAnalysisHelper
 {
-    Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywords, int? beforeLines, int? afterLines);
+    Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywords, int? beforeLines, int? afterLines, CancellationToken ct);
 }
 
 public class Keyword
@@ -78,13 +78,13 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
         "bad request"
     ];
 
-    public async Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywordOverrides, int? beforeLines, int? afterLines)
+    public async Task<List<LogEntry>> AnalyzeLogContent(string filePath, List<string>? keywordOverrides, int? beforeLines, int? afterLines, CancellationToken ct)
     {
         using var stream = new StreamReader(filePath);
-        return await AnalyzeLogContent(stream, keywordOverrides, beforeLines, afterLines, filePath: filePath);
+        return await AnalyzeLogContent(stream, keywordOverrides, beforeLines, afterLines, filePath: filePath, ct: ct);
     }
 
-    public async Task<List<LogEntry>> AnalyzeLogContent(StreamReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "")
+    public async Task<List<LogEntry>> AnalyzeLogContent(StreamReader reader, List<string>? keywordOverrides, int? beforeLines, int? afterLines, string url = "", string filePath = "", CancellationToken ct = default)
     {
         var keywords = defaultErrorKeywords;
         if (keywordOverrides?.Count > 0)
@@ -106,7 +106,7 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
 
         var lineNumber = 0;
         string? line;
-        while ((line = await reader.ReadLineAsync()) != null)
+        while ((line = await reader.ReadLineAsync(ct)) != null)
         {
             lineNumber++;
             // check > not >= because an error match will take up an extra slot
@@ -120,7 +120,7 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
             if (matchedKeywords.Count > 0)
             {
                 logger.LogDebug("Found error matches at line {lineNumber}: {keywords}. Line: {line}", lineNumber, string.Join(", ", matchedKeywords), line);
-                while (after.Count < afterLines && (line = await reader.ReadLineAsync()) != null)
+                while (after.Count < afterLines && (line = await reader.ReadLineAsync(ct)) != null)
                 {
                     lineNumber++;
                     matchedKeywords = keywords.Where(k => k.Matches(line)).ToList();

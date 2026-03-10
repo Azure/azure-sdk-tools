@@ -92,8 +92,8 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             _logger.LogInformation("Extracted revisionId: {RevisionId}, reviewId: {ReviewId}", revisionId, reviewId);
 
             // Get consolidated comments and metadata
-            var comments = await _service.GetConsolidatedComments(revisionId);
-            var metadata = await _service.ParseReviewMetadata(revisionId);
+            var comments = await _service.GetConsolidatedComments(revisionId, ct);
+            var metadata = await _service.ParseReviewMetadata(revisionId, ct);
 
             if (comments.Count == 0)
             {
@@ -108,7 +108,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
 
             // Detect commit SHA, TypeSpec project path, and target repo
             _logger.LogInformation("Detecting commit SHA and TypeSpec project path");
-            var (commitSha, tspProjectPath, detectedRepo) = await _service.DetectShaAndTspPath(metadata);
+            var (commitSha, tspProjectPath, detectedRepo) = await _service.DetectShaAndTspPath(metadata, ct);
 
             // Use override repo if specified, otherwise use detected repo, fallback to default
             var targetRepo = !string.IsNullOrEmpty(repo) ? repo : detectedRepo ?? "Azure/azure-rest-api-specs";
@@ -159,7 +159,7 @@ public class DelegateAPIViewFeedbackTool : MCPTool
             // Create issue and assign to Copilot
             _logger.LogInformation("Creating issue in {Owner}/{Repo} and assigning to Copilot", owner, repoName);
             var assignees = new List<string> { "copilot-swe-agent[bot]" };
-            var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt, assignees);
+            var issue = await _gitHubService.CreateIssueAsync(owner, repoName, title, prompt, assignees, ct);
 
             return new DefaultCommandResponse
             {

@@ -37,7 +37,7 @@ Application shutting down";
 
         await File.WriteAllTextAsync(tempFile, logContent);
 
-        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 1, 1);
+        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 1, 1, CancellationToken.None);
 
         // Based on actual behavior, might be 1 or 2 depending on how contiguous errors are handled
         Assert.That(results, Is.Not.Empty);
@@ -61,7 +61,7 @@ System crash error detected";
         var tempFile = Path.GetTempFileName();
         await File.WriteAllTextAsync(tempFile, logContent);
 
-        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 0, 0);
+        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 0, 0, CancellationToken.None);
 
         // Should find 3 real errors, excluding the false positives
         Assert.That(results, Has.Count.EqualTo(3));
@@ -94,7 +94,7 @@ System restored";
         var tempFile = Path.GetTempFileName();
         await File.WriteAllTextAsync(tempFile, logContent);
 
-        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 1, null);
+        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 1, null, CancellationToken.None);
 
         // Should find one LogEntry that contains all contiguous errors
         Assert.That(results, Has.Count.EqualTo(1));
@@ -123,7 +123,7 @@ Processing complete";
         await File.WriteAllTextAsync(tempFile, logContent);
 
         var customKeywords = new List<string> { "CUSTOM_ISSUE", "CUSTOM_WARNING" };
-        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, customKeywords, 0, 0);
+        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, customKeywords, 0, 0, CancellationToken.None);
 
         Assert.That(results, Has.Count.EqualTo(2));
 
@@ -154,7 +154,7 @@ Line 10";
         await File.WriteAllTextAsync(tempFile, logContent);
 
         // Test with custom context sizes
-        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 2, 3);
+        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 2, 3, CancellationToken.None);
 
         Assert.That(results, Has.Count.EqualTo(1));
 
@@ -175,10 +175,10 @@ Line 10";
     {
         var nonExistentDirectory = "/path/that/does/not/exist.log";
         Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
-            await logAnalysisHelper.AnalyzeLogContent(nonExistentDirectory, null, null, null));
+            await logAnalysisHelper.AnalyzeLogContent(nonExistentDirectory, null, null, null, CancellationToken.None));
         var nonExistentFile = "exist.log";
         Assert.ThrowsAsync<FileNotFoundException>(async () =>
-            await logAnalysisHelper.AnalyzeLogContent(nonExistentFile, null, null, null));
+            await logAnalysisHelper.AnalyzeLogContent(nonExistentFile, null, null, null, CancellationToken.None));
     }
 
     [Test]
@@ -187,7 +187,7 @@ Line 10";
         var tempFile = Path.GetTempFileName();
         await File.WriteAllTextAsync(tempFile, string.Empty);
 
-        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, null, null);
+        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, null, null, CancellationToken.None);
 
         Assert.That(results, Is.Empty);
     }
@@ -205,7 +205,7 @@ Shutting down gracefully";
         var tempFile = Path.GetTempFileName();
         await File.WriteAllTextAsync(tempFile, logContent);
 
-        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, null, null);
+        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, null, null, CancellationToken.None);
 
         Assert.That(results, Is.Empty);
     }
@@ -221,11 +221,11 @@ Processing complete";
         await File.WriteAllTextAsync(tempFile, logContent);
 
         // Test with null keywords
-        var results1 = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 1, 1);
+        var results1 = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 1, 1, CancellationToken.None);
         Assert.That(results1, Has.Count.EqualTo(1));
 
         // Test with empty keywords list - should also use defaults
-        var results2 = await logAnalysisHelper.AnalyzeLogContent(tempFile, new List<string>(), 1, 1);
+        var results2 = await logAnalysisHelper.AnalyzeLogContent(tempFile, new List<string>(), 1, 1, CancellationToken.None);
         Assert.That(results2, Has.Count.EqualTo(1)); // Empty list uses defaults, same as null
     }
 
@@ -239,7 +239,7 @@ Processing complete";
         // Verify the test asset file exists
         Assert.That(File.Exists(testAssetPath), Is.True, $"Test asset file not found at {testAssetPath}");
 
-        var results = await logAnalysisHelper.AnalyzeLogContent(testAssetPath, null, 2, 5);
+        var results = await logAnalysisHelper.AnalyzeLogContent(testAssetPath, null, 2, 5, CancellationToken.None);
 
         // Should find 2 error groups: one for the database errors and one for the fatal errors
         Assert.That(results, Has.Count.EqualTo(2));
@@ -266,7 +266,7 @@ End of log";
         var tempFile = Path.GetTempFileName();
         await File.WriteAllTextAsync(tempFile, logContent);
 
-        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 0, 0);
+        var results = await logAnalysisHelper.AnalyzeLogContent(tempFile, null, 0, 0, CancellationToken.None);
 
         Assert.That(results, Has.Count.EqualTo(2));
         Assert.That(results[0].Message, Does.Contain("[31mThis is red text indicating an error[0m"));

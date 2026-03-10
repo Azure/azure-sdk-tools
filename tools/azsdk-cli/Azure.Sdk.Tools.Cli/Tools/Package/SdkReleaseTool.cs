@@ -63,11 +63,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var language = parseResult.GetValue(languageOpt);
             var branch = parseResult.GetValue(branchOpt);
             var checkReady = parseResult.GetValue(checkReadyOpt);
-            return await ReleasePackageAsync(packageName, language, branch, checkReady);
+            return await ReleasePackageAsync(packageName, language, branch, checkReady, ct);
         }
 
         [McpServerTool(Name = ReleaseSdkToolName), Description("Releases the specified SDK package for a language. This includes checking if the package is ready for release and triggering the release pipeline. To ONLY check package release readiness pass checkReady as true.")]
-        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool checkReady = false)
+        public async Task<SdkReleaseResponse> ReleasePackageAsync(string packageName, string language, string branch = "main", bool checkReady = false, CancellationToken ct = default)
         {
             try
             {
@@ -95,11 +95,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Get the package work item from DevOps
-                var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
+                var package = await devopsService.GetPackageWorkItemAsync(packageName, language, ct: ct);
                 if (package == null)
                 {
                     logger.LogInformation("Exact package not found; falling back to partial matches");
-                    var packages = await devopsService.ListPartialPackageWorkItemAsync(packageName, language);
+                    var packages = await devopsService.ListPartialPackageWorkItemAsync(packageName, language, ct);
                     if (packages == null || packages.Count == 0)
                     {
                         response.ReleaseStatusDetails = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language and also make sure that SDK is merged to main branch in the specific language repo.";
@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Check if the package is ready for release
-                var releaseReadiness = await CheckPackageReleaseReadinessAsync(packageName, language);
+                var releaseReadiness = await CheckPackageReleaseReadinessAsync(packageName, language, ct);
                 if (!releaseReadiness.IsPackageReady)
                 {
                     response.ReleaseStatusDetails = $"Package is not ready for release. {releaseReadiness.PackageReadinessDetails}";
@@ -151,7 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Trigger the release pipeline
                 if (buildDefinitionId != null)
                 {
-                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), new Dictionary<string, string>(), branch);
+                    var releasePipelineRun = await devopsService.RunPipelineAsync(int.Parse(buildDefinitionId!), new Dictionary<string, string>(), branch, ct);
                     if (releasePipelineRun != null)
                     {
                         response.ReleasePipelineRunUrl = DevOpsService.GetPipelineUrl(releasePipelineRun.Id);
@@ -190,11 +190,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
+        private async Task<PackageWorkitemResponse> CheckPackageReleaseReadinessAsync(string packageName, string language, CancellationToken ct)
         {
             try
             {
-                var package = await devopsService.GetPackageWorkItemAsync(packageName, language);
+                var package = await devopsService.GetPackageWorkItemAsync(packageName, language, ct: ct);
                 if (package == null)
                 {
                     package = new PackageWorkitemResponse
@@ -253,7 +253,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Check last pipeline run status for the package and verify it completed successfully
-                package.LatestPipelineStatus = await GetPipelineRunDetails(package.LatestPipelineRun);
+                package.LatestPipelineStatus = await GetPipelineRunDetails(package.LatestPipelineRun, ct);
                 bool hasPipelineWarning = string.IsNullOrEmpty(package.LatestPipelineStatus) || !package.LatestPipelineStatus.Contains(Pipeline_Success_Status);
 
                 // Package release readiness status
@@ -286,7 +286,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<string> GetPipelineRunDetails(string pipelineRunUrl)
+        private async Task<string> GetPipelineRunDetails(string pipelineRunUrl, CancellationToken ct)
         {
             try
             {
@@ -295,7 +295,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     var buildId = int.Parse(pipelineRunUrl.Split("buildId=").LastOrDefault());
                     logger.LogInformation("Extracted build ID: {buildId}", buildId);
-                    var pipelineRun = await devopsService.GetPipelineRunAsync(buildId);
+                    var pipelineRun = await devopsService.GetPipelineRunAsync(buildId, ct);
                     if (pipelineRun != null)
                     {
                         logger.LogInformation(

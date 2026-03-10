@@ -6,7 +6,7 @@ public sealed class UpgradeShutdownCoordinator
 {
     private readonly Channel<bool> requests = Channel.CreateUnbounded<bool>();
 
-    public ValueTask RequestShutdown() => requests.Writer.WriteAsync(true);
+    public ValueTask RequestShutdown(CancellationToken ct) => requests.Writer.WriteAsync(true, ct);
     public IAsyncEnumerable<bool> Watch(CancellationToken ct) => requests.Reader.ReadAllAsync(ct);
 }
 

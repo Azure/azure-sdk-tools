@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewAuthenticationService
 {
-    Task ConfigureAuthenticationAsync(HttpClient httpClient, string environment = "production");
+    Task ConfigureAuthenticationAsync(HttpClient httpClient, string environment = "production", CancellationToken ct = default);
     AuthenticationErrorResponse CreateAuthenticationErrorResponse(string message, string revisionId = null, string activeRevisionId = null,
         string diffRevisionId = null, string baseUrl = null);
 }
@@ -25,7 +25,7 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
         _logger = logger;
     }
 
-    public async Task<string?> GetAuthenticationTokenAsync(string environment = "production")
+    public async Task<string?> GetAuthenticationTokenAsync(string environment = "production", CancellationToken ct = default)
     {
         try
         {
@@ -39,7 +39,7 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
             }
 
             TokenRequestContext tokenRequest = new([scope]);
-            AccessToken? tokenResponse = await credential.GetTokenAsync(tokenRequest, CancellationToken.None);
+            AccessToken? tokenResponse = await credential.GetTokenAsync(tokenRequest, ct);
 
             _logger.LogInformation("Successfully obtained Azure token with scope {Scope}", scope);
             return tokenResponse?.Token;
@@ -51,9 +51,9 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
         }
     }
 
-    public async Task ConfigureAuthenticationAsync(HttpClient httpClient, string environment = "production")
+    public async Task ConfigureAuthenticationAsync(HttpClient httpClient, string environment = "production", CancellationToken ct = default)
     {
-        string? token = await GetAuthenticationTokenAsync(environment);
+        string? token = await GetAuthenticationTokenAsync(environment, ct);
         if (!string.IsNullOrEmpty(token))
         {
             httpClient.DefaultRequestHeaders.Authorization =

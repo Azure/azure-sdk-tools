@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="username">The GitHub username to validate</param>
         /// <param name="verbose">Whether to include verbose output</param>
         /// <returns>Validation result with detailed information</returns>
-        Task<CodeownersValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false);
+        Task<CodeownersValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false, CancellationToken ct = default);
     }
 
     /// <summary>
@@ -36,12 +36,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// </summary>
         /// <param name="username">The GitHub username to validate</param>
         /// <returns>Validation result with detailed information</returns>
-        public async Task<CodeownersValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false)
+        public async Task<CodeownersValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false, CancellationToken ct = default)
         {
             try
             {
                 // Get user's public organization memberships and evaluate required-org membership inline
-                var memberships = await githubService.GetPublicOrgMembership(username);
+                var memberships = await githubService.GetPublicOrgMembership(username, ct);
                 var hasRequiredOrgs = memberships != null && RequiredOrganizations.All(o => memberships.Contains(o));
 
                 // Populate result. Organizations from memberships without having the validator helper mutate the result.
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 }
 
                 // Validate write permissions on azure-sdk-for-net
-                var hasWritePermission = await githubService.HasWritePermission("Azure", "azure-sdk-for-net", username);
+                var hasWritePermission = await githubService.HasWritePermission("Azure", "azure-sdk-for-net", username, ct);
 
                 var isValidCodeowner = hasRequiredOrgs && hasWritePermission;
                 return new CodeownersValidationResult

@@ -311,7 +311,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="oldGenerationPath">Previous generation</param>
         /// <param name="newGenerationPath">New/current generation root.</param>
         /// <returns>List of detected API changes (empty if no differences).</returns>
-        public virtual Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+        public virtual Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath, CancellationToken ct)
         {
             List<ApiChange> result = [];
             return Task.FromResult(result);
@@ -586,7 +586,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
                 PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
 
-                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
+                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build, ct);
                 if (configContentType == SpecGenSdkConfigContentType.Unknown || string.IsNullOrEmpty(configValue))
                 {
                     return (false, "No build configuration found or failed to prepare the build command.", packageInfo);

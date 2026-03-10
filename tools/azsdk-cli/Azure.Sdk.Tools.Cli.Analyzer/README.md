@@ -1,3 +1,45 @@
+# Async CancellationToken Requirement (AZSDK001)
+
+## Overview
+
+All public and internal async methods (returning `Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>`) must accept a `CancellationToken` parameter. This ensures consistent cancellation support across the codebase. The primary intent is so we immediately exit when the user presses ctrl-c.
+
+### Parameter Convention
+
+- If the method has **no other optional parameters** → `CancellationToken ct` (required)
+- If the method has **optional parameters** → `CancellationToken ct = default` (last parameter)
+- `CancellationToken` must always be the **last** parameter
+
+### Exclusions
+
+- **Override methods** — signature dictated by base class
+- **Interface implementations** — explicit and implicit (e.g. `IAsyncDisposable.DisposeAsync`); signature dictated by the interface
+- **`Main` entry points** — fixed signature
+- **Test methods** — `[Test]`, `[Fact]`, `[Theory]`, `[TestMethod]` attributes
+- **Generated code** — excluded automatically
+
+### Migration Guide
+
+```csharp
+// ❌ Incorrect - no CancellationToken
+public async Task<Result> FetchDataAsync(string query)
+{
+    return await service.GetAsync(query);
+}
+
+// ✅ Correct - required CT (no other optional params)
+public async Task<Result> FetchDataAsync(string query, CancellationToken ct)
+{
+    return await service.GetAsync(query, ct);
+}
+
+// ✅ Correct - default CT (has other optional params)
+public async Task<Result> FetchDataAsync(string query, int limit = 100, CancellationToken ct = default)
+{
+    return await service.GetAsync(query, limit, ct);
+}
+```
+
 # Tool Exception Handling Analyzer (MCP001)
 
 ## Overview

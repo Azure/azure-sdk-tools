@@ -1,11 +1,12 @@
+
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewService
 {
-    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType);
-    Task<string?> GetCommentsByRevisionAsync(string revisionId);
-    Task<string?> GetMetadata(string revisionId);
-    Task<string?> Resolve(string url);
+    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, CancellationToken ct);
+    Task<string?> GetCommentsByRevisionAsync(string revisionId, CancellationToken ct);
+    Task<string?> GetMetadata(string revisionId, CancellationToken ct);
+    Task<string?> Resolve(string url, CancellationToken ct);
 }
 
 public class APIViewService : IAPIViewService
@@ -21,10 +22,10 @@ public class APIViewService : IAPIViewService
         _logger = logger;
     }
 
-    public async Task<string?> GetCommentsByRevisionAsync(string revisionId)
+    public async Task<string?> GetCommentsByRevisionAsync(string revisionId, CancellationToken ct)
     {
         string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint);
+        string? result = await _httpService.GetAsync(endpoint, ct);
 
         if (result == null)
         {
@@ -34,10 +35,10 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType)
+    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string contentReturnType, CancellationToken ct)
     {
         string revisionContentEndpoint = $"/api/apirevisions/getRevisionContent?apiRevisionId={apiRevisionId}&reviewId={reviewId}&contentReturnType={contentReturnType}";
-        string? result = await _httpService.GetAsync(revisionContentEndpoint);
+        string? result = await _httpService.GetAsync(revisionContentEndpoint, ct);
         if (string.IsNullOrWhiteSpace(result))
         {
             _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", apiRevisionId);
@@ -47,10 +48,10 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> GetMetadata(string revisionId)
+    public async Task<string?> GetMetadata(string revisionId, CancellationToken ct)
     {
         string endpoint = $"/api/reviews/metadata?revisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint);
+        string? result = await _httpService.GetAsync(endpoint, ct);
 
         if (result == null)
         {
@@ -60,10 +61,10 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> Resolve(string url)
+    public async Task<string?> Resolve(string url, CancellationToken ct)
     {
         string endpoint = $"/api/reviews/resolve?link={url}";
-        string? result = await _httpService.GetAsync(endpoint);
+        string? result = await _httpService.GetAsync(endpoint, ct);
 
         if (result == null)
         {

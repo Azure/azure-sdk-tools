@@ -27,11 +27,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         private const string GetPullRequestToolName = "azsdk_get_pull_request";
 
         [McpServerTool(Name = GetGitHubUserDetailsToolName), Description("Get GitHub user details and profile information. Find out who a GitHub user is by their username.")]
-        public async Task<DefaultCommandResponse> GetGitHubUserDetails()
+        public async Task<DefaultCommandResponse> GetGitHubUserDetails(CancellationToken ct = default)
         {
             try
             {
-                var user = await gitHubService.GetGitUserDetailsAsync();
+                var user = await gitHubService.GetGitUserDetailsAsync(ct);
                 return user != null
                     ? new DefaultCommandResponse { Result = $"Connected to GitHub as {user.Login}" }
                     : new DefaultCommandResponse { ResponseError = "Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub." };
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 }
 
                 logger.LogInformation("Getting pull request for branch {HeadBranchRef}...", headBranchRef);
-                var pullRequest = await gitHubService.GetPullRequestForBranchAsync(repoOwner, repoName, headBranchRef);
+                var pullRequest = await gitHubService.GetPullRequestForBranchAsync(repoOwner, repoName, headBranchRef, ct);
                 if (pullRequest == null)
                 {
                     return new DefaultCommandResponse { ResponseError = "No pull request found for the current branch." };
@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                                             repoName, headRepoOwner, headBranchName, headBranch);
                     logger.LogInformation("Creating pull request in {targetRepoOwner}:{repoName}", targetRepoOwner, repoName);
                     // Create pull request
-                    var createResponse = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
+                    var createResponse = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft, ct);
                     results.AddRange(createResponse.Messages);
                     return new DefaultCommandResponse { Result = string.Join(Environment.NewLine, results) };
                 }
@@ -139,10 +139,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         private async Task<List<string>> GetPullRequestCommentsAsync(int pullRequestNumber, string repoPath, CancellationToken ct)
         {
             var repoRootPath = await gitHelper.DiscoverRepoRootAsync(repoPath, ct);
-            var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
+            var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, ct: ct);
             var repoName = await gitHelper.GetRepoNameAsync(repoRootPath, ct);
 
-            var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
+            var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber, ct);
             if (comments == null || comments.Count == 0)
             {
                 return ["No comments found for the pull request."];
@@ -162,7 +162,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 
                 logger.LogInformation("Getting pull request details for {pullRequestNumber} in repo {repoOwner}/{repoName}",
                                         pullRequestNumber, repoOwner, repoName);
-                var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
+                var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber, ct);
                 PullRequestDetails prDetails = new()
                 {
                     // Get PR basics and comments
@@ -179,7 +179,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 
                 // Get PR check statuses
                 logger.LogInformation("Getting pull request checks");
-                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecksAsync(pullRequestNumber, repoName, repoOwner));
+                prDetails.Checks.AddRange(await gitHubService.GetPullRequestChecksAsync(pullRequestNumber, repoName, repoOwner, ct));
 
                 // Parse API reviews and add the information
                 logger.LogInformation("Searching for API review links in comments");

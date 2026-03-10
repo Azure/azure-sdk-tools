@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewHttpService
 {
-    Task<string?> GetAsync(string endpoint);
+    Task<string?> GetAsync(string endpoint, CancellationToken ct);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -37,16 +37,16 @@ public class APIViewHttpService : IAPIViewHttpService
         return Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT") ?? "production";
     }
 
-    public async Task<string?> GetAsync(string endpoint)
+    public async Task<string?> GetAsync(string endpoint, CancellationToken ct)
     {
         try
         {
             string environment = GetEnvironment();
             string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
-            HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
+            HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment, ct);
 
             string requestUrl = $"{baseUrl}{endpoint}";
-            using HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
+            using HttpResponseMessage response = await httpClient.GetAsync(requestUrl, ct);
             if (response.StatusCode == HttpStatusCode.Found || response.StatusCode == HttpStatusCode.Redirect)
             {
                 string? location = response.Headers.Location?.ToString();
@@ -74,7 +74,7 @@ public class APIViewHttpService : IAPIViewHttpService
                 return null;
             }
 
-            string content = await response.Content.ReadAsStringAsync();
+            string content = await response.Content.ReadAsStringAsync(ct);
 
             if (APIViewAuthenticationService.IsAuthenticationFailure(content))
             {
@@ -99,7 +99,7 @@ public class APIViewHttpService : IAPIViewHttpService
         }
     }
 
-    private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync(string environment)
+    private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync(string environment, CancellationToken ct)
     {
         if (_cachedClient != null && 
             _cachedEnvironment == environment && 
@@ -108,7 +108,7 @@ public class APIViewHttpService : IAPIViewHttpService
             return _cachedClient;
         }
 
-        await _cacheLock.WaitAsync();
+        await _cacheLock.WaitAsync(ct);
         try
         {
             if (_cachedClient != null && 

@@ -3,7 +3,6 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.APIView;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 

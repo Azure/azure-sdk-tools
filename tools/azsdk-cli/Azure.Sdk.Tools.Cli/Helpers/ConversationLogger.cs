@@ -1,4 +1,3 @@
-using System.Threading;
 using Microsoft.Extensions.Logging;
 using OpenAI.Chat;
 using System.Text.Json;

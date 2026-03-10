@@ -8,7 +8,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services.Upgrade;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.CliManagement;
 

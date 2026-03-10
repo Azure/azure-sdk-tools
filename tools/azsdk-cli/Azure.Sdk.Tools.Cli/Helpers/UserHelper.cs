@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Threading;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.Graph;
 

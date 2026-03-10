@@ -8,7 +8,6 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {

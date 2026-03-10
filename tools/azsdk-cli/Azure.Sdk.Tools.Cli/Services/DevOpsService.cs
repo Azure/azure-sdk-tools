@@ -18,7 +18,6 @@ using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using System.Globalization;
 using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
-using System.Threading;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -500,7 +499,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (parentId != null)
                 {
                     // Create parent-child relation
-                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "parent", targetId: parentId);
+                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "parent", targetId: parentId, ct: ct);
                 }
 
                 if (relatedId != null)
@@ -566,7 +565,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 });
             }
 
-            return await workItemClient.UpdateWorkItemAsync(patchDocument, id);
+            return await workItemClient.UpdateWorkItemAsync(patchDocument, id, cancellationToken: ct);
         }
 
         public async Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct = default)
@@ -608,7 +607,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Remove,
                 Path = $"/relations/{relationIndex}"
             });
-            await workItemClient.UpdateWorkItemAsync(patchDocument, id);
+            await workItemClient.UpdateWorkItemAsync(patchDocument, id, cancellationToken: ct);
         }
 
         private async Task<string> ResolveRelationTypeSystemName(string relationType, CancellationToken ct)
@@ -1077,7 +1076,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 // Get parent work item and make sure it is release plan work item
                 var childWorkItemId = int.Parse(relation.Url.Split('/').Last());
-                var childWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(childWorkItemId);
+                var childWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(childWorkItemId, cancellationToken: ct);
                 if (childWorkItem == null || !childWorkItem.Fields.TryGetValue("System.WorkItemType", out Object? workItemType))
                 {
                     continue;
@@ -1360,7 +1359,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     var zipPath = Path.Combine(tempDir, "artifact.zip");
                     using (var fileStream = File.Create(zipPath))
                     {
-                        await stream.CopyToAsync(fileStream);
+                        await stream.CopyToAsync(fileStream, ct);
                     }
 
                     await Task.Factory.StartNew(() =>
@@ -1381,14 +1380,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             var result = new Dictionary<string, List<string>>();
             using var httpClient = new HttpClient();
             var artifactsUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
-            var artifactsResponse = await httpClient.GetAsync(artifactsUrl);
+            var artifactsResponse = await httpClient.GetAsync(artifactsUrl, ct);
             // Devops will return a sign-in html page if the user is not authorized
             if (artifactsResponse.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
             {
                 throw new Exception($"Not authorized to get artifacts from {artifactsUrl}");
             }
             artifactsResponse.EnsureSuccessStatusCode();
-            var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync();
+            var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync(ct);
             using var doc = JsonDocument.Parse(artifactsJson);
             var artifacts = doc.RootElement.GetProperty("value").EnumerateArray();
 
@@ -1445,7 +1444,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 using (var zipStream = await httpClient.GetStreamAsync(downloadUrl))
                 using (var fileStream = File.Create(zipPath))
                 {
-                    await zipStream.CopyToAsync(fileStream);
+                    await zipStream.CopyToAsync(fileStream, ct);
                 }
 
                 await Task.Factory.StartNew(() =>
@@ -1499,7 +1498,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<WorkItem> FindOrCreateServiceParent(string serviceName, bool ignoreReleasePlannerTests = true, string? tag = null, CancellationToken ct = default)
         {
-            var serviceParent = await FindServiceWorkItem(serviceName, ignoreReleasePlannerTests, tag);
+            var serviceParent = await FindServiceWorkItem(serviceName, ignoreReleasePlannerTests, tag, ct: ct);
             if (serviceParent != null)
             {
                 logger.LogDebug("Found existing service work item [{workItemId}]", serviceParent.Id);
@@ -1517,7 +1516,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 serviceWorkItem.Tag = tag;
             }
 
-            var workItem = await CreateWorkItemAsync(serviceWorkItem, "Epic", serviceName);
+            var workItem = await CreateWorkItemAsync(serviceWorkItem, "Epic", serviceName, ct: ct);
 
             logger.LogInformation("[{workItemId}] - Created service work item for {serviceName}", workItem.Id, serviceName);
             return workItem;
@@ -1710,7 +1709,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             try
             {
-                var workItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath);
+                var workItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath, ct: ct);
                 if (workItem == null)
                 {
                     return null;
@@ -1731,7 +1730,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 logger.LogInformation("Searching for release plan with TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);
 
-                var releasePlanWorkItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath, true);
+                var releasePlanWorkItem = await FetchReleasePlanWorkItemByTypeSpecPathAsync(typeSpecProjectPath, true, ct);
                 if (releasePlanWorkItem == null)
                 {
                     logger.LogInformation("No release plan found for TypeSpec project path: {typeSpecProjectPath}", typeSpecProjectPath);

@@ -4,7 +4,7 @@ import { tmpdir } from "os";
 import { join, resolve } from "path";
 import semver from "semver";
 import { simpleGit } from "simple-git";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { execNpmExec } from "../shared/exec.js";
 import { debugLogger } from "../shared/logger.js";
 import { SdkName } from "../shared/sdk-types.js";
@@ -44,44 +44,42 @@ describe.concurrent.each([SdkName.Js, SdkName.Net, SdkName.Python])(
     });
 
     describe("worktree tests", () => {
-      it("inits from url", async (ctx) => {
-        ctx.skip();
-      });
+      /** @type {string} */
+      let sdkDir;
+      /** @type {string} */
+      let worktree;
 
-      it("updates template", async (ctx) => {
-        const sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
+      beforeEach(async (ctx) => {
+        sdkDir = await getSdkDir(sdkName).catch(() => ctx.skip());
 
         const lang = sdkName.replace("azure-sdk-for-", "");
-        const worktree = await mkdtemp(
-          join(tmpdir(), `tsp-client-test-${lang}-`),
-        );
+        worktree = await mkdtemp(join(tmpdir(), `tsp-client-test-${lang}-`));
 
+        await simpleGit(sdkDir).raw(["worktree", "add", worktree, "--detach"]);
+      });
+
+      afterEach(async () => {
         try {
           await simpleGit(sdkDir).raw([
             "worktree",
-            "add",
+            "remove",
             worktree,
-            "--detach",
+            "--force",
           ]);
-
-          await execNpmExec(["tsp-client", "update"], {
-            cwd: join(worktree, ...templateDir[sdkName]),
-            logger: debugLogger,
-            prefix: engCommonTspClient,
-          });
-        } finally {
-          try {
-            await simpleGit(sdkDir).raw([
-              "worktree",
-              "remove",
-              worktree,
-              "--force",
-            ]);
-          } catch {
-            // Worktree may not have been created
-          }
-          await rm(worktree, { recursive: true, force: true });
+        } catch {
+          // Worktree may not have been created
         }
+        await rm(worktree, { recursive: true, force: true });
+      });
+
+      it.skip("inits from url", () => {});
+
+      it("updates template", async () => {
+        await execNpmExec(["tsp-client", "update"], {
+          cwd: join(worktree, ...templateDir[sdkName]),
+          logger: debugLogger,
+          prefix: engCommonTspClient,
+        });
       });
     });
   },

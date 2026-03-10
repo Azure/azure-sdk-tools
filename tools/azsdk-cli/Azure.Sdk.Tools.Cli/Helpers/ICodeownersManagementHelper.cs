@@ -15,10 +15,9 @@ public interface ICodeownersManagementHelper
     Task<CodeownersViewResponse> GetViewByPackage(string packageName, string? repo = null);
 
     // Find-or-create helpers
-    Task<OwnerWorkItem> FindOrCreateOwner(string gitHubAlias);
     Task<LabelOwnerWorkItem> FindOrCreateLabelOwnerAsync(
         string repo,
-        string ownerType,
+        OwnerType ownerType,
         string? repoPath,
         LabelWorkItem[] labelWorkItems
     );
@@ -29,10 +28,10 @@ public interface ICodeownersManagementHelper
     // Add scenarios
     Task<CodeownersModifyResponse> AddOwnersToPackage(OwnerWorkItem[] owners, string packageName, string repo);
     Task<CodeownersModifyResponse> AddLabelsToPackage(LabelWorkItem[] labels, string packageName, string repo);
-    Task<CodeownersModifyResponse> AddOwnersAndLabelsToPath(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, string ownerType);
+    Task<CodeownersModifyResponse> AddOwnersAndLabelsToPath(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, OwnerType ownerType);
 
     // Remove scenarios
     Task<CodeownersModifyResponse> RemoveOwnersFromPackage(OwnerWorkItem[] owners, string packageName, string repo);
     Task<CodeownersModifyResponse> RemoveLabelsFromPackage(LabelWorkItem[] labels, string packageName, string repo);
-    Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPath(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, string ownerType);
+    Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPath(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, OwnerType ownerType);
 }

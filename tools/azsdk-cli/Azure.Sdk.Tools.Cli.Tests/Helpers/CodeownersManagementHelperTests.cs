@@ -770,79 +770,15 @@ public class CodeownersManagementHelperTests
     }
 
     // ========================
-    // MapOwnerType tests
+    // OwnerType.ToWorkItemString tests
     // ========================
 
-    [TestCase("service-owner", "Service Owner")]
-    [TestCase("azsdk-owner", "Azure SDK Owner")]
-    [TestCase("pr-label", "PR Label")]
-    [TestCase("SERVICE-OWNER", "Service Owner")]
-    public void MapOwnerType_ReturnsExpected(string input, string expected)
+    [TestCase(OwnerType.ServiceOwner, "Service Owner")]
+    [TestCase(OwnerType.AzSdkOwner, "Azure SDK Owner")]
+    [TestCase(OwnerType.PrLabel, "PR Label")]
+    public void OwnerType_ToWorkItemString_ReturnsExpected(OwnerType input, string expected)
     {
-        Assert.That(CodeownersManagementHelper.MapOwnerType(input), Is.EqualTo(expected));
-    }
-
-    [Test]
-    public void MapOwnerType_InvalidType_Throws()
-    {
-        Assert.Throws<ArgumentException>(() => CodeownersManagementHelper.MapOwnerType("unknown-type"));
-    }
-
-    // ========================
-    // FindOrCreateOwner tests
-    // ========================
-
-    [Test]
-    public async Task FindOrCreateOwner_ExistingOwner_ReturnsWithoutCreating()
-    {
-        var ownerWi = MakeOwnerWorkItem(1, "existinguser");
-
-        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Owner'") && q.Contains("existinguser")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
-            .ReturnsAsync(new List<WorkItem> { ownerWi });
-
-        var result = await _helper.FindOrCreateOwner("@existinguser");
-
-        Assert.That(result.GitHubAlias, Is.EqualTo("existinguser"));
-        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()), Times.Never);
-    }
-
-    [Test]
-    public async Task FindOrCreateOwner_NewOwner_ValidatesAndCreates()
-    {
-        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Owner'") && q.Contains("newuser")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
-            .ReturnsAsync(new List<WorkItem>());
-
-        _mockValidator.Setup(v => v.ValidateCodeOwnerAsync("newuser", It.IsAny<bool>()))
-            .ReturnsAsync(new CodeownersValidationResult { Username = "newuser", IsValidCodeOwner = true });
-
-        var createdWi = MakeOwnerWorkItem(99, "newuser");
-        _mockDevOps.Setup(d => d.CreateWorkItemAsync(
-                It.IsAny<WorkItemBase>(), "Owner", "newuser", It.IsAny<int?>(), It.IsAny<int?>()))
-            .ReturnsAsync(createdWi);
-
-        var result = await _helper.FindOrCreateOwner("newuser");
-
-        Assert.That(result.GitHubAlias, Is.EqualTo("newuser"));
-        _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Owner", "newuser", It.IsAny<int?>(), It.IsAny<int?>()), Times.Once);
-    }
-
-    [Test]
-    public void FindOrCreateOwner_InvalidUser_Throws()
-    {
-        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
-                It.Is<string>(q => q.Contains("'Owner'") && q.Contains("baduser")),
-                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
-            .ReturnsAsync(new List<WorkItem>());
-
-        _mockValidator.Setup(v => v.ValidateCodeOwnerAsync("baduser", It.IsAny<bool>()))
-            .ReturnsAsync(new CodeownersValidationResult { Username = "baduser", IsValidCodeOwner = false, Message = "Not a valid code owner" });
-
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.FindOrCreateOwner("baduser"));
-        Assert.That(ex!.Message, Does.Contain("not a valid Azure SDK code owner"));
+        Assert.That(input.ToWorkItemString(), Is.EqualTo(expected));
     }
 
     // ========================
@@ -867,7 +803,7 @@ public class CodeownersManagementHelperTests
                 It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
             .ReturnsAsync(new List<WorkItem> { labelWiRaw });
 
-        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", "service-owner", null, [labelWi]);
+        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [labelWi]);
 
         Assert.That(result.WorkItemId, Is.EqualTo(55));
         _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int?>()), Times.Never);
@@ -897,7 +833,7 @@ public class CodeownersManagementHelperTests
                 It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>()))
             .ReturnsAsync(createdLoWi);
 
-        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", "service-owner", null, [expectedLabelWi]);
+        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [expectedLabelWi]);
 
         Assert.That(result.WorkItemId, Is.EqualTo(99));
         _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>()), Times.Once);
@@ -918,7 +854,7 @@ public class CodeownersManagementHelperTests
                 It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>()))
             .ReturnsAsync(createdLoWi);
 
-        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", "service-owner", null, [labelWi]);
+        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, null, [labelWi]);
 
         Assert.That(result.WorkItemId, Is.EqualTo(77));
         _mockDevOps.Verify(d => d.CreateWorkItemAsync(It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: Storage", It.IsAny<int?>(), It.IsAny<int?>()), Times.Once);
@@ -939,7 +875,7 @@ public class CodeownersManagementHelperTests
                 It.IsAny<WorkItemBase>(), "Label Owner", "Service Owner: sdk/service/", It.IsAny<int?>(), It.IsAny<int?>()))
             .ReturnsAsync(createdLoWi);
 
-        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", "service-owner", "sdk/service/", [labelWi]);
+        var result = await _helper.FindOrCreateLabelOwnerAsync("Azure/azure-sdk-for-net", OwnerType.ServiceOwner, "sdk/service/", [labelWi]);
 
         Assert.That(result.WorkItemId, Is.EqualTo(88));
     }
@@ -1195,7 +1131,7 @@ public class CodeownersManagementHelperTests
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", "service-owner");
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
@@ -1232,7 +1168,7 @@ public class CodeownersManagementHelperTests
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", "service-owner");
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
@@ -1275,7 +1211,7 @@ public class CodeownersManagementHelperTests
         };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", "service-owner");
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
@@ -1316,7 +1252,7 @@ public class CodeownersManagementHelperTests
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/newpath", "service-owner");
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/newpath", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
@@ -1373,7 +1309,7 @@ public class CodeownersManagementHelperTests
             new LabelWorkItem { WorkItemId = label2Id, LabelName = "Blobs" }
         };
 
-        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", "service-owner");
+        var result = await _helper.AddOwnersAndLabelsToPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
@@ -1398,7 +1334,7 @@ public class CodeownersManagementHelperTests
         var owners = new[] { new OwnerWorkItem { WorkItemId = 10, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = 20, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/nopath", "service-owner");
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/nopath", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Does.Contain("No Label Owner work item found for path '/sdk/nopath'"));
     }
@@ -1439,7 +1375,7 @@ public class CodeownersManagementHelperTests
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", "service-owner");
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwnerWiId, "related", ownerId), Times.Once);
@@ -1475,7 +1411,7 @@ public class CodeownersManagementHelperTests
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", "service-owner");
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
@@ -1523,7 +1459,7 @@ public class CodeownersManagementHelperTests
         };
         var labels = new[] { new LabelWorkItem { WorkItemId = labelId, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", "service-owner");
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.View, Is.Not.Null);
@@ -1572,7 +1508,7 @@ public class CodeownersManagementHelperTests
         var owners = new[] { new OwnerWorkItem { WorkItemId = ownerId, GitHubAlias = "user1" } };
         var labels = new[] { new LabelWorkItem { WorkItemId = label1Id, LabelName = "Storage" } };
 
-        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", "service-owner");
+        var result = await _helper.RemoveOwnersFromLabelsAndPath(owners, labels, "Azure/azure-sdk-for-net", "/sdk/storage", OwnerType.ServiceOwner);
 
         Assert.That(result.ResponseError, Is.Null);
         // Should remove from labelOwner1 (which has label1), not labelOwner2

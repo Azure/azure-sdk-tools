@@ -12,6 +12,25 @@ using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
+public enum OwnerType
+{
+    ServiceOwner,
+    AzSdkOwner,
+    PrLabel
+}
+
+public static class OwnerTypeExtensions
+{
+    public static string ToWorkItemString(this OwnerType ownerType) => ownerType switch
+    {
+        OwnerType.ServiceOwner => "Service Owner",
+        OwnerType.AzSdkOwner   => "Azure SDK Owner",
+        OwnerType.PrLabel      => "PR Label",
+        _ => throw new ArgumentOutOfRangeException(nameof(ownerType), ownerType, $"Unknown owner type '{ownerType}'.")
+    };
+}
+
+
 public class CodeownersManagementHelper(
     ILogger<CodeownersManagementHelper> logger,
     IDevOpsService devOpsService,
@@ -334,53 +353,13 @@ public class CodeownersManagementHelper(
         }
     }
 
-    // ========================
-    // Owner type mapping
-    // ========================
-
-    /// <summary>Maps CLI owner-type values to work item field values.</summary>
-    public static string MapOwnerType(string ownerType) => ownerType.ToLowerInvariant() switch
-    {
-        "service-owner" => "Service Owner",
-        "azsdk-owner"   => "Azure SDK Owner",
-        "pr-label"      => "PR Label",
-        _ => throw new ArgumentException($"Invalid owner type '{ownerType}'. Valid values are: service-owner, azsdk-owner, pr-label.")
-    };
-
-    // ========================
-    // Find-or-create helpers
-    // ========================
-
-    public async Task<OwnerWorkItem> FindOrCreateOwner(string gitHubAlias)
-    {
-        var alias = NormalizeGitHubAlias(gitHubAlias);
-
-        var existing = await FindOwnerByGitHubAlias(alias);
-        if (existing != null)
-        {
-            return existing;
-        }
-
-        // Validate before creating
-        var validation = await validatorHelper.ValidateCodeOwnerAsync(alias, verbose: false);
-        if (!validation.IsValidCodeOwner)
-        {
-            throw new InvalidOperationException(
-                $"GitHub user '{alias}' is not a valid Azure SDK code owner: {validation.Message}");
-        }
-
-        var ownerWi = new OwnerWorkItem { GitHubAlias = alias };
-        var created = await devOpsService.CreateWorkItemAsync(ownerWi, "Owner", alias);
-        return WorkItemMappers.MapToOwnerWorkItem(created);
-    }
-
     public async Task<LabelOwnerWorkItem> FindOrCreateLabelOwnerAsync(
         string repo,
-        string ownerType,
+        OwnerType ownerType,
         string? repoPath,
         LabelWorkItem[] labelWorkItems
     ) {
-        var labelTypeString = MapOwnerType(ownerType);
+        var labelTypeString = ownerType.ToWorkItemString();
         var normalizedPath = repoPath ?? string.Empty;
 
         var escapedRepo = repo.Replace("'", "''");
@@ -492,7 +471,7 @@ public class CodeownersManagementHelper(
         LabelWorkItem[] labels,
         string repo,
         string path,
-        string ownerType
+        OwnerType ownerType
     ) {
         var labelOwnerWi = await FindOrCreateLabelOwnerAsync(repo, ownerType, path, labels);
 
@@ -592,7 +571,7 @@ public class CodeownersManagementHelper(
         LabelWorkItem[] labels,
         string repo,
         string path,
-        string ownerType
+        OwnerType ownerType
     ) {
         var labelOwners = await QueryLabelOwnersByPath(path, repo);
         if (labelOwners.Count == 0)
@@ -602,7 +581,7 @@ public class CodeownersManagementHelper(
         await HydrateLabelOwners(labelOwners);
 
         var labelOwner = labelOwners.Single(lo =>
-            lo.LabelType.Equals(MapOwnerType(ownerType), StringComparison.OrdinalIgnoreCase)
+            lo.LabelType.Equals(ownerType.ToWorkItemString(), StringComparison.OrdinalIgnoreCase)
             && lo.Labels.Select(l => l.WorkItemId).ToHashSet().SetEquals(labels.Select(l => l.WorkItemId))
         );
 

@@ -114,21 +114,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly Option<string[]> multipleGithubUserOption = new("--github-user")
         {
             Description = "GitHub alias(es). Can be specified multiple times.",
-            Required = false,
             AllowMultipleArgumentsPerToken = true,
         };
 
         private readonly Option<string[]> labelsOption = new("--label")
         {
             Description = "Label name(s). Can be specified multiple times.",
-            Required = false,
             AllowMultipleArgumentsPerToken = true,
         };
 
         private readonly Option<string> packageOption = new("--package")
         {
             Description = "Package name",
-            Required = false,
         };
 
         private readonly Option<string> pathOption = new("--path", "-p")
@@ -176,6 +173,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = true,
         };
 
+        private readonly Option<OwnerType> ownerTypeOption = new("--owner-type")
+        {
+            Description = "Owner type: service-owner, azsdk-owner, or pr-label",
+            Required = false,
+        };
+
         // Command names
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
@@ -200,13 +203,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string CodeownerRemovePackageOwnerToolName = "azsdk_engsys_codeowner_remove_package_owner";
         private const string CodeownerRemoveLabelToolName = "azsdk_engsys_codeowner_remove_package_label";
         private const string CodeownerRemoveLabelOwnerToolName = "azsdk_engsys_codeowner_remove_label_owner";
-
-        private readonly Option<string> ownerTypeOption = new("--owner-type")
-        {
-            Description = "Owner type: service-owner, azsdk-owner, or pr-label",
-            Required = false,
-        };
-
 
         public CodeownersTool(
             IGitHubService githubService,
@@ -914,7 +910,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<CommandResponse> AddLabelOwner(
             string[] githubUsers,
             string[] labels,
-            string ownerType,
+            OwnerType ownerType,
             string? path = null,
             string? repo = null
         ) {
@@ -984,7 +980,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<CommandResponse> RemoveLabelOwner(
             string[] githubUsers,
             string[] labels,
-            string ownerType,
+            OwnerType ownerType,
             string? path = null,
             string? repo = null
         ) {

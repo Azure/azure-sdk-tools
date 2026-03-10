@@ -58,16 +58,34 @@ namespace APIViewWeb.Repositories
 
         public async Task<Project> GetProjectByExpectedPackageAsync(string language, string packageName)
         {
-            // Exact match OR suffix match for prefixed names like Java's "com.azure:azure-foo" → expected "azure-foo"
-            var queryDefinition = new QueryDefinition(
+            // First try exact match
+            var exactQuery = new QueryDefinition(
                     "SELECT * FROM Projects p WHERE IS_DEFINED(p.ExpectedPackages[@language])" +
-                    " AND (LOWER(p.ExpectedPackages[@language].PackageName) = LOWER(@packageName)" +
-                    "      OR ENDSWITH(LOWER(@packageName), CONCAT(\":\", LOWER(p.ExpectedPackages[@language].PackageName))))" +
+                    " AND LOWER(p.ExpectedPackages[@language].PackageName) = LOWER(@packageName)" +
                     " AND p.IsDeleted = false")
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName);
 
-            var itemQueryIterator = _projectsContainer.GetItemQueryIterator<Project>(queryDefinition);
+            var itemQueryIterator = _projectsContainer.GetItemQueryIterator<Project>(exactQuery);
+            if (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                var exactMatch = result.Resource.FirstOrDefault();
+                if (exactMatch != null)
+                {
+                    return exactMatch;
+                }
+            }
+
+            // Fallback: suffix match for prefixed names like Java's "com.azure:azure-foo" → expected "azure-foo"
+            var suffixQuery = new QueryDefinition(
+                    "SELECT * FROM Projects p WHERE IS_DEFINED(p.ExpectedPackages[@language])" +
+                    " AND ENDSWITH(LOWER(@packageName), CONCAT(\":\", LOWER(p.ExpectedPackages[@language].PackageName)))" +
+                    " AND p.IsDeleted = false")
+                .WithParameter("@language", language)
+                .WithParameter("@packageName", packageName);
+
+            itemQueryIterator = _projectsContainer.GetItemQueryIterator<Project>(suffixQuery);
             if (itemQueryIterator.HasMoreResults)
             {
                 var result = await itemQueryIterator.ReadNextAsync();

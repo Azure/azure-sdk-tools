@@ -271,7 +271,7 @@ public class ProjectsManager : IProjectsManager
         }
     }
 
-    internal static bool PackageNamesMatch(string expectedPackageName, string reviewPackageName)
+    private static bool PackageNamesMatch(string expectedPackageName, string reviewPackageName)
     {
         if (string.IsNullOrEmpty(expectedPackageName) || string.IsNullOrEmpty(reviewPackageName))
         {

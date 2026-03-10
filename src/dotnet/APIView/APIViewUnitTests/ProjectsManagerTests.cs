@@ -483,6 +483,42 @@ public class ProjectsManagerTests
 
     #endregion
 
+    #region Java Package Name Prefix Tests
+
+    [Fact]
+    public async Task Reconcile_JavaReviewWithGroupIdPrefix_StillMatchesExpectedPackage()
+    {
+        // Java review stored as "com.azure:azure-storage" in DB, project expects "azure-storage"
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage", "project-1");
+        ReviewListItemModel javaReview = CreateReview("java-1", "Java", "com.azure:azure-storage", projectId: "project-1");
+        Project project = CreateProject("project-1", "Azure.Storage",
+            "Azure.Storage", "Azure Storage",
+            Packages(("Java", "azure-storage")),
+            new HashSet<string> { "ts-1", "java-1" });
+        // Metadata unchanged — only description tweak to trigger update path
+        TypeSpecMetadata metadata = new()
+        {
+            TypeSpec = new TypeSpecInfo { Namespace = "Azure.Storage", Documentation = "Azure Storage updated" },
+            Languages = new Dictionary<string, LanguageConfig>
+            {
+                ["Java"] = new() { Namespace = "com.azure.storage", PackageName = "azure-storage" }
+            }
+        };
+
+        SetupGetProject("project-1", project);
+        SetupGetReviews(new[] { javaReview });
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        // Java review must stay linked — PackageNamesMatch("azure-storage", "com.azure:azure-storage") is true
+        Assert.Contains("java-1", result.ReviewIds);
+        Assert.DoesNotContain("java-1", result.HistoricalReviewIds);
+        Assert.Equal("project-1", javaReview.ProjectId);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(It.IsAny<IEnumerable<ReviewListItemModel>>()), Times.Never);
+    }
+
+    #endregion
+
     #region Language Key Normalization Tests
 
     [Fact]

@@ -58,8 +58,12 @@ namespace APIViewWeb.Repositories
 
         public async Task<Project> GetProjectByExpectedPackageAsync(string language, string packageName)
         {
+            // Exact match OR suffix match for prefixed names like Java's "com.azure:azure-foo" → expected "azure-foo"
             var queryDefinition = new QueryDefinition(
-                    "SELECT * FROM Projects p WHERE IS_DEFINED(p.ExpectedPackages[@language]) AND LOWER(p.ExpectedPackages[@language].PackageName) = LOWER(@packageName) AND p.IsDeleted = false")
+                    "SELECT * FROM Projects p WHERE IS_DEFINED(p.ExpectedPackages[@language])" +
+                    " AND (LOWER(p.ExpectedPackages[@language].PackageName) = LOWER(@packageName)" +
+                    "      OR ENDSWITH(LOWER(@packageName), CONCAT(\":\", LOWER(p.ExpectedPackages[@language].PackageName))))" +
+                    " AND p.IsDeleted = false")
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName);
 

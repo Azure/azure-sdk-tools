@@ -218,8 +218,7 @@ public class ProjectsManager : IProjectsManager
             bool stillMatches = !string.IsNullOrEmpty(review.Language)
                                && project.ExpectedPackages != null
                                && project.ExpectedPackages.TryGetValue(review.Language, out var expected)
-                               && string.Equals(expected.PackageName, review.PackageName,
-                                   StringComparison.OrdinalIgnoreCase);
+                               && PackageNamesMatch(expected.PackageName, review.PackageName);
 
             if (stillMatches)
             {
@@ -270,6 +269,21 @@ public class ProjectsManager : IProjectsManager
                     candidate.Id, project.Id);
             }
         }
+    }
+
+    internal static bool PackageNamesMatch(string expectedPackageName, string reviewPackageName)
+    {
+        if (string.IsNullOrEmpty(expectedPackageName) || string.IsNullOrEmpty(reviewPackageName))
+        {
+            return false;
+        }
+
+        if (string.Equals(expectedPackageName, reviewPackageName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return reviewPackageName.EndsWith(":" + expectedPackageName, StringComparison.OrdinalIgnoreCase);
     }
 
     private static Dictionary<string, PackageInfo> BuildExpectedPackages(TypeSpecMetadata metadata)

@@ -140,7 +140,12 @@ namespace APIViewWeb
 
         public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
-            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language) AND LOWER(r.PackageName) = LOWER(@packageName) AND r.IsDeleted = false");
+            // Exact match OR suffix match for prefixed names like Java's "com.azure:azure-foo" matching expected "azure-foo"
+            var queryStringBuilder = new StringBuilder(
+                "SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language)" +
+                " AND (LOWER(r.PackageName) = LOWER(@packageName)" +
+                "      OR ENDSWITH(LOWER(r.PackageName), CONCAT(\":\", LOWER(@packageName))))" +
+                " AND r.IsDeleted = false");
             if (isClosed.HasValue)
             {
                 queryStringBuilder.Append(" AND r.IsClosed = @isClosed");

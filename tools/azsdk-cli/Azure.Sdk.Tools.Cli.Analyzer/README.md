@@ -2,7 +2,7 @@
 
 ## Overview
 
-All public and internal async methods (returning `Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>`) must accept a `CancellationToken` parameter. This ensures consistent cancellation support across the codebase.
+All public and internal async methods (returning `Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>`) must accept a `CancellationToken` parameter. This ensures consistent cancellation support across the codebase. The primary intent is so we immediately exit when the user presses ctrl-c.
 
 ### Parameter Convention
 
@@ -12,7 +12,6 @@ All public and internal async methods (returning `Task`, `Task<T>`, `ValueTask`,
 
 ### Exclusions
 
-- **Private methods** — get CT from their callers
 - **Override methods** — signature dictated by base class
 - **`Main` entry points** — fixed signature
 - **Test methods** — `[Test]`, `[Fact]`, `[Theory]`, `[TestMethod]` attributes

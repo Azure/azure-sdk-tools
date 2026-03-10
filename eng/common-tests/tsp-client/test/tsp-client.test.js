@@ -124,8 +124,12 @@ describe.concurrent.each([
     });
 
     it("inits from url", async () => {
+      // const url =
+      //   "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
+
+      // test widget rust config
       const url =
-        "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
+        "https://github.com/Azure/azure-rest-api-specs/blob/1c6ba5522dfdf969d4e541737e8969f542a80fd5/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
       await execNpmExec(["tsp-client", "--debug", "init", "-c", url], {
         cwd: initWorktree,

@@ -106,6 +106,10 @@
 
     { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new resource 'asset' for service widget with TypeSpec.", "category": "all" },
     { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new api version for service widget with TypeSpec.", "category": "all" },
-    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" }
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" },
+
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Address the APIView feedback for my TypeSpec package", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Delegate the APIView reviewer comments to Copilot for TypeSpec fixes", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Resolve the APIView feedback by creating a GitHub issue for TypeSpec customizations", "category": "all" }
   ]
 }

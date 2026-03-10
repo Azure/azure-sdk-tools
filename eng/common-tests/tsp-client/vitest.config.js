@@ -1,3 +1,4 @@
+import { cpus } from "os";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -8,6 +9,8 @@ export default defineConfig({
     tsConfig: false,
   },
   test: {
+    // Default is 5, but increasing to num cpus can improve perf on many-core machines
+    maxConcurrency: cpus().length,
     testTimeout: 240_000,
   },
 });

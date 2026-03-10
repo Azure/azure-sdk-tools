@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses.Package
         {
             return new PackageOperationResponse
             {
-                ResponseErrors = errors?.ToList() ?? [],
+                ResponseErrors = errors,
                 PackageName = packageInfo?.PackageName ?? string.Empty,
                 Language = packageInfo?.Language ?? SdkLanguage.Unknown,
                 PackageType = packageInfo?.SdkType ?? SdkType.Unknown,

@@ -145,6 +145,12 @@ async function updateDataPlaneCiYaml(
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, serviceDirectory) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
 
+    // Ensure ServiceDirectory is set correctly under extends.parameters
+    const expectedServiceDirectory = serviceDirToSdkRoot;
+    if (parsed.extends.parameters.ServiceDirectory !== expectedServiceDirectory) {
+        parsed.extends.parameters.ServiceDirectory = expectedServiceDirectory;
+        needUpdate = true;
+    }
     // Sync exclusions from ci.mgmt.yml if it exists
     if (await existsAsync(ciMgmtPath)) {
         const mgmtContent = await readFile(ciMgmtPath, { encoding: 'utf-8' });

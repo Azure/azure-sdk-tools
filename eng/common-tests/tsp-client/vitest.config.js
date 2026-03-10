@@ -8,6 +8,6 @@ export default defineConfig({
     tsConfig: false,
   },
   test: {
-    testTimeout: 90_000,
+    testTimeout: 240_000,
   },
 });

@@ -5,6 +5,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.0",
     "@tsconfig/node20": "^20.1.4",
+    "@types/debug": "^4.1.12",
     "@types/node": "^20.0.0",
     "@types/semver": "^7.7.1",
     "cross-env": "^10.1.0",

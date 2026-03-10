@@ -12,11 +12,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 public partial class PythonLanguageService : LanguageService
 {
     // Common NextSteps messages for Python tool issues
-    private static readonly string[] pythonToolsInstallationNextSteps = [
-        "Run 'azsdk_verify_setup' to check and auto-install required Python tools",
-        "Ensure Python is installed and available in PATH",
-        "Navigate to the azure-sdk-for-python repository root and run: python -m pip install eng/tools/azure-sdk-tools"
-    ];
+    private static readonly string VerifySetupNextStepInstruction = 
+    "Run 'azsdk_verify_setup' from the azure-sdk-for-python repo root to auto-install required Python tools";
 
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
@@ -33,7 +30,7 @@ public partial class PythonLanguageService : LanguageService
                 return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}")
                 {
                     NextSteps = [
-                        "Ensure you are running this command from within the azure-sdk-for-python repository",
+                        VerifySetupNextStepInstruction,
                         "Verify the eng/tools/azure-sdk-tools directory exists in the repository root"
                     ]
                 };
@@ -46,9 +43,9 @@ public partial class PythonLanguageService : LanguageService
                 return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.")
                 {
                     NextSteps = [
-                        "Install Python 3.8+ and ensure it is added to your system PATH",
+                        "Install Python and ensure it is added to your system PATH",
                         "Verify installation by running 'python --version' in your terminal",
-                        "Run 'azsdk_verify_setup' to check and auto-install required Python tools"
+                        VerifySetupNextStepInstruction
                     ]
                 };
             }
@@ -78,7 +75,7 @@ public partial class PythonLanguageService : LanguageService
             logger.LogError(ex, "Error updating snippets for Python project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}")
             {
-                NextSteps = [.. pythonToolsInstallationNextSteps]
+                NextSteps = [VerifySetupNextStepInstruction]
             };
         }
     }
@@ -123,13 +120,13 @@ public partial class PythonLanguageService : LanguageService
                 var nextSteps = new List<string>();
                 if (failedTools.Any(t => t.toolName == "pylint"))
                 {
-                    nextSteps.Add("pylint: Review and manually fix code quality violations - no auto-fix available");
+                    nextSteps.Add("pylint: Review and manually fix code quality violations.");
                 }
                 if (failedTools.Any(t => t.toolName == "mypy"))
                 {
-                    nextSteps.Add("mypy: Review and manually fix type annotation issues - no auto-fix available");
+                    nextSteps.Add("mypy: Review and manually fix type annotation issues.");
                 }
-                nextSteps.Add("Run 'azsdk_verify_setup' to ensure azpysdk tools are properly installed");
+                nextSteps.Add(VerifySetupNextStepInstruction);
 
                 return new PackageCheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}")
                 {
@@ -142,7 +139,7 @@ public partial class PythonLanguageService : LanguageService
             logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error running code linting: {ex.Message}")
             {
-                NextSteps = [.. pythonToolsInstallationNextSteps]
+                NextSteps = [VerifySetupNextStepInstruction]
             };
         }
     }
@@ -178,7 +175,7 @@ public partial class PythonLanguageService : LanguageService
             logger.LogError(ex, "Error running dependency analysis for Python project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error running dependency analysis: {ex.Message}")
             {
-                NextSteps = [.. pythonToolsInstallationNextSteps]
+                NextSteps = [VerifySetupNextStepInstruction]
             };
         }
     }
@@ -227,7 +224,7 @@ public partial class PythonLanguageService : LanguageService
             logger.LogError(ex, "Error running code formatting for Python project at: {PackagePath}", packagePath);
             return new PackageCheckResponse(1, "", $"Error running code formatting: {ex.Message}")
             {
-                NextSteps = [.. pythonToolsInstallationNextSteps]
+                NextSteps = [VerifySetupNextStepInstruction]
             };
         }
     }

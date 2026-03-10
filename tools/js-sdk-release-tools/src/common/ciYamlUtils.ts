@@ -126,6 +126,7 @@ async function updateDataPlaneCiYaml(
     const content = await readFile(ciPath, { encoding: 'utf-8' });
     let parsed = parse(content.toString());
 
+    makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'branches', 'exclude']);
     makeSureArrayAvailableInCiYaml(parsed, ['pr', 'branches', 'exclude']);
     makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'include']);
     makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'include']);
@@ -137,7 +138,9 @@ async function updateDataPlaneCiYaml(
     const ciMgmtPath = posix.join(serviceDirToSdkRoot, 'ci.mgmt.yml');
 
     let needUpdate = false;
+    needUpdate = tryAddItemInArray(parsed.trigger.branches.exclude, 'feature/v4') || needUpdate;
     needUpdate = tryAddItemInArray(parsed.pr.branches.exclude, 'feature/v4') || needUpdate;
+    
     needUpdate = tryAddItemInArray(parsed.trigger.paths.include, serviceDirectory) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.pr.paths.include, serviceDirectory) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
@@ -146,7 +149,7 @@ async function updateDataPlaneCiYaml(
     if (await existsAsync(ciMgmtPath)) {
         const mgmtContent = await readFile(ciMgmtPath, { encoding: 'utf-8' });
         const mgmtParsed = parse(mgmtContent.toString());
-        const mgmtPaths: string[] = [ciMgmtPath, ...(mgmtParsed?.trigger?.paths?.include ?? [])];
+        const mgmtPaths = Array.from(new Set([ciMgmtPath, ...(mgmtParsed?.trigger?.paths?.include ?? [])]));
         makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'exclude']);
         makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'exclude']);
         for (const p of mgmtPaths) {
@@ -182,12 +185,13 @@ async function createDataPlaneCiYaml(
     if (await existsAsync(ciMgmtPath)) {
         const mgmtContent = await readFile(ciMgmtPath, { encoding: 'utf-8' });
         const mgmtParsed = parse(mgmtContent.toString());
-        const mgmtPaths: string[] = [ciMgmtPath, ...(mgmtParsed?.trigger?.paths?.include ?? [])];
+        const mgmtPaths = Array.from(new Set([ciMgmtPath, ...(mgmtParsed?.trigger?.paths?.include ?? [])]));
         parsed.trigger.paths.exclude = mgmtPaths;
         parsed.pr.paths.exclude = mgmtPaths;
     } else {
-        parsed.trigger.paths.exclude = null;
-        parsed.pr.paths.exclude = null;
+        // When no ci.mgmt.yml exists, omit exclude keys entirely
+        delete parsed.trigger.paths.exclude;
+        delete parsed.pr.paths.exclude;
     }
 
     await writeCiYaml(ciPath, parsed);

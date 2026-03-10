@@ -4,14 +4,10 @@ trigger:
   branches:
     include:
       - main
-      - feature/*
       - release/*
       - hotfix/*
-    exclude:
-      - feature/v4
   paths:
     include: null
-    exclude: null
 
 pr:
   branches:
@@ -24,10 +20,9 @@ pr:
       - feature/v4
   paths:
     include: null
-    exclude: null
 
 extends:
-  template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
     ServiceDirectory: null
     Artifacts:

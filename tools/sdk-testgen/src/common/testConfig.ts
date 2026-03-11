@@ -1,8 +1,12 @@
 import * as _ from 'lodash';
 import * as path from 'path';
+
 import { Config } from './constant';
 export class TestConfig {
-    constructor(public readonly config: Record<string, any>, public readonly defaultValues: unknown) {}
+    constructor(
+        public readonly config: Record<string, any>,
+        public readonly defaultValues: unknown,
+    ) {}
 
     public getValue(path: string, d: any = undefined) {
         if (d === undefined) {

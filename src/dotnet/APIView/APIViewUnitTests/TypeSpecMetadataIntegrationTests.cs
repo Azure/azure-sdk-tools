@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -161,7 +162,10 @@ public class TypeSpecMetadataIntegrationTests
         Assert.Equal("Azure.Analytics.Purview", capturedProject.ExpectedPackages["DotNet"].PackageName);
 
         Assert.Equal(capturedProject.Id, typeSpecReview.ProjectId);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(typeSpecReview), Times.Once);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(capturedProject), Times.Once);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
+            It.Is<IEnumerable<ReviewListItemModel>>(revs => revs.Count() == 1 && revs.First().Id == typeSpecReview.Id)),
+            Times.Once);
     }
 
     [Fact]

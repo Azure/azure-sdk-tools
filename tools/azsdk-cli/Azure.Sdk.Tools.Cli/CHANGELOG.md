@@ -1,19 +1,27 @@
 # Release History
 
-## 0.6.1 (Unreleased)
+## 0.6.2 (2026-03-11)
+
+### Features Added
+
+- Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
+
+### Bugs Fixed
+
+- Fixed a bug in get release plan CLI when release plan is fetched using api spec pull request.
+
+## 0.6.1 (2026-03-05)
 
 ### Features Added
 
 - Added `azsdk_package_pack` tool to create package artifacts
 - Improved `azsdk_typespec_delegate_apiview_feedback` tool description to better recognize intent expressed as "address", "fix", or "resolve" APIView feedback
-
-### Breaking Changes
+- Added a CLI command `azsdk release-plan update` and MCP tool `azsdk_update_release_plan` to update release plan.
+- Updated CLI command `azsdk release-plan get` to get release plan using API spec pull request or spec project path.
 
 ### Bugs Fixed
 
 - Filter out downvoted `azure-sdk` bot comments from APIView feedback to reduce noise in delegated issues
-
-### Other Changes
 
 ## 0.6.0 (2026-02-27)
 

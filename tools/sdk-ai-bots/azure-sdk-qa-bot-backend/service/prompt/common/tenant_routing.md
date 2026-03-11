@@ -43,12 +43,12 @@ Each tenant below lists its **ID**, **scope**, and **matching topics**. Some ten
 **Scope**: Azure REST API specification PR review process and failing checks (**not** API design questions).
 **Topics**:
 - Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories
-- How to fix specification PR pipeline errors, validation errors, check failures or CI failures
-- How to suppress specification PR pipeline errors, validation errors, check failures or CI failures
+- How to fix specification PR pipeline errors, SDK validation errors, check failures or CI failures
+- How to suppress specification PR pipeline errors, SDK validation errors, check failures or CI failures
 **Exclusions** (route elsewhere instead):
 - Language-specific SDK generation/validation errors → route to that language's SDK tenant
 - TypeSpec validation errors → route to `azure_sdk_qa_bot`
-- Core topic is about API design questions → route to `azure_sdk_qa_bot`
+- Core topic is about API design or spec authoring questions → route to `azure_sdk_qa_bot`
 - Permission or access issues for API spec repos → route to `azure_sdk_onboarding`
 
 ### 3. `azure_sdk_qa_bot` — TypeSpec

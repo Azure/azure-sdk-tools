@@ -1,5 +1,11 @@
 # Release History
 
+## 0.9.2 (2026-03-06)
+
+### Features Added
+
+* Support access github check run logs
+
 ## 0.9.1 (2026-02-13)
 
 ### Features Added

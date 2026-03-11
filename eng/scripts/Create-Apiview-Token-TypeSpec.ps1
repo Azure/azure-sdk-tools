@@ -29,7 +29,6 @@ function Generate-Apiview-File($packagePath)
     npx tsp compile . --emit=@azure-tools/typespec-metadata --option "@azure-tools/typespec-metadata.outputFile={project-root}/output/typespec-metadata.json" --option "@azure-tools/typespec-metadata.format=json"
     if ($LASTEXITCODE) {
         Write-Host "Warning: Failed to generate metadata file (exit code: $LASTEXITCODE). Continuing without metadata."
-        $global:LASTEXITCODE = 0
     }
     Pop-Location
 }

@@ -5,15 +5,16 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
- * @param {import("../shared/sdk-types.js").SdkName} sdkName
+ * @param {string} longName
  */
-export async function getSdkDir(sdkName) {
-  const lang = sdkName.replace("azure-sdk-for-", "");
+export async function getMatchingDir(longName) {
+  // azure-sdk-for-js     -> js
+  // azure-rest-api-specs -> specs
+  const shortName = longName.substring(longName.lastIndexOf("-") + 1);
 
-  // look for full name (eg "azure-sdk-for-js") or short name (eg "js")
   const candidates = [
-    resolve(__dirname, `../../../../../${sdkName}`),
-    resolve(__dirname, `../../../../../${lang}`),
+    resolve(__dirname, `../../../../../${longName}`),
+    resolve(__dirname, `../../../../../${shortName}`),
   ];
 
   for (const candidate of candidates) {
@@ -22,11 +23,11 @@ export async function getSdkDir(sdkName) {
         return candidate;
       }
     } catch {
-      // Continue to the next candidate if this path does not exist.
+      // continue to next candidate
     }
   }
 
   throw new Error(
-    `Unable to find ${sdkName} repo clone. Checked: ${candidates.join(", ")}`,
+    `Unable to find dir matching ${longName}. Checked: ${candidates.join(", ")}`,
   );
 }

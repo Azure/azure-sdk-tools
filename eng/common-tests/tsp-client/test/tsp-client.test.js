@@ -8,7 +8,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { execNpmExec } from "../shared/exec.js";
 import { debugLogger } from "../shared/logger.js";
 import { SdkName } from "../shared/sdk-types.js";
-import { getSdkDir } from "../src/fs.js";
+import { getMatchingDir } from "../src/fs.js";
 
 // Enable simple-git debug logging to improve console output
 debug.enable("simple-git");
@@ -23,6 +23,14 @@ describe("tsp-client", () => {
     });
 
     expect(semver.parse(stdout.trim())).toBeTruthy();
+  });
+
+  it("finds spec dir", async (ctx) => {
+    const specDir = await getMatchingDir("azure-rest-api-specs").catch(
+      ctx.skip(),
+    );
+
+    expect((await stat(specDir)).isDirectory()).toBe(true);
   });
 });
 
@@ -44,12 +52,12 @@ describe.concurrent.each([
   /** @type {string} */
   let sdkDir;
 
+  /** @type {string} */
+  let specDir;
+
   beforeAll(async () => {
-    try {
-      sdkDir = await getSdkDir(sdkName);
-    } catch {
-      // if errors, leave undefined
-    }
+    sdkDir = await getMatchingDir(sdkName).catch(() => "");
+    specDir = await getMatchingDir("azure-rest-api-specs").catch(() => "");
   });
 
   beforeEach((ctx) => {
@@ -60,14 +68,15 @@ describe.concurrent.each([
 
   it("finds sdk dir", async () => {
     const sdkDirStat = await stat(sdkDir);
-
     expect(sdkDirStat.isDirectory()).toBe(true);
-    console.log(`SDK dir: ${sdkDir}`);
   });
 
   describe("worktree tests", () => {
     /** @type {string} */
-    let initWorktree;
+    let initUrlWorktree;
+
+    /** @type {string} */
+    let initLocalWorktree;
 
     /** @type {string} */
     let updateWorktree;
@@ -77,18 +86,28 @@ describe.concurrent.each([
       if (sdkDir) {
         const lang = sdkName.replace("azure-sdk-for-", "");
 
-        initWorktree = await mkdtemp(
-          join(tmpdir(), `tsp-client-test-${lang}-`),
+        initUrlWorktree = await mkdtemp(
+          join(tmpdir(), `tsp-client-test-initurl-${lang}-`),
         );
+
+        if (specDir) {
+          initLocalWorktree = await mkdtemp(
+            join(tmpdir(), `tsp-client-test-initlocal-${lang}-`),
+          );
+        }
 
         const templateDir = templateDirs[sdkName];
         if (templateDir.length > 0) {
           updateWorktree = await mkdtemp(
-            join(tmpdir(), `tsp-client-test-${lang}-`),
+            join(tmpdir(), `tsp-client-test-update-${lang}-`),
           );
         }
 
-        for (const worktree of [initWorktree, updateWorktree]) {
+        for (const worktree of [
+          initUrlWorktree,
+          initLocalWorktree,
+          updateWorktree,
+        ]) {
           if (worktree) {
             await simpleGit(sdkDir).raw([
               "worktree",
@@ -103,7 +122,11 @@ describe.concurrent.each([
 
     afterAll(async () => {
       if (sdkDir) {
-        for (const worktree of [initWorktree, updateWorktree]) {
+        for (const worktree of [
+          initUrlWorktree,
+          initLocalWorktree,
+          updateWorktree,
+        ]) {
           if (worktree) {
             try {
               await simpleGit(sdkDir).raw([
@@ -126,18 +149,35 @@ describe.concurrent.each([
       //   "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
       // test widget rust config
-      const url =
+      const urlConfig =
         "https://github.com/Azure/azure-rest-api-specs/blob/1c6ba5522dfdf969d4e541737e8969f542a80fd5/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
-      await execNpmExec(["tsp-client", "--debug", "init", "-c", url], {
-        cwd: initWorktree,
+      await execNpmExec(["tsp-client", "--debug", "init", "-c", urlConfig], {
+        cwd: initUrlWorktree,
         logger: debugLogger,
         prefix: engCommonTspClient,
       });
     });
 
-    it("inits from local", (ctx) => {
-      ctx.skip();
+    it("inits from local", async (ctx) => {
+      if (!specDir) {
+        ctx.skip();
+      }
+
+      const localConfig = join(
+        specDir,
+        "specification",
+        "widget",
+        "data-plane",
+        "WidgetAnalytics",
+        "tspconfig.yaml",
+      );
+
+      await execNpmExec(["tsp-client", "--debug", "init", "-c", localConfig], {
+        cwd: initLocalWorktree,
+        logger: debugLogger,
+        prefix: engCommonTspClient,
+      });
     });
 
     it("updates template", async (ctx) => {

@@ -53,13 +53,22 @@ public class Program
         // All other logs will be redirected via the mcp logger over json-rpc to the mcp client only
         builder.Logging.ConfigureMcpConsoleFallbackLogging(isCommandLine);
 
-        // Skip azure client logging noise
+        // Skip azure client and noisy third-party logging
         builder.Logging.AddFilter((category, level) =>
         {
             if (debug || null == category) { return level >= logLevel; }
             var isAzureClient = category.StartsWith("Azure.", StringComparison.Ordinal);
             var isToolsClient = category.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
             if (isAzureClient && !isToolsClient) { return level >= LogLevel.Error; }
+
+            // Suppress noisy third-party/framework categories
+            if (category.StartsWith("System.Net.Http.HttpClient", StringComparison.Ordinal)
+                || category.StartsWith("GitHub.Copilot.SDK", StringComparison.Ordinal)
+                || category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal))
+            {
+                return level >= LogLevel.Warning;
+            }
+
             return level >= logLevel;
         });
 

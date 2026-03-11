@@ -6,7 +6,6 @@ using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -34,6 +33,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
     // Classification categories returned by the classifier
     private const string ClassificationTspApplicable = "TSP_APPLICABLE";
+    private const string ClassificationCodeCustomization = "CODE_CUSTOMIZATION";
     private const string ClassificationRequiresManualIntervention = "REQUIRES_MANUAL_INTERVENTION";
     private const string ClassificationSuccess = "SUCCESS";
     
@@ -59,10 +59,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     ) : base(languageServices, gitHelper, logger)
     {
         this.tspClientHelper = tspClientHelper ?? throw new ArgumentNullException(nameof(tspClientHelper));
-        this.feedbackService = feedbackService;
-        _classifierService = classifierService;
-        this.typeSpecCustomizationService = typeSpecCustomizationService;
-        this.typeSpecHelper = typeSpecHelper;
+        this.feedbackService = feedbackService ?? throw new ArgumentNullException(nameof(feedbackService));
+        _classifierService = classifierService ?? throw new ArgumentNullException(nameof(classifierService));
+        this.typeSpecCustomizationService = typeSpecCustomizationService ?? throw new ArgumentNullException(nameof(typeSpecCustomizationService));
+        this.typeSpecHelper = typeSpecHelper ?? throw new ArgumentNullException(nameof(typeSpecHelper));
     }
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
@@ -123,6 +123,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// regenerates code if needed (Java), builds, and returns success/failure with build result.
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
+    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> indicating the outcome.</returns>
@@ -134,7 +135,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// Executes the update pipeline: classify → patch customizations → regen → build.
     /// </summary>
     /// <param name="packagePath">Absolute path to the SDK package directory.</param>
-    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory (containing client.tsp/main.tsp).</param>
+    /// <param name="tspProjectPath">Absolute path to the local TypeSpec project directory.</param>
     /// <param name="customizationRequest">Description of the requested customization to apply to the TypeSpec, used for guiding the update process.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="CustomizedCodeUpdateResponse"/> with the pipeline result.</returns>
@@ -185,8 +186,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         bool buildSucceeded = false;
         string? buildError = null;
 
-        var feedbackItems = await GetFeedbackItems(tspProjectPath, plainTextFeedback: customizationRequest, ct: ct);
-
+        var feedbackItems = await GetFeedbackItems(plainTextFeedback: customizationRequest, ct: ct);
         if (feedbackItems.Count == 0)
         {
             return new CustomizedCodeUpdateResponse
@@ -197,16 +197,16 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 BuildResult = "No feedback items to process."
             };
         }
-
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
         List<string> changesMade = new();
         List<string> manualInterventions = new();
+        StringBuilder classifierAnalysis = new();
         StringBuilder tspFixFailedReasons = new();
         do
         {
             // TODO - need to update this to avoid casting to/from list
-            var response = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: "", tspProjectPath, ct: ct);
+            var response = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath, ct: ct);
 
             if (response.Classifications == null || response.Classifications.Count == 0)
             {
@@ -229,6 +229,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             var tspFixFailed = 0;
             var tspFixSucceeded = 0;
             var tspApplicable = 0;
+            var codeCustomizations = 0;
             var manualChanges = 0;
             var noChanges = 0;
 
@@ -238,14 +239,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
                 if (feedbackItem == null)
                 {
-                    logger.LogDebug("Classifier returned non-existent feedback item ID '{ItemId}'.", itemDetails.ItemId);
+                    logger.LogWarning("Classifier returned non-existent feedback item ID '{ItemId}', skipping.", itemDetails.ItemId);
+                    continue;
                 }
-
-                feedbackItem?.AppendContext($"Iteration {tries+1}");
 
                 if (itemDetails.Classification == ClassificationTspApplicable)
                 {
                     tspApplicable++;
+                    feedbackItem.AppendContext($"Iteration {tries+1}");
                     logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
                     var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, itemDetails.Text, ct: ct);
 
@@ -253,7 +254,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         var changes = string.Join("; ", tspCustomizationResult.ChangesSummary);
                         logger.LogInformation("Successfully applied tsp customization changes, changes applied: {changes}", changes);
-                        feedbackItem?.AppendContext(changes, "Typespec changes applied");
+                        feedbackItem.AppendContext(changes, "Typespec changes applied");
                         changesMade.AddRange(tspCustomizationResult.ChangesSummary);
                         tspFixSucceeded++;
                     }
@@ -264,7 +265,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                         tspFixFailedReasons.Append("; ");
                         tspFixFailed++;
                     }
-                } else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
+                }
+                else if (itemDetails.Classification == ClassificationCodeCustomization)
+                {
+                    codeCustomizations++;
+                    logger.LogInformation("Item '{ItemId}' classified as CODE_CUSTOMIZATION — will be handled via code patching.", itemDetails.ItemId);
+                    classifierAnalysis.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
+
+                    // Don't try and fix the same feedback again  
+                    feedbackDictionary.Remove(itemDetails.ItemId);
+                }
+                else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
                 {
                     manualChanges++;
                     manualInterventions.Add($"'{itemDetails.Text}' (Reason: {itemDetails.Reason})");
@@ -285,7 +296,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (tries == 0)
             {
                 // Nothing was classified as tsp applicable and at least some feedback requires manual intervention
-                if (tspApplicable == 0 && manualChanges > 0)
+                if (tspApplicable == 0 && codeCustomizations == 0 && manualChanges > 0)
                 {
                     return new CustomizedCodeUpdateResponse
                     {
@@ -297,7 +308,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
 
                 // Everything was classified as success
-                if (tspApplicable == 0 && noChanges > 0)
+                if (tspApplicable == 0 && codeCustomizations == 0 && noChanges > 0)
                 {
                     return new CustomizedCodeUpdateResponse
                     {
@@ -316,6 +327,17 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                         ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed
                     };
                 }
+
+                // All items are code customizations — no TSP changes were made, skip regen
+                // but still build to get error context for the patch agent
+                if (tspApplicable == 0 && codeCustomizations > 0)
+                {
+                    logger.LogInformation("All items classified as CODE_CUSTOMIZATION — skipping regen, building for error context.");
+                    var (codeCustSuccess, codeCustError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                    buildSucceeded = codeCustSuccess;
+                    buildError = codeCustError;
+                    break;
+                }
             }
 
             // Don't waste time regenerating if no TSP fixes were successfully applied
@@ -330,7 +352,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
                     // Append regen failure context so the classifier can re-classify for manual intervention
                     var regenContext = $"Regeneration failed: {regenResult.ResponseError}";
-                    feedbackDictionary.Values.ToList().ForEach(item => item.AppendContext(regenContext, "Regeneration Result"));
+                    foreach (var item in feedbackDictionary.Values)
+                    {
+                        item.AppendContext(regenContext, "Regeneration Result");
+                    }
 
                     buildSucceeded = false;
                     buildError = regenContext;
@@ -349,11 +374,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (tries + 1 < maxTries)
             {
                 var buildContext = success ? "Build succeeded." : (error ?? "Build failed with unknown error.");
-                feedbackDictionary.Values.ToList().ForEach(item => item.AppendContext(buildContext, "Build Result"));
+                foreach (var item in feedbackDictionary.Values)
+                {
+                    item.AppendContext(buildContext, "Build Result");
+                }
             }
 
             tries++;
-        } while (buildSucceeded == false && tries < maxTries);
+        } while (!buildSucceeded && tries < maxTries);
 
         if (buildSucceeded)
         {
@@ -395,11 +423,13 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         // Step 4: Apply patches based on build errors
+        var patchContext = BuildPatchContext(customizationRequest, classifierAnalysis, buildError);
+
         logger.LogInformation("Applying patches to fix build errors...");
         var patches = await languageService.ApplyPatchesAsync(
             customizationRoot,
             packagePath,
-            buildError ?? string.Empty,
+            patchContext,
             ct);
 
         if (patches.Count == 0)
@@ -418,7 +448,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (languageService.Language == SdkLanguage.Java)
         {
             logger.LogInformation("Regenerating code after patches (Java)...");
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha: null, isCli: false, localSpecRepoPath: null, ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha: null, isCli: false, localSpecRepoPath: tspProjectPath, ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
@@ -428,6 +458,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     Message = $"Regeneration failed after patches: {regenResult.ResponseError}",
                     ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
                     BuildResult = regenResult.ResponseError,
+                    TypeSpecChangesSummary = changesMade,
                     AppliedPatches = patches
                 };
             }
@@ -444,6 +475,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             {
                 Success = true,
                 Message = "Build passed after repairs.",
+                TypeSpecChangesSummary = changesMade,
                 AppliedPatches = patches
             };
         }
@@ -456,15 +488,50 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             Message = "Patches applied but build still failing.",
             ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
             BuildResult = finalBuildError,
+            TypeSpecChangesSummary = changesMade,
             AppliedPatches = patches
         };
     }
 
     /// <summary>
-    /// Gathers and constructs feedback items from various sources (APIView, plain text, file).
+    /// Builds a formatted context string for the patch agent, combining the original request,
+    /// classifier analysis, and build errors into labeled markdown sections.
     /// </summary>
+    /// <param name="customizationRequest">The original user customization request text.</param>
+    /// <param name="classifierAnalysis">Accumulated classifier analysis from all classification iterations.</param>
+    /// <param name="buildError">The build error output, if any.</param>
+    /// <returns>A formatted markdown string combining all available context sections.</returns>
+    internal static string BuildPatchContext(string? customizationRequest, StringBuilder classifierAnalysis, string? buildError)
+    {
+        var sb = new StringBuilder();
+        if (!string.IsNullOrWhiteSpace(customizationRequest))
+        {
+            sb.AppendLine("## Original Request");
+            sb.AppendLine(customizationRequest);
+            sb.AppendLine();
+        }
+        if (classifierAnalysis.Length > 0)
+        {
+            sb.AppendLine("## Classifier Analysis");
+            sb.AppendLine(classifierAnalysis.ToString());
+        }
+        if (!string.IsNullOrWhiteSpace(buildError))
+        {
+            sb.AppendLine("## Build Errors");
+            sb.AppendLine(buildError);
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Gathers feedback items from the provided sources: APIView URL, plain text feedback, or a file containing plain text feedback.
+    /// </summary>
+    /// <param name="apiViewUrl">Optional APIView URL to extract feedback from.</param>
+    /// <param name="plainTextFeedback">Optional plain text feedback string.</param>
+    /// <param name="plainTextFeedbackFile">Optional path to a file containing plain text feedback.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A list of <see cref="FeedbackItem"/> instances extracted from the provided sources.</returns>
     private async Task<List<FeedbackItem>> GetFeedbackItems(
-        string tspProjectPath,
         string? apiViewUrl = default,
         string? plainTextFeedback = default,
         string? plainTextFeedbackFile = default,
@@ -482,11 +549,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
                 plainTextFeedback = await File.ReadAllTextAsync(plainTextFeedbackFile, ct);
                 logger.LogInformation("Read {length} characters from feedback file: {file}", plainTextFeedback.Length, plainTextFeedbackFile);
-            }
-
-            if (string.IsNullOrEmpty(tspProjectPath) || !Directory.Exists(tspProjectPath))
-            {
-                throw new DirectoryNotFoundException($"TypeSpec project path does not exist: {tspProjectPath}");
             }
 
             List<FeedbackItem> feedbackItems = [];

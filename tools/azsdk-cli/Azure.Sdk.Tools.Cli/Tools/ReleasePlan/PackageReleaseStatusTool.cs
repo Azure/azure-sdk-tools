@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (!ReleasePlanTool.SUPPORTED_LANGUAGES.Contains(language.ToLower()))
                 {
-                    response.ResponseError = $"Language '{language}' is not supported. Supported languages: {string.Join(", ", ReleasePlanTool.SUPPORTED_LANGUAGES)}";
+                    response.Message = $"Language '{language}' is not supported. Supported languages: {string.Join(", ", ReleasePlanTool.SUPPORTED_LANGUAGES)}";
                     return response;
                 }
                 
@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var releasePlans = await devOpsService.GetReleasePlansForPackageAsync(packageName, language, isAgentTesting);
                 if (releasePlans.Count == 0)
                 {
-                    response.ResponseError = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
+                    response.Message = $"No in-progress release plans found for package '{packageName}' in language '{language}'.";
                     return response;
                 }
 

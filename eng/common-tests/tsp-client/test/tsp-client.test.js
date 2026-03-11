@@ -15,6 +15,18 @@ debug.enable("simple-git");
 
 const engCommonTspClient = resolve("../../common/tsp-client");
 
+/**
+ * @param {string[]} args
+ * @param {string} cwd
+ */
+async function execTspClient(args, cwd) {
+  return execNpmExec(["tsp-client", "--debug", ...args], {
+    cwd,
+    logger: debugLogger,
+    prefix: engCommonTspClient,
+  });
+}
+
 describe("tsp-client", () => {
   it("version parses as semver", async () => {
     const { stdout } = await execNpmExec(["tsp-client", "-v"], {
@@ -152,11 +164,7 @@ describe.concurrent.each([
       const urlConfig =
         "https://github.com/Azure/azure-rest-api-specs/blob/1c6ba5522dfdf969d4e541737e8969f542a80fd5/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
-      await execNpmExec(["tsp-client", "--debug", "init", "-c", urlConfig], {
-        cwd: initUrlWorktree,
-        logger: debugLogger,
-        prefix: engCommonTspClient,
-      });
+      await execTspClient(["init", "-c", urlConfig], initUrlWorktree);
     });
 
     it("inits from local", async (ctx) => {
@@ -173,11 +181,7 @@ describe.concurrent.each([
         "tspconfig.yaml",
       );
 
-      await execNpmExec(["tsp-client", "--debug", "init", "-c", localConfig], {
-        cwd: initLocalWorktree,
-        logger: debugLogger,
-        prefix: engCommonTspClient,
-      });
+      await execTspClient(["init", "-c", localConfig], initLocalWorktree);
     });
 
     it("updates template", async (ctx) => {
@@ -187,11 +191,7 @@ describe.concurrent.each([
         ctx.skip();
       }
 
-      await execNpmExec(["tsp-client", "--debug", "update"], {
-        cwd: join(updateWorktree, ...templateDir),
-        logger: debugLogger,
-        prefix: engCommonTspClient,
-      });
+      await execTspClient(["update"], join(updateWorktree, ...templateDir));
     });
   });
 });

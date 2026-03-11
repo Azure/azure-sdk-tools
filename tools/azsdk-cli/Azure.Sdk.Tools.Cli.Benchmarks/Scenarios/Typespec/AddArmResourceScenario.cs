@@ -88,7 +88,7 @@ public class AddArmResourceScenario : BenchmarkScenario
 
         // Verify the project compiles successfully
         new CommandValidator("tsp compile succeeds",
-            command: "tsp",
-            arguments: ["compile", "./specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp"])
+            command: "npx",
+            arguments: ["tsp", "compile", "./specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp"])
     ];
 }

@@ -45,6 +45,7 @@ public class Program
         var verboseOption = new Option<bool>("--verbose") { Description = "Show agent activity during execution" };
         var parallelOption = new Option<int>("--parallel") { Description = $"Maximum number of scenarios to run concurrently (default: {BenchmarkDefaults.DefaultMaxParallelism})", DefaultValueFactory = _ => BenchmarkDefaults.DefaultMaxParallelism };
         var reportOption = new Option<bool>("--report") { Description = "Generate a markdown report after the run completes" };
+        var outputOption = new Option<string?>("--output") { Description = "Output file path for the report (used with --report)" };
         var tagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
         var repoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
 
@@ -55,6 +56,7 @@ public class Program
         runCommand.Options.Add(verboseOption);
         runCommand.Options.Add(parallelOption);
         runCommand.Options.Add(reportOption);
+        runCommand.Options.Add(outputOption);
         runCommand.Options.Add(tagOption);
         runCommand.Options.Add(repoOption);
 
@@ -67,9 +69,10 @@ public class Program
             var verbose = parseResult.GetValue(verboseOption);
             var parallel = parseResult.GetValue(parallelOption);
             var report = parseResult.GetValue(reportOption);
+            var output = parseResult.GetValue(outputOption);
             var tags = parseResult.GetValue(tagOption);
             var repo = parseResult.GetValue(repoOption);
-            return await HandleRunCommand(name, all, tags, repo, model, cleanup, verbose, parallel, report);
+            return await HandleRunCommand(name, all, tags, repo, model, cleanup, verbose, parallel, report, output);
         });
         rootCommand.Subcommands.Add(runCommand);
 
@@ -122,7 +125,7 @@ public class Program
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? repo, string? model, CleanupPolicy cleanup, bool verbose, int parallel, bool report)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? repo, string? model, CleanupPolicy cleanup, bool verbose, int parallel, bool report, string? output)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -250,7 +253,7 @@ public class Program
                 var runName = $"benchmark-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
                 var reportContent = await reportGenerator.GenerateAsync(resultsList, runName, effectiveModel);
 
-                var reportPath = Path.Combine(Directory.GetCurrentDirectory(), $"{runName}-report.md");
+                var reportPath = output ?? Path.Combine(Directory.GetCurrentDirectory(), $"{runName}-report.md");
                 await File.WriteAllTextAsync(reportPath, reportContent);
                 Console.WriteLine($"Report written to: {reportPath}");
             }

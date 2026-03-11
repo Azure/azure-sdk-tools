@@ -106,6 +106,34 @@
 
     { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new resource 'asset' for service widget with TypeSpec.", "category": "all" },
     { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new api version for service widget with TypeSpec.", "category": "all" },
-    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" }
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" },
+
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Delegate the APIView feedback to Copilot for resolution", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Address the APIView comments by creating a GitHub issue and assigning Copilot", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Resolve the APIView reviewer feedback from this URL", "category": "all" },
+
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Get the service tree details for my TypeSpec project path", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Look up the service and product details using the TypeSpec project path", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "What service tree ID and product info is associated with this TypeSpec path?", "category": "all" },
+
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update the release plan with my TypeSpec project path and API version", "category": "all" },
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update the spec PR URL and SDK release type in my release plan", "category": "all" },
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update the existing release plan for my service", "category": "all" },
+
+    { "toolName": "azsdk_engsys_codeowner_view", "prompt": "View the CODEOWNERS associations for my GitHub user", "category": "all" },
+    { "toolName": "azsdk_engsys_codeowner_view", "prompt": "Show me which packages are associated with this label in CODEOWNERS", "category": "all" },
+    { "toolName": "azsdk_engsys_codeowner_view", "prompt": "Who are the codeowners for this package?", "category": "all" },
+
+    { "toolName": "azsdk_package_translate_samples", "prompt": "Translate the sample code from the Python package to the Java package", "category": "all" },
+    { "toolName": "azsdk_package_translate_samples", "prompt": "Convert samples from the source package to the target language package", "category": "all" },
+    { "toolName": "azsdk_package_translate_samples", "prompt": "Translate SDK samples from one language to another", "category": "all" },
+
+    { "toolName": "azsdk_package_generate_samples", "prompt": "Generate sample code for my SDK package", "category": "all" },
+    { "toolName": "azsdk_package_generate_samples", "prompt": "Create sample code for my package based on these scenarios", "category": "all" },
+    { "toolName": "azsdk_package_generate_samples", "prompt": "Generate samples for my package using this prompt", "category": "all" },
+
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon the release plan for work item 12345", "category": "all" },
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel and abandon my release plan", "category": "all" },
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Mark the release plan as abandoned", "category": "all" }
   ]
 }

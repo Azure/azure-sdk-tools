@@ -44,6 +44,14 @@ public class SessionExecutor : IDisposable
                 McpServers = mcpServers,
                 Model = config.Model,
                 Streaming = true,
+                // Auto-approve all permission requests (file edits, creates, etc.)
+                OnPermissionRequest = (request, invocation) =>
+                {
+                    return Task.FromResult(new PermissionRequestResult
+                    {
+                        Kind = "approved"
+                    });
+                },
                 Hooks = new SessionHooks
                 {
                     OnPreToolUse = (input, invocation) =>

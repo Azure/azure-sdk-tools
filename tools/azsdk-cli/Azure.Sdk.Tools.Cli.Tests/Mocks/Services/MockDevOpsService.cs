@@ -252,7 +252,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult<ProductInfo?>(null);
         }
 
-        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath, bool isTestReleasePlan)
+        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath)
         {
             return Task.FromResult<ReleasePlanWorkItem?>(null);
         }
@@ -270,6 +270,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         public Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
         {
             return Task.FromResult(new List<WorkItem>());
+        }
+
+        public Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null)
+        {
+            throw new NotImplementedException();
+        }
+        public Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
+        {
+            throw new NotImplementedException();
+        }
+        public Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -34,6 +34,14 @@ public class RepoConfig
     public string EffectiveOwner => ForkOwner ?? Owner;
 
     /// <summary>
+    /// Optional list of directory paths to sparse checkout.
+    /// When set, only these directories (plus root-level files) will be materialized in the worktree.
+    /// When null or empty, the full repository is checked out.
+    /// Uses git sparse-checkout in cone mode.
+    /// </summary>
+    public string[]? SparseCheckoutPaths { get; init; }
+
+    /// <summary>
     /// The HTTPS clone URL for the repository.
     /// </summary>
     public string CloneUrl => $"https://github.com/{EffectiveOwner}/{Name}.git";

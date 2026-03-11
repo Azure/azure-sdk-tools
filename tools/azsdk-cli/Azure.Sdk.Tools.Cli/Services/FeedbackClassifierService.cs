@@ -40,7 +40,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     private static readonly ConcurrentDictionary<string, string> TspCustomizationGuideCache = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly Regex BatchResultBlockPattern = new(
-        @"\[(?<id>[^\]]+)\]\s*\n\s*Classification:\s*(?<classification>\S+)\s*\n\s*Reason:\s*(?<reason>.+)",
+        @"\[(?<id>[^\]]+)\]\s*\n\s*Classification:\s*(?<classification>\S+)\s*\n\s*Reason:\s*(?<reason>[^\n]+)",
         RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     private readonly ICopilotAgentRunner _agentRunner;
@@ -102,6 +102,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         var successCount = 0;
         var failureCount = 0;
         var tspApplicableCount = 0;
+        var codeCustomizationCount = 0;
         var classifications = new List<FeedbackClassificationResponse.ItemClassificationDetails>();
 
         foreach (var item in items)
@@ -109,6 +110,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             var classification = item.Status switch
             {
                 FeedbackStatus.SUCCESS => "SUCCESS",
+                FeedbackStatus.CODE_CUSTOMIZATION => "CODE_CUSTOMIZATION",
                 FeedbackStatus.REQUIRES_MANUAL_INTERVENTION => "REQUIRES_MANUAL_INTERVENTION",
                 _ => "TSP_APPLICABLE"
             };
@@ -116,6 +118,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
             switch (item.Status)
             {
                 case FeedbackStatus.SUCCESS: successCount++; break;
+                case FeedbackStatus.CODE_CUSTOMIZATION: codeCustomizationCount++; break;
                 case FeedbackStatus.REQUIRES_MANUAL_INTERVENTION: failureCount++; break;
                 default: tspApplicableCount++; break;
             }
@@ -131,7 +134,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
 
         return new FeedbackClassificationResponse
         {
-            Message = $"Classification complete: {successCount} success, {failureCount} requires-manual-intervention, {tspApplicableCount} tsp-applicable",
+            Message = $"Classification complete: {successCount} success, {tspApplicableCount} tsp-applicable, {codeCustomizationCount} code-customization, {failureCount} requires-manual-intervention",
             Classifications = classifications
         };
     }
@@ -186,7 +189,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
     /// Parses the batch LLM result with ID-keyed blocks and applies classifications to items.
     /// Expected format:
     /// [item-id]
-    /// Classification: TSP_APPLICABLE | SUCCESS | REQUIRES_MANUAL_INTERVENTION
+    /// Classification: TSP_APPLICABLE | SUCCESS | CODE_CUSTOMIZATION | REQUIRES_MANUAL_INTERVENTION
     /// Reason: explanation
     /// </summary>
     private void ParseBatchResult(List<FeedbackItem> items, string result)
@@ -227,6 +230,7 @@ public class FeedbackClassifierService : IFeedbackClassifierService
         var status = classification switch
         {
             "SUCCESS" => FeedbackStatus.SUCCESS,
+            "CODE_CUSTOMIZATION" => FeedbackStatus.CODE_CUSTOMIZATION,
             "REQUIRES_MANUAL_INTERVENTION" => FeedbackStatus.REQUIRES_MANUAL_INTERVENTION,
             "TSP_APPLICABLE" => FeedbackStatus.TSP_APPLICABLE,
             _ => FeedbackStatus.TSP_APPLICABLE

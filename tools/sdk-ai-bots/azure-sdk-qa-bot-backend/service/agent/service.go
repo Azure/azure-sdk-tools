@@ -388,10 +388,10 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 
 				// Check if this is a pipeline link and analyze it
 				if utils.IsPipelineLink(info.Link) {
-					log.Printf("Detected Azure DevOps pipeline link: %s", info.Link)
+					log.Printf("Detected Azure DevOps pipeline link: %s", utils.SanitizeForLog(info.Link))
 					analysisText, err := utils.AnalyzePipeline(info.Link, "", true) // Use agent analysis
 					if err != nil {
-						log.Printf("Failed to analyze pipeline: %v", err)
+						log.Printf("Failed to analyze pipeline: %s", utils.SanitizeForLog(err.Error()))
 						// Fall back to regular link processing
 					} else {
 						// Use the pipeline analysis as content
@@ -832,7 +832,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 // Returns the routed tenant config and true if routing occurred, otherwise returns empty config and false.
 func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelConfig *model.ModelConfig, messages []openai.ChatCompletionMessageParamUnion) (model.TenantID, bool) {
 	routingStart := time.Now()
-	log.Printf("Starting tenant routing for tenant: %s", originalTenantID)
+	log.Printf("Starting tenant routing for tenant: %s", utils.SanitizeForLog(string(originalTenantID)))
 
 	// Use the common tenant routing prompt
 	promptParser := prompt.RoutingTenantPromptParser{
@@ -891,21 +891,21 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelCo
 	}
 
 	routedTenantID := model.TenantID(result.RouteTenant)
-	log.Printf("Tenant routing recommendation: %s", routedTenantID)
+	log.Printf("Tenant routing recommendation: %s", utils.SanitizeForLog(string(routedTenantID)))
 
 	// Validate and apply routing
 	if routedTenantID == "" || routedTenantID == originalTenantID {
-		log.Printf("No routing needed, staying with current tenant: %s", originalTenantID)
+		log.Printf("No routing needed, staying with current tenant: %s", utils.SanitizeForLog(string(originalTenantID)))
 		return originalTenantID, false
 	}
 
 	_, hasConfig := config.GetTenantConfig(routedTenantID)
 	if !hasConfig {
-		log.Printf("Routed tenant '%s' not found, staying with current tenant", routedTenantID)
+		log.Printf("Routed tenant '%s' not found, staying with current tenant", utils.SanitizeForLog(string(routedTenantID)))
 		return originalTenantID, false
 	}
 
 	// Apply routing
-	log.Printf("Routing: %s → %s (took %v)", originalTenantID, routedTenantID, time.Since(routingStart))
+	log.Printf("Routing: %s → %s (took %v)", utils.SanitizeForLog(string(originalTenantID)), utils.SanitizeForLog(string(routedTenantID)), time.Since(routingStart))
 	return routedTenantID, true
 }

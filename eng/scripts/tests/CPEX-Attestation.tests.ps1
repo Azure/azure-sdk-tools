@@ -766,11 +766,22 @@ Describe 'Parse release plans' {
 
 # --------------------- Add Attestation Entry to Kusto Database ---------------------
 Describe 'Add Attestation Entry to Kusto Database' {
+    BeforeAll {
+        function global:az {
+            param([Parameter(ValueFromRemainingArguments = $true)] $RemainingArgs)
+            return 'fake-access-token'
+        }
+    }
+
+    AfterAll {
+        Remove-Item -Path Function:\global:az -ErrorAction SilentlyContinue
+    }
+
     It 'posts a valid JSON envelope and CSL when run with required params' {
         Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
         Mock -CommandName Write-Host -MockWith {}
 
-        $tableName    = 'FAKE-TABLE-NAME'
+        $tableName    = 'TestKpiEvidenceStream'
         $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
         $targetId     = '11314123-2343-1232-2133-213412341344'
         $targetType   = 'ProductSku'
@@ -790,8 +801,124 @@ Describe 'Add Attestation Entry to Kusto Database' {
             ($Body | ConvertFrom-Json).csl -match ('TargetId\s*=\s*"' + [regex]::Escape($targetId) + '"') -and
             ($Body | ConvertFrom-Json).csl -match ('TargetType\s*=\s*"' + [regex]::Escape($targetType) + '"') -and
             ($Body | ConvertFrom-Json).csl -match ('Status\s*=\s*int\s*\(\s*' + [regex]::Escape($status.ToString()) + '\s*\)') -and
-            ($Body | ConvertFrom-Json).csl -match ('EvidenceUrl\s*=\s*"' + [regex]::Escape($evidenceUrl) + '"') 
+            ($Body | ConvertFrom-Json).csl -match ('EvidenceUrl\s*=\s*"' + [regex]::Escape($evidenceUrl) + '"') -and
             ($Body | ConvertFrom-Json).csl -match 'CreatedTime\s*=\s*datetime\s*\(\s*now\s*\)'
         }
+    }
+
+    It 'defaults TableName to ProdKpiEvidenceStream when TableName is not provided' {
+        Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
+        Mock -CommandName Write-Host -MockWith {}
+
+        $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
+        $targetId     = '11314123-2343-1232-2133-213412341344'
+        $targetType   = 'ProductSku'
+        $status       = 1
+        $evidenceUrl  = 'https://dev.azure.com/azure-sdk/Release/_workitems/edit/42'
+
+        & (Join-Path $PSScriptRoot '../Add-CPEX-Attestation-Entry.ps1') -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $evidenceUrl
+
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -ParameterFilter {
+            ($Body | ConvertFrom-Json).csl -match ([regex]::Escape('ProdKpiEvidenceStream'))
+        }
+    }
+
+    It 'fails when ActionItemId has whitespace or is not a supported KPI id' -TestCases @(
+        @{ actionItemId = ' 84715402-4f3c-4dca-b330-f05206abaec5 ' },
+        @{ actionItemId = '11111111-1111-1111-1111-111111111111' }
+    ) {
+        param($actionItemId)
+
+        Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
+
+        $tableName   = 'TestKpiEvidenceStream'
+        $targetId    = '11314123-2343-1232-2133-213412341344'
+        $targetType  = 'ProductSku'
+        $status      = 1
+        $evidenceUrl = 'https://dev.azure.com/azure-sdk/Release/_workitems/edit/42'
+
+        {
+            & (Join-Path $PSScriptRoot '../Add-CPEX-Attestation-Entry.ps1') -TableName $tableName -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $evidenceUrl -ErrorAction Stop
+        } | Should -Throw "*Cannot validate argument on parameter 'ActionItemId'*"
+
+        Should -Invoke -CommandName Invoke-RestMethod -Times 0
+    }
+
+    It 'fails when TargetId is not a valid GUID' -TestCases @(
+        @{ targetId = 'a897717-c6ba-48b1-9a6d-a842272174f0' },
+        @{ targetId = ' ea897717-c6ba-48b1-9a6d-a842272174f0 ' },
+        @{ targetId = 'not-a-guid' }
+    ) {
+        param($targetId)
+
+        Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
+
+        $tableName    = 'TestKpiEvidenceStream'
+        $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
+        $targetType   = 'ProductSku'
+        $status       = 1
+        $evidenceUrl  = 'https://dev.azure.com/azure-sdk/Release/_workitems/edit/42'
+
+        {
+            & (Join-Path $PSScriptRoot '../Add-CPEX-Attestation-Entry.ps1') -TableName $tableName -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $evidenceUrl -ErrorAction Stop
+        } | Should -Throw "*Cannot validate argument on parameter 'TargetId'*"
+
+        Should -Invoke -CommandName Invoke-RestMethod -Times 0
+    }
+
+    It 'fails when Status is not one of 0, 1, or 3' -TestCases @(
+        @{ status = -1 },
+        @{ status = 2 },
+        @{ status = 4 }
+    ) {
+        param($status)
+
+        Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
+
+        $tableName    = 'TestKpiEvidenceStream'
+        $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
+        $targetId     = 'ea897717-c6ba-48b1-9a6d-a842272174f0'
+        $targetType   = 'ProductSku'
+        $evidenceUrl  = 'https://dev.azure.com/azure-sdk/Release/_workitems/edit/42'
+
+        {
+            & (Join-Path $PSScriptRoot '../Add-CPEX-Attestation-Entry.ps1') -TableName $tableName -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $evidenceUrl -ErrorAction Stop
+        } | Should -Throw "*Cannot validate argument on parameter 'Status'*"
+
+        Should -Invoke -CommandName Invoke-RestMethod -Times 0
+    }
+
+    It 'fails when TargetType is not one of Service, Offering, ProductSku, or Feature' {
+        Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
+
+        $tableName    = 'TestKpiEvidenceStream'
+        $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
+        $targetId     = 'ea897717-c6ba-48b1-9a6d-a842272174f0'
+        $targetType   = 'Sku'
+        $status       = 1
+        $evidenceUrl  = 'https://dev.azure.com/azure-sdk/Release/_workitems/edit/42'
+
+        {
+            & (Join-Path $PSScriptRoot '../Add-CPEX-Attestation-Entry.ps1') -TableName $tableName -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $evidenceUrl -ErrorAction Stop
+        } | Should -Throw "*Cannot validate argument on parameter 'TargetType'*"
+
+        Should -Invoke -CommandName Invoke-RestMethod -Times 0
+    }
+
+    It 'fails when TableName is not ProdKpiEvidenceStream or TestKpiEvidenceStream' {
+        Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
+
+        $tableName    = 'FAKE-TABLE-NAME'
+        $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
+        $targetId     = 'ea897717-c6ba-48b1-9a6d-a842272174f0'
+        $targetType   = 'ProductSku'
+        $status       = 1
+        $evidenceUrl  = 'https://dev.azure.com/azure-sdk/Release/_workitems/edit/42'
+
+        {
+            & (Join-Path $PSScriptRoot '../Add-CPEX-Attestation-Entry.ps1') -TableName $tableName -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $evidenceUrl -ErrorAction Stop
+        } | Should -Throw "*Cannot validate argument on parameter 'TableName'*"
+
+        Should -Invoke -CommandName Invoke-RestMethod -Times 0
     }
 }

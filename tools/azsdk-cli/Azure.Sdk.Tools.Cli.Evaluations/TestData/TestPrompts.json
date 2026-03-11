@@ -89,8 +89,8 @@
 
     { "toolName": "azsdk_convert_swagger_to_typespec", "prompt": "Convert my swagger to TypeSpec", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_convert_swagger_to_typespec", "prompt": "Migrate my API from swagger to TypeSpec", "category": "azure-rest-api-specs" },
-    { "toolName": "azsdk_customized_code_update", "prompt": "Update my customized SDK code after regeneration", "category": "all" },
-    { "toolName": "azsdk_customized_code_update", "prompt": "Help me update the custom code after TypeSpec changes", "category": "all" },
+    { "toolName": "azsdk_customized_code_update", "prompt": "Apply TypeSpec customizations to my SDK package", "category": "all" },
+    { "toolName": "azsdk_customized_code_update", "prompt": "Update my SDK code with TypeSpec customizations and regenerate", "category": "all" },
     { "toolName": "azsdk_get_modified_typespec_projects", "prompt": "What TypeSpec projects were modified in my branch?", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_get_modified_typespec_projects", "prompt": "List the changed TypeSpec projects", "category": "azure-rest-api-specs" },
     { "toolName": "azsdk_run_typespec_validation", "prompt": "Validate my TypeSpec project", "category": "azure-rest-api-specs" },
@@ -106,6 +106,19 @@
 
     { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new resource 'asset' for service widget with TypeSpec.", "category": "all" },
     { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to add a new api version for service widget with TypeSpec.", "category": "all" },
-    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" }
+    { "toolName": "azsdk_typespec_generate_authoring_plan", "prompt": "Generate a solution to set a default value `21` for property `age` in model EmployeeProperties from a api version say 2025-11-01 with TypeSpec.", "category": "all" },
+
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon my release plan", "category": "all" },
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel the release plan for my service", "category": "all" },
+
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Find product details for my typespec project", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "What service does this TypeSpec project belong to?", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Get service and service tree product details for a product using TypeSpec project path", "category": "all" },
+
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update my release plan", "category": "all" },
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update TypeSpec project in release plan", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Help me fix these comments: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Fix this feedback: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd", "category": "all" }
   ]
 }

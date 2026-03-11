@@ -29,7 +29,8 @@ public class RenameClientPropertyScenario : BenchmarkScenario
     {
         Owner = "Azure",
         Name = "azure-rest-api-specs",
-        Ref = "main"
+        Ref = "main",
+        SparseCheckoutPaths = ["specification/ai/Face"]
     };
 
     /// <inheritdoc />
@@ -40,7 +41,7 @@ public class RenameClientPropertyScenario : BenchmarkScenario
         """;
 
     /// <inheritdoc />
-    public override TimeSpan Timeout => TimeSpan.FromMinutes(3);
+    public override TimeSpan Timeout => TimeSpan.FromMinutes(5);
 
     /// <inheritdoc />
     public override IEnumerable<IValidator> Validators =>

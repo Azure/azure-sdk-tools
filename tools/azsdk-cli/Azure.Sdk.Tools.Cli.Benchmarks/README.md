@@ -100,6 +100,12 @@ Azure.Sdk.Tools.Cli.Benchmarks/
 └── Program.cs                # Entry point
 ```
 
+## Running in a Container
+
+To prevent the agent from modifying your host environment (installing packages, changing runtime versions, etc.), you can run benchmarks inside a dev container using the target repo's dev container config. See [docs/running-in-containers.md](docs/running-in-containers.md) for details.
+
+> **Note:** This is a temporary workaround while benchmarks have no built in sandboxing. Once proper sandboxing is available, container-based isolation may no longer be necessary.
+
 ## Creating Scenarios
 
 See [docs/creating-scenarios.md](docs/creating-scenarios.md) for guidance on defining new benchmark scenarios.

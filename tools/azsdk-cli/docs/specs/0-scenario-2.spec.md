@@ -152,7 +152,7 @@ Without coverage for customization, live testing, and **[Brand New Package](#bra
    - **Checkpoint**: **User Review**: Changes remain uncommitted in working directory for user review. 
 
 5. **Testing** → `azsdk_package_run_tests`
-   - Single unified testing tool that handles all test modes (live, live-record, playback)
+   - Single unified testing tool that handles all test modes (live, record, playback)
    - Automatically provisions test resources when running live tests if not already available
    - Calls existing test resource provisioning scripts
    - **Stretch Goal**: Creation of bicep files for test resource provisioning for [Brand New Packages](#brand-new-package) may be complex and will need to be more thoroughly investigated before committing to full automation
@@ -358,7 +358,7 @@ This stage uses a unified testing tool that handles all test modes and automatic
 
 **Unified Testing Approach:**
 
-- Single tool handles all test modes: `live`, `live-record`, and `playback`
+- Single tool handles all test modes: `live`, `record`, and `playback`
 - Automatically checks for and provisions test resources when running live tests if not already available
 - Calls existing test resource provisioning and teardown scripts
 - Supports test mode selection via command-line options
@@ -366,13 +366,13 @@ This stage uses a unified testing tool that handles all test modes and automatic
 
 **Workflow:**
 
-1. **Select test mode** using `--mode` option (`live`, `live-record`, or `playback`)
-2. **For live/live-record modes**: Tool automatically checks if test resources exist
+1. **Select test mode** using `--mode` option (`live`, `record`, or `playback`)
+2. **For live/record modes**: Tool automatically checks if test resources exist
    - If resources don't exist, provisions them using existing test resource provisioning scripts
    - Configures test environment with resource connection information
 3. **Execute tests** with optional `--test-filter` for targeted test runs
    - Being able to only run select test may help when fixing issues with specific tests, so user doesn't have to wait for all tests to run.
-4. **For live-record mode**: Captures test recordings during execution
+4. **For record mode**: Captures test recordings during execution
 5. **Cleanup**: Optionally tears down resources using `--cleanup` flag
 
 **Brand New Package Considerations:**
@@ -390,7 +390,7 @@ This stage uses a unified testing tool that handles all test modes and automatic
 
 **Success:**
 
-- Tests run successfully in all modes (live, live-record, playback)
+- Tests run successfully in all modes (live, record, playback)
 - Test resources are provisioned and torn down cleanly for live tests
 - Test recordings are generated or refreshed correctly
 - Playback runs succeed with recordings
@@ -463,7 +463,7 @@ Scenario 2 is complete when:
 - Agent prompts trigger expected tool sequences
 - CLI commands execute with expected outputs
 - Workflow runs entirely on the local machine
-- Testing succeeds in all modes (live, live-record, playback) with automatic resource provisioning and cleanup, test recordings are generated or refreshed correctly, and test filtering works as expected
+- Testing succeeds in all modes (live, record, playback) with automatic resource provisioning and cleanup, test recordings are generated or refreshed correctly, and test filtering works as expected
 - **All Scenario 2 tooling enhancements and additions function correctly** as defined in their respective stage details:
   - `azsdk_verify_setup` detects issues in verify-only mode and remediates them in auto-install mode (enhanced from Scenario 1)
   - `azsdk_package_customize_code` applies both TypeSpec and code customizations through unified two-phase workflow (new)
@@ -510,7 +510,7 @@ I need to create a new Health Deidentification SDK for all languages.
    - Generate test scaffolding and basic test cases for each language
    - Follow language-specific testing patterns and conventions
    - **Agent reports** what test scenarios were identified and asks for confirmation before generating tests
-8. Execute tests with `azsdk_package_run_tests --mode live-record`.
+8. Execute tests with `azsdk_package_run_tests --mode record`.
    - **Agent prompts user** to confirm Azure subscription and region for test resource provisioning
    - Tool automatically provisions resources based on test infrastructure
    - **Agent reports** test results and recording generation status
@@ -611,11 +611,11 @@ Set up test resources, run live tests, and generate test recordings for this new
 **Expected Agent Activity:**
 
 1. Note: Bicep files for test resource provisioning may need manual creation or configuration due to service-specific requirements. This complexity will need to be more thoroughly investigated before committing to full automation.
-2. Execute `azsdk_package_run_tests --mode live-record` (tool automatically provisions resources if not already available).
-3. Tests run in live-record mode, capturing test recordings.
+2. Execute `azsdk_package_run_tests --mode record` (tool automatically provisions resources if not already available).
+3. Tests run in record mode, capturing test recordings.
 4. Persist recorded sessions and catalog their locations per language.
 5. Execute `azsdk_package_run_tests --mode playback` to validate recordings.
-6. Optionally, execute `azsdk_package_run_tests --mode live-record --cleanup` to tear down resources after completion.
+6. Optionally, execute `azsdk_package_run_tests --mode record --cleanup` to tear down resources after completion.
 
 ### Live Testing (Existing SDK)
 
@@ -628,7 +628,7 @@ Run live tests for the existing SDK and re-record any failing tests.
 **Expected Agent Activity:**
 
 1. Execute `azsdk_package_run_tests --mode live` for the specified languages to detect drift or failures.
-2. If re-recording is needed, execute `azsdk_package_run_tests --mode live-record --test-filter <pattern>` to refresh only impacted tests.
+2. If re-recording is needed, execute `azsdk_package_run_tests --mode record --test-filter <pattern>` to refresh only impacted tests.
 3. Tool automatically provisions resources if not already available.
 4. Execute `azsdk_package_run_tests --mode playback` to confirm refreshed recordings succeed.
 5. Summarize outcomes and highlight recordings that changed.
@@ -643,7 +643,7 @@ Refresh only outdated or failing test recordings for the Health Deidentification
 
 **Expected Agent Activity:**
 
-1. Execute `azsdk_package_run_tests --mode live-record --test-filter <pattern>` to capture updated recordings for specific tests.
+1. Execute `azsdk_package_run_tests --mode record --test-filter <pattern>` to capture updated recordings for specific tests.
 2. Tool automatically provisions resources if needed.
 3. Execute `azsdk_package_run_tests --mode playback --test-filter <pattern>` to validate new recordings.
 4. Summarize which recordings changed and any remaining discrepancies.
@@ -1038,7 +1038,7 @@ Scenario 2 also needs to consider **how the CLI tools will be used inside CI/CD 
   - If CI usage is supported: Commands should accept **explicit paths** for specs, workspaces, and output folders to avoid assumptions about checkout layout, and the tool should provide `--auto-approve` flag for non-interactive CI usage.
   - `azsdk_package_generate_code` should be usable in CI with clear, machine-readable logs for validation workflows.
 - Testing:
-  - `azsdk_package_run_tests --mode live` or `--mode live-record` is expected to be **opt-in** for CI, guarded behind environment variables or flags and properly parameterized with subscriptions/resource groups.
+  - `azsdk_package_run_tests --mode live` or `--mode record` is expected to be **opt-in** for CI, guarded behind environment variables or flags and properly parameterized with subscriptions/resource groups.
   - `azsdk_package_run_tests --mode playback` is expected to be **safe to run by default** in CI for regression validation.
   - Tool should support `--cleanup` flag to automatically tear down resources after live test completion in CI.
 

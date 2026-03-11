@@ -7,7 +7,8 @@
         "target": "es2016",
         "declaration": true,
         "esModuleInterop": true,
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
+        "skipLibCheck": true
     },
     "include": ["src", "test", "index.ts"]
 }

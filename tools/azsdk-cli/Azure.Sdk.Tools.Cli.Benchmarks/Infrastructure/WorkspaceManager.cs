@@ -46,7 +46,7 @@ public class WorkspaceManager
     public async Task<Workspace> PrepareAsync(RepoConfig repo, string scenarioId)
     {
         // Ensure bare clone exists, fetch the target ref, and resolve the commit SHA.
-        // All git operations on the shared bare repo are serialized under _cloneLock.
+        // Clone/fetch operations on the shared bare repo are serialized under _cloneLock.
         var (barePath, commitSha) = await EnsureBareCloneAsync(repo);
 
         // Create a unique run ID using timestamp

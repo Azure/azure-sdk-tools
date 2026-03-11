@@ -26,7 +26,7 @@ describe("tsp-client", () => {
   });
 
   it("finds spec dir", async (ctx) => {
-    const specDir = await getMatchingDir("azure-rest-api-specs").catch(
+    const specDir = await getMatchingDir("azure-rest-api-specs").catch(() =>
       ctx.skip(),
     );
 

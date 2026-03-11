@@ -374,7 +374,18 @@ namespace Azure.Sdk.Tools.Cli.Services
                         // If agent test mode is enabled or if it's a test release plan then skip release plans.
                         if (IsAgentTesting != isTestReleasePlan)
                         {
-                            logger.LogInformation("Skipping test release plans because either it's test release plan or agent test mode is enabled.");
+                            var planKind = isTestReleasePlan ? "test" : "non-test";
+                            var reason = IsAgentTesting
+                                ? "agent test mode is enabled and this is not a test release plan"
+                                : "agent test mode is disabled and this is a test release plan";
+
+                            logger.LogInformation(
+                                "Skipping {PlanKind} release plan work item {WorkItemId} because {Reason}. IsAgentTesting={IsAgentTesting}, IsTestReleasePlan={IsTestReleasePlan}",
+                                planKind,
+                                parentWorkItemId,
+                                reason,
+                                IsAgentTesting,
+                                isTestReleasePlan);
                             continue;
                         }
 

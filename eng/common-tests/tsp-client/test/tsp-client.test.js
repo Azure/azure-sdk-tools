@@ -14,8 +14,10 @@ import { getRootSibling } from "../src/fs.js";
 // Enable simple-git debug logging to improve console output
 debug.enable("simple-git");
 
+// absolute path of folder containing this file
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// absolute path of repo containing eng/common/tsp-client
 const engCommonTspClient = join(
   __dirname,
   "..",
@@ -30,7 +32,7 @@ const engCommonTspClient = join(
  * @param {string} cwd
  */
 async function execTspClient(args, cwd) {
-  return execNpmExec(["tsp-client", "--debug", ...args], {
+  await execNpmExec(["tsp-client", "--debug", ...args], {
     cwd,
     logger: debugLogger,
     prefix: engCommonTspClient,
@@ -56,6 +58,7 @@ describe("tsp-client", () => {
   });
 });
 
+// if non-empty, test "tsp-client update" in this dir
 const templateDirs = {
   [SdkName.Go]: [],
   [SdkName.Java]: [],
@@ -83,6 +86,7 @@ describe.concurrent.each([
   });
 
   beforeEach((ctx) => {
+    // Skip any test if SDK dir is not cloned as tools sibling
     if (!sdkDir) {
       ctx.skip();
     }
@@ -150,16 +154,9 @@ describe.concurrent.each([
           updateWorktree,
         ]) {
           if (worktree) {
-            try {
-              await simpleGit(sdkDir).raw([
-                "worktree",
-                "remove",
-                worktree,
-                "--force",
-              ]);
-            } catch {
-              // Worktree may not have been created
-            }
+            await simpleGit(sdkDir)
+              .raw(["worktree", "remove", worktree, "--force"])
+              .catch();
             await rm(worktree, { recursive: true, force: true });
           }
         }
@@ -167,12 +164,8 @@ describe.concurrent.each([
     });
 
     it("inits from url", async () => {
-      // const url =
-      //   "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
-
-      // test widget rust config
       const urlConfig =
-        "https://github.com/Azure/azure-rest-api-specs/blob/1c6ba5522dfdf969d4e541737e8969f542a80fd5/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
+        "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
       await execTspClient(["init", "-c", urlConfig], initUrlWorktree);
     });

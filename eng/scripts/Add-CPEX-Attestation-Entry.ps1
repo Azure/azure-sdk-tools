@@ -29,18 +29,31 @@ The URL pointing to the evidence supporting the attestation, i.e. link to releas
 
 param (
     [Parameter(Mandatory = $true)]
+    [ValidateSet('ProdKpiEvidenceStream', 'TestKpiEvidenceStream')]
     [string] $TableName,
 
     [Parameter(Mandatory = $true)]
+    [ValidateSet(
+        "ba2c80d5-b8be-465f-8948-283229082fd1",
+        "e0504da9-8897-41db-a75f-5027298ba410",
+        "dfe9c112-416e-4e0a-8012-4a3a29807782",
+        "84715402-4f3c-4dca-b330-f05206abaec5",
+        "ad70777b-a1f5-4d77-8926-5c466d7a214d",
+        "210c095f-b3a2-4cf4-a899-eaab4c3ed958",
+        "da768dff-8f90-4999-ad3a-adcd790911f3"
+    )]
     [string] $ActionItemId,
 
     [Parameter(Mandatory = $true)]
+    [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string] $TargetId,
 
     [Parameter(Mandatory = $true)]
+    [ValidateSet('Service', 'Offering', 'ProductSku', 'Feature')]
     [string] $TargetType,
 
     [Parameter(Mandatory = $true)]
+    [ValidateSet(0, 1, 3)]
     [int] $Status,
 
     [Parameter(Mandatory = $true)]

@@ -1,16 +1,24 @@
 # Release History
 
-## 0.6.2 (Unreleased)
+## 0.6.3 (Unreleased)
 
 ### Features Added
-
-- Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
 
 ### Breaking Changes
 
 ### Bugs Fixed
 
 ### Other Changes
+
+## 0.6.2 (2026-03-11)
+
+### Features Added
+
+- Added MCP progress reporting to long running tools including SDK generation, build, and pack tools
+
+### Bugs Fixed
+
+- Fixed a bug in get release plan CLI when release plan is fetched using api spec pull request.
 
 ## 0.6.1 (2026-03-05)
 

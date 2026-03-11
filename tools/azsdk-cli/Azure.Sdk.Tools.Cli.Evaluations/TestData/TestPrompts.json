@@ -135,5 +135,17 @@
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon the release plan for work item 12345", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel and abandon my release plan", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Mark the release plan as abandoned", "category": "all" }
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon my release plan", "category": "all" },
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel the release plan for my service", "category": "all" },
+
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Find product details for my typespec project", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "What service does this TypeSpec project belong to?", "category": "all" },
+    { "toolName": "azsdk_get_service_details_by_typespec_path", "prompt": "Get service and service tree product details for a product using TypeSpec project path", "category": "all" },
+
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update my release plan", "category": "all" },
+    { "toolName": "azsdk_update_release_plan", "prompt": "Update TypeSpec project in release plan", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Help me fix these comments: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Fix this feedback: https://spa.apiview.dev/review/c375391d5ab9419f83e3bdsfas9asdfadf2e?activeApiRevisionId=fc2a4adfasdfasdagae3w3hhtd", "category": "all" },
+    { "toolName": "azsdk_typespec_delegate_apiview_feedback", "prompt": "Create an issue and assign to copilot to fix this: https://spa.apiview.dev/review/adfaset5391d5ab9419f83e3bds9asdfadf2e?activeApiRevisionId=adf34adfasadastasdagae3w3hhtd", "category": "all" }
   ]
 }

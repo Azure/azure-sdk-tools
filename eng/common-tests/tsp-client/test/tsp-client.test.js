@@ -1,9 +1,10 @@
 import debug from "debug";
 import { mkdtemp, rm, stat } from "fs/promises";
 import { tmpdir } from "os";
-import { join, resolve } from "path";
+import { dirname, join } from "path";
 import semver from "semver";
 import { simpleGit } from "simple-git";
+import { fileURLToPath } from "url";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { execNpmExec } from "../shared/exec.js";
 import { debugLogger } from "../shared/logger.js";
@@ -13,7 +14,16 @@ import { getMatchingDir } from "../src/fs.js";
 // Enable simple-git debug logging to improve console output
 debug.enable("simple-git");
 
-const engCommonTspClient = resolve("../../common/tsp-client");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const engCommonTspClient = join(
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "common",
+  "tsp-client",
+);
 
 /**
  * @param {string[]} args

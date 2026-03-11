@@ -370,10 +370,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                             continue;
                         }
 
-                        // If agent test mode is enabled then skip all non test release plans.
-                        if (IsAgentTesting && parentWorkItem.Fields.TryGetValue("System.Tags", out Object? value) && value is String tags && !tags.Contains(RELEASE_PLANNER_APP_TEST))
+                        var isTestReleasePlan = parentWorkItem.Fields.TryGetValue("System.Tags", out Object? value) && value is String tags && tags.Contains(RELEASE_PLANNER_APP_TEST);
+                        // If agent test mode is enabled or if it's a test release plan then skip release plans.
+                        if (IsAgentTesting != isTestReleasePlan)
                         {
-                            logger.LogInformation("Agent test mode is enabled. Skipping release plans without testing tag.");
+                            logger.LogInformation("Skipping test release plans because either it's test release plan or agent test mode is enabled.");
                             continue;
                         }
 

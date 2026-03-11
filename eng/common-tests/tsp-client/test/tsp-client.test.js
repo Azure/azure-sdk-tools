@@ -9,7 +9,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { execNpmExec } from "../shared/exec.js";
 import { debugLogger } from "../shared/logger.js";
 import { SdkName } from "../shared/sdk-types.js";
-import { getMatchingDir } from "../src/fs.js";
+import { getRootSibling } from "../src/fs.js";
 
 // Enable simple-git debug logging to improve console output
 debug.enable("simple-git");
@@ -48,7 +48,7 @@ describe("tsp-client", () => {
   });
 
   it("finds spec dir", async (ctx) => {
-    const specDir = await getMatchingDir("azure-rest-api-specs").catch(() =>
+    const specDir = await getRootSibling("azure-rest-api-specs").catch(() =>
       ctx.skip(),
     );
 
@@ -78,8 +78,8 @@ describe.concurrent.each([
   let specDir;
 
   beforeAll(async () => {
-    sdkDir = await getMatchingDir(sdkName).catch(() => "");
-    specDir = await getMatchingDir("azure-rest-api-specs").catch(() => "");
+    sdkDir = await getRootSibling(sdkName).catch(() => "");
+    specDir = await getRootSibling("azure-rest-api-specs").catch(() => "");
   });
 
   beforeEach((ctx) => {

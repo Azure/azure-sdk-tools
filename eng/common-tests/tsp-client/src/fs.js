@@ -6,8 +6,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * @param {string} longName
+ * @returns {Promise<string>} absolute path of repo root sibling matching long or short name.  throws if not found.
  */
-export async function getMatchingDir(longName) {
+export async function getRootSibling(longName) {
   // azure-sdk-for-js     -> js
   // azure-rest-api-specs -> specs
   const shortName = longName.substring(longName.lastIndexOf("-") + 1);

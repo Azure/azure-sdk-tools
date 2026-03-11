@@ -98,9 +98,9 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
 
         _logger.LogInformation("Found {Count} actionable comment(s) after filtering", filteredComments.Count);
 
-        // 2. Group comments by threadId; fall back to line number for standalone comments so they are not merged
+        // 2. Group comments by line ID
         var groupedComments = filteredComments
-            .GroupBy(c => !string.IsNullOrEmpty(c.ThreadId) ? c.ThreadId : c.LineNo.ToString())
+            .GroupBy(c => c.LineId ?? string.Empty)
             .ToDictionary(
                 g => g.Key,
                 g => g.OrderBy(c => c.CreatedOn).ToList()

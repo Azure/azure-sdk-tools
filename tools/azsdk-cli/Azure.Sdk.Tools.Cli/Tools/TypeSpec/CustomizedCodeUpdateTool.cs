@@ -348,7 +348,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         Success = true,
                         Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
-                        NextSteps = manualInterventions
+                        NextSteps = manualInterventions, 
+                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
                     };
                 }
 
@@ -373,22 +374,19 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     };
                 }
 
-                // All items are code customizations — no TSP changes were made, skip regen
-                // but still build to get error context for the patch agent
-                if (tspApplicable == 0 && codeCustomizations > 0)
-                {
-                    logger.LogInformation("All items classified as CODE_CUSTOMIZATION — skipping regen, building for error context.");
-                    var (codeCustSuccess, codeCustError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-                    buildSucceeded = codeCustSuccess;
-                    buildError = codeCustError;
-                    break;
-                }
             }
 
-            // No more TSP-applicable items — remaining items need code customization, skip reclassification
+            // No more TSP-applicable items — remaining items need code customization, skip re-gen
             if (tspApplicable == 0 && codeCustomizations > 0)
             {
                 logger.LogInformation("No TSP-applicable items remain; {CodeCustomizations} item(s) require code customization.", codeCustomizations);
+                // if first atttempt, still build to get error context for the patch agent
+                if (tries == 0)
+                {
+                    var (codeCustSuccess, codeCustError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+                    buildSucceeded = codeCustSuccess;
+                    buildError = codeCustError;
+                }
                 break;
             }
 
@@ -486,10 +484,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         foreach (var patch in patches)
         {
-            var patchDetail = patch.Description.StartsWith($"Patch applied to {patch.FilePath}: ")
-                ? patch.Description[$"Patch applied to {patch.FilePath}: ".Length..]
-                : patch.Description;
-            logger.LogInformation("Patch applied: {File} — {Detail}", patch.FilePath, patchDetail);
+            logger.LogInformation("{Description}", patch.Description);
         }
 
         if (patches.Count == 0)

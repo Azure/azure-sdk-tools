@@ -72,8 +72,8 @@ public partial class PythonLanguageService : LanguageService
 
             var lintingTools = new[]
             {
-                ("pylint", new PythonOptions("azpysdk", ["pylint", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(3))),
-                ("mypy", new PythonOptions("azpysdk", ["mypy", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(3))),
+                    ("pylint", new PythonOptions("azpysdk", ["pylint", "--isolate", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(3))),
+                    ("mypy", new PythonOptions("azpysdk", ["mypy", "--isolate", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(3))),
             };
 
             logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);

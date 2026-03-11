@@ -806,6 +806,23 @@ Describe 'Add Attestation Entry to Kusto Database' {
         }
     }
 
+    It 'defaults TableName to ProdKpiEvidenceStream when TableName is not provided' {
+        Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
+        Mock -CommandName Write-Host -MockWith {}
+
+        $actionItemId = '84715402-4f3c-4dca-b330-f05206abaec5'
+        $targetId     = '11314123-2343-1232-2133-213412341344'
+        $targetType   = 'ProductSku'
+        $status       = 1
+        $evidenceUrl  = 'https://dev.azure.com/azure-sdk/Release/_workitems/edit/42'
+
+        & (Join-Path $PSScriptRoot '../Add-CPEX-Attestation-Entry.ps1') -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $evidenceUrl
+
+        Should -Invoke -CommandName Invoke-RestMethod -Times 1 -ParameterFilter {
+            ($Body | ConvertFrom-Json).csl -match ([regex]::Escape('ProdKpiEvidenceStream'))
+        }
+    }
+
     It 'fails when ActionItemId has whitespace or is not a supported KPI id' -TestCases @(
         @{ actionItemId = ' 84715402-4f3c-4dca-b330-f05206abaec5 ' },
         @{ actionItemId = '11111111-1111-1111-1111-111111111111' }

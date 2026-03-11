@@ -28,9 +28,9 @@ The URL pointing to the evidence supporting the attestation, i.e. link to releas
 #>
 
 param (
-    [Parameter(Mandatory = $true)]
+    [Parameter()]
     [ValidateSet('ProdKpiEvidenceStream', 'TestKpiEvidenceStream')]
-    [string] $TableName,
+    [string] $TableName = 'ProdKpiEvidenceStream',
 
     [Parameter(Mandatory = $true)]
     [ValidateSet(
@@ -53,6 +53,7 @@ param (
     [string] $TargetType,
 
     [Parameter(Mandatory = $true)]
+    # 0 = Incomplete, 1 = Complete, 3 = N/A.
     [ValidateSet(0, 1, 3)]
     [int] $Status,
 

@@ -205,7 +205,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Step 1: try tsp fixes
         var tries = 0;
         var maxTries = 2;
-        const int MaxPatchIterations = 2;
         bool buildSucceeded = false;
         string? buildError = null;
 
@@ -372,6 +371,13 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
 
+            // No more TSP-applicable items — remaining items need code customization, skip reclassification
+            if (tspApplicable == 0 && codeCustomizations > 0)
+            {
+                logger.LogInformation("No TSP-applicable items remain; {CodeCustomizations} item(s) require code customization.", codeCustomizations);
+                break;
+            }
+
             // Don't waste time regenerating if no TSP fixes were successfully applied
             if (tspFixSucceeded > 0)
             {
@@ -454,98 +460,82 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
-        // Steps 4-6: Iteratively apply patches and build until passing or iterations exhausted
-        var currentBuildError = buildError;
-        var allPatches = new List<AppliedPatch>();
+        // Step 4: Apply patches based on build errors
+        var patchContext = BuildPatchContext(customizationRequest, classifierAnalysis, buildError);
 
-        for (var patchIteration = 0; patchIteration < MaxPatchIterations; patchIteration++)
+        logger.LogInformation("Applying patches to fix build errors...");
+        var patches = await languageService.ApplyPatchesAsync(
+            customizationRoot,
+            packagePath,
+            patchContext,
+            ct);
+
+        foreach (var patch in patches)
         {
-            // Step 4: Apply patches based on current build errors
-            var patchContext = BuildPatchContext(customizationRequest, classifierAnalysis, currentBuildError);
-
-            logger.LogInformation("Applying patches to fix build errors (iteration {Iteration}/{Max})...", patchIteration + 1, MaxPatchIterations);
-            var patches = await languageService.ApplyPatchesAsync(
-                customizationRoot,
-                packagePath,
-                patchContext,
-                ct);
-
-            foreach (var patch in patches)
-            {
-                var patchDetail = patch.Description.StartsWith($"Patch applied to {patch.FilePath}: ")
-                    ? patch.Description[$"Patch applied to {patch.FilePath}: ".Length..]
-                    : patch.Description;
-                logger.LogInformation("Patch applied: {File} — {Detail}", patch.FilePath, patchDetail);
-            }
-
-            if (patches.Count == 0)
-            {
-                logger.LogInformation("No patches applied on iteration {Iteration}.", patchIteration + 1);
-                if (patchIteration == 0)
-                {
-                    return new CustomizedCodeUpdateResponse
-                    {
-                        Success = false,
-                        Message = "No patches could be applied - automated repair found nothing to fix.",
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
-                        BuildResult = currentBuildError
-                    };
-                }
-                break;
-            }
-
-            allPatches.AddRange(patches);
-
-            // Step 5: Regenerate if Java (only Java needs regen after patching customization files)
-            if (languageService.Language == SdkLanguage.Java)
-            {
-                logger.LogInformation("Regenerating code after patches (Java, iteration {Iteration})...", patchIteration + 1);
-                var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha: null, isCli: false, localSpecRepoPath: tspProjectPath, ct);
-                if (!regenResult.IsSuccessful)
-                {
-                    logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
-                    return new CustomizedCodeUpdateResponse
-                    {
-                        Success = false,
-                        Message = $"Regeneration failed after patches: {regenResult.ResponseError}",
-                        ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
-                        BuildResult = regenResult.ResponseError,
-                        TypeSpecChangesSummary = changesMade,
-                        AppliedPatches = allPatches
-                    };
-                }
-            }
-
-            // Step 6: Build to validate
-            logger.LogInformation("Building after patch iteration {Iteration}/{Max}...", patchIteration + 1, MaxPatchIterations);
-            var (patchBuildSuccess, patchBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-
-            if (patchBuildSuccess)
-            {
-                logger.LogInformation("Build passed after patch iteration {Iteration}.", patchIteration + 1);
-                return new CustomizedCodeUpdateResponse
-                {
-                    Success = true,
-                    Message = "Build passed after repairs.",
-                    TypeSpecChangesSummary = changesMade,
-                    AppliedPatches = allPatches
-                };
-            }
-
-            logger.LogInformation("Build still failing after patch iteration {Iteration}, retrying...", patchIteration + 1);
-            currentBuildError = patchBuildError;
+            var patchDetail = patch.Description.StartsWith($"Patch applied to {patch.FilePath}: ")
+                ? patch.Description[$"Patch applied to {patch.FilePath}: ".Length..]
+                : patch.Description;
+            logger.LogInformation("Patch applied: {File} — {Detail}", patch.FilePath, patchDetail);
         }
 
-        // All patch iterations exhausted — build still failing
-        logger.LogInformation("Build still failing after {Max} patch iterations.", MaxPatchIterations);
+        if (patches.Count == 0)
+        {
+            logger.LogInformation("No patches applied.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = "No patches could be applied - automated repair found nothing to fix.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
+                BuildResult = buildError
+            };
+        }
+
+        // Step 5: Regenerate if Java (only Java needs regen after patching customization files)
+        if (languageService.Language == SdkLanguage.Java)
+        {
+            logger.LogInformation("Regenerating code after patches (Java)...");
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha: null, isCli: false, localSpecRepoPath: tspProjectPath, ct);
+            if (!regenResult.IsSuccessful)
+            {
+                logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
+                return new CustomizedCodeUpdateResponse
+                {
+                    Success = false,
+                    Message = $"Regeneration failed after patches: {regenResult.ResponseError}",
+                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
+                    BuildResult = regenResult.ResponseError,
+                    TypeSpecChangesSummary = changesMade,
+                    AppliedPatches = patches
+                };
+            }
+        }
+
+        // Step 6: Final build to validate
+        logger.LogInformation("Running final build to validate...");
+        var (finalBuildSuccess, finalBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+
+        if (finalBuildSuccess)
+        {
+            logger.LogInformation("Build passed after repairs.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = true,
+                Message = "Build passed after repairs.",
+                TypeSpecChangesSummary = changesMade,
+                AppliedPatches = patches
+            };
+        }
+
+        // Build still failing
+        logger.LogInformation("Build still failing after patches.");
         return new CustomizedCodeUpdateResponse
         {
             Success = false,
             Message = "Patches applied but build still failing.",
             ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
-            BuildResult = currentBuildError,
+            BuildResult = finalBuildError,
             TypeSpecChangesSummary = changesMade,
-            AppliedPatches = allPatches
+            AppliedPatches = patches
         };
     }
 

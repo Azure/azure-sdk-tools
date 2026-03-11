@@ -72,7 +72,7 @@ public class PythonErrorDrivenPatchTemplate(
         Extract each pylint/mypy error: file path, line, error code, message.
 
         ### Step 2 — Find and read relevant code
-        - **Use GrepSearch first** to find the failing symbol (e.g., the old name) across the
+        - **Use GrepSearch** to find the failing symbol (e.g., the old name) across the
           customization files. This tells you exactly which lines reference it.
         - Then use **ReadFile with startLine/endLine** to read ~20 lines around each match
           to understand the surrounding context.
@@ -81,9 +81,23 @@ public class PythonErrorDrivenPatchTemplate(
         ### Step 3 — Apply safe patches
         Apply patches only when the correct fix is certain.
 
-        After determining the fix for each error, fix ALL occurrences of the affected symbol across
-        the file — imports, `__all__`, type annotations, and any other uses. Do not assume pylint
-        will report every affected line; cascading errors may be hidden until earlier ones are resolved.
+        After determining the fix for each error, fix ALL unique occurrences of the affected symbol
+        across the file — imports, `__all__`, type annotations, and any other uses. Do not assume
+        pylint will report every affected line; cascading errors may be hidden until earlier ones
+        are resolved.
+
+        **For each occurrence, follow this exact sequence:**
+        1. GrepSearch to verify the symbol is still present and get its current line number.
+           (Each prior patch may have shifted line numbers — always use a fresh GrepSearch result.)
+        2. If GrepSearch finds it → ReadFile to confirm content → CodePatchTool to patch.
+        3. If GrepSearch does NOT find it → it was already fixed by a previous patch. Skip it.
+
+        **When a line contains the old symbol more than once** (e.g. `class NumberField(NumberField):`),
+        patch each occurrence separately: patch the first, then GrepSearch again to find the
+        remaining occurrence, then patch that too.
+
+        **Never patch the same location twice.** Once CodePatchTool succeeds for an occurrence,
+        that occurrence is done. Do not apply another patch to the same line.
 
         ### Step 4 — Return summary
         Briefly describe each fix applied, or return empty string if none.
@@ -93,8 +107,11 @@ public class PythonErrorDrivenPatchTemplate(
     private string BuildTaskConstraints() => """
         ## CONSTRAINTS
 
-        ### 1. _patch.py FILES ONLY
+        ### 1. _patch.py FILES ONLY — ERROR-RELATED LINES ONLY
         Patch ONLY the `_patch.py` files provided. Never modify generated files.
+        Only fix the specific symbols, imports, and references that are **directly named in or related to the
+        build errors**. Do NOT reformat, rewrite, or "clean up" any other code in the file —
+        even if it looks incorrect or could be improved. Leave all unrelated lines exactly as-is.
 
         ### 2. SAFE PATCHES ONLY
         **DO NOT**:
@@ -114,7 +131,10 @@ public class PythonErrorDrivenPatchTemplate(
           - `StartLine=7`, `EndLine=7`, `OldText="NumberField"`, `NewText="NumField"` ✓
           - NOT: `OldText="7: x = NumberField(...)"`, `NewText="7: x = NumField(...)"` ✗
 
-        If `CodePatchTool` reports "OldText not found", re-read the file to get the exact current content and retry with the correct text.
+        If `CodePatchTool` reports "OldText not found": first re-run GrepSearch to check if the
+        symbol is still present. If GrepSearch no longer finds it, the location was already patched
+        by an earlier call — skip it, do NOT retry. Only retry if GrepSearch confirms the symbol
+        is still in the file (e.g. the StartLine/EndLine was stale — use the line from GrepSearch).
         If `CodePatchTool` reports "multiple matches", narrow the `StartLine`/`EndLine` range or add one line of surrounding context to `OldText`.
 
         ### 4. READ FIRST, PATCH SECOND

@@ -766,6 +766,17 @@ Describe 'Parse release plans' {
 
 # --------------------- Add Attestation Entry to Kusto Database ---------------------
 Describe 'Add Attestation Entry to Kusto Database' {
+    BeforeAll {
+        function global:az {
+            param([Parameter(ValueFromRemainingArguments = $true)] $RemainingArgs)
+            return 'fake-access-token'
+        }
+    }
+
+    AfterAll {
+        Remove-Item -Path Function:\global:az -ErrorAction SilentlyContinue
+    }
+
     It 'posts a valid JSON envelope and CSL when run with required params' {
         Mock -CommandName Invoke-RestMethod -MockWith {} -Verifiable
         Mock -CommandName Write-Host -MockWith {}
@@ -790,7 +801,7 @@ Describe 'Add Attestation Entry to Kusto Database' {
             ($Body | ConvertFrom-Json).csl -match ('TargetId\s*=\s*"' + [regex]::Escape($targetId) + '"') -and
             ($Body | ConvertFrom-Json).csl -match ('TargetType\s*=\s*"' + [regex]::Escape($targetType) + '"') -and
             ($Body | ConvertFrom-Json).csl -match ('Status\s*=\s*int\s*\(\s*' + [regex]::Escape($status.ToString()) + '\s*\)') -and
-            ($Body | ConvertFrom-Json).csl -match ('EvidenceUrl\s*=\s*"' + [regex]::Escape($evidenceUrl) + '"') 
+            ($Body | ConvertFrom-Json).csl -match ('EvidenceUrl\s*=\s*"' + [regex]::Escape($evidenceUrl) + '"') -and
             ($Body | ConvertFrom-Json).csl -match 'CreatedTime\s*=\s*datetime\s*\(\s*now\s*\)'
         }
     }

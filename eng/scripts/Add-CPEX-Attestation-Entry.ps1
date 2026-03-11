@@ -61,11 +61,20 @@ param (
 
 )
 
+Set-StrictMode -Version 3
+$ErrorActionPreference = 'Stop'
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+    $PSNativeCommandUseErrorActionPreference = $true
+}
+
 function InvokeKustoCommand($command) {
     try {
         $clusterUri = "https://azsdk-cpex-attestation.westus2.kusto.windows.net"
         $databaseName = "CPEX_Attestation_DB"
         $accessToken = az account get-access-token --resource "https://api.kusto.windows.net" --query "accessToken" --output tsv
+        if ([string]::IsNullOrWhiteSpace($accessToken)) {
+            throw "Failed to acquire an access token from Azure CLI for Kusto."
+        }
         $headers = @{ Authorization="Bearer $accessToken" }
         $body = @{ csl = $command; db = $databaseName } | ConvertTo-Json -Depth 3
         Invoke-RestMethod -Uri "$clusterUri/v1/rest/mgmt" -Headers $headers -Method Post -Body $body -ContentType "application/json"

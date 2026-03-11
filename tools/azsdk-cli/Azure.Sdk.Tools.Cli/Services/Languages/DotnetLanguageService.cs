@@ -1,10 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -20,10 +24,12 @@ public sealed partial class DotnetLanguageService: LanguageService
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
 
     private readonly IPowershellHelper powershellHelper;
+    private readonly ICopilotAgentRunner copilotAgentRunner;
 
     public DotnetLanguageService(
         IProcessHelper processHelper,
         IPowershellHelper powershellHelper,
+        ICopilotAgentRunner copilotAgentRunner,
         IGitHelper gitHelper,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
@@ -34,6 +40,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.powershellHelper = powershellHelper;
+        this.copilotAgentRunner = copilotAgentRunner;
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
@@ -369,6 +376,103 @@ public sealed partial class DotnetLanguageService: LanguageService
         {
             logger.LogWarning(ex, "Error searching for .NET customization files in {PackagePath}", packagePath);
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Applies patches to customization files based on build errors.
+    /// This is a mechanical worker - the Classifier does the thinking and routing.
+    /// </summary>
+    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
+        string customizationRoot,
+        string packagePath,
+        string buildContext,
+        CancellationToken ct)
+    {
+        try
+        {
+            if (!Directory.Exists(customizationRoot))
+            {
+                logger.LogDebug("Customization root does not exist: {Root}", customizationRoot);
+                return [];
+            }
+
+            // Get the list of customization files, excluding generated code
+            var generatedDirMarker = Path.DirectorySeparatorChar + GeneratedFolderName + Path.DirectorySeparatorChar;
+            var csFiles = Directory.GetFiles(customizationRoot, "*.cs", SearchOption.AllDirectories)
+                .Where(f => !f.Contains(generatedDirMarker, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            if (csFiles.Length == 0)
+            {
+                logger.LogDebug("No customization .cs files found in: {Root}", customizationRoot);
+                return [];
+            }
+
+            // Collect patches directly from the tool as they succeed
+            var patchLog = new ConcurrentBag<AppliedPatch>();
+
+            // Build both relative-path lists in a single pass:
+            //  - customizationFiles: relative to packagePath (for the ReadFile tool)
+            //  - patchFilePaths:     relative to customizationRoot (for the CodePatch tool)
+            var customizationFiles = new List<string>(csFiles.Length);
+            var patchFilePaths = new List<string>(csFiles.Length);
+            foreach (var f in csFiles)
+            {
+                customizationFiles.Add(Path.GetRelativePath(packagePath, f));
+                patchFilePaths.Add(Path.GetRelativePath(customizationRoot, f));
+            }
+
+            // Build error-driven prompt for patch agent
+            var prompt = new DotnetErrorDrivenPatchTemplate(
+                buildContext,
+                packagePath,
+                customizationRoot,
+                customizationFiles,
+                patchFilePaths).BuildPrompt();
+
+            // Single-pass agent: applies all patches it can in one run
+            var agentDefinition = new CopilotAgent<string>
+            {
+                Instructions = prompt,
+                MaxIterations = 10,
+                Tools =
+                [
+                    FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,
+                        description: "Read files from the package directory (generated code, customization files, etc.). Use startLine/endLine to read specific sections of large files."),
+                    FileTools.CreateGrepSearchTool(packagePath,
+                        description: "Search for text or regex patterns in files. Use this to find specific symbols or references without reading entire files."),
+                    CodePatchTools.CreateCodePatchTool(customizationRoot,
+                        description: "Apply code patches to customization files only (never generated code)",
+                        onPatchApplied: patchLog.Add)
+                ]
+            };
+
+            // Run the agent to apply patches
+            try
+            {
+                await copilotAgentRunner.RunAsync(agentDefinition, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception agentEx)
+            {
+                // Agent exhausted its iteration budget without completing.
+                logger.LogDebug(agentEx, "CopilotAgent terminated early");
+            }
+
+            // The patchLog was populated directly by the tool on each successful patch
+            var appliedPatches = patchLog.ToList();
+
+            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
+            return appliedPatches;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to apply patches");
+            return [];
         }
     }
 }

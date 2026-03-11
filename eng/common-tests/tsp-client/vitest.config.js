@@ -1,3 +1,5 @@
+// copied from https://github.com/Azure/azure-rest-api-specs/tree/main/.github/shared
+
 import { cpus } from "os";
 import { defineConfig } from "vitest/config";
 

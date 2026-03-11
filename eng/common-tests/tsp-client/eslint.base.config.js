@@ -1,3 +1,5 @@
+// copied from https://github.com/Azure/azure-rest-api-specs/tree/main/.github/shared
+
 import eslint from "@eslint/js";
 import { defineConfig } from "eslint/config";
 import globals from "globals";

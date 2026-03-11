@@ -72,8 +72,8 @@ public class FeedbackClassificationResponse : CommandResponse
         public string Reason { get; set; } = string.Empty;
 
         /// <summary>
-        /// Original feedback text for the item, when available.
+        /// Original feedback text for the item.
         /// </summary>
-        public string? Text { get; set; }
+        public string Text { get; set; } = string.Empty;
     }
 }

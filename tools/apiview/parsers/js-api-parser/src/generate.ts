@@ -3,16 +3,14 @@
 
 import { CodeFile, ReviewLine, ReviewToken, TokenKind } from "./models";
 import {
-  ApiDeclaredItem,
   ApiDocumentedItem,
   ApiEntryPoint,
   ApiItem,
   ApiItemKind,
   ApiModel,
-  ExcerptTokenKind,
   ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { buildToken, splitAndBuild, splitAndBuildMultipleLine } from "./jstokens";
+import { buildToken } from "./jstokens";
 import { generators } from "./tokenGenerators";
 
 interface Metadata {
@@ -320,47 +318,6 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem, deprecated: bool
         line.Children.push(...result.children);
       }
       return;
-    }
-  }
-  if (item instanceof ApiDeclaredItem) {
-    if (item.kind === ApiItemKind.Namespace) {
-      splitAndBuild(line.Tokens, `declare namespace ${item.displayName} `, item, deprecated);
-    } else {
-      if (item.kind === ApiItemKind.Variable) {
-        line.Tokens.push(
-          buildToken({
-            Kind: TokenKind.Keyword,
-            Value: "export",
-            HasSuffixSpace: true,
-            IsDeprecated: deprecated,
-          }),
-          buildToken({
-            Kind: TokenKind.Keyword,
-            Value: "const",
-            HasSuffixSpace: true,
-            IsDeprecated: deprecated,
-          }),
-        );
-      }
-      if (!item.excerptTokens.some((except) => except.text.includes("\n"))) {
-        for (const excerpt of item.excerptTokens) {
-          if (excerpt.kind === ExcerptTokenKind.Reference && excerpt.canonicalReference) {
-            const token = buildToken({
-              Kind: TokenKind.TypeName,
-              NavigateToId: excerpt.canonicalReference.toString(),
-              Value: excerpt.text,
-              IsDeprecated: deprecated,
-            });
-            line.Tokens.push(token);
-          } else if (item.kind === ApiItemKind.Enum) {
-            splitAndBuild(line.Tokens, `export enum ${item.displayName}`, item, deprecated);
-          } else {
-            splitAndBuild(line.Tokens, excerpt.text, item, deprecated);
-          }
-        }
-      } else {
-        splitAndBuildMultipleLine(line, item.excerptTokens, item, deprecated);
-      }
     }
   }
 }

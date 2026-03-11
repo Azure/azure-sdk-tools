@@ -193,6 +193,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
+        Task<bool> IDevOpsService.UpdateApiSpecVersionAsync(int releasePlanWorkItemId, string apiVersion)
+        {
+            return Task.FromResult(true);
+        }
+
         Task<Dictionary<string, List<string>>> IDevOpsService.GetPipelineLlmArtifacts(string project, int buildId)
         {
             return Task.FromResult(new Dictionary<string, List<string>>());
@@ -247,9 +252,37 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult<ProductInfo?>(null);
         }
 
+        Task<ReleasePlanWorkItem?> IDevOpsService.GetReleasePlanByTypeSpecProjectPathAsync(string typeSpecProjectPath)
+        {
+            return Task.FromResult<ReleasePlanWorkItem?>(null);
+        }
+
         public Task<List<WorkItem>> FetchWorkItemsPagedAsync(string query, int top = 100000, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
         {
             return Task.FromResult(new List<WorkItem>());
+        }
+
+        public Task<List<WorkItem>> QueryWorkItemsByTypeAndFieldAsync(string type, string field, string value, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<WorkItem>> GetWorkItemsByIdsAsync(IEnumerable<int> ids, int batchSize = 200, WorkItemExpand expand = WorkItemExpand.All)
+        {
+            return Task.FromResult(new List<WorkItem>());
+        }
+
+        public Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null)
+        {
+            throw new NotImplementedException();
+        }
+        public Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
+        {
+            throw new NotImplementedException();
+        }
+        public Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

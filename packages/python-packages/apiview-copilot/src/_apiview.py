@@ -178,7 +178,7 @@ class ApiViewClient:
             endpoint = endpoint[1:]
 
         apiview_endpoints = {
-            "production": "https://apiview.org",
+            "production": "https://apiview.dev",
             "staging": "https://apiviewstagingtest.com",
         }
         endpoint_root = apiview_endpoints.get(self.environment)
@@ -236,7 +236,7 @@ def get_active_reviews(
 ) -> list[ActiveReviewMetadata]:
     """
     Lists distinct active APIView review IDs in the specified environment during the specified period.
-    The definition of "active" is any review that has comments created during the time period.
+    The definition of "active" is any review that has non-Diagnostic comments created during the time period.
     For each active review, also returns the active revisions (those with comments in the period)
     along with their package versions.
 
@@ -246,8 +246,9 @@ def get_active_reviews(
     """
     metadata: list[ActiveReviewMetadata] = []
 
-    # Get comments in the date range
+    # Get comments in the date range, excluding Diagnostic comments
     comments = get_comments_in_date_range(start_date, end_date, environment=environment)
+    comments = [c for c in comments if c.get("CommentSource") != "Diagnostic"]
 
     # Extract unique review IDs and revision IDs from comments
     review_ids = set()

@@ -1,46 +1,79 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
+/// <summary>
+/// Language service implementation for Java SDK packages.
+/// </summary>
 public sealed partial class JavaLanguageService : LanguageService
 {
+    /// <inheritdoc/>
     public override SdkLanguage Language { get; } = SdkLanguage.Java;
+
+    /// <inheritdoc/>
     public override bool IsCustomizedCodeUpdateSupported => true;
-    private readonly IMicroagentHostService microagentHost;
-    private readonly IMavenHelper _mavenHelper;
+
+    private readonly ICopilotAgentRunner copilotAgentRunner;
+    private readonly IMavenHelper mavenHelper;
+    private readonly IPythonHelper pythonHelper;
+
     private const string CustomizationDirName = "customization";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JavaLanguageService"/> class.
+    /// </summary>
+    /// <param name="processHelper">Process execution helper.</param>
+    /// <param name="gitHelper">Git helper.</param>
+    /// <param name="mavenHelper">Maven command helper.</param>
+    /// <param name="pythonHelper">Python command helper.</param>
+    /// <param name="copilotAgentRunner">Copilot agent runner.</param>
+    /// <param name="logger">Logger for language service operations.</param>
+    /// <param name="commonValidationHelpers">Common validation helpers.</param>
+    /// <param name="packageInfoHelper">Package information helper.</param>
+    /// <param name="fileHelper">File helper.</param>
+    /// <param name="specGenSdkConfigHelper">Spec-gen SDK config helper.</param>
+    /// <param name="changelogHelper">Changelog helper.</param>
     public JavaLanguageService(
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         IMavenHelper mavenHelper,
-        IMicroagentHostService microagentHost,
+        IPythonHelper pythonHelper,
+        ICopilotAgentRunner copilotAgentRunner,
         ILogger<LanguageService> logger,
         ICommonValidationHelpers commonValidationHelpers,
+        IPackageInfoHelper packageInfoHelper,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper,
         IChangelogHelper changelogHelper)
-        : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
+        : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
-        this.microagentHost = microagentHost;
-        this._mavenHelper = mavenHelper;
+        this.copilotAgentRunner = copilotAgentRunner;
+        this.mavenHelper = mavenHelper;
+        this.pythonHelper = pythonHelper;
     }
 
+    /// <summary>
+    /// Resolves package metadata for a Java SDK package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A populated <see cref="PackageInfo"/> instance.</returns>
     public override async Task<PackageInfo> GetPackageInfo(string packagePath, CancellationToken ct = default)
     {
         logger.LogDebug("Resolving Java package info for path: {packagePath}", packagePath);
-        var (repoRoot, relativePath, fullPath) = await PackagePathParser.ParseAsync(gitHelper, packagePath, ct);
+        var (repoRoot, relativePath, fullPath) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
         var (packageName, packageVersion) = await TryGetPackageInfoAsync(fullPath, ct);
-        
+
         if (packageName == null)
         {
             logger.LogWarning("Could not determine package name for Java package at {fullPath}", fullPath);
@@ -49,9 +82,9 @@ public sealed partial class JavaLanguageService : LanguageService
         {
             logger.LogWarning("Could not determine package version for Java package at {fullPath}", fullPath);
         }
-        
+
         var sdkType = DetermineSdkType(packageName);
-        
+
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -64,10 +97,10 @@ public sealed partial class JavaLanguageService : LanguageService
             SamplesDirectory = BuildSamplesDirectory(fullPath),
             SdkType = sdkType
         };
-        
-        logger.LogDebug("Resolved Java package: {packageName} v{packageVersion} at {relativePath}", 
+
+        logger.LogDebug("Resolved Java package: {packageName} v{packageVersion} at {relativePath}",
             packageName ?? "(unknown)", packageVersion ?? "(unknown)", relativePath);
-        
+
         return model;
     }
 
@@ -88,68 +121,43 @@ public sealed partial class JavaLanguageService : LanguageService
 
     private async Task<(string? Name, string? Version)> TryGetPackageInfoAsync(string packagePath, CancellationToken ct)
     {
-        var path = Path.Combine(packagePath, "pom.xml");
-        if (!File.Exists(path)) 
+        if (!TryGetPomFilePath(packagePath, out var path))
         {
-            logger.LogWarning("No pom.xml file found at {path}", path);
-            return (null, null); 
-        }
-        try
-        {
-            logger.LogTrace("Reading pom.xml file: {path}", path);
-            using var stream = File.OpenRead(path);
-            var doc = await XDocument.LoadAsync(stream, LoadOptions.None, ct);
-            var root = doc.Root;
-            if (root == null) 
-            {
-                logger.LogWarning("pom.xml has no root element at {path}", path);
-                return (null, null); 
-            }
-            // Maven POM uses a default namespace; capture it to access elements.
-            var ns = root.Name.Namespace;
-
-            // Extract artifactId
-            string? artifactId = root.Element(ns + "artifactId")?.Value?.Trim();
-            if (string.IsNullOrWhiteSpace(artifactId)) 
-            { 
-                logger.LogWarning("No artifactId found in pom.xml at {path}", path);
-                artifactId = null; 
-            }
-            else
-            {
-                logger.LogTrace("Found artifactId: {artifactId}", artifactId);
-            }
-
-            // Extract version
-            string? version = root.Element(ns + "version")?.Value?.Trim();
-            if (string.IsNullOrWhiteSpace(version))
-            {
-                // Fallback to parent version if project version not declared directly.
-                var parent = root.Element(ns + "parent");
-                version = parent?.Element(ns + "version")?.Value?.Trim();
-                if (!string.IsNullOrWhiteSpace(version))
-                {
-                    logger.LogTrace("Found version from parent: {version}", version);
-                }
-            }
-            else
-            {
-                logger.LogTrace("Found version: {version}", version);
-            }
-            
-            if (string.IsNullOrWhiteSpace(version)) 
-            { 
-                logger.LogWarning("No version found in pom.xml at {path}", path);
-                version = null; 
-            }
-
-            return (artifactId, version);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error reading Java package info from {path}", path);
             return (null, null);
         }
+
+        var metadataResult = await TryReadPomMetadataAsync(path, ct);
+        if (!metadataResult.Success)
+        {
+            logger.LogWarning("{Error} at {path}", metadataResult.Error, path);
+            return (null, null);
+        }
+
+        var metadata = metadataResult.Metadata!;
+        logger.LogTrace("Found artifactId: {artifactId}", metadata.ArtifactId);
+
+        if (string.IsNullOrWhiteSpace(metadata.Version))
+        {
+            logger.LogWarning("No version found in pom.xml at {path}", path);
+        }
+        else
+        {
+            logger.LogTrace("Found version: {version}", metadata.Version);
+        }
+
+        return (metadata.ArtifactId, metadata.Version);
+    }
+
+    private bool TryGetPomFilePath(string packagePath, out string pomPath)
+    {
+        pomPath = Path.Combine(packagePath, "pom.xml");
+        if (File.Exists(pomPath))
+        {
+            return true;
+        }
+
+        logger.LogWarning("No pom.xml file found at {PomPath}", pomPath);
+        return false;
     }
 
     private string? TryGetJavaModuleName(string packagePath)
@@ -157,12 +165,12 @@ public sealed partial class JavaLanguageService : LanguageService
         try
         {
             var moduleInfoPath = Path.Combine(packagePath, "src", "main", "java", "module-info.java");
-            if (!File.Exists(moduleInfoPath)) 
+            if (!File.Exists(moduleInfoPath))
             {
                 logger.LogTrace("No module-info.java found at {moduleInfoPath}", moduleInfoPath);
-                return null; 
+                return null;
             }
-            
+
             logger.LogTrace("Reading module-info.java from {moduleInfoPath}", moduleInfoPath);
             var content = File.ReadAllText(moduleInfoPath);
             var match = JavaModuleDeclarationRegex().Match(content);
@@ -195,17 +203,17 @@ public sealed partial class JavaLanguageService : LanguageService
         }
 
         // Following the logic from azure-sdk-for-java/eng/scripts/Language-Settings.ps1
-        if (artifactId.Contains("mgmt", StringComparison.OrdinalIgnoreCase) || 
+        if (artifactId.Contains("mgmt", StringComparison.OrdinalIgnoreCase) ||
             artifactId.Contains("resourcemanager", StringComparison.OrdinalIgnoreCase))
         {
             return SdkType.Management;
         }
-        
+
         if (artifactId.Contains("spring", StringComparison.OrdinalIgnoreCase))
         {
             return SdkType.Spring;
         }
-        
+
         // Default case - client SDKs
         return SdkType.Dataplane;
     }
@@ -216,27 +224,115 @@ public sealed partial class JavaLanguageService : LanguageService
     [GeneratedRegex(@"^\s*module\s+([^\{\s]+)\s*\{", RegexOptions.Compiled | RegexOptions.Multiline)]
     private static partial Regex JavaModuleDeclarationRegex();
 
-    private static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan testTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan versioningScriptTimeout = TimeSpan.FromMinutes(5);
 
+    private sealed record ScriptUpdateResult(bool ScriptsAvailable, bool Success, string? Message)
+    {
+        public static ScriptUpdateResult NotAvailable(string message) => new(false, false, message);
+        public static ScriptUpdateResult Failed(string message) => new(true, false, message);
+        public static ScriptUpdateResult Succeeded(string message) => new(true, true, message);
+    }
+
+    private sealed record PomMetadata(string ArtifactId, string? Version, string GroupId);
+
+    /// <summary>
+    /// Runs all Maven tests for the specified Java package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="TestRunResponse"/> containing test execution details.</returns>
     public override async Task<TestRunResponse> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         logger.LogInformation("Starting test execution for Java project at: {PackagePath}", packagePath);
 
         // Run Maven tests using consistent command pattern
-        var pomPath = Path.Combine(packagePath, "pom.xml");
-        var result = await _mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: TestTimeout), ct);
-
-        if (result.ExitCode == 0)
+        if (!TryGetPomFilePath(packagePath, out var pomPath))
         {
-            logger.LogInformation("Test execution completed successfully");
-            return new TestRunResponse(result);
+            logger.LogError("Cannot run tests - no pom.xml found at {PackagePath}", packagePath);
+            return new TestRunResponse(
+                exitCode: 1,
+                testRunOutput: $"No pom.xml file found at {pomPath}. Cannot run tests.",
+                error: "pom.xml not found");
         }
-        else
+
+        var result = await mavenHelper.Run(new("test", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: testTimeout), ct);
+
+        if (result.ExitCode != 0)
         {
             logger.LogWarning("Test execution failed with exit code {ExitCode}", result.ExitCode);
             return new TestRunResponse(result);
         }
 
+        logger.LogInformation("Test execution completed successfully");
+        return new TestRunResponse(result);
+    }
+
+    public override async Task<(bool Success, string? ErrorMessage, PackageInfo? PackageInfo, string? ArtifactPath)> PackAsync(
+        string packagePath, string? outputPath = null, int timeoutMinutes = 30, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Packing Java SDK project at: {PackagePath}", packagePath);
+
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                return (false, "Package path is required and cannot be empty.", null, null);
+            }
+
+            string fullPath = Path.GetFullPath(packagePath);
+            if (!Directory.Exists(fullPath))
+            {
+                return (false, $"Package path does not exist: {fullPath}", null, null);
+            }
+
+            var packageInfo = await GetPackageInfo(fullPath, ct);
+
+            var pomPath = Path.Combine(fullPath, "pom.xml");
+            var args = new List<string>
+            {
+                "package"
+            };
+
+            if (!string.IsNullOrWhiteSpace(outputPath))
+            {
+                args.Add($"-DpackageOutputDirectory={outputPath}");
+            }
+
+            var result = await mavenHelper.Run(
+                new("clean", args.ToArray(), pomPath, workingDirectory: fullPath, timeout: TimeSpan.FromMinutes(timeoutMinutes)),
+                ct
+            );
+
+            if (result.ExitCode != 0)
+            {
+                var errorMessage = $"mvn clean package failed with exit code {result.ExitCode}. Output:\n{result.Output}";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return (false, errorMessage, packageInfo, null);
+            }
+
+            // Try to find artifact path in the output directory
+            var artifactDir = outputPath ?? Path.Combine(fullPath, "target");
+            string? artifactPath = null;
+            if (Directory.Exists(artifactDir))
+            {
+                var jarFiles = Directory.GetFiles(artifactDir, "*.jar", SearchOption.TopDirectoryOnly)
+                    .Where(f => !f.EndsWith("-sources.jar") && !f.EndsWith("-javadoc.jar") && !f.EndsWith("-tests.jar"))
+                    .ToArray();
+                if (jarFiles.Length > 0)
+                {
+                    artifactPath = jarFiles.OrderByDescending(File.GetLastWriteTimeUtc).First();
+                }
+            }
+
+            logger.LogInformation("Pack completed successfully. Artifact: {ArtifactPath}", artifactPath ?? "(unknown)");
+            return (true, null, packageInfo, artifactPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error occurred while packing Java SDK");
+            return (false, $"An error occurred: {ex.Message}", null, null);
+        }
     }
 
     public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
@@ -245,122 +341,290 @@ public sealed partial class JavaLanguageService : LanguageService
         return Task.FromResult(new List<ApiChange>());
     }
 
-    public override bool HasCustomizations(string packagePath, CancellationToken ct)
+    public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {
         // In azure-sdk-for-java layout, customizations live under:
         //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
-        // Example (document intelligence):
-        //   package path: .../azure-ai-documentintelligence
-        //   customization: .../azure-ai-documentintelligence/customization/src/main/java
-        // TODO: In the future, check tspconfig.yaml for "customization-class" directive for definitive detection.
-
-        try
-        {
-            var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
-            if (Directory.Exists(customizationSourceRoot))
-            {
-                logger.LogDebug("Found Java customization directory at {CustomizationPath}", customizationSourceRoot);
-                return true;
-            }
-
-            logger.LogDebug("No Java customization directory found in {PackagePath}", packagePath);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error searching for Java customization files in {PackagePath}", packagePath);
-            return false;
-        }
+        var customizationSourceRoot = Path.Combine(packagePath, CustomizationDirName, "src", "main", "java");
+        return Directory.Exists(customizationSourceRoot) ? customizationSourceRoot : null;
     }
 
-    public override async Task<bool> ApplyPatchesAsync(
-        string commitSha,
+    /// <summary>
+    /// Applies patches to customization files based on build errors.
+    /// This is a mechanical worker - the Classifier does the thinking and routing.
+    /// </summary>
+    public override async Task<List<AppliedPatch>> ApplyPatchesAsync(
         string customizationRoot,
         string packagePath,
+        string buildContext,
         CancellationToken ct)
     {
         try
         {
-            logger.LogInformation("Generating automated patches for customization files");
-            logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
-            logger.LogInformation("Package path: {PackagePath}", packagePath);
-            logger.LogInformation("Commit SHA: {CommitSha}", commitSha);
-
-            // Read all .java files under customizationRoot and concatenate their contents into customizationContent
-            var customizationContentBuilder = new System.Text.StringBuilder();
-
-            if (Directory.Exists(customizationRoot))
+            if (!Directory.Exists(customizationRoot))
             {
-                var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
-                logger.LogInformation("Found {FileCount} Java customization files in {Root}", javaFiles.Length, customizationRoot);
-
-                foreach (var file in javaFiles)
-                {
-                    logger.LogDebug("Reading customization file: {File}", file);
-                    var fileContent = await File.ReadAllTextAsync(file, ct);
-                    logger.LogInformation("File {File} has {Lines} lines and {Characters} characters",
-                        Path.GetFileName(file), fileContent.Split('\n').Length, fileContent.Length);
-
-                    // Use relative path from customizationRoot for the LLM to reference
-                    var relativePath = Path.GetRelativePath(customizationRoot, file);
-                    customizationContentBuilder.AppendLine($"// File: {relativePath}");
-                    customizationContentBuilder.AppendLine(fileContent);
-                    customizationContentBuilder.AppendLine();
-                }
-            }
-            else
-            {
-                logger.LogWarning("Customization root directory does not exist: {Root}", customizationRoot);
-                return false;
+                logger.LogDebug("Customization root does not exist: {Root}", customizationRoot);
+                return [];
             }
 
-            var customizationContent = customizationContentBuilder.ToString();
+            // Get the list of customization files
+            var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
 
-            // For now, using placeholder generated code - TODO: implement proper old/new code comparison  
-            // Future enhancement: read actual generated files and compare them
-            var oldGeneratedCode = "// TODO: Read actual old generated code for comparison";
-            var newGeneratedCode = "// TODO: Read actual new generated code for comparison";
+            // Collect patches directly from the tool as they succeed
+            var patchLog = new ConcurrentBag<AppliedPatch>();
 
-            // Build prompt for direct patch application using the java patch template
-            var prompt = new JavaPatchGenerationTemplate(
-                oldGeneratedCode,
-                newGeneratedCode,
+            // Build both relative-path lists in a single pass over javaFiles:
+            //  - customizationFiles: relative to packagePath (for the ReadFile tool)
+            //  - patchFilePaths:     relative to customizationRoot (for the CodePatch tool)
+            var customizationFiles = new List<string>(javaFiles.Length);
+            var patchFilePaths = new List<string>(javaFiles.Length);
+            foreach (var f in javaFiles)
+            {
+                customizationFiles.Add(Path.GetRelativePath(packagePath, f));
+                patchFilePaths.Add(Path.GetRelativePath(customizationRoot, f));
+            }
+
+            // Build error-driven prompt for patch agent
+            var prompt = new JavaErrorDrivenPatchTemplate(
+                buildContext,
                 packagePath,
-                customizationContent,
                 customizationRoot,
-                commitSha).BuildPrompt();
-            logger.LogInformation("Generated prompt for patch analysis with {ContentLength} characters", prompt.Length);
+                customizationFiles,
+                patchFilePaths).BuildPrompt();
 
-            var agentDefinition = new Microagent<bool>
+            // Single-pass agent: applies all patches it can in one run
+            var agentDefinition = new CopilotAgent<string>
             {
                 Instructions = prompt,
+                MaxIterations = 10,
                 Tools =
                 [
-                    new ReadFileTool(packagePath)
-                    {
-                        Name = "ReadFile",
-                        Description = "Read files from the package directory (generated code, customization files, etc.)"
-                    },
-                    new ClientCustomizationCodePatchTool(customizationRoot)
-                    {
-                        Name = "ClientCustomizationCodePatch",
-                        Description = "Apply code patches directly to customization files"
-                    }
+                    FileTools.CreateReadFileTool(packagePath, includeLineNumbers: true,
+                        description: "Read files from the package directory (generated code, customization files, etc.). Use startLine/endLine to read specific sections of large files."),
+                    FileTools.CreateGrepSearchTool(packagePath,
+                        description: "Search for text or regex patterns in files. Use this to find specific symbols or references without reading entire files."),
+                    CodePatchTools.CreateCodePatchTool(customizationRoot,
+                        description: "Apply code patches to customization files only (never generated code)",
+                        onPatchApplied: patchLog.Add)
                 ]
             };
 
-            // Use microagent system to apply patches directly
-            logger.LogInformation("Sending prompt to microagent for direct patch application");
-            var patchApplicationSuccess = await microagentHost.RunAgentToCompletion(agentDefinition, ct);
-            logger.LogInformation("Patch application completed with result: {Success}", patchApplicationSuccess);
+            // Run the agent to apply patches
+            try
+            {
+                await copilotAgentRunner.RunAsync(agentDefinition, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancelled externally, re-throw
+                throw;
+            }
+            catch (Exception agentEx)
+            {
+                // Agent exhausted its iteration budget without completing.
+                logger.LogDebug(agentEx, "CopilotAgent terminated early");
+            }
 
-            // Return the result of patch application
-            return patchApplicationSuccess;
+            // The patchLog was populated directly by the tool on each successful patch
+            var appliedPatches = patchLog.ToList();
+
+            logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
+            return appliedPatches;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to apply automated patches");
-            return false;
+            logger.LogError(ex, "Failed to apply patches");
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// Updates Java package versions using the Java repository versioning scripts.
+    /// Follows SetPackageVersion from azure-sdk-for-java/eng/scripts/Language-Settings.ps1,
+    /// excluding changelog updates because changelog changes are handled by the base language workflow.
+    /// </summary>
+    protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
+        string packagePath,
+        string version,
+        string? releaseType,
+        CancellationToken ct)
+    {
+        logger.LogInformation("Updating Java package version to {Version} in {PackagePath}", version, packagePath);
+
+        try
+        {
+            if (!TryGetPomFilePath(packagePath, out var pomPath))
+            {
+                return PackageOperationResponse.CreateFailure(
+                    $"No pom.xml file found at {pomPath}",
+                    nextSteps: ["Ensure the package path contains a valid Maven project with pom.xml"]);
+            }
+
+            var scriptResult = await TryUpdateVersionUsingScriptsAsync(packagePath, pomPath, version, ct);
+
+            if (!scriptResult.ScriptsAvailable || !scriptResult.Success)
+            {
+                return PackageOperationResponse.CreateFailure(
+                    scriptResult.Message ?? "Failed to run Java versioning scripts.",
+                    nextSteps:
+                    [
+                        "Run 'azsdk verify setup' to verify Python is available",
+                        "Ensure eng/versioning/set_versions.py and eng/versioning/update_versions.py exist",
+                        "Run scripts manually and verify version propagation"
+                    ]);
+            }
+
+            return PackageOperationResponse.CreateSuccess(
+                $"Version updated to {version} via Java versioning scripts.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to update Java package version");
+            return PackageOperationResponse.CreateFailure(
+                $"Failed to update version: {ex.Message}",
+                nextSteps: ["Check the pom.xml file format", "Ensure the file is not locked by another process"]);
+        }
+    }
+
+    /// <summary>
+    /// Attempts to run Java versioning scripts to update version source files and propagate version references.
+    /// </summary>
+    /// <param name="packagePath">Path to the Java package directory.</param>
+    /// <param name="pomPath">Path to the package pom.xml.</param>
+    /// <param name="version">Target version string.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="ScriptUpdateResult"/> describing script availability, outcome, and details.</returns>
+    private async Task<ScriptUpdateResult> TryUpdateVersionUsingScriptsAsync(
+        string packagePath,
+        string pomPath,
+        string version,
+        CancellationToken ct)
+    {
+        string repoRoot;
+        try
+        {
+            repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to discover repo root for {PackagePath}; script propagation skipped", packagePath);
+            return ScriptUpdateResult.NotAvailable("Failed to discover repository root for Java versioning scripts.");
+        }
+
+        if (string.IsNullOrWhiteSpace(repoRoot))
+        {
+            logger.LogDebug("Repo root not found for {PackagePath}; script propagation skipped", packagePath);
+            return ScriptUpdateResult.NotAvailable("Repository root was not found for Java versioning scripts.");
+        }
+
+        var setVersionsScriptPath = Path.Combine(repoRoot, "eng", "versioning", "set_versions.py");
+        var updateVersionsScriptPath = Path.Combine(repoRoot, "eng", "versioning", "update_versions.py");
+        if (!File.Exists(setVersionsScriptPath) || !File.Exists(updateVersionsScriptPath))
+        {
+            logger.LogDebug("Java versioning scripts not found under repo root {RepoRoot}; script propagation skipped", repoRoot);
+            return ScriptUpdateResult.NotAvailable("Java versioning scripts were not found under eng/versioning.");
+        }
+
+        var metadataResult = await TryReadPomMetadataAsync(pomPath, ct);
+        if (!metadataResult.Success)
+        {
+            return ScriptUpdateResult.Failed(metadataResult.Error);
+        }
+
+        var metadata = metadataResult.Metadata!;
+        if (string.IsNullOrWhiteSpace(metadata.GroupId))
+        {
+            return ScriptUpdateResult.Failed("No groupId found in pom.xml");
+        }
+
+        var groupId = metadata.GroupId;
+        var artifactId = metadata.ArtifactId;
+        var fullLibraryName = $"{groupId}:{artifactId}";
+        logger.LogInformation("Running Java versioning scripts for {LibraryName}", fullLibraryName);
+
+        var setVersionsResult = await pythonHelper.Run(new PythonOptions(
+            executableName: "python",
+            args:
+            [
+                setVersionsScriptPath,
+                "--new-version", version,
+                "--artifact-id", artifactId,
+                "--group-id", groupId
+            ],
+            workingDirectory: repoRoot,
+            timeout: versioningScriptTimeout), ct);
+
+        if (setVersionsResult.ExitCode != 0)
+        {
+            logger.LogError("set_versions.py failed for {LibraryName} with exit code {ExitCode}", fullLibraryName, setVersionsResult.ExitCode);
+            return ScriptUpdateResult.Failed($"set_versions.py failed: {setVersionsResult.Output}");
+        }
+
+        var updateVersionsResult = await pythonHelper.Run(new PythonOptions(
+            executableName: "python",
+            args:
+            [
+                updateVersionsScriptPath,
+                "--library-list", fullLibraryName
+            ],
+            workingDirectory: repoRoot,
+            timeout: versioningScriptTimeout), ct);
+
+        if (updateVersionsResult.ExitCode != 0)
+        {
+            logger.LogError("update_versions.py failed for {LibraryName} with exit code {ExitCode}", fullLibraryName, updateVersionsResult.ExitCode);
+            return ScriptUpdateResult.Failed($"update_versions.py failed: {updateVersionsResult.Output}");
+        }
+
+        return ScriptUpdateResult.Succeeded($"Version updated to {version} via Java versioning scripts for {fullLibraryName}.");
+    }
+
+    private static async Task<(bool Success, PomMetadata? Metadata, string Error)> TryReadPomMetadataAsync(
+        string pomPath,
+        CancellationToken ct)
+    {
+        try
+        {
+            using var stream = File.OpenRead(pomPath);
+            var doc = await XDocument.LoadAsync(stream, LoadOptions.None, ct);
+            var root = doc.Root;
+            if (root == null)
+            {
+                return (false, null, "pom.xml has no root element");
+            }
+
+            var ns = root.Name.Namespace;
+
+            var artifactId = root.Element(ns + "artifactId")?.Value?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(artifactId))
+            {
+                return (false, null, "No artifactId found in pom.xml");
+            }
+
+            var version = root.Element(ns + "version")?.Value?.Trim();
+            if (string.IsNullOrWhiteSpace(version))
+            {
+                var parent = root.Element(ns + "parent");
+                version = parent?.Element(ns + "version")?.Value?.Trim();
+            }
+
+            var groupId = root.Element(ns + "groupId")?.Value?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(groupId))
+            {
+                var parent = root.Element(ns + "parent");
+                groupId = parent?.Element(ns + "groupId")?.Value?.Trim() ?? string.Empty;
+            }
+
+            var metadata = new PomMetadata(
+                artifactId,
+                string.IsNullOrWhiteSpace(version) ? null : version,
+                groupId);
+
+            return (true, metadata, string.Empty);
+        }
+        catch (Exception ex)
+        {
+            return (false, null, $"Failed to parse pom.xml: {ex.Message}");
         }
     }
 }

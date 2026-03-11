@@ -20,6 +20,8 @@ public interface IAPIViewFeedbackService
 {
     Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId);
     Task<ReviewMetadata> ParseReviewMetadata(string revisionId);
+    Task<List<FeedbackItem>> GetFeedbackItemsAsync(string apiViewUrl, CancellationToken ct = default);
+    Task<string?> GetLanguageAsync(string apiViewUrl, CancellationToken ct = default);
     Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata);
 }
 
@@ -79,14 +81,18 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
             return new List<ConsolidatedComment>();
         }
 
-        // 1. Filter out resolved, Question severity comments, and comments with no text
+        // 1. Filter out resolved, Question severity comments, comments with no text,
+        //    and azure-sdk bot comments that have been downvoted
         var filteredComments = comments
-            .Where(c => !c.IsResolved && c.Severity != "Question" && !string.IsNullOrWhiteSpace(c.CommentText))
+            .Where(c => !c.IsResolved
+                && c.Severity != "Question"
+                && !string.IsNullOrWhiteSpace(c.CommentText)
+                && !(c.CreatedBy == "azure-sdk" && c.Downvotes > 0))
             .ToList();
 
         if (filteredComments.Count == 0)
         {
-            _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering (all resolved or questions)", revisionId);
+            _logger.LogInformation("No actionable comments for revision {RevisionId} after filtering", revisionId);
             return new List<ConsolidatedComment>();
         }
 
@@ -358,6 +364,33 @@ Respond in JSON format:
         {
             _logger.LogWarning("Cannot call Resolve endpoint - ReviewId is null or empty, or Revision is null");
         }
+    }
+
+    /// <summary>
+    /// Returns feedback items derived from consolidated APIView review comments for the given APIView URL.
+    /// </summary>
+    public async Task<List<FeedbackItem>> GetFeedbackItemsAsync(string apiViewUrl, CancellationToken ct = default)
+    {
+        _logger.LogInformation("Preprocessing APIView feedback from: {Url}", apiViewUrl);
+        var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
+        var comments = await GetConsolidatedComments(revisionId);
+        var feedbackItems = comments.Select(c =>
+        {
+            var text = $"API Line {c.LineNo}: {c.LineId}, Code: {c.LineText.Trim()}, ReviewComment: {c.Comment}";
+            return new FeedbackItem { Text = text, Context = string.Empty };
+        }).ToList();
+        _logger.LogInformation("Converted {Count} comments to feedback items", feedbackItems.Count);
+        return feedbackItems;
+    }
+
+    /// <summary>
+    /// Returns the SDK language detected from APIView review metadata for the given APIView URL.
+    /// </summary>
+    public async Task<string?> GetLanguageAsync(string apiViewUrl, CancellationToken ct = default)
+    {
+        var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
+        var metadata = await ParseReviewMetadata(revisionId);
+        return metadata.Language;
     }
 
     /// <summary>

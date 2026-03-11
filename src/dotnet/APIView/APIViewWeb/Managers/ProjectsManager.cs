@@ -119,7 +119,6 @@ public class ProjectsManager : IProjectsManager
         };
 
         await _projectsRepository.UpsertProjectAsync(project);
-
         typeSpecReview.ProjectId = project.Id;
         await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 
@@ -155,7 +154,8 @@ public class ProjectsManager : IProjectsManager
             changes.Add("CrossLanguagePackageId");
         }
 
-        if (!string.Equals(project.Description, metadata.TypeSpec.Documentation))
+        // Case-sensitive comparison is intentional: description is human-readable text where casing matters.
+        if (!string.Equals(project.Description, metadata.TypeSpec.Documentation, StringComparison.Ordinal))
         {
             project.Description = metadata.TypeSpec.Documentation;
             changes.Add("Description");
@@ -166,6 +166,9 @@ public class ProjectsManager : IProjectsManager
         {
             project.ExpectedPackages = newExpectedPackages;
             changes.Add("ExpectedPackages");
+
+            // Mutates project in-place (ReviewIds, HistoricalReviewIds, ChangeHistory). Caller persists afterward.
+            await ReconcileReviewLinksAsync(userName, project, typeSpecReview.Id);
         }
 
         if (changes.Count > 0)
@@ -184,12 +187,104 @@ public class ProjectsManager : IProjectsManager
         return project;
     }
 
+    private async Task ReconcileReviewLinksAsync(string userName, Project project, string typeSpecReviewId)
+    {
+        project.HistoricalReviewIds ??= [];
+        project.ReviewIds ??= [];
+
+        List<string> reviewIdsToCheck = project.ReviewIds.Where(id => id != typeSpecReviewId).ToList();
+        var reviews = reviewIdsToCheck.Count > 0
+            ? (await _reviewsRepository.GetReviewsAsync(reviewIdsToCheck)).ToList()
+            : [];
+
+        var foundIds = new HashSet<string>(reviews.Select(r => r.Id));
+        var orphanedIds = reviewIdsToCheck.Where(id => !foundIds.Contains(id)).ToList();
+        if (orphanedIds.Count > 0)
+        {
+            _logger.LogWarning(
+                "Project {ProjectId} has review IDs not found in database: {OrphanedIds}. Removing from ReviewIds.",
+                project.Id, string.Join(", ", orphanedIds));
+            foreach (var orphanId in orphanedIds)
+            {
+                project.ReviewIds.Remove(orphanId);
+            }
+        }
+
+        var reviewsToUpsert = new List<ReviewListItemModel>();
+        var coveredLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var review in reviews)
+        {
+            bool stillMatches = !string.IsNullOrEmpty(review.Language)
+                               && project.ExpectedPackages != null
+                               && project.ExpectedPackages.TryGetValue(review.Language, out var expected)
+                               && string.Equals(expected.PackageName, review.PackageName,
+                                   StringComparison.OrdinalIgnoreCase);
+
+            if (stillMatches)
+            {
+                coveredLanguages.Add(review.Language);
+                continue;
+            }
+
+            project.ReviewIds.Remove(review.Id);
+            project.HistoricalReviewIds.Add(review.Id);
+            review.ProjectId = null;
+            reviewsToUpsert.Add(review);
+        }
+
+        if (reviewsToUpsert.Count > 0)
+        {
+            project.ChangeHistory.Add(new ProjectChangeHistory
+            {
+                ChangedOn = DateTime.UtcNow,
+                ChangedBy = userName,
+                ChangeAction = ProjectChangeAction.ReviewUnlinked,
+                Notes = $"Reviews unlinked (ExpectedPackages changed): {string.Join(", ", reviewsToUpsert.Select(r => r.Id))}"
+            });
+
+            await _reviewsRepository.UpsertReviewsAsync(reviewsToUpsert);
+        }
+
+        // For every expected-package language without a linked review, try to find and link one.
+        var languagesToSearch = (project.ExpectedPackages ?? new Dictionary<string, PackageInfo>())
+            .Where(ep => !coveredLanguages.Contains(ep.Key) && !string.IsNullOrEmpty(ep.Value?.PackageName))
+            .ToList();
+
+        foreach (var (language, pkg) in languagesToSearch)
+        {
+            ReviewListItemModel candidate = await _reviewsRepository.GetReviewAsync(language, pkg.PackageName, false);
+            if (candidate != null)
+            {
+                candidate.ProjectId = project.Id;
+                project.ReviewIds.Add(candidate.Id);
+                project.ChangeHistory.Add(new ProjectChangeHistory
+                {
+                    ChangedOn = DateTime.UtcNow,
+                    ChangedBy = userName,
+                    ChangeAction = ProjectChangeAction.ReviewLinked,
+                    Notes = $"Review {candidate.Id} ({candidate.Language}/{candidate.PackageName}) linked to project"
+                });
+                await _reviewsRepository.UpsertReviewAsync(candidate);
+                _logger.LogInformation("Linked review {ReviewId} to project {ProjectId} during reconciliation",
+                    candidate.Id, project.Id);
+            }
+        }
+    }
+
     private static Dictionary<string, PackageInfo> BuildExpectedPackages(TypeSpecMetadata metadata)
     {
-        return metadata.Languages?.ToDictionary(
-            lang => lang.Key,
-            lang => new PackageInfo { Namespace = lang.Value.Namespace, PackageName = lang.Value.PackageName }
-        ) ?? new Dictionary<string, PackageInfo>();
+        if (metadata?.Languages == null)
+        {
+            return new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        return metadata.Languages
+            .Where(lang => !string.IsNullOrEmpty(lang.Value.Namespace) || !string.IsNullOrEmpty(lang.Value.PackageName))
+            .ToDictionary(
+                lang => lang.Key,
+                lang => new PackageInfo { Namespace = lang.Value.Namespace, PackageName = lang.Value.PackageName },
+                StringComparer.OrdinalIgnoreCase);
     }
 
     private static bool AreExpectedPackagesEqual(Dictionary<string, PackageInfo> current,
@@ -207,7 +302,7 @@ public class ProjectsManager : IProjectsManager
 
         return current.Count == updated.Count &&
                current.All(kvp => updated.TryGetValue(kvp.Key, out var u) &&
-                                  kvp.Value?.Namespace == u?.Namespace &&
-                                  kvp.Value?.PackageName == u?.PackageName);
+                                  string.Equals(kvp.Value?.Namespace, u?.Namespace, StringComparison.OrdinalIgnoreCase) &&
+                                  string.Equals(kvp.Value?.PackageName, u?.PackageName, StringComparison.OrdinalIgnoreCase));
     }
 }

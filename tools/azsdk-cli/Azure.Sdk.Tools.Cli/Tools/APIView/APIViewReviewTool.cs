@@ -290,7 +290,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
         try
         {
-            (string? content, int statusCode) = await _apiViewService.CreateReviewFromPipelineAsync(
+            (string? content, int statusCode) = await _apiViewService.CreateCIReviewAsync(
                 buildId!, artifactName!, originalFilePath!, reviewFilePath!,
                 repoName!, packageName!, project!,
                 label, compareAllRevisions, packageVersion, setReleaseTag, packageType, sourceBranch);
@@ -347,7 +347,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
 
         try
         {
-            (string? content, int statusCode) = await _apiViewService.CreateApiRevisionIfChangesAsync(
+            (string? content, int statusCode) = await _apiViewService.CreatePullRequestRevisionAsync(
                 buildId!, artifactName!, filePath!, commitSha!,
                 repoName!, packageName!,
                 pullRequestNumber, codeFile, baselineCodeFile, language, project, packageType, metadataFile);

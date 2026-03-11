@@ -137,7 +137,7 @@ public class ApiViewReviewToolTests
     {
         string expectedContent = "review created";
         _mockApiViewService
-            .Setup(x => x.CreateReviewFromPipelineAsync(
+            .Setup(x => x.CreateCIReviewAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
                 "Azure/azure-sdk-for-python", "azure-core", "internal",
                 "CI Build", false, null, false, null, null))
@@ -160,7 +160,7 @@ public class ApiViewReviewToolTests
     {
         string expectedContent = "review created";
         _mockApiViewService
-            .Setup(x => x.CreateReviewFromPipelineAsync(
+            .Setup(x => x.CreateCIReviewAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
                 "Azure/azure-sdk-for-python", "azure-core", "internal",
                 "Source Branch:main", false, null, false, null, "main"))
@@ -182,7 +182,7 @@ public class ApiViewReviewToolTests
     {
         string expectedContent = "review created";
         _mockApiViewService
-            .Setup(x => x.CreateReviewFromPipelineAsync(
+            .Setup(x => x.CreateCIReviewAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
                 "Azure/azure-sdk-for-python", "azure-core", "internal",
                 "CI Build", true, "1.0.0", true, "client", "refs/heads/main"))
@@ -204,7 +204,7 @@ public class ApiViewReviewToolTests
     public async Task CreateReview_WhenServiceReturnsError_ReturnsError()
     {
         _mockApiViewService
-            .Setup(x => x.CreateReviewFromPipelineAsync(
+            .Setup(x => x.CreateCIReviewAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
@@ -225,7 +225,7 @@ public class ApiViewReviewToolTests
     public async Task CreateReview_WhenServiceThrowsException_ReturnsError()
     {
         _mockApiViewService
-            .Setup(x => x.CreateReviewFromPipelineAsync(
+            .Setup(x => x.CreateCIReviewAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
@@ -246,7 +246,7 @@ public class ApiViewReviewToolTests
     public async Task CreateReview_WhenPackageNotFoundInArtifacts_ReturnsError()
     {
         _mockApiViewService
-            .Setup(x => x.CreateReviewFromPipelineAsync(
+            .Setup(x => x.CreateCIReviewAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
@@ -282,7 +282,7 @@ public class ApiViewReviewToolTests
     {
         string expectedContent = "{\"message\":\"revision created\"}";
         _mockApiViewService
-            .Setup(x => x.CreateApiRevisionIfChangesAsync(
+            .Setup(x => x.CreatePullRequestRevisionAsync(
                 "99999", "packages", "azure-core/azure-core-1.0.0.whl", "abc123def",
                 "Azure/azure-sdk-for-python", "azure-core",
                 42, "azure-core_python.json", null, "python", "internal", null, null))
@@ -307,7 +307,7 @@ public class ApiViewReviewToolTests
     {
         string expectedContent = "{\"message\":\"no changes\"}";
         _mockApiViewService
-            .Setup(x => x.CreateApiRevisionIfChangesAsync(
+            .Setup(x => x.CreatePullRequestRevisionAsync(
                 "99999", "packages", "azure-core/azure-core-1.0.0.whl", "abc123def",
                 "Azure/azure-sdk-for-python", "azure-core",
                 42, "azure-core_python.json", null, null, "internal", null, null))
@@ -332,7 +332,7 @@ public class ApiViewReviewToolTests
     {
         string expectedContent = "{\"message\":\"revision created\"}";
         _mockApiViewService
-            .Setup(x => x.CreateApiRevisionIfChangesAsync(
+            .Setup(x => x.CreatePullRequestRevisionAsync(
                 "99999", "packages", "azure-core-1.0.0.whl", "abc123def",
                 "Azure/azure-sdk-for-python", "azure-core",
                 42, "azure-core_python.json", "azure-core_python_baseline.json",
@@ -359,7 +359,7 @@ public class ApiViewReviewToolTests
     public async Task CreateApiRevisionIfChanges_WhenServiceReturnsError_ReturnsError()
     {
         _mockApiViewService
-            .Setup(x => x.CreateApiRevisionIfChangesAsync(
+            .Setup(x => x.CreatePullRequestRevisionAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<string?>(),
@@ -382,7 +382,7 @@ public class ApiViewReviewToolTests
     public async Task CreateApiRevisionIfChanges_WhenServiceThrowsException_ReturnsError()
     {
         _mockApiViewService
-            .Setup(x => x.CreateApiRevisionIfChangesAsync(
+            .Setup(x => x.CreatePullRequestRevisionAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<string?>(),

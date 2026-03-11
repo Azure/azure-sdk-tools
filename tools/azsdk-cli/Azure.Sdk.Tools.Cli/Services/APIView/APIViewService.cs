@@ -7,13 +7,21 @@ public interface IAPIViewService
     Task<string?> GetMetadata(string revisionId);
     Task<string?> Resolve(string url);
 
-    Task<(string? content, int statusCode)> CreateReviewFromPipelineAsync(
+    /// <summary>
+    /// Creates or updates an API review from a CI pipeline build.
+    /// Optionally tracks package versions, release tags, and source branches.
+    /// </summary>
+    Task<(string? content, int statusCode)> CreateCIReviewAsync(
         string buildId, string artifactName, string originalFilePath, string reviewFilePath,
         string repoName, string packageName, string project,
         string? label = null, bool compareAllRevisions = false, string? packageVersion = null,
         bool setReleaseTag = false, string? packageType = null, string? sourceBranch = null);
 
-    Task<(string? content, int statusCode)> CreateApiRevisionIfChangesAsync(
+    /// <summary>
+    /// Creates an API revision for a pull request if API surface changes are detected.
+    /// Use this during PR validation to compare the PR's API against the baseline.
+    /// </summary>
+    Task<(string? content, int statusCode)> CreatePullRequestRevisionAsync(
         string buildId, string artifactName, string filePath, string commitSha,
         string repoName, string packageName,
         int pullRequestNumber = 0, string? codeFile = null, string? baselineCodeFile = null,
@@ -86,7 +94,8 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<(string? content, int statusCode)> CreateReviewFromPipelineAsync(
+    /// <inheritdoc />
+    public async Task<(string? content, int statusCode)> CreateCIReviewAsync(
         string buildId, string artifactName, string originalFilePath, string reviewFilePath,
         string repoName, string packageName, string project,
         string? label = null, bool compareAllRevisions = false, string? packageVersion = null,
@@ -134,7 +143,8 @@ public class APIViewService : IAPIViewService
         return await _httpService.PostAsync(endpoint);
     }
 
-    public async Task<(string? content, int statusCode)> CreateApiRevisionIfChangesAsync(
+    /// <inheritdoc />
+    public async Task<(string? content, int statusCode)> CreatePullRequestRevisionAsync(
         string buildId, string artifactName, string filePath, string commitSha,
         string repoName, string packageName,
         int pullRequestNumber = 0, string? codeFile = null, string? baselineCodeFile = null,

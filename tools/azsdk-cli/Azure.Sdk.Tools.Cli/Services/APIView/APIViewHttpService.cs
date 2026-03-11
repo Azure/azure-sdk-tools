@@ -13,10 +13,11 @@ public class APIViewHttpService : IAPIViewHttpService
     private readonly IAPIViewAuthenticationService _authService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<APIViewHttpService> _logger;
+    private readonly string _environment;
+    private readonly string _baseUrl;
     
     private HttpClient? _cachedClient;
     private DateTime _cacheExpiry = DateTime.MinValue;
-    private string? _cachedEnvironment;
     private readonly SemaphoreSlim _cacheLock = new(1, 1);
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(50); 
 
@@ -28,20 +29,15 @@ public class APIViewHttpService : IAPIViewHttpService
         _httpClientFactory = httpClientFactory;
         _authService = authService;
         _logger = logger;
-    }
-
-    private static string GetEnvironment()
-    {
-        return Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT") ?? "production";
+        _environment = Environment.GetEnvironmentVariable("APIVIEW_ENVIRONMENT") ?? "production";
+        _baseUrl = APIViewConfiguration.BaseUrlEndpoints[_environment];
     }
 
     public async Task<(string? content, int statusCode)> GetAsync(string endpoint)
     {
-        string environment = GetEnvironment();
-        string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
-        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync();
 
-        string requestUrl = $"{baseUrl}{endpoint}";
+        string requestUrl = $"{_baseUrl}{endpoint}";
         using HttpResponseMessage response = await httpClient.GetAsync(requestUrl);
 
         string content = await response.Content.ReadAsStringAsync();
@@ -62,11 +58,9 @@ public class APIViewHttpService : IAPIViewHttpService
 
     public async Task<(string? content, int statusCode)> PostAsync(string endpoint)
     {
-        string environment = GetEnvironment();
-        string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
-        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync();
 
-        string requestUrl = $"{baseUrl}{endpoint}";
+        string requestUrl = $"{_baseUrl}{endpoint}";
         using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty));
 
         string content = await response.Content.ReadAsStringAsync();
@@ -85,10 +79,9 @@ public class APIViewHttpService : IAPIViewHttpService
 
     }
 
-    private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync(string environment)
+    private async Task<HttpClient> GetOrCreateAuthenticatedClientAsync()
     {
         if (_cachedClient != null && 
-            _cachedEnvironment == environment && 
             DateTime.UtcNow < _cacheExpiry)
         {
             return _cachedClient;
@@ -98,17 +91,15 @@ public class APIViewHttpService : IAPIViewHttpService
         try
         {
             if (_cachedClient != null && 
-                _cachedEnvironment == environment && 
                 DateTime.UtcNow < _cacheExpiry)
             {
                 return _cachedClient;
             }
             
             HttpClient newClient = _httpClientFactory.CreateClient();
-            await _authService.ConfigureAuthenticationAsync(newClient, environment);
+            await _authService.ConfigureAuthenticationAsync(newClient, _environment);
             
             _cachedClient = newClient;
-            _cachedEnvironment = environment;
             _cacheExpiry = DateTime.UtcNow.Add(CacheDuration);
                         
             return _cachedClient;

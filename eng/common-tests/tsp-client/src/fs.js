@@ -29,6 +29,6 @@ export async function getRootSibling(longName) {
   }
 
   throw new Error(
-    `Unable to find dir matching ${longName}. Checked: ${candidates.join(", ")}`,
+    `Unable to find repo root sibling matching ${longName}. Checked: ${candidates.join(", ")}`,
   );
 }

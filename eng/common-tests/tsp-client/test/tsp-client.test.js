@@ -18,14 +18,7 @@ debug.enable("simple-git");
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // absolute path of repo containing eng/common/tsp-client
-const engCommonTspClient = join(
-  __dirname,
-  "..",
-  "..",
-  "..",
-  "common",
-  "tsp-client",
-);
+const engCommonTspClient = join(__dirname, "..", "..", "..", "common", "tsp-client");
 
 /**
  * @param {string[]} args
@@ -50,9 +43,7 @@ describe("tsp-client", () => {
   });
 
   it("finds spec dir", async (ctx) => {
-    const specDir = await getRootSibling("azure-rest-api-specs").catch(() =>
-      ctx.skip(),
-    );
+    const specDir = await getRootSibling("azure-rest-api-specs").catch(() => ctx.skip());
 
     expect((await stat(specDir)).isDirectory()).toBe(true);
   });
@@ -67,134 +58,110 @@ const templateDirs = {
   [SdkName.Python]: [],
 };
 
-describe.concurrent.each([
-  SdkName.Go,
-  SdkName.Java,
-  SdkName.Js,
-  SdkName.Net,
-  SdkName.Python,
-])("%s", (sdkName) => {
-  /** @type {string} */
-  let sdkDir;
-
-  /** @type {string} */
-  let specDir;
-
-  beforeAll(async () => {
-    sdkDir = await getRootSibling(sdkName).catch(() => "");
-    specDir = await getRootSibling("azure-rest-api-specs").catch(() => "");
-  });
-
-  beforeEach((ctx) => {
-    // Skip any test if SDK dir is not cloned as tools sibling
-    if (!sdkDir) {
-      ctx.skip();
-    }
-  });
-
-  it("finds sdk dir", async () => {
-    const sdkDirStat = await stat(sdkDir);
-    expect(sdkDirStat.isDirectory()).toBe(true);
-  });
-
-  describe("worktree tests", () => {
+describe.concurrent.each([SdkName.Go, SdkName.Java, SdkName.Js, SdkName.Net, SdkName.Python])(
+  "%s",
+  (sdkName) => {
     /** @type {string} */
-    let initUrlWorktree;
+    let sdkDir;
 
     /** @type {string} */
-    let initLocalWorktree;
+    let specDir;
 
-    /** @type {string} */
-    let updateWorktree;
-
-    // worktrees from the same source repo must be created/removed sequentially (not in parallel)
     beforeAll(async () => {
-      if (sdkDir) {
-        const lang = sdkName.replace("azure-sdk-for-", "");
+      sdkDir = await getRootSibling(sdkName).catch(() => "");
+      specDir = await getRootSibling("azure-rest-api-specs").catch(() => "");
+    });
 
-        initUrlWorktree = await mkdtemp(
-          join(tmpdir(), `tsp-client-test-initurl-${lang}-`),
+    beforeEach((ctx) => {
+      // Skip any test if SDK dir is not cloned as tools sibling
+      if (!sdkDir) {
+        ctx.skip();
+      }
+    });
+
+    it("finds sdk dir", async () => {
+      const sdkDirStat = await stat(sdkDir);
+      expect(sdkDirStat.isDirectory()).toBe(true);
+    });
+
+    describe("worktree tests", () => {
+      /** @type {string} */
+      let initUrlWorktree;
+
+      /** @type {string} */
+      let initLocalWorktree;
+
+      /** @type {string} */
+      let updateWorktree;
+
+      // worktrees from the same source repo must be created/removed sequentially (not in parallel)
+      beforeAll(async () => {
+        if (sdkDir) {
+          const lang = sdkName.replace("azure-sdk-for-", "");
+
+          initUrlWorktree = await mkdtemp(join(tmpdir(), `tsp-client-test-initurl-${lang}-`));
+
+          if (specDir) {
+            initLocalWorktree = await mkdtemp(join(tmpdir(), `tsp-client-test-initlocal-${lang}-`));
+          }
+
+          const templateDir = templateDirs[sdkName];
+          if (templateDir.length > 0) {
+            updateWorktree = await mkdtemp(join(tmpdir(), `tsp-client-test-update-${lang}-`));
+          }
+
+          for (const worktree of [initUrlWorktree, initLocalWorktree, updateWorktree]) {
+            if (worktree) {
+              await simpleGit(sdkDir).raw(["worktree", "add", worktree, "--detach"]);
+            }
+          }
+        }
+      });
+
+      afterAll(async () => {
+        if (sdkDir) {
+          for (const worktree of [initUrlWorktree, initLocalWorktree, updateWorktree]) {
+            if (worktree) {
+              await simpleGit(sdkDir).raw(["worktree", "remove", worktree, "--force"]).catch();
+              await rm(worktree, { recursive: true, force: true });
+            }
+          }
+        }
+      });
+
+      it("inits from url", async () => {
+        const urlConfig =
+          "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
+
+        await execTspClient(["init", "-c", urlConfig], initUrlWorktree);
+      });
+
+      it("inits from local", async (ctx) => {
+        if (!specDir) {
+          ctx.skip();
+        }
+
+        const localConfig = join(
+          specDir,
+          "specification",
+          "widget",
+          "data-plane",
+          "WidgetAnalytics",
+          "tspconfig.yaml",
         );
 
-        if (specDir) {
-          initLocalWorktree = await mkdtemp(
-            join(tmpdir(), `tsp-client-test-initlocal-${lang}-`),
-          );
-        }
+        await execTspClient(["init", "-c", localConfig], initLocalWorktree);
+      });
 
+      it("updates template", async (ctx) => {
         const templateDir = templateDirs[sdkName];
-        if (templateDir.length > 0) {
-          updateWorktree = await mkdtemp(
-            join(tmpdir(), `tsp-client-test-update-${lang}-`),
-          );
+
+        if (templateDir.length === 0) {
+          ctx.skip();
         }
 
-        for (const worktree of [
-          initUrlWorktree,
-          initLocalWorktree,
-          updateWorktree,
-        ]) {
-          if (worktree) {
-            await simpleGit(sdkDir).raw([
-              "worktree",
-              "add",
-              worktree,
-              "--detach",
-            ]);
-          }
-        }
-      }
+        await execTspClient(["update"], join(updateWorktree, ...templateDir));
+      });
     });
-
-    afterAll(async () => {
-      if (sdkDir) {
-        for (const worktree of [
-          initUrlWorktree,
-          initLocalWorktree,
-          updateWorktree,
-        ]) {
-          if (worktree) {
-            await simpleGit(sdkDir)
-              .raw(["worktree", "remove", worktree, "--force"])
-              .catch();
-            await rm(worktree, { recursive: true, force: true });
-          }
-        }
-      }
-    });
-
-    it("inits from url", async () => {
-      const urlConfig =
-        "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
-
-      await execTspClient(["init", "-c", urlConfig], initUrlWorktree);
-    });
-
-    it("inits from local", async (ctx) => {
-      if (!specDir) {
-        ctx.skip();
-      }
-
-      const localConfig = join(
-        specDir,
-        "specification",
-        "widget",
-        "data-plane",
-        "WidgetAnalytics",
-        "tspconfig.yaml",
-      );
-
-      await execTspClient(["init", "-c", localConfig], initLocalWorktree);
-    });
-
-    it("updates template", async (ctx) => {
-      const templateDir = templateDirs[sdkName];
-
-      if (templateDir.length === 0) {
-        ctx.skip();
-      }
-
-      await execTspClient(["update"], join(updateWorktree, ...templateDir));
-    });
-  });
-});
+  },
+);

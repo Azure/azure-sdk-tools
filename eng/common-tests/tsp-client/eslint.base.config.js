@@ -14,22 +14,18 @@ import tseslint from "typescript-eslint";
 export function defineBaseConfig(options) {
   const { projectService = true, tsconfigRootDir } = options;
 
-  return defineConfig(
-    eslint.configs.recommended,
-    tseslint.configs.recommendedTypeChecked,
-    {
-      languageOptions: {
-        // we only run in node, not browser
-        globals: globals.node,
-        // required to use tseslint.configs.recommendedTypeChecked
-        parserOptions: {
-          // Defaults to "true", which is the minimum required to use tseslint.configs.recommendedTypeChecked
-          // Can be overridden by caller, by setting to a config object
-          projectService,
-          // Must be set by caller, since this should point to the root directory of the project being analyzed
-          tsconfigRootDir,
-        },
+  return defineConfig(eslint.configs.recommended, tseslint.configs.recommendedTypeChecked, {
+    languageOptions: {
+      // we only run in node, not browser
+      globals: globals.node,
+      // required to use tseslint.configs.recommendedTypeChecked
+      parserOptions: {
+        // Defaults to "true", which is the minimum required to use tseslint.configs.recommendedTypeChecked
+        // Can be overridden by caller, by setting to a config object
+        projectService,
+        // Must be set by caller, since this should point to the root directory of the project being analyzed
+        tsconfigRootDir,
       },
     },
-  );
+  });
 }

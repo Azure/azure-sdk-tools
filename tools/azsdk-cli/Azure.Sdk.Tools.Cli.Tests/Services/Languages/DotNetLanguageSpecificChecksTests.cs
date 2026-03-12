@@ -81,6 +81,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Install the .NET SDK"));
         });
     }
 
@@ -103,6 +105,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on version failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Update the .NET SDK"));
         });
     }
 
@@ -196,6 +200,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain(expectedDetail));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Auto-fix is not available"));
         });
     }
 
@@ -217,6 +223,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Install the .NET SDK"));
         });
     }
 
@@ -239,6 +247,8 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
+            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on version failure");
+            Assert.That(result.NextSteps, Has.Some.Contain("Update the .NET SDK"));
         });
     }
 
@@ -326,6 +336,8 @@ internal class DotNetLanguageSpecificChecksTests
                 Assert.That(result.ExitCode, Is.EqualTo(1));
                 Assert.That(result.CheckStatusDetails, Does.Contain("Trim analysis warning"));
                 Assert.That(result.CheckStatusDetails, Does.Contain("RequiresUnreferencedCodeAttribute"));
+                Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty, "NextSteps should be populated on AOT failure");
+                Assert.That(result.NextSteps, Has.Some.Contain("AOT"));
             });
         }
         finally

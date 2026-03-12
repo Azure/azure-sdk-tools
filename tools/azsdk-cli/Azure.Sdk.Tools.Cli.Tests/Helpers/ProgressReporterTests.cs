@@ -156,9 +156,9 @@ public class ProgressReporterTests
 
         reporter.NextStep("Starting work");
 
-        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
         {
-            await Task.Delay(15);
+            await Task.Delay(200);
         }
 
         // Should have initial step report + at least 1 heartbeat
@@ -183,15 +183,15 @@ public class ProgressReporterTests
 
         reporter.NextStep("Step 1");
 
-        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
         {
-            await Task.Delay(15);
+            await Task.Delay(200);
         }
 
         var countAfterDispose = reported.Count;
 
         // Wait a bit more — no new heartbeats should appear
-        await Task.Delay(15);
+        await Task.Delay(100);
 
         Assert.That(reported.Count, Is.EqualTo(countAfterDispose));
     }
@@ -203,9 +203,9 @@ public class ProgressReporterTests
 
         reporter.NextStep("Step 1");
 
-        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
         {
-            await Task.Delay(15);
+            await Task.Delay(200);
         }
 
         // At least the step message + some heartbeats
@@ -223,16 +223,16 @@ public class ProgressReporterTests
 
         var heartbeat = reporter.StartHeartbeat("Working",
             ct: cts.Token,
-            heartbeatInterval: TimeSpan.FromMilliseconds(5));
+            heartbeatInterval: TimeSpan.FromMilliseconds(50));
 
-        await Task.Delay(15);
+        await Task.Delay(200);
         cts.Cancel();
 
         // DisposeAsync should complete without throwing
         await heartbeat.DisposeAsync();
 
         var countAfterCancel = _consoleOutput.Count;
-        await Task.Delay(15);
+        await Task.Delay(100);
 
         Assert.That(_consoleOutput.Count, Is.EqualTo(countAfterCancel));
     }
@@ -272,9 +272,9 @@ public class ProgressReporterTests
         reporter.NextStep("Step 1"); // progress = 1
         reporter.NextStep("Step 2"); // progress = 2
 
-        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
+        await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(50)))
         {
-            await Task.Delay(15);
+            await Task.Delay(200);
         }
 
         // Heartbeat messages should use step index 2 (current step after NextStep increments)

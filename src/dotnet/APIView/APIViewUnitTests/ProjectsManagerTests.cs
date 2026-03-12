@@ -231,7 +231,160 @@ public class ProjectsManagerTests
         Assert.Single(capturedProject.ChangeHistory);
         Assert.Equal(ProjectChangeAction.Created, capturedProject.ChangeHistory[0].ChangeAction);
         Assert.Equal(capturedProject.Id, typeSpecReview.ProjectId);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(typeSpecReview), Times.Once);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
+            It.Is<IEnumerable<ReviewListItemModel>>(revs =>
+                revs.Any(rv => rv.Id == "ts-1"))),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task NewProject_DiscoversSingleExistingReview_LinksIt()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage");
+        ReviewListItemModel existingPy = CreateReview("py-1", "Python", "azure-storage");
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Storage", "Azure Storage",
+            ("Python", "azure-storage"));
+
+        SetupFindReview("Python", "azure-storage", existingPy);
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        Assert.Contains("ts-1", capturedProject.ReviewIds);
+        Assert.Contains("py-1", capturedProject.ReviewIds);
+        Assert.Equal(capturedProject.Id, existingPy.ProjectId);
+        Assert.Equal(2, capturedProject.ChangeHistory.Count);
+        Assert.Equal(ProjectChangeAction.Created, capturedProject.ChangeHistory[0].ChangeAction);
+        Assert.Equal(ProjectChangeAction.ReviewLinked, capturedProject.ChangeHistory[1].ChangeAction);
+
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
+            It.Is<IEnumerable<ReviewListItemModel>>(revs =>
+                revs.Count() == 2 &&
+                revs.Any(rv => rv.Id == "py-1") &&
+                revs.Any(rv => rv.Id == "ts-1"))),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task NewProject_DiscoversMultipleExistingReviews_LinksAll()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage");
+        ReviewListItemModel existingPy = CreateReview("py-1", "Python", "azure-storage");
+        ReviewListItemModel existingJs = CreateReview("js-1", "JavaScript", "@azure/storage");
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Storage", "Azure Storage",
+            ("Python", "azure-storage"), ("JavaScript", "@azure/storage"));
+
+        SetupFindReview("Python", "azure-storage", existingPy);
+        SetupFindReview("JavaScript", "@azure/storage", existingJs);
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        Assert.Equal(3, capturedProject.ReviewIds.Count);
+        Assert.Contains("ts-1", capturedProject.ReviewIds);
+        Assert.Contains("py-1", capturedProject.ReviewIds);
+        Assert.Contains("js-1", capturedProject.ReviewIds);
+        Assert.Equal(capturedProject.Id, existingPy.ProjectId);
+        Assert.Equal(capturedProject.Id, existingJs.ProjectId);
+
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
+            It.Is<IEnumerable<ReviewListItemModel>>(revs => revs.Count() == 3)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task NewProject_MixedDiscovery_LinksFoundAndSkipsMissing()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage");
+        ReviewListItemModel existingPy = CreateReview("py-1", "Python", "azure-storage");
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Storage", "Azure Storage",
+            ("Python", "azure-storage"), ("JavaScript", "@azure/storage"));
+
+        SetupFindReview("Python", "azure-storage", existingPy);
+        // JavaScript review does not exist
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync("JavaScript", "@azure/storage", false))
+            .ReturnsAsync((ReviewListItemModel)null);
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        Assert.Equal(2, capturedProject.ReviewIds.Count);
+        Assert.Contains("ts-1", capturedProject.ReviewIds);
+        Assert.Contains("py-1", capturedProject.ReviewIds);
+        Assert.DoesNotContain("js-1", capturedProject.ReviewIds);
+    }
+
+    [Fact]
+    public async Task NewProject_NoExistingReviews_LinksOnlyTypeSpecReview()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage");
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Storage", "Azure Storage",
+            ("Python", "azure-storage"));
+
+        // No review exists for the expected package
+        _mockReviewsRepository.Setup(r => r.GetReviewAsync("Python", "azure-storage", false))
+            .ReturnsAsync((ReviewListItemModel)null);
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        Assert.Single(capturedProject.ReviewIds);
+        Assert.Contains("ts-1", capturedProject.ReviewIds);
+        Assert.Single(capturedProject.ChangeHistory);
+        Assert.Equal(ProjectChangeAction.Created, capturedProject.ChangeHistory[0].ChangeAction);
+    }
+
+    [Fact]
+    public async Task NewProject_ReviewAlreadyLinkedToAnotherProject_ReassignsToNewProject()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage");
+        // This review is already linked to a different project
+        ReviewListItemModel existingPy = CreateReview("py-1", "Python", "azure-storage", projectId: "other-project");
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Storage", "Azure Storage",
+            ("Python", "azure-storage"));
+
+        SetupFindReview("Python", "azure-storage", existingPy);
+
+        Project capturedProject = null;
+        _mockProjectsRepository
+            .Setup(r => r.UpsertProjectAsync(It.IsAny<Project>()))
+            .Callback<Project>(p => capturedProject = p)
+            .Returns(Task.CompletedTask);
+
+        await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        Assert.NotNull(capturedProject);
+        Assert.Contains("py-1", capturedProject.ReviewIds);
+        Assert.Equal(capturedProject.Id, existingPy.ProjectId);
+
+        // Change history should note the re-assignment
+        var linkEntry = capturedProject.ChangeHistory
+            .First(h => h.ChangeAction == ProjectChangeAction.ReviewLinked);
+        Assert.Contains("re-linked from project other-project", linkEntry.Notes);
     }
 
     [Fact]
@@ -352,10 +505,11 @@ public class ProjectsManagerTests
         Assert.Equal("project-1", newReview.ProjectId);
 
         _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
-                It.Is<IEnumerable<ReviewListItemModel>>(revs => revs.Count() == 1 && revs.First().Id == "py-old")),
+            It.Is<IEnumerable<ReviewListItemModel>>(revs =>
+                revs.Count() == 2 &&
+                revs.Any(rv => rv.Id == "py-old" && rv.ProjectId == null) &&
+                revs.Any(rv => rv.Id == "py-new" && rv.ProjectId == "project-1"))),
             Times.Once);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(
-            It.Is<ReviewListItemModel>(rv => rv.Id == "py-new")), Times.Once);
     }
 
     [Fact]
@@ -386,10 +540,12 @@ public class ProjectsManagerTests
         Assert.Contains("js-new", result.ReviewIds);
 
         _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
-            It.Is<IEnumerable<ReviewListItemModel>>(revs => revs.Count() == 2)), Times.Once);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(It.Is<ReviewListItemModel>(rv => rv.Id == "py-new")),
-            Times.Once);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(It.Is<ReviewListItemModel>(rv => rv.Id == "js-new")),
+            It.Is<IEnumerable<ReviewListItemModel>>(revs =>
+                revs.Count() == 4 &&
+                revs.Any(rv => rv.Id == "py-old" && rv.ProjectId == null) &&
+                revs.Any(rv => rv.Id == "js-old" && rv.ProjectId == null) &&
+                revs.Any(rv => rv.Id == "py-new" && rv.ProjectId == "project-1") &&
+                revs.Any(rv => rv.Id == "js-new" && rv.ProjectId == "project-1"))),
             Times.Once);
     }
 
@@ -417,10 +573,40 @@ public class ProjectsManagerTests
         Assert.Contains("js-new", result.ReviewIds);
         Assert.Equal("project-1", newJs.ProjectId);
 
-        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(It.IsAny<IEnumerable<ReviewListItemModel>>()),
-            Times.Never);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(It.Is<ReviewListItemModel>(rv => rv.Id == "js-new")),
+        _mockReviewsRepository.Verify(r => r.UpsertReviewsAsync(
+            It.Is<IEnumerable<ReviewListItemModel>>(revs =>
+                revs.Count() == 1 && revs.First().Id == "js-new" && revs.First().ProjectId == "project-1")),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task Reconcile_DiscoveredReviewAlreadyLinkedToAnotherProject_ReassignsToCurrentProject()
+    {
+        ReviewListItemModel typeSpecReview = CreateTypeSpecReview("ts-1", "Azure.Storage", "project-1");
+        ReviewListItemModel oldReview = CreateReview("py-old", "Python", "azure-storage-old", projectId: "project-1");
+        // The replacement review is already linked to a different project
+        ReviewListItemModel newReview = CreateReview("py-new", "Python", "azure-storage-new", projectId: "other-project");
+        Project project = CreateProject("project-1", "Azure.Storage",
+            "Azure.Storage", "Azure Storage",
+            Packages(("Python", "azure-storage-old")),
+            new HashSet<string> { "ts-1", "py-old" });
+        TypeSpecMetadata metadata = CreateMetadata("Azure.Storage", "Azure Storage",
+            ("Python", "azure-storage-new"));
+
+        SetupGetProject("project-1", project);
+        SetupGetReviews(new[] { oldReview });
+        SetupFindReview("Python", "azure-storage-new", newReview);
+
+        Project result = await _projectsManager.UpsertProjectFromMetadataAsync("testUser", metadata, typeSpecReview);
+
+        // Review should be re-assigned to the current project
+        Assert.Contains("py-new", result.ReviewIds);
+        Assert.Equal("project-1", newReview.ProjectId);
+
+        // Change history should note the re-assignment from other-project
+        var linkEntry = result.ChangeHistory
+            .First(h => h.ChangeAction == ProjectChangeAction.ReviewLinked);
+        Assert.Contains("re-linked from project other-project", linkEntry.Notes);
     }
 
     [Fact]

@@ -7,6 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /**
  * @param {string} longName
  * @returns {Promise<string>} absolute path of repo root sibling matching long or short name.  throws if not found.
+ * @example getRootSibling("azure-sdk-for-js") -> "/home/foo/js"
  */
 export async function getRootSibling(longName) {
   // azure-sdk-for-js     -> js

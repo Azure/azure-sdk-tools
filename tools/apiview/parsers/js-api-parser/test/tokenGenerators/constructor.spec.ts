@@ -179,9 +179,16 @@ describe("constructorTokenGenerator", () => {
     });
 
     it("skips destructured parameters and emits only the synthetic normalized parameter", () => {
-      // API Extractor reports destructured params as two entries: the raw destructuring pattern
-      // (name starting with "{", empty type) followed by the synthetic normalized parameter.
+      // API Extractor reports destructured params as two entries:
+      // 1. raw destructuring pattern (name starting with "{", empty type token range)
+      // 2. synthetic normalized parameter with the actual type info
+      // excerptText mirrors the real API Extractor constructor signature so that
+      // getParameterPropertyModifiers exercises the TypeScript AST parsing path with
+      // two parameters (destructured + synthetic), verifying that originalIndex is used
+      // when looking up parameterModifiersByIndex.
       const mockConstructor = createMockConstructor({
+        excerptText:
+          "constructor({ additionalAllowedHeaderNames: allowedHeaderNames, additionalAllowedQueryParameters: allowedQueryParameters }?: SanitizerOptions, input?: SanitizerOptions)",
         parameters: [
           createMockParameter(
             "{ additionalAllowedHeaderNames: allowedHeaderNames, additionalAllowedQueryParameters: allowedQueryParameters, }",
@@ -195,9 +202,12 @@ describe("constructorTokenGenerator", () => {
       const { tokens } = constructorTokenGenerator.generate(mockConstructor, false);
       const values = tokens.map((t) => t.Value).join(" ");
 
+      // Only the synthetic parameter should be rendered — no destructuring pattern, no stray
+      // commas or colons from the skipped parameter.
       expect(values).toContain("input");
       expect(values).toContain("SanitizerOptions");
       expect(values).not.toContain("{");
+      expect(values).not.toMatch(/,\s*\)/); // no trailing comma before closing paren
       expect(tokens[tokens.length - 1].Value).toBe(";");
     });
 

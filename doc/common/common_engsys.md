@@ -1,10 +1,14 @@
 # Common Engineering System
 
+* [Code Structure](#code-structure)
+* [Updating](#updating)
+* [eng/common sync](#engcommon-sync)
+
+## Code Structure
+
 The `eng/common` directory contains engineering files that are common across the various azure-sdk language repos.
 It should remain relatively small and only contain textual based files like scripts, configs, or templates. It
 should not contain binary files as they don't play well with git.
-
-## Code Structure
 
 To help keep the content of the `eng/common` directory as small as possible we should split the language specific parts of a common script out if possible.
 
@@ -19,7 +23,7 @@ All changes made will cause a PR to be created in all subscribed azure-sdk langu
 the `eng/common` directory in that repo. For that reason do **NOT** make changes to files in this directory in the individual azure-sdk
 languages repos as they will be overwritten the next time an update is taken from the common azure-sdk-tools repo.
 
-## Workflow
+## eng/common sync
 
 When you create a PR against `azure-sdk-tools` repo that changes contents of the `eng/common` directory, the PR
 triggers an [`azure-sdk-tools - sync - eng-common` pipeline][pipeline] that will mirror all changes in the `azure-sdk-tools eng/common` directory

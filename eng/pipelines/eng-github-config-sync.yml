@@ -1,17 +1,23 @@
-# Mirror the .github/workflows folder to all subscribed repos.
+# Mirror selected files and sub-directories in the .github directory to all subscribed repos
 #
 # For more information on this file, please see:
 # doc/common/common_engsys.md
 parameters:
 - name: DirectoryToSync
   type: string
-  default: .github/workflows
+  default: .github
   # Remember to update the path includes below as well as the eng-common-workflow-enforcer.yml file if you update this list
 - name: FilePatterns
   type: object
-  default: 
-    - '*event*'
-    - post-apiview.yml
+  default:
+    # Workflows
+    - 'workflows/*event*'
+    - 'workflows/post-apiview.yml'
+    # Skills
+    # Shared skills use an azsdk-common- directory prefix and live in .github/skills/
+    # in azure-sdk-tools. Only azsdk-common-* directories are synced to target repos.
+    # Repo-specific skills in .github/skills/<name>/ are not affected by this sync.
+    - 'skills/azsdk-common-*'
 - name: Repos
   type: object
   default:
@@ -35,8 +41,11 @@ pr:
       - main
   paths:
     include:
+      # Workflows
       - .github/workflows/*event*
       - .github/workflows/post-apiview.yml
+      # Skills
+      - .github/skills/azsdk-common-*/**
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml

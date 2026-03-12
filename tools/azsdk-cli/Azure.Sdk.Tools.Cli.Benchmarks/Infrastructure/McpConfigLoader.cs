@@ -111,8 +111,7 @@ public static class McpConfigLoader
             .Select(arg => ExpandVariables(arg, workspaceRoot))
             .ToList() ?? [];
 
-        // Expand ${workspaceFolder} in cwd if present, defaulting to workspace root
-        // to match VS Code behavior where relative paths resolve from the workspace folder.
+        // Expand ${workspaceFolder} in cwd if present; if cwd is null, default to workspace root.
         var expandedCwd = vsCodeServer.Cwd != null 
             ? ExpandVariables(vsCodeServer.Cwd, workspaceRoot) 
             : workspaceRoot;

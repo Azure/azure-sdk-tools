@@ -158,7 +158,7 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await Task.Delay(100);
+            await Task.Delay(15);
         }
 
         // Should have initial step report + at least 1 heartbeat
@@ -185,13 +185,13 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await Task.Delay(100);
+            await Task.Delay(15);
         }
 
         var countAfterDispose = reported.Count;
 
         // Wait a bit more — no new heartbeats should appear
-        await Task.Delay(50);
+        await Task.Delay(15);
 
         Assert.That(reported.Count, Is.EqualTo(countAfterDispose));
     }
@@ -205,7 +205,7 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await Task.Delay(100);
+            await Task.Delay(15);
         }
 
         // At least the step message + some heartbeats
@@ -225,14 +225,14 @@ public class ProgressReporterTests
             ct: cts.Token,
             heartbeatInterval: TimeSpan.FromMilliseconds(5));
 
-        await Task.Delay(100);
+        await Task.Delay(15);
         cts.Cancel();
 
         // DisposeAsync should complete without throwing
         await heartbeat.DisposeAsync();
 
         var countAfterCancel = _consoleOutput.Count;
-        await Task.Delay(50);
+        await Task.Delay(15);
 
         Assert.That(_consoleOutput.Count, Is.EqualTo(countAfterCancel));
     }
@@ -274,7 +274,7 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await Task.Delay(100);
+            await Task.Delay(15);
         }
 
         // Heartbeat messages should use step index 2 (current step after NextStep increments)

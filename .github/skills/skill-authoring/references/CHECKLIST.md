@@ -56,7 +56,7 @@ See [Token Budgets](token-budgets.md) for detailed limits.
 
 ## Azure-Specific (for this repo)
 
-- [ ] Prefers Azure MCP tools over direct CLI commands
+- [ ] Prefers [azsdk MCP/CLI tools](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/mcp-tools.md) over direct CLI commands
 - [ ] Uses `azd` where applicable
 - [ ] Lists relevant MCP tools in a "Tools Used" section
 - [ ] Includes troubleshooting section for common issues
@@ -67,7 +67,7 @@ See [Token Budgets](token-budgets.md) for detailed limits.
 - [ ] Skill activates correctly when relevant prompts are used
 - [ ] Referenced files exist and are accessible
 - [ ] Scripts execute without errors
-- [ ] MCP tools mentioned are available and documented
+- [ ] MCP tools mentioned are available and documented (see [azsdk MCP/CLI tool reference](https://github.com/Azure/azure-sdk-tools/blob/main/tools/azsdk-cli/docs/mcp-tools.md))
 
 ## Final Steps
 

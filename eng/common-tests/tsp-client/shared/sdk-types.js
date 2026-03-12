@@ -67,8 +67,7 @@ export const sdkLabels = {
     breakingChange: "BreakingChange-Go-Sdk",
     breakingChangeApproved: "BreakingChange-Go-Sdk-Approved",
     breakingChangeSuppression: "BreakingChange-Go-Sdk-Suppression",
-    breakingChangeSuppressionApproved:
-      "BreakingChange-Go-Sdk-Suppression-Approved",
+    breakingChangeSuppressionApproved: "BreakingChange-Go-Sdk-Suppression-Approved",
   },
   "azure-sdk-for-java": {
     breakingChange: undefined,
@@ -80,8 +79,7 @@ export const sdkLabels = {
     breakingChange: "BreakingChange-JavaScript-Sdk",
     breakingChangeApproved: "BreakingChange-JavaScript-Sdk-Approved",
     breakingChangeSuppression: "BreakingChange-JavaScript-Sdk-Suppression",
-    breakingChangeSuppressionApproved:
-      "BreakingChange-JavaScript-Sdk-Suppression-Approved",
+    breakingChangeSuppressionApproved: "BreakingChange-JavaScript-Sdk-Suppression-Approved",
   },
   "azure-sdk-for-net": {
     breakingChange: undefined,
@@ -93,7 +91,6 @@ export const sdkLabels = {
     breakingChange: "BreakingChange-Python-Sdk",
     breakingChangeApproved: "BreakingChange-Python-Sdk-Approved",
     breakingChangeSuppression: "BreakingChange-Python-Sdk-Suppression",
-    breakingChangeSuppressionApproved:
-      "BreakingChange-Python-Sdk-Suppression-Approved",
+    breakingChangeSuppressionApproved: "BreakingChange-Python-Sdk-Suppression-Approved",
   },
 };

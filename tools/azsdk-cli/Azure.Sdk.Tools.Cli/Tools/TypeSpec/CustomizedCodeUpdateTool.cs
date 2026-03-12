@@ -111,6 +111,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
+                ResponseError = $"Customized code update failed: {ex.Message}",
                 Message = $"Customized code update failed: {ex.Message}",
                 BuildResult = ex.Message,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError
@@ -147,6 +148,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
+                ResponseError = $"Package path does not exist: {packagePath}",
                 Message = $"Package path does not exist: {packagePath}",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                 BuildResult = $"Package path does not exist: {packagePath}"
@@ -158,6 +160,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
+                ResponseError = $"TypeSpec project path does not exist: {tspProjectPath}",
                 Message = $"TypeSpec project path does not exist: {tspProjectPath}",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                 BuildResult = $"TypeSpec project path does not exist: {tspProjectPath}"
@@ -169,6 +172,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
+                ResponseError = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml.",
                 Message = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                 BuildResult = $"Invalid TypeSpec project path: {tspProjectPath}. Directory must exist and contain tspconfig.yaml."
@@ -192,6 +196,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
+                ResponseError = "No feedback items provided. Please supply a customization request or API review URL.",
                 Message = "No feedback items provided. Please supply a customization request or API review URL.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                 BuildResult = "No feedback items to process."
@@ -215,6 +220,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     return new CustomizedCodeUpdateResponse
                     {
                         Success = false,
+                        ResponseError = "Feedback could not be classified.",
                         Message = "Feedback could not be classified.",
                         ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
                         BuildResult = "Feedback could not be classified."
@@ -323,6 +329,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     return new CustomizedCodeUpdateResponse
                     {
                         Success = false,
+                        ResponseError = $"Failed to apply any TypeSpec customizations: {tspFixFailedReasons}",
                         Message = $"Failed to apply any TypeSpec customizations: {tspFixFailedReasons}",
                         ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed
                     };
@@ -364,19 +371,23 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
 
-            logger.LogDebug("Building {packagePath}", packagePath);
-            var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-
-            buildSucceeded = success;
-            buildError = error;
-
-            // Append build result context to all remaining feedback items for the next iteration
-            if (tries + 1 < maxTries)
+            // Only build if we regenerated (code changed) or don't yet have build error context
+            if (tspFixSucceeded > 0 || buildError == null)
             {
-                var buildContext = success ? "Build succeeded." : (error ?? "Build failed with unknown error.");
-                foreach (var item in feedbackDictionary.Values)
+                logger.LogDebug("Building {packagePath}", packagePath);
+                var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+
+                buildSucceeded = success;
+                buildError = error;
+
+                // Append build result context to all remaining feedback items for the next iteration
+                if (tries + 1 < maxTries)
                 {
-                    item.AppendContext(buildContext, "Build Result");
+                    var buildContext = success ? "Build succeeded." : (error ?? "Build failed with unknown error.");
+                    foreach (var item in feedbackDictionary.Values)
+                    {
+                        item.AppendContext(buildContext, "Build Result");
+                    }
                 }
             }
 
@@ -402,6 +413,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
+                ResponseError = "Language service does not support customized code updates.",
                 Message = "Language service does not support customized code updates.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.NoLanguageService,
                 BuildResult = "No language service available for this package type."
@@ -416,6 +428,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
+                ResponseError = "Build failed but no customization files found to repair.",
                 Message = "Build failed but no customization files found to repair.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
                 BuildResult = buildError
@@ -438,6 +451,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
+                ResponseError = "No patches could be applied - automated repair found nothing to fix.",
                 Message = "No patches could be applied - automated repair found nothing to fix.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
                 BuildResult = buildError
@@ -448,13 +462,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         if (languageService.Language == SdkLanguage.Java)
         {
             logger.LogInformation("Regenerating code after patches (Java)...");
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, commitSha: null, isCli: false, localSpecRepoPath: tspProjectPath, ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(packagePath, localSpecRepoPath: tspProjectPath, isCli: false, ct: ct);
             if (!regenResult.IsSuccessful)
             {
                 logger.LogWarning("Regeneration failed: {Error}", regenResult.ResponseError);
                 return new CustomizedCodeUpdateResponse
                 {
                     Success = false,
+                    ResponseError = $"Regeneration failed after patches: {regenResult.ResponseError}",
                     Message = $"Regeneration failed after patches: {regenResult.ResponseError}",
                     ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.RegenerateAfterPatchesFailed,
                     BuildResult = regenResult.ResponseError,
@@ -464,8 +479,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             }
         }
 
-        // Step 6: Final build to validate
-        logger.LogInformation("Running final build to validate...");
+        // Step 6: Final build to validate patches
+        logger.LogInformation("Running final build to validate patches...");
         var (finalBuildSuccess, finalBuildError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
 
         if (finalBuildSuccess)
@@ -475,16 +490,18 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             {
                 Success = true,
                 Message = "Build passed after repairs.",
+                BuildResult = finalBuildError,
                 TypeSpecChangesSummary = changesMade,
                 AppliedPatches = patches
             };
         }
 
-        // Build still failing
+        // Build still failing after patches
         logger.LogInformation("Build still failing after patches.");
         return new CustomizedCodeUpdateResponse
         {
             Success = false,
+            ResponseError = "Patches applied but build still failing.",
             Message = "Patches applied but build still failing.",
             ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
             BuildResult = finalBuildError,

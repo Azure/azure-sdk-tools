@@ -29,8 +29,7 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     public List<AppliedPatch>? AppliedPatches { get; set; }
 
     /// <summary>
-    /// Raw build error output. Only set when Success = false.
-    /// The classifier uses this to determine next steps.
+    /// Raw build output. Set on both success and failure to provide context in MCP responses.
     /// </summary>
     [JsonPropertyName("buildResult")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -76,6 +75,11 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
+        }
+        if (!string.IsNullOrWhiteSpace(BuildResult))
+        {
+            sb.AppendLine("Build Output:");
+            sb.AppendLine(BuildResult);
         }
         if (TypeSpecChangesSummary is { Count: > 0 })
         {

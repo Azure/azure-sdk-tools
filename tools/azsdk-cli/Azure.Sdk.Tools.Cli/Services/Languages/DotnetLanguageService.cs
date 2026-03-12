@@ -5,6 +5,7 @@ using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
+using YamlDotNet.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
@@ -323,6 +324,16 @@ public sealed partial class DotnetLanguageService: LanguageService
         return null;
     }
 
+    protected override void ApplyLanguageCiParameters(PackageInfo packageInfo)
+    {
+        var parameters = packageInfoHelper.GetLanguageCiParameters<DotnetCiPipelineYamlParameters>(packageInfo)
+            ?? new DotnetCiPipelineYamlParameters();
+
+        packageInfo.CiParameters.BuildSnippets = parameters.BuildSnippets;
+        packageInfo.CiParameters.CheckAotCompat = parameters.CheckAotCompat;
+        packageInfo.CiParameters.AotTestInputs = parameters.AotTestInputs;
+    }
+
     public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {
         // In azure-sdk-for-net, generated code lives in the Generated folder.
@@ -370,5 +381,17 @@ public sealed partial class DotnetLanguageService: LanguageService
             logger.LogWarning(ex, "Error searching for .NET customization files in {PackagePath}", packagePath);
             return null;
         }
+    }
+
+    internal sealed class DotnetCiPipelineYamlParameters : CiPipelineYamlParametersBase
+    {
+        [YamlMember(Alias = "BuildSnippets")]
+        public bool? BuildSnippets { get; set; } = true;
+
+        [YamlMember(Alias = "CheckAOTCompat")]
+        public bool? CheckAotCompat { get; set; } = false;
+
+        [YamlMember(Alias = "AOTTestInputs")]
+        public List<Dictionary<string, object?>>? AotTestInputs { get; set; }
     }
 }

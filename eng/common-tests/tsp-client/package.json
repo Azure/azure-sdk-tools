@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/eng-common-tsp-client-tests",
-  "private": "true",
+  "private": true,
   "type": "module",
   "devDependencies": {
     "@eslint/js": "^10.0.0",

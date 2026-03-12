@@ -84,7 +84,7 @@
   },
   "overrides": {
     "glob@<10.5.0": "10.5.0",
-    "serialize-javascript": ">=7.0.3",
+    "serialize-javascript": "^7.0.3",
     "workbox-cli": {
       "update-notifier": "5.1.0"
     },

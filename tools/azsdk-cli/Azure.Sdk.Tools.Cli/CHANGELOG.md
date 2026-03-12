@@ -1,16 +1,10 @@
 # Release History
 
-## 0.6.3 (Unreleased)
-
-### Features Added
-
-### Breaking Changes
+## 0.6.3 (2026-03-12)
 
 ### Bugs Fixed
 
 - Do not fail update release status CLI command when a release plan is not found for a package.
-
-### Other Changes
 
 ## 0.6.2 (2026-03-11)
 

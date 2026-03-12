@@ -134,7 +134,7 @@
 
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon the release plan for work item 12345", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel and abandon my release plan", "category": "all" },
-    { "toolName": "azsdk_abandon_release_plan", "prompt": "Mark the release plan as abandoned", "category": "all" }
+    { "toolName": "azsdk_abandon_release_plan", "prompt": "Mark the release plan as abandoned", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Abandon my release plan", "category": "all" },
     { "toolName": "azsdk_abandon_release_plan", "prompt": "Cancel the release plan for my service", "category": "all" },
 

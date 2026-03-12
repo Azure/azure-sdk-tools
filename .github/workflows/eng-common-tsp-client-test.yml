@@ -118,14 +118,14 @@ jobs:
       - name: npm run test:ci
         run: |
           set -o pipefail
-          npm run test:ci | tee vitest-output.txt || TEST_EXIT=$?
+          npm run test:ci | tee test-output.txt || TEST_EXIT=$?
           {
-            echo '## Vitest Summary'
+            echo '## Test Summary'
             echo '```text'
-            sed 's/\x1b\[[0-9;]*m//g' vitest-output.txt | grep -E '^[[:space:]]*[✓×] .+ > .+ [0-9]+(ms|s)$' || true
+            sed 's/\x1b\[[0-9;]*m//g' test-output.txt | grep -E '^[[:space:]]*[✓×] .+ > .+ [0-9]+(ms|s)$' || true
             echo '```'
             echo '```text'
-            awk '/Test Files/{flag=1} flag{print} /Duration/{flag=0}' vitest-output.txt | sed 's/\x1b\[[0-9;]*m//g'
+            awk '/Test Files/{flag=1} flag{print} /Duration/{flag=0}' test-output.txt | sed 's/\x1b\[[0-9;]*m//g'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit ${TEST_EXIT:-0}

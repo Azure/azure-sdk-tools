@@ -179,28 +179,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         // Detect if customizationRequest is an APIView URL (prod or staging)
         string? apiViewUrl = IsApiViewUrl(customizationRequest) ? customizationRequest : null;
 
-        // Get language info — prefer APIView metadata when a URL is provided, fall back to package path
-        LanguageService languageService;
-        if (apiViewUrl != null)
-        {
-            try
-            {
-                var language = await feedbackService.GetLanguageAsync(apiViewUrl, ct);
-                var sdkLanguage = language != null ? SdkLanguageHelpers.GetSdkLanguage(language) : SdkLanguage.Unknown;
-                languageService = sdkLanguage != SdkLanguage.Unknown
-                    ? GetLanguageService(sdkLanguage)
-                    : await GetLanguageServiceAsync(packagePath, ct);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to detect language from APIView URL; falling back to package path detection.");
-                languageService = await GetLanguageServiceAsync(packagePath, ct);
-            }
-        }
-        else
-        {
-            languageService = await GetLanguageServiceAsync(packagePath, ct);
-        }
+        var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
 
         // Step 1: try tsp fixes
         var tries = 0;
@@ -209,26 +188,19 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         string? buildError = null;
 
         List<FeedbackItem> feedbackItems;
-        if (apiViewUrl != null)
+        try
         {
-            try
-            {
-                feedbackItems = await GetFeedbackItems(apiViewUrl: apiViewUrl, ct: ct);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to fetch feedback items from APIView URL.");
-                return new CustomizedCodeUpdateResponse
-                {
-                    Success = false,
-                    Message = $"Failed to fetch feedback from APIView: {ex.Message}",
-                    ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError
-                };
-            }
+            feedbackItems = await GetFeedbackItems(apiViewUrl: apiViewUrl, plainTextFeedback: customizationRequest, ct: ct);
         }
-        else
+        catch (Exception ex)
         {
-            feedbackItems = await GetFeedbackItems(plainTextFeedback: customizationRequest, ct: ct);
+            logger.LogError(ex, "Failed to fetch feedback items.");
+            return new CustomizedCodeUpdateResponse
+            {
+                Success = false,
+                Message = $"Failed to fetch feedback: {ex.Message}",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError
+            };
         }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
 
@@ -284,9 +256,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
 
                 feedbackItem?.AppendContext($"Iteration {tries+1}");
-
-                // Accumulate classifier analysis for downstream patch agent
-                classifierAnalysis.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
 
                 if (itemDetails.Classification == ClassificationTspApplicable)
                 {
@@ -380,7 +349,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             if (tspApplicable == 0 && codeCustomizations > 0)
             {
                 logger.LogInformation("No TSP-applicable items remain; {CodeCustomizations} item(s) require code customization.", codeCustomizations);
-                // if first atttempt, still build to get error context for the patch agent
+                // if first attempt, still build to get error context for the patch agent
                 if (tries == 0)
                 {
                     var (codeCustSuccess, codeCustError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
@@ -546,6 +515,34 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             TypeSpecChangesSummary = changesMade,
             AppliedPatches = patches
         };
+    }
+
+    /// <summary>
+    /// Resolves the language service to use: prefers language detected from an APIView URL,
+    /// falls back to detecting from the package path.
+    /// </summary>
+    private async Task<LanguageService> ResolveLanguageServiceAsync(string packagePath, string? apiViewUrl, CancellationToken ct)
+    {
+        if (apiViewUrl != null)
+        {
+            try
+            {
+                var language = await feedbackService.GetLanguageAsync(apiViewUrl, ct);
+                var sdkLanguage = language != null ? SdkLanguageHelpers.GetSdkLanguage(language) : SdkLanguage.Unknown;
+                if (sdkLanguage != SdkLanguage.Unknown)
+                {
+                    return GetLanguageService(sdkLanguage);
+                }
+                logger.LogWarning("Could not determine language from APIView URL; falling back to package path detection.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to detect language from APIView URL; falling back to package path detection.");
+            }
+        }
+
+        logger.LogInformation("Detecting language from package path: {PackagePath}", packagePath);
+        return await GetLanguageServiceAsync(packagePath, ct);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-name: eng/common/tsp-client - test
+name: eng/common/tsp-client - Test
 
 on:
   pull_request:

@@ -24,29 +24,41 @@ repos/
 
 Both long names (e.g. `azure-sdk-for-js`) and short names (e.g. `js`) are supported. Tests for repos that are not cloned locally will be **skipped** automatically.
 
-### 1. Clone repos with sparse checkout
+### 1. Clone repos
 
-You only need the spec repo and at least one SDK language repo. Sparse checkout keeps the clones small.
+You need the spec repo and at least one SDK language repo. The `azure-sdk-tools` and `azure-rest-api-specs` repos can be cloned normally. **Sparse checkout is recommended for SDK language repos** since the tests create git worktrees from them, and a full clone would be very large.
 
 **azure-sdk-tools** (if not already cloned):
 
 ```sh
-git clone --sparse https://github.com/Azure/azure-sdk-tools.git
-cd azure-sdk-tools
-git sparse-checkout set .github eng/common/tsp-client eng/common-tests/tsp-client
-cd ..
+git clone https://github.com/Azure/azure-sdk-tools.git
 ```
+
+> **Tip:** To save time, you can sparse clone the tools repo:
+>
+> ```sh
+> git clone --sparse https://github.com/Azure/azure-sdk-tools.git
+> cd azure-sdk-tools
+> git sparse-checkout set eng/common/tsp-client eng/common-tests/tsp-client
+> cd ..
+> ```
 
 **azure-rest-api-specs** (required for "inits from local" tests):
 
 ```sh
-git clone --sparse https://github.com/Azure/azure-rest-api-specs.git
-cd azure-rest-api-specs
-git sparse-checkout set specification/widget
-cd ..
+git clone https://github.com/Azure/azure-rest-api-specs.git
 ```
 
-**azure-sdk-for-js** (example SDK repo — repeat for other languages as needed):
+> **Tip:** To save time, you can sparse clone the spec repo:
+>
+> ```sh
+> git clone --sparse https://github.com/Azure/azure-rest-api-specs.git
+> cd azure-rest-api-specs
+> git sparse-checkout set specification/widget
+> cd ..
+> ```
+
+**SDK language repos** (at least one — using JS as an example):
 
 ```sh
 git clone --sparse https://github.com/Azure/azure-sdk-for-js.git

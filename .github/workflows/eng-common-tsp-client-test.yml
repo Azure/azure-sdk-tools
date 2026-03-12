@@ -6,6 +6,13 @@ on:
       - .github/workflows/eng-common-tsp-client-test.yml
       - eng/common/tsp-client/**
       - eng/common-tests/tsp-client/**
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/eng-common-tsp-client-test.yml
+      - eng/common/tsp-client/**
+      - eng/common-tests/tsp-client/**
 
 permissions:
   contents: read

@@ -25,9 +25,9 @@ See [recipes](references/recipes/) for options.
 
 | ❌ Won't Load | ✅ Will Load |
 |---------------|--------------|
-| `[Recipes](references/recipes/)` | `[Recipes](references/recipes/README.md)` |
-| `[AZD](references/recipes/azd)` | `[AZD](references/recipes/azd/README.md)` |
-| `[Services](references/services)` | `[Services](references/services/README.md)` |
+| `[Languages](references/languages/)` | `[Languages](references/languages/README.md)` |
+| `[Python](references/languages/python)` | `[Python](references/languages/python/README.md)` |
+| `[Pipeline Stages](references/pipelines)` | `[Pipeline Stages](references/pipelines/README.md)` |
 
 Use `README.md` as the entry point for folder-organized content.
 
@@ -61,42 +61,57 @@ This means:
 ### Selective Loading with Recipes
 
 ```markdown
-<!-- In SKILL.md - user picks ONE option -->
-## Deployment Method
+<!-- In azsdk-common-sdk-release/SKILL.md - agent loads only the relevant language guide -->
+## SDK Release Workflow
 
-Choose your approach:
-- [AZD](references/recipes/azd/README.md) - Quick start
-- [Bicep](references/recipes/bicep/README.md) - IaC-first
-- [Terraform](references/recipes/terraform/README.md) - Multi-cloud
+Which language SDK are you releasing?
+- [Python](references/languages/python/README.md) - PyPI package release
+- [JavaScript](references/languages/javascript/README.md) - npm package release
+- [Java](references/languages/java/README.md) - Maven Central release
+- [.NET](references/languages/dotnet/README.md) - NuGet package release
 
-<!-- Result: Only chosen recipe loads (~300 tokens) -->
-<!-- Not all recipes (~900 tokens) -->
+<!-- Result: Only the chosen language guide loads (~300 tokens) -->
+<!-- Not all four language guides (~1,200 tokens) -->
+```
+
+```markdown
+<!-- In azsdk-common-pipeline-troubleshooting/SKILL.md - agent loads only the relevant failure type -->
+## Pipeline Failure Triage
+
+What kind of pipeline failure are you seeing?
+- [Build Failures](references/failures/build/README.md) - Compilation and packaging errors
+- [Test Failures](references/failures/test/README.md) - Unit, integration, or live test issues
+- [ApiView Failures](references/failures/apiview/README.md) - API compatibility checks
+
+<!-- Result: Only the relevant failure guide loads (~250 tokens) -->
+<!-- Not all failure guides (~750 tokens) -->
 ```
 
 ## Self-Contained Reference Example
 
 ```markdown
-# AZD Deployment Errors
+# Pipeline Troubleshooting: Common CI Failures
 
-Quick reference for Azure Developer CLI deployment issues.
+Quick reference for Azure SDK CI pipeline issues (used by azsdk-common-pipeline-troubleshooting).
 
 ## Common Errors
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `CONTAINER_REGISTRY_UNAUTHORIZED` | ACR login expired | `az acr login --name <registry>` |
-| `QUOTA_EXCEEDED` | Resource limits | Request increase or change region |
+| `ApiView check failed` | Breaking API changes detected | Review ApiView diff, update public API surface |
+| `Credential test timeout` | Live test auth expired | Refresh service principal via `az login --service-principal` |
+| `Package version conflict` | Version not bumped | Run version update per language convention |
 
 ## Troubleshooting Steps
 
-1. Check deployment logs: `azd deploy --debug`
-2. Verify authentication: `az account show`
-3. Check resource status: `azd show`
+1. Check pipeline logs: Navigate to the failed stage in Azure DevOps
+2. Reproduce locally: Generate SDK and run tests for the target language
+3. Validate API compatibility: Submit to ApiView for review
 
 ## Related
 
-- [AZD Commands](README.md)
-- [Verification](verify.md)
+- [Release Plan Preparation](../azsdk-common-prepare-release-plan/references/README.md)
+- [ApiView Feedback Resolution](../azsdk-common-apiview-feedback-resolution/references/README.md)
 ```
 
 Note: This file works standalone without requiring other files to be loaded first.

@@ -7,6 +7,7 @@ using Azure.Sdk.Tools.Cli.Models.Codeowners;
 using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Configuration;
 
@@ -601,6 +602,137 @@ public class CodeownersManagementHelper(
                 ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo)
                 : await GetViewByPath(path, repo)
         };
+    }
+
+    // ========================
+    // Release gate
+    // ========================
+
+    public async Task<ReleaseGateResult> CheckReleaseGateAsync(
+        string packageName,
+        string repo,
+        string packageDirectory,
+        CancellationToken ct = default
+    ) {
+        var packageWi = await FindPackageByName(packageName, repo);
+        if (packageWi == null)
+        {
+            return new ReleaseGateResult
+            {
+                Passed = false,
+                ExitCode = 1,
+                Message = $"No Package work item found for '{packageName}' in repo '{repo}'.",
+                UniqueOwnerCount = 0
+            };
+        }
+
+        await HydratePackages([packageWi]);
+
+        var packageOwners = CollectUniqueOwners(packageWi.Owners);
+        if (packageOwners.Count >= 2)
+        {
+            return new ReleaseGateResult
+            {
+                Passed = true,
+                ExitCode = 0,
+                Message = $"Package '{packageName}' has {packageOwners.Count} unique owner(s). Release gate passed.",
+                UniqueOwnerCount = packageOwners.Count
+            };
+        }
+
+        // Package has < 2 owners, check LabelOwners
+        var labelOwners = await QueryLabelOwnersByRepo(repo);
+        await HydrateLabelOwners(labelOwners);
+
+        // Filter to LabelOwners with non-empty RepoPath and acceptable LabelType
+        var pathBasedLabelOwners = labelOwners
+            .Where(lo => !string.IsNullOrEmpty(lo.RepoPath))
+            .Where(lo => string.IsNullOrEmpty(lo.LabelType)
+                || lo.LabelType.Equals("PR Label", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(lo => lo.RepoPath, StringComparer.Ordinal)
+            .ToList();
+
+        // Find all LabelOwners whose RepoPath glob-matches the package directory
+        var matchingLabelOwners = pathBasedLabelOwners
+            .Where(lo => DirectoryUtils.PathExpressionMatchesTargetPath(lo.RepoPath, packageDirectory))
+            .ToList();
+
+        if (matchingLabelOwners.Count == 0)
+        {
+            return new ReleaseGateResult
+            {
+                Passed = false,
+                ExitCode = 1,
+                Message = $"Package '{packageName}' has {packageOwners.Count} unique owner(s) and no matching LabelOwner found for path '{packageDirectory}'. Release gate failed.",
+                UniqueOwnerCount = packageOwners.Count
+            };
+        }
+
+        // Collect all unique owners from the package and all matching LabelOwners
+        var allOwners = new HashSet<string>(packageOwners, StringComparer.OrdinalIgnoreCase);
+        foreach (var lo in matchingLabelOwners)
+        {
+            foreach (var alias in CollectUniqueOwners(lo.Owners))
+            {
+                allOwners.Add(alias);
+            }
+        }
+
+        if (allOwners.Count >= 2)
+        {
+            return new ReleaseGateResult
+            {
+                Passed = true,
+                ExitCode = 0,
+                Message = $"Package '{packageName}' has {allOwners.Count} unique owner(s) (including LabelOwner matches). Release gate passed.",
+                UniqueOwnerCount = allOwners.Count
+            };
+        }
+
+        return new ReleaseGateResult
+        {
+            Passed = false,
+            ExitCode = 1,
+            Message = $"Package '{packageName}' has only {allOwners.Count} unique owner(s) (including LabelOwner matches). At least 2 are required. Release gate failed.",
+            UniqueOwnerCount = allOwners.Count
+        };
+    }
+
+    /// <summary>
+    /// Queries all LabelOwner work items for a given repository.
+    /// </summary>
+    internal async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByRepo(string repo)
+    {
+        var escapedRepo = repo.Replace("'", "''");
+        var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}'" +
+                    $" AND [System.WorkItemType] = 'Label Owner'" +
+                    $" AND [Custom.Repository] = '{escapedRepo}'" +
+                    $" AND [Custom.RepoPath] <> ''";
+        var rawWorkItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        return rawWorkItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
+    }
+
+    /// <summary>
+    /// Collects unique owner aliases from a list of OwnerWorkItems, expanding teams to individual members.
+    /// </summary>
+    private static HashSet<string> CollectUniqueOwners(List<OwnerWorkItem> owners)
+    {
+        var uniqueOwners = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var owner in owners)
+        {
+            if (owner.IsGitHubTeam && owner.ExpandedMembers.Count > 0)
+            {
+                foreach (var member in owner.ExpandedMembers)
+                {
+                    uniqueOwners.Add(member);
+                }
+            }
+            else
+            {
+                uniqueOwners.Add(owner.GitHubAlias);
+            }
+        }
+        return uniqueOwners;
     }
 
 }

@@ -34,4 +34,7 @@ public interface ICodeownersManagementHelper
     Task<CodeownersModifyResponse> RemoveOwnersFromPackage(OwnerWorkItem[] owners, string packageName, string repo);
     Task<CodeownersModifyResponse> RemoveLabelsFromPackage(LabelWorkItem[] labels, string packageName, string repo);
     Task<CodeownersModifyResponse> RemoveOwnersFromLabelsAndPath(OwnerWorkItem[] owners, LabelWorkItem[] labels, string repo, string path, OwnerType ownerType);
+
+    // Release gate
+    Task<ReleaseGateResult> CheckReleaseGateAsync(string packageName, string repo, string packageDirectory, CancellationToken ct = default);
 }

@@ -1512,4 +1512,359 @@ public class CodeownersManagementHelperTests
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwner1Id, "related", ownerId), Times.Once);
         _mockDevOps.Verify(d => d.RemoveWorkItemRelationAsync(labelOwner2Id, "related", It.IsAny<int>()), Times.Never);
     }
+
+    // ========================
+    // CheckReleaseGateAsync tests
+    // ========================
+
+    [Test]
+    public async Task CheckReleaseGate_PackageNotFound_Fails()
+    {
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("NonExistentPackage")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem>());
+
+        var result = await _helper.CheckReleaseGateAsync("NonExistentPackage", "Azure/azure-sdk-for-net", "sdk/storage/NonExistentPackage");
+
+        Assert.That(result.Passed, Is.False);
+        Assert.That(result.ExitCode, Is.EqualTo(1));
+        Assert.That(result.Message, Does.Contain("No Package work item found"));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_PackageWithTwoOwners_Passes()
+    {
+        const int pkgId = 1, owner1Id = 10, owner2Id = 11;
+
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs", relatedIds: [owner1Id, owner2Id]);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        var owner1Wi = MakeOwnerWorkItem(owner1Id, "user1");
+        var owner2Wi = MakeOwnerWorkItem(owner2Id, "user2");
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.IsAny<IEnumerable<int>>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner1Wi, owner2Wi });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        Assert.That(result.Passed, Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        Assert.That(result.UniqueOwnerCount, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_PackageWithNoOwners_MatchingLabelOwnerWithTwoOwners_Passes()
+    {
+        const int pkgId = 1, loId = 100, owner1Id = 10, owner2Id = 11;
+
+        // Package with no owners
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs");
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        // Hydrate packages - returns empty (no related IDs)
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem>());
+
+        // Query LabelOwners by repo
+        var loWi = MakeLabelOwnerWorkItem(loId, "PR Label", "Azure/azure-sdk-for-net", "/sdk/storage/", owner1Id, owner2Id);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net") && q.Contains("RepoPath")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { loWi });
+
+        // Hydrate LabelOwners - return owner work items
+        var owner1Wi = MakeOwnerWorkItem(owner1Id, "user1");
+        var owner2Wi = MakeOwnerWorkItem(owner2Id, "user2");
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id)),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner1Wi, owner2Wi });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        Assert.That(result.Passed, Is.True);
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        Assert.That(result.UniqueOwnerCount, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_PackageWithNoOwners_MatchingLabelOwnerWithOneOwner_Fails()
+    {
+        const int pkgId = 1, loId = 100, owner1Id = 10;
+
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs");
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem>());
+
+        var loWi = MakeLabelOwnerWorkItem(loId, "PR Label", "Azure/azure-sdk-for-net", "/sdk/storage/", owner1Id);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { loWi });
+
+        var owner1Wi = MakeOwnerWorkItem(owner1Id, "user1");
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id)),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner1Wi });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        Assert.That(result.Passed, Is.False);
+        Assert.That(result.ExitCode, Is.EqualTo(1));
+        Assert.That(result.UniqueOwnerCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_PackageWithNoOwners_NoMatchingLabelOwner_Fails()
+    {
+        const int pkgId = 1, loId = 100, owner1Id = 10, owner2Id = 11;
+
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs");
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem>());
+
+        // LabelOwner with path that doesn't match
+        var loWi = MakeLabelOwnerWorkItem(loId, "PR Label", "Azure/azure-sdk-for-net", "/sdk/identity/", owner1Id, owner2Id);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { loWi });
+
+        var owner1Wi = MakeOwnerWorkItem(owner1Id, "user1");
+        var owner2Wi = MakeOwnerWorkItem(owner2Id, "user2");
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id)),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner1Wi, owner2Wi });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        Assert.That(result.Passed, Is.False);
+        Assert.That(result.ExitCode, Is.EqualTo(1));
+        Assert.That(result.Message, Does.Contain("no matching LabelOwner"));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_PackageWithOneOwner_LabelOwnerWithSameOwner_Fails()
+    {
+        const int pkgId = 1, loId = 100, owner1Id = 10;
+
+        // Package with 1 owner
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs", relatedIds: [owner1Id]);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        var owner1Wi = MakeOwnerWorkItem(owner1Id, "user1");
+
+        // First call: hydrate package owners
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && ids.Count() == 1),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner1Wi });
+
+        // LabelOwner with the same owner
+        var loWi = MakeLabelOwnerWorkItem(loId, "PR Label", "Azure/azure-sdk-for-net", "/sdk/storage/", owner1Id);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { loWi });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        Assert.That(result.Passed, Is.False);
+        Assert.That(result.UniqueOwnerCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_PackageWithOneOwner_LabelOwnerWithDifferentOwner_Passes()
+    {
+        const int pkgId = 1, loId = 100, owner1Id = 10, owner2Id = 11;
+
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs", relatedIds: [owner1Id]);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        var owner1Wi = MakeOwnerWorkItem(owner1Id, "user1");
+        var owner2Wi = MakeOwnerWorkItem(owner2Id, "user2");
+
+        // Hydrate package returns owner1
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id) && !ids.Contains(owner2Id)),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner1Wi });
+
+        // LabelOwner with a different owner
+        var loWi = MakeLabelOwnerWorkItem(loId, "PR Label", "Azure/azure-sdk-for-net", "/sdk/storage/", owner2Id);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { loWi });
+
+        // Hydrate LabelOwners returns owner2
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner2Id) && !ids.Contains(owner1Id)),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner2Wi });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        Assert.That(result.Passed, Is.True);
+        Assert.That(result.UniqueOwnerCount, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_GlobMatchingPicksMostSpecificLabelOwner()
+    {
+        const int pkgId = 1, loGeneralId = 100, loSpecificId = 101;
+        const int owner1Id = 10, owner2Id = 11, owner3Id = 12;
+
+        // Package with no owners
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs");
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem>());
+
+        // Two LabelOwners: general /sdk/** with 1 owner, specific /sdk/storage/** with 2 owners
+        var loGeneral = MakeLabelOwnerWorkItem(loGeneralId, "PR Label", "Azure/azure-sdk-for-net", "/sdk/", owner1Id);
+        var loSpecific = MakeLabelOwnerWorkItem(loSpecificId, "PR Label", "Azure/azure-sdk-for-net", "/sdk/storage/", owner2Id, owner3Id);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { loGeneral, loSpecific });
+
+        var owner1Wi = MakeOwnerWorkItem(owner1Id, "user1");
+        var owner2Wi = MakeOwnerWorkItem(owner2Id, "user2");
+        var owner3Wi = MakeOwnerWorkItem(owner3Id, "user3");
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Any()),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner1Wi, owner2Wi, owner3Wi });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        // Both LabelOwners match, so all 3 unique owners are collected
+        Assert.That(result.Passed, Is.True);
+        Assert.That(result.UniqueOwnerCount, Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_LabelOwnerFilteringByLabelType()
+    {
+        const int pkgId = 1, loValidId = 100, loInvalidId = 101;
+        const int owner1Id = 10, owner2Id = 11;
+
+        // Package with no owners
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs");
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => !ids.Any()), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem>());
+
+        // One LabelOwner with empty LabelType (should be included), one with "Service Owner" (should be excluded)
+        var loValid = MakeLabelOwnerWorkItem(loValidId, "", "Azure/azure-sdk-for-net", "/sdk/storage/", owner1Id);
+        var loInvalid = MakeLabelOwnerWorkItem(loInvalidId, "Service Owner", "Azure/azure-sdk-for-net", "/sdk/storage/", owner2Id);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Label Owner'") && q.Contains("Azure/azure-sdk-for-net")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { loValid, loInvalid });
+
+        var owner1Wi = MakeOwnerWorkItem(owner1Id, "user1");
+        var owner2Wi = MakeOwnerWorkItem(owner2Id, "user2");
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Any()),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { owner1Wi, owner2Wi });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        // Only the empty-LabelType LabelOwner counts, so only 1 unique owner
+        Assert.That(result.Passed, Is.False);
+        Assert.That(result.UniqueOwnerCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task CheckReleaseGate_TeamOwnerExpanded_CountsTowardThreshold()
+    {
+        const int pkgId = 1, owner1Id = 10;
+
+        // Package with 1 team owner
+        var pkgWi = MakePackageWorkItem(pkgId, "Azure.Storage.Blobs", relatedIds: [owner1Id]);
+
+        _mockDevOps.Setup(d => d.FetchWorkItemsPagedAsync(
+                It.Is<string>(q => q.Contains("'Package'") && q.Contains("Azure.Storage.Blobs")),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { pkgWi });
+
+        // Team owner with alias "Azure/storage-team"
+        var teamOwnerWi = MakeOwnerWorkItem(owner1Id, "Azure/storage-team");
+
+        _mockDevOps.Setup(d => d.GetWorkItemsByIdsAsync(
+                It.Is<IEnumerable<int>>(ids => ids.Contains(owner1Id)),
+                It.IsAny<int>(), It.IsAny<WorkItemExpand>()))
+            .ReturnsAsync(new List<WorkItem> { teamOwnerWi });
+
+        // Team expansion returns 3 members
+        _mockTeamUserCache.Setup(c => c.GetUsersForTeam("Azure/storage-team"))
+            .Returns(new List<string> { "member1", "member2", "member3" });
+
+        var result = await _helper.CheckReleaseGateAsync("Azure.Storage.Blobs", "Azure/azure-sdk-for-net", "sdk/storage/Azure.Storage.Blobs");
+
+        Assert.That(result.Passed, Is.True);
+        Assert.That(result.UniqueOwnerCount, Is.EqualTo(3));
+    }
 }

@@ -134,6 +134,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = false,
         };
 
+        private readonly Option<string> packageDirectoryOption = new("--package-directory")
+        {
+            Description = "Path from the repo root to the package (e.g., sdk/formrecognizer/Azure.AI.FormRecognizer). Used for glob matching against LabelOwner RepoPath.",
+        };
+
         private readonly Option<string> optionalRepoOption = new("--repo", "-r")
         {
             Description = "Repository name of the format <owner>/<repo> (e.g., Azure/azure-sdk-for-python).",
@@ -191,6 +196,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private const string removeCodeownersToPackageCommandName = "remove-package-owner";
         private const string removeLabelToPackageCommandName = "remove-package-label";
         private const string removeLabelOwnerCommandName = "remove-label-owner";
+        private const string releaseGateCommandName = "release-gate";
 
 
         // MCP Tool Names
@@ -278,6 +284,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
                 codeownersPathOption, sectionsOption, outputFilePathOption,
+            },
+            new(releaseGateCommandName, "Check codeowners release gate for a package")
+            {
+                packageOption, optionalRepoOption, packageDirectoryOption,
             }
         ];
 
@@ -402,6 +412,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var sections = parseResult.GetValue(sectionsOption);
                 var output = parseResult.GetValue(outputFilePathOption);
                 return await ExportSection(codeownersPath!, sections!, output!);
+            }
+
+            if (command == releaseGateCommandName)
+            {
+                var package = parseResult.GetValue(packageOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                var packageDirectory = parseResult.GetValue(packageDirectoryOption);
+                return await CheckReleaseGate(package!, repo, packageDirectory!, ct);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -861,6 +879,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 Message = $"Exported {sections.Length} section(s) to {output}"
             };
+        }
+
+        public async Task<CommandResponse> CheckReleaseGate(
+            string package,
+            string? repo,
+            string packageDirectory,
+            CancellationToken ct = default
+        ) {
+            try
+            {
+                repo = await ResolveRepo(repo, ct);
+                return await codeownersManagementHelper.CheckReleaseGateAsync(
+                    package,
+                    repo,
+                    packageDirectory,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking release gate");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
         }
 
         [McpServerTool(Name = CodeownerAddPackageOwnerToolName), Description("Add source owner(s) to a package in CODEOWNERS work items.")]

@@ -144,7 +144,3 @@ To fix, list and force-remove stale worktrees for the affected SDK repo:
 git -C /path/to/azure-sdk-for-js worktree list
 git -C /path/to/azure-sdk-for-js worktree remove /path/to/stale-worktree --force
 ```
-
-### Hook timeouts
-
-The `beforeAll` hook creates git worktrees, which can take a long time for large repos. The timeout is configured in [vitest.config.js](vitest.config.js) (`hookTimeout: 240_000`). If you experience timeouts, check for locked worktrees first (see above), as those cause `git worktree add` to hang.

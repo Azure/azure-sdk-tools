@@ -381,6 +381,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
+
+            if (result.ExitCode != 0 && result.NextSteps is not { Count: > 0 })
+            {
+                result.NextSteps = fixCheckErrors
+                    ? [
+                        "Auto-fix was attempted but could not resolve all spelling issues",
+                        "Review the output above and manually fix remaining spelling errors, or add valid words to '.vscode/cspell.json'"
+                    ]
+                    : [
+                        "Run with the --fix flag to attempt automatic spelling corrections",
+                        "Alternatively, fix spelling issues manually or add valid words to '.vscode/cspell.json' in the 'words' array"
+                    ];
+            }
+
             return result;
         }
 
@@ -395,6 +409,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
+
+            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
+            {
+                result.NextSteps =
+                [
+                    "Ensure code snippets in documentation match the actual code implementation",
+                    "Verify that snippet markers in source files are properly formatted",
+                    "Re-run after updating code samples to reflect current API usage"
+                ];
+            }
+
             return result;
         }
 
@@ -409,6 +434,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
+
+            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
+            {
+                result.NextSteps = fixCheckErrors
+                    ? [
+                        "Auto-fix was attempted but could not resolve all linting issues",
+                        "Review the linting errors above and fix them manually"
+                    ]
+                    : [
+                        "Run with the --fix flag to automatically fix some linting issues",
+                        "Review the linting errors above and fix any remaining issues manually"
+                    ];
+            }
+
             return result;
         }
 
@@ -423,6 +462,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
+
+            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
+            {
+                result.NextSteps = fixCheckErrors
+                    ? [
+                        "Auto-fix was attempted but could not resolve all formatting issues",
+                        "Review the formatting errors above and fix them manually"
+                    ]
+                    : [
+                        "Run with the --fix flag to automatically apply code formatting",
+                        "Review the formatting errors above and fix any remaining issues manually"
+                    ];
+            }
+
             return result;
         }
 
@@ -436,6 +489,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
+
+            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
+            {
+                result.NextSteps =
+                [
+                    "Auto-fix is not available for generated code checks",
+                    "Regenerate the SDK client code and verify the generated API surface matches the expected public API",
+                    "If API surface changes are expected, update the public API baseline files"
+                ];
+            }
+
             return result;
         }
 
@@ -449,6 +513,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
+
+            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
+            {
+                result.NextSteps =
+                [
+                    "Auto-fix is not available for AOT compatibility issues",
+                    "Review the output above for specific trimming or AOT warnings and add required annotations",
+                    "If AOT compatibility is not required, add '<AotCompatOptOut>true</AotCompatOptOut>' to the .csproj file"
+                ];
+            }
+
             return result;
         }
 
@@ -462,6 +537,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.ValidateSamples(packagePath, fixCheckErrors, ct);
+
+            if (result.ExitCode != 0 && result.CheckStatusDetails != "noop" && result.NextSteps is not { Count: > 0 })
+            {
+                result.NextSteps =
+                [
+                    "Auto-fix is not available for sample validation",
+                    "Ensure code samples exist and compile successfully",
+                    "Verify that sample projects reference the correct package version and all dependencies are resolved"
+                ];
+            }
+
             return result;
         }
 

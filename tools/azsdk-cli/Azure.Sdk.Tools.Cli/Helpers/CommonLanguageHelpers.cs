@@ -120,7 +120,16 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Changelog validation failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.");
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Changelog validation failed.")
+                {
+                    NextSteps =
+                    [
+                        "Auto-fix is not available for changelog validation.",
+                        "Ensure CHANGELOG.md exists in the package root directory.",
+                        "Verify the changelog follows the Azure SDK format: each release should have a '## x.y.z (yyyy-MM-dd)' header.",
+                        "Add an '## x.y.z-beta.1 (Unreleased)' section for unreleased changes if one is missing."
+                    ]
+                };
             }
 
             return new PackageCheckResponse(processResult);
@@ -181,7 +190,16 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Readme validation failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.");
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Readme validation failed.")
+                {
+                    NextSteps =
+                    [
+                        "Auto-fix is not available for README validation.",
+                        "Ensure README.md exists in the package root directory.",
+                        "Verify the README includes all required sections: description, getting started, key concepts, examples, and troubleshooting.",
+                        "Check that the README conforms to the doc settings in 'eng/.docsettings.yml'."
+                    ]
+                };
             }
 
             return new PackageCheckResponse(processResult);
@@ -238,7 +256,14 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error running spelling fix agent");
-                    return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
+                    return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message)
+                    {
+                        NextSteps =
+                        [
+                            "Auto-fix was attempted but failed. Review the error above.",
+                            "Manually fix the spelling issues listed in the output, or add valid words to '.vscode/cspell.json' in the 'words' array."
+                        ]
+                    };
                 }
             }
 
@@ -246,7 +271,14 @@ public class CommonValidationHelpers : ICommonValidationHelpers
             {
                 _logger.LogWarning("Spelling check failed. Exit Code: {ExitCode}, Output: {Output}",
                     processResult.ExitCode, processResult.Output);
-                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.");
+                return new PackageCheckResponse(processResult.ExitCode, processResult.Output, "Spelling check failed.")
+                {
+                    NextSteps =
+                    [
+                        "Run with the --fix flag to attempt automatic spelling corrections.",
+                        "Alternatively, fix the spelling issues listed in the output manually, or add valid words to '.vscode/cspell.json' in the 'words' array."
+                    ]
+                };
             }
 
             return new PackageCheckResponse(processResult);

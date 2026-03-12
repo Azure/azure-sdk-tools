@@ -87,11 +87,14 @@ function generate(item: ApiConstructor, deprecated?: boolean): GeneratorResult {
   // Filter out destructured parameters (names starting with "{") - API Extractor reports
   // destructured parameters in raw form followed by a synthetic normalized parameter with
   // the actual type info. We skip the raw destructuring pattern and only emit the synthetic one.
-  const filteredParameters = parameters?.filter((param) => !param.name.startsWith("{")) ?? [];
+  const filteredParameters =
+    parameters?.map((param, originalIndex) => ({ param, originalIndex })).filter(
+      ({ param }) => !param.name.startsWith("{"),
+    ) ?? [];
 
   if (filteredParameters.length > 0) {
-    filteredParameters.forEach((param, index) => {
-      const parameterModifiers = parameterModifiersByIndex[index] ?? [];
+    filteredParameters.forEach(({ param, originalIndex }, index) => {
+      const parameterModifiers = parameterModifiersByIndex[originalIndex] ?? [];
 
       parameterModifiers.forEach((modifier, modifierIndex) => {
         collector.push(

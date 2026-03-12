@@ -47,12 +47,12 @@ class TestModuleParsing:
         lines = _render_lines(tokens)
         assert lines[2].lstrip() == "@overload"
         actual1 = lines[3]
-        expected1 = "def apistubgentest.another_func(*, b: str) -> bool"
+        expected1 = "def apistubgentest.another_func(*, b: str) -> bool: ..."
         _check(actual1, expected1, obj)
 
         assert lines[6].lstrip() == "@overload"
         actual2 = lines[7]
-        expected2 = "def apistubgentest.another_func(*, b: int) -> bool"
+        expected2 = "def apistubgentest.another_func(*, b: int) -> bool: ..."
         _check(actual2, expected2, obj)
 
         assert lines[10].lstrip() == "@overload"
@@ -63,7 +63,7 @@ class TestModuleParsing:
             "    *, ",
             "    b: str, ",
             "    **kwargs",
-            ") -> bool"
+            ") -> bool: ..."
         ]
         _check(actual4, expected4, obj)
 
@@ -75,7 +75,7 @@ class TestModuleParsing:
             "    *, ",
             "    b: int, ",
             "    **kwargs",
-            ") -> bool"
+            ") -> bool: ..."
         ]
         _check(actual5, expected5, obj)
 

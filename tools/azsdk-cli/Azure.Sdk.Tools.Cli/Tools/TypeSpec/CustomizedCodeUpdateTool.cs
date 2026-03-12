@@ -291,7 +291,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 if (itemDetails.Classification == ClassificationTspApplicable)
                 {
                     tspApplicable++;
-                    feedbackItem.AppendContext($"Iteration {tries+1}");
+                    feedbackItem!.AppendContext($"Iteration {tries+1}");
                     logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
                     var languageTaggedRequest = $"For {languageService.Language}: {itemDetails.Text}";
                     var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);

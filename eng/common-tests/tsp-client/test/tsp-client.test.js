@@ -17,7 +17,7 @@ debug.enable("simple-git");
 // absolute path of folder containing this file
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// absolute path of repo containing eng/common/tsp-client
+// absolute path of folder containing eng/common/tsp-client
 const engCommonTspClient = join(__dirname, "..", "..", "..", "common", "tsp-client");
 
 /**
@@ -25,7 +25,7 @@ const engCommonTspClient = join(__dirname, "..", "..", "..", "common", "tsp-clie
  * @param {string} cwd
  */
 async function execTspClient(args, cwd) {
-  await execNpmExec(["tsp-client", "--debug", ...args], {
+  return await execNpmExec(["tsp-client", "--debug", ...args], {
     cwd,
     logger: debugLogger,
     prefix: engCommonTspClient,
@@ -44,7 +44,6 @@ describe("tsp-client", () => {
 
   it("finds spec dir", async (ctx) => {
     const specDir = await getRootSibling("azure-rest-api-specs").catch(() => ctx.skip());
-
     expect((await stat(specDir)).isDirectory()).toBe(true);
   });
 });
@@ -94,7 +93,8 @@ describe.concurrent.each([SdkName.Go, SdkName.Java, SdkName.Js, SdkName.Net, Sdk
       /** @type {string} */
       let updateWorktree;
 
-      // worktrees from the same source repo must be created/removed sequentially (not in parallel)
+      // worktrees from the same source repo must be created/removed sequentially (not in parallel),
+      // and none may be deleted until all are done being used.
       beforeAll(async () => {
         if (sdkDir) {
           const lang = sdkName.replace("azure-sdk-for-", "");
@@ -119,17 +119,16 @@ describe.concurrent.each([SdkName.Go, SdkName.Java, SdkName.Js, SdkName.Net, Sdk
       });
 
       afterAll(async () => {
-        if (sdkDir) {
-          for (const worktree of [initUrlWorktree, initLocalWorktree, updateWorktree]) {
-            if (worktree) {
-              await simpleGit(sdkDir).raw(["worktree", "remove", worktree, "--force"]).catch();
-              await rm(worktree, { recursive: true, force: true });
-            }
+        for (const worktree of [initUrlWorktree, initLocalWorktree, updateWorktree]) {
+          if (worktree) {
+            await simpleGit(sdkDir).raw(["worktree", "remove", worktree, "--force"]).catch();
+            await rm(worktree, { recursive: true, force: true });
           }
         }
       });
 
       it("inits from url", async () => {
+        // "tsp-client init" requires a URL with a fixed SHA
         const urlConfig =
           "https://github.com/Azure/azure-rest-api-specs/blob/c4213182795684aafcfe0ea51a0d91283ca979e1/specification/widget/data-plane/WidgetAnalytics/tspconfig.yaml";
 
@@ -137,6 +136,7 @@ describe.concurrent.each([SdkName.Go, SdkName.Java, SdkName.Js, SdkName.Net, Sdk
       });
 
       it("inits from local", async (ctx) => {
+        // Skip test if spec dir is not cloned as tools sibling
         if (!specDir) {
           ctx.skip();
         }
@@ -156,6 +156,7 @@ describe.concurrent.each([SdkName.Go, SdkName.Java, SdkName.Js, SdkName.Net, Sdk
       it("updates template", async (ctx) => {
         const templateDir = templateDirs[sdkName];
 
+        // Skip test if sdk dir does not contain a template mapped to widget
         if (templateDir.length === 0) {
           ctx.skip();
         }

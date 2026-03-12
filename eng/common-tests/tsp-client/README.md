@@ -98,8 +98,8 @@ npx vitest run --reporter=verbose --testNamePattern "azure-sdk-for-java"
 Combine language and test name patterns:
 
 ```sh
-# Only "inits from local" for Java
-npx vitest run --reporter=verbose --testNamePattern "azure-sdk-for-java.*inits from local"
+# Only "inits from local" for JS
+npx vitest run --reporter=verbose --testNamePattern "azure-sdk-for-js.*inits from local"
 ```
 
 ## Debugging in VS Code
@@ -110,17 +110,17 @@ npx vitest run --reporter=verbose --testNamePattern "azure-sdk-for-java.*inits f
    {
      "type": "node",
      "request": "launch",
-     "name": "Debug vitest - Java inits from local",
+     "name": "Debug vitest - JS inits from local",
      "program": "${workspaceFolder}/eng/common-tests/tsp-client/node_modules/vitest/vitest.mjs",
      "args": [
        "run",
        "--reporter=verbose",
        "--testNamePattern",
-       "azure-sdk-for-java.*inits from local"
+       "azure-sdk-for-js.*inits from local",
      ],
      "cwd": "${workspaceFolder}/eng/common-tests/tsp-client",
      "console": "integratedTerminal",
-     "skipFiles": ["<node_internals>/**"]
+     "skipFiles": ["<node_internals>/**"],
    }
    ```
 

@@ -191,7 +191,7 @@ public static partial class CodePatchTools
                     : targetRegion;
                 return new CodePatchResult(false,
                     $"OldText not found in lines {startLine}-{endLine}.\n" +
-                    $"Looking for: \"{TruncateForDisplay(cleanOldText, 50)}\"\n" +
+                    $"Looking for: \"{TruncateForDisplay(cleanOldText, 100)}\"\n" +
                     $"Region content: \"{TruncateForDisplay(regionPreview, 300)}\"");
             }
 

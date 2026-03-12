@@ -348,7 +348,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         Success = true,
                         Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
-                        NextSteps = manualInterventions, 
+                        NextSteps = manualInterventions,
                         ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
                     };
                 }

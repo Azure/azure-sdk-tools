@@ -97,8 +97,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", language, "Released");
 
             // Assert
-            Assert.That(result.ResponseError, Does.Contain($"Language '{language}' is not supported"));
-            Assert.That(result.ResponseError, Does.Contain("Supported languages:"));
+            Assert.That(result.Message, Does.Contain($"Language '{language}' is not supported"));
+            Assert.That(result.Message, Does.Contain("Supported languages:"));
+            Assert.That(result.ResponseError, Is.Null);
         }
 
         [TestCase("python")]
@@ -122,8 +123,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus("azure-test-package", language, "Released");
 
             // Assert
-            Assert.That(result.ResponseError, Does.Contain("No in-progress release plans found"));
-            Assert.That(result.ResponseError, Does.Contain("azure-test-package"));
+            Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
+            Assert.That(result.Message, Does.Contain("azure-test-package"));
+            Assert.That(result.ResponseError, Is.Null);
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
         }
 
@@ -462,10 +464,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             var result = await packageReleaseStatusTool.UpdatePackageReleaseStatus(packageName, language, "Released");
 
             // Assert
-            Assert.That(result.ResponseError, Is.Not.Null);
-            Assert.That(result.ResponseError, Does.Contain("No in-progress release plans found"));
-            Assert.That(result.ResponseError, Does.Contain(packageName));
-            Assert.That(result.ResponseError, Does.Contain(language));
+            Assert.That(result.ResponseError, Is.Null);
+            Assert.That(result.Message, Does.Contain("No in-progress release plans found"));
+            Assert.That(result.Message, Does.Contain(packageName));
+            Assert.That(result.Message, Does.Contain(language));
             Assert.That(result.ReleaseStatus, Is.EqualTo("Released"));
 
             // Verify UpdateWorkItemAsync was never called since no release plan was found

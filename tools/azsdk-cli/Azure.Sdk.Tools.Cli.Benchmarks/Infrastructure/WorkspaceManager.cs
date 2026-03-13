@@ -45,8 +45,9 @@ public class WorkspaceManager
     /// <exception cref="InvalidOperationException">Thrown when git operations fail.</exception>
     public async Task<Workspace> PrepareAsync(RepoConfig repo, string scenarioId)
     {
-        // Ensure bare clone exists or fetch if it does
-        var barePath = await EnsureBareCloneAsync(repo);
+        // Ensure bare clone exists, fetch the target ref, and resolve the commit SHA.
+        // Clone/fetch operations on the shared bare repo are serialized under _cloneLock.
+        var (barePath, commitSha) = await EnsureBareCloneAsync(repo);
 
         // Create a unique run ID using timestamp
         var runId = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff");
@@ -58,8 +59,8 @@ public class WorkspaceManager
         // Create worktree path as a subdirectory named after the repo
         var worktreePath = Path.Combine(workspaceRoot, repo.Name);
 
-        // Create worktree from bare clone at the specified ref
-        await CreateWorktreeAsync(barePath, worktreePath, repo.Ref);
+        // Create worktree using the resolved SHA (safe for concurrent use)
+        await CreateWorktreeAsync(barePath, worktreePath, commitSha, repo.SparseCheckoutPaths);
 
         return new Workspace(workspaceRoot, repo.Name);
     }
@@ -104,9 +105,11 @@ public class WorkspaceManager
     }
 
     /// <summary>
-    /// Ensures a bare clone of the repository exists in the cache, fetching updates if it already exists.
+    /// Ensures a bare clone of the repository exists in the cache, fetches the target ref,
+    /// and returns the resolved commit SHA. The lock only covers clone/fetch operations
+    /// that mutate the bare repo; the returned SHA is immutable and safe for concurrent use.
     /// </summary>
-    private async Task<string> EnsureBareCloneAsync(RepoConfig repo)
+    private async Task<(string BarePath, string CommitSha)> EnsureBareCloneAsync(RepoConfig repo)
     {
         var barePath = Path.Combine(_repoCachePath, repo.EffectiveOwner, repo.Name + ".git");
 
@@ -121,30 +124,51 @@ public class WorkspaceManager
             else
             {
                 // Create parent directory and clone
-                Directory.CreateDirectory(Path.GetDirectoryName(barePath)!);
+                var dir = Directory.CreateDirectory(Path.GetDirectoryName(barePath)!);
                 await RunGitCommandAsync(
-                    Path.GetDirectoryName(barePath)!,
+                    dir.FullName,
                     "clone", "--bare", "--depth=1", repo.CloneUrl, barePath);
             }
+
+            // Fetch the specific ref and read the resolved SHA from FETCH_HEAD
+            await RunGitCommandAsync(barePath, "fetch", "origin", repo.Ref, "--depth=1");
+            var fetchHeadPath = Path.Combine(barePath, "FETCH_HEAD");
+            var commitSha = (await File.ReadAllTextAsync(fetchHeadPath)).Split('\t')[0];
+
+            return (barePath, commitSha);
         }
         finally
         {
             _cloneLock.Release();
         }
-
-        return barePath;
     }
 
     /// <summary>
     /// Creates a worktree from a bare clone at the specified ref.
+    /// Supports sparse checkout when paths are specified.
     /// </summary>
-    private async Task CreateWorktreeAsync(string barePath, string worktreePath, string gitRef)
+    private async Task CreateWorktreeAsync(string barePath, string worktreePath, string commitSha, string[]? sparseCheckoutPaths = null)
     {
-        // Fetch the specific ref to ensure it's available (needed for shallow clones)
-        await RunGitCommandAsync(barePath, "fetch", "origin", gitRef, "--depth=1");
+        if (sparseCheckoutPaths is { Length: > 0 })
+        {
+            // Create the worktree without checking out files
+            await RunGitCommandAsync(barePath, "worktree", "add", "--no-checkout", worktreePath, commitSha, "--detach");
 
-        // Create the worktree
-        await RunGitCommandAsync(barePath, "worktree", "add", worktreePath, "FETCH_HEAD", "--detach");
+            // Configure sparse checkout in cone mode (includes root-level files automatically)
+            // Always include .github so copilot-instructions and other config files are available
+            await RunGitCommandAsync(worktreePath, "sparse-checkout", "init", "--cone");
+            var allPaths = new[] { ".github" }.Concat(sparseCheckoutPaths).Distinct();
+            await RunGitCommandAsync(worktreePath,
+                new[] { "sparse-checkout", "set" }.Concat(allPaths).ToArray());
+
+            // Checkout the sparse paths
+            await RunGitCommandAsync(worktreePath, "checkout");
+        }
+        else
+        {
+            // Full checkout (existing behavior)
+            await RunGitCommandAsync(barePath, "worktree", "add", worktreePath, commitSha, "--detach");
+        }
     }
 
     /// <summary>

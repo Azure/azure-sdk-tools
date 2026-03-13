@@ -3,12 +3,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license output.pushrmation.
  *--------------------------------------------------------------------------------------------*/
 
-import * as _ from 'lodash';
 import { AutorestExtensionHost } from '@autorest/extension-base';
+import * as _ from 'lodash';
+
 import { Config, configDefaults } from '../common/constant';
+import { TestConfig } from '../common/testConfig';
 import { Helper } from '../util/helper';
 import { TestCodeModeler } from './model';
-import { TestConfig } from '../common/testConfig';
 
 export async function processRequest(host: AutorestExtensionHost): Promise<void> {
     //const session = await startSession<TestCodeModel>(host, {}, codeModelSchema)

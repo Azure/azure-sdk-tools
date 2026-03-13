@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
@@ -63,13 +64,24 @@ public class Workspace : IDisposable
     {
         var startInfo = new ProcessStartInfo
         {
-            FileName = command,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
             WorkingDirectory = RepoPath
         };
+
+        // On Windows, wrap with cmd /c to resolve .cmd/.bat files (e.g., npm, tsp)
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            startInfo.FileName = "cmd.exe";
+            startInfo.ArgumentList.Add("/c");
+            startInfo.ArgumentList.Add(command);
+        }
+        else
+        {
+            startInfo.FileName = command;
+        }
 
         foreach (var arg in args)
         {

@@ -28,19 +28,33 @@ The URL pointing to the evidence supporting the attestation, i.e. link to releas
 #>
 
 param (
-    [Parameter(Mandatory = $true)]
-    [string] $TableName,
+    [Parameter()]
+    [ValidateSet('ProdKpiEvidenceStream', 'TestKpiEvidenceStream')]
+    [string] $TableName = 'ProdKpiEvidenceStream',
 
     [Parameter(Mandatory = $true)]
+    [ValidateSet(
+        "ba2c80d5-b8be-465f-8948-283229082fd1",
+        "e0504da9-8897-41db-a75f-5027298ba410",
+        "dfe9c112-416e-4e0a-8012-4a3a29807782",
+        "84715402-4f3c-4dca-b330-f05206abaec5",
+        "ad70777b-a1f5-4d77-8926-5c466d7a214d",
+        "210c095f-b3a2-4cf4-a899-eaab4c3ed958",
+        "da768dff-8f90-4999-ad3a-adcd790911f3"
+    )]
     [string] $ActionItemId,
 
     [Parameter(Mandatory = $true)]
+    [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string] $TargetId,
 
     [Parameter(Mandatory = $true)]
+    [ValidateSet('Service', 'Offering', 'ProductSku', 'Feature')]
     [string] $TargetType,
 
     [Parameter(Mandatory = $true)]
+    # 0 = Incomplete, 1 = Complete, 3 = N/A.
+    [ValidateSet(0, 1, 3)]
     [int] $Status,
 
     [Parameter(Mandatory = $true)]
@@ -48,11 +62,20 @@ param (
 
 )
 
+Set-StrictMode -Version 3
+$ErrorActionPreference = 'Stop'
+if (Get-Variable -Name PSNativeCommandUseErrorActionPreference -ErrorAction SilentlyContinue) {
+    $PSNativeCommandUseErrorActionPreference = $true
+}
+
 function InvokeKustoCommand($command) {
     try {
         $clusterUri = "https://azsdk-cpex-attestation.westus2.kusto.windows.net"
         $databaseName = "CPEX_Attestation_DB"
         $accessToken = az account get-access-token --resource "https://api.kusto.windows.net" --query "accessToken" --output tsv
+        if ([string]::IsNullOrWhiteSpace($accessToken)) {
+            throw "Failed to acquire an access token from Azure CLI for Kusto."
+        }
         $headers = @{ Authorization="Bearer $accessToken" }
         $body = @{ csl = $command; db = $databaseName } | ConvertTo-Json -Depth 3
         Invoke-RestMethod -Uri "$clusterUri/v1/rest/mgmt" -Headers $headers -Method Post -Body $body -ContentType "application/json"

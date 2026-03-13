@@ -22,7 +22,7 @@ public class GetPrLinkCurrentBranchScenario : BenchmarkScenario
         "Verify the agent calls azsdk_get_pull_request_link_for_current_branch for PR status.";
 
     /// <inheritdoc />
-    public override string[] Tags => ["tool-invocation", "general"];
+    public override string[] Tags => ["github"];
 
     /// <inheritdoc />
     public override RepoConfig Repo => new()

@@ -24,7 +24,7 @@ public class CheckSdkGenerationStatusScenario : BenchmarkScenario
         "Verify the agent calls azsdk_get_pipeline_status to check SDK generation.";
 
     /// <inheritdoc />
-    public override string[] Tags => ["tool-invocation", "azure-rest-api-specs"];
+    public override string[] Tags => ["pipeline"];
 
     /// <inheritdoc />
     public override RepoConfig Repo => new()

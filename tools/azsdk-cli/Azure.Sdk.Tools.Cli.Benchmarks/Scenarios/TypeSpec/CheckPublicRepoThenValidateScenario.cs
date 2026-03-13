@@ -8,21 +8,21 @@ using Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 
 /// <summary>
-/// Validates that the agent invokes azsdk_typespec_check_project_in_public_repo followed by
-/// azsdk_run_typespec_validation when asked to confirm the project is public and then validate.
+/// Validates that the agent invokes azsdk_run_typespec_validation followed by
+/// azsdk_typespec_check_project_in_public_repo when asked to validate and then check public repo.
 /// Migrated from evaluation scenario: Evaluate_CheckPublicRepoThenValidate.
 /// </summary>
 public class CheckPublicRepoThenValidateScenario : BenchmarkScenario
 {
     /// <inheritdoc />
-    public override string Name => "check-public-repo-then-validate";
+    public override string Name => "validate-then-check-public-repo";
 
     /// <inheritdoc />
     public override string Description =>
-        "Verify the agent calls check public repo then runs TypeSpec validation in order.";
+        "Verify the agent runs TypeSpec validation then checks public repo.";
 
     /// <inheritdoc />
-    public override string[] Tags => ["tool-invocation", "azure-rest-api-specs"];
+    public override string[] Tags => ["typespec"];
 
     /// <inheritdoc />
     public override RepoConfig Repo => new()
@@ -35,7 +35,7 @@ public class CheckPublicRepoThenValidateScenario : BenchmarkScenario
 
     /// <inheritdoc />
     public override string Prompt => """
-        Confirm the TypeSpec project is in the public repo, then run TypeSpec validation.
+        Run TypeSpec validation, then check if the project is in the public repo.
         Project path: specification/contosowidgetmanager/Contoso.WidgetManager.
         My setup has already been verified, do not run azsdk_verify_setup.
         """;
@@ -44,21 +44,20 @@ public class CheckPublicRepoThenValidateScenario : BenchmarkScenario
     public override IEnumerable<IValidator> Validators =>
     [
         new ToolCallValidator(
-            "Expected tools: check public repo and validate",
+            "Expected tools: validate then check public repo",
             expectedToolCalls:
             [
-                new ExpectedToolCall("azsdk_typespec_check_project_in_public_repo",
-                    new Dictionary<string, object?>
-                    {
-                        ["typeSpecProjectPath"] = "specification/contosowidgetmanager/Contoso.WidgetManager"
-                    }),
                 new ExpectedToolCall("azsdk_run_typespec_validation",
                     new Dictionary<string, object?>
                     {
                         ["typeSpecProjectRootPath"] = "specification/contosowidgetmanager/Contoso.WidgetManager"
+                    }),
+                new ExpectedToolCall("azsdk_typespec_check_project_in_public_repo",
+                    new Dictionary<string, object?>
+                    {
+                        ["typeSpecProjectPath"] = "specification/contosowidgetmanager/Contoso.WidgetManager"
                     })
             ],
-            forbiddenToolNames: ["azsdk_verify_setup"],
-            enforceOrder: false)
+            forbiddenToolNames: ["azsdk_verify_setup"])
     ];
 }

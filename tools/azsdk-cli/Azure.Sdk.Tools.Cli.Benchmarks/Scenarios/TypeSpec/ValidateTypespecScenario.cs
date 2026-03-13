@@ -23,7 +23,7 @@ public class ValidateTypespecScenario : BenchmarkScenario
         "Verify the agent calls verify setup and run TypeSpec validation.";
 
     /// <inheritdoc />
-    public override string[] Tags => ["tool-invocation", "azure-rest-api-specs"];
+    public override string[] Tags => ["typespec"];
 
     /// <inheritdoc />
     public override RepoConfig Repo => new()

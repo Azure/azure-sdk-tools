@@ -22,7 +22,7 @@ public class LinkNamespaceApprovalIssueScenario : BenchmarkScenario
         "Verify the agent calls azsdk_link_namespace_approval_issue to link an issue to a release plan.";
 
     /// <inheritdoc />
-    public override string[] Tags => ["tool-invocation", "general"];
+    public override string[] Tags => ["release-plan"];
 
     /// <inheritdoc />
     public override RepoConfig Repo => new()

@@ -24,7 +24,7 @@ public class TypespecGenerationStep02Scenario : BenchmarkScenario
         "Verify the agent checks public repo as part of TypeSpec generation step 2.";
 
     /// <inheritdoc />
-    public override string[] Tags => ["tool-invocation", "azure-rest-api-specs"];
+    public override string[] Tags => ["typespec"];
 
     /// <inheritdoc />
     public override RepoConfig Repo => new()

@@ -21,7 +21,7 @@ public class CreateReleasePlanScenario : BenchmarkScenario
         "Verify the agent calls azsdk_create_release_plan with appropriate context.";
 
     /// <inheritdoc />
-    public override string[] Tags => ["tool-invocation", "general"];
+    public override string[] Tags => ["release-plan"];
 
     /// <inheritdoc />
     public override RepoConfig Repo => new()

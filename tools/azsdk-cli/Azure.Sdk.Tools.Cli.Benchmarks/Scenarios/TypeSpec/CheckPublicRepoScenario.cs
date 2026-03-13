@@ -22,7 +22,7 @@ public class CheckPublicRepoScenario : BenchmarkScenario
         "Verify the agent calls azsdk_typespec_check_project_in_public_repo.";
 
     /// <inheritdoc />
-    public override string[] Tags => ["tool-invocation", "azure-rest-api-specs"];
+    public override string[] Tags => ["typespec"];
 
     /// <inheritdoc />
     public override RepoConfig Repo => new()

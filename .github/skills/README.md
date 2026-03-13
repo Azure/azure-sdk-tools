@@ -54,7 +54,7 @@ Each skill lives in `<name>/` and contains:
 
 | Tool | Purpose | Install |
 | ---- | ------- | ------- |
-| [**waza**](https://spboyer.github.io/waza/getting-started/) | Scaffold skills, run evals, check compliance | `go install github.com/spboyer/waza/cmd/waza@latest` |
+| [**waza**](https://microsoft.github.io/waza/getting-started/) | Scaffold skills, run evals, check compliance | `go install github.com/microsoft/waza/cmd/waza@latest` |
 
 ### Testing Skills
 
@@ -78,4 +78,4 @@ waza run --discover
 ## Further Reading
 
 - [agentskills.io spec](https://agentskills.io) — Skill frontmatter specification
-- [waza docs](https://spboyer.github.io/waza/getting-started/) — Scaffold, check, and eval skills
+- [waza docs](https://microsoft.github.io/waza/getting-started/) — Scaffold, check, and eval skills

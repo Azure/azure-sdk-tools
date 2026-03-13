@@ -5,6 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 
 public class LogAnalysisResponse : CommandResponse
 {
+    [JsonIgnore()]
     public bool HasErrors => Errors != null && Errors.Count > 0;
 
     [JsonPropertyName("errors")]

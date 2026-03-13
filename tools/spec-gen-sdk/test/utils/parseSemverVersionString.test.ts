@@ -95,4 +95,53 @@ describe('parseSemverVersionString', () => {
       }),
     ).toBeTruthy();
   });
+
+  it('Parse a standard Python post-release version', () => {
+    const parsedVersion = parseSemverVersionString('1.0.0.post1', 'Python');
+    expect(parsedVersion?.isSemVerFormat).toEqual(true);
+    expect(parsedVersion?.major).toEqual('1');
+    expect(parsedVersion?.minor).toEqual('0');
+    expect(parsedVersion?.patch).toEqual('0');
+    expect(parsedVersion?.isPostRelease).toEqual(true);
+    expect(parsedVersion?.postReleaseNumber).toEqual('1');
+    expect(parsedVersion?.postReleaseSeparator).toEqual('.post');
+    expect(parsedVersion?.isPrerelease).toEqual(false);
+    expect(parsedVersion?.versionType).toEqual('GA');
+  });
+
+  it('Parse a Python post-release with implicit number', () => {
+    const parsedVersion = parseSemverVersionString('1.0.0.post', 'Python');
+    expect(parsedVersion?.isPostRelease).toEqual(true);
+    expect(parsedVersion?.postReleaseNumber).toEqual('0');
+    expect(parsedVersion?.isPrerelease).toEqual(false);
+    expect(parsedVersion?.versionType).toEqual('GA');
+  });
+
+  it('Parse a Python prerelease + post-release version', () => {
+    const parsedVersion = parseSemverVersionString('1.0.0b2.post1', 'Python');
+    expect(parsedVersion?.isPrerelease).toEqual(true);
+    expect(parsedVersion?.prereleaseLabel).toEqual('b');
+    expect(parsedVersion?.prereleaseNumber).toEqual('2');
+    expect(parsedVersion?.isPostRelease).toEqual(true);
+    expect(parsedVersion?.postReleaseNumber).toEqual('1');
+    expect(parsedVersion?.versionType).toEqual('Beta');
+  });
+
+  it('Parse Python post-release with alternate separators', () => {
+    for (const ver of ['1.0.0-post1', '1.0.0_post1', '1.0.0post1']) {
+      const parsedVersion = parseSemverVersionString(ver, 'Python');
+      expect(parsedVersion?.isPostRelease).toEqual(true);
+      expect(parsedVersion?.postReleaseNumber).toEqual('1');
+      expect(parsedVersion?.isPrerelease).toEqual(false);
+      expect(parsedVersion?.versionType).toEqual('GA');
+    }
+  });
+
+  it('Non-Python language treats "post" as prerelease label, not post-release', () => {
+    const parsedVersion = parseSemverVersionString('1.0.0-post1', 'JavaScript');
+    expect(parsedVersion?.isPostRelease).toBeUndefined();
+    expect(parsedVersion?.isPrerelease).toEqual(true);
+    expect(parsedVersion?.versionType).toEqual('Beta');
+    expect(parsedVersion?.prereleaseLabel).toEqual('post');
+  });
 });

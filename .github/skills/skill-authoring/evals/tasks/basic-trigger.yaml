@@ -1,6 +1,8 @@
+id: basic-trigger
 name: basic-trigger
 description: Should trigger on skill creation requests
-prompt: "I need to create a new skill for Azure SDK. What's the correct SKILL.md format?"
+inputs:
+  prompt: "I need to create a new skill for Azure SDK. What's the correct SKILL.md format?"
 expected:
   skill_activated: true
 graders:

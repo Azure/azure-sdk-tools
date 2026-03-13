@@ -1,6 +1,8 @@
+id: basic-trigger
 name: basic-trigger
 description: Should trigger on token optimization requests
-prompt: "My SKILL.md is too large and uses too many tokens. Can you help me optimize it?"
+inputs:
+  prompt: "My SKILL.md is too large and uses too many tokens. Can you help me optimize it?"
 expected:
   skill_activated: true
 graders:

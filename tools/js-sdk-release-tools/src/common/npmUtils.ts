@@ -64,8 +64,8 @@ export interface NpmViewParameters {
 
 function executeCommand(
     command: string,
-    maxRetries = 3,
-    retryDelayMs = 1000
+    maxRetries = 5,
+    retryDelayMs = 3000
 ): shell.ShellString | null {
     const currentRepo = shell.pwd().stdout.trim();
     logger.info(`Executing git command in repo: ${currentRepo}`);

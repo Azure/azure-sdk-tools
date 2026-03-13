@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 
         /// <summary>
         /// Evaluates a single prompt against its expected tool using keyword matching.
-        /// The test passes if the expected tool ranks in top 3 with ≥2 keyword matches.
+        /// The test passes if the expected tool ranks in top 3 with ≥2 keyword matches or ≥20% overlap.
         /// </summary>
         [Test]
         [TestCaseSource(nameof(GetPromptTestCases))]

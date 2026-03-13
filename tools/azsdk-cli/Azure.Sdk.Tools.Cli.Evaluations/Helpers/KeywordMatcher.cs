@@ -52,7 +52,13 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
                 if (Stopwords.Contains(word))
                     continue;
 
-                if (word.Length <= 2 && !DomainTerms.Contains(word))
+                if (DomainTerms.Contains(word))
+                {
+                    keywords.Add(word);
+                    continue;
+                }
+
+                if (word.Length <= 2)
                     continue;
 
                 keywords.Add(word);

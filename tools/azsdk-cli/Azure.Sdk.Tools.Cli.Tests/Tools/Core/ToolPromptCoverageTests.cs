@@ -37,7 +37,7 @@ internal class ToolPromptCoverageTests
         // Discover all MCP tool names via reflection on the CLI assembly
         var cliAssembly = typeof(Azure.Sdk.Tools.Cli.Program).Assembly;
         var allToolNames = cliAssembly.GetTypes()
-            .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static))
+            .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
             .SelectMany(m => m.GetCustomAttributes<McpServerToolAttribute>())
             .Select(attr => attr.Name)
             .Where(name => !string.IsNullOrEmpty(name))

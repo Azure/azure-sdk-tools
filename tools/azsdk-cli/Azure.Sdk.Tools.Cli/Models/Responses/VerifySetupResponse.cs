@@ -9,6 +9,46 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// </summary>
 public class VerifySetupResponse : CommandResponse
 {
+    /// <summary>
+    /// Exit code values for CI scenarios:
+    /// 0 = All good (environment is fully valid)
+    /// 1 = Blocking (at least one issue requires manual intervention)
+    /// 2 = Fixable (all issues can be auto-remediated)
+    /// </summary>
+    public static class ExitCodes
+    {
+        public const int AllGood = 0;
+        public const int Blocking = 1;
+        public const int Fixable = 2;
+    }
+
+    /// <inheritdoc/>
+    [JsonIgnore]
+    public override int ExitCode
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(ResponseError) || (ResponseErrors?.Count ?? 0) > 0)
+            {
+                return ExitCodes.Blocking;
+            }
+
+            var unresolvedFailures = Results?.Where(r => !r.AutoInstallSucceeded).ToList() ?? [];
+            if (unresolvedFailures.Count == 0)
+            {
+                return ExitCodes.AllGood;
+            }
+
+            return unresolvedFailures.All(r => r.IsAutoInstallable && !r.AutoInstallAttempted)
+                ? ExitCodes.Fixable
+                : ExitCodes.Blocking;
+        }
+        // Setter is required by C# (base property is virtual get/set) but the getter
+        // always computes from Results/ResponseError, so setting a value would be silently ignored.
+        set => throw new NotSupportedException(
+            "Setting ExitCode on VerifySetupResponse is not supported; it is computed from verification results.");
+    }
+
     [JsonPropertyName("results")]
     public List<RequirementCheckResult>? Results { get; set; }
 

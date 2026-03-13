@@ -15,7 +15,7 @@ public abstract class CommandResponse
 {
     private int? exitCode = null;
     [JsonIgnore]
-    public int ExitCode
+    public virtual int ExitCode
     {
         get
         {

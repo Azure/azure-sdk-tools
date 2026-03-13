@@ -133,3 +133,55 @@ model MyPatchModel {
   ...ArmTagsProperty;
 }
 ```
+
+## GitHub Actions Example Validation Fails Due to Spec Constraints
+
+When using tools like `oav generate-examples` to auto‑generate Swagger examples for a TypeSpec‑based spec, the generated examples may **not satisfy constraints defined in the spec**, such as string patterns or required formats. This is expected behavior: the example generator primarily produces a **structural placeholder**, not fully valid values.
+
+Common validation failures indicate that:
+
+- Example strings do not match required patterns
+- Example values do not satisfy required formats
+
+In most cases, the validation error message explicitly instructs you to replace the placeholder with a compliant value. The intended workflow is to **manually update the auto‑generated example values** so they conform to the constraints. Full placeholder materialization is not automated today and has not been prioritized, so manual adjustment is required to pass CI validation.
+
+## Swagger LintDiff Fails When Swagger Files Are Not Referenced by README
+
+When a PR fails with a Swagger LintDiff error stating that **no affected swaggers were found**, it means the Swagger file reported in the error is **not reachable from the service `readme.md`**, either directly listed or indirectly referenced. LintDiff only analyzes Swagger files that are discoverable through the README; if a Swagger exists on disk but is not referenced, LintDiff treats it as orphaned and fails. To fix this, either **add the Swagger file to the appropriate `readme.md`** or **remove the unused Swagger file** so that all Swagger inputs are consistently tracked by the README-driven spec model.
+
+## Generating and Maintaining Examples in TypeSpec and Swagger
+
+When generating examples for a TypeSpec‑based API, tools like `oav generate-examples` are intended as **best‑effort helpers** and do not fully control naming, synchronization, or semantic correctness on their own.
+
+**Example naming** is determined by the `title` field inside the example JSON, not by the file name. TypeSpec and `tsv` do not enforce naming conventions for example files as long as they are placed in the configured examples directory. However, an example may be dropped if another example shares the same `title` and `operationId`.
+
+`oav generate-examples` is designed to help bootstrap examples from Swagger, but the generated output often requires **manual editing**. It may rename examples, remove duplicates, or drop entries when later processed by `tsv`.
+
+The **source of truth for examples is the `examples` folder alongside the TypeSpec sources**. During compilation, `tsp compile` / `tsv` copies these examples into the generated Swagger output. Swagger examples should not be treated as authoritative or manually synchronized.
+
+For minimum‑set examples, generated responses may still include properties that are **required by the resource model**. For tracked resources, required properties (such as those mandated by the resource shape) will appear even when generating minimal example sets.
+
+## Creating Examples for TypeSpec Models in Azure API Specs
+
+In Azure API specifications, **examples are required at the operation level**, not at the model level. The `@example()` decorator on models is not supported for Azure API Specs and should not be used to satisfy example requirements.
+
+The expected workflow is to **provide operation examples**, which naturally include serialized representations of the models used by those operations. Models themselves do not have `operationId`s; instead, examples are associated with operations via the `operationId` defined in the OpenAPI document.
+
+The recommended process is:
+
+- Design the API in TypeSpec.
+- Compile the TypeSpec to generate OpenAPI.
+- Use `oav` to generate example files for each operation, which include populated `operationId` and `title` fields.
+- Manually review and refine the generated examples to improve documentation quality or cover important scenarios.
+- Place the finalized example files under the `examples/<api-version>/` folder in the TypeSpec source tree, where they are automatically associated with the corresponding operations based on `operationId` and `title`.
+
+## Viewing CI Workflow Details for Azure REST API PRs
+
+When a contributor cannot view validation workflow details on an Azure REST API pull request and sees a message such as **“at least one review required to see the workflow”**, the issue is due to **insufficient permissions**.
+
+Access to detailed workflow logs requires the appropriate Azure SDK or repository permissions. Contributors must request or obtain access through the official Azure SDK onboarding and permissions process.
+
+**Resolution**
+
+To gain visibility into workflow runs and validation errors, request the required permissions as described at:  
+https://aka.ms/azsdk/access

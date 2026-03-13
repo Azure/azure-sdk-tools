@@ -184,3 +184,56 @@ interface ProviderOperations extends Azure.ResourceManager.Operations {}
 ```
 
 Suppress the resulting naming warning. Do not use the `@operationId` decorator.
+
+## How to implement a custom model for patch
+
+You want to make sure to represent the properties that can be PATCHed in the patch operation, generally this includes any properties that are not generated on the service (e.g. type, id, name, systemData) or settable only on creation (e.g. location), and make sure these properties are optional and have no defaults.
+
+**You can do this either be creating a separate model type for patch, or by using standard transformations to filter out the readOnly and createOnly properties and make these optional.**
+
+- Here is a sample of using a fully bespoke patch model:
+
+```
+model MyResourceUpdate {
+  ...Azure.ResourceManager.Foundations.ArmTagsProperty;
+  properties?: MyResourcePropertiesUpdate;
+}
+
+model MyResourcePropertiesUpdate {
+  fieldA?: string;
+  fieldB?: int32;
+}
+
+@armResourceOperations
+interface MyResources {
+  update is ArmCustomPatchSync<MyResource, MyResourceUpdate>;
+}
+```
+
+- Here is a sample of using transformations:
+
+```
+alias PatchModel<
+  T extends {},
+  OmittedProperties extends string = "",
+  NameTemplate extends valueof string = "{name}Update"
+> = UpdateableProperties<
+      OptionalProperties<
+        OmitDefaults<OmitProperties<T, OmittedProperties>>
+      >
+    >;
+
+model MyResourcePropertiesUpdate is PatchModel<MyResourceProperties>;
+
+model MyResourceUpdate
+  is PatchModel<MyResource, OmittedProperties = "name" | "properties"> {
+  properties?: MyResourcePropertiesUpdate;
+}
+
+@armResourceOperations
+interface MyResources {
+  update is ArmCustomPatchSync<MyResource, MyResourceUpdate>;
+}
+```
+
+The advantage to using transformations is that, as the model versions, the PATCH model will also version automatically, whereas if you use a completely bespoke patch model, you will need to remember to make appropriate versioning changes there as well as in the resource model.

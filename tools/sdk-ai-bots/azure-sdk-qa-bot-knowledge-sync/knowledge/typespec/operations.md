@@ -51,3 +51,20 @@ model GcpCloudProfile {
 ```
 
 The `@discriminated` decorator exists for more flexible patterns but is not yet supported by all SDK emitters. Use `@discriminator` for now.
+
+## Modeling Mutually Exclusive Properties in TypeSpec for Azure APIs
+
+**Scenario**
+
+A model needs to enforce that **only one of multiple property objects can be specified**. An attempt is made to use **discriminated unions** to model this exclusivity.
+
+**Guidance**
+
+For Azure APIs, **discriminated unions are not currently supported by Azure emitters**, so they are not a viable solution. Additionally, modeling a **polymorphic resource type** (a single resource with multiple mutually exclusive RP‑specific schemas) is considered an **anti‑pattern**.
+
+The recommended approaches are:
+
+- Define **separate resources** instead of one polymorphic resource, or
+- Make a **property within the RP‑specific properties polymorphic**, using **inheritance‑based discrimination** rather than discriminated unions.
+
+While it is technically possible to use a discriminator property (such as a `kind` field) at the resource level, this is discouraged and should be avoided.

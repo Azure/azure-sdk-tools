@@ -1,6 +1,6 @@
 ---
 name: sensei
-description: "**WORKFLOW SKILL** — Iteratively improve skill frontmatter compliance using the Ralph loop pattern. WHEN: \"run sensei\", \"sensei help\", \"improve skill\", \"fix frontmatter\", \"skill compliance\", \"frontmatter audit\", \"score skill\", \"check skill tokens\". INVOKES: waza CLI, git. FOR SINGLE OPERATIONS: use waza check directly."
+description: "Improve skill frontmatter compliance iteratively using the Ralph loop pattern. **WORKFLOW SKILL**. WHEN: \"run sensei\", \"sensei help\", \"improve skill\", \"fix frontmatter\", \"skill compliance\", \"frontmatter audit\", \"score skill\", \"check skill tokens\". INVOKES: waza CLI, git."
 license: MIT
 metadata:
   author: Microsoft
@@ -21,7 +21,6 @@ Run sensei on <skill1>, <skill2>
 Run sensei on all skills
 ```
 
-Use `--skip-integration` for faster iteration (trigger tests only).
 
 ## The Ralph Loop
 
@@ -42,6 +41,19 @@ Target: High compliance, ≤500 tokens, all links valid.
 - Keep ≤60 words, ≤1024 chars
 - Prefer `WHEN:` over `USE FOR:` for cross-model reliability
 
+## Examples
+
+- "Run sensei on pipeline-troubleshooting"
+- "Run sensei on all skills"
+
+## Prerequisites
+
+No MCP servers required. Uses waza CLI and git only.
+
+## Troubleshooting
+
+If waza check fails to run, verify waza is installed and you are in the skills directory.
+
 ## References
 
 - [SCORING.md](references/SCORING.md) — Scoring criteria
@@ -49,7 +61,3 @@ Target: High compliance, ≤500 tokens, all links valid.
 - [EXAMPLES.md](references/EXAMPLES.md) — Before/after examples
 - [TOKEN-INTEGRATION.md](references/TOKEN-INTEGRATION.md) — Token budgets
 
-## Related Skills
-
-- **markdown-token-optimizer** — Token optimization
-- **skill-authoring** — Skill writing guidelines

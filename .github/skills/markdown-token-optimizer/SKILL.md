@@ -1,6 +1,6 @@
 ---
 name: markdown-token-optimizer
-description: "Analyzes markdown files for token efficiency. TRIGGERS: optimize markdown, reduce tokens, token count, token bloat, too many tokens, make concise, shrink file, file too large, optimize for AI, token efficiency, verbose markdown, reduce file size"
+description: "Analyze markdown files for token efficiency and reduce context-window bloat. TRIGGERS: optimize markdown, reduce tokens, token count, token bloat, too many tokens, make concise, shrink file, file too large, optimize for AI, token efficiency, verbose markdown, reduce file size"
 license: MIT
 metadata:
   author: Microsoft
@@ -33,6 +33,19 @@ See [ANTI-PATTERNS.md](references/ANTI-PATTERNS.md) for detection patterns and [
 - Suggest only (no auto-modification)  
 - Preserve clarity in all optimizations
 - SKILL.md target: <500 tokens, references: <1000 tokens
+
+## Examples
+
+- "Optimize this SKILL.md for tokens"
+- "Count tokens in references/SCORING.md"
+
+## Troubleshooting
+
+If token count seems high, check for hidden bloat like emojis, repeated headings, or verbose tables.
+
+## Prerequisites
+
+No MCP servers required. Uses local CLI tools only.
 
 ## References
 

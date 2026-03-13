@@ -12,7 +12,7 @@ Use this checklist before submitting a new skill or updating an existing one.
 - [ ] `description` field is present and 1-1024 characters
 - [ ] `description` explains WHAT the skill does
 - [ ] `description` explains WHEN to use it (use `WHEN:` with quoted trigger phrases)
-- [ ] `description` avoids bare `DO NOT USE FOR:` without redirects (acceptable with `(use skill-name)` to route between related skills — see [SCORING.md](/.github/skills/sensei/references/SCORING.md) check 4)
+- [ ] `description` avoids bare `DO NOT USE FOR:` without redirects (acceptable with `(use skill-name)` to route between related skills — see SCORING.md (in sensei skill) check 4)
 - [ ] `description` is ≤ 60 words (cross-model density)
 - [ ] `description` uses inline double-quoted string for short descriptions; `>-` folded scalar is acceptable for longer descriptions with routing instructions
 - [ ] No XML angle brackets (`< >`) in frontmatter

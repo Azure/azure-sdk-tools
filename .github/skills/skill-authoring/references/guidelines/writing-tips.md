@@ -61,9 +61,9 @@ Use relative paths from the skill root with descriptive link text:
 See [the API reference](references/api-reference.md) for details.
 
 <!-- ❌ Bad: path as text wastes tokens -->
-See [the API reference](references/examples.md) for details.
+See [the API reference](references/file.md) for details.
 ```
-See [references/examples.md](references/examples.md) for details.
+`See [references/file.md](references/file.md) for details.`
 Keep references one level deep. Avoid chains like `references/detail/more/file.md`.
 
 ## Tables with Links

@@ -2,12 +2,15 @@
 // Licensed under the MIT License.
 using System.CommandLine;
 using System.ComponentModel;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Azure.Core;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
@@ -18,6 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 public class PipelineTool(
     IPipelineIdentifierHelper pipelineHelper,
     IHttpClientFactory httpClientFactory,
+    IAzureService azureService,
     ILogger<PipelineTool> logger
 ) : MCPTool
 {
@@ -88,6 +92,14 @@ public class PipelineTool(
         }
 
         var httpClient = httpClientFactory.CreateClient();
+
+        if (buildProject != Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
+        {
+            var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
+            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
+        }
+
         var buildUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{buildProject}/_apis/build/builds/{build.BuildId}?api-version=7.1";
         logger.LogDebug("Getting build status from {url}", buildUrl);
         var response = await httpClient.GetAsync(buildUrl);

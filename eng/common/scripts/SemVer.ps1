@@ -30,10 +30,12 @@ class AzureEngSemanticVersion : IComparable {
   [bool] $IsSemVerFormat
   [string] $DefaultPrereleaseLabel
   [string] $DefaultAlphaReleaseLabel
+  [int] $PostReleaseNumber
 
   # Regex inspired but simplified from https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
   # Validation: https://regex101.com/r/vkijKf/426
-  static [string] $SEMVER_REGEX = "(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?"
+  # Supports Python post releases per PEP 440: X.Y.postN, X.YaN.postM, X.YbN.postM, X.YrcN.postM
+  static [string] $SEMVER_REGEX = "(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?(?:\.post(?<postrelease>\d+))?"
 
   static [AzureEngSemanticVersion] ParseVersionString([string] $versionString)
   {
@@ -101,6 +103,10 @@ class AzureEngSemanticVersion : IComparable {
         $this.BuildNumberSeparator = $matches["buildnumsep"]
         $this.BuildNumber = $matches["buildnumber"]
       }
+
+      if ($null -ne $matches['postrelease']) {
+        $this.PostReleaseNumber = [int]$matches["postrelease"]
+      }
     }
     else
     {
@@ -140,6 +146,9 @@ class AzureEngSemanticVersion : IComparable {
       if ($this.BuildNumber) {
           $versionString += $this.BuildNumberSeparator + $this.BuildNumber
       }
+    }
+    if ($this.PostReleaseNumber) {
+      $versionString += ".post" + $this.PostReleaseNumber
     }
     return $versionString;
   }
@@ -239,7 +248,10 @@ class AzureEngSemanticVersion : IComparable {
     $ret = $thisPrereleaseNumber.CompareTo($otherPrereleaseNumber)
     if ($ret) { return $ret }
 
-    return ([int] $this.BuildNumber).CompareTo([int] $other.BuildNumber)
+    $ret = ([int] $this.BuildNumber).CompareTo([int] $other.BuildNumber)
+    if ($ret) { return $ret }
+
+    return $this.PostReleaseNumber.CompareTo($other.PostReleaseNumber)
   }
 
   static [string[]] SortVersionStrings([string[]] $versionStrings)
@@ -428,6 +440,53 @@ class AzureEngSemanticVersion : IComparable {
     if ($expected -ne $version.ToString()) {
       Write-Host "Error: version string did not correctly increment. Expected: $expected, Actual: $version"
     }
+
+    # Python post release tests (PEP 440)
+    $global:Language = "python"
+    $postReleaseVerString = "1.0.0.post1"
+    $postReleaseVer = [AzureEngSemanticVersion]::new($postReleaseVerString)
+    if (!$postReleaseVer.IsSemVerFormat) {
+      Write-Host "Error: Python post release version $postReleaseVerString should be valid SemVer format"
+    }
+    if ($postReleaseVer.IsPrerelease) {
+      Write-Host "Error: Python post release version $postReleaseVerString should not be prerelease"
+    }
+    if ($postReleaseVer.PostReleaseNumber -ne 1) {
+      Write-Host "Error: Python post release version $postReleaseVerString should have PostReleaseNumber=1, got $($postReleaseVer.PostReleaseNumber)"
+    }
+    if ($postReleaseVerString -ne $postReleaseVer.ToString()) {
+      Write-Host "Error: Python post release string did not round trip. Expected: $postReleaseVerString, Actual: $($postReleaseVer.ToString())"
+    }
+
+    $betaPostReleaseVerString = "1.0.0b1.post2"
+    $betaPostReleaseVer = [AzureEngSemanticVersion]::new($betaPostReleaseVerString)
+    if (!$betaPostReleaseVer.IsSemVerFormat) {
+      Write-Host "Error: Python beta post release version $betaPostReleaseVerString should be valid SemVer format"
+    }
+    if (!$betaPostReleaseVer.IsPrerelease) {
+      Write-Host "Error: Python beta post release version $betaPostReleaseVerString should be prerelease"
+    }
+    if ($betaPostReleaseVer.PostReleaseNumber -ne 2) {
+      Write-Host "Error: Python beta post release version $betaPostReleaseVerString should have PostReleaseNumber=2, got $($betaPostReleaseVer.PostReleaseNumber)"
+    }
+    if ($betaPostReleaseVerString -ne $betaPostReleaseVer.ToString()) {
+      Write-Host "Error: Python beta post release string did not round trip. Expected: $betaPostReleaseVerString, Actual: $($betaPostReleaseVer.ToString())"
+    }
+
+    # Verify sort order includes post releases: 1.0.0.post2 > 1.0.0.post1 > 1.0.0 > 1.0.0b1.post1 > 1.0.0b1
+    $postReleaseVersions = @("1.0.0.post1", "1.0.0", "1.0.0b1", "1.0.0.post2", "1.0.0b1.post1")
+    $expectedPostSort = @("1.0.0.post2", "1.0.0.post1", "1.0.0", "1.0.0b1.post1", "1.0.0b1")
+    $postReleaseSort = [AzureEngSemanticVersion]::SortVersionStrings($postReleaseVersions)
+    for ($i = 0; $i -lt $expectedPostSort.Count; $i++) {
+      if ($postReleaseSort[$i] -ne $expectedPostSort[$i]) {
+        Write-Host "Error: Incorrect Python post release version sort:"
+        Write-Host "Expected: $($expectedPostSort -join ', ')"
+        Write-Host "Actual: $($postReleaseSort -join ', ')"
+        break
+      }
+    }
+
+    $global:Language = ""
 
     Write-Host "QuickTests done"
   }

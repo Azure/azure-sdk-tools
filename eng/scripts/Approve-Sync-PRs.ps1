@@ -48,62 +48,6 @@ $syncPipelineDefinitionIds = @(
   6130  # sync-.github.yml
 )
 
-foreach ($defId in $syncPipelineDefinitionIds) {
-  $buildsUrl = "$devOpsBaseUrl/_apis/build/builds?definitions=$defId&branchName=refs/pull/$ToolsPRNumber/merge&`$top=1&queryOrder=queueTimeDescending&api-version=7.0"
-
-  try {
-    $buildsResponse = Invoke-RestMethod $buildsUrl -Headers $headers
-  }
-  catch {
-    Write-Warning "Failed to query builds for pipeline definition ${defId}: $_"
-    continue
-  }
-
-  if ($buildsResponse.count -eq 0) {
-    Write-Host "No builds found for pipeline definition $defId for PR #$ToolsPRNumber"
-    continue
-  }
-
-  $build = $buildsResponse.value[0]
-  $buildUrl = "$devOpsBaseUrl/_build/results?buildId=$($build.id)"
-  Write-Host "Found build $($build.id) for pipeline definition $defId (status: $($build.status)) - $buildUrl"
-
-  # Use build timeline to find stages with pending approvals.
-  # The Checkpoint.Approval record ID in the timeline IS the approval ID.
-  $timelineUrl = "$devOpsBaseUrl/_apis/build/builds/$($build.id)/timeline?api-version=7.0"
-
-  try {
-    $timeline = Invoke-RestMethod $timelineUrl -Headers $headers
-  }
-  catch {
-    Write-Warning "Failed to get timeline for build $($build.id): $_"
-    continue
-  }
-
-  $pendingCheckpointApprovals = @($timeline.records | Where-Object {
-    $_.type -eq "Checkpoint.Approval" -and $_.state -eq "inProgress"
-  })
-
-  if ($pendingCheckpointApprovals.Count -eq 0) {
-    Write-Host "No stages waiting for approval in build $($build.id)"
-    continue
-  }
-
-  foreach ($checkpointApproval in $pendingCheckpointApprovals) {
-    if ($PSCmdlet.ShouldProcess($buildUrl, "Approve pending pipeline stage")) {
-      Write-Host "Approving pipeline stage (approval $($checkpointApproval.id)) for build $($build.id)..."
-      $approveUrl = "$devOpsBaseUrl/_apis/pipelines/approvals?api-version=7.1"
-      $body = ConvertTo-Json @(@{
-        approvalId = $checkpointApproval.id
-        status     = "approved"
-        comment    = "Approved via Approve-Sync-PRs.ps1 for tools PR #$ToolsPRNumber"
-      })
-      Invoke-RestMethod $approveUrl -Method Patch -Headers $headers -Body $body -ContentType "application/json" | Out-Null
-      Write-Host "Approved pipeline stage (approval $($checkpointApproval.id)) for build $($build.id)"
-    }
-  }
-}
-
 $checks = gh pr checks $ToolsPRNumber -R $ToolsRepo --json "name,link" | ConvertFrom-Json
 $syncChecks = $checks | Where-Object { $_.name -match "azure-sdk-tools - sync - [^(]*$" }
 $prList = @()

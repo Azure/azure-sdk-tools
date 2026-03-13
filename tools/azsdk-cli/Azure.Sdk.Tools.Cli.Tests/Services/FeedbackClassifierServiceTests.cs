@@ -12,6 +12,8 @@ using Moq;
 using NUnit.Framework;
 using System.Reflection;
 
+using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
+
 namespace Azure.Sdk.Tools.Cli.Tests.Services;
 
 /// <summary>
@@ -23,7 +25,7 @@ public class FeedbackClassifierServiceTests
 {
     private Mock<ICopilotAgentRunner> _mockAgentRunner = null!;
     private Mock<ITypeSpecHelper> _mockTypeSpecHelper = null!;
-    private ILoggerFactory _loggerFactory = null!;
+    private Mock<ILoggerFactory> _mockLoggerFactory = null!;
     private string _testTspPath = null!;
     private string _specRepoRoot = null!;
     private string _typeSpecProjectPath = null!;
@@ -55,7 +57,9 @@ public class FeedbackClassifierServiceTests
     {
         _mockAgentRunner = new Mock<ICopilotAgentRunner>();
         _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
-        _loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+        _mockLoggerFactory = new Mock<ILoggerFactory>();
+        _mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new TestLogger<FeedbackClassifierService>());
         
         // Set up a fake tsp project path for mocked tests
         _specRepoRoot = Path.Combine(Path.GetTempPath(), "test-spec-repo-" + Guid.NewGuid().ToString("N")[..8]);
@@ -73,8 +77,6 @@ public class FeedbackClassifierServiceTests
     [TearDown]
     public void TearDown()
     {
-        _loggerFactory?.Dispose();
-        
         // Clean up temp files
         if (Directory.Exists(_specRepoRoot))
         {
@@ -88,7 +90,7 @@ public class FeedbackClassifierServiceTests
     {
         return new FeedbackClassifierService(
             _mockAgentRunner.Object,
-            _loggerFactory,
+            _mockLoggerFactory.Object,
             _mockTypeSpecHelper.Object);
     }
 
@@ -133,9 +135,13 @@ public class FeedbackClassifierServiceTests
             tokenUsageHelper,
             new TestLogger<CopilotAgentRunner>());
 
+        var mockLoggerFactory = new Mock<ILoggerFactory>();
+        mockLoggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>()))
+            .Returns(new TestLogger<FeedbackClassifierService>());
+
         return new FeedbackClassifierService(
             copilotAgentRunner,
-            LoggerFactory.Create(builder => builder.AddConsole()),
+            mockLoggerFactory.Object,
             typeSpecHelper);
     }
 
@@ -374,13 +380,9 @@ public class FeedbackClassifierServiceTests
     /// - REQUIRES_MANUAL_INTERVENTION: Code-level changes (custom retry, serialization)
     /// </summary>
     [Test]
+    [Category(Integration)]
     public async Task Live_ClassifyAsync_AllFeedbackCategories_ClassifiesCorrectly()
     {
-        if (!await CopilotTestHelper.IsCopilotAvailableAsync())
-        {
-            Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
-        }
-
         var service = CreateRealService();
 
         var items = new List<FeedbackItem>
@@ -439,13 +441,9 @@ public class FeedbackClassifierServiceTests
     /// This represents a retry scenario where previous TypeSpec customization attempt failed.
     /// </summary>
     [Test]
+    [Category(Integration)]
     public async Task Live_ClassifyAsync_WithErrorContext_ClassifiedAsRequiresManualIntervention()
     {
-        if (!await CopilotTestHelper.IsCopilotAvailableAsync())
-        {
-            Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
-        }
-
         var service = CreateRealService();
 
         // Represents a retry scenario: originally TSP_APPLICABLE but failed compilation
@@ -478,13 +476,9 @@ public class FeedbackClassifierServiceTests
     /// Note: NextAction guidance generation was removed.
     /// </summary>
     [Test]
+    [Category(Integration)]
     public async Task Live_ClassifyAsync_RequiresManualInterventionItems_ClassifiedCorrectly()
     {
-        if (!await CopilotTestHelper.IsCopilotAvailableAsync())
-        {
-            Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
-        }
-
         var service = CreateRealService();
 
         // Request that requires code-level SDK implementation - no TypeSpec decorator can address

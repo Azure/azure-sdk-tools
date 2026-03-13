@@ -8,6 +8,8 @@ using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 
+using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
+
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 {
     internal class ReadMeGeneratorToolTests
@@ -68,21 +70,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         }
 
         [Test]
+        [Category(Integration)]
         public void TestReadmeGeneratorToolLive()
         {
-            var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
+            var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")
+                ?? throw new InconclusiveException("AZURE_OPENAI_ENDPOINT is not set");
 
-            if (endpoint == null)
-            {
-                Assert.Ignore("Skipping test as AZURE_OPENAI_ENDPOINT is not set");
-            }
-
-            var languageRepo = Environment.GetEnvironmentVariable("AZURE_SDK_FOR_GO_PATH");
-
-            if (languageRepo == null)
-            {
-                Assert.Ignore("Skipping test as AZURE_SDK_FOR_GO_PATH is not set");
-            }
+            var languageRepo = Environment.GetEnvironmentVariable("AZURE_SDK_FOR_GO_PATH")
+                ?? throw new InconclusiveException("AZURE_SDK_FOR_GO_PATH is not set");
 
             var command = tool.GetCommandInstances().First();
             var readmeOutputPath = Path.GetTempFileName();

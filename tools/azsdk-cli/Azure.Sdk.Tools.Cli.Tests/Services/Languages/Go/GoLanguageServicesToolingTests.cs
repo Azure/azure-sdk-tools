@@ -8,8 +8,11 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
+using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
+
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
+    [Category(RequiresGoTooling)]
     internal class GoLanguageServicesToolingTests
     {
         private TempDirectory tempDir = null!;
@@ -18,8 +21,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
 
         private GoLanguageService LangService { get; set; } = null!;
-
-        private readonly Version goMinimumVersion = Version.Parse("1.24");
 
         [SetUp]
         public async Task SetUp()
@@ -44,20 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 Mock.Of<ISpecGenSdkConfigHelper>(),
                 Mock.Of<IChangelogHelper>());
 
-            if (!await LangService.CheckDependencies(CancellationToken.None))
-            {
-                Assert.Ignore("golang tooling dependencies are not installed, can't run GoLanguageSpecificChecksTests");
-            }
-
             await LangService.CreateEmptyPackage(packagePath, "github.com/Azure/azure-sdk-for-go/sdk/template/aztemplate", CancellationToken.None);
-
-            // check that our current version of Go is new enough for these tests.
-            var version = await GoLanguageService.GetGoModVersionAsync(Path.Join(packagePath, "go.mod"));
-
-            if (version.CompareTo(goMinimumVersion) < 0)
-            {
-                Assert.Ignore($"You'll need Go {goMinimumVersion}+, in the path, for these tests");
-            }
         }
 
         [TearDown]
@@ -109,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(identityLine, Is.Not.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0"), "go get updates dependencies properly");
 
             var currentVersion = await GoLanguageService.GetGoModVersionAsync(goModPath);
-            Assert.That(currentVersion, Is.GreaterThanOrEqualTo(goMinimumVersion));
+            Assert.That(currentVersion, Is.GreaterThanOrEqualTo(Version.Parse("1.24")));
 
             resp = await LangService.FormatCode(packagePath, false, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
@@ -138,9 +126,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
+        [Category(Integration)]
         public async Task TestGoLanguageLinting()
         {
-            var goRepoRoot = IgnoreTestIfRepoNotConfigured();
+            var goRepoRoot = Environment.GetEnvironmentVariable("AZSDK_CLI_TEST_AZSDKGO")
+                ?? throw new InconclusiveException("AZSDK_CLI_TEST_AZSDKGO is not set to a Go repo path");
 
             var resp = await LangService.LintCode(Path.Join(goRepoRoot, "sdk", "template", "aztemplate"));
 
@@ -153,9 +143,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
+        [Category(Integration)]
         public async Task TestGetPackageInfo()
         {
-            var actualSdkRepo = IgnoreTestIfRepoNotConfigured();
+            var actualSdkRepo = Environment.GetEnvironmentVariable("AZSDK_CLI_TEST_AZSDKGO")
+                ?? throw new InconclusiveException("AZSDK_CLI_TEST_AZSDKGO is not set to a Go repo path");
             var fullPackagePath = Path.Join(actualSdkRepo, "sdk/messaging/azservicebus");
             var packageInfo = await LangService.GetPackageInfo(fullPackagePath);
 
@@ -260,24 +252,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         /// <summary>
-        /// Ignores the test if you don't have a path to a real Go repo configured.
+        /// Creates a test Go package at the given directory with a go.mod and internal/version.go.
         /// </summary>
-        /// <returns></returns>
-        private static string IgnoreTestIfRepoNotConfigured()
-        {
-            // Setting this lets you run tests that require a live environment.
-            const string GoLiveTestVarName = "AZSDK_CLI_TEST_AZSDKGO";
-            var actualSdkRepo = Environment.GetEnvironmentVariable(GoLiveTestVarName);
-
-            if (actualSdkRepo != null)
-            {
-                return actualSdkRepo;
-            }
-
-            Assert.Ignore("Live testing disabled for GoLanguageServiceTests: AZSDK_CLI_TEST_AZSDKGO is not set to a Go repo path");
-            return "";
-        }
-
         private static async Task CreateTestGoPackageAsync(string packageDirectory, string modulePath)
         {
             Directory.CreateDirectory(packageDirectory);

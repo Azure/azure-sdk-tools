@@ -9,6 +9,8 @@ using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using GitHub.Copilot.SDK;
 using Moq;
 
+using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
+
 namespace Azure.Sdk.Tools.Cli.Tests.Services.TypeSpec;
 
 /// <summary>
@@ -63,14 +65,9 @@ internal class TypeSpecCustomizationServiceTests
     /// Will be skipped if Copilot is not available.
     /// </summary>
     [Test]
-    [Explicit]  // Mark as explicit/manual because this test takes 26 seconds
+    [Category(Integration)]
     public async Task ApplyCustomization_WithRealCopilotSdk_CompletesSuccessfully()
     {
-        if (!await CopilotTestHelper.IsCopilotAvailableAsync())
-        {
-            Assert.Ignore("Skipping test as GitHub Copilot CLI is either not installed or not authenticated.");
-        }
-
         var logger = new TestLogger<TypeSpecCustomizationService>();
         var rawOutputHelper = Mock.Of<IRawOutputHelper>();
         var npxHelper = new NpxHelper(

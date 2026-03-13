@@ -230,7 +230,7 @@ public class WorkspaceManager
             var output = await process.StandardOutput.ReadToEndAsync();
             var error = await process.StandardError.ReadToEndAsync();
             await process.WaitForExitAsync();
-
+            Console.WriteLine($"Git command (attempt {attempt + 1}/{maxRetries + 1}): git {arguments}\nOutput: {output}\nError: {error}");
             if (process.ExitCode == 0)
             {
                 return;
@@ -243,6 +243,8 @@ public class WorkspaceManager
                 await Task.Delay(delayMs);
                 continue;
             }
+
+            Console.WriteLine($"Git command failed (attempt {attempt + 1}/{maxRetries + 1}): git {arguments}\n exit code: {process.ExitCode}\nOutput: {output}\nError: {error}");
 
             throw new InvalidOperationException(
                 $"Git command failed with exit code {process.ExitCode}: git {arguments}\n" +

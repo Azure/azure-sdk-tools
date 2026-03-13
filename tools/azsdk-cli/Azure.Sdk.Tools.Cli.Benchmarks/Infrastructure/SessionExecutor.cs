@@ -36,6 +36,8 @@ public class SessionExecutor : IDisposable
             var mcpServers = BuildMcpServers(config.AzsdkMcpPath) 
                 ?? await McpConfigLoader.LoadFromWorkspaceAsync(config.WorkingDirectory);
 
+            //(mcpServers["azure-sdk-mcp"] as McpLocalServerConfig).Env["AZURE_SDK_KB_ENDPOINT"] = "http://localhost:8088";
+
             var sessionConfig = new SessionConfig
             {
                 WorkingDirectory = config.WorkingDirectory,
@@ -54,18 +56,27 @@ public class SessionExecutor : IDisposable
                 {
                     OnPreToolUse = (input, invocation) =>
                     {
+                        Console.WriteLine($"Model is calling tool: {input.ToolName}");
                         config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
                         return Task.FromResult<PreToolUseHookOutput?>(null);
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
-                        toolCalls.Add(input.ToolName);
+                        if (input.ToolName == "skill")
+                        {
+                            toolCalls.Add($"{input.ToolName} {input.ToolArgs?.ToString()}");
+                        }
+                        else
+                        {
+                            toolCalls.Add(input.ToolName);
+                        }
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },
                 // Auto-respond to ask_user with a simple response
                 OnUserInputRequest = (request, invocation) =>
                 {
+                    Console.WriteLine($"Model requested user input with prompt: {request.Question}");
                     return Task.FromResult(new UserInputResponse
                     {
                         Answer = "Please proceed with your best judgment.",
@@ -75,13 +86,68 @@ public class SessionExecutor : IDisposable
             };
 
             await using var session = await _client.CreateSessionAsync(sessionConfig);
+            var done = new TaskCompletionSource();
+            session.On(evt =>
+            {
+                switch (evt)
+                {
+                    case AssistantMessageDeltaEvent delta:
+                        // Streaming message chunk - print incrementally
+                        Console.Write(delta.Data.DeltaContent);
+                        break;
+                    case AssistantReasoningDeltaEvent reasoningDelta:
+                        // Streaming reasoning chunk (if model supports reasoning)
+                        Console.Write(reasoningDelta.Data.DeltaContent);
+                        break;
+                    case AssistantMessageEvent msg:
+                        // Final message - complete content
+                        Console.WriteLine("\n--- Final message ---");
+                        Console.WriteLine(msg.Data.Content);
+                        Console.WriteLine("\n---End of Final message ---");
+                        break;
+                    case AssistantReasoningEvent reasoningEvt:
+                        // Final reasoning content (if model supports reasoning)
+                        Console.WriteLine("--- Reasoning ---");
+                        Console.WriteLine(reasoningEvt.Data.Content);
+                        Console.WriteLine("--- End of Reasoning ---");
+                        break;
+                    case ToolExecutionStartEvent toolStart:
+                        Console.WriteLine($"Tool execution started: {toolStart.Data.ToolName}, {toolStart.Data.Arguments?.ToString()}, {toolStart.Data.McpToolName}");
+                        break;
+                    case ToolExecutionCompleteEvent toolFinish:
+                        Console.WriteLine($"Tool {toolFinish.Data.ToolCallId} execution finished: {toolFinish.Data.Result?.DetailedContent}");
+                        break;
+                    case SessionIdleEvent:
+                        // Session finished processing
+                        done.SetResult();
+                        break;
+                }
+            });
 
             // Send prompt and wait for completion
             var messageOptions = new MessageOptions { Prompt = config.Prompt };
-            await session.SendAndWaitAsync(messageOptions, config.Timeout);
+
+                await session.SendAndWaitAsync(messageOptions, config.Timeout);
 
             // Get messages for debugging
             var messages = await session.GetMessagesAsync();
+            //Console.WriteLine("\n=== Execution Messages ===");
+            //var messagesString = string.Join(
+            //    Environment.NewLine,
+            //    messages.Select(m =>
+            //    {
+            //        var deltaEvent = m as AssistantMessageDeltaEvent;
+            //        return deltaEvent?.Data.DeltaContent ?? "(null)";
+            //    })
+            //);
+            //        var messagesJson = System.Text.Json.JsonSerializer.Serialize(
+            //  messages,
+            //    new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+            //);
+            //Console.WriteLine(messagesString);
+            //Console.WriteLine("=== End Messages ===\n");
+
+            // stream version
 
             stopwatch.Stop();
             return new ExecutionResult
@@ -114,7 +180,10 @@ public class SessionExecutor : IDisposable
     {
         // Priority: config param > env var > null (let SDK use repo config)
         var path = azsdkPath ?? Environment.GetEnvironmentVariable("AZSDK_MCP_PATH");
-        if (path == null) return null;
+        if (path == null)
+        {
+            return null;
+        }
 
         return new Dictionary<string, object>
         {

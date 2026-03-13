@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -22,7 +21,6 @@ public class PipelineTestsTool(
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
     private const string GetPipelineLlmArtifactsToolName = "azsdk_get_pipeline_llm_artifacts";
-    private readonly Argument<string> pipelineArg = new("Pipeline link, Build ID, or PR link");
 
     private readonly Option<string> projectOpt = new("--project", "-p")
     {
@@ -31,19 +29,19 @@ public class PipelineTestsTool(
     };
 
     protected override Command GetCommand() =>
-        new McpCommand("test-results", "Get test results for a pipeline run", GetPipelineLlmArtifactsToolName) { pipelineArg, projectOpt };
+        new McpCommand("test-results", "Get test results for a pipeline run", GetPipelineLlmArtifactsToolName) { SharedOptions.PipelineLocator, projectOpt };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var pipelineIdentifier = parseResult.GetValue(pipelineArg);
+        var pipelineIdentifier = parseResult.GetValue(SharedOptions.PipelineLocator);
         var project = parseResult.GetValue(projectOpt);
 
         return await GetPipelineLlmArtifacts(pipelineIdentifier, project);
     }
 
-    [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run. Accepts a build ID, pipeline link, or GitHub PR link.")]
+    [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number.")]
     public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(
-        [Description("Build ID, pipeline link, or GitHub PR link")] string pipelineIdentifier,
+        [Description("Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")] string pipelineIdentifier,
         [Description("Pipeline project name (optional)")] string? project = null)
     {
         try

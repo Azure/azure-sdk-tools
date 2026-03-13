@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -27,8 +26,6 @@ public class PipelineTool(
     private const string getPipelineStatusCommandName = "status";
     private const string GetPipelineStatusToolName = "azsdk_get_pipeline_status";
 
-    private readonly Argument<string> pipelineArg = new("Pipeline link, Build ID, or PR link");
-
     private readonly Option<string> projectOpt = new("--project", "-p")
     {
         Description = "Pipeline project name",
@@ -36,19 +33,19 @@ public class PipelineTool(
     };
 
     protected override Command GetCommand() =>
-        new McpCommand(getPipelineStatusCommandName, "Get pipeline run status", GetPipelineStatusToolName) { pipelineArg, projectOpt };
+        new McpCommand(getPipelineStatusCommandName, "Get pipeline run status", GetPipelineStatusToolName) { SharedOptions.PipelineLocator, projectOpt };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var pipelineIdentifier = parseResult.GetValue(pipelineArg);
+        var pipelineIdentifier = parseResult.GetValue(SharedOptions.PipelineLocator);
         var project = parseResult.GetValue(projectOpt);
 
         return await GetPipelineRunStatus(pipelineIdentifier, project);
     }
 
-    [McpServerTool(Name = GetPipelineStatusToolName), Description("Get pipeline status for a given build ID, pipeline link, or GitHub PR link")]
+    [McpServerTool(Name = GetPipelineStatusToolName), Description("Get pipeline status for a given Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")]
     public async Task<ObjectCommandResponse> GetPipelineRunStatus(
-        [Description("Build ID, pipeline link, or GitHub PR link")] string pipelineIdentifier,
+        [Description("Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")] string pipelineIdentifier,
         [Description("Pipeline project name (optional)")] string? project = null)
     {
         try

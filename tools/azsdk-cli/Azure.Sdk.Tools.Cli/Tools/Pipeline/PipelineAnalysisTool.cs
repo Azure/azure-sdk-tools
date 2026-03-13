@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Linq;
 using System.Text.Json;
 using Azure.Core;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -31,7 +31,6 @@ public class PipelineAnalysisTool(
     ILogger<PipelineAnalysisTool> logger
 ) : MCPTool
 {
-    private readonly Argument<string> pipelineArg = new("Pipeline link, Build ID, or PR link");
     private readonly Option<int> logIdOpt = new("--log-id")
     {
         Description = "ID of the pipeline task log",
@@ -51,12 +50,12 @@ public class PipelineAnalysisTool(
     protected override Command GetCommand() =>
         new McpCommand("analyze", "Analyze a pipeline run", AnalyzePipelineToolName)
         {
-            pipelineArg, projectOpt, logIdOpt,
+            SharedOptions.PipelineLocator, projectOpt, logIdOpt,
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var pipelineIdentifier = parseResult.GetValue(pipelineArg);
+        var pipelineIdentifier = parseResult.GetValue(SharedOptions.PipelineLocator);
         var project = parseResult.GetValue(projectOpt);
         var logId = parseResult.GetValue(logIdOpt);
 
@@ -283,12 +282,17 @@ public class PipelineAnalysisTool(
                 logFilePaths.Add(tempPath);
             }
 
-            LogAnalysisResponse response = new() { Errors = [] };
+            LogAnalysisResponse response = new() {
+                PipelineUrl = pipelineHelper.GetPipelineUrl(project, buildId),
+                Errors = []
+            };
+
             foreach (var log in logFilePaths)
             {
                 var localLogResult = await logAnalysisHelper.AnalyzeLogContent(log, null, null, null, ct);
                 response.Errors.AddRange(localLogResult);
             }
+
             return response;
         }
         finally
@@ -301,9 +305,9 @@ public class PipelineAnalysisTool(
         }
     }
 
-    [McpServerTool(Name = AnalyzePipelineToolName), Description("Analyze what happened in an Azure pipeline build. Investigates pipeline runs, identifies failures, and explains build issues. Accepts a build ID, DevOps pipeline link, or GitHub PR link.")]
+    [McpServerTool(Name = AnalyzePipelineToolName), Description("Analyze what happened in an Azure pipeline build. Investigates pipeline runs, identifies failures, and explains build issues. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or Pull Request number.")]
     public async Task<AnalyzePipelineResponse> AnalyzePipeline(
-        [Description("Build ID, pipeline link, or GitHub PR link")] string pipelineIdentifier,
+        [Description("Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")] string pipelineIdentifier,
         [Description("Pipeline project name (optional)")] string? project = null,
         [Description("Specific log ID to analyze (optional)")] int? logId = null,
         CancellationToken ct = default)
@@ -329,7 +333,10 @@ public class PipelineAnalysisTool(
                 if (logId.HasValue && logId.Value != 0)
                 {
                     var logResult = await AnalyzePipelineFailureLogs(buildProject, build.BuildId, [logId.Value], ct);
-                    aggregatedResponse.FailedTasks.Add(logResult);
+                    if (logResult.HasErrors)
+                    {
+                        aggregatedResponse.FailedTasks.Add(logResult);
+                    }
                 }
                 else
                 {
@@ -339,16 +346,6 @@ public class PipelineAnalysisTool(
                         aggregatedResponse.ResponseErrors ??= [];
                         aggregatedResponse.ResponseErrors.Add($"Build {build.BuildId}: {result.ResponseError}");
                         continue;
-                    }
-
-                    // Tag each failed task with its pipeline URL for multi-build traceability
-                    if (build.PipelineUrl != null || buildProject != null)
-                    {
-                        var url = build.PipelineUrl ?? pipelineHelper.GetPipelineUrl(buildProject!, build.BuildId);
-                        foreach (var task in result.FailedTasks)
-                        {
-                            task.PipelineUrl = url;
-                        }
                     }
 
                     aggregatedResponse.FailedTasks.AddRange(result.FailedTasks);
@@ -411,7 +408,7 @@ public class PipelineAnalysisTool(
 
             return new AnalyzePipelineResponse()
             {
-                FailedTasks = [analysis],
+                FailedTasks = analysis.HasErrors ? [analysis] : [],
                 FailedTests = failedTestsByUri
             };
         }

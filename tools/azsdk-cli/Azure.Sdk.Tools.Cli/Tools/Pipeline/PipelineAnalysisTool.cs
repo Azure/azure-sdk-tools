@@ -4,7 +4,6 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text.Json;
-using System.Web;
 using Azure.Core;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.TestManagement.WebApi;
@@ -23,6 +22,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
 [McpServerToolType, Description("Fetches data from an Azure Pipelines run.")]
 public class PipelineAnalysisTool(
+    IPipelineIdentifierHelper pipelineHelper,
+    IHttpClientFactory httpClientFactory,
     IAzureService azureService,
     IDevOpsService devopsService,
     ILogAnalysisHelper logAnalysisHelper,
@@ -30,8 +31,7 @@ public class PipelineAnalysisTool(
     ILogger<PipelineAnalysisTool> logger
 ) : MCPTool
 {
-    // Options
-    private readonly Argument<string> pipelineArg = new("Pipeline link or Build ID");
+    private readonly Argument<string> pipelineArg = new("Pipeline link, Build ID, or PR link");
     private readonly Option<int> logIdOpt = new("--log-id")
     {
         Description = "ID of the pipeline task log",
@@ -60,22 +60,11 @@ public class PipelineAnalysisTool(
         var project = parseResult.GetValue(projectOpt);
         var logId = parseResult.GetValue(logIdOpt);
 
-        var (buildId, projectFromLink) = getBuildIdFromPipelineIdentifier(pipelineIdentifier);
         logger.LogInformation("Analyzing pipeline {pipelineIdentifier}...", pipelineIdentifier);
-
-        if (logId != 0)
-        {
-            return await AnalyzePipelineFailureLogs(project ?? projectFromLink, buildId, [logId], ct);
-        }
-        else
-        {
-            return await AnalyzePipeline(project ?? projectFromLink, buildId, ct);
-        }
+        return await AnalyzePipeline(pipelineIdentifier, project, logId != 0 ? logId : null, ct);
     }
 
     private bool initialized = false;
-
-    private readonly HttpClient httpClient = new();
     private BuildHttpClient buildClientValue;
     private BuildHttpClient buildClient
     {
@@ -93,39 +82,6 @@ public class PipelineAnalysisTool(
             Initialize();
             return testClientValue;
         }
-    }
-
-    private static (int, string?) getBuildIdFromPipelineIdentifier(string pipelineIdentifier)
-    {
-        // pipelineIdentifier could be a pipeline link like
-        // https://dev.azure.com/azure-sdk/internal/_build/results?buildId=5094469&view=results (buildId 5094469, project internal)
-        // or just an id like 5094469 (project will be auto-discovered)
-        if (int.TryParse(pipelineIdentifier, out int buildId))
-        {
-            return (buildId, null);
-        }
-
-        string? project = null;
-        if (!Uri.TryCreate(pipelineIdentifier, UriKind.Absolute, out var uri))
-        {
-            throw new ArgumentException($"Invalid pipeline identifier: {pipelineIdentifier}. Expected a valid absolute URI or an integer.");
-        }
-
-        // Extract devops project from URI segments
-        var segments = uri.Segments.Select(s => s.Trim('/')).ToList();
-        if (segments.Count >= 3)
-        {
-            project = segments[2];
-        }
-
-        var query = uri.Query;
-        var queryParams = HttpUtility.ParseQueryString(query);
-        if (int.TryParse(queryParams.Get("buildId"), out buildId))
-        {
-            return (buildId, project);
-        }
-
-        throw new ArgumentException($"Could not extract buildId from pipeline identifier: {pipelineIdentifier}");
     }
 
     private void Initialize(bool auth = true, CancellationToken ct = default)
@@ -154,40 +110,6 @@ public class PipelineAnalysisTool(
         initialized = true;
     }
 
-    private async Task<string> GetPipelineProject(int buildId, string? project = null, CancellationToken ct = default)
-    {
-        if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT || string.IsNullOrEmpty(project))
-        {
-            var pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT}/_apis/build/builds/{buildId}?api-version=7.1";
-            logger.LogDebug("Getting pipeline details from {url} via http", pipelineUrl);
-            var response = await httpClient.GetAsync(pipelineUrl, ct);
-            // If project is not specified, try both public and internal projects
-            if (string.IsNullOrEmpty(project) && !response.IsSuccessStatusCode)
-            {
-                return await GetPipelineProject(buildId, Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, ct);
-            }
-            // Devops will return a sign-in html page if the user is not authorized
-            if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
-            {
-                throw new Exception($"Not authorized to get pipeline details from {pipelineUrl}");
-            }
-            response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync(ct);
-            using var doc = JsonDocument.Parse(json);
-            var projectName = doc.RootElement.GetProperty("project").GetProperty("name").GetString();
-            if (string.IsNullOrEmpty(projectName))
-            {
-                throw new Exception($"Failed to parse project name from build details for build {buildId}");
-            }
-            return projectName;
-        }
-
-        var _pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}?api-version=7.1";
-        logger.LogDebug("Getting pipeline details from {url} via sdk", _pipelineUrl);
-        var build = await buildClient.GetBuildAsync(project, buildId, cancellationToken: ct);
-        return build.Project.Name;
-    }
-
     private async Task<List<int>> getPipelineFailureLogIds(string project, int buildId, CancellationToken ct = default)
     {
         logger.LogDebug("Getting pipeline task failures for {project} {buildId}", project, buildId);
@@ -206,7 +128,7 @@ public class PipelineAnalysisTool(
 
         var timelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/timeline?api-version=7.1";
         logger.LogDebug("Getting timeline records from {url}", timelineUrl);
-        var response = await httpClient.GetAsync(timelineUrl, ct);
+        var response = await httpClientFactory.CreateClient().GetAsync(timelineUrl, ct);
         // Devops will return a sign-in html page if the user is not authorized
         if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
         {
@@ -306,7 +228,7 @@ public class PipelineAnalysisTool(
     {
         var logUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
         logger.LogDebug("Fetching log file from {url}", logUrl);
-        var response = await httpClient.GetAsync(logUrl, ct);
+        var response = await httpClientFactory.CreateClient().GetAsync(logUrl, ct);
         // Devops will return a sign-in html page if the user is not authorized
         if (response.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
         {
@@ -379,30 +301,90 @@ public class PipelineAnalysisTool(
         }
     }
 
-    [McpServerTool(Name = AnalyzePipelineToolName), Description("Analyze what happened in an Azure pipeline build. Investigates pipeline runs, identifies failures, and explains build issues.")]
-    public async Task<AnalyzePipelineResponse> AnalyzePipeline(int buildId, CancellationToken ct)
+    [McpServerTool(Name = AnalyzePipelineToolName), Description("Analyze what happened in an Azure pipeline build. Investigates pipeline runs, identifies failures, and explains build issues. Accepts a build ID, DevOps pipeline link, or GitHub PR link.")]
+    public async Task<AnalyzePipelineResponse> AnalyzePipeline(
+        [Description("Build ID, pipeline link, or GitHub PR link")] string pipelineIdentifier,
+        [Description("Pipeline project name (optional)")] string? project = null,
+        [Description("Specific log ID to analyze (optional)")] int? logId = null,
+        CancellationToken ct = default)
     {
         try
         {
-            return await AnalyzePipeline(null, buildId, ct);
+            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, project);
+
+            if (builds.Count == 0)
+            {
+                return new AnalyzePipelineResponse
+                {
+                    ResponseError = $"No failed Azure Pipeline builds found for {pipelineIdentifier}"
+                };
+            }
+
+            var aggregatedResponse = new AnalyzePipelineResponse();
+
+            foreach (var build in builds)
+            {
+                var buildProject = build.Project;
+
+                if (logId.HasValue && logId.Value != 0)
+                {
+                    var logResult = await AnalyzePipelineFailureLogs(buildProject, build.BuildId, [logId.Value], ct);
+                    aggregatedResponse.FailedTasks.Add(logResult);
+                }
+                else
+                {
+                    var result = await AnalyzePipelineInternal(buildProject, build.BuildId, ct);
+                    if (result.ResponseError != null)
+                    {
+                        aggregatedResponse.ResponseErrors ??= [];
+                        aggregatedResponse.ResponseErrors.Add($"Build {build.BuildId}: {result.ResponseError}");
+                        continue;
+                    }
+
+                    // Tag each failed task with its pipeline URL for multi-build traceability
+                    if (build.PipelineUrl != null || buildProject != null)
+                    {
+                        var url = build.PipelineUrl ?? pipelineHelper.GetPipelineUrl(buildProject!, build.BuildId);
+                        foreach (var task in result.FailedTasks)
+                        {
+                            task.PipelineUrl = url;
+                        }
+                    }
+
+                    aggregatedResponse.FailedTasks.AddRange(result.FailedTasks);
+                    foreach (var (key, value) in result.FailedTests)
+                    {
+                        if (aggregatedResponse.FailedTests.TryGetValue(key, out var existing))
+                        {
+                            existing.AddRange(value);
+                        }
+                        else
+                        {
+                            aggregatedResponse.FailedTests[key] = value;
+                        }
+                    }
+                }
+            }
+
+            return aggregatedResponse;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to analyze pipeline {buildId}", buildId);
+            logger.LogError(ex, "Failed to analyze pipeline {pipelineIdentifier}", pipelineIdentifier);
             return new AnalyzePipelineResponse()
             {
-                ResponseError = $"Failed to analyze pipeline {buildId}: {ex.Message}",
+                ResponseError = $"Failed to analyze pipeline {pipelineIdentifier}: {ex.Message}",
             };
         }
     }
 
-    public async Task<AnalyzePipelineResponse> AnalyzePipeline(string? project, int buildId, CancellationToken ct)
+    private async Task<AnalyzePipelineResponse> AnalyzePipelineInternal(string? project, int buildId, CancellationToken ct)
     {
         try
         {
             if (string.IsNullOrEmpty(project))
             {
-                project = await GetPipelineProject(buildId, project, ct);
+                project = await pipelineHelper.GetPipelineProjectAsync(buildId, project, ct);
             }
 
             var failureLogIds = await getPipelineFailureLogIds(project, buildId, ct);

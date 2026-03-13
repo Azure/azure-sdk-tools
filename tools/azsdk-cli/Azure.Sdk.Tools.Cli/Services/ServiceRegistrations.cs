@@ -90,6 +90,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPythonHelper, PythonHelper>();
             services.AddSingleton<IGitCommandHelper, GitCommandHelper>();
 
+            // Pipeline helpers
+            services.AddSingleton<IPipelineIdentifierHelper, PipelineIdentifierHelper>();
+
             // Services that need to be scoped so we can track/update state across services per request
             services.AddScoped<TokenUsageHelper>();
             services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));

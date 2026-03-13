@@ -5,6 +5,8 @@ license: MIT
 metadata:
   author: Microsoft
   version: "1.0.0"
+compatibility:
+  platforms: "copilot-chat"
 ---
 
 # Markdown Token Optimizer

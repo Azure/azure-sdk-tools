@@ -91,14 +91,11 @@ Alternatively, consider RPaaS proxy resources which can simplify cross-scope sce
 **The core reason** is semantic, not tooling limitation. ResourceModelWithAllowedPropertySet exists as a legacy compatibility helper used in limited examples; it is not treated as an actual ARM resource type in TypeSpec. As a result, it cannot represent a true resource boundary and is intentionally rejected by ARM resource validation. Carrying this pattern forward would preserve Swagger-era modeling quirks and make the spec harder to evolve.
 **The correct approach** is to model the resource as a proper ARM resource type, typically TrackedResource, and reuse the legacy “allowed property set” via composition rather than inheritance. Resource-specific fields should live in a separate properties model and be spread or referenced, keeping the resource definition accurate and future-proof. This approach aligns with TypeSpec ARM guidelines, avoids invalid base types, and produces clearer, more maintainable specifications and SDKs.
 
-## whether it’s supported to use a different path parameter name for the parent resource identifier only for a specific child operation, while keeping the originally defined one elsewhere
+## Different path parameter names for parent resource per child operation are not directly supported
 
-**Scenario**  
-There is a parent resource `YourJob` with a key property `name`. There is a child resource `YourJobDetails`, and an operation to list `YourJobDetails` for a `YourJob`. In SDK reviews, it has been requested to use the parameter name `jobName` for this operation instead of `name`. The question is whether it’s supported to use a different path parameter name for the parent resource identifier only for this specific child operation, while keeping {name} elsewhere.
+ARM resource operation keys are derived from parent keys and cannot be individually specified per operation. To use a different parent key name (e.g., `jobName` instead of `name`) for a specific child operation, you would need a custom operation definition with explicitly specified keys.
 
-1. There isn't a simple way to use a different key, because, by default, **the keys of the operation for a resource are derived from the parent keys and are not individually specified for each operation**. It would be easy to change the keyName for all operations, it is possible, but requires a different operation definition in which keys are explicitly specified for the operation to use a different parent key name from one operation to another.
-
-2. **Recommended solution**: Unless there is a blocking reason, changing the key name globally is the recommended approach. You can do this using the @key decorator on the name property of the resource.
+**Recommended**: Change the key name globally using the `@key` decorator on the parent resource's name property unless there is a blocking reason to keep different names.
 
 ## the typespec-providerhub emitter is about generating RPaaS extensions, not about generating APIs
 
@@ -110,19 +107,9 @@ The emitter only updates a specific set of folders. You can write your own contr
 
 ## Excluding Large Properties from ARM List Responses
 
-**Scenario**
+Standard `ArmResourceRead` and `ArmResourceListByParent` return the canonical resource model, with no built-in way to omit specific properties. To exclude large properties from list responses, override the response type using the `Response` parameter on the list operation templates.
 
-An ARM resource contains a required property that holds very large text and is not suitable for LIST responses.
-
-While ArmResourceCreateOrReplaceAsync and ArmResourcePatchAsync allow overriding the request/response shape, standard ArmResourceRead and ArmResourceListByParent operations return the canonical resource model and do not provide a built‑in way to omit specific properties.
-
-**Supported Approach**
-
-For list operations, you can **override the response type by using the Response parameter on the list operation templates**, instead of changing the resource model itself.
-
-**Example**
-
-```
+```typespec
 @armResourceOperations
 interface Employees {
   #suppress "@azure-tools/typespec-azure-resource-manager/arm-resource-operation-response"
@@ -137,3 +124,63 @@ interface Employees {
   >;
 }
 ```
+
+## Use Azure.ResourceManager.ExtensionResource, not @extensionResource decorator
+
+For ARM extension resources, use `Azure.ResourceManager.ExtensionResource` as the base type rather than the `@extensionResource` decorator. Even if the resource has the same properties as a `TrackedResource`, using `ExtensionResource` is required because `resourceKind` matters when the service side calls `resolveArmResources`.
+
+```typespec
+model MyExtension is ExtensionResource<MyExtensionProperties> {
+  @key("extensionName")
+  @segment("extensions")
+  @path
+  name: string;
+}
+```
+
+## Use @Rest.Private.actionSegment to preserve custom casing in action routes
+
+The `@action` decorator normalizes the action segment to lowercase. To preserve custom casing (e.g., `All` instead of `all`), use `@Rest.Private.actionSegment` instead.
+
+```typespec
+@armResourceOperations
+interface Employees {
+  @Rest.Private.actionSegment("All")
+  listAll is ArmResourceActionSync<Employee, Request, Response>;
+}
+```
+
+Note: ARM APIs mandate case-insensitive path segments, so custom casing should not be needed for ARM. This workaround applies to non-ARM scenarios where `@action` normalization is problematic.
+
+## ResourceNameParameter does not support union types for the Type parameter
+
+Passing a union type to `ResourceNameParameter<..., Type = MyUnion>` throws "Cannot apply @pattern decorator to type it is not a string". This is a known bug.
+
+**Workaround**: Manually define the name property with `@path`, `@segment`, `@key`, and `@visibility`, and suppress the `arm-resource-name-pattern` warning:
+
+```typespec
+model MyResource is TrackedResource<MyProperties> {
+  #suppress "@azure-tools/typespec-azure-resource-manager/arm-resource-name-pattern"
+  @visibility(Lifecycle.Read)
+  @path
+  @segment("resources")
+  @key("resourceName")
+  name: MyNameUnion;
+}
+```
+
+## ARM PUT operations must not return 202 Accepted — it violates ARM RPC
+
+ARM PUT operations that return `202 Accepted` violate the ARM RPC guidelines. No new ARM service should implement this pattern.
+
+For brownfield conversion of existing APIs that already behave this way, it is possible to model the 202 response to prevent breaking changes. Use `ArmResourceCreateOrReplaceAsync` with custom LRO headers and suppress `arm-put-operation-response-codes`. This should only be done if you are certain the service actually returns 202 on PUT — SDK client flexibility may have masked errors in the original spec.
+
+## Customize ARM Operations_List operationId by naming the interface
+
+The default `interface Operations extends Azure.ResourceManager.Operations {}` produces `Operations_List` as the operationId. To change it (e.g., to `ProviderOperations_List`), rename the interface itself:
+
+```typespec
+interface ProviderOperations extends Azure.ResourceManager.Operations {}
+```
+
+Suppress the resulting naming warning. Do not use the `@operationId` decorator.

@@ -84,33 +84,52 @@ The location and factoring of `readme.md` can vary by service. You need at least
 
 ## PR bot adds WaitForARMFeedback label even when CI checks fail
 
-This is intentional behavior — the label is added when the PR enters the ARM review queue regardless of CI status. Open a draft PR first and only mark it "ready for review" after all required checks pass, to avoid wasting reviewer time.
+This is intentional behavior — the label is added when the PR enters the ARM review queue regardless of CI status. Open a draft PR first and only mark it "ready for review" after all required checks pass, to avoid wasting reviewer time. Reviewers who see failing checks will manually change the label to `ARMChangesRequested`.
 
-Automatically switching the label to `ARMChangesRequested` when checks fail is on the backlog.
-
-**What Happens After Label is Added**:
-- Reviewers typically see failing checks and manually comment "Fix X pipeline check"
-- They then change the label to `ARMChangesRequested`
-- You fix the issues and re-run pipelines
-
-**Future Improvement**: The team is working on automatically changing the label to `ARMChangesRequested` when checks fail. This improvement is on the backlog and will be easier once the labeling system migration to GitHub Actions is complete.
-
-**Best Practice**: Don't push commits expecting checks to fail and wait for manual label removal. Instead, use draft PRs and only mark ready for review when CI is green.
-
-**Key Points**:
-- `WaitForARMFeedback` label is added when PR enters review queue, regardless of CI
-- This is intended behavior, not a bug
-- Use draft PRs to develop with failing checks
-- Only mark "ready for review" after all checks pass
-- Automatic label switching for failed checks is on the backlog
+Note: Automatic label switching for failed checks is on the backlog and will be implemented once the labeling system migration to GitHub Actions is complete.
 
 ## Handling Documentation-Only TypeSpec Changes That Affect Multiple API Versions
 
-**Scenario**
+When adding or updating model descriptions in TypeSpec, all API version specifications generated from TypeSpec change simultaneously because TypeSpec is the single source of truth. If only the latest version is updated while older versions are left unchanged, TypeSpec validation will fail.
 
-Additional details are added to model descriptions (description) in TypeSpec. Since TypeSpec is the single source of truth for the specification, such changes cause all API version specifications generated from TypeSpec to change simultaneously. If only the latest version is updated while older versions are left unchanged, TypeSpec validation will fail.
+All affected historical API specification versions should be updated together. Documentation-only updates should not be flagged as breaking changes.
 
-**Handling Principle**
+## Stale local dependencies cause CI swagger mismatch, not config errors
 
-All affected historical API specification versions should be updated together, and the documentation differences regenerated from TypeSpec should be accepted.
-Documentation-only updates should not be flagged as breaking changes.
+When TypeSpec Validation fails with "Files have been changed after `tsp compile`", the most common cause is stale local dependencies producing different generated swagger than CI. The `SdkTspConfigValidation` config errors (for C#, Java, Go, Python emitters) are typically warnings only and not the actual failure cause.
+
+**Fix**: Sync your branch and reinstall dependencies:
+
+```bash
+git fetch upstream main
+git pull upstream main
+npm ci
+npx tsv specification/yourservice/YourService.Management
+```
+
+Always follow the TypeSpec Validation wiki instructions for local repro before investigating config issues.
+
+## Inconsistent filename or folder casing causes TypeSpec validation failure on Linux CI
+
+TypeSpec validation may pass on Windows (case-insensitive filesystem) but fail on Linux CI (case-sensitive). Common causes include inconsistent casing in the resource provider folder name (e.g., `Microsoft.PowerBIdedicated` vs `Microsoft.PowerBIDedicated`) or ARM namespace directory (e.g., `NGINX.NGINXPLUS` vs `Nginx.NginxPlus`), which creates two separate directories on Linux.
+
+**Fix**: Ensure consistent casing in all file and folder names. Use `git status` on Linux or inspect CI output to detect duplicate directories. If you must keep non-standard casing, configure the TypeSpec output path explicitly in `tspconfig.yaml`.
+
+## duplicate-type-name errors from unnamed transformation templates
+
+Using transformation decorators like `@withoutDefaultProperties` directly or transformation templates like `Update<T>` without assigning a named model causes `duplicate-type-name` errors in TypeSpec Compiler v1.0.0+. This is a compiler bug, but the following anti-patterns should be avoided:
+
+1. Do not use transformation decorators (e.g., `@withoutDefaultProperties`) directly
+2. Do not use transformation templates without naming the result (e.g., `properties?: Update<MyProperties>`)
+
+**Fix**: Create a named model for the transformed type:
+
+```typespec
+model MyPatchProperties
+  is UpdateableProperties<OmitDefaults<MyBaseProperties>>;
+
+model MyPatchModel {
+  properties?: MyPatchProperties;
+  ...ArmTagsProperty;
+}
+```

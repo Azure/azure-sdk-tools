@@ -25,3 +25,29 @@ op update(
 ```
 
 Do **not** use `| null` in the model to indicate erasable fields. Merge-patch support is treated as a fundamental protocol decision of the service, not something reflected in the type system. A new `MergePatch` template is being designed to address this gap for generation-first languages.
+
+## Modeling mutually exclusive properties with discriminated unions
+
+TypeSpec has no built-in way to enforce mutual exclusivity between properties. Making both optional to "allow only one" is actually a breaking change if either was previously required.
+
+**Recommended**: Use a discriminated union with `@discriminator` to model mutually exclusive variants. This is the approved Azure pattern.
+
+```typespec
+@discriminator("kind")
+union CloudProfile {
+  aws: AwsCloudProfile,
+  gcp: GcpCloudProfile,
+}
+
+model AwsCloudProfile {
+  kind: "aws";
+  accountId: string;
+}
+
+model GcpCloudProfile {
+  kind: "gcp";
+  projectId: string;
+}
+```
+
+The `@discriminated` decorator exists for more flexible patterns but is not yet supported by all SDK emitters. Use `@discriminator` for now.

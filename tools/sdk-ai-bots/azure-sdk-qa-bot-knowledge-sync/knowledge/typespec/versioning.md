@@ -51,15 +51,43 @@ The **correct approach** is to treat versioning as a model-level concern rather 
 
 ## TypeSpec Does Not Support Version-Based Conditional Imports
 
-**Scenario**
+TypeSpec does not support conditional imports by API version. You cannot restrict which `.tsp` files are imported in `main.tsp` based on API versions.
 
-In `main.tsp`, multiple resource type .tsp files are imported. When introducing a new API version, one of the resource types should not be included in that new version. Is it supported to restrict importing TypeSpec files in main.tsp based on API versions?
+**Recommended**: Use the `@removed` decorator from the versioning library to mark models, resource types, operations, or properties that should not appear in a specific API version. Version-specific inclusion or exclusion is controlled via versioning decorators, not via import statements.
 
-**Key Takeaway**
+## Do not use @typeChangedFrom for validation changes that apply to all versions
 
-TypeSpec does not support conditional imports by API version. 
+When updating validation decorators (e.g., `@pattern`, `@minLength`, `@maxLength`) on a property, do not create a legacy scalar type and use `@typeChangedFrom` if the service enforces the same validation across all API versions. Instead, apply the updated constraints directly to all versions.
 
-**Recommended Approach**
+This is not a breaking change for SDKs because there is no client-side validation involved. TypeSpec makes such changes more visible than raw Swagger diffs, but they should reflect actual service behavior, not version-specific spec artifacts.
 
-Use the TypeSpec versioning library and mark models, resource types, operations, or properties that should no longer appear in a specific API version with the `@removed` decorator.
-Version-specific inclusion or exclusion is controlled via versioning decorators, not via import statements.
+## Undecorated TypeSpec changes bleed into all API versions
+
+When adding properties, making fields optional, or changing models for a new API version, you must use versioning decorators (`@added`, `@madeOptional`, `@removed`, etc.). Without them, changes apply to all versions by default, including older ones — this is the most common cause of "generated swagger changed for old versions" validation failures.
+
+Spread parameters cannot be decorated with versioning decorators directly. Use operation-specific parameters instead for localized version changes. Linter warnings that don't apply to your service should be ignored rather than changing service behavior to satisfy them.
+
+## Pattern and constraint changes should apply to all API versions
+
+When relaxing `@pattern`, `@minLength`, or `@maxLength` on a property, change the constraint for all versions rather than using the remove/rename/add pattern. Constraints usually reflect how the service validates across all API versions, not just a specific one.
+
+The remove/rename workaround is technically possible but not recommended because it requires versioning the resource and all its operations. Confirm with your team whether the constraint change truly applies to all versions before proceeding.
+
+## No versioning decorator for adding default values — use added/removed/rename pattern
+
+TypeSpec currently has no versioning decorator for adding a default value to a property. Using `@madeOptional` alone with a default value causes the default to bleed into older API versions. This is a known limitation.
+
+**Workaround**: Use the added/removed/rename pattern — remove the old property with `@removed` and `@renamedFrom`, then add a new property with `@added` and the default value:
+
+```typespec
+model MyProperties {
+  @removed(Versions.v2)
+  @renamedFrom(Versions.v2, "items")
+  oldItems: string[];
+
+  @added(Versions.v2)
+  items?: string[] = #[];
+}
+```
+
+Note: Do not use `@OpenAPI.extension("x-ms-identifiers", ...)` directly — use `@key` properties or the `@identifiers` decorator instead.

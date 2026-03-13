@@ -118,7 +118,7 @@ extends:
                 displayName: "Install Angular CLI"
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(WebClientProjectDirectory)
                 displayName: "Install npm packages"
 
@@ -128,7 +128,7 @@ extends:
                 displayName: "Build client assets"
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Install Client SPA Packages"
 
@@ -200,12 +200,12 @@ extends:
                 displayName: "Install Angular CLI"
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(WebClientProjectDirectory)
                 displayName: "Install npm packages"
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Install Client SPA Packages"
 
@@ -301,7 +301,7 @@ extends:
 
 
               #- script: |
-              #    npm install
+              #    npm ci
               #  workingDirectory: $(WebClientProjectDirectory)
               #  displayName: "Install Client Dependencies"
 

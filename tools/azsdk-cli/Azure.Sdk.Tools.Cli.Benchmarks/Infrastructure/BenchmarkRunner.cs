@@ -41,13 +41,11 @@ public class BenchmarkRunner : IDisposable
         {
             // 1. Environment Setup - prepare workspace
             Console.WriteLine($"[Benchmark] Preparing workspace for {scenario.Name}...");
-            //workspace = await _workspaceManager.PrepareAsync(scenario.Repo, scenario.Name);
-            workspace = new Workspace("D:\\project", "azure-rest-api-specs");
-            //workspace = new Workspace("C:\\Users\\chunyu\\AppData\\Local\\Temp\\azsdk-benchmarks\\workspaces\\add-arm-resource\\20260309-051913-542", "azure-rest-api-specs");
+            workspace = await _workspaceManager.PrepareAsync(scenario.Repo, scenario.Name);
 
             // 2. Run scenario setup (if any)
             Console.WriteLine($"[Benchmark] Running scenario setup...");
-            //await scenario.SetupAsync(workspace);
+            await scenario.SetupAsync(workspace);
 
             // 3. Execution - run agent
             Console.WriteLine($"[Benchmark] Executing scenario prompt...");

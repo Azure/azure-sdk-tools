@@ -21,7 +21,7 @@
   },
   "private": true,
   "engines": {
-    "node": "^20.11.1 || >=22.11.0"
+    "node": "^20.19.0 || >=22.11.0"
   },
   "dependencies": {
     "@angular/animations": "^20.3.18",

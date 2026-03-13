@@ -43,6 +43,17 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
 
+            // azpysdk returns exit code 0 when the target resolves to no Python packages.
+            // Validate upfront so we don't report a false pass for an invalid package path.
+            var hasSetupPy = File.Exists(Path.Combine(packagePath, "setup.py"));
+            var hasPyProjectToml = File.Exists(Path.Combine(packagePath, "pyproject.toml"));
+            if (!hasSetupPy && !hasPyProjectToml)
+            {
+                var errorMessage = $"Package path is not a Python package root: {packagePath}. Expected setup.py or pyproject.toml.";
+                logger.LogError("{ErrorMessage}", errorMessage);
+                return new PackageCheckResponse(1, errorMessage, errorMessage);
+            }
+
             var lintingTools = new[]
             {
                 ("pylint", new PythonOptions("azpysdk", ["pylint", "--isolate", packagePath], workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(3))),

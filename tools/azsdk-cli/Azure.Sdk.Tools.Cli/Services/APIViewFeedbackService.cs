@@ -98,9 +98,9 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
 
         _logger.LogInformation("Found {Count} actionable comment(s) after filtering", filteredComments.Count);
 
-        // 2. Group comments by threadId and order by createdOn
+        // 2. Group comments by line ID
         var groupedComments = filteredComments
-            .GroupBy(c => c.ThreadId ?? string.Empty)
+            .GroupBy(c => c.LineId ?? string.Empty)
             .ToDictionary(
                 g => g.Key,
                 g => g.OrderBy(c => c.CreatedOn).ToList()
@@ -115,8 +115,7 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
             consolidatedComments.Add(consolidated);
 
             _logger.LogInformation(
-                "Consolidated discussion - ThreadId: {ThreadId}, LineNo: {LineNo}, Comment: {Comment}",
-                consolidated.ThreadId,
+                "Consolidated discussion - LineNo: {LineNo}, Comment: {Comment}",
                 consolidated.LineNo,
                 consolidated.Comment);
         }

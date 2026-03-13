@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
@@ -36,6 +37,7 @@ internal class PythonLanguageServiceVersionUpdateTests
             _processHelperMock.Object,
             _pythonHelperMock.Object,
             _npxHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,

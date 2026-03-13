@@ -238,7 +238,7 @@ public static partial class CodePatchTools
             // Write back
             await File.WriteAllLinesAsync(safeFilePath, newAllLines, ct).ConfigureAwait(false);
 
-            var description = $"Replaced \"{TruncateForDisplay(cleanOldText, 50)}\" with \"{TruncateForDisplay(cleanNewText, 50)}\" in lines {startLine}-{endLine}";
+            var description = $"Replaced \"{TruncateForDisplay(cleanOldText, 100)}\" with \"{TruncateForDisplay(cleanNewText, 100)}\" in lines {startLine}-{endLine}";
             return new CodePatchResult(true, $"Patch applied to {filePath}: {description}");
         }
         catch (Exception ex)

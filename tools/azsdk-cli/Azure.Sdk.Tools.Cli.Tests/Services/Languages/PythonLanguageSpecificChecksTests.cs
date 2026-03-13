@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
@@ -31,6 +32,7 @@ internal class PythonLanguageSpecificChecksTests
             _processHelperMock.Object,
             _pythonHelperMock.Object,
             _npxHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<PythonLanguageService>.Instance,
             _commonValidationHelpersMock.Object,

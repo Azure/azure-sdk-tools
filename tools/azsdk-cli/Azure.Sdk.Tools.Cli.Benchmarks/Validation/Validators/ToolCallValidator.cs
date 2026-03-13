@@ -12,30 +12,12 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
 /// </summary>
 public class ToolCallValidator : IValidator
 {
-    /// <summary>Gets the name of this validator.</summary>
     public string Name { get; }
-
-    /// <summary>Gets the ordered list of expected tool calls.</summary>
     public IReadOnlyList<ExpectedToolCall> ExpectedToolCalls { get; }
-
-    /// <summary>Gets the list of optional tool names that may appear but aren't required.</summary>
     public IReadOnlyList<string> OptionalToolNames { get; }
-
-    /// <summary>Gets the list of forbidden tool names that must not be called.</summary>
     public IReadOnlyList<string> ForbiddenToolNames { get; }
-
-    /// <summary>Gets whether tool call order is enforced.</summary>
     public bool EnforceOrder { get; }
 
-    /// <summary>
-    /// Creates a validator using rich <see cref="ExpectedToolCall"/> objects that can
-    /// validate both tool names and their inputs.
-    /// </summary>
-    /// <param name="name">Human-readable name for the validator.</param>
-    /// <param name="expectedToolCalls">Ordered list of expected tool calls with optional input expectations.</param>
-    /// <param name="optionalToolNames">Optional tool names that may appear but won't cause failure if absent.</param>
-    /// <param name="forbiddenToolNames">Tool names that must not appear in actual calls.</param>
-    /// <param name="enforceOrder">Whether to enforce the order of expected tool calls (default: true).</param>
     public ToolCallValidator(
         string name,
         IEnumerable<ExpectedToolCall> expectedToolCalls,
@@ -51,13 +33,8 @@ public class ToolCallValidator : IValidator
     }
 
     /// <summary>
-    /// Creates a validator that only checks tool names and order (no input validation).
+    /// Convenience constructor that only checks tool names (no input validation).
     /// </summary>
-    /// <param name="name">Human-readable name for the validator.</param>
-    /// <param name="expectedToolNames">Ordered list of expected tool names.</param>
-    /// <param name="optionalToolNames">Optional tool names that may appear but won't cause failure if absent.</param>
-    /// <param name="forbiddenToolNames">Tool names that must not appear in actual calls.</param>
-    /// <param name="enforceOrder">Whether to enforce the order of expected tool calls (default: true).</param>
     public ToolCallValidator(
         string name,
         IEnumerable<string> expectedToolNames,
@@ -77,234 +54,184 @@ public class ToolCallValidator : IValidator
         CancellationToken cancellationToken = default)
     {
         if (ExpectedToolCalls.Count == 0)
-        {
-            return Task.FromResult(ValidationResult.Fail(Name, "No expected tool calls configured."));
-        }
+            return Fail("No expected tool calls configured.");
 
         // Check for forbidden tool calls
         if (ForbiddenToolNames.Count > 0)
         {
             var forbiddenCalls = context.ToolCalls
-                .Where(call => ForbiddenToolNames.Any(f => MatchesToolName(call.ToolName, f)))
+                .Where(c => ForbiddenToolNames.Any(f => MatchesToolName(c.ToolName, f)))
                 .ToList();
 
             if (forbiddenCalls.Count > 0)
-            {
-                var forbiddenStr = string.Join(", ", forbiddenCalls.Select(c => c.ToolName));
-                return Task.FromResult(ValidationResult.Fail(Name,
-                    $"Forbidden tool(s) were called: [{forbiddenStr}].",
-                    $"Forbidden tools: [{string.Join(", ", ForbiddenToolNames)}]"));
-            }
+                return Fail(
+                    $"Forbidden tool(s) were called: [{FormatNames(forbiddenCalls)}].",
+                    $"Forbidden tools: [{string.Join(", ", ForbiddenToolNames)}]");
         }
 
         var expectedNames = ExpectedToolCalls.Select(tc => tc.ToolName).ToList();
 
-        // Filter actual tool calls to only those matching expected or optional tools.
-        // Uses suffix matching because the SDK may capture prefixed names
-        // like "mcp_azure-sdk-mcp_azsdk_create_release_plan".
-        var allRelevantNames = expectedNames.Concat(OptionalToolNames).ToList();
-
-        var relevantCalls = context.ToolCalls
-            .Where(call => allRelevantNames.Any(name => MatchesToolName(call.ToolName, name)))
+        // Filter to calls matching expected tools (suffix matching handles MCP prefixes)
+        var requiredCalls = context.ToolCalls
+            .Where(c => expectedNames.Any(n => MatchesToolName(c.ToolName, n)))
             .ToList();
 
-        // Keep only required calls (filter out optional-only tools).
-        var requiredCalls = relevantCalls
-            .Where(call => expectedNames.Any(exp => MatchesToolName(call.ToolName, exp)))
-            .ToList();
+        // Match each expected tool to an actual call (subsequence for ordered, set for unordered)
+        var (matched, error) = FindMatches(requiredCalls, expectedNames, context);
+        if (error != null)
+            return error;
 
-        // Match each expected tool to an actual call using subsequence matching.
-        // This naturally tolerates duplicate calls of the same tool.
-        var matchedCalls = new List<ToolCallRecord>();
+        // Validate inputs for matched calls
+        var inputErrors = ValidateInputs(matched);
+        if (inputErrors.Count > 0)
+            return Fail(
+                $"Tool inputs did not match: {inputErrors.Count} error(s).",
+                string.Join("\n", inputErrors));
 
-        if (EnforceOrder)
-        {
-            int searchStart = 0;
-            for (int i = 0; i < ExpectedToolCalls.Count; i++)
-            {
-                var expected = ExpectedToolCalls[i];
-                int foundIndex = -1;
+        var orderStr = EnforceOrder ? " in correct order" : "";
+        var inputStr = ExpectedToolCalls.Any(tc => tc.ExpectedInputs != null) ? " with expected inputs" : "";
+        return Pass($"All {ExpectedToolCalls.Count} expected tool(s) called{orderStr}{inputStr}.");
+    }
 
-                for (int j = searchStart; j < requiredCalls.Count; j++)
-                {
-                    if (MatchesToolName(requiredCalls[j].ToolName, expected.ToolName))
-                    {
-                        foundIndex = j;
-                        break;
-                    }
-                }
-
-                if (foundIndex == -1)
-                {
-                    var actualStr = string.Join(", ", requiredCalls.Select(c => c.ToolName));
-                    return Task.FromResult(ValidationResult.Fail(Name,
-                        $"Expected tool '{expected.ToolName}' not found{(i > 0 ? $" after '{ExpectedToolCalls[i - 1].ToolName}'" : "")}.",
-                        $"Expected order: [{string.Join(", ", expectedNames)}]\nActual: [{actualStr}]\nAll tool calls: [{string.Join(", ", context.ToolCalls.Select(tc => tc.ToolName))}]"));
-                }
-
-                matchedCalls.Add(requiredCalls[foundIndex]);
-                searchStart = foundIndex + 1;
-            }
-        }
-        else
-        {
-            var usedIndices = new HashSet<int>();
-            for (int i = 0; i < ExpectedToolCalls.Count; i++)
-            {
-                var expected = ExpectedToolCalls[i];
-                int foundIndex = -1;
-
-                for (int j = 0; j < requiredCalls.Count; j++)
-                {
-                    if (!usedIndices.Contains(j) && MatchesToolName(requiredCalls[j].ToolName, expected.ToolName))
-                    {
-                        foundIndex = j;
-                        break;
-                    }
-                }
-
-                if (foundIndex == -1)
-                {
-                    var actualStr = string.Join(", ", requiredCalls.Select(c => c.ToolName));
-                    return Task.FromResult(ValidationResult.Fail(Name,
-                        $"Expected tool '{expected.ToolName}' not found.",
-                        $"Expected: [{string.Join(", ", expectedNames)}]\nActual: [{actualStr}]\nAll tool calls: [{string.Join(", ", context.ToolCalls.Select(tc => tc.ToolName))}]"));
-                }
-
-                matchedCalls.Add(requiredCalls[foundIndex]);
-                usedIndices.Add(foundIndex);
-            }
-        }
-
-        // Validate each matched tool call's inputs
-        var inputErrors = new List<string>();
+    /// <summary>
+    /// Matches expected tool calls against actual calls. Uses subsequence matching when
+    /// order is enforced, or unordered set matching otherwise.
+    /// </summary>
+    private (List<ToolCallRecord> Matched, Task<ValidationResult>? Error) FindMatches(
+        List<ToolCallRecord> requiredCalls,
+        List<string> expectedNames,
+        ValidationContext context)
+    {
+        var matched = new List<ToolCallRecord>();
+        var used = new HashSet<int>();
+        int searchStart = 0;
 
         for (int i = 0; i < ExpectedToolCalls.Count; i++)
         {
             var expected = ExpectedToolCalls[i];
-            var actual = matchedCalls[i];
+            int foundIndex = -1;
 
-            // Check inputs (if specified)
-            if (expected.ExpectedInputs != null)
+            for (int j = EnforceOrder ? searchStart : 0; j < requiredCalls.Count; j++)
             {
-                var actualArgs = actual.GetArgsAsDictionary();
-                foreach (var (key, expectedValue) in expected.ExpectedInputs)
-                {
-                    if (!actualArgs.TryGetValue(key, out var actualJsonValue))
-                    {
-                        inputErrors.Add($"Tool '{expected.ToolName}': missing expected input '{key}'.");
-                        continue;
-                    }
+                if (!EnforceOrder && used.Contains(j))
+                    continue;
+                if (!MatchesToolName(requiredCalls[j].ToolName, expected.ToolName))
+                    continue;
 
-                    var mismatch = CompareValue(key, expectedValue, actualJsonValue);
-                    if (mismatch != null)
-                    {
-                        inputErrors.Add($"Tool '{expected.ToolName}': {mismatch}");
-                    }
+                foundIndex = j;
+                break;
+            }
+
+            if (foundIndex == -1)
+            {
+                var afterHint = EnforceOrder && i > 0
+                    ? $" after '{ExpectedToolCalls[i - 1].ToolName}'" : "";
+                var label = EnforceOrder ? "Expected order" : "Expected";
+                return (matched, Fail(
+                    $"Expected tool '{expected.ToolName}' not found{afterHint}.",
+                    $"{label}: [{string.Join(", ", expectedNames)}]\n" +
+                    $"Actual: [{FormatNames(requiredCalls)}]\n" +
+                    $"All tool calls: [{FormatNames(context.ToolCalls)}]"));
+            }
+
+            matched.Add(requiredCalls[foundIndex]);
+            used.Add(foundIndex);
+            searchStart = foundIndex + 1;
+        }
+
+        return (matched, null);
+    }
+
+    private List<string> ValidateInputs(List<ToolCallRecord> matchedCalls)
+    {
+        var errors = new List<string>();
+
+        for (int i = 0; i < ExpectedToolCalls.Count; i++)
+        {
+            var expected = ExpectedToolCalls[i];
+            if (expected.ExpectedInputs == null)
+                continue;
+
+            var actualArgs = matchedCalls[i].GetArgsAsDictionary();
+            foreach (var (key, expectedValue) in expected.ExpectedInputs)
+            {
+                if (!actualArgs.TryGetValue(key, out var actualJson))
+                {
+                    errors.Add($"Tool '{expected.ToolName}': missing expected input '{key}'.");
+                    continue;
                 }
+
+                var mismatch = CompareValue(key, expectedValue, actualJson);
+                if (mismatch != null)
+                    errors.Add($"Tool '{expected.ToolName}': {mismatch}");
             }
         }
 
-        if (inputErrors.Count > 0)
-        {
-            return Task.FromResult(ValidationResult.Fail(Name,
-                $"Tool inputs did not match: {inputErrors.Count} error(s).",
-                string.Join("\n", inputErrors)));
-        }
-
-        var hasInputChecks = ExpectedToolCalls.Any(tc => tc.ExpectedInputs != null);
-        var orderStr = EnforceOrder ? " in correct order" : "";
-        var inputStr = hasInputChecks ? " with expected inputs" : "";
-        var message = $"All {ExpectedToolCalls.Count} expected tool(s) called{orderStr}{inputStr}.";
-
-        return Task.FromResult(ValidationResult.Pass(Name, message));
+        return errors;
     }
 
     /// <summary>
     /// Compares an expected value against an actual JsonElement.
-    /// String values use case-insensitive substring matching (handles variable path prefixes).
-    /// Numeric and boolean values use exact matching.
+    /// Strings use case-insensitive substring matching (handles path prefixes).
+    /// Numerics and booleans use exact matching.
     /// </summary>
-    /// <returns>Error description if mismatch, null if match.</returns>
     private static string? CompareValue(string key, object? expectedValue, JsonElement actual)
     {
         if (expectedValue == null)
-        {
             return actual.ValueKind == JsonValueKind.Null
-                ? null
-                : $"input '{key}': expected null but got '{actual}'.";
-        }
+                ? null : $"input '{key}': expected null but got '{actual}'.";
 
         switch (expectedValue)
         {
             case string expectedStr:
                 var actualStr = actual.ValueKind == JsonValueKind.String
-                    ? actual.GetString()
-                    : actual.GetRawText();
-
-                // Normalize path separators so forward-slash expected values match
-                // backslash actual values (and vice versa) on Windows.
-                var normalizedActual = actualStr?.Replace('\\', '/');
-                var normalizedExpected = expectedStr.Replace('\\', '/');
-
-                if (normalizedActual == null || !normalizedActual.Contains(normalizedExpected, StringComparison.OrdinalIgnoreCase))
-                {
-                    return $"input '{key}': expected to contain '{expectedStr}' but got '{actualStr}'.";
-                }
-                return null;
+                    ? actual.GetString() : actual.GetRawText();
+                // Normalize path separators for cross-platform matching
+                var normActual = actualStr?.Replace('\\', '/');
+                var normExpected = expectedStr.Replace('\\', '/');
+                return normActual != null && normActual.Contains(normExpected, StringComparison.OrdinalIgnoreCase)
+                    ? null : $"input '{key}': expected to contain '{expectedStr}' but got '{actualStr}'.";
 
             case bool expectedBool:
-                if (actual.ValueKind != JsonValueKind.True && actual.ValueKind != JsonValueKind.False)
-                {
-                    return $"input '{key}': expected boolean {expectedBool} but got '{actual}'.";
-                }
-                if (actual.GetBoolean() != expectedBool)
-                {
-                    return $"input '{key}': expected {expectedBool} but got {actual.GetBoolean()}.";
-                }
-                return null;
+                return actual.ValueKind is JsonValueKind.True or JsonValueKind.False
+                    && actual.GetBoolean() == expectedBool
+                    ? null : $"input '{key}': expected {expectedBool} but got '{actual}'.";
 
             case int expectedInt:
-                if (!actual.TryGetInt32(out var actualInt) || actualInt != expectedInt)
-                {
-                    return $"input '{key}': expected {expectedInt} but got '{actual}'.";
-                }
-                return null;
+                return actual.TryGetInt32(out var ai) && ai == expectedInt
+                    ? null : $"input '{key}': expected {expectedInt} but got '{actual}'.";
 
             case long expectedLong:
-                if (!actual.TryGetInt64(out var actualLong) || actualLong != expectedLong)
-                {
-                    return $"input '{key}': expected {expectedLong} but got '{actual}'.";
-                }
-                return null;
+                return actual.TryGetInt64(out var al) && al == expectedLong
+                    ? null : $"input '{key}': expected {expectedLong} but got '{actual}'.";
 
             case double expectedDouble:
-                if (!actual.TryGetDouble(out var actualDouble) || Math.Abs(actualDouble - expectedDouble) > 0.0001)
-                {
-                    return $"input '{key}': expected {expectedDouble} but got '{actual}'.";
-                }
-                return null;
+                return actual.TryGetDouble(out var ad) && Math.Abs(ad - expectedDouble) <= 0.0001
+                    ? null : $"input '{key}': expected {expectedDouble} but got '{actual}'.";
 
             default:
-                // For other types, compare string representations
                 var expectedRepr = expectedValue.ToString();
                 var actualRepr = actual.GetRawText().Trim('"');
-                if (!string.Equals(expectedRepr, actualRepr, StringComparison.OrdinalIgnoreCase))
-                {
-                    return $"input '{key}': expected '{expectedRepr}' but got '{actualRepr}'.";
-                }
-                return null;
+                return string.Equals(expectedRepr, actualRepr, StringComparison.OrdinalIgnoreCase)
+                    ? null : $"input '{key}': expected '{expectedRepr}' but got '{actualRepr}'.";
         }
     }
 
     /// <summary>
-    /// Checks if an actual tool call name matches an expected tool name.
+    /// Checks if an actual tool call name matches an expected name.
     /// Handles MCP prefix (e.g., "mcp_azure-sdk-mcp_azsdk_create_release_plan"
     /// matches "azsdk_create_release_plan").
     /// </summary>
-    private static bool MatchesToolName(string actualCallName, string expectedToolName)
-    {
-        return actualCallName.EndsWith(expectedToolName, StringComparison.OrdinalIgnoreCase)
-               || expectedToolName.EndsWith(actualCallName, StringComparison.OrdinalIgnoreCase);
-    }
+    private static bool MatchesToolName(string actualCallName, string expectedToolName) =>
+        actualCallName.EndsWith(expectedToolName, StringComparison.OrdinalIgnoreCase)
+        || expectedToolName.EndsWith(actualCallName, StringComparison.OrdinalIgnoreCase);
+
+    private Task<ValidationResult> Pass(string message) =>
+        Task.FromResult(ValidationResult.Pass(Name, message));
+
+    private Task<ValidationResult> Fail(string message, string? details = null) =>
+        Task.FromResult(ValidationResult.Fail(Name, message, details));
+
+    private static string FormatNames(IEnumerable<ToolCallRecord> calls) =>
+        string.Join(", ", calls.Select(c => c.ToolName));
 }

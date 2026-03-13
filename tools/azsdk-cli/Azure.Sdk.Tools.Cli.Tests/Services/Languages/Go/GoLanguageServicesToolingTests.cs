@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        [Category(Integration)]
+        [Category(RequiresGoTooling)]
         public async Task TestGoLanguageLinting()
         {
             var goRepoRoot = Environment.GetEnvironmentVariable("AZSDK_CLI_TEST_AZSDKGO")
@@ -144,7 +144,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        [Category(Integration)]
+        [Category(RequiresGoTooling)]
         public async Task TestGetPackageInfo()
         {
             var actualSdkRepo = Environment.GetEnvironmentVariable("AZSDK_CLI_TEST_AZSDKGO")

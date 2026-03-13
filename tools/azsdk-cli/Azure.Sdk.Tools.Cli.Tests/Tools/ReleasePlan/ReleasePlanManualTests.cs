@@ -12,6 +12,8 @@ using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Microsoft.VisualStudio.TestPlatform.CoreUtilities.Helpers;
 using Moq;
 
+using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
+
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
 {
     internal class ReleasePlanManualTests
@@ -59,8 +61,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             releasePlan = new ReleasePlanTool(devOpsService, gitHelper, typeSpecHelper, logger, userHelper, gitHubService, environmentHelper, inputSanitizer, httpClient, Mock.Of<INpxHelper>());
         }
 
-        [Test] // disabled by default because it makes real API calls
-        [Ignore("Manual test - requires real API calls")]
+        [Test, Explicit]
+        [Category(TestCategories.ReleasePlan)]
         public async Task Test_UpdateExclusionJustification()
         {
             int releasePlanWorkItemId = 28940; // replace with a real release plan ID
@@ -73,8 +75,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.That(exclusionJustification, Is.EqualTo(releasePlanInfo.LanguageExclusionRequesterNote));
         }
 
-        [Test] // disabled by default because it makes real API calls
-        [Ignore("Manual test - requires real API calls")]
+        [Test, Explicit]
+        [Category(TestCategories.ReleasePlan)]
         public async Task Test_UpdateExclusionJustificationWithLanguage()
         {
             int releasePlanWorkItemId = 28940; // replace with a real release plan ID
@@ -88,14 +90,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         }
 
 
-        [Test] // disabled by default because it makes real API calls
-        [Ignore("Manual test - requires real API calls")]
+        [Test, Explicit]
+        [Category(TestCategories.ReleasePlan)]
         public async Task Test_Get_ReleaseExclusionStatus()
         {
             int releasePlan = 28940; // replace with a real release plan ID
             var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlan);
             Assert.IsNotNull(releasePlanInfo);
-            
+
             var pythonSdk = releasePlanInfo.SDKInfo.FirstOrDefault(sdk => sdk.Language.Equals("Python", StringComparison.OrdinalIgnoreCase));
             Assert.IsNotNull(pythonSdk);
             Assert.That(pythonSdk.ReleaseExclusionStatus, Is.EqualTo("Requested"));

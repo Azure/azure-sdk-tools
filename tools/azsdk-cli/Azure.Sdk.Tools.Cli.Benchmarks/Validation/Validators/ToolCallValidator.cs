@@ -70,6 +70,19 @@ public class ToolCallValidator : IValidator
         }
 
         var expectedNames = ExpectedToolCalls.Select(tc => tc.ToolName).ToList();
+        var allowedNames = expectedNames.Concat(OptionalToolNames).ToList();
+
+        // Check for unexpected MCP tool calls not in the allow-list
+        var unexpectedCalls = context.ToolCalls
+            .Where(c => IsMcpToolCall(c.ToolName))
+            .Where(c => !allowedNames.Any(n => MatchesToolName(c.ToolName, n)))
+            .ToList();
+
+        if (unexpectedCalls.Count > 0)
+            return Fail(
+                $"Unexpected tool(s) called: [{FormatNames(unexpectedCalls)}].",
+                $"Allowed: [{string.Join(", ", allowedNames)}]\n" +
+                $"Add unexpected tools to OptionalToolNames if they are acceptable.");
 
         // Filter to calls matching expected tools (suffix matching handles MCP prefixes)
         var requiredCalls = context.ToolCalls
@@ -80,6 +93,11 @@ public class ToolCallValidator : IValidator
         var (matched, error) = FindMatches(requiredCalls, expectedNames, context);
         if (error != null)
             return error;
+
+        // Check for extra calls to expected tools beyond what was configured
+        var extraError = CheckExtraCalls(context, expectedNames);
+        if (extraError != null)
+            return extraError;
 
         // Validate inputs for matched calls
         var inputErrors = ValidateInputs(matched);
@@ -92,6 +110,41 @@ public class ToolCallValidator : IValidator
         var inputStr = ExpectedToolCalls.Any(tc => tc.ExpectedInputs != null) ? " with expected inputs" : "";
         return Pass($"All {ExpectedToolCalls.Count} expected tool(s) called{orderStr}{inputStr}.");
     }
+
+    /// <summary>
+    /// Checks that expected tools aren't called more times than configured.
+    /// Tools that also appear in OptionalToolNames are exempt (retries allowed).
+    /// </summary>
+    private Task<ValidationResult>? CheckExtraCalls(
+        ValidationContext context,
+        List<string> expectedNames)
+    {
+        var expectedCounts = ExpectedToolCalls
+            .GroupBy(tc => tc.ToolName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (expectedName, maxCount) in expectedCounts)
+        {
+            // Extra calls are allowed if the tool is also optional
+            if (OptionalToolNames.Any(o => string.Equals(o, expectedName, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            var actualCount = context.ToolCalls.Count(c => MatchesToolName(c.ToolName, expectedName));
+            if (actualCount > maxCount)
+                return Fail(
+                    $"Expected {maxCount} call(s) to '{expectedName}' but found {actualCount}.",
+                    $"Add '{expectedName}' to OptionalToolNames if retries are acceptable.");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Determines if a tool call is from the MCP server (vs agent infrastructure like
+    /// report_intent, powershell, view, etc). Uses the azsdk_ naming convention.
+    /// </summary>
+    private static bool IsMcpToolCall(string toolName) =>
+        toolName.Contains("azsdk_", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Matches expected tool calls against actual calls. Uses subsequence matching when
@@ -157,13 +210,12 @@ public class ToolCallValidator : IValidator
             {
                 if (!actualArgs.TryGetValue(key, out var actualJson))
                 {
-                    errors.Add($"Tool '{expected.ToolName}': missing expected input '{key}'.");
+                    errors.Add($"Tool '{expected.ToolName}': missing input '{key}'.");
                     continue;
                 }
 
-                var mismatch = CompareValue(key, expectedValue, actualJson);
-                if (mismatch != null)
-                    errors.Add($"Tool '{expected.ToolName}': {mismatch}");
+                if (!InputMatches(expectedValue, actualJson, out var actualStr))
+                    errors.Add($"Tool '{expected.ToolName}': input '{key}' expected {FormatExpected(expectedValue)} but got '{actualStr}'.");
             }
         }
 
@@ -171,51 +223,42 @@ public class ToolCallValidator : IValidator
     }
 
     /// <summary>
-    /// Compares an expected value against an actual JsonElement.
-    /// Strings use case-insensitive substring matching (handles path prefixes).
+    /// Checks if an actual JsonElement matches an expected value.
+    /// Strings use case-insensitive substring matching with normalized path separators.
     /// Numerics and booleans use exact matching.
     /// </summary>
-    private static string? CompareValue(string key, object? expectedValue, JsonElement actual)
+    private static bool InputMatches(object? expected, JsonElement actual, out string actualStr)
     {
-        if (expectedValue == null)
-            return actual.ValueKind == JsonValueKind.Null
-                ? null : $"input '{key}': expected null but got '{actual}'.";
+        actualStr = actual.ToString() ?? "";
 
-        switch (expectedValue)
+        if (expected == null)
+            return actual.ValueKind == JsonValueKind.Null;
+
+        switch (expected)
         {
-            case string expectedStr:
-                var actualStr = actual.ValueKind == JsonValueKind.String
-                    ? actual.GetString() : actual.GetRawText();
-                // Normalize path separators for cross-platform matching
-                var normActual = actualStr?.Replace('\\', '/');
-                var normExpected = expectedStr.Replace('\\', '/');
-                return normActual != null && normActual.Contains(normExpected, StringComparison.OrdinalIgnoreCase)
-                    ? null : $"input '{key}': expected to contain '{expectedStr}' but got '{actualStr}'.";
+            case string s:
+                actualStr = actual.ValueKind == JsonValueKind.String
+                    ? actual.GetString()! : actual.GetRawText();
+                return actualStr.Replace('\\', '/').Contains(
+                    s.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase);
 
-            case bool expectedBool:
+            case bool b:
                 return actual.ValueKind is JsonValueKind.True or JsonValueKind.False
-                    && actual.GetBoolean() == expectedBool
-                    ? null : $"input '{key}': expected {expectedBool} but got '{actual}'.";
+                    && actual.GetBoolean() == b;
 
-            case int expectedInt:
-                return actual.TryGetInt32(out var ai) && ai == expectedInt
-                    ? null : $"input '{key}': expected {expectedInt} but got '{actual}'.";
+            case int or long:
+                return actual.TryGetInt64(out var al) && al == Convert.ToInt64(expected);
 
-            case long expectedLong:
-                return actual.TryGetInt64(out var al) && al == expectedLong
-                    ? null : $"input '{key}': expected {expectedLong} but got '{actual}'.";
-
-            case double expectedDouble:
-                return actual.TryGetDouble(out var ad) && Math.Abs(ad - expectedDouble) <= 0.0001
-                    ? null : $"input '{key}': expected {expectedDouble} but got '{actual}'.";
+            case double d:
+                return actual.TryGetDouble(out var ad) && Math.Abs(ad - d) <= 0.0001;
 
             default:
-                var expectedRepr = expectedValue.ToString();
-                var actualRepr = actual.GetRawText().Trim('"');
-                return string.Equals(expectedRepr, actualRepr, StringComparison.OrdinalIgnoreCase)
-                    ? null : $"input '{key}': expected '{expectedRepr}' but got '{actualRepr}'.";
+                actualStr = actual.GetRawText().Trim('"');
+                return string.Equals(expected.ToString(), actualStr, StringComparison.OrdinalIgnoreCase);
         }
     }
+
+    private static string FormatExpected(object? value) => value is string s ? $"to contain '{s}'" : $"{value ?? "null"}";
 
     /// <summary>
     /// Checks if an actual tool call name matches an expected name.

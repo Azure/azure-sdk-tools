@@ -4,7 +4,7 @@ Sensei integrates with the token management system to ensure skills stay within 
 
 ## Token Budgets
 
-From the [skill-authoring](/.github/skills/skill-authoring) skill:
+From the skill-authoring skill:
 
 | File Type | Soft Limit | Hard Limit |
 |-----------|------------|------------|
@@ -63,10 +63,10 @@ Include in summary:
 
 ## Optimization Patterns
 
-For detailed optimization guidance, reference the [markdown-token-optimizer](/.github/skills/markdown-token-optimizer) skill:
+For detailed optimization guidance, reference the markdown-token-optimizer skill:
 
-- [ANTI-PATTERNS.md](/.github/skills/markdown-token-optimizer/references/ANTI-PATTERNS.md) - Token-wasting patterns to avoid
-- [OPTIMIZATION-PATTERNS.md](/.github/skills/markdown-token-optimizer/references/OPTIMIZATION-PATTERNS.md) - Techniques to reduce tokens
+- ANTI-PATTERNS.md (in markdown-token-optimizer) - Token-wasting patterns to avoid
+- OPTIMIZATION-PATTERNS.md (in markdown-token-optimizer) - Techniques to reduce tokens
 
 ### Quick Reference: Common Optimizations
 
@@ -120,5 +120,5 @@ Sensei captures token optimization suggestions but does **not** auto-apply them.
 
 ## Related Skills
 
-- [markdown-token-optimizer](/.github/skills/markdown-token-optimizer) - Token analysis and suggestions
-- [skill-authoring](/.github/skills/skill-authoring) - Skill writing guidelines and constraints
+- markdown-token-optimizer - Token analysis and suggestions
+- skill-authoring - Skill writing guidelines and constraints

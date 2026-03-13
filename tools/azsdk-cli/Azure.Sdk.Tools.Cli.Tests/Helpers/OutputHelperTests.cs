@@ -55,18 +55,10 @@ internal class OutputHelperTests
     {
         var response = new LogAnalysisResponse
         {
-            Summary = summary,
             Errors = errors,
-            SuggestedFix = suggestedFix
         };
 
         var expectedStr = @"
-### Summary:
-a test summary
-
-### Suggested Fix:
-a test suggested fix
-
 ### Errors:
 --> file1:1
 message1

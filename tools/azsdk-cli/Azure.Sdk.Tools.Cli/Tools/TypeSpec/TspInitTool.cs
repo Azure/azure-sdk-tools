@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     /// This tool provides functionality for initializing TypeSpec projects.
     /// Use this tool to onboard new services to TypeSpec.
     /// </summary>
-    [McpServerToolType, Description("Tools for initializing TypeSpec projects.")]
+    [McpServerToolType, Description("Initialize TypeSpec projects.")]
     public class TypeSpecInitTool(
         INpxHelper npxHelper,
         ITypeSpecHelper typespecHelper,

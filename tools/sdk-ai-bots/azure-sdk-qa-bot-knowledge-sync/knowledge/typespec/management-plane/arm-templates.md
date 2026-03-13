@@ -49,22 +49,6 @@ interface Employees {
 
 The future direction is to represent the final result only in `x-ms-long-running-operation-options` via `final-state-schema`, but not all language emitters support this yet.
 
-## Adding final-state-schema for a single POST action LRO
-
-Set `FinalResult` on the LRO header type for that specific operation to emit `final-state-schema` scoped to only that operation, without requiring `emit-lro-options: "all"` globally.
-
-```typespec
-myAction is ArmResourceActionAsync<
-  MyResource,
-  MyActionRequest,
-  MyActionResponse,
-  LroHeaders = ArmAsyncOperationHeader<FinalResult = MyActionResponse> &
-    Azure.Core.Foundations.RetryAfterHeader
->;
-```
-
-For `Location`-based polling use `ArmLroLocationHeader<FinalResult = MyActionResponse>` instead. For actions with no final response body, set `FinalResult = void`.
-
 ## ARM path segments are case-insensitive; use consistent casing
 
 Static segments in ARM URLs are treated as case-insensitive at runtime. If existing Swagger has inconsistent casing (e.g., `/volumeGroups` and `/volumegroups`), the Swagger is incorrect. Use a single canonical casing throughout and do not try to preserve legacy inconsistencies.

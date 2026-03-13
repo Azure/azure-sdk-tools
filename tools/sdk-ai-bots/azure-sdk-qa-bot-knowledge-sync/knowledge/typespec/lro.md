@@ -17,7 +17,7 @@ options:
     emit-lro-options: "all"  # verifies lro encoding; switch to "none" when confirmed
 ```
 
-Note: `x-ms-long-running-operation-options` is a Microsoft-specific OpenAPI extension and omitting it does not break SDK generation for TypeSpec-authored data plane services.
+Note: `x-ms-long-running-operation-options` (including `final-state-schema`) is a Microsoft-specific OpenAPI extension. The original expert clarified that `final-state-schema` "is just for debugging purposes and is not necessary in the actual swagger." Omitting it does not break SDK generation for TypeSpec-authored services, as SDK emitters read LRO metadata directly from the TypeSpec model.
 
 ## Non‑resource long‑running GET operations are not supported in ARM TypeSpec modeling
 

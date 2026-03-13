@@ -64,8 +64,8 @@ internal class TypeSpecCustomizationServiceTests
     /// Requires GitHub Copilot CLI to be installed and authenticated.
     /// Will be skipped if Copilot is not available.
     /// </summary>
-    [Test]
-    [Category(Integration)]
+    [Test, Explicit]
+    [Category(CopilotAgent)]
     public async Task ApplyCustomization_WithRealCopilotSdk_CompletesSuccessfully()
     {
         var logger = new TestLogger<TypeSpecCustomizationService>();

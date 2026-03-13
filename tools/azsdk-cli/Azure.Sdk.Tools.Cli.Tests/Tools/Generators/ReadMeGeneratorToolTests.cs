@@ -8,8 +8,6 @@ using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 
-using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
-
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 {
     internal class ReadMeGeneratorToolTests
@@ -69,8 +67,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             }
         }
 
-        [Test]
-        [Category(Integration)]
+        [Test, Explicit]
+        [Category(TestCategories.OpenAI)]
         public void TestReadmeGeneratorToolLive()
         {
             var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")

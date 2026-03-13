@@ -379,8 +379,8 @@ public class FeedbackClassifierServiceTests
     /// - SUCCESS: Non-actionable (LGTM, keep as is, approvals)
     /// - REQUIRES_MANUAL_INTERVENTION: Code-level changes (custom retry, serialization)
     /// </summary>
-    [Test]
-    [Category(Integration)]
+    [Test, Explicit]
+    [Category(CopilotAgent)]
     public async Task Live_ClassifyAsync_AllFeedbackCategories_ClassifiesCorrectly()
     {
         var service = CreateRealService();
@@ -440,8 +440,8 @@ public class FeedbackClassifierServiceTests
     /// Live test: Verifies items with prior compilation error context are classified as REQUIRES_MANUAL_INTERVENTION.
     /// This represents a retry scenario where previous TypeSpec customization attempt failed.
     /// </summary>
-    [Test]
-    [Category(Integration)]
+    [Test, Explicit]
+    [Category(CopilotAgent)]
     public async Task Live_ClassifyAsync_WithErrorContext_ClassifiedAsRequiresManualIntervention()
     {
         var service = CreateRealService();
@@ -475,8 +475,8 @@ public class FeedbackClassifierServiceTests
     /// Live test: Verifies REQUIRES_MANUAL_INTERVENTION items are classified correctly.
     /// Note: NextAction guidance generation was removed.
     /// </summary>
-    [Test]
-    [Category(Integration)]
+    [Test, Explicit]
+    [Category(CopilotAgent)]
     public async Task Live_ClassifyAsync_RequiresManualInterventionItems_ClassifiedCorrectly()
     {
         var service = CreateRealService();

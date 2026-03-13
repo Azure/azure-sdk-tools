@@ -601,8 +601,8 @@ internal class CopilotAgentRunnerTests
 
     }
 
-    [Test]
-    [Category(Integration)]
+    [Test, Explicit]
+    [Category(CopilotAgent)]
     public void RunAsync_WithInvalidGitHubToken_ThrowsNotAuthenticatedError()
     {
         // Arrange - Use an invalid GitHub token

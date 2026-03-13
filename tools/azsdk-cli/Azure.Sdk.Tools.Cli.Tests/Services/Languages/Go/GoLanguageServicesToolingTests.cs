@@ -12,6 +12,7 @@ using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
+    [Explicit]
     [Category(RequiresGoTooling)]
     internal class GoLanguageServicesToolingTests
     {

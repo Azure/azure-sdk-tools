@@ -101,6 +101,31 @@ Describe "Post-release version parsing - Python convention" {
         $ver.IsPrerelease | Should -BeTrue
         $ver.VersionType | Should -Be "Beta"
     }
+
+    It "Should parse implicit post-release number '1.0.0.post' as post0" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0.post")
+        $ver | Should -Not -BeNullOrEmpty
+        $ver.IsSemVerFormat | Should -BeTrue
+        $ver.Major | Should -Be 1
+        $ver.Minor | Should -Be 0
+        $ver.Patch | Should -Be 0
+        $ver.IsPostRelease | Should -BeTrue
+        $ver.PostReleaseNumber | Should -Be 0
+        $ver.PrereleaseLabel | Should -BeNullOrEmpty
+        $ver.IsPrerelease | Should -BeFalse
+        $ver.VersionType | Should -Be "GA"
+    }
+
+    It "Should parse implicit prerelease post-release '1.0.0b2.post' as post0" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0b2.post")
+        $ver | Should -Not -BeNullOrEmpty
+        $ver.IsSemVerFormat | Should -BeTrue
+        $ver.PrereleaseLabel | Should -Be "b"
+        $ver.PrereleaseNumber | Should -Be 2
+        $ver.IsPostRelease | Should -BeTrue
+        $ver.PostReleaseNumber | Should -Be 0
+        $ver.IsPrerelease | Should -BeTrue
+    }
 }
 
 Describe "Post-release version ToString round-trip - Default convention (non-Python languages don't support post-release, so should round-trip as prerelease)" {
@@ -157,6 +182,48 @@ Describe "PEP 440 alternate post-release format normalization - Python conventio
         $ver.ToString() | Should -Be "1.0.0.post1"
     }
 
+    It "Should normalize implicit post number '1.0.0.post' to '1.0.0.post0'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0.post")
+        $ver | Should -Not -BeNullOrEmpty
+        $ver.IsPostRelease | Should -BeTrue
+        $ver.PostReleaseNumber | Should -Be 0
+        $ver.ToString() | Should -Be "1.0.0.post0"
+    }
+
+    It "Should normalize implicit post number with hyphen '1.0.0-post' to '1.0.0.post0'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0-post")
+        $ver | Should -Not -BeNullOrEmpty
+        $ver.IsPostRelease | Should -BeTrue
+        $ver.PostReleaseNumber | Should -Be 0
+        $ver.ToString() | Should -Be "1.0.0.post0"
+    }
+
+    It "Should normalize implicit post number with underscore '1.0.0_post' to '1.0.0.post0'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0_post")
+        $ver | Should -Not -BeNullOrEmpty
+        $ver.IsPostRelease | Should -BeTrue
+        $ver.PostReleaseNumber | Should -Be 0
+        $ver.ToString() | Should -Be "1.0.0.post0"
+    }
+
+    It "Should normalize implicit post number with no separator '1.0.0post' to '1.0.0.post0'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0post")
+        $ver | Should -Not -BeNullOrEmpty
+        $ver.IsPostRelease | Should -BeTrue
+        $ver.PostReleaseNumber | Should -Be 0
+        $ver.ToString() | Should -Be "1.0.0.post0"
+    }
+
+    It "Should normalize implicit prerelease post number '1.0.0b2.post' to '1.0.0b2.post0'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0b2.post")
+        $ver | Should -Not -BeNullOrEmpty
+        $ver.PrereleaseLabel | Should -Be "b"
+        $ver.PrereleaseNumber | Should -Be 2
+        $ver.IsPostRelease | Should -BeTrue
+        $ver.PostReleaseNumber | Should -Be 0
+        $ver.ToString() | Should -Be "1.0.0b2.post0"
+    }
+
     It "Should normalize prerelease hyphen separator '1.0.0b2-post1' to canonical form" {
         $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0b2-post1")
         $ver | Should -Not -BeNullOrEmpty
@@ -207,6 +274,11 @@ Describe "Post-release version ToString round-trip - Python convention" {
     It "Should round-trip alpha prerelease post-release '2.0.0a20201208001.post2'" {
         $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("2.0.0a20201208001.post2")
         $ver.ToString() | Should -Be "2.0.0a20201208001.post2"
+    }
+
+    It "Should normalize implicit post-release '1.0.0.post' to '1.0.0.post0'" {
+        $ver = [AzureEngSemanticVersion]::ParsePythonVersionString("1.0.0.post")
+        $ver.ToString() | Should -Be "1.0.0.post0"
     }
 }
 
@@ -274,6 +346,23 @@ Describe "Post-release version sorting - Python convention" {
             "2.0.0b1",
             "1.0.1",
             "1.0.0.post1",
+            "1.0.0"
+        )
+        $sort = [AzureEngSemanticVersion]::SortVersionStrings($versions)
+        for ($i = 0; $i -lt $expectedSort.Count; $i++) {
+            $sort[$i] | Should -Be $expectedSort[$i]
+        }
+    }
+
+    It "Should sort implicit post-release (post0) equivalently to explicit post0" {
+        $versions = @(
+            "1.0.0.post1",
+            "1.0.0",
+            "1.0.0.post0"
+        )
+        $expectedSort = @(
+            "1.0.0.post1",
+            "1.0.0.post0",
             "1.0.0"
         )
         $sort = [AzureEngSemanticVersion]::SortVersionStrings($versions)

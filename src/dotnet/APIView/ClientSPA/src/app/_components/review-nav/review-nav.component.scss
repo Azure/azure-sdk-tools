@@ -12,6 +12,26 @@
     img {
     }
 
+    .codicon {
+        font-size: 14px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .codicon-symbol-class { color: #e37933; }
+    .codicon-symbol-interface { color: #75beff; }
+    .codicon-symbol-method { color: #b180d7; }
+    .codicon-symbol-enum { color: #ee9d28; }
+    .codicon-symbol-struct { color: #e37933; }
+    .codicon-symbol-namespace { color: #67b7a4; }
+    .codicon-symbol-event { color: #ee9d28; }
+    .codicon-symbol-type-parameter { color: #75beff; }
+    .codicon-symbol-reference { color: #cccccc; }
+    .codicon-symbol-misc { color: var(--text-color-secondary); }
+    .codicon-package { color: #67b7a4; }
+    .codicon-library { color: #67b7a4; }
+
     .p-tree {
         font-family: Consolas,monospace;
         font-size: 14px;

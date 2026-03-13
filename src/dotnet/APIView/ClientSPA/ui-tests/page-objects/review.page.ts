@@ -17,13 +17,11 @@ export class ReviewPage extends BasePage {
   readonly lineNumbers: Locator;
   readonly sectionCarets: Locator;
 
-  // Sidebar elements
-  readonly revisionsSidebar: Locator;
-  readonly conversationSidebar: Locator;
-
-  // Side menu buttons
-  readonly revisionsButton: Locator;
-  readonly conversationsButton: Locator;
+  // Tab navigation
+  readonly apiTab: Locator;
+  readonly commentsTab: Locator;
+  readonly samplesTab: Locator;
+  readonly revisionsTab: Locator;
 
   // Page options elements
   readonly diffStyleDropdown: Locator;
@@ -53,13 +51,11 @@ export class ReviewPage extends BasePage {
     this.lineNumbers = page.locator('.line-number');
     this.sectionCarets = page.locator('.row-fold-caret');
 
-    // Sidebars
-    this.revisionsSidebar = page.locator('.revisions-sidebar');
-    this.conversationSidebar = page.locator('.conversation-sidebar');
-
-    // Side menu
-    this.revisionsButton = page.locator('[tooltip="Revisions"]');
-    this.conversationsButton = page.locator('[tooltip="Conversations"]');
+    // Tab navigation
+    this.apiTab = page.locator('.page-tab', { hasText: 'API' });
+    this.commentsTab = page.locator('.page-tab', { hasText: 'Comments' });
+    this.samplesTab = page.locator('.page-tab', { hasText: 'Samples' });
+    this.revisionsTab = page.locator('.page-tab', { hasText: 'Revisions' });
 
     // Page options (these will be refined based on actual implementation)
     this.diffStyleDropdown = page.locator(
@@ -178,24 +174,15 @@ export class ReviewPage extends BasePage {
     return await firstLineNumber.isVisible();
   }
 
-  // Sidebar Methods
-  async openRevisionsSidebar(): Promise<void> {
-    await this.revisionsButton.click();
-    await this.revisionsSidebar.waitFor({ state: 'visible' });
-  }
-
-  async closeRevisionsSidebar(): Promise<void> {
-    await this.closeSidebar();
-  }
-
-  async openConversationsSidebar(): Promise<void> {
-    await this.conversationsButton.click();
-    await this.conversationSidebar.waitFor({ state: 'visible' });
+  // Tab Navigation Methods
+  async navigateToTab(tab: 'api' | 'comments' | 'samples' | 'revisions'): Promise<void> {
+    const tabMap = { api: this.apiTab, comments: this.commentsTab, samples: this.samplesTab, revisions: this.revisionsTab };
+    await tabMap[tab].click();
   }
 
   async selectRevision(revisionLabel: string): Promise<void> {
-    await this.openRevisionsSidebar();
-    const revisionItem = this.revisionsSidebar
+    await this.navigateToTab('revisions');
+    const revisionItem = this.page
       .locator('.revision-item')
       .filter({ hasText: revisionLabel });
     await revisionItem.click();

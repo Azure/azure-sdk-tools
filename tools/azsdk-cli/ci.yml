@@ -60,4 +60,8 @@ extends:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:
           ToolDirectory: $(ToolDir)
+      - template: /eng/common/pipelines/templates/jobs/benchmark-job.yml
+        parameters:
+          BenchmarkProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks
+          Parallelism: 5
 

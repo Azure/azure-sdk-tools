@@ -23,8 +23,8 @@ public class APIViewReviewTool : MCPMultiCommandTool
     // Sub-command constants
     private const string GetCommentsCmd = "get-comments";
     private const string GetContentCmd = "get-content";
-    private const string CreateReviewCmd = "create-review";
-    private const string CreateApiRevisionIfChangesCmd = "create-api-revision-if-changes";
+    private const string CreateCIRevisionCmd = "create-ci-revision";
+    private const string CreatePullRequestRevisionCmd = "create-pull-request-revision";
 
     private const string ApiViewGetCommentsToolName = "azsdk_apiview_get_comments";
 
@@ -120,7 +120,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         Description = "The source branch for the build"
     };
 
-    // create-api-revision-if-changes specific options
+    // create-pull-request-revision specific options
     private readonly Option<string> commitShaOption = new("--commit-sha")
     {
         Description = "The git commit SHA of the pull request head",
@@ -161,13 +161,13 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             apiViewUrlOption, outputFileOption, contentReturnTypeOption
         },
-        new(CreateReviewCmd, "Create an API review from Azure DevOps pipeline artifacts (CI/release pipeline usage)")
+        new(CreateCIRevisionCmd, "Create an API revision from Azure DevOps pipeline artifacts (CI/release pipeline usage)")
         {
             buildIdOption, artifactNameOption, sourceFileOption, codeFileOption,
             repoNameOption, packageNameOption, projectOption,
             labelOption, compareAllRevisionsOption, packageVersionOption, setReleaseTagOption, packageTypeOption, sourceBranchOption
         },
-        new(CreateApiRevisionIfChangesCmd, "Create an API revision if API changes are detected in a pull request (PR pipeline usage)")
+        new(CreatePullRequestRevisionCmd, "Create an API revision if API changes are detected in a pull request (PR pipeline usage)")
         {
             buildIdOption, artifactNameOption, sourceFileOption, commitShaOption,
             repoNameOption, packageNameOption, pullRequestNumberOption,
@@ -182,8 +182,8 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             GetCommentsCmd => await GetComments(parseResult, ct),
             GetContentCmd => await GetContent(parseResult, ct),
-            CreateReviewCmd => await CreateReview(parseResult, ct),
-            CreateApiRevisionIfChangesCmd => await CreateApiRevisionIfChanges(parseResult, ct),
+            CreateCIRevisionCmd => await CreateCIRevision(parseResult, ct),
+            CreatePullRequestRevisionCmd => await CreatePullRequestRevision(parseResult, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
         };
         
@@ -266,7 +266,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
     }
 
-    private async Task<APIViewResponse> CreateReview(ParseResult parseResult, CancellationToken ct)
+    private async Task<APIViewResponse> CreateCIRevision(ParseResult parseResult, CancellationToken ct)
     {
         string? reviewFilePath = parseResult.GetValue(codeFileOption);
         string? buildId = parseResult.GetValue(buildIdOption);
@@ -320,11 +320,11 @@ public class APIViewReviewTool : MCPMultiCommandTool
         }
         catch (Exception ex)
         {
-            return new APIViewResponse { ResponseError = $"Failed to create API review: {ex.Message}" };
+            return new APIViewResponse { ResponseError = $"Failed to create API revision: {ex.Message}" };
         }
     }
 
-    private async Task<APIViewResponse> CreateApiRevisionIfChanges(ParseResult parseResult, CancellationToken ct)
+    private async Task<APIViewResponse> CreatePullRequestRevision(ParseResult parseResult, CancellationToken ct)
     {
         string? buildId = parseResult.GetValue(buildIdOption);
         string? artifactName = parseResult.GetValue(artifactNameOption);

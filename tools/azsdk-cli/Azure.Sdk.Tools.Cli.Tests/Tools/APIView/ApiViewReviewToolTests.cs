@@ -130,10 +130,10 @@ public class ApiViewReviewToolTests
         _mockApiViewService.Verify(x => x.GetCommentsByRevisionAsync(expectedRevisionId), Times.Once);
     }
 
-    // create-review CLI command tests
+    // create-ci-revision CLI command tests
 
     [Test]
-    public async Task CreateReview_WithRequiredPipelineParams_ReturnsSuccess()
+    public async Task CreateCIRevision_WithRequiredPipelineParams_ReturnsSuccess()
     {
         string expectedContent = "review created";
         _mockApiViewService
@@ -143,9 +143,9 @@ public class ApiViewReviewToolTests
                 "CI Build", false, null, false, null, null))
             .ReturnsAsync((expectedContent, 200));
 
-        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-review");
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
         var parseResult = command.Parse(
-            "create-review --build-id 12345 --artifact-name packages " +
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
             "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
             "--label \"CI Build\" --repo-name Azure/azure-sdk-for-python --package-name azure-core --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
@@ -156,7 +156,7 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateReview_WithDefaultsAndAutoLabel_UsesSourceBranchForLabel()
+    public async Task CreateCIRevision_WithDefaultsAndAutoLabel_UsesSourceBranchForLabel()
     {
         string expectedContent = "review created";
         _mockApiViewService
@@ -166,9 +166,9 @@ public class ApiViewReviewToolTests
                 "Source Branch:main", false, null, false, null, "main"))
             .ReturnsAsync((expectedContent, 200));
 
-        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-review");
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
         var parseResult = command.Parse(
-            "create-review --build-id 12345 --artifact-name packages --project internal " +
+            "create-ci-revision --build-id 12345 --artifact-name packages --project internal " +
             "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
             "--repo-name Azure/azure-sdk-for-python --package-name azure-core --source-branch main");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
@@ -178,7 +178,7 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateReview_WithAllPipelineParams_ReturnsSuccess()
+    public async Task CreateCIRevision_WithAllPipelineParams_ReturnsSuccess()
     {
         string expectedContent = "review created";
         _mockApiViewService
@@ -188,9 +188,9 @@ public class ApiViewReviewToolTests
                 "CI Build", true, "1.0.0", true, "client", "refs/heads/main"))
             .ReturnsAsync((expectedContent, 202));
 
-        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-review");
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
         var parseResult = command.Parse(
-            "create-review --build-id 12345 --artifact-name packages " +
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
             "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
             "--label \"CI Build\" --repo-name Azure/azure-sdk-for-python --package-name azure-core --project internal " +
             "--compare-all-revisions --package-version 1.0.0 --set-release-tag --package-type client --source-branch refs/heads/main");
@@ -201,7 +201,7 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateReview_WhenServiceReturnsError_ReturnsError()
+    public async Task CreateCIRevision_WhenServiceReturnsError_ReturnsError()
     {
         _mockApiViewService
             .Setup(x => x.CreateCIReviewAsync(
@@ -210,9 +210,9 @@ public class ApiViewReviewToolTests
                 It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(((string?)null, 500));
 
-        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-review");
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
         var parseResult = command.Parse(
-            "create-review --build-id 12345 --artifact-name packages " +
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json " +
             "--label test --repo-name Azure/repo --package-name pkg --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
@@ -222,7 +222,7 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateReview_WhenServiceThrowsException_ReturnsError()
+    public async Task CreateCIRevision_WhenServiceThrowsException_ReturnsError()
     {
         _mockApiViewService
             .Setup(x => x.CreateCIReviewAsync(
@@ -231,19 +231,19 @@ public class ApiViewReviewToolTests
                 It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
-        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-review");
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
         var parseResult = command.Parse(
-            "create-review --build-id 12345 --artifact-name packages " +
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json " +
             "--label test --repo-name Azure/repo --package-name pkg --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
 
-        Assert.That(response.ResponseError, Does.Contain("Failed to create API review"));
+        Assert.That(response.ResponseError, Does.Contain("Failed to create API revision"));
         Assert.That(response.ResponseError, Does.Contain("Connection refused"));
     }
 
     [Test]
-    public async Task CreateReview_WhenPackageNotFoundInArtifacts_ReturnsError()
+    public async Task CreateCIRevision_WhenPackageNotFoundInArtifacts_ReturnsError()
     {
         _mockApiViewService
             .Setup(x => x.CreateCIReviewAsync(
@@ -252,9 +252,9 @@ public class ApiViewReviewToolTests
                 It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(((string?)null, 204));
 
-        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-review");
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
         var parseResult = command.Parse(
-            "create-review --build-id 12345 --artifact-name packages " +
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json " +
             "--label test --repo-name Azure/repo --package-name pkg --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
@@ -263,11 +263,11 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateReview_WithInvalidRepoNameFormat_ReturnsError()
+    public async Task CreateCIRevision_WithInvalidRepoNameFormat_ReturnsError()
     {
-        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-review");
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
         var parseResult = command.Parse(
-            "create-review --build-id 12345 --artifact-name packages " +
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json " +
             "--label test --repo-name azure-sdk-for-python --package-name pkg --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
@@ -275,10 +275,10 @@ public class ApiViewReviewToolTests
         Assert.That(response.ResponseError, Does.Contain("owner/repo"));
     }
 
-    // create-api-revision-if-changes tests
+    // create-pull-request-revision tests
 
     [Test]
-    public async Task CreateApiRevisionIfChanges_WithApiChanges_Returns201Success()
+    public async Task CreatePullRequestRevision_WithApiChanges_Returns201Success()
     {
         string expectedContent = "{\"message\":\"revision created\"}";
         _mockApiViewService
@@ -289,9 +289,9 @@ public class ApiViewReviewToolTests
             .ReturnsAsync((expectedContent, 201));
 
         var commands = apiViewReviewTool.GetCommandInstances();
-        var command = commands.First(c => c.Name == "create-api-revision-if-changes");
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
         var parseResult = command.Parse(
-            "create-api-revision-if-changes --build-id 99999 --artifact-name packages " +
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
             "--source-file-path azure-core/azure-core-1.0.0.whl --commit-sha abc123def " +
             "--repo-name Azure/azure-sdk-for-python --package-name azure-core " +
             "--pull-request-number 42 --code-token-file-path azure-core_python.json --language python --project internal");
@@ -303,7 +303,7 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateApiRevisionIfChanges_WithNoApiChanges_Returns208Success()
+    public async Task CreatePullRequestRevision_WithNoApiChanges_Returns208Success()
     {
         string expectedContent = "{\"message\":\"no changes\"}";
         _mockApiViewService
@@ -314,9 +314,9 @@ public class ApiViewReviewToolTests
             .ReturnsAsync((expectedContent, 208));
 
         var commands = apiViewReviewTool.GetCommandInstances();
-        var command = commands.First(c => c.Name == "create-api-revision-if-changes");
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
         var parseResult = command.Parse(
-            "create-api-revision-if-changes --build-id 99999 --artifact-name packages " +
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
             "--source-file-path azure-core/azure-core-1.0.0.whl --commit-sha abc123def " +
             "--repo-name Azure/azure-sdk-for-python --package-name azure-core " +
             "--pull-request-number 42 --code-token-file-path azure-core_python.json --project internal");
@@ -328,7 +328,7 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateApiRevisionIfChanges_WithAllParams_ReturnsSuccess()
+    public async Task CreatePullRequestRevision_WithAllParams_ReturnsSuccess()
     {
         string expectedContent = "{\"message\":\"revision created\"}";
         _mockApiViewService
@@ -340,9 +340,9 @@ public class ApiViewReviewToolTests
             .ReturnsAsync((expectedContent, 201));
 
         var commands = apiViewReviewTool.GetCommandInstances();
-        var command = commands.First(c => c.Name == "create-api-revision-if-changes");
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
         var parseResult = command.Parse(
-            "create-api-revision-if-changes --build-id 99999 --artifact-name packages " +
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
             "--source-file-path azure-core-1.0.0.whl --commit-sha abc123def " +
             "--repo-name Azure/azure-sdk-for-python --package-name azure-core " +
             "--pull-request-number 42 --code-token-file-path azure-core_python.json " +
@@ -356,7 +356,7 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateApiRevisionIfChanges_WhenServiceReturnsError_ReturnsError()
+    public async Task CreatePullRequestRevision_WhenServiceReturnsError_ReturnsError()
     {
         _mockApiViewService
             .Setup(x => x.CreatePullRequestRevisionAsync(
@@ -367,9 +367,9 @@ public class ApiViewReviewToolTests
             .ReturnsAsync(((string?)null, 500));
 
         var commands = apiViewReviewTool.GetCommandInstances();
-        var command = commands.First(c => c.Name == "create-api-revision-if-changes");
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
         var parseResult = command.Parse(
-            "create-api-revision-if-changes --build-id 99999 --artifact-name packages " +
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json --commit-sha abc123 " +
             "--repo-name Azure/repo --package-name pkg --pull-request-number 1 --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
@@ -379,7 +379,7 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateApiRevisionIfChanges_WhenServiceThrowsException_ReturnsError()
+    public async Task CreatePullRequestRevision_WhenServiceThrowsException_ReturnsError()
     {
         _mockApiViewService
             .Setup(x => x.CreatePullRequestRevisionAsync(
@@ -390,9 +390,9 @@ public class ApiViewReviewToolTests
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
         var commands = apiViewReviewTool.GetCommandInstances();
-        var command = commands.First(c => c.Name == "create-api-revision-if-changes");
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
         var parseResult = command.Parse(
-            "create-api-revision-if-changes --build-id 99999 --artifact-name packages " +
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json --commit-sha abc123 " +
             "--repo-name Azure/repo --package-name pkg --pull-request-number 1 --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
@@ -402,12 +402,12 @@ public class ApiViewReviewToolTests
     }
 
     [Test]
-    public async Task CreateApiRevisionIfChanges_WithInvalidRepoNameFormat_ReturnsError()
+    public async Task CreatePullRequestRevision_WithInvalidRepoNameFormat_ReturnsError()
     {
         var commands = apiViewReviewTool.GetCommandInstances();
-        var command = commands.First(c => c.Name == "create-api-revision-if-changes");
+        var command = commands.First(c => c.Name == "create-pull-request-revision");
         var parseResult = command.Parse(
-            "create-api-revision-if-changes --build-id 99999 --artifact-name packages " +
+            "create-pull-request-revision --build-id 99999 --artifact-name packages " +
             "--source-file-path file.whl --code-token-file-path file.json --commit-sha abc123 " +
             "--repo-name azure-sdk-for-python --package-name pkg --pull-request-number 1 --project internal");
         var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);

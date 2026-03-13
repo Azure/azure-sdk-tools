@@ -6,11 +6,13 @@ using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Microsoft.Graph.Models;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
@@ -335,16 +337,20 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     };
                 }
 
-                // All items are code customizations — no TSP changes were made, skip regen
-                // but still build to get error context for the patch agent
+                // All items are code customizations — no TSP changes were made, skip regen.
+                // Build will happen after the loop to get error context for the patch agent.
                 if (tspApplicable == 0 && codeCustomizations > 0)
                 {
-                    logger.LogInformation("All items classified as CODE_CUSTOMIZATION — skipping regen, building for error context.");
-                    var (codeCustSuccess, codeCustError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-                    buildSucceeded = codeCustSuccess;
-                    buildError = codeCustError;
+                    logger.LogInformation("All items classified as CODE_CUSTOMIZATION — skipping regen.");
                     break;
                 }
+            }
+
+            // No TSP progress on subsequent iterations — stop looping
+            if (tries > 0 && tspFixSucceeded == 0)
+            {
+                logger.LogInformation("No TSP fixes succeeded on iteration {Iteration}, stopping.", tries + 1);
+                break;
             }
 
             // Don't waste time regenerating if no TSP fixes were successfully applied
@@ -365,34 +371,41 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     }
 
                     buildSucceeded = false;
-                    buildError = regenContext;
+                    // Reset buildError — no code was generated, nothing new to build
+                    buildError = null;
                     tries++;
                     continue;
                 }
             }
 
-            // Only build if we regenerated (code changed) or don't yet have build error context
-            if (tspFixSucceeded > 0 || buildError == null)
+            // Always build after regen to get fresh error context for the classifier
+            logger.LogDebug("Building {packagePath}", packagePath);
+            var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+
+            buildSucceeded = success;
+            buildError = error;
+
+            // Append build result context to all remaining feedback items for the next iteration
+            if (tries + 1 < maxTries)
             {
-                logger.LogDebug("Building {packagePath}", packagePath);
-                var (success, error, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
-
-                buildSucceeded = success;
-                buildError = error;
-
-                // Append build result context to all remaining feedback items for the next iteration
-                if (tries + 1 < maxTries)
+                var buildContext = success ? "Build succeeded." : (error ?? "Build failed with unknown error.");
+                foreach (var item in feedbackDictionary.Values)
                 {
-                    var buildContext = success ? "Build succeeded." : (error ?? "Build failed with unknown error.");
-                    foreach (var item in feedbackDictionary.Values)
-                    {
-                        item.AppendContext(buildContext, "Build Result");
-                    }
+                    item.AppendContext(buildContext, "Build Result");
                 }
             }
 
             tries++;
         } while (!buildSucceeded && tries < maxTries);
+
+        // Build for error context if no build happened in the loop (pure CODE_CUSTOMIZATION path)
+        if (!buildSucceeded && buildError == null)
+        {
+            logger.LogInformation("Building for error context...");
+            var (s, e, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
+            buildSucceeded = s;
+            buildError = e;
+        }
 
         if (buildSucceeded)
         {
@@ -428,7 +441,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                ResponseError = "Build failed but no customization files found to repair.",
+                ResponseError = string.IsNullOrWhiteSpace(buildError)
+                    ? "Build failed but no customization files found to repair."
+                    : $"Build failed but no customization files found to repair.\n{buildError}",
                 Message = "Build failed but no customization files found to repair.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildNoCustomizationsFailed,
                 BuildResult = buildError
@@ -451,7 +466,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                ResponseError = "No patches could be applied - automated repair found nothing to fix.",
+                ResponseError = string.IsNullOrWhiteSpace(buildError)
+                    ? "No patches could be applied - automated repair found nothing to fix."
+                    : $"No patches could be applied - automated repair found nothing to fix.\n{buildError}",
                 Message = "No patches could be applied - automated repair found nothing to fix.",
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.PatchesFailed,
                 BuildResult = buildError
@@ -490,7 +507,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             {
                 Success = true,
                 Message = "Build passed after repairs.",
-                BuildResult = finalBuildError,
                 TypeSpecChangesSummary = changesMade,
                 AppliedPatches = patches
             };
@@ -501,7 +517,9 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         return new CustomizedCodeUpdateResponse
         {
             Success = false,
-            ResponseError = "Patches applied but build still failing.",
+            ResponseError = string.IsNullOrWhiteSpace(finalBuildError)
+                ? "Patches applied but build still failing."
+                : $"Patches applied but build still failing.\n{finalBuildError}",
             Message = "Patches applied but build still failing.",
             ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.BuildAfterPatchesFailed,
             BuildResult = finalBuildError,

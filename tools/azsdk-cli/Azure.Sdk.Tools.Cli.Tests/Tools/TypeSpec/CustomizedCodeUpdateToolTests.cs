@@ -431,8 +431,10 @@ public class CustomizedCodeUpdateToolAutoTests
     public async Task TspRegeneration_Fails_ContinuesLoopAndAppendsContext()
     {
         var classifyCalls = 0;
+        var svc = new ConfigurableLanguageService(buildFunc: () => (false, "error: regen never succeeded", null));
         var failingTsp = new MockTspHelper(updateSuccess: false, updateError: "tsp-client failed: exit code 1");
         var (tool, _) = CreateTool(
+            languageService: svc,
             tspHelper: failingTsp,
             configureClassifier: c =>
                 c.Setup(x => x.ClassifyItemsAsync(

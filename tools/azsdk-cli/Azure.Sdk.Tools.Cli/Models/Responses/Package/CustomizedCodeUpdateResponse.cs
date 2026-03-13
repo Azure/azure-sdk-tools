@@ -29,7 +29,8 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
     public List<AppliedPatch>? AppliedPatches { get; set; }
 
     /// <summary>
-    /// Raw build output. Set on both success and failure to provide context in MCP responses.
+    /// Raw build error output. Only set when Success = false.
+    /// The classifier uses this to determine next steps.
     /// </summary>
     [JsonPropertyName("buildResult")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: "Guide writing of Agent Skills compliant with agentskills.io specification. WHEN: \"create a skill\", \"new skill\", \"write a skill\", \"skill template\", \"skill structure\", \"review skill\", \"skill PR\", \"skill compliance\", \"SKILL.md format\", \"skill frontmatter\", \"skill best practices\". INVOKES: waza CLI."
+description: "Write Agent Skills that comply with the agentskills.io specification. WHEN: \"create a skill\", \"new skill\", \"write a skill\", \"skill template\", \"skill structure\", \"review skill\", \"skill PR\", \"skill compliance\", \"SKILL.md format\", \"skill frontmatter\", \"skill best practices\". INVOKES: waza CLI."
 license: MIT
 metadata:
   author: Microsoft
@@ -10,8 +10,6 @@ compatibility:
 ---
 
 # Skill Authoring Guide
-
-Write Agent Skills that comply with the [agentskills.io specification](https://agentskills.io/specification).
 
 ## Constraints
 
@@ -29,11 +27,27 @@ Write Agent Skills that comply with the [agentskills.io specification](https://a
 
 ## Progressive Disclosure
 
-Metadata loads at startup. SKILL.md loads on activation. References load **only when explicitly linked** via `[text](references/file.md)` — not on activation. Keep SKILL.md lean.
+Metadata loads at startup. SKILL.md on activation. References load only when linked via `[text](references/file.md)`.
 
-## Validation
+## Prerequisites
 
-Run `waza check {skill-name}` to validate compliance, token budget, and links.
+No MCP servers required. Uses waza CLI only.
+
+## Quick Start
+
+1. Create skill directory with `SKILL.md`
+2. Add frontmatter with `name`, `description`, `license`
+3. Run `waza check {skill-name}` to validate
+
+## Examples
+
+- "Create a new skill for code review"
+- "Review my skill for compliance"
+
+## Troubleshooting
+
+If `waza check` reports broken links, verify reference file paths match exactly.
+
 
 ## Reference Documentation
 

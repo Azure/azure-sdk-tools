@@ -443,6 +443,11 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Diagnostic comments cannot be deleted. They are managed automatically by the diagnostic sync process.");
+            }
+
             await AssertOwnerAsync(user, comment);
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, user.GetGitHubLogin());
             comment.ChangeHistory = changeUpdate.ChangeHistory;
@@ -572,7 +577,10 @@ namespace APIViewWeb.Managers
                 switch (request.Disposition)
                 {
                     case ConversationDisposition.Delete:
-                        await SoftDeleteCommentAsync(user, reviewId, commentId);
+                        if (comment.CommentSource != CommentSource.Diagnostic)
+                        {
+                            await SoftDeleteCommentAsync(user, reviewId, commentId);
+                        }
                         break;
                     case ConversationDisposition.Resolve:
                         await ResolveConversation(user, reviewId, comment.ElementId, comment.ThreadId);
@@ -733,6 +741,11 @@ namespace APIViewWeb.Managers
 
         private async Task ToggleVoteAsync(ClaimsPrincipal user, CommentItemModel comment, FeedbackVote voteType)
         {
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                throw new InvalidOperationException("Voting is not supported on diagnostic comments.");
+            }
+
             string userName = user.GetGitHubLogin();
             switch (voteType)
             {
@@ -775,6 +788,11 @@ namespace APIViewWeb.Managers
         private async Task SetVoteAsync(ClaimsPrincipal user, string reviewId, string commentId, FeedbackVote voteType)
         {
             CommentItemModel comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+
+            if (comment.CommentSource == CommentSource.Diagnostic)
+            {
+                return; // Silently skip voting on diagnostic comments during batch operations
+            }
 
             string userName = user.GetGitHubLogin();
             bool voteChanged = false;

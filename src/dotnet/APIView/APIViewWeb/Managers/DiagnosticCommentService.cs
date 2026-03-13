@@ -113,6 +113,7 @@ public class DiagnosticCommentService : IDiagnosticCommentService
                 ElementId = diagnostic.TargetId,
                 ThreadId = threadId,
                 CommentText = newCommentText,
+                CorrelationId = diagnostic.DiagnosticId,
                 CommentSource = CommentSource.Diagnostic,
                 Severity = newSeverity,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,

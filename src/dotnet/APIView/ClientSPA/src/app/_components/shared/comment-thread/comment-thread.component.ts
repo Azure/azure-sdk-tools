@@ -243,13 +243,13 @@ export class CommentThreadComponent {
         { label: 'Edit', icon: 'pi pi-pencil', command: (event) => this.showEditEditor(event) },
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && this.permissionsService.isAdmin(this.userProfile?.permissions)) {
-      // Admins can delete any comment but not edit others' comments
+    } else if (comment && !this.isDiagnostic(comment) && this.permissionsService.isAdmin(this.userProfile?.permissions)) {
+      // Admins can delete any comment but not edit others' comments (except diagnostics)
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
       ]});
-    } else if (comment && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
+    } else if (comment && !this.isDiagnostic(comment) && comment.createdBy == "azure-sdk" && this.permissionsService.isApproverFor(this.userProfile?.permissions, this.reviewContextService.getLanguage())) {
       menu.push({ separator: true });
       menu.push({ items: [
         { label: 'Delete', icon: 'pi pi-trash', command: (event) => this.deleteComment(event) }
@@ -381,6 +381,13 @@ export class CommentThreadComponent {
     const commentId = target.getAttribute("data-item-id");
     const title = target.getAttribute("data-element-id");
 
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+
+    // Diagnostic comments cannot be deleted
+    if (comment?.commentSource === CommentSource.Diagnostic) {
+      return;
+    }
+
     const deleteAction = {
       commentThreadUpdateAction: CommentThreadUpdateAction.CommentDeleted,
       nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
@@ -389,8 +396,6 @@ export class CommentThreadComponent {
       associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
       title: title // Used for Sample Instance of CommentThread
     } as CommentUpdatesDto;
-
-    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
 
     if (comment?.commentSource === CommentSource.AIGenerated) {
       this.pendingDeleteAction = deleteAction;
@@ -524,6 +529,13 @@ export class CommentThreadComponent {
   toggleUpVoteAction(event: Event) {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
+
+    // Diagnostic comments cannot be voted on
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    if (comment?.commentSource === CommentSource.Diagnostic) {
+      return;
+    }
+
     this.commentUpvoteActionEmitter.emit(
       {
         commentThreadUpdateAction: CommentThreadUpdateAction.CommentUpVoteToggled,
@@ -539,6 +551,12 @@ export class CommentThreadComponent {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
     const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+
+    // Diagnostic comments cannot be voted on
+    if (comment?.commentSource === CommentSource.Diagnostic) {
+      return;
+    }
+
     const isAIComment = comment?.commentSource === CommentSource.AIGenerated;
     const hasDownvote = comment?.downvotes?.includes(this.userProfile?.userName || '');
 

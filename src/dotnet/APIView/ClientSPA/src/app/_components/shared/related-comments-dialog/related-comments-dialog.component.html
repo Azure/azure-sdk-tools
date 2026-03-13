@@ -97,7 +97,7 @@
       <div class="d-flex align-items-center justify-content-end gap-2 mb-3">
         <!-- Disposition Dropdown -->
         <p-select
-          [options]="dispositionOptions"
+          [options]="filteredDispositionOptions"
           [(ngModel)]="selectedDisposition"
           optionLabel="label"
           optionValue="value"
@@ -132,7 +132,7 @@
         <div class="vr mx-2"></div>
 
         <!-- Vote Buttons -->
-        <div class="d-flex align-items-center vote-section">
+        <div *ngIf="!allSelectedAreDiagnostic" class="d-flex align-items-center vote-section">
           <button
             type="button"
             class="btn btn-link p-2 vote-btn"

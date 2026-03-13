@@ -9,6 +9,45 @@
         padding: 0 0.5rem;
     }
 
+    .panel-toggles {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        padding-bottom: 0.1rem;
+    }
+
+    .sidebar-toggle-btn {
+        padding: 0rem 0.35rem;
+        border: none !important;
+        background: transparent !important;
+        color: var(--text-muted-color) !important;
+        font-size: 1.1rem;
+        position: relative;
+
+        &:hover {
+            color: var(--base-text-color) !important;
+        }
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20%;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color);
+            transition: width 0.15s;
+        }
+    }
+
+    .btn-check:checked + .sidebar-toggle-btn {
+        color: var(--base-text-color) !important;
+
+        &::after {
+            width: 60%;
+        }
+    }
+
     .page-tab {
         display: inline-flex;
         align-items: center;

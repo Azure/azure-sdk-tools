@@ -5,11 +5,7 @@
         [apiRevisions]="apiRevisions"
         [activeApiRevisionId]="activeApiRevisionId"
         [diffApiRevisionId]="diffApiRevisionId"
-        [userProfile]="userProfile"
-        [showPageoptionsButton]="showPageoptionsButton"
-        [showLeftNavigation]="showLeftNavigation"
-        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
-        (showLeftNavigationEmitter)="handleLeftNavigationEmitter($event)"></app-review-info>
+        [userProfile]="userProfile"></app-review-info>
     <nav class="page-tabs" aria-label="Review navigation">
         <button type="button" class="page-tab" [class.active]="activePage === 'reviews'" (click)="navigateToReviewsEmitter.emit()" title="View API review code">
             <i class="bi bi-code-slash"></i>
@@ -29,6 +25,13 @@
             <i class="bi bi-clock-history"></i>
             <span>Revisions</span>
         </button>
+        <div *ngIf="showPageoptionsButton && activePage === 'reviews'" class="panel-toggles">
+            <input type="checkbox" (change)="onLeftPanelCheckChange($event)" [ngModel]="showLeftNavigation" class="btn-check" id="page-left-panel" autocomplete="off" data-clarity-region="toggle-left-navigation"/>
+            <label class="btn btn-sm sidebar-toggle-btn" accesskey="l" for="page-left-panel"><i class="bi bi-layout-sidebar"></i></label>
+
+            <input type="checkbox" (change)="onRightPanelCheckChange($event)" [ngModel]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off" data-clarity-region="toggle-page-options"/>
+            <label class="btn btn-sm sidebar-toggle-btn" accesskey="m" for="page-right-panel"><i class="bi bi-layout-sidebar-reverse"></i></label>
+        </div>
     </nav>
     <div class="layout-body">
         <div class="layout-content">

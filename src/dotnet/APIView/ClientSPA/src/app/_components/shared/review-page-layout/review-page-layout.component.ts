@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NavBarComponent } from 'src/app/_components/shared/nav-bar/nav-bar.component';
 import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/review-info.component';
 import { Review } from 'src/app/_models/review';
@@ -13,6 +14,7 @@ import { UserProfile } from 'src/app/_models/userProfile';
     standalone: true,
     imports: [
         CommonModule,
+        FormsModule,
         NavBarComponent,
         ReviewInfoComponent
     ]
@@ -36,6 +38,8 @@ export class ReviewPageLayoutComponent {
   @Output() navigateToRevisionsEmitter : EventEmitter<void> = new EventEmitter<void>();
   @Output() navigateToConversationsEmitter : EventEmitter<void> = new EventEmitter<void>();
 
+  showPageOptions: boolean = true;
+
   handlePageOptionsEmitter(showPageOptions: boolean) {
     this.pageOptionsEmitter.emit(showPageOptions);
   }
@@ -44,5 +48,21 @@ export class ReviewPageLayoutComponent {
     this.showLeftNavigationEmitter.emit(showLeftNavigation);
   }
 
+  ngOnChanges(changes: any) {
+    if (changes['userProfile'] && this.userProfile) {
+      this.showPageOptions = this.userProfile.preferences?.hideReviewPageOptions != undefined
+        ? !this.userProfile.preferences.hideReviewPageOptions
+        : false;
+    }
+  }
 
+  onRightPanelCheckChange(event: any) {
+    this.showPageOptions = event.target.checked;
+    this.pageOptionsEmitter.emit(event.target.checked);
+  }
+
+  onLeftPanelCheckChange(event: any) {
+    this.showLeftNavigation = event.target.checked;
+    this.showLeftNavigationEmitter.emit(event.target.checked);
+  }
 }

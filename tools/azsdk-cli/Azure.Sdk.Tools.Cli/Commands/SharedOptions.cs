@@ -59,7 +59,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(UpgradeTool),
 #if DEBUG
             // only add these tools in debug mode
-            typeof(CleanupTool),
             typeof(ExampleTool),
             typeof(HelloWorldTool),
 #endif

@@ -12,3 +12,8 @@ body {
     background-color: var(--base-bg-color);
     color: var(--base-fg-color);
 }
+
+:root {
+    --page-content-height: calc(100vh - 122px);
+    --tab-hover-bg: color-mix(in srgb, var(--text-color) 10%, transparent);
+}

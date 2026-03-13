@@ -38,4 +38,27 @@ export class ReviewNavComponent implements OnChanges {
   isClientType(node: TreeNode): boolean {
     return node.label?.toLowerCase().endsWith('client') || false;
   }
+
+  private static readonly ICON_MAP: Record<string, string> = {
+    'assembly': 'codicon-library',
+    'class': 'codicon-symbol-class',
+    'delegate': 'codicon-symbol-event',
+    'enum': 'codicon-symbol-enum',
+    'interface': 'codicon-symbol-interface',
+    'method': 'codicon-symbol-method',
+    'namespace': 'codicon-symbol-namespace',
+    'package': 'codicon-package',
+    'struct': 'codicon-symbol-struct',
+    'type': 'codicon-symbol-type-parameter',
+    'typeparam': 'codicon-symbol-type-parameter',
+    'dependencies': 'codicon-symbol-reference',
+  };
+
+  getCodiconClass(icon: string): string {
+    return ReviewNavComponent.ICON_MAP[icon] ?? '';
+  }
+
+  hasCodiconIcon(icon: string): boolean {
+    return icon in ReviewNavComponent.ICON_MAP;
+  }
 }

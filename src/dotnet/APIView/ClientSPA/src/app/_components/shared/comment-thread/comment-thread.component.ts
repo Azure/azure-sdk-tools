@@ -20,7 +20,8 @@ import { LanguageNamesPipe } from 'src/app/_pipes/language-names.pipe';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
-import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, getStructuredTokenClass } from 'src/app/_helpers/common-helpers';
+import { StructuredToken } from 'src/app/_models/structuredToken';
 import { CommentSeverityHelper } from 'src/app/_helpers/comment-severity.helper';
 import { CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
@@ -77,6 +78,7 @@ export class CommentThreadComponent {
   @Input() reviewId: string = '';
   @Input() allComments: CommentItemModel[] = [];
   @Input() allCodePanelRowData: CodePanelRowData[] = [];
+  @Input() elementId: string = '';
 
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -87,6 +89,7 @@ export class CommentThreadComponent {
   @Output() commentDownvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentThreadNavigationEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() batchResolutionActionEmitter : EventEmitter<CommentUpdatesDto> = new EventEmitter<CommentUpdatesDto>();
+  @Output() navigateToElementEmitter : EventEmitter<string> = new EventEmitter<string>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -121,6 +124,7 @@ export class CommentThreadComponent {
   showAIDeleteDialog: boolean = false;
   pendingDownvoteAction: CommentUpdatesDto | null = null;
   pendingDeleteAction: CommentUpdatesDto | null = null;
+  conversationCodeRow: CodePanelRowData | null = null;
 
   get pendingDownvoteCommentId(): string {
     return this.pendingDownvoteAction?.commentId || '';
@@ -167,6 +171,7 @@ export class CommentThreadComponent {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
       this.setCommentResolutionState();
+      this.updateConversationCodeContext();
     }
 
     if (changes['allComments'] || changes['allCodePanelRowData']) {
@@ -174,7 +179,24 @@ export class CommentThreadComponent {
         CommentRelationHelper.calculateRelatedComments(this.allComments);
       }
       this.visibleRelatedCommentsCache.clear();
+      this.updateConversationCodeContext();
     }
+  }
+
+  private updateConversationCodeContext() {
+    if (this.instanceLocation !== 'conversations') {
+      return;
+    }
+    const elementId = this.codePanelRowData?.comments?.[0]?.elementId;
+    if (!elementId || !this.allCodePanelRowData || this.allCodePanelRowData.length === 0) {
+      this.conversationCodeRow = null;
+      return;
+    }
+    this.conversationCodeRow = this.allCodePanelRowData.find(row => row.nodeId === elementId) || null;
+  }
+
+  getTokenClass(token: StructuredToken) {
+    return getStructuredTokenClass(token);
   }
 
   setCommentResolutionState() {

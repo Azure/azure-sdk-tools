@@ -74,8 +74,8 @@ public class AddArmResourceScenario : BenchmarkScenario
                 "@armResourceOperations",
                 "interface Assets",
                 "get is ArmResourceRead<Asset>",
-                "createOrUpdate is ArmResourceCreateOrReplaceAsync<Asset>",
-                "update is ArmResourcePatchSync<Asset, AssetProperties>",
+                "ArmResourceCreateOrReplace",
+                "update is Arm",
                 "delete is ArmResourceDeleteWithoutOkAsync<Asset>",
                 "listByResourceGroup is ArmResourceListByParent<Asset>",
                 "listBySubscription is ArmListBySubscription<Asset>"
@@ -88,7 +88,7 @@ public class AddArmResourceScenario : BenchmarkScenario
 
         // Verify the project compiles successfully
         new CommandValidator("tsp compile succeeds",
-            command: "tsp",
-            arguments: ["compile", "./specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp"])
+            command: "npx",
+            arguments: ["tsp", "compile", "./specification/widget/resource-manager/Microsoft.Widget/Widget/main.tsp"])
     ];
 }

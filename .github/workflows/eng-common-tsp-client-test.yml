@@ -1,0 +1,138 @@
+name: eng/common/tsp-client - Test
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/eng-common-tsp-client-test.yml
+      - eng/common/tsp-client/**
+      - eng/common-tests/tsp-client/**
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/eng-common-tsp-client-test.yml
+      - eng/common/tsp-client/**
+      - eng/common-tests/tsp-client/**
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: tools/eng/common-tests/tsp-client
+
+    steps:
+      - name: Checkout self
+        uses: actions/checkout@v6
+        with:
+          path: tools
+          sparse-checkout: |
+            .github
+            eng/common/tsp-client
+            eng/common-tests/tsp-client
+
+      - name: Setup node
+        uses: actions/setup-node@v6
+        with:
+          # default node-version on agent should be sufficient for this test
+          cache: "npm"
+          cache-dependency-path: |
+            tools/eng/common/tsp-client/package-lock.json
+            tools/eng/common-tests/tsp-client/package-lock.json
+
+      - name: Install eng/common/tsp-client
+        run: |
+          echo "::group::npm ci --no-audit --no-fund --prefer-offline"
+          npm ci --no-audit --no-fund --prefer-offline
+          echo "::endgroup::"
+          echo "::group::npm ls -a"
+          npm ls -a || true
+          echo "::endgroup::"
+        working-directory: tools/eng/common/tsp-client
+
+      - name: Install deps
+        run: |
+          echo "::group::npm ci --no-audit --no-fund --prefer-offline"
+          npm ci --no-audit --no-fund --prefer-offline
+          echo "::endgroup::"
+          echo "::group::npm ls -a"
+          npm ls -a || true
+          echo "::endgroup::"
+
+      - name: npm run lint
+        run: npm run lint
+
+      - name: npm run format:check:ci
+        run: npm run format:check:ci
+
+      - name: Checkout specs
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-rest-api-specs
+          path: specs
+          sparse-checkout: |
+            specification/widget
+
+      - name: Checkout go
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-go
+          path: go
+          sparse-checkout: |
+            eng
+            sdk/template
+
+      - name: Checkout java
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-java
+          path: java
+          sparse-checkout: |
+            eng
+            sdk/template
+
+      - name: Checkout js
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-js
+          path: js
+          sparse-checkout: |
+            eng
+            sdk/template
+
+      - name: Checkout net
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-net
+          path: net
+          sparse-checkout: |
+            eng
+            sdk/template
+
+      - name: Checkout python
+        uses: actions/checkout@v6
+        with:
+          repository: Azure/azure-sdk-for-python
+          path: python
+          sparse-checkout: |
+            eng
+            sdk/template
+
+      - name: npm run test:ci
+        run: |
+          set -o pipefail
+          npm run test:ci | tee test-output.txt || TEST_EXIT=$?
+          {
+            echo '## Test Summary'
+            echo '```text'
+            sed 's/\x1b\[[0-9;]*m//g' test-output.txt | grep -E '^[[:space:]]*[✓×] .+ > .+ [0-9]+(ms|s)$' | sort || true
+            echo '```'
+            echo '```text'
+            awk '/Test Files/{flag=1} flag{print} /Duration/{flag=0}' test-output.txt | sed 's/\x1b\[[0-9;]*m//g'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit ${TEST_EXIT:-0}

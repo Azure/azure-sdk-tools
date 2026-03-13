@@ -22,7 +22,7 @@ stages:
   - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
     - stage: CreateSync
       jobs:
-        - job: SyncEngCommon
+        - job: SyncDirectory
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           pool:

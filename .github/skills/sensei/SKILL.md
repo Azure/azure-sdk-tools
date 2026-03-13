@@ -1,6 +1,6 @@
 ---
 name: sensei
-description: "Improve skill frontmatter compliance iteratively using the Ralph loop pattern. **WORKFLOW SKILL**. WHEN: \"run sensei\", \"sensei help\", \"improve skill\", \"fix frontmatter\", \"skill compliance\", \"frontmatter audit\", \"score skill\", \"check skill tokens\". INVOKES: waza CLI, git."
+description: "Improve skill frontmatter compliance iteratively using the Ralph loop pattern. **WORKFLOW SKILL**. WHEN: \"run sensei\", \"sensei help\", \"improve skill\", \"fix frontmatter\", \"skill compliance\", \"frontmatter audit\", \"score skill\", \"check skill tokens\". DO NOT USE FOR: writing new skills from scratch (use skill-authoring), general code review. INVOKES: waza CLI, git."
 license: MIT
 metadata:
   author: Microsoft
@@ -11,7 +11,7 @@ compatibility:
 
 # Sensei
 
-Automates skill frontmatter improvement via the Ralph loop — iteratively improving skills until they pass waza check compliance.
+Iteratively improve skills until they pass waza check compliance.
 
 ## Usage
 
@@ -20,7 +20,6 @@ Run sensei on <skill-name>
 Run sensei on <skill1>, <skill2>
 Run sensei on all skills
 ```
-
 
 ## The Ralph Loop
 
@@ -60,4 +59,3 @@ If waza check fails to run, verify waza is installed and you are in the skills d
 - [LOOP.md](references/LOOP.md) — Detailed workflow
 - [EXAMPLES.md](references/EXAMPLES.md) — Before/after examples
 - [TOKEN-INTEGRATION.md](references/TOKEN-INTEGRATION.md) — Token budgets
-

@@ -114,7 +114,7 @@ public static class McpConfigLoader
         // Expand ${workspaceFolder} in cwd if present
         var expandedCwd = vsCodeServer.Cwd != null 
             ? ExpandVariables(vsCodeServer.Cwd, workspaceRoot) 
-            : null;
+            : workspaceRoot;
 
         // Expand ${workspaceFolder} in env values if present
         var expandedEnv = vsCodeServer.Env?

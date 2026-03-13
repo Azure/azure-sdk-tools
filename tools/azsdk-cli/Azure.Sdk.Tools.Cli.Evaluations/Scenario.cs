@@ -1,5 +1,4 @@
 using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
-using Azure.Sdk.Tools.Cli.Evaluations.Models;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 using Microsoft.Extensions.AI.Evaluation.Reporting;
@@ -16,8 +15,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         // Static services shared across all tests
         protected static IChatClient? s_chatClient;
         protected static McpClient? s_mcpClient;
-        protected static ChatCompletion? s_chatCompletion;
-        protected static IEnumerable<string>? s_toolNames;
         protected static ChatConfiguration? s_chatConfig;
         private static readonly string s_executionName = $"{DateTime.Now:yyyyMMddTHHmmss}";
         private string ScenarioName => $"{TestContext.CurrentContext.Test.ClassName}.{TestContext.CurrentContext.Test.Name}";
@@ -40,8 +37,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
             s_chatClient = TestSetup.GetChatClient();
             s_mcpClient = await TestSetup.GetMcpClientAsync();
             s_chatConfig = new ChatConfiguration(s_chatClient);
-            s_chatCompletion = TestSetup.GetChatCompletion(s_chatClient, s_mcpClient);
-            s_toolNames = (await s_mcpClient.ListToolsAsync()).Select(tool => tool.Name)!;
         }
 
         [SetUp]

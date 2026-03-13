@@ -22,7 +22,6 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
         public static string? RepositoryName => Environment.GetEnvironmentVariable("REPOSITORY_NAME");
         
         public static string? CopilotInstructionsPath => Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH_MCP_EVALS");
-        public static ChatCompletion GetChatCompletion(IChatClient chatClient, McpClient mcpClient) => new ChatCompletion(chatClient, mcpClient);
 
         public static TokenCredential GetCredential(ILogger? logger = null)
         {

@@ -36,7 +36,7 @@ public class BenchmarkResult
     /// <summary>
     /// Gets the list of tool calls made during execution.
     /// </summary>
-    public IReadOnlyList<string> ToolCalls { get; init; } = [];
+    public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
 
     /// <summary>
     /// Gets the path to the workspace where the benchmark was executed.

@@ -47,6 +47,12 @@ dotnet run -- run --all
 
 # Run with options
 dotnet run -- run rename-client-property --model gpt-4o --cleanup never
+
+# Run all scenarios and generate a report
+dotnet run -- run --all --report
+
+# Generate a report from existing log files
+dotnet run -- report /path/to/logs --output report.md
 ```
 
 ### CLI Options
@@ -56,11 +62,14 @@ dotnet run -- run rename-client-property --model gpt-4o --cleanup never
 | `list` | List all available scenarios with name, description, and tags |
 | `run <name>` | Run a specific scenario by name |
 | `run --all` | Run all discovered scenarios |
+| `report <path>` | Generate a markdown report from existing benchmark log files |
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--model <model>` | Model to use for agent execution | `claude-opus-4.5` |
 | `--cleanup <policy>` | Cleanup policy: `always`, `never`, `on-success` | `on-success` |
+| `--report` | Generate a markdown report after the run completes | `false` |
+| `--output <path>` | Output file path for the report (report command only) | `report.md` in log dir |
 
 ### Environment Variables
 
@@ -79,6 +88,12 @@ Azure.Sdk.Tools.Cli.Benchmarks/
 │   ├── SessionExecutor.cs    # Runs Copilot agent sessions
 │   ├── WorkspaceManager.cs   # Manages repo cloning and worktrees
 │   └── ...
+├── Models/                   # Data models
+│   ├── BenchmarkResult.cs    # Result of a benchmark run
+│   └── ...
+├── Reporting/                # Report generation
+│   ├── ReportGenerator.cs    # LLM-based report generation using Copilot SDK
+│   └── report-template.md    # Markdown report template
 ├── Scenarios/                # Benchmark scenario definitions
 │   ├── BenchmarkScenario.cs  # Base class for all scenarios
 │   └── ...

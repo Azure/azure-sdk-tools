@@ -120,34 +120,6 @@
     { "toolName": "azsdk_update_release_plan", "prompt": "Update the spec PR URL and SDK release type in my release plan", "category": "all" },
     { "toolName": "azsdk_update_release_plan", "prompt": "Update the existing release plan for my service", "category": "all" },
 
-    { "toolName": "azsdk_engsys_codeowner_view", "prompt": "View the CODEOWNERS associations for my GitHub user", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_view", "prompt": "Show me which packages are associated with this label in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_view", "prompt": "Who are the codeowners for this package?", "category": "all" },
-
-    { "toolName": "azsdk_engsys_codeowner_add_label_owner", "prompt": "Add an owner to a label in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_add_label_owner", "prompt": "Add a GitHub user as a service owner for this label in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_add_label_owner", "prompt": "Assign an owner to the CODEOWNERS label for my service", "category": "all" },
-
-    { "toolName": "azsdk_engsys_codeowner_remove_label_owner", "prompt": "Remove an owner from a label in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_remove_label_owner", "prompt": "Remove a GitHub user from the CODEOWNERS label ownership", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_remove_label_owner", "prompt": "Unassign an owner from the CODEOWNERS label for my service", "category": "all" },
-
-    { "toolName": "azsdk_engsys_codeowner_add_package_owner", "prompt": "Add a source owner to a package in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_add_package_owner", "prompt": "Add a GitHub user as a package owner in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_add_package_owner", "prompt": "Assign a source owner to my package in CODEOWNERS", "category": "all" },
-
-    { "toolName": "azsdk_engsys_codeowner_remove_package_owner", "prompt": "Remove a source owner from a package in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_remove_package_owner", "prompt": "Remove a GitHub user from the package ownership in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_remove_package_owner", "prompt": "Unassign a source owner from my package in CODEOWNERS", "category": "all" },
-
-    { "toolName": "azsdk_engsys_codeowner_add_package_label", "prompt": "Add a PR label to a package in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_add_package_label", "prompt": "Add a label to my package in CODEOWNERS work items", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_add_package_label", "prompt": "Tag my package with a PR label in CODEOWNERS", "category": "all" },
-
-    { "toolName": "azsdk_engsys_codeowner_remove_package_label", "prompt": "Remove a PR label from a package in CODEOWNERS", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_remove_package_label", "prompt": "Remove a label from my package in CODEOWNERS work items", "category": "all" },
-    { "toolName": "azsdk_engsys_codeowner_remove_package_label", "prompt": "Untag a PR label from my package in CODEOWNERS", "category": "all" },
-
     { "toolName": "azsdk_package_translate_samples", "prompt": "Translate the sample code from the Python package to the Java package", "category": "all" },
     { "toolName": "azsdk_package_translate_samples", "prompt": "Convert samples from the source package to the target language package", "category": "all" },
     { "toolName": "azsdk_package_translate_samples", "prompt": "Translate SDK samples from one language to another", "category": "all" },

@@ -87,7 +87,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 "azsdk_example_agent_fibonacci",
                 "azsdk_example_github_service",
                 "azsdk_example_devops_service",
-                "azsdk_upgrade"
+                "azsdk_upgrade",
+                "azsdk_engsys_codeowner_view",
+                "azsdk_engsys_codeowner_add_label_owner",
+                "azsdk_engsys_codeowner_remove_label_owner",
+                "azsdk_engsys_codeowner_add_package_owner",
+                "azsdk_engsys_codeowner_remove_package_owner",
+                "azsdk_engsys_codeowner_add_package_label",
+                "azsdk_engsys_codeowner_remove_package_label"
             };
 
             var missingTools = toolsWithoutPrompts

@@ -47,8 +47,6 @@ Each skill lives in `<name>/` and contains:
     └── <files>
 ```
 
-For the full mapping between original instruction files and these skills, see
-[INSTRUCTION-TO-SKILL-MAPPING.md](INSTRUCTION-TO-SKILL-MAPPING.md).
 
 ---
 
@@ -81,4 +79,3 @@ waza run --discover
 
 - [agentskills.io spec](https://agentskills.io) — Skill frontmatter specification
 - [waza docs](https://spboyer.github.io/waza/getting-started/) — Scaffold, check, and eval skills
-- [INSTRUCTION-TO-SKILL-MAPPING.md](INSTRUCTION-TO-SKILL-MAPPING.md) — Maps original instruction files to skills

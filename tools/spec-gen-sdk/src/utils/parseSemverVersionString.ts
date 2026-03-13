@@ -29,6 +29,13 @@ export function parseSemverVersionString(
   // Copied from https://github.com/Azure/azure-sdk-tools/blob/efa8a15c81e4614f2071b82dd8ca4f6ce6076f7b/eng/common/scripts/SemVer.ps1#L36
   const SEMVER_REGEX =
    /(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?/im;
+  // Python PEP 440 post-release extension: SEMVER_REGEX + optional post-release suffix.
+  // Handles all PEP 440 alternate formats: .postN, -postN, _postN, postN, .post.N, .post (implicit 0) (case-insensitive)
+  const PYTHON_SEMVER_REGEX =
+   /(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?(?:(?<postsep>[.\-_]?)(?<postword>[pP][oO][sS][tT])\.?(?<postnum>\d+)?)?/im;
+
+  const isPython = language.toLowerCase() === 'python';
+  const parseRegex = isPython ? PYTHON_SEMVER_REGEX : SEMVER_REGEX;
   let prereleaseLabelSeparator: string | undefined;
   let prereleaseNumberSeparator: string | undefined;
   let buildNumberSeparator: string | undefined;
@@ -45,7 +52,10 @@ export function parseSemverVersionString(
   let prelabel: string | undefined;
   let isSemVerFormat: boolean | undefined;
   let rawVersion: string | undefined;
-  const matches = versionString.match(SEMVER_REGEX);
+  let isPostRelease: boolean | undefined;
+  let postReleaseNumber: string | undefined;
+  let postReleaseSeparator: string | undefined;
+  const matches = versionString.match(parseRegex);
   if (matches) {
     isSemVerFormat = true;
     rawVersion = versionString;
@@ -53,8 +63,7 @@ export function parseSemverVersionString(
     minor = matches && matches.groups && matches.groups.minor;
     patch = matches && matches.groups && matches.groups.patch;
     // If Language exists and is set to python setup the python conventions.
-    const parseLanguage = 'python';
-    if (parseLanguage === language.toLowerCase()) {
+    if (isPython) {
       // Python uses no separators and 'b' for beta so this sets up the the object to work with those conventions
       prereleaseLabelSeparator = prereleaseNumberSeparator = buildNumberSeparator = '';
       defaultPrereleaseLabel = 'b';
@@ -68,8 +77,28 @@ export function parseSemverVersionString(
       defaultAlphaReleaseLabel = 'alpha';
     }
 
+    let skipPrelabel = false;
+
+    // Python PEP 440 post-release detection
+    if (isPython) {
+      const postword = matches?.groups?.postword;
+      if (postword) {
+        // Case A: explicit post-release suffix (e.g., "1.0.0.post1", "1.0.0b2.post1")
+        isPostRelease = true;
+        postReleaseNumber = matches?.groups?.postnum ?? '0';
+        postReleaseSeparator = '.post';
+      } else if (matches?.groups?.prelabel && matches.groups.prelabel.toLowerCase() === 'post') {
+        // Case B: "post" captured as prelabel (e.g., "1.0.0-post1", "1.0.0post1")
+        // Reinterpret as post-release, not prerelease
+        isPostRelease = true;
+        postReleaseNumber = matches?.groups?.prenumber ?? '0';
+        postReleaseSeparator = '.post';
+        skipPrelabel = true;
+      }
+    }
+
     prelabel = matches && matches.groups && matches.groups.prelabel;
-    if (!prelabel) {
+    if (skipPrelabel || !prelabel) {
       prereleaseLabel = 'zzz';
       prereleaseNumber = '99999999';
       isPrerelease = false;
@@ -111,7 +140,10 @@ export function parseSemverVersionString(
     rawVersion,
     isSemVerFormat,
     defaultPrereleaseLabel,
-    defaultAlphaReleaseLabel
+    defaultAlphaReleaseLabel,
+    isPostRelease,
+    postReleaseNumber,
+    postReleaseSeparator
   };
 }
 
@@ -132,4 +164,7 @@ type ParseVersion = {
   prelabel: string | undefined;
   isSemVerFormat: boolean | undefined;
   rawVersion: string | undefined;
+  isPostRelease: boolean | undefined;
+  postReleaseNumber: string | undefined;
+  postReleaseSeparator: string | undefined;
 };

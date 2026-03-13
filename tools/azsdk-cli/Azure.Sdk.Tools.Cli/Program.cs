@@ -56,6 +56,12 @@ public class Program
         // Skip azure client and noisy third-party logging
         builder.Logging.AddFilter((category, level) =>
         {
+            // Always suppress Copilot SDK noise, even in debug mode
+            if (category?.StartsWith("GitHub.Copilot.SDK", StringComparison.Ordinal) == true)
+            {
+                return level >= LogLevel.Warning;
+            }
+
             if (debug || null == category) { return level >= logLevel; }
             var isAzureClient = category.StartsWith("Azure.", StringComparison.Ordinal);
             var isToolsClient = category.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
@@ -63,7 +69,6 @@ public class Program
 
             // Suppress noisy third-party/framework categories
             if (category.StartsWith("System.Net.Http.HttpClient", StringComparison.Ordinal)
-                || category.StartsWith("GitHub.Copilot.SDK", StringComparison.Ordinal)
                 || category.StartsWith("Microsoft.AspNetCore", StringComparison.Ordinal))
             {
                 return level >= LogLevel.Warning;

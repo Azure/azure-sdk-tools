@@ -20,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly List<Type> ToolsList = [
             typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
+            typeof(PipelineChecksTool),
             typeof(CodeownersTool),
             typeof(GitHubLabelsTool),
             typeof(LogAnalysisTool),

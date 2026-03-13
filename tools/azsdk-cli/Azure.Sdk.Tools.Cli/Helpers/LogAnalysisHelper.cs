@@ -51,13 +51,13 @@ public class LogAnalysisHelper(ILogger<LogAnalysisHelper> logger) : ILogAnalysis
 
         // custom keyword comparers
         new("error", (i) => {
-            var falsePositives = new[] { "no error", "0 error", "any errors", "`error`", "error.type" };
+            var falsePositives = new[] { "no error", "0 error", "any errors", "`error`", "error.type", "errorActionPreference" };
             var hasFalsePositives = falsePositives.Any(fp => i.Contains(fp, StringComparison.OrdinalIgnoreCase));
             return hasFalsePositives ? false : i.Contains("error", StringComparison.OrdinalIgnoreCase);
         }),
 
         new("fail", (i) => {
-            var falsePositives = new[] { "no fail", "0 fail", "any fail" };
+            var falsePositives = new[] { "no fail", "0 fail", "any fail", "succeededOrFailed", "failOnStderr" };
             var hasFalsePositives = falsePositives.Any(fp => i.Contains(fp, StringComparison.OrdinalIgnoreCase));
             return hasFalsePositives ? false : i.Contains("fail", StringComparison.OrdinalIgnoreCase);
         }),

@@ -20,9 +20,18 @@ public class LogAnalysisResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string SuggestedFix { get; set; }
 
+    [JsonPropertyName("pipeline_url")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PipelineUrl { get; set; }
+
     protected override string Format()
     {
-        var output = $"### Summary:" + Environment.NewLine +
+        var output = "";
+        if (!string.IsNullOrEmpty(PipelineUrl))
+        {
+            output += $"### Pipeline: {PipelineUrl}" + Environment.NewLine;
+        }
+        output += $"### Summary:" + Environment.NewLine +
                      $"{Summary}" + Environment.NewLine + Environment.NewLine;
 
         if (Matches?.Count > 0)

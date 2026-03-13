@@ -1,75 +1,125 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.Core;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools.Pipeline
+namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
+
+[Description("This type contains the MCP tool to get pipeline status.")]
+[McpServerToolType]
+public class PipelineTool(
+    IPipelineIdentifierHelper pipelineHelper,
+    IHttpClientFactory httpClientFactory,
+    ILogger<PipelineTool> logger
+) : MCPTool
 {
-    [Description("This type contains the MCP tool to get pipeline status.")]
-    [McpServerToolType]
-    public class PipelineTool(IDevOpsService devopsService, ILogger<PipelineTool> logger) : MCPTool
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
+
+    private const string getPipelineStatusCommandName = "status";
+    private const string GetPipelineStatusToolName = "azsdk_get_pipeline_status";
+
+    private readonly Argument<string> pipelineArg = new("Pipeline link, Build ID, or PR link");
+
+    private readonly Option<string> projectOpt = new("--project", "-p")
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
+        Description = "Pipeline project name",
+        Required = false,
+    };
 
-        // Commands
-        private const string getPipelineStatusCommandName = "status";
-        private const string GetPipelineStatusToolName = "azsdk_get_pipeline_status";
+    protected override Command GetCommand() =>
+        new McpCommand(getPipelineStatusCommandName, "Get pipeline run status", GetPipelineStatusToolName) { pipelineArg, projectOpt };
 
-        // Options
-        private readonly Option<int> pipelineRunIdOpt = new("--pipeline-id")
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+    {
+        var pipelineIdentifier = parseResult.GetValue(pipelineArg);
+        var project = parseResult.GetValue(projectOpt);
+
+        return await GetPipelineRunStatus(pipelineIdentifier, project);
+    }
+
+    [McpServerTool(Name = GetPipelineStatusToolName), Description("Get pipeline status for a given build ID, pipeline link, or GitHub PR link")]
+    public async Task<ObjectCommandResponse> GetPipelineRunStatus(
+        [Description("Build ID, pipeline link, or GitHub PR link")] string pipelineIdentifier,
+        [Description("Pipeline project name (optional)")] string? project = null)
+    {
+        try
         {
-            Description = "pipeline run id",
-            Required = true,
-        };
+            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, project);
 
-        protected override Command GetCommand() =>
-            new McpCommand(getPipelineStatusCommandName, "Get pipeline run status", GetPipelineStatusToolName) { pipelineRunIdOpt };
-
-        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
-        {
-            var command = parseResult.CommandResult.Command.Name;
-            switch (command)
+            if (builds.Count == 0)
             {
-                case getPipelineStatusCommandName:
-                    var pipelineRunStatus = await GetPipelineRunStatus(parseResult.GetValue(pipelineRunIdOpt), ct);
-                    return new DefaultCommandResponse { Message = $"Pipeline run status: {pipelineRunStatus}" };
-                default:
-                    return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
-            }
-        }
-
-        /// <summary>
-        /// Get pipeline run details and status for a given pipeline build ID
-        /// </summary>
-        /// <param name="buildId">Build ID for the pipeline run</param>
-        /// <returns></returns>
-        [McpServerTool(Name = GetPipelineStatusToolName), Description("Get pipeline status for a given pipeline build ID")]
-        public async Task<DefaultCommandResponse> GetPipelineRunStatus(int buildId, CancellationToken ct = default)
-        {
-            try
-            {
-                var response = new DefaultCommandResponse();
-                var pipeline = await devopsService.GetPipelineRunAsync(buildId, ct);
-                if (pipeline != null)
+                return new ObjectCommandResponse
                 {
-                    response.Result = pipeline.Result?.ToString() ?? pipeline.Status?.ToString() ?? "Not available";
-                    response.Message = $"Pipeline run link: {DevOpsService.GetPipelineUrl(pipeline.Id)}";
-                }
-                return response;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to get pipeline run with id {buildId}", buildId);
-                return new()
-                {
-                    ResponseError = $"Failed to get pipeline run with id {buildId}. Error: {ex.Message}"
+                    ResponseError = $"No failed Azure Pipeline builds found for {pipelineIdentifier}"
                 };
             }
+
+            var statuses = new List<BuildStatusResult>();
+            foreach (var build in builds)
+            {
+                var status = await GetSingleBuildStatus(build);
+                statuses.Add(status);
+            }
+
+            return new ObjectCommandResponse { Result = statuses };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to get pipeline run for {pipelineIdentifier}", pipelineIdentifier);
+            return new ObjectCommandResponse
+            {
+                ResponseError = $"Failed to get pipeline run for {pipelineIdentifier}. Error: {ex.Message}"
+            };
         }
     }
+
+    private async Task<BuildStatusResult> GetSingleBuildStatus(ResolvedBuild build)
+    {
+        var buildProject = build.Project;
+        if (string.IsNullOrEmpty(buildProject))
+        {
+            buildProject = await pipelineHelper.GetPipelineProjectAsync(build.BuildId);
+        }
+
+        var httpClient = httpClientFactory.CreateClient();
+        var buildUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{buildProject}/_apis/build/builds/{build.BuildId}?api-version=7.1";
+        logger.LogDebug("Getting build status from {url}", buildUrl);
+        var response = await httpClient.GetAsync(buildUrl);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        var result = root.TryGetProperty("result", out var resultProp) ? resultProp.GetString() : null;
+        var status = root.TryGetProperty("status", out var statusProp) ? statusProp.GetString() : null;
+
+        return new BuildStatusResult
+        {
+            BuildId = build.BuildId,
+            Status = result ?? status ?? "Not available",
+            PipelineUrl = build.PipelineUrl ?? pipelineHelper.GetPipelineUrl(buildProject, build.BuildId),
+        };
+    }
+}
+
+public class BuildStatusResult
+{
+    [JsonPropertyName("build_id")]
+    public int BuildId { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "";
+
+    [JsonPropertyName("pipeline_url")]
+    public string PipelineUrl { get; set; } = "";
 }

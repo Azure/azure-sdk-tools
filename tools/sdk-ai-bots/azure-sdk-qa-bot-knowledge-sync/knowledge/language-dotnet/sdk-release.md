@@ -1,0 +1,5 @@
+# .NET SDK Release
+
+Common issues and solutions for .NET SDK release processes.
+
+<!-- Add knowledge entries below. Each ## heading should describe a specific topic/scenario. -->

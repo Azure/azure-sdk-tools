@@ -41,11 +41,15 @@ See [ANTI-PATTERNS.md](references/ANTI-PATTERNS.md) for detection patterns and [
 
 ## Troubleshooting
 
-If token count seems high, check for hidden bloat like emojis, repeated headings, or verbose tables.
+High token count? Check for emojis, repeated headings, or verbose tables.
 
-## Prerequisites
+## MCP Tools
 
-No MCP servers required. Uses local CLI tools only.
+| Tool | Purpose |
+|------|---------|
+| None | CLI-only; uses local file tools |
+
+**CLI fallback:** Primary mode is CLI-based. No MCP servers required.
 
 ## References
 

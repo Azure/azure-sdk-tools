@@ -7,9 +7,12 @@ import os
 import logging
 import traceback
 from ast import literal_eval
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from azure.cosmos import CosmosClient
+from azure.cosmos.exceptions import CosmosHttpResponseError
 from azure.identity import AzurePowerShellCredential, ChainedTokenCredential, AzureCliCredential
 from azure.storage.blob import BlobServiceClient
+import time
 
 logging.getLogger().setLevel(logging.INFO)
 http_logger = logging.getLogger("azure.core.pipeline.policies.http_logging_policy")
@@ -22,7 +25,9 @@ http_logger.setLevel(logging.WARNING)
 
 COSMOS_SELECT_ID_PARTITIONKEY_QUERY = "select c.id, c.{0} as partitionKey, c._ts from {1} c"
 
-COSMOS_CONTAINERS = ["APIRevisions", "Reviews", "Comments", "PullRequests", "SamplesRevisions", "Permissions", "Projects"]
+# Process smaller containers first to ensure they sync before timeout
+# Reordered from largest to smallest based on typical record counts
+COSMOS_CONTAINERS = ["Permissions", "Projects", "PullRequests", "SamplesRevisions", "Comments", "Reviews", "APIRevisions"]
 BACKUP_CONTAINER = "backups"
 BLOB_NAME_PATTERN ="cosmos/{0}/{1}"
 
@@ -35,29 +40,113 @@ def restore_data_from_backup(backup_storage_url, dest_url, db_name):
     
     blob_service_client = BlobServiceClient(backup_storage_url, credential = credential_chain)
     container_client = blob_service_client.get_container_client(BACKUP_CONTAINER)
-    for cosmos_container_name in COSMOS_CONTAINERS:
+    
+    total_containers = len(COSMOS_CONTAINERS)
+    for idx, cosmos_container_name in enumerate(COSMOS_CONTAINERS, 1):
+        logging.info("=" * 80)
+        logging.info("Processing container {}/{}: {}".format(idx, total_containers, cosmos_container_name))
+        logging.info("=" * 80)
+        
         # Load source records from backup file
         source_contents = get_backup_contents(container_client, "{}.json".format(cosmos_container_name))
-        logging.info("Number of records in {0} backup:{1}".format(cosmos_container_name, len(source_contents)))
+        logging.info("Number of records in {0} backup: {1}".format(cosmos_container_name, len(source_contents)))
 
         # get records from destination DB
         dest_container_client = dest_db_client.get_container_client(cosmos_container_name)
         dest_records = fetch_records(dest_container_client, cosmos_container_name)
+        logging.info("Number of existing records in destination {0}: {1}".format(cosmos_container_name, len(dest_records)))
 
         # find missing or updated records
         # updated records has new timestamp value in column(_ts)
-        missing_records = [
-            x for x in source_contents if x['id'] not in dest_records or x['_ts'] > dest_records[x['id']][1]
-        ]
+        # Note: _ts in backup may be stored as string or int, so we convert both to int for comparison
+        missing_records = []
+        for x in source_contents:
+            record_id = x.get('id')
+            if not record_id:
+                logging.warning("Record without 'id' field found, skipping")
+                continue
+            
+            source_ts = x.get('_ts', 0)
+            # Handle _ts that might be string or int
+            if isinstance(source_ts, str):
+                try:
+                    source_ts = int(source_ts)
+                except ValueError:
+                    source_ts = 0
+            
+            if record_id not in dest_records:
+                missing_records.append(x)
+            else:
+                dest_ts = dest_records[record_id][1]
+                if isinstance(dest_ts, str):
+                    try:
+                        dest_ts = int(dest_ts)
+                    except ValueError:
+                        dest_ts = 0
+                if source_ts > dest_ts:
+                    missing_records.append(x)
         if missing_records:
-            logging.info(
-                "Found {} missing/updated rows in source DB".format(len(missing_records))
-            )
-            for row in missing_records:
-                dest_container_client.upsert_item(row)
-            logging.info("Records in cosmosdb source container {} is synced successfully to destination container.".format(cosmos_container_name))
+            logging.info("Found {} missing/updated rows to sync".format(len(missing_records)))
+            
+            # Use parallel upserts for better performance
+            # ThreadPoolExecutor allows concurrent upsert operations to Cosmos DB
+            max_workers = 20  # Number of parallel threads - increased for better throughput
+            batch_size = 100  # Log progress every N records
+            total_records = len(missing_records)
+            upserted_count = 0
+            failed_count = 0
+            max_retries = 3  # Number of retries for transient failures
+            
+            def upsert_item_with_retry(item, retries=max_retries):
+                """Helper function to upsert a single item with retry logic"""
+                for attempt in range(retries):
+                    try:
+                        dest_container_client.upsert_item(item)
+                        return True
+                    except CosmosHttpResponseError as e:
+                        if e.status_code == 429:  # Too Many Requests - throttling
+                            # Wait with exponential backoff
+                            retry_after = float(e.headers.get('x-ms-retry-after-ms', 1000)) / 1000
+                            time.sleep(retry_after * (2 ** attempt))
+                            continue
+                        elif e.status_code >= 500:  # Server error - retry
+                            time.sleep(1 * (2 ** attempt))
+                            continue
+                        else:
+                            logging.error("Failed to upsert item {}: {} (status: {})".format(
+                                item.get('id', 'unknown'), str(e), e.status_code))
+                            return False
+                    except Exception as e:
+                        logging.error("Failed to upsert item {}: {}".format(item.get('id', 'unknown'), str(e)))
+                        return False
+                logging.error("Failed to upsert item {} after {} retries".format(item.get('id', 'unknown'), retries))
+                return False
+            
+            # Execute upserts in parallel using ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Submit all upsert tasks
+                future_to_item = {executor.submit(upsert_item_with_retry, record): record for record in missing_records}
+                
+                # Process completed tasks and log progress
+                for future in as_completed(future_to_item):
+                    if future.result():
+                        upserted_count += 1
+                    else:
+                        failed_count += 1
+                    
+                    processed = upserted_count + failed_count
+                    if processed % batch_size == 0:
+                        logging.info("Progress: {}/{} records processed ({} upserted, {} failed)".format(
+                            processed, total_records, upserted_count, failed_count))
+            
+            if failed_count > 0:
+                logging.warning("⚠ Container {} synced with {} failures ({} records upserted)".format(
+                    cosmos_container_name, failed_count, upserted_count))
+            else:
+                logging.info("✓ Container {} synced successfully ({} records upserted)".format(
+                    cosmos_container_name, upserted_count))
         else:
-            logging.info("Destination DB container is in sync with source cosmosDB")
+            logging.info("✓ Container {} is already in sync".format(cosmos_container_name))
 
 
 def get_backup_contents(container_client, blob_name):

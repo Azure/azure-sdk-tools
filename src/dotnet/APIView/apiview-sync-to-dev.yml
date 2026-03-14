@@ -1,11 +1,3 @@
-parameters:
-- name: 'containers'
-  type: object
-  default:
-  - originals
-  - codefiles
-  - usagesamples
-
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
 
@@ -14,6 +6,7 @@ stages:
     jobs:
       - job: 'BlobCopy'
         displayName: 'Sync API reviews'
+        timeoutInMinutes: 180 
         pool:
           name: azsdk-pool
           demands: ImageOverride -equals windows-2022
@@ -34,22 +27,92 @@ stages:
           workingDirectory: $(Build.BinariesDirectory)
           displayName: Download and Extract azcopy Zip
 
-        - ${{ each c in parameters.containers }}:
-          - task: AzurePowerShell@5
-            displayName: Copy Blobs in ${{c}}
-            inputs:
-              azureSubscription: 'Azure SDK Engineering System'
-              ScriptType: 'InlineScript'
-              azurePowerShellVersion: LatestVersion
-              workingDirectory: $(Build.BinariesDirectory)
-              pwsh: true
-              Inline: |
-                $azcopy = $(Resolve-Path "$(Build.BinariesDirectory)/azcopy/azcopy_windows_amd64_*/azcopy.exe")[0]
-                $sourceUrl = "https://$(apiview-prod-storageaccount).blob.core.windows.net/${{c}}"
-                $destUrl = "https://$(destStorageAccount).blob.core.windows.net/${{c}}"
-                &($azcopy) sc $sourceUrl $destUrl --recursive=true
-            env:
-              AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
+        - task: AzurePowerShell@5
+          displayName: Copy Blobs in parallel (originals, codefiles, usagesamples)
+          inputs:
+            azureSubscription: 'Azure SDK Engineering System'
+            ScriptType: 'InlineScript'
+            azurePowerShellVersion: LatestVersion
+            workingDirectory: $(Build.BinariesDirectory)
+            pwsh: true
+            Inline: |
+              $azcopy = $(Resolve-Path "$(Build.BinariesDirectory)/azcopy/azcopy_windows_amd64_*/azcopy.exe")[0]
+              $containers = @('originals', 'codefiles', 'usagesamples')
+              $sourceAccount = "$(apiview-prod-storageaccount)"
+              $destAccount = "$(destStorageAccount)"
+              
+              Write-Host "Starting parallel blob sync for $($containers.Count) containers..."
+              Write-Host "Using azcopy at: $azcopy"
+              
+              # Start all azcopy processes in parallel
+              $processes = @{}
+              $logFiles = @{}
+              
+              foreach ($container in $containers) {
+                  $sourceUrl = "https://$sourceAccount.blob.core.windows.net/$container"
+                  $destUrl = "https://$destAccount.blob.core.windows.net/$container"
+                  $logFile = Join-Path $env:TEMP "azcopy_${container}.log"
+                  
+                  Write-Host "[$container] Starting sync: $sourceUrl -> $destUrl"
+                  Write-Host "[$container] Log file: $logFile"
+                  
+                  # Start azcopy process in background
+                  # Use --compare-hash=MD5 to skip unchanged files (faster for incremental syncs)
+                  $processInfo = Start-Process -FilePath $azcopy `
+                      -ArgumentList "sync", $sourceUrl, $destUrl, "--recursive=true", "--compare-hash=MD5" `
+                      -NoNewWindow -PassThru -RedirectStandardOutput $logFile -RedirectStandardError "$logFile.err"
+                  
+                  $processes[$container] = $processInfo
+                  $logFiles[$container] = $logFile
+              }
+              
+              Write-Host "`nAll $($processes.Count) sync processes started. Waiting for completion..."
+              
+              # Wait for all processes and collect results
+              $failedContainers = @()
+              $totalStartTime = Get-Date
+              
+              foreach ($container in $containers) {
+                  $process = $processes[$container]
+                  $logFile = $logFiles[$container]
+                  
+                  Write-Host "`n[$container] Waiting for sync to complete (PID: $($process.Id))..."
+                  $process.WaitForExit()
+                  $exitCode = $process.ExitCode
+                  $duration = (Get-Date) - $process.StartTime
+                  
+                  Write-Host "[$container] Completed in $($duration.TotalMinutes.ToString('F1')) minutes with exit code: $exitCode"
+                  
+                  # Output log file content
+                  if (Test-Path $logFile) {
+                      Write-Host "[$container] === Output Log ==="
+                      Get-Content $logFile | ForEach-Object { Write-Host "  $_" }
+                  }
+                  if (Test-Path "$logFile.err") {
+                      $errContent = Get-Content "$logFile.err"
+                      if ($errContent) {
+                          Write-Host "[$container] === Error Log ==="
+                          $errContent | ForEach-Object { Write-Host "  $_" }
+                      }
+                  }
+                  
+                  if ($exitCode -ne 0) {
+                      $failedContainers += $container
+                      Write-Host "##vso[task.logissue type=warning]Container sync failed: $container (exit code: $exitCode)"
+                  }
+              }
+              
+              $totalDuration = (Get-Date) - $totalStartTime
+              Write-Host "`nTotal parallel sync time: $($totalDuration.TotalMinutes.ToString('F1')) minutes"
+              
+              if ($failedContainers.Count -gt 0) {
+                  Write-Host "##vso[task.logissue type=error]Failed to sync containers: $($failedContainers -join ', ')"
+                  exit 1
+              }
+              
+              Write-Host "All container syncs completed successfully!"
+          env:
+            AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
 
         - template: /eng/pipelines/templates/steps/use-python-version.yml
           parameters:

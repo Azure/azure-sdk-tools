@@ -29,9 +29,13 @@ compatibility:
 
 Metadata loads at startup. SKILL.md on activation. References load when linked via `[text](references/file.md)`.
 
-## Prerequisites
+## MCP Tools
 
-No MCP servers required. Uses waza CLI only.
+| Tool | Purpose |
+|------|---------|
+| None | CLI-only; uses local file tools |
+
+**CLI fallback:** Primary mode is CLI-based. No MCP servers required.
 
 ## Quick Start
 
@@ -50,8 +54,6 @@ If `waza check` reports broken links, verify reference file paths match exactly.
 
 ## References
 
-- [Guidelines](references/guidelines/README.md) — Writing guidelines
-- [Token Budgets](references/token-budgets.md) — Limits and splitting
-- [Reference Loading](references/REFERENCE-LOADING.md) — How references load
-- [Checklist](references/CHECKLIST.md) — Pre-submission checklist
-- [Validation](references/validation/README.md) — Link and reference validation
+- [Guidelines](references/guidelines.md) — Writing and structure
+- [Validation](references/validation.md) — Checks and procedures
+- [Reference Guide](references/reference-guide.md) — Budgets, loading, checklist

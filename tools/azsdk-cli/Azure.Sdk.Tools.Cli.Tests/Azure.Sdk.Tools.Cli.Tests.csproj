@@ -40,6 +40,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="../Azure.Sdk.Tools.Cli.Evaluations/TestData/TestPrompts.json" Link="TestData/TestPrompts.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="TypeSpecTestData/specification/testcontoso/Contoso.Management/employee.tsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -288,7 +288,7 @@ Report a warning if SKILL.md exceeds 500 lines (spec recommendation).
 
 **Note:** Token optimizations are captured but NOT automatically applied. The user decides whether to implement them or create an issue for follow-up.
 
-See [TOKEN-INTEGRATION.md](TOKEN-INTEGRATION.md) for details on token optimization patterns.
+See [SCORING.md § Token Integration](SCORING.md) for details on token optimization patterns.
 
 ### Step 7: SUMMARY
 

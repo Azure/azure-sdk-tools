@@ -38,24 +38,27 @@ Target: High compliance, ≤500 tokens, all links valid.
 - Use inline double-quoted `description` (not `>-` folded scalars)
 - Lead with action verb + domain; add `WHEN:` trigger phrases
 - Keep ≤60 words, ≤1024 chars
-- Prefer `WHEN:` over `USE FOR:` for cross-model reliability
+
+## Tools
+
+No MCP servers required — uses waza CLI directly.
+
+| Tool | Fallback |
+|------|----------|
+| waza | `waza check` / `waza run` CLI |
+| git | Standard git CLI |
 
 ## Examples
 
 - "Run sensei on pipeline-troubleshooting"
 - "Run sensei on all skills"
 
-## Prerequisites
-
-No MCP servers required. Uses waza CLI and git only.
-
 ## Troubleshooting
 
-If waza check fails to run, verify waza is installed and you are in the skills directory.
+If waza fails, verify it is installed and you are in the skills directory.
 
 ## References
 
-- [SCORING.md](references/SCORING.md) — Scoring criteria
+- [SCORING.md](references/SCORING.md) — Scoring criteria and token budgets
 - [LOOP.md](references/LOOP.md) — Detailed workflow
 - [EXAMPLES.md](references/EXAMPLES.md) — Before/after examples
-- [TOKEN-INTEGRATION.md](references/TOKEN-INTEGRATION.md) — Token budgets

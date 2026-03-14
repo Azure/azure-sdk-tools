@@ -12,7 +12,6 @@ using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
-    [Explicit]
     [Category(RequiresGoTooling)]
     internal class GoLanguageServicesToolingTests
     {
@@ -55,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             tempDir.Dispose();
         }
 
-        [Test]
+        [Test, Explicit]
         public async Task TestGoLanguageSpecificChecksBasic()
         {
             await File.WriteAllTextAsync(Path.Combine(packagePath, "main.go"), """
@@ -107,7 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(resp.ExitCode, Is.EqualTo(0));
         }
 
-        [Test]
+        [Test, Explicit]
         public async Task TestGoLanguageSpecificChecksCompileErrors()
         {
             await File.WriteAllTextAsync(Path.Combine(packagePath, "main.go"), """
@@ -126,7 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             });
         }
 
-        [Test]
+        [Test, Explicit]
         [Category(RequiresGoTooling)]
         public async Task TestGoLanguageLinting()
         {
@@ -143,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             });
         }
 
-        [Test]
+        [Test, Explicit]
         [Category(RequiresGoTooling)]
         public async Task TestGetPackageInfo()
         {
@@ -200,7 +199,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             });
         }
 
-        [Test]
+        [Test, Explicit]
         public async Task TestLegacyGoMod()
         {
             using var tempFolder = TempDirectory.Create("legacy_go_mod");
@@ -235,7 +234,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(version, Is.EqualTo(Version.Parse("1.23.0")));
         }
 
-        [Test]
+        [Test, Explicit]
         public void TestGetGoModVersionAsync()
         {
             using var tempDir = TempDirectory.Create("go_mod_test");
@@ -245,7 +244,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.ThrowsAsync(typeof(Exception), async () => await GoLanguageService.GetGoModVersionAsync(goModPath));
         }
 
-        [Test]
+        [Test, Explicit]
         public async Task TestGetSubPath()
         {
             var subPath = await LangService.GetSubPath(packagePath);
@@ -271,7 +270,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
         #region HasCustomizations Tests
 
-        [Test]
+        [Test, Explicit]
         public void HasCustomizations_ReturnsPath_WhenInternalGenerateDirectoryExists()
         {
             var customizationDir = Path.Combine(packagePath, "internal", "generate");
@@ -283,7 +282,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(result, Is.EqualTo(customizationDir));
         }
 
-        [Test]
+        [Test, Explicit]
         public void HasCustomizations_ReturnsPath_WhenTestdataGenerateDirectoryExists()
         {
             var customizationDir = Path.Combine(packagePath, "testdata", "generate");
@@ -295,7 +294,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.That(result, Is.EqualTo(customizationDir));
         }
 
-        [Test]
+        [Test, Explicit]
         public void HasCustomizations_ReturnsNull_WhenNoCustomizationDirectoryExists()
         {
             // packagePath is already created without customization directories

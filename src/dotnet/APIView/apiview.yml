@@ -91,9 +91,9 @@ extends:
           - job: 'Build'
 
             pool:
-              name: $(WINDOWSPOOL)
-              image: $(WINDOWSVMIMAGE)
-              os: windows
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
 
             templateContext:
               sdl: 
@@ -189,11 +189,16 @@ extends:
             condition: or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true'))
 
             pool:
-              name: $(WINDOWSPOOL)
-              image: $(WINDOWSVMIMAGE)
-              os: windows
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
 
             steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '$(NodeVersion)'
+                displayName: 'Use NodeJS $(NodeVersion)'
+
               - script: |
                   npm install -g @angular/cli@16.1.8
                 workingDirectory: $(SPAClientProjectDirectory)

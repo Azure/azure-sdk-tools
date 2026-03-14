@@ -55,12 +55,40 @@
         background-color: var(--base-bg-color) !important;
         border-radius: .375rem .375rem 0 0;
         position: relative;
-        height: 42px;
+        min-height: 42px;
         &.p-2 { padding: .5rem !important; }
         &.collapsed { border: 1px solid var(--border-color) !important; border-radius: .375rem !important; }
         .d-flex.align-items-center:first-child { margin-left: 1rem; }
         .severity-header-container { display: flex; align-items: center; margin-left: 2rem; margin-right: 1rem; margin-bottom: .1rem; }
     }
+
+    .go-to-code-link {
+        margin-left: 0.75rem;
+        gap: 0.3rem;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.75rem;
+        color: var(--primary-color);
+        cursor: pointer;
+        text-decoration: none;
+        border-radius: 0.25rem;
+        transition: background-color 0.15s, color 0.15s;
+
+        span {
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        .bi-box-arrow-up-right {
+            font-size: 0.65rem;
+        }
+
+        &:hover {
+            color: var(--link-active, var(--primary-color));
+            background-color: var(--editor-bg-color);
+        }
+    }
+
+    .comment-thread-header + .code-context-box { margin-top: -0.5rem; }
 
     .timeline-container { margin-top: 8px; .p-timeline-event-separator { margin-left: 1.5rem; min-width: 40px; width: 40px; } }
     .p-timeline-event-opposite { display: none; }
@@ -112,6 +140,39 @@
     }
 
     .resolved-toggler { color: var(--primary-color); font-weight: bolder; cursor: pointer; }
+
+    .code-context-box {
+        background-color: var(--editor-bg-color);
+        border-top: 0px;
+        border-bottom: 1px solid var(--border-color);
+        overflow-x: auto;
+        max-width: 100%;
+        font-family: Consolas, monospace;
+        font-size: 12px;
+        line-height: 20px;
+
+        .code-context-line {
+            display: flex;
+            align-items: baseline;
+            white-space: pre;
+            padding: 0.25rem 0;
+        }
+
+        .code-context-line-number {
+            display: inline-block;
+            min-width: 2.5rem;
+            padding: 0 0.5rem;
+            text-align: right;
+            color: var(--text-muted-color);
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .code-context-tokens {
+            flex: 1;
+            padding-right: 0.5rem;
+        }
+    }
 
     .rendered-comment-content {
         overflow-wrap: anywhere;

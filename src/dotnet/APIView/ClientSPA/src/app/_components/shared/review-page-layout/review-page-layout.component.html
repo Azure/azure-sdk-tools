@@ -3,29 +3,38 @@
     <app-review-info
         [review]="review"
         [apiRevisions]="apiRevisions"
-        [samplesRevisions]="samplesRevisions"
         [activeApiRevisionId]="activeApiRevisionId"
-        [activeSamplesRevisionId]="activeSamplesRevisionId"
         [diffApiRevisionId]="diffApiRevisionId"
-        [userProfile]="userProfile"
-        [showPageoptionsButton]="showPageoptionsButton"
-        [showLeftNavigation]="showLeftNavigation"
-        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
-        (showLeftNavigationEmitter)="handleLeftNavigationEmitter($event)"></app-review-info>
-    <div class="mt-1" style="display: flex; align-items: flex-start;">
-        <div>
-            <p-menu [model]="sideMenu" styleClass="side-menu">
-                <ng-template pTemplate="item" let-item>
-                    <a pRipple class="p-menuitem-link" pTooltip="{{item.tooltip}}" tooltipPosition="right">
-                        <div class="icon-wrapper">
-                            <span [class]="item.icon" class="menu-icon"></span>
-                            <p-badge *ngIf="item.badge" styleClass="menu-badge" [value]="item.badge" severity="danger" />
-                        </div>
-                    </a>
-                </ng-template>
-            </p-menu>
+        [userProfile]="userProfile"></app-review-info>
+    <nav class="page-tabs" aria-label="Review navigation">
+        <button type="button" class="page-tab" [class.active]="activePage === 'reviews'" (click)="navigateToReviewsEmitter.emit()" title="View API review code">
+            <i class="bi bi-code-slash"></i>
+            <span>API</span>
+        </button>
+        <button type="button" class="page-tab" [class.active]="activePage === 'conversations'" (click)="navigateToConversationsEmitter.emit()" title="View comment threads ({{ conversationCount }} active)">
+            <i class="bi bi-chat-dots"></i>
+            <span>Comments</span>
+            <span *ngIf="conversationCount > 0" class="tab-badge">{{ conversationCount }}</span>
+        </button>
+        <button type="button" class="page-tab" [class.active]="activePage === 'samples'" (click)="navigateToSamplesEmitter.emit()" title="View code samples ({{ samplesRevisionCount }} revisions)">
+            <i class="bi bi-journal-code"></i>
+            <span>Samples</span>
+            <span *ngIf="samplesRevisionCount > 0" class="tab-badge">{{ samplesRevisionCount }}</span>
+        </button>
+        <button type="button" class="page-tab" [class.active]="activePage === 'revisions'" (click)="navigateToRevisionsEmitter.emit()" title="View API revisions history">
+            <i class="bi bi-clock-history"></i>
+            <span>Revisions</span>
+        </button>
+        <div *ngIf="showPageoptionsButton && activePage === 'reviews'" class="panel-toggles">
+            <input type="checkbox" (change)="onLeftPanelCheckChange($event)" [ngModel]="showLeftNavigation" class="btn-check" id="page-left-panel" autocomplete="off" data-clarity-region="toggle-left-navigation"/>
+            <label class="btn btn-sm sidebar-toggle-btn" accesskey="l" for="page-left-panel"><i class="bi bi-layout-sidebar"></i></label>
+
+            <input type="checkbox" (change)="onRightPanelCheckChange($event)" [ngModel]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off" data-clarity-region="toggle-page-options"/>
+            <label class="btn btn-sm sidebar-toggle-btn" accesskey="m" for="page-right-panel"><i class="bi bi-layout-sidebar-reverse"></i></label>
         </div>
-        <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
+    </nav>
+    <div class="layout-body">
+        <div class="layout-content">
             <ng-content></ng-content>
         </div>
     </div>

@@ -14,14 +14,13 @@ test.describe('Conversations Side Panel', () => {
     await reviewPage.goto('test-review-id');
     await reviewPage.waitForReviewLoaded();
 
-    // Click the conversations icon in the side menu
-    const conversationsIcon = page.locator('.bi-chat-left-dots');
-    await expect(conversationsIcon).toBeVisible({ timeout: 5000 });
-    await conversationsIcon.click();
+    // Click the Comments tab in the horizontal navigation
+    const commentsTab = page.locator('.page-tab', { hasText: 'Comments' });
+    await expect(commentsTab).toBeVisible({ timeout: 5000 });
+    await commentsTab.click();
 
-    // The conversations sidebar should appear with the "Conversations" header
-    const sidebarHeader = page.locator('text=Conversations').first();
-    await expect(sidebarHeader).toBeVisible({ timeout: 5000 });
+    // The conversations page should appear (URL changes to /conversations)
+    await expect(page).toHaveURL(/conversations/, { timeout: 5000 });
   });
 
   // TODO: Add test for comment text appearing in sidebar once mock data issue is resolved

@@ -27,7 +27,7 @@
 ###########
 # Files used to manage tsp-client version and installation
 ###########
-/eng/common/tsp-client @catalinaperalta @mikeharder
+/eng/**/tsp-client @catalinaperalta @mikeharder
 
 ###########
 # Eng Sys Tools

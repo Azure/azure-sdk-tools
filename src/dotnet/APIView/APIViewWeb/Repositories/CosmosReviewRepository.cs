@@ -140,20 +140,46 @@ namespace APIViewWeb
 
         public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
-            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language) AND LOWER(r.PackageName) = LOWER(@packageName) AND r.IsDeleted = false");
+            var exactQueryBuilder = new StringBuilder(
+                "SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language)" +
+                " AND LOWER(r.PackageName) = LOWER(@packageName)" +
+                " AND r.IsDeleted = false");
             if (isClosed.HasValue)
             {
-                queryStringBuilder.Append(" AND r.IsClosed = @isClosed");
+                exactQueryBuilder.Append(" AND r.IsClosed = @isClosed");
             }
 
-            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+            var exactQuery = new QueryDefinition(exactQueryBuilder.ToString())
                 .WithParameter("@language", language)
                 .WithParameter("@packageName", packageName)
                 .WithParameter("@isClosed", isClosed);
 
-            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(exactQuery);
             var result = await itemQueryIterator.ReadNextAsync();
-            return result.Resource.FirstOrDefault();    
+            var exactMatch = result.Resource.FirstOrDefault();
+            if (exactMatch != null)
+            {
+                return exactMatch;
+            }
+
+            // Fallback: suffix match for prefixed names like Java's "com.azure:azure-foo" matching expected "azure-foo"
+            var suffixQueryBuilder = new StringBuilder(
+                "SELECT * FROM Reviews r WHERE LOWER(r.Language) = LOWER(@language)" +
+                " AND ENDSWITH(LOWER(r.PackageName), CONCAT(\":\", LOWER(@packageName)))" +
+                " AND r.IsDeleted = false");
+            if (isClosed.HasValue)
+            {
+                suffixQueryBuilder.Append(" AND r.IsClosed = @isClosed");
+            }
+
+            var suffixQuery = new QueryDefinition(suffixQueryBuilder.ToString())
+                .WithParameter("@language", language)
+                .WithParameter("@packageName", packageName)
+                .WithParameter("@isClosed", isClosed);
+
+            itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(suffixQuery);
+            result = await itemQueryIterator.ReadNextAsync();
+            return result.Resource.FirstOrDefault();
         }
 
         /// <summary>

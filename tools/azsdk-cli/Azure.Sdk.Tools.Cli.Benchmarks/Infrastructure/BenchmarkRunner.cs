@@ -71,7 +71,8 @@ public class BenchmarkRunner : IDisposable
                 AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath,
                 RunAzsdkInMcpServer = options.RunAzsdkInMcpServer ?? scenario.RunAzsdkInMcpServer,
                 Model = options.Model ?? BenchmarkDefaults.DefaultModel,
-                OnActivity = onActivity
+                OnActivity = onActivity,
+                Verbose = options.Verbose
             };
             var execResult = await executor.ExecuteAsync(execConfig);
 

@@ -85,42 +85,45 @@ public class SessionExecutor : IDisposable
 
             await using var session = await _client.CreateSessionAsync(sessionConfig);
             var done = new TaskCompletionSource();
-            session.On(evt =>
+            if (config.Verbose)
             {
-                switch (evt)
+                session.On(evt =>
                 {
-                    case AssistantMessageDeltaEvent delta:
-                        // Streaming message chunk - print incrementally
-                        Console.Write(delta.Data.DeltaContent);
-                        break;
-                    case AssistantReasoningDeltaEvent reasoningDelta:
-                        // Streaming reasoning chunk (if model supports reasoning)
-                        Console.Write(reasoningDelta.Data.DeltaContent);
-                        break;
-                    case AssistantMessageEvent msg:
-                        // Final message - complete content
-                        Console.WriteLine("\n--- Final message ---");
-                        Console.WriteLine(msg.Data.Content);
-                        Console.WriteLine("\n---End of Final message ---");
-                        break;
-                    case AssistantReasoningEvent reasoningEvt:
-                        // Final reasoning content (if model supports reasoning)
-                        Console.WriteLine("--- Reasoning ---");
-                        Console.WriteLine(reasoningEvt.Data.Content);
-                        Console.WriteLine("--- End of Reasoning ---");
-                        break;
-                    case ToolExecutionStartEvent toolStart:
-                        Console.WriteLine($"Tool execution started: {toolStart.Data.ToolName}, {toolStart.Data.Arguments?.ToString()}, {toolStart.Data.McpToolName}");
-                        break;
-                    case ToolExecutionCompleteEvent toolFinish:
-                        Console.WriteLine($"Tool {toolFinish.Data.ToolCallId} execution finished: {toolFinish.Data.Result?.DetailedContent}");
-                        break;
-                    case SessionIdleEvent:
-                        // Session finished processing
-                        done.SetResult();
-                        break;
-                }
-            });
+                    switch (evt)
+                    {
+                        case AssistantMessageDeltaEvent delta:
+                            // Streaming message chunk - print incrementally
+                            Console.Write(delta.Data.DeltaContent);
+                            break;
+                        case AssistantReasoningDeltaEvent reasoningDelta:
+                            // Streaming reasoning chunk (if model supports reasoning)
+                            Console.Write(reasoningDelta.Data.DeltaContent);
+                            break;
+                        case AssistantMessageEvent msg:
+                            // Final message - complete content
+                            Console.WriteLine("\n--- Final message ---");
+                            Console.WriteLine(msg.Data.Content);
+                            Console.WriteLine("\n---End of Final message ---");
+                            break;
+                        case AssistantReasoningEvent reasoningEvt:
+                            // Final reasoning content (if model supports reasoning)
+                            Console.WriteLine("--- Reasoning ---");
+                            Console.WriteLine(reasoningEvt.Data.Content);
+                            Console.WriteLine("--- End of Reasoning ---");
+                            break;
+                        case ToolExecutionStartEvent toolStart:
+                            Console.WriteLine($"Tool execution started: {toolStart.Data.ToolName}, {toolStart.Data.Arguments?.ToString()}, {toolStart.Data.McpToolName}");
+                            break;
+                        case ToolExecutionCompleteEvent toolFinish:
+                            Console.WriteLine($"Tool {toolFinish.Data.ToolCallId} execution finished: {toolFinish.Data.Result?.DetailedContent}");
+                            break;
+                        case SessionIdleEvent:
+                            // Session finished processing
+                            done.SetResult();
+                            break;
+                    }
+                });
+            }
 
             // Send prompt and wait for completion
             var messageOptions = new MessageOptions { Prompt = config.Prompt };
@@ -129,22 +132,6 @@ public class SessionExecutor : IDisposable
 
             // Get messages for debugging
             var messages = await session.GetMessagesAsync();
-            //Console.WriteLine("\n=== Execution Messages ===");
-            //var messagesString = string.Join(
-            //    Environment.NewLine,
-            //    messages.Select(m =>
-            //    {
-            //        var deltaEvent = m as AssistantMessageDeltaEvent;
-            //        return deltaEvent?.Data.DeltaContent ?? "(null)";
-            //    })
-            //);
-            //        var messagesJson = System.Text.Json.JsonSerializer.Serialize(
-            //  messages,
-            //    new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
-            //);
-            //Console.WriteLine(messagesString);
-            //Console.WriteLine("=== End Messages ===\n");
-
             // stream version
 
             stopwatch.Stop();

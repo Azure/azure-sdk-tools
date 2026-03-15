@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 public class AddArmResourceScenario : BenchmarkScenario
 {
     /// <inheritdoc />
-    public override string Name => "add-arm-resource";
+    public override string Name => "add-arm-resource-only";
 
     /// <inheritdoc />
     public override string Description =>
@@ -30,8 +30,9 @@ public class AddArmResourceScenario : BenchmarkScenario
         Owner = "Azure",
         Name = "azure-rest-api-specs",
         Ref = "main",
-        SparseCheckoutPaths = ["specification/widget/resource-manager/Microsoft.Widget/Widget"]
+        SparseCheckoutPaths = ["specification/widget/resource-manager/Microsoft.Widget/Widget", ".vscode", "eng/common"]
     };
+
 
     /// <inheritdoc />
     public override string Prompt => """
@@ -46,6 +47,12 @@ public class AddArmResourceScenario : BenchmarkScenario
     public override async Task SetupAsync(Workspace workspace)
     {
         await workspace.RunCommandAsync("npm", "ci");
+        /* download azsdkcli*/
+        await workspace.RunCommandAsync("pwsh", "./eng/common/mcp/azure-sdk-mcp.ps1", "-InstallDirectory", workspace.RootPath);
+        AzsdkMcpPath = Path.Combine(workspace.RootPath, "azsdk.exe");
+        RunAzsdkInMcpServer = true;
+        /** start the azure knowledge service. **/
+        await workspace.RunCommandAsync("");
     }
 
     /// <inheritdoc />

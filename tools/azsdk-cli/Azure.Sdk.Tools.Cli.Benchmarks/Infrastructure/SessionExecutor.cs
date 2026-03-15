@@ -33,10 +33,8 @@ public class SessionExecutor : IDisposable
             _client = new CopilotClient();
 
             // Build MCP server config - try explicit path first, then load from workspace
-            var mcpServers = BuildMcpServers(config.AzsdkMcpPath) 
+            var mcpServers = BuildMcpServers(config.AzsdkMcpPath, config.RunAzsdkInMcpServer) 
                 ?? await McpConfigLoader.LoadFromWorkspaceAsync(config.WorkingDirectory);
-
-            //(mcpServers["azure-sdk-mcp"] as McpLocalServerConfig).Env["AZURE_SDK_KB_ENDPOINT"] = "http://localhost:8088";
 
             var sessionConfig = new SessionConfig
             {
@@ -176,7 +174,7 @@ public class SessionExecutor : IDisposable
     /// </summary>
     /// <param name="azsdkPath">Optional path to the azsdk MCP server executable.</param>
     /// <returns>MCP server configuration dictionary, or null if no path is available.</returns>
-    private static Dictionary<string, object>? BuildMcpServers(string? azsdkPath)
+    private static Dictionary<string, object>? BuildMcpServers(string? azsdkPath, bool? RunAzsdkInMcpServer)
     {
         // Priority: config param > env var > null (let SDK use repo config)
         var path = azsdkPath ?? Environment.GetEnvironmentVariable("AZSDK_MCP_PATH");
@@ -191,8 +189,14 @@ public class SessionExecutor : IDisposable
             {
                 Type = "local",
                 Command = path,
-                Args = ["mcp", "run"],
-                Tools = ["*"]
+                Args = RunAzsdkInMcpServer == true ? ["start"] : ["mcp", "run"],
+                Tools = ["*"],
+                Env = new Dictionary<string, string>
+                {
+                    // Set any necessary environment variables for the MCP server here
+                    // For example: ["AZURE_SDK_KB_ENDPOINT"] = "http://localhost:8088"
+                    ["AZURE_SDK_KB_ENDPOINT"] = "http://localhost:8088"
+                }
             }
         };
     }

@@ -3,6 +3,7 @@
 
 using System.Reflection;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
+using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
@@ -21,7 +22,7 @@ public static class ScenarioDiscovery
         var assembly = Assembly.GetExecutingAssembly();
 
         var scenarioTypes = assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && scenarioType.IsAssignableFrom(t));
+            .Where(t => t.IsClass && !t.IsAbstract && scenarioType.IsAssignableFrom(t) && t != typeof(AuthoringScenario));
 
         foreach (var type in scenarioTypes)
         {
@@ -40,6 +41,13 @@ public static class ScenarioDiscovery
             {
                 yield return scenario;
             }
+        }
+
+        // discovery all AuthoringScenarios from json files
+        var authoringScenarios = AuthoringScenarioLoader.LoadFromJsonFiles();
+        foreach (var scenario in authoringScenarios)
+        {
+            yield return scenario;
         }
     }
 

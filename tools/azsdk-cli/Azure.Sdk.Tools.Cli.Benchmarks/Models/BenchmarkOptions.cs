@@ -14,6 +14,12 @@ public class BenchmarkOptions
     public string? AzsdkMcpPath { get; init; }
 
     /// <summary>
+    /// Override execute mode to azsdk MCP server.
+    /// When true, runs the azsdk MCP server in stdio mode; otherwise uses command line mode.
+    /// </summary>
+    public bool? RunAzsdkInMcpServer { get; init; }
+
+    /// <summary>
     /// Cleanup policy after run.
     /// </summary>
     public CleanupPolicy CleanupPolicy { get; init; } = CleanupPolicy.OnSuccess;

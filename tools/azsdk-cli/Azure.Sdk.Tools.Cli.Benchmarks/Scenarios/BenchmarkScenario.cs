@@ -49,7 +49,13 @@ public abstract class BenchmarkScenario
     /// Gets the optional path to the azsdk-mcp executable.
     /// When null, uses the repo's config or falls back to the AZSDK_MCP_PATH environment variable.
     /// </summary>
-    public virtual string? AzsdkMcpPath => null;
+    public virtual string? AzsdkMcpPath { get; set; }
+    
+    /// <summary>
+    /// Gets whether to run the azsdk MCP server in command line mode.
+    /// When true, runs in command line mode; when false, runs in stdio mode; when null, uses default behavior.
+    /// </summary>
+    public virtual bool? RunAzsdkInMcpServer { get; set; }
 
     // === SETUP ===
 

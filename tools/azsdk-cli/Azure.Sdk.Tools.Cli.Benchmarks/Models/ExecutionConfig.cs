@@ -20,6 +20,9 @@ public class ExecutionConfig
     /// <summary>Path to azsdk MCP server executable (optional override).</summary>
     public string? AzsdkMcpPath { get; init; }
 
+    /// <summary>When true, runs the azsdk MCP server in stdio mode; otherwise use command line mode;</summary>
+    public bool? RunAzsdkInMcpServer { get; init; }
+
     /// <summary>The model to use for the agent session.</summary>
     public string Model { get; init; } = BenchmarkDefaults.DefaultModel;
 

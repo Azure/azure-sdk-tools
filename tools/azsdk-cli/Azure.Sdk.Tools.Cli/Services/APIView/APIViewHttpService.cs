@@ -40,7 +40,7 @@ public class APIViewHttpService : IAPIViewHttpService
         string requestUrl = $"{_baseUrl}{endpoint}";
         using HttpResponseMessage response = await httpClient.GetAsync(requestUrl, ct);
 
-        string content = await response.Content.ReadAsStringAsync();
+        string content = await response.Content.ReadAsStringAsync(ct);
 
         if (response.IsSuccessStatusCode)
         {
@@ -63,7 +63,7 @@ public class APIViewHttpService : IAPIViewHttpService
         string requestUrl = $"{_baseUrl}{endpoint}";
         using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty), ct);
 
-        string content = await response.Content.ReadAsStringAsync();
+        string content = await response.Content.ReadAsStringAsync(ct);
 
         if (response.IsSuccessStatusCode)
         {
@@ -97,7 +97,7 @@ public class APIViewHttpService : IAPIViewHttpService
             }
 
             HttpClient newClient = _httpClientFactory.CreateClient();
-            await _authService.ConfigureAuthenticationAsync(newClient, _environment);
+            await _authService.ConfigureAuthenticationAsync(newClient, _environment, ct);
 
             _cachedClient = newClient;
             _cacheExpiry = DateTime.UtcNow.Add(CacheDuration);

@@ -167,7 +167,7 @@ public class PipelineAnalysisTool(
         throw new ArgumentException($"Could not extract buildId from pipeline identifier: {pipelineIdentifier}");
     }
 
-    private void Initialize(bool auth = true)
+    private void Initialize(bool auth = true, CancellationToken ct = default)
     {
         if (initialized)
         {
@@ -177,7 +177,7 @@ public class PipelineAnalysisTool(
         if (auth)
         {
             var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
-            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
+            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), ct);
             var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
             buildClientValue = connection.GetClient<BuildHttpClient>();
@@ -211,7 +211,7 @@ public class PipelineAnalysisTool(
                 throw new Exception($"Not authorized to get pipeline details from {pipelineUrl}");
             }
             response.EnsureSuccessStatusCode();
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync(ct);
             using var doc = JsonDocument.Parse(json);
             var projectName = doc.RootElement.GetProperty("project").GetProperty("name").GetString();
             if (string.IsNullOrEmpty(projectName))
@@ -223,7 +223,7 @@ public class PipelineAnalysisTool(
 
         var _pipelineUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}?api-version=7.1";
         logger.LogDebug("Getting pipeline details from {url} via sdk", _pipelineUrl);
-        var build = await buildClient.GetBuildAsync(project, buildId);
+        var build = await buildClient.GetBuildAsync(project, buildId, cancellationToken: ct);
         return build.Project.Name;
     }
 
@@ -474,7 +474,7 @@ public class PipelineAnalysisTool(
             {
                 foreach (var file in testFiles.Value)
                 {
-                    var failed = await testHelper.GetFailedTestCases(file);
+                    var failed = await testHelper.GetFailedTestCases(file, ct: ct);
                     failedTests.Items.AddRange(failed.Items);
                 }
             }

@@ -843,7 +843,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 };
             }
 
-            var lines = (await File.ReadAllLinesAsync(codeownersPath)).ToList();
+            var lines = (await File.ReadAllLinesAsync(codeownersPath, ct)).ToList();
             var exportedLines = new List<string>();
 
             foreach (var sectionName in sections)
@@ -861,7 +861,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 exportedLines.AddRange(lines.GetRange(headerStart, sectionEnd - headerStart));
             }
 
-            await File.WriteAllLinesAsync(output, exportedLines);
+            await File.WriteAllLinesAsync(output, exportedLines, ct);
 
             return new DefaultCommandResponse
             {

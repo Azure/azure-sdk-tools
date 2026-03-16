@@ -1362,7 +1362,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return response;
                 }
 
-                var sdkInfoInRelease = devOpsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl, "Completed");
+                var sdkInfoInRelease = devOpsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl, "Completed", ct: ct);
                 var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan, ct);
 
                 await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);

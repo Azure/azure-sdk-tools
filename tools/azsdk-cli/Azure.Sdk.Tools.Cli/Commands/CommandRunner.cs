@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             };
 
             var parseResult = rootCommand.Parse(args, parseConfig);
-            return await parseResult.InvokeAsync();
+            return await parseResult.InvokeAsync(ct);
         }
 
         private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPToolBase> toolList)

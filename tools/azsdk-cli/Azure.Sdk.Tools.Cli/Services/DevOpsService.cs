@@ -1060,7 +1060,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// </summary>
         private async Task<WorkItem> GetApiSpecWorkItemAsync(int releasePlanWorkItemId, CancellationToken ct)
         {
-            var releasePlanWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlanWorkItemId, expand: WorkItemExpand.All);
+            var releasePlanWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(releasePlanWorkItemId, expand: WorkItemExpand.All, cancellationToken: ct);
             if (releasePlanWorkItem?.Id == null)
             {
                 throw new InvalidOperationException($"Work item {releasePlanWorkItemId} not found.");
@@ -1355,7 +1355,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                     logger.LogDebug("Downloading artifact '{artifactName}' to '{tempDir}'", artifact.Name, tempDir);
 
-                    using var stream = await buildClient.GetArtifactContentZipAsync(project, buildId, artifact.Name);
+                    using var stream = await buildClient.GetArtifactContentZipAsync(project, buildId, artifact.Name, cancellationToken: ct);
                     var zipPath = Path.Combine(tempDir, "artifact.zip");
                     using (var fileStream = File.Create(zipPath))
                     {
@@ -1366,7 +1366,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                     {
                         System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir);
                         File.Delete(zipPath);
-                    });
+                    }, ct);
 
                     var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
                     result[artifact.Name] = files;
@@ -1398,7 +1398,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 await Task.Factory.StartNew(() =>
                 {
                     Directory.Delete(tempDir, true);
-                });
+                }, ct);
             }
             Directory.CreateDirectory(tempDir);
 
@@ -1441,7 +1441,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 var zipPath = Path.Combine(tempDir, "artifact.zip");
 
-                using (var zipStream = await httpClient.GetStreamAsync(downloadUrl))
+                using (var zipStream = await httpClient.GetStreamAsync(downloadUrl, ct))
                 using (var fileStream = File.Create(zipPath))
                 {
                     await zipStream.CopyToAsync(fileStream, ct);
@@ -1451,7 +1451,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     System.IO.Compression.ZipFile.ExtractToDirectory(zipPath, tempDir);
                     File.Delete(zipPath);
-                });
+                }, ct);
 
                 var files = Directory.GetFiles(tempDir, "*", SearchOption.AllDirectories).ToList();
                 var newFiles = files.Where(f => !seenFiles.Contains(f)).ToList();

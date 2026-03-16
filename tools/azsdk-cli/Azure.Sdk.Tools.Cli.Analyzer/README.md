@@ -2,7 +2,7 @@
 
 ## Overview
 
-All public and internal async methods (returning `Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>`) must accept a `CancellationToken` parameter. This ensures consistent cancellation support across the codebase. The primary intent is so we immediately exit when the user presses ctrl-c.
+All async methods (returning `Task`, `Task<T>`, `ValueTask`, or `ValueTask<T>`) must accept a `CancellationToken` parameter. This ensures consistent cancellation support across the codebase. The primary intent is so we immediately exit when the user presses ctrl-c.
 
 ### Parameter Convention
 
@@ -38,6 +38,30 @@ public async Task<Result> FetchDataAsync(string query, int limit = 100, Cancella
 {
     return await service.GetAsync(query, limit, ct);
 }
+```
+
+# Prohibit Default CancellationToken (AZSDK002)
+
+## Overview
+
+Do not pass `default`, `default(CancellationToken)`, or `CancellationToken.None` as a CancellationToken argument. Always forward an existing token from the calling method instead. This ensures cancellation (e.g. Ctrl+C) propagates correctly through the call chain.
+
+Test projects are excluded from this rule.
+
+### Examples
+
+```csharp
+// ❌ Incorrect - passing CancellationToken.None
+var token = credential.GetToken(context, CancellationToken.None);
+
+// ❌ Incorrect - passing default
+await service.GetAsync(query, default);
+
+// ✅ Correct - forward existing token
+var token = credential.GetToken(context, ct);
+
+// ✅ Correct - forward existing token
+await service.GetAsync(query, ct);
 ```
 
 # Tool Exception Handling Analyzer (MCP001)

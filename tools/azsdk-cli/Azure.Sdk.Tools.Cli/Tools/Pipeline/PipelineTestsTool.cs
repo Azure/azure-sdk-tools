@@ -33,7 +33,7 @@ public class PipelineTestsTool(
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        Initialize();
+        Initialize(ct);
         var buildId = parseResult.GetValue(buildIdArg);
 
         logger.LogInformation("Getting test results for pipeline {buildId}...", buildId);
@@ -43,14 +43,14 @@ public class PipelineTestsTool(
     private BuildHttpClient buildClient;
     private readonly bool initialized = false;
 
-    private void Initialize()
+    private void Initialize(CancellationToken ct = default)
     {
         if (initialized)
         {
             return;
         }
         var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };  // Azure DevOps scope
-        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
+        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope), ct);
         var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
         var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
         buildClient = connection.GetClient<BuildHttpClient>();
@@ -82,15 +82,15 @@ public class PipelineTestsTool(
     {
         if (!string.IsNullOrEmpty(project))
         {
-            return await buildClient.GetBuildAsync(project, buildId);
+            return await buildClient.GetBuildAsync(project, buildId, cancellationToken: ct);
         }
         try
         {
-            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT, buildId);
+            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT, buildId, cancellationToken: ct);
         }
         catch (Exception)
         {
-            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId);
+            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId, cancellationToken: ct);
         }
     }
 }

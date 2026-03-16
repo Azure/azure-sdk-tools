@@ -528,7 +528,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
                 {
-                    var content = request.Content?.ReadAsStringAsync().Result ?? "";
+                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
                     var payload = JsonSerializer.Deserialize<JsonElement>(content);
                     capturedBody = payload.GetProperty("Body").GetString() ?? "";
                     return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
@@ -575,7 +575,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
                 {
-                    var content = request.Content?.ReadAsStringAsync().Result ?? "";
+                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
                     var payload = JsonSerializer.Deserialize<JsonElement>(content);
                     capturedBody = payload.GetProperty("Body").GetString() ?? "";
                     return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
@@ -621,7 +621,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
                 {
-                    var content = request.Content?.ReadAsStringAsync().Result ?? "";
+                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
                     var payload = JsonSerializer.Deserialize<JsonElement>(content);
                     capturedBody = payload.GetProperty("Body").GetString() ?? "";
                     return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
@@ -667,7 +667,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync((HttpRequestMessage request, CancellationToken token) =>
                 {
-                    var content = request.Content?.ReadAsStringAsync().Result ?? "";
+                    var content = request.Content?.ReadAsStringAsync(token).Result ?? "";
                     var payload = JsonSerializer.Deserialize<JsonElement>(content);
                     capturedBody = payload.GetProperty("Body").GetString() ?? "";
                     return new HttpResponseMessage(System.Net.HttpStatusCode.OK);

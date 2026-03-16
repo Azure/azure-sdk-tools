@@ -80,7 +80,7 @@ internal abstract class UnixMachineInformationProvider(ILogger<UnixMachineInform
         {
             File.Delete(fullPath);
 
-            await File.WriteAllTextAsync(fullPath, value, Encoding.UTF8);
+            await File.WriteAllTextAsync(fullPath, value, Encoding.UTF8, ct);
             return true;
         }
         catch (Exception ex)
@@ -105,7 +105,7 @@ internal abstract class UnixMachineInformationProvider(ILogger<UnixMachineInform
 
         try
         {
-            var contents = await File.ReadAllTextAsync(path, Encoding.UTF8);
+            var contents = await File.ReadAllTextAsync(path, Encoding.UTF8, ct);
             return contents;
         }
         catch (Exception ex)

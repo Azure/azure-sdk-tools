@@ -215,17 +215,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         {
             private readonly TestWorkItemClient _workItemClient = new();
 
-            public BuildHttpClient GetBuildClient()
+            public BuildHttpClient GetBuildClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
             }
 
-            public WorkItemTrackingHttpClient GetWorkItemClient()
+            public WorkItemTrackingHttpClient GetWorkItemClient(CancellationToken ct = default)
             {
                 return _workItemClient;
             }
 
-            public ProjectHttpClient GetProjectClient()
+            public ProjectHttpClient GetProjectClient(CancellationToken ct = default)
             {
                 throw new NotImplementedException();
             }

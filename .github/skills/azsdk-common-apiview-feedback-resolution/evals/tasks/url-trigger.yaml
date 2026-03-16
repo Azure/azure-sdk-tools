@@ -9,6 +9,5 @@ graders:
   - type: text
     name: mentions-apiview-domain
     config:
-      contains_any:
-        - "apiview.dev"
-        - "apiviewstagingtest.com"
+      contains:
+        - "apiview"

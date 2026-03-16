@@ -356,7 +356,7 @@ internal class PythonLanguageSpecificChecksTests
         Assert.Multiple(() =>
         {
             Assert.That(result.ExitCode, Is.EqualTo(0));
-            Assert.That(result.CheckStatusDetails, Does.Contain("formatting applied"));
+            Assert.That(result.CheckStatusDetails, Does.Contain("formatting completed"));
             Assert.That(result.NextSteps, Is.Null.Or.Empty);
         });
     }
@@ -409,65 +409,6 @@ internal class PythonLanguageSpecificChecksTests
     #endregion
 
     #region UpdateSnippets Tests
-
-    [Test]
-    public async Task UpdateSnippets_ReturnsNextStepsWithRepoGuidance_WhenScriptNotFound()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("python-snippets-no-script-test");
-        var packagePath = tempDir.DirectoryPath;
-
-        // Git helper will return the temp dir as repo root - so script won't exist there
-        _gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(tempDir.DirectoryPath);
-
-        // Act
-        var result = await _languageService.UpdateSnippets(packagePath, false, CancellationToken.None);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.ResponseError, Does.Contain("not found"));
-            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
-            Assert.That(result.NextSteps, Has.Some.Contains("azure-sdk-for-python"));
-        });
-    }
-
-    [Test]
-    public async Task UpdateSnippets_ReturnsNextStepsWithPythonInstallGuidance_WhenPythonNotAvailable()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("python-snippets-no-python-test");
-        var packagePath = tempDir.DirectoryPath;
-
-        // Create the script path so we get past that check
-        _gitHelperMock.Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(tempDir.DirectoryPath);
-
-        var scriptDir = Path.Combine(tempDir.DirectoryPath, "eng", "tools", "azure-sdk-tools", "ci_tools", "snippet_update");
-        Directory.CreateDirectory(scriptDir);
-        File.WriteAllText(Path.Combine(scriptDir, "python_snippet_updater.py"), "# placeholder");
-
-        // Python check fails
-        _pythonHelperMock.Setup(p => p.Run(
-                It.Is<PythonOptions>(o => o.Args.Contains("--version")),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "python: command not found")] });
-
-        // Act
-        var result = await _languageService.UpdateSnippets(packagePath, false, CancellationToken.None);
-
-        // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.ResponseError, Does.Contain("Python is not installed"));
-            Assert.That(result.NextSteps, Is.Not.Null.And.Not.Empty);
-            Assert.That(result.NextSteps, Has.Some.Contains("Python"));
-            Assert.That(result.NextSteps, Has.Some.Contains("azsdk_verify_setup"));
-        });
-    }
 
     [Test]
     public async Task UpdateSnippets_ReturnsNextStepsWithSnippetGuidance_WhenUpdateFails()

@@ -45,6 +45,7 @@ public class NamespaceManager : INamespaceManager
 
     public async Task<NamespaceOperationResult> ApproveNamespaceAsync(string projectId, string language, ClaimsPrincipal user)
     {
+        language = LanguageServiceHelpers.MapLanguageAlias(language);
         string userName = user.GetGitHubLogin();
         if (!await _permissionsManager.CanApproveAsync(userName, language))
         {
@@ -98,6 +99,7 @@ public class NamespaceManager : INamespaceManager
 
     public async Task<NamespaceOperationResult> RejectNamespaceAsync(string projectId, string language, string notes, ClaimsPrincipal user)
     {
+        language = LanguageServiceHelpers.MapLanguageAlias(language);
         string userName = user.GetGitHubLogin();
         if (!await _permissionsManager.CanApproveAsync(userName, language))
         {
@@ -138,6 +140,7 @@ public class NamespaceManager : INamespaceManager
 
     public async Task<NamespaceOperationResult> WithdrawNamespaceAsync(string projectId, string language, ClaimsPrincipal user)
     {
+        language = LanguageServiceHelpers.MapLanguageAlias(language);
         string userName = user.GetGitHubLogin();
         if (!await _permissionsManager.CanApproveAsync(userName, language))
         {
@@ -263,8 +266,9 @@ public class NamespaceManager : INamespaceManager
 
         var oldLanguages = new HashSet<string>(oldPackages.Keys, StringComparer.OrdinalIgnoreCase);
         var newLanguages = new HashSet<string>(newPackages.Keys, StringComparer.OrdinalIgnoreCase);
-        var alreadyApprovedPackages = new HashSet<string>(newReviews.Where(t => t.IsApproved).Select(t => t.PackageName),
-            StringComparer.OrdinalIgnoreCase);
+        var approvedReviewsByPackage = newReviews
+            .Where(r => r.IsApproved && !string.IsNullOrEmpty(r.PackageName))
+            .ToDictionary(r => r.PackageName, r => r, StringComparer.OrdinalIgnoreCase);
 
 
         // Removed language → withdraw & remove language
@@ -290,10 +294,9 @@ public class NamespaceManager : INamespaceManager
             if (!string.IsNullOrEmpty(languagePackageInfo?.Namespace))
             {
                 NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, languagePackageInfo.PackageName, languagePackageInfo.Namespace);
-                if (alreadyApprovedPackages.Contains(proposed.PackageName))
+                if (approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var approvedReview))
                 {
-                    proposed.Status = NamespaceDecisionStatus.Approved;
-                    proposed.Notes += NamespaceManagerConstants.AutoApprovalNotes;
+                    ApplyAutoApproval(proposed, approvedReview);
                 }
 
                 currentInfo.CurrentNamespaceStatus[lang] = proposed;
@@ -321,10 +324,9 @@ public class NamespaceManager : INamespaceManager
                 }
 
                 NamespaceDecisionEntry proposed = CreateProposedEntry(userName, lang, newPkg.PackageName, newNamespace);
-                if (alreadyApprovedPackages.Contains(proposed.PackageName))
+                if (approvedReviewsByPackage.TryGetValue(proposed.PackageName, out var approvedReview))
                 {
-                    proposed.Status = NamespaceDecisionStatus.Approved;
-                    proposed.Notes += NamespaceManagerConstants.AutoApprovalNotes;
+                    ApplyAutoApproval(proposed, approvedReview);
                 }
 
                 currentInfo.CurrentNamespaceStatus[lang] = proposed;
@@ -353,6 +355,16 @@ public class NamespaceManager : INamespaceManager
         await _reviewsRepository.UpsertReviewAsync(review);
     }
 
+
+    private static void ApplyAutoApproval(NamespaceDecisionEntry entry, ReviewListItemModel approvedReview)
+    {
+        entry.Status = NamespaceDecisionStatus.Approved;
+        ReviewChangeHistoryModel approvalAction = approvedReview.ChangeHistory?
+            .LastOrDefault(ch => ch.ChangeAction == ReviewChangeAction.Approved && ch.ChangedOn > DateTime.MinValue);
+        entry.DecidedBy = approvalAction?.ChangedBy ?? ApiViewConstants.AzureSdkBotName;
+        entry.DecidedOn = approvalAction?.ChangedOn is { } d && d > DateTime.MinValue ? d : DateTime.UtcNow;
+        entry.Notes = $" {NamespaceManagerConstants.AutoApprovalNotes} (review {approvedReview.Id}) ";
+    }
 
     private static NamespaceDecisionEntry CreateProposedEntry(string userName, string language, string packageName, string namespaceName) => new()
     {

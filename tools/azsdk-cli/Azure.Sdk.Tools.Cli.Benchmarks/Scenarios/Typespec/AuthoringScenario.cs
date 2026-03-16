@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// Gets or sets the verification plan for validating the scenario results.
         /// Contains the strategy or criteria used to verify that the agent completed the task correctly.
         /// </summary>
-        public string VerifyPlan { get; set; } = string.Empty;
+        public IReadOnlyList<string> VerifyPlan { get; set; } = new List<string>();
 
         /// <summary>
         /// Gets or sets the list of TypeSpec test files relevant to this scenario.
@@ -52,13 +52,13 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <param name="prompt">The prompt to send to the agent.</param>
         /// <param name="testTspFiles">Optional list of TypeSpec files relevant to this scenario.</param>
         /// <param name="verifyPlan">Optional verification plan for validating scenario results.</param>
-        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, string verifyPlan = "")
+        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? verifyPlan = null)
         {
             Name = name;
             Description = description ?? string.Empty;
             Prompt = prompt ?? string.Empty;
             this.tspProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? DefaultTspProjectPath : tspProjectPath;
-            VerifyPlan = verifyPlan ?? "compile the project.";
+            VerifyPlan = verifyPlan ?? new List<string> { "compile the project." };
             TestTspFiles = testTspFiles ?? new List<string>();
             // Enable MCP server mode for TypeSpec authoring scenarios
             RunAzsdkInMcpServer = true;
@@ -139,7 +139,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         public override IEnumerable<IValidator> Validators =>
         [
             new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", new List<string>(){ "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan"}),
-            new VerifyResultWithAIValidate("Verify results with AI", VerifyPlan)
+            new VerifyResultWithAIValidate("Verify results with AI", string.Join("\n", VerifyPlan.ToArray()))
         ];
     }
 }

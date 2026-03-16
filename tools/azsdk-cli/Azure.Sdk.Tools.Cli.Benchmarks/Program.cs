@@ -205,7 +205,7 @@ public class Program
 
         // Summary for multiple scenarios
         var resultsList = results.ToList();
-        if (resultsList.Count > 1)
+        if (resultsList.Count > 0)
         {
             Console.WriteLine("\n=== Summary ===");
             var passed = resultsList.Count(r => r.Result.Passed);

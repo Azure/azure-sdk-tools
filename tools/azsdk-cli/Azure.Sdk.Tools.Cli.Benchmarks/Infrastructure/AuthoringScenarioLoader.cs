@@ -75,7 +75,7 @@ public static class AuthoringScenarioLoader
                     prompt: testCase.Prompt,
                     tspProjectPath: null,
                     testTspFiles: testCase.TestFiles,
-                    verifyPlan: testCase.VerifyPlan ?? string.Empty
+                    verifyPlan: testCase.VerifyPlan ?? new List<string>()
                 );
             }
         }
@@ -108,6 +108,6 @@ public static class AuthoringScenarioLoader
         public List<string>? TestFiles { get; set; }
 
         [JsonPropertyName("verifyPlan")]
-        public string? VerifyPlan { get; set; }
+        public List<string>? VerifyPlan { get; set; }
     }
 }

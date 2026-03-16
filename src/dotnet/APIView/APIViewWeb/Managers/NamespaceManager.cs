@@ -43,9 +43,7 @@ public class NamespaceManager : INamespaceManager
         return project?.NamespaceInfo;
     }
 
-    /// <summary>
-    /// Allowed transitions: maps (currentStatus) → set of valid target statuses.
-    /// </summary>
+    // Allowed transitions: maps (currentStatus) → set of valid target statuses.
     private static readonly Dictionary<NamespaceDecisionStatus, HashSet<NamespaceDecisionStatus>> AllowedTransitions = new()
     {
         [NamespaceDecisionStatus.Proposed]  = [NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Rejected, NamespaceDecisionStatus.Withdrawn],

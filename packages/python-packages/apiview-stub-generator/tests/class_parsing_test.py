@@ -466,9 +466,9 @@ class TestClassParsing:
         # Check that the RelatedToLine and IsContextEndLine are being set correctly.
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 1
+        assert metadata["RelatedToLine"] == 3
         # Body of class is not defined so there is no context end line
-        assert metadata["IsContextEndLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_no_name_attr_typed_dict(self):
         obj = PropertyWithNoNameAttr
@@ -575,9 +575,9 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 2
         # class type with no defined body
-        assert metadata["IsContextEndLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_union_alias(self):
         obj = AliasUnion
@@ -596,9 +596,9 @@ class TestClassParsing:
 
         metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
         metadata = _count_review_line_metadata(tokens, metadata)
-        assert metadata["RelatedToLine"] == 0
+        assert metadata["RelatedToLine"] == 2
         # class type with no defined body
-        assert metadata["IsContextEndLine"] == 0
+        assert metadata["IsContextEndLine"] == 1
 
     def test_literals(self):
         obj = SomethingWithLiterals

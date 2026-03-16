@@ -495,6 +495,8 @@ namespace azure.core.exceptions
 
 
     class azure.core.exceptions.DeserializationError(ValueError):
+
+
     class azure.core.exceptions.HttpResponseError(AzureError):
         error: ODataV4Format
         model: Model
@@ -617,6 +619,8 @@ namespace azure.core.exceptions
 
 
     class azure.core.exceptions.SerializationError(ValueError):
+
+
     class azure.core.exceptions.ServiceRequestError(AzureError):
 
         def __init__(
@@ -2099,7 +2103,11 @@ namespace azure.core.polling.async_base_polling
 namespace azure.core.polling.base_polling
 
     class azure.core.polling.base_polling.BadResponse(Exception):
+
+
     class azure.core.polling.base_polling.BadStatus(Exception):
+
+
     class azure.core.polling.base_polling.LROBasePolling(_SansIOLROBasePolling[+PollingReturnType_co, PipelineClient[HttpRequestTypeVar, HttpResponseTypeVar], HttpRequestTypeVar, HttpResponseTypeVar], PollingMethod[+PollingReturnType_co]):
 
         def __getattribute__(self, name: str) -> Any: ...
@@ -2174,6 +2182,8 @@ namespace azure.core.polling.base_polling
 
 
     class azure.core.polling.base_polling.OperationFailed(Exception):
+
+
     class azure.core.polling.base_polling.OperationResourcePolling(LongRunningOperation[HttpRequestTypeVar, AllHttpResponseTypeVar]):
 
         def __init__(

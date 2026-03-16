@@ -388,6 +388,52 @@
     },
     {
       "repository": {
+        "url": "git@github-azure:Azure/typespec-cpp.git",
+        "branch": "main",
+        "authType": "ssh",
+        "sshHost": "github-azure"
+      },
+      "paths": [
+        {
+          "description": "Emitter README for TypeSpec C++ code generation",
+          "path": "/packages/typespec-cpp/README.md",
+          "folder": "typespec_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Codegen Engine README for TypeSpec C++ code generation",
+          "path": "/packages/codegen.cpp/README.md",
+          "folder": "typespec_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Architecture Guide for TypeSpec C++ code generation",
+          "path": "/.github/copilot-instructions.md",
+          "folder": "typespec_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Development Guide for TypeSpec C++ code generation",
+          "path": "/docs/development.md",
+          "folder": "typespec_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-java.git",
         "branch": "main",
         "authType": "public"

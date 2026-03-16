@@ -20,7 +20,6 @@ parameters:
 - name: ForkAutomationBranches
   type: object
   default:
-    - azure-sdk/azure-powershell
     - azure-sdk/azure-sdk-for-go
     - azure-sdk/azure-sdk-for-java
     - azure-sdk/azure-sdk-for-js
@@ -35,7 +34,6 @@ parameters:
     - Azure/azure-sdk-for-js-pr
     - Azure/azure-sdk-for-net-pr
     - Azure/azure-sdk-for-python-pr
-    - azure-sdk/azure-powershell-pr
     - azure-sdk/azure-sdk-for-go-pr
     - azure-sdk/azure-sdk-for-java-pr
     - azure-sdk/azure-sdk-for-js-pr
@@ -129,8 +127,7 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId "${{ repo }}"
-              -CentralRepoId "Azure/azure-rest-api-specs"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
+              -BranchRegex "^sdkAuto/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
@@ -145,8 +142,7 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId "${{ repo }}"
-              -CentralRepoId "Azure/azure-rest-api-specs-pr"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
+              -BranchRegex "^sdkAuto/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
@@ -163,21 +159,5 @@ jobs:
               -RepoId "${{ repo }}"
               -BranchRegex "^daily"
               -LastCommitOlderThan ((Get-Date).AddDays(-7))
-              -AuthToken $(azuresdk-github-pat)
-              -WhatIf:$${{parameters.WhatIfPreference}}
-
-      - ${{ each repo in parameters.RestAPISpecsDocsRepos }}:
-        - task: PowerShell@2
-          displayName: ${{ repo }} azure-rest-api-specs docs branch clean-up
-          condition: succeededOrFailed()
-          continueOnError: true
-          inputs:
-            pwsh: true
-            workingDirectory: $(System.DefaultWorkingDirectory)
-            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
-            arguments: >
-              -RepoId "${{ repo }}"
-              -BranchRegex "^(result_)?([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
-              -LastCommitOlderThan ((Get-Date).AddDays(-14))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

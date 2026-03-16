@@ -204,6 +204,60 @@ public class Workspace : IDisposable
     }
 
     /// <summary>
+    /// Copies a file or directory from source to the workspace.
+    /// If the source is a directory, copies the entire directory recursively.
+    /// </summary>
+    /// <param name="sourcePath">The source file or directory path (absolute or relative to current directory).</param>
+    /// <param name="targetRelativePath">The target path relative to the repository root.</param>
+    public async Task CopyToWorkspaceAsync(string sourcePath, string targetRelativePath)
+    {
+        var targetPath = Path.Combine(RepoPath, targetRelativePath);
+        
+        if (Directory.Exists(sourcePath))
+        {
+            // Copy entire directory
+            CopyDirectory(sourcePath, targetPath);
+        }
+        else if (File.Exists(sourcePath))
+        {
+            // Copy single file
+            Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+            await Task.Run(() => File.Copy(sourcePath, targetPath, overwrite: true));
+        }
+        else
+        {
+            throw new FileNotFoundException($"Source path not found: {sourcePath}");
+        }
+    }
+
+    /// <summary>
+    /// Recursively copies a directory and all its contents.
+    /// </summary>
+    /// <param name="sourceDir">The source directory path.</param>
+    /// <param name="targetDir">The target directory path.</param>
+    private static void CopyDirectory(string sourceDir, string targetDir)
+    {
+        // Create target directory
+        Directory.CreateDirectory(targetDir);
+        
+        // Copy all files
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var fileName = Path.GetFileName(file);
+            var targetFile = Path.Combine(targetDir, fileName);
+            File.Copy(file, targetFile, overwrite: true);
+        }
+        
+        // Copy all subdirectories recursively
+        foreach (var subDir in Directory.GetDirectories(sourceDir))
+        {
+            var dirName = Path.GetFileName(subDir);
+            var targetSubDir = Path.Combine(targetDir, dirName);
+            CopyDirectory(subDir, targetSubDir);
+        }
+    }
+
+    /// <summary>
     /// Disposes of the workspace resources.
     /// Note: Cleanup of the workspace directory is handled by <see cref="WorkspaceManager"/> based on the configured cleanup policy.
     /// </summary>

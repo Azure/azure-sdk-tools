@@ -106,7 +106,6 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                     foreach (var tspFile in TestTspFiles)
                     {
                         var sourcePath = Path.Combine(testDataPath, tspFile);
-                        var tspContent = await workspace.ReadFileAsync(sourcePath);
 
                         // Exclude the top-level folder (case-name folder) from the destination path
                         // e.g., "version-add-preview-after-preview/employee.tsp" -> "employee.tsp"
@@ -115,8 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                             : tspFile;
 
                         var destinationPath = Path.Combine(workspace.RepoPath, tspProjectPath, relativePath);
-                        // WriteFileAsync will overwrite the file if it already exists
-                        await workspace.WriteFileAsync(destinationPath, tspContent);
+                        await workspace.CopyToWorkspaceAsync(sourcePath, Path.Combine(tspProjectPath, relativePath));
                     }
                 }
             }

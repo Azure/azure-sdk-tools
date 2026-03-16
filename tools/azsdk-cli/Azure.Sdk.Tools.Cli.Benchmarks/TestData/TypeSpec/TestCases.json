@@ -4,7 +4,12 @@
             "name": "version-add-preview-after-preview",
             "description": "Add a new apiversion `2025-05-04-preview`.",
             "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, Add a new preview version `2025-05-04-preview` to my service widget resource manager.",
-            "testfiles": [ "version-add-preview-after-preview/employee.tsp", "version-add-preview-after-preview/main.tsp" ],
+            "testfiles": [
+                "version-add-preview-after-preview/employee.tsp",
+                "version-add-preview-after-preview/main.tsp",
+                "version-add-preview-after-preview/examples" 
+
+            ],
             "verifyPlan": [
                 "1.Add the new version `2025-05-04-preview` to the `Versions` enum and decoratored '@previewVersion'.",
                 "2. Example folders are correctly set up. rename the example folder from the old preview to the new one (e.g., `mv examples/2024-10-01-preview examples/2025-05-04-preview`), update the `api-version` parameter in all example files, and add or modify examples to reflect API changes.",

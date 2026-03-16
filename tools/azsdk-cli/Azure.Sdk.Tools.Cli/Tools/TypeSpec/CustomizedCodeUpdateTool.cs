@@ -234,17 +234,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
             var tspFixFailed = 0;
             var tspFixSucceeded = 0;
-            var tspApplicable = response.Classifications.Count(c => c.Classification == ClassificationTspApplicable);
-            var codeCustomizations = response.Classifications.Count(c => c.Classification == ClassificationCodeCustomization);
-            var manualChanges = response.Classifications.Count(c => c.Classification == ClassificationRequiresManualIntervention);
-            var noChanges = response.Classifications.Count(c => c.Classification == ClassificationSuccess);
-
-            logger.LogInformation("Classification summary: TSP_APPLICABLE={TspApplicable}, CODE_CUSTOMIZATION={CodeCustomization}, REQUIRES_MANUAL_INTERVENTION={Manual}, SUCCESS={Success}", tspApplicable, codeCustomizations, manualChanges, noChanges);
-
-            tspApplicable = 0;
-            codeCustomizations = 0;
-            manualChanges = 0;
-            noChanges = 0;
+            var tspApplicable = 0;
+            var codeCustomizations = 0;
+            var manualChanges = 0;
+            var noChanges = 0;
 
             foreach (var itemDetails in response.Classifications)
             {
@@ -305,6 +298,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     feedbackDictionary.Remove(itemDetails.ItemId);
                 }
             }
+
+            logger.LogInformation("Classification summary: TSP_APPLICABLE={TspApplicable}, CODE_CUSTOMIZATION={CodeCustomization}, REQUIRES_MANUAL_INTERVENTION={Manual}, SUCCESS={Success}", tspApplicable, codeCustomizations, manualChanges, noChanges);
 
             // Exit cases for the first attempt
             if (tries == 0)
@@ -577,17 +572,20 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// <summary>
     /// Returns <see langword="true"/> if <paramref name="value"/> is an absolute HTTP/HTTPS URL
     /// whose host matches a known APIView environment (production or staging).
-    /// Recognised hosts: <c>apiview.dev</c>, <c>apiview.org</c>, <c>apiviewstagingtest.com</c>.
+    /// Recognised hosts: <c>apiview.dev</c>, <c>*.apiview.dev</c>, <c>apiview.org</c>, <c>*.apiview.org</c>, <c>apiviewstagingtest.com</c>, <c>*.apiviewstagingtest.com</c>.
     /// </summary>
     internal static bool IsApiViewUrl(string? value)
     {
         if (string.IsNullOrWhiteSpace(value)) { return false; }
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)) { return false; }
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) { return false; }
-        var host = uri.Host;
-        return host.EndsWith("apiview.dev", StringComparison.OrdinalIgnoreCase)
-            || host.EndsWith("apiview.org", StringComparison.OrdinalIgnoreCase)
-            || host.EndsWith("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
+        var host = uri.IdnHost;
+        return host.Equals("apiview.dev", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".apiview.dev", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("apiview.org", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".apiview.org", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

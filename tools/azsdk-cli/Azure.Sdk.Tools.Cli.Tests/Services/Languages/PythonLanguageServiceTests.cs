@@ -17,9 +17,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 /// <summary>
 /// Integration tests for PythonLanguageService.BuildAsync and ApplyPatchesAsync.
 ///
-/// All tests work from a sparse clone of azure-sdk-for-python at a pinned SHA so behaviour
-/// is deterministic regardless of local clone state.  Tests are skipped automatically when
-/// there is no network access or when GitHub Copilot CLI is not available/authenticated.
+/// Tests run against a minimal local Python package created in a temp directory — no network
+/// access required. Tests are skipped automatically when GitHub Copilot CLI is not
+/// available/authenticated.
 ///
 /// Running live tests requires:
 ///   - GitHub Copilot CLI installed and authenticated
@@ -83,6 +83,29 @@ public class PythonLanguageServiceTests
         return new CopilotAgentRunner(wrapper, tokenUsage, loggerFactory.CreateLogger<CopilotAgentRunner>());
     }
 
+    private static async Task<bool> IsAzpysdkAvailableAsync()
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "azpysdk",
+                ArgumentList = { "--help" },
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false
+            };
+            var proc = System.Diagnostics.Process.Start(psi);
+            if (proc is null) return false;
+            await proc.WaitForExitAsync();
+            return proc.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>Runs <c>git init</c> in the given directory so it is treated as a git repo.</summary>
     internal static async Task RunGitInit(string directory)
     {
@@ -97,161 +120,71 @@ public class PythonLanguageServiceTests
         await proc.WaitForExitAsync();
     }
 
-    /// <summary>Recursively copies a directory tree.</summary>
-    internal static void CopyDirectory(string source, string destination)
-    {
-        Directory.CreateDirectory(destination);
-        foreach (var file in Directory.GetFiles(source))
-            File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), overwrite: true);
-        foreach (var dir in Directory.GetDirectories(source))
-            CopyDirectory(dir, Path.Combine(destination, Path.GetFileName(dir)));
-    }
-
-    // ── Pinned-SHA clone setup ────────────────────────────────────────────────
-    //
-    // Sparse-clones azure-sdk-for-python at a pinned SHA once for the whole fixture.
-    // At SHA 79728834 (2026-03-12), models/_patch.py uses NumberField throughout:
-    //   - from ._models import (..., NumberField, ...)
-    //   - __all__ = [..., "NumberField", ...]
-    //   - if TYPE_CHECKING: class NumberField(NumberField): ...
-    //   - _add_value_property_to_field(NumberField, "value_number", Optional[float])
-
-    private const string PinnedPythonRepoSha = "79728834e7f38018d372860cf9117bf51d9ed417";
-    private const string PinnedPythonRepoUrl = "https://github.com/Azure/azure-sdk-for-python";
-    private const string PinnedRelativePackagePath = "sdk/contentunderstanding/azure-ai-contentunderstanding";
-
-    private TempDirectory? _cloneDir;
-    private string? _clonedPackagePath;
-
-    /// <summary>
-    /// Attempts a sparse clone at the pinned SHA. If the clone fails (e.g. no network),
-    /// sets <see cref="_clonedPackagePath"/> to null so individual tests can skip cleanly
-    /// without marking the whole fixture as ignored.
-    /// </summary>
-    [OneTimeSetUp]
-    public async Task SetUpPinnedClone()
-    {
-        _cloneDir = TempDirectory.Create("py-lang-svc-pinned-clone");
-
-        var cloneExit = await RunCommand("git",
-        [
-            "clone",
-            "--filter=blob:none",
-            "--no-checkout",
-            "--sparse",
-            PinnedPythonRepoUrl,
-            _cloneDir.DirectoryPath
-        ]);
-
-        if (cloneExit != 0)
-        {
-            _cloneDir.Dispose();
-            _cloneDir = null;
-            return; // _clonedPackagePath stays null; pinned tests will skip individually
-        }
-
-        // Include the SDK package plus all paths that azpysdk resolves from the repo root
-        // at runtime: eng/scripts (get_package_properties.py), eng/tools/azure-sdk-tools
-        // (installed into isolated venvs by azpysdk --isolate),
-        // scripts/devops_tasks (common_tasks.py), sdk/core/azure-core
-        // (relative path dep in dev_requirements.txt), and pylintrc (repo-root config).
-        await RunCommand("git", ["-C", _cloneDir.DirectoryPath, "sparse-checkout", "set",
-            PinnedRelativePackagePath,
-            "sdk/core/azure-core",
-            "eng/scripts",
-            "eng/tools/azure-sdk-tools",
-            "scripts/devops_tasks",
-            "pylintrc"]);
-        await RunCommand("git", ["-C", _cloneDir.DirectoryPath, "checkout", PinnedPythonRepoSha]);
-
-        var candidate = Path.Combine(_cloneDir.DirectoryPath,
-            PinnedRelativePackagePath.Replace('/', Path.DirectorySeparatorChar));
-        _clonedPackagePath = Directory.Exists(candidate) ? candidate : null;
-    }
-
-    [OneTimeTearDown]
-    public void TearDownPinnedClone() => _cloneDir?.Dispose();
-
-    private static async Task<int> RunCommand(string fileName, string[] args)
-    {
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = fileName,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false
-        };
-        foreach (var arg in args) psi.ArgumentList.Add(arg);
-        var proc = System.Diagnostics.Process.Start(psi)!;
-        await proc.WaitForExitAsync();
-        return proc.ExitCode;
-    }
-
     // ── Test ─────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Three-step live roundtrip using a pinned SHA clone:
-    ///   1. Verify the clean package builds without errors.
-    ///   2. Rename NumberField → NumberFieldOld in models/_patch.py and verify the build fails.
-    ///   3. Feed the real build errors to ApplyPatchesAsync with a live Copilot runner,
-    ///      then verify the build passes again.
+    /// Three-step live roundtrip using a minimal local Python package:
+    ///   1. Verify the clean package lints without errors.
+    ///   2. Rename Widget → OldWidget in the class definition only, verify lint fails.
+    ///   3. Feed the build errors to ApplyPatchesAsync with a live Copilot runner,
+    ///      then verify lint passes again.
     ///
     /// Requires GitHub Copilot CLI installed and authenticated.
     /// </summary>
     [Test]
-    public async Task Live_PinnedClone_CleanBuildThenFixNumberFieldRename()
+    public async Task Live_SimplePyFile_LintErrorFixedByCopilot()
     {
-        if (_clonedPackagePath is null)
-            Assert.Ignore("Pinned clone not available (no network?) — skipping.");
+        if (!await IsAzpysdkAvailableAsync())
+            Assert.Ignore("azpysdk not available or not properly configured — skipping.");
         if (!await CopilotTestHelper.IsCopilotAvailableAsync())
             Assert.Ignore("GitHub Copilot CLI not available or not authenticated.");
 
-        using var pinnedTemp = TempDirectory.Create("py-lang-svc-pinned");
+        using var tempPkg = TempDirectory.Create("py-lang-svc-lint-test");
+        var packagePath = tempPkg.DirectoryPath;
 
-        // Mirror the sparse-checked-out directories into a temp working tree so that:
-        //   - discover_repo_root() finds repoRoot as git root
-        //   - relative path deps in dev_requirements.txt resolve correctly
-        //     (e.g. ../../core/azure-core from sdk/contentunderstanding/<pkg>)
-        var repoRoot = pinnedTemp.DirectoryPath;
-        var cloneRoot = _cloneDir!.DirectoryPath;
-        CopyDirectory(Path.Combine(cloneRoot, "sdk", "contentunderstanding", "azure-ai-contentunderstanding"),
-            Path.Combine(repoRoot, "sdk", "contentunderstanding", "azure-ai-contentunderstanding"));
-        CopyDirectory(Path.Combine(cloneRoot, "sdk", "core", "azure-core"),
-            Path.Combine(repoRoot, "sdk", "core", "azure-core"));
-        CopyDirectory(Path.Combine(cloneRoot, "eng", "scripts"),
-            Path.Combine(repoRoot, "eng", "scripts"));
-        CopyDirectory(Path.Combine(cloneRoot, "eng", "tools", "azure-sdk-tools"),
-            Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools"));
-        CopyDirectory(Path.Combine(cloneRoot, "scripts", "devops_tasks"),
-            Path.Combine(repoRoot, "scripts", "devops_tasks"));
-        File.Copy(Path.Combine(cloneRoot, "pylintrc"), Path.Combine(repoRoot, "pylintrc"));
-        await RunGitInit(repoRoot);
+        // Minimal package structure azpysdk can lint without --isolate:
+        //   - pyproject.toml: required by LintCode upfront check; `dependencies` and
+        //     `requires-python` must both be present to avoid parse errors in ci_tools
+        //   - pylintrc at the git root: azpysdk resolves REPO_ROOT via discover_repo_root()
+        //     (walks up from cwd to find .git) and then looks for REPO_ROOT/pylintrc;
+        //     disable style-only checks so only real errors (e.g. E0602 undefined-variable)
+        //     cause a failure
+        //   - widget/__init__.py: so discover_namespace() returns "widget" and both
+        //     pylint and mypy target the widget/ subdirectory rather than the package root
+        //   - widget/_patch.py: the file we mutate in step 2
+        await File.WriteAllTextAsync(Path.Combine(packagePath, "pyproject.toml"),
+            "[project]\nname = \"widget\"\nversion = \"0.0.1\"\ndependencies = []\nrequires-python = \">=3.8\"\n");
+        File.WriteAllText(Path.Combine(packagePath, "pylintrc"),
+            "[MESSAGES CONTROL]\ndisable=C0114,C0115,C0116,R0903,C0103\n");
 
-        var packagePath = Path.Combine(repoRoot, "sdk", "contentunderstanding", "azure-ai-contentunderstanding");
+        var widgetDir = Path.Combine(packagePath, "widget");
+        Directory.CreateDirectory(widgetDir);
+        await File.WriteAllTextAsync(Path.Combine(widgetDir, "__init__.py"), "__version__ = \"0.0.1\"\n");
 
-        var modelsPatchFile = Path.Combine(
-            packagePath, "azure", "ai", "contentunderstanding", "models", "_patch.py");
-        Assert.That(File.Exists(modelsPatchFile), Is.True, "models/_patch.py not found in pinned clone");
+        var patchFile = Path.Combine(widgetDir, "_patch.py");
+        await File.WriteAllTextAsync(patchFile,
+            // __all__ must be non-empty so ApplyPatchesAsync's HasNonEmptyAllExport check
+            // includes this file; Widget in __all__ also means the undefined-variable error
+            // after renaming the class is unambiguous.
+            "__all__ = [\"Widget\"]\n\nclass Widget:\n    def value(self) -> int:\n        return 1\n\nresult = Widget().value()\n");
+
+        await RunGitInit(packagePath);
+
+        var service = CreateLanguageService(Mock.Of<ICopilotAgentRunner>());
 
         // ── Step 1: clean build should pass ──────────────────────────────────
-        var service = CreateLanguageService(Mock.Of<ICopilotAgentRunner>());
-        var (cleanSuccess, cleanError, _) = await service.BuildAsync(
-            packagePath, timeoutMinutes: 10, ct: CancellationToken.None);
-
+        var (cleanSuccess, cleanError, _) = await service.BuildAsync(packagePath, ct: CancellationToken.None);
         TestContext.WriteLine($"Step 1 — clean build: success={cleanSuccess}, error={cleanError}");
-        Assert.That(cleanSuccess, Is.True, $"Expected clean pinned build to pass. Error: {cleanError}");
+        Assert.That(cleanSuccess, Is.True, $"Expected clean build to pass. Error: {cleanError}");
 
-        // ── Step 2: introduce stale rename and verify build fails ─────────────
-        var original = await File.ReadAllTextAsync(modelsPatchFile);
-        const string StaleName = "NumberFieldOld";
-        await File.WriteAllTextAsync(modelsPatchFile, original.Replace("NumberField", StaleName));
+        // ── Step 2: rename class in definition only → undefined-variable error ──
+        var original = await File.ReadAllTextAsync(patchFile);
+        await File.WriteAllTextAsync(patchFile, original.Replace("class Widget", "class OldWidget"));
 
-        var (brokenSuccess, brokenError, _) = await service.BuildAsync(
-            packagePath, timeoutMinutes: 10, ct: CancellationToken.None);
-
+        var (brokenSuccess, brokenError, _) = await service.BuildAsync(packagePath, ct: CancellationToken.None);
         TestContext.WriteLine($"Step 2 — broken build: success={brokenSuccess}");
         TestContext.WriteLine($"Build error output:\n{brokenError}");
-        Assert.That(brokenSuccess, Is.False, "Build should fail with stale NumberFieldOld reference");
+        Assert.That(brokenSuccess, Is.False, "Build should fail with stale Widget reference");
         Assert.That(brokenError, Is.Not.Null.And.Not.Empty);
 
         // ── Step 3: Copilot fixes it and build passes ─────────────────────────
@@ -270,13 +203,7 @@ public class PythonLanguageServiceTests
 
         Assert.That(patches, Is.Not.Empty, "Copilot should have applied at least one patch");
 
-        var resultContent = await File.ReadAllTextAsync(modelsPatchFile);
-        Assert.That(resultContent, Does.Not.Contain(StaleName),
-            "Copilot should have replaced all stale symbol occurrences");
-
-        var (finalSuccess, finalError, _) = await liveService.BuildAsync(
-            packagePath, timeoutMinutes: 10, ct: CancellationToken.None);
-
+        var (finalSuccess, finalError, _) = await liveService.BuildAsync(packagePath, ct: CancellationToken.None);
         TestContext.WriteLine($"Step 3 — final build: success={finalSuccess}, error={finalError}");
         Assert.That(finalSuccess, Is.True, $"Build should pass after Copilot patch. Error: {finalError}");
     }

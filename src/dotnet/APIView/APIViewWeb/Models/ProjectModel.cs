@@ -14,7 +14,7 @@ public enum ProjectChangeAction
     UnDeleted,
     ReviewLinked,
     ReviewUnlinked,
-    NamespaceApproved,
+    NamespaceStatusChanged,
 }
 
 public class Project

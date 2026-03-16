@@ -540,112 +540,113 @@ public class NamespaceManagerTests
 
     #endregion
 
-    #region ApproveNamespaceAsync Tests
+    #region UpdateNamespaceStatusAsync Tests
 
-    [Fact]
-    public async Task ApproveNamespaceAsync_ValidApproval_SetsApprovedStatus()
+    [Theory]
+    [InlineData(NamespaceDecisionStatus.Proposed, NamespaceDecisionStatus.Approved)]
+    [InlineData(NamespaceDecisionStatus.Proposed, NamespaceDecisionStatus.Rejected)]
+    [InlineData(NamespaceDecisionStatus.Proposed, NamespaceDecisionStatus.Withdrawn)]
+    [InlineData(NamespaceDecisionStatus.Rejected, NamespaceDecisionStatus.Approved)]
+    [InlineData(NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Rejected)]
+    [InlineData(NamespaceDecisionStatus.Withdrawn, NamespaceDecisionStatus.Proposed)]
+    public async Task UpdateNamespaceStatusAsync_ValidTransition_Succeeds(NamespaceDecisionStatus from, NamespaceDecisionStatus to)
     {
         SetupPermissions(true);
         var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
+        entry.Status = from;
+        if (from != NamespaceDecisionStatus.Proposed) { entry.DecidedBy = "someone"; entry.DecidedOn = DateTime.UtcNow.AddDays(-1); }
         var project = CreateProject("project-1",
             currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
             reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
         SetupProject("project-1", project);
         SetupReview("py-review-1", new ReviewListItemModel { Id = "py-review-1" });
 
-        NamespaceOperationResult result = await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("approver"));
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", to, "test notes", CreateUser("approver"));
 
         Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Project);
-        Assert.Equal(NamespaceDecisionStatus.Approved, entry.Status);
-        Assert.Equal("approver", entry.DecidedBy);
-        Assert.NotNull(entry.DecidedOn);
+        Assert.Equal(to, entry.Status);
 
-        Assert.Single(result.Project.NamespaceInfo.ApprovedNamespaces);
+        if (to != NamespaceDecisionStatus.Proposed)
+        {
+            Assert.Equal("approver", entry.DecidedBy);
+            Assert.NotNull(entry.DecidedOn);
+        }
+
         Assert.Single(result.Project.ChangeHistory);
-        Assert.Equal(ProjectChangeAction.NamespaceApproved, result.Project.ChangeHistory[0].ChangeAction);
+        Assert.Equal(ProjectChangeAction.NamespaceStatusChanged, result.Project.ChangeHistory[0].ChangeAction);
         Assert.Single(result.Project.NamespaceInfo.NamespaceHistory["Python"]);
-        Assert.Equal(NamespaceDecisionStatus.Approved, result.Project.NamespaceInfo.NamespaceHistory["Python"][0].Status);
+        Assert.Equal(from, result.Project.NamespaceInfo.NamespaceHistory["Python"][0].Status);
 
         _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(project), Times.Once);
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(
-            It.Is<ReviewListItemModel>(rev => rev.NamespaceDecisionStatus == NamespaceDecisionStatus.Approved)), Times.Once);
     }
 
-    [Fact]
-    public async Task ApproveNamespaceAsync_NoPermission_ReturnsUnauthorized()
-    {
-        SetupPermissions(false);
+    // Invalid transitions ---
 
-        NamespaceOperationResult result = await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("noperm"));
+    [Theory]
+    [InlineData(NamespaceDecisionStatus.Proposed, NamespaceDecisionStatus.Proposed)]
+    [InlineData(NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Approved)]
+    [InlineData(NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Withdrawn)]
+    [InlineData(NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Proposed)]
+    [InlineData(NamespaceDecisionStatus.Rejected, NamespaceDecisionStatus.Rejected)]
+    [InlineData(NamespaceDecisionStatus.Rejected, NamespaceDecisionStatus.Proposed)]
+    [InlineData(NamespaceDecisionStatus.Withdrawn, NamespaceDecisionStatus.Withdrawn)]
+    [InlineData(NamespaceDecisionStatus.Withdrawn, NamespaceDecisionStatus.Approved)]
+    [InlineData(NamespaceDecisionStatus.Withdrawn, NamespaceDecisionStatus.Rejected)]
+    public async Task UpdateNamespaceStatusAsync_InvalidTransition_ReturnsError(NamespaceDecisionStatus from, NamespaceDecisionStatus to)
+    {
+        SetupPermissions(true);
+        var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
+        entry.Status = from;
+        var project = CreateProject("project-1",
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry });
+        SetupProject("project-1", project);
+
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", to, null, CreateUser("approver"));
 
         Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.Unauthorized, result.Error);
+        Assert.Equal(NamespaceOperationError.InvalidStateTransition, result.Error);
         _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
     }
 
-    [Fact]
-    public async Task ApproveNamespaceAsync_ProjectNotFound_ReturnsProjectNotFound()
-    {
-        SetupPermissions(true);
-        SetupProject("project-1", null);
-
-        NamespaceOperationResult result = await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("approver"));
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.ProjectNotFound, result.Error);
-    }
+    // --- Approved list tracking ---
 
     [Fact]
-    public async Task ApproveNamespaceAsync_LanguageNotInStatus_ReturnsLanguageNotFound()
+    public async Task UpdateNamespaceStatusAsync_Approve_AddsToApprovedList()
     {
         SetupPermissions(true);
-        var project = CreateProject("project-1");
+        var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
+        var project = CreateProject("project-1",
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry });
         SetupProject("project-1", project);
 
-        NamespaceOperationResult result = await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("approver"));
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.LanguageNotFound, result.Error);
+        Assert.Single(result.Project.NamespaceInfo.ApprovedNamespaces);
     }
 
     [Fact]
-    public async Task ApproveNamespaceAsync_AlreadyApproved_ReturnsInvalidStateTransition()
+    public async Task UpdateNamespaceStatusAsync_RejectApproved_RemovesFromApprovedList()
     {
         SetupPermissions(true);
         var entry = ApprovedEntry("Python", "azure.storage", "azure-storage");
         var project = CreateProject("project-1",
             currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
-            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
+            approved: [entry]);
         SetupProject("project-1", project);
 
-        NamespaceOperationResult result = await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("approver"));
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", NamespaceDecisionStatus.Rejected, null, CreateUser("approver"));
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.InvalidStateTransition, result.Error);
-        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
+        Assert.Empty(result.Project.NamespaceInfo.ApprovedNamespaces);
     }
 
-    [Fact]
-    public async Task ApproveNamespaceAsync_AlreadyRejected_ReturnsInvalidStateTransition()
-    {
-        SetupPermissions(true);
-        var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
-        entry.Status = NamespaceDecisionStatus.Rejected;
-        var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
-            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
-        SetupProject("project-1", project);
-
-        NamespaceOperationResult result = await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("approver"));
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.InvalidStateTransition, result.Error);
-        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
-    }
+    // --- Review sync ---
 
     [Fact]
-    public async Task ApproveNamespaceAsync_SyncsReviewStatus()
+    public async Task UpdateNamespaceStatusAsync_Approve_SyncsReviewIsApproved()
     {
         SetupPermissions(true);
         var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
@@ -656,133 +657,71 @@ public class NamespaceManagerTests
         SetupProject("project-1", project);
         SetupReview("py-review-1", review);
 
-        await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("approver"));
+        await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
 
         _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(
-            It.Is<ReviewListItemModel>(rev =>
-                rev.NamespaceDecisionStatus == NamespaceDecisionStatus.Approved &&
-                rev.IsApproved == true)), Times.Once);
-    }
-
-    #endregion
-
-    #region RejectNamespaceAsync Tests
-
-    [Fact]
-    public async Task RejectNamespaceAsync_ValidRejection_SetsRejectedStatus()
-    {
-        SetupPermissions(true);
-        var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
-        var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
-            history: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = new List<NamespaceDecisionEntry>() },
-            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
-        SetupProject("project-1", project);
-        SetupReview("py-review-1", new ReviewListItemModel { Id = "py-review-1" });
-
-        NamespaceOperationResult result = await _namespaceManager.RejectNamespaceAsync("project-1", "Python", "Bad namespace", CreateUser("approver"));
-
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Project);
-        Assert.Equal(NamespaceDecisionStatus.Rejected, entry.Status);
-        Assert.Equal("approver", entry.DecidedBy);
-        Assert.Contains("Bad namespace", entry.Notes);
-        Assert.Single(result.Project.NamespaceInfo.NamespaceHistory["Python"]);
-
-        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(project), Times.Once);
+            It.Is<ReviewListItemModel>(rev => rev.IsApproved == true)), Times.Once);
     }
 
     [Fact]
-    public async Task RejectNamespaceAsync_AlreadyApproved_ReturnsInvalidStateTransition()
+    public async Task UpdateNamespaceStatusAsync_RevertApproved_ClearsReviewIsApproved()
     {
         SetupPermissions(true);
         var entry = ApprovedEntry("Python", "azure.storage", "azure-storage");
-        var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
-            history: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = new List<NamespaceDecisionEntry>() });
-        SetupProject("project-1", project);
-
-        NamespaceOperationResult result = await _namespaceManager.RejectNamespaceAsync("project-1", "Python", "notes", CreateUser("approver"));
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.InvalidStateTransition, result.Error);
-        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task RejectNamespaceAsync_NoPermission_ReturnsUnauthorized()
-    {
-        SetupPermissions(false);
-
-        NamespaceOperationResult result = await _namespaceManager.RejectNamespaceAsync("project-1", "Python", "notes", CreateUser("noperm"));
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.Unauthorized, result.Error);
-    }
-
-    #endregion
-
-    #region WithdrawNamespaceAsync Tests
-
-    [Fact]
-    public async Task WithdrawNamespaceAsync_ValidWithdrawal_SetsWithdrawnStatus()
-    {
-        SetupPermissions(true);
-        var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
+        var review = new ReviewListItemModel { Id = "py-review-1", IsApproved = true };
         var project = CreateProject("project-1",
             currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
             reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
         SetupProject("project-1", project);
-        SetupReview("py-review-1", new ReviewListItemModel { Id = "py-review-1" });
+        SetupReview("py-review-1", review);
 
-        NamespaceOperationResult result = await _namespaceManager.WithdrawNamespaceAsync("project-1", "Python", CreateUser("user1"));
+        await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", NamespaceDecisionStatus.Rejected, null, CreateUser("approver"));
 
-        Assert.True(result.IsSuccess);
-        Assert.NotNull(result.Project);
-        Assert.Equal(NamespaceDecisionStatus.Withdrawn, entry.Status);
-        Assert.Equal("user1", entry.DecidedBy);
-        Assert.Contains("withdrawn", entry.Notes);
-
-        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(project), Times.Once);
+        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(
+            It.Is<ReviewListItemModel>(rev => rev.IsApproved == false)), Times.Once);
     }
 
-    [Fact]
-    public async Task WithdrawNamespaceAsync_AlreadyApproved_ReturnsInvalidStateTransition()
-    {
-        SetupPermissions(true);
-        var entry = ApprovedEntry("Python", "azure.storage", "azure-storage");
-        var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry });
-        SetupProject("project-1", project);
-
-        NamespaceOperationResult result = await _namespaceManager.WithdrawNamespaceAsync("project-1", "Python", CreateUser("user1"));
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(NamespaceOperationError.InvalidStateTransition, result.Error);
-        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
-    }
+    // --- Error cases ---
 
     [Fact]
-    public async Task WithdrawNamespaceAsync_NoPermission_ReturnsUnauthorized()
+    public async Task UpdateNamespaceStatusAsync_NoPermission_ReturnsUnauthorized()
     {
         SetupPermissions(false);
 
-        NamespaceOperationResult result = await _namespaceManager.WithdrawNamespaceAsync("project-1", "Python", CreateUser("noperm"));
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("noperm"));
 
         Assert.False(result.IsSuccess);
         Assert.Equal(NamespaceOperationError.Unauthorized, result.Error);
     }
 
     [Fact]
-    public async Task WithdrawNamespaceAsync_ProjectNotFound_ReturnsProjectNotFound()
+    public async Task UpdateNamespaceStatusAsync_ProjectNotFound_ReturnsProjectNotFound()
     {
         SetupPermissions(true);
         SetupProject("project-1", null);
 
-        NamespaceOperationResult result = await _namespaceManager.WithdrawNamespaceAsync("project-1", "Python", CreateUser("user1"));
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
 
         Assert.False(result.IsSuccess);
         Assert.Equal(NamespaceOperationError.ProjectNotFound, result.Error);
+    }
+
+    [Fact]
+    public async Task UpdateNamespaceStatusAsync_LanguageNotFound_ReturnsLanguageNotFound()
+    {
+        SetupPermissions(true);
+        var project = CreateProject("project-1");
+        SetupProject("project-1", project);
+
+        NamespaceOperationResult result = await _namespaceManager.UpdateNamespaceStatusAsync(
+            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(NamespaceOperationError.LanguageNotFound, result.Error);
     }
 
     #endregion

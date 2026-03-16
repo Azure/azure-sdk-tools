@@ -146,7 +146,6 @@ public class ProjectsManager : IProjectsManager
         await _projectsRepository.UpsertProjectAsync(project);
 
         typeSpecReview.ProjectId = project.Id;
-        typeSpecReview.NamespaceDecisionStatus = NamespaceDecisionStatus.Proposed;
         relatedReviews.ReviewsToAdd.Add(typeSpecReview);
         await _reviewsRepository.UpsertReviewsAsync(relatedReviews.ReviewsToAdd);
 

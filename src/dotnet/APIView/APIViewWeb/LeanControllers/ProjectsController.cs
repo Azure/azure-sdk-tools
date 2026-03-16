@@ -141,87 +141,47 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Approve a proposed namespace for a language
+        /// Update the namespace decision status for a language
         /// </summary>
         /// <param name="projectId">The project ID</param>
-        /// <param name="language">The language to approve the namespace for</param>
+        /// <param name="language">The language to update</param>
+        /// <param name="request">The new status and optional notes</param>
         /// <returns>The updated project</returns>
-        [HttpPost("{projectId}/namespaces/{language}/approve", Name = "ApproveNamespace")]
-        public async Task<ActionResult<Project>> ApproveNamespaceAsync(string projectId, string language)
+        [HttpPatch("{projectId}/namespaces/{language}", Name = "UpdateNamespaceStatus")]
+        public async Task<ActionResult<Project>> UpdateNamespaceStatusAsync(string projectId, string language, [FromBody] UpdateNamespaceStatusRequest request)
         {
-            var result = await _namespaceManager.ApproveNamespaceAsync(projectId, language, User);
+            if (request == null)
+            {
+                return BadRequest(new { message = "Request body is required." });
+            }
+
+            var result = await _namespaceManager.UpdateNamespaceStatusAsync(projectId, language, request.Status, request.Notes, User);
             if (!result.IsSuccess)
             {
-                return MapNamespaceError(result.Error!.Value, language, "approve");
+                return result.Error!.Value switch
+                {
+                    NamespaceOperationError.Unauthorized => StatusCode(StatusCodes.Status403Forbidden,
+                        new { message = $"Insufficient permissions to update the namespace for language '{language}'. Please contact an approver for this language." }),
+                    NamespaceOperationError.ProjectNotFound => NotFound(
+                        new { message = "The specified project was not found or does not have namespace information configured." }),
+                    NamespaceOperationError.LanguageNotFound => NotFound(
+                        new { message = $"No namespace entry exists for language '{language}' in this project." }),
+                    NamespaceOperationError.InvalidStateTransition => Conflict(
+                        new { message = $"Cannot transition the namespace for '{language}' to '{request.Status}' from its current state." }),
+                    _ => StatusCode(StatusCodes.Status500InternalServerError,
+                        new { message = "An unexpected error occurred while processing the namespace operation." })
+                };
             }
             return new LeanJsonResult(result.Project, StatusCodes.Status200OK);
         }
-
-        /// <summary>
-        /// Reject a proposed namespace for a language
-        /// </summary>
-        /// <param name="projectId">The project ID</param>
-        /// <param name="language">The language to reject the namespace for</param>
-        /// <param name="request">Optional rejection notes</param>
-        /// <returns>The updated project</returns>
-        [HttpPost("{projectId}/namespaces/{language}/reject", Name = "RejectNamespace")]
-        public async Task<ActionResult<Project>> RejectNamespaceAsync(string projectId, string language, [FromBody] NamespaceDecisionRequest request = null)
-        {
-            var result = await _namespaceManager.RejectNamespaceAsync(projectId, language, request?.Notes, User);
-            if (!result.IsSuccess)
-            {
-                return MapNamespaceError(result.Error!.Value, language, "reject");
-            }
-            return new LeanJsonResult(result.Project, StatusCodes.Status200OK);
-        }
-
-        /// <summary>
-        /// Withdraw a proposed namespace for a language
-        /// </summary>
-        /// <param name="projectId">The project ID</param>
-        /// <param name="language">The language to withdraw the namespace for</param>
-        /// <returns>The updated project</returns>
-        [HttpPost("{projectId}/namespaces/{language}/withdraw", Name = "WithdrawNamespace")]
-        public async Task<ActionResult<Project>> WithdrawNamespaceAsync(string projectId, string language)
-        {
-            var result = await _namespaceManager.WithdrawNamespaceAsync(projectId, language, User);
-            if (!result.IsSuccess)
-            {
-                return MapNamespaceError(result.Error!.Value, language, "withdraw");
-            }
-            return new LeanJsonResult(result.Project, StatusCodes.Status200OK);
-        }
-
-        private ActionResult MapNamespaceError(NamespaceOperationError error, string language, string action)
-        {
-            return error switch
-            {
-                NamespaceOperationError.Unauthorized => StatusCode(StatusCodes.Status403Forbidden,
-                    new { message = $"Insufficient permissions to {action} the namespace for language '{language}'. Please contact an approver for this language." }),
-                NamespaceOperationError.ProjectNotFound => NotFound(
-                    new { message = "The specified project was not found or does not have namespace information configured." }),
-                NamespaceOperationError.LanguageNotFound => NotFound(
-                    new { message = $"No namespace proposal exists for language '{language}' in this project." }),
-                NamespaceOperationError.InvalidStateTransition => Conflict(
-                    new { message = $"The namespace for '{language}' cannot be {GetPastTense(action)} in its current state." }),
-                _ => StatusCode(StatusCodes.Status500InternalServerError,
-                    new { message = "An unexpected error occurred while processing the namespace operation. Please try again or contact support." })
-            };
-        }
-        private static string GetPastTense(string action) => action switch
-        {
-            "approve" => "approved",
-            "reject" => "rejected",
-            "withdraw" => "withdrawn",
-            _ => action
-        };
     }
 
-    public class NamespaceDecisionRequest
+    public class UpdateNamespaceStatusRequest
     {
+        public NamespaceDecisionStatus Status { get; set; }
         public string Notes { get; set; }
     }
-    
+
     public class RelatedReviewsResponse
     {
         public string CurrentReviewId { get; set; }

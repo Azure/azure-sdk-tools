@@ -43,7 +43,19 @@ public class NamespaceManager : INamespaceManager
         return project?.NamespaceInfo;
     }
 
-    public async Task<NamespaceOperationResult> ApproveNamespaceAsync(string projectId, string language, ClaimsPrincipal user)
+    /// <summary>
+    /// Allowed transitions: maps (currentStatus) → set of valid target statuses.
+    /// </summary>
+    private static readonly Dictionary<NamespaceDecisionStatus, HashSet<NamespaceDecisionStatus>> AllowedTransitions = new()
+    {
+        [NamespaceDecisionStatus.Proposed]  = [NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Rejected, NamespaceDecisionStatus.Withdrawn],
+        [NamespaceDecisionStatus.Approved]  = [NamespaceDecisionStatus.Rejected],
+        [NamespaceDecisionStatus.Rejected]  = [NamespaceDecisionStatus.Approved],
+        [NamespaceDecisionStatus.Withdrawn] = [NamespaceDecisionStatus.Proposed],
+    };
+
+    public async Task<NamespaceOperationResult> UpdateNamespaceStatusAsync(
+        string projectId, string language, NamespaceDecisionStatus newStatus, string notes, ClaimsPrincipal user)
     {
         language = LanguageServiceHelpers.MapLanguageAlias(language);
         string userName = user.GetGitHubLogin();
@@ -63,16 +75,30 @@ public class NamespaceManager : INamespaceManager
             return NamespaceOperationResult.Failure(NamespaceOperationError.LanguageNotFound);
         }
 
-        if (entry.Status != NamespaceDecisionStatus.Proposed)
+        if (!AllowedTransitions.TryGetValue(entry.Status, out var allowed) || !allowed.Contains(newStatus))
         {
             return NamespaceOperationResult.Failure(NamespaceOperationError.InvalidStateTransition);
         }
 
-        entry.Status = NamespaceDecisionStatus.Approved;
-        entry.DecidedBy = userName;
-        entry.DecidedOn = DateTime.UtcNow;
+        EnsureHistoryList(project.NamespaceInfo, language).Add(new NamespaceDecisionEntry
+        {
+            Language = entry.Language,
+            PackageName = entry.PackageName,
+            Namespace = entry.Namespace,
+            Status = entry.Status,
+            Notes = entry.Notes,
+            ProposedBy = entry.ProposedBy,
+            ProposedOn = entry.ProposedOn,
+            DecidedBy = entry.DecidedBy,
+            DecidedOn = entry.DecidedOn
+        });
 
-        EnsureHistoryList(project.NamespaceInfo, language).Add(entry);
+        entry.Status = newStatus;
+        if (newStatus != NamespaceDecisionStatus.Proposed)        {
+            entry.DecidedBy = userName;
+            entry.DecidedOn = DateTime.UtcNow;
+        }
+        entry.Notes = notes;
 
         project.NamespaceInfo.ApprovedNamespaces = project.NamespaceInfo.CurrentNamespaceStatus
             .Where(kvp => kvp.Value.Status == NamespaceDecisionStatus.Approved)
@@ -84,97 +110,18 @@ public class NamespaceManager : INamespaceManager
         {
             ChangedOn = DateTime.UtcNow,
             ChangedBy = userName,
-            ChangeAction = ProjectChangeAction.NamespaceApproved,
-            Notes = $"Namespace '{entry.Namespace}' approved for {language}"
+            ChangeAction = ProjectChangeAction.NamespaceStatusChanged,
+            Notes = $"Namespace '{entry.Namespace}' for {language} changed to {newStatus}"
         });
         project.LastUpdatedOn = DateTime.UtcNow;
         await _projectsRepository.UpsertProjectAsync(project);
+
         project.Reviews ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (project.Reviews.TryGetValue(language, out var approveReviewId) && !string.IsNullOrEmpty(approveReviewId))
+        if (project.Reviews.TryGetValue(language, out var reviewId) && !string.IsNullOrEmpty(reviewId))
         {
-            await SyncReviewNamespaceStatusAsync(approveReviewId, NamespaceDecisionStatus.Approved);
-        }
-        return NamespaceOperationResult.Success(project);
-    }
-
-    public async Task<NamespaceOperationResult> RejectNamespaceAsync(string projectId, string language, string notes, ClaimsPrincipal user)
-    {
-        language = LanguageServiceHelpers.MapLanguageAlias(language);
-        string userName = user.GetGitHubLogin();
-        if (!await _permissionsManager.CanApproveAsync(userName, language))
-        {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.Unauthorized);
+            await SyncReviewNamespaceStatusAsync(reviewId, newStatus);
         }
 
-        Project project = await _projectsRepository.GetProjectAsync(projectId);
-        if (project?.NamespaceInfo?.CurrentNamespaceStatus == null)
-        {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.ProjectNotFound);
-        }
-
-        if (!project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(language, out NamespaceDecisionEntry rejectedNamespace))
-        {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.LanguageNotFound);
-        }
-
-        if (rejectedNamespace.Status == NamespaceDecisionStatus.Approved)
-        {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.InvalidStateTransition);
-        }
-
-        rejectedNamespace.Status = NamespaceDecisionStatus.Rejected;
-        rejectedNamespace.DecidedBy = userName;
-        rejectedNamespace.DecidedOn = DateTime.UtcNow;
-        rejectedNamespace.Notes += $" Namespace rejected by {userName} " + notes;
-
-        EnsureHistoryList(project.NamespaceInfo, language).Add(rejectedNamespace);
-
-        await _projectsRepository.UpsertProjectAsync(project);
-        project.Reviews ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (project.Reviews.TryGetValue(language, out var rejectReviewId) && !string.IsNullOrEmpty(rejectReviewId))
-        {
-            await SyncReviewNamespaceStatusAsync(rejectReviewId, NamespaceDecisionStatus.Rejected);
-        }
-        return NamespaceOperationResult.Success(project);
-    }
-
-    public async Task<NamespaceOperationResult> WithdrawNamespaceAsync(string projectId, string language, ClaimsPrincipal user)
-    {
-        language = LanguageServiceHelpers.MapLanguageAlias(language);
-        string userName = user.GetGitHubLogin();
-        if (!await _permissionsManager.CanApproveAsync(userName, language))
-        {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.Unauthorized);
-        }
-
-        var project = await _projectsRepository.GetProjectAsync(projectId);
-        if (project?.NamespaceInfo?.CurrentNamespaceStatus == null)
-        {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.ProjectNotFound);
-        }
-
-        if (!project.NamespaceInfo.CurrentNamespaceStatus.TryGetValue(language, out var entry))
-        {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.LanguageNotFound);
-        }
-
-        if (entry.Status == NamespaceDecisionStatus.Approved)
-        {
-            return NamespaceOperationResult.Failure(NamespaceOperationError.InvalidStateTransition);
-        }
-
-
-        entry.Status = NamespaceDecisionStatus.Withdrawn;
-        entry.DecidedBy = userName;
-        entry.DecidedOn = DateTime.UtcNow;
-        entry.Notes = $"Namespace withdrawn by {userName}";
-
-        await _projectsRepository.UpsertProjectAsync(project);
-        project.Reviews ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (project.Reviews.TryGetValue(language, out var withdrawReviewId) && !string.IsNullOrEmpty(withdrawReviewId))
-        {
-            await SyncReviewNamespaceStatusAsync(withdrawReviewId, NamespaceDecisionStatus.Withdrawn);
-        }
         return NamespaceOperationResult.Success(project);
     }
 
@@ -350,11 +297,9 @@ public class NamespaceManager : INamespaceManager
             return;
         }
 
-        review.NamespaceDecisionStatus = status;
         review.IsApproved = status == NamespaceDecisionStatus.Approved;
         await _reviewsRepository.UpsertReviewAsync(review);
     }
-
 
     private static void ApplyAutoApproval(NamespaceDecisionEntry entry, ReviewListItemModel approvedReview)
     {

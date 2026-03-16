@@ -113,9 +113,8 @@ namespace APIViewWeb.LeanModels
         public bool IsClosed { get; set; }
         public bool IsApproved { get; set; } 
         public PackageType? PackageType { get; set; } // Nullable - null means not yet classified
-        // TODO: Deprecated — will be removed once migration to the project-based namespace workflow (NamespaceDecisionStatus) is complete.
+        // TODO: Deprecated — will be removed once migration to the project-based namespace workflow is complete.
         public NamespaceReviewStatus NamespaceReviewStatus { get; set; } = NamespaceReviewStatus.NotStarted;
-        public NamespaceDecisionStatus? NamespaceDecisionStatus { get; set; }
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }

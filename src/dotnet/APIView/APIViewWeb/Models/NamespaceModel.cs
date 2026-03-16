@@ -45,11 +45,11 @@ public enum NamespaceOperationError
 
 public class NamespaceOperationResult
 {
-    public Project Project { get; }
+    public Project? Project { get; }
     public NamespaceOperationError? Error { get; }
     public bool IsSuccess => Error == null;
 
-    private NamespaceOperationResult(Project project, NamespaceOperationError? error)
+    private NamespaceOperationResult(Project? project, NamespaceOperationError? error)
     {
         Project = project;
         Error = error;

@@ -62,15 +62,23 @@ public class NamespaceManager : INamespaceManager
             return NamespaceOperationResult.Failure(NamespaceOperationError.LanguageNotFound);
         }
 
+        if (entry.Status != NamespaceDecisionStatus.Proposed)
+        {
+            return NamespaceOperationResult.Failure(NamespaceOperationError.InvalidStateTransition);
+        }
+
         entry.Status = NamespaceDecisionStatus.Approved;
         entry.DecidedBy = userName;
         entry.DecidedOn = DateTime.UtcNow;
+
+        EnsureHistoryList(project.NamespaceInfo, language).Add(entry);
 
         project.NamespaceInfo.ApprovedNamespaces = project.NamespaceInfo.CurrentNamespaceStatus
             .Where(kvp => kvp.Value.Status == NamespaceDecisionStatus.Approved)
             .Select(kvp => kvp.Value)
             .ToList();
 
+        project.ChangeHistory ??= [];
         project.ChangeHistory.Add(new ProjectChangeHistory
         {
             ChangedOn = DateTime.UtcNow,
@@ -80,6 +88,7 @@ public class NamespaceManager : INamespaceManager
         });
         project.LastUpdatedOn = DateTime.UtcNow;
         await _projectsRepository.UpsertProjectAsync(project);
+        project.Reviews ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (project.Reviews.TryGetValue(language, out var approveReviewId) && !string.IsNullOrEmpty(approveReviewId))
         {
             await SyncReviewNamespaceStatusAsync(approveReviewId, NamespaceDecisionStatus.Approved);
@@ -119,6 +128,7 @@ public class NamespaceManager : INamespaceManager
         EnsureHistoryList(project.NamespaceInfo, language).Add(rejectedNamespace);
 
         await _projectsRepository.UpsertProjectAsync(project);
+        project.Reviews ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (project.Reviews.TryGetValue(language, out var rejectReviewId) && !string.IsNullOrEmpty(rejectReviewId))
         {
             await SyncReviewNamespaceStatusAsync(rejectReviewId, NamespaceDecisionStatus.Rejected);
@@ -157,6 +167,7 @@ public class NamespaceManager : INamespaceManager
         entry.Notes = $"Namespace withdrawn by {userName}";
 
         await _projectsRepository.UpsertProjectAsync(project);
+        project.Reviews ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (project.Reviews.TryGetValue(language, out var withdrawReviewId) && !string.IsNullOrEmpty(withdrawReviewId))
         {
             await SyncReviewNamespaceStatusAsync(withdrawReviewId, NamespaceDecisionStatus.Withdrawn);

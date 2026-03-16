@@ -64,9 +64,13 @@ public class ProjectsManager : IProjectsManager
             project = await _projectsRepository.GetProjectByCrossLanguagePackageIdAsync(review.CrossLanguagePackageId);
         }
 
-        if (project == null && !string.IsNullOrEmpty(review.Language) && !string.IsNullOrEmpty(review.PackageName))
+        string normalizedLanguage = !string.IsNullOrWhiteSpace(review.Language)
+            ? LanguageServiceHelpers.MapLanguageAlias(review.Language)
+            : null;
+
+        if (project == null && !string.IsNullOrEmpty(normalizedLanguage) && !string.IsNullOrEmpty(review.PackageName))
         {
-            project = await _projectsRepository.GetProjectByExpectedPackageAsync(review.Language, review.PackageName);
+            project = await _projectsRepository.GetProjectByExpectedPackageAsync(normalizedLanguage, review.PackageName);
         }
 
         if (project == null)
@@ -79,7 +83,7 @@ public class ProjectsManager : IProjectsManager
 
         project.ChangeHistory ??= [];
 
-        if (project.Reviews.TryAdd(review.Language, review.Id))
+        if (!string.IsNullOrEmpty(normalizedLanguage) && project.Reviews.TryAdd(normalizedLanguage, review.Id))
         {
             project.ChangeHistory.Add(new ProjectChangeHistory
             {
@@ -162,13 +166,14 @@ public class ProjectsManager : IProjectsManager
 
         if (!string.Equals(project.Namespace, metadata.TypeSpec.Namespace, StringComparison.OrdinalIgnoreCase))
         {
+            var oldNamespace = project.Namespace;
             project.Namespace = metadata.TypeSpec.Namespace;
             project.DisplayName = metadata.TypeSpec.Namespace;
             changes.Add("Namespace");
             changes.Add("DisplayName");
 
             project.NamespaceInfo = _namespaceManager.ResolveTypeSpecNamespaceChange(
-                userName, project.NamespaceInfo, project.Namespace, metadata.TypeSpec.Namespace);
+                userName, project.NamespaceInfo, oldNamespace, metadata.TypeSpec.Namespace);
         }
 
         if (!string.Equals(project.CrossLanguagePackageId, typeSpecReview.CrossLanguagePackageId,

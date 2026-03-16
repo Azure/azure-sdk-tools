@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -80,7 +81,7 @@ public class ProjectsManagerTests
             DisplayName = namespaceName,
             Description = description,
             ExpectedPackages = expectedPackages ?? new Dictionary<string, PackageInfo>(),
-            Reviews = reviewIds ?? new Dictionary<string, string>(),
+            Reviews = reviewIds ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
             HistoricalReviewIds = historicalReviewIds ?? [],
             ChangeHistory = []
         };

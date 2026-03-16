@@ -564,6 +564,8 @@ public class NamespaceManagerTests
         Assert.Single(result.Project.NamespaceInfo.ApprovedNamespaces);
         Assert.Single(result.Project.ChangeHistory);
         Assert.Equal(ProjectChangeAction.NamespaceApproved, result.Project.ChangeHistory[0].ChangeAction);
+        Assert.Single(result.Project.NamespaceInfo.NamespaceHistory["Python"]);
+        Assert.Equal(NamespaceDecisionStatus.Approved, result.Project.NamespaceInfo.NamespaceHistory["Python"][0].Status);
 
         _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(project), Times.Once);
         _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(
@@ -605,6 +607,41 @@ public class NamespaceManagerTests
 
         Assert.False(result.IsSuccess);
         Assert.Equal(NamespaceOperationError.LanguageNotFound, result.Error);
+    }
+
+    [Fact]
+    public async Task ApproveNamespaceAsync_AlreadyApproved_ReturnsInvalidStateTransition()
+    {
+        SetupPermissions(true);
+        var entry = ApprovedEntry("Python", "azure.storage", "azure-storage");
+        var project = CreateProject("project-1",
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
+            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
+        SetupProject("project-1", project);
+
+        NamespaceOperationResult result = await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("approver"));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(NamespaceOperationError.InvalidStateTransition, result.Error);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ApproveNamespaceAsync_AlreadyRejected_ReturnsInvalidStateTransition()
+    {
+        SetupPermissions(true);
+        var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
+        entry.Status = NamespaceDecisionStatus.Rejected;
+        var project = CreateProject("project-1",
+            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
+            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
+        SetupProject("project-1", project);
+
+        NamespaceOperationResult result = await _namespaceManager.ApproveNamespaceAsync("project-1", "Python", CreateUser("approver"));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(NamespaceOperationError.InvalidStateTransition, result.Error);
+        _mockProjectsRepository.Verify(r => r.UpsertProjectAsync(It.IsAny<Project>()), Times.Never);
     }
 
     [Fact]

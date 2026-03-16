@@ -42,6 +42,7 @@ namespace APIViewWeb.LeanControllers
             var project = await _projectsRepository.GetProjectAsync(projectId);
             if (project == null)
             {
+                _logger.LogWarning("Project with ID {ProjectId} was not found.", projectId);
                 return NotFound();
             }
             return new LeanJsonResult(project, StatusCodes.Status200OK);
@@ -63,19 +64,14 @@ namespace APIViewWeb.LeanControllers
 
             var relatedReviews = new List<ReviewListItemModel>();
 
-            if (project.Reviews != null && project.Reviews.Count > 0)
+            if (project.Reviews is { Count: > 0 })
             {
-                foreach (var reviewId in project.Reviews.Values)
-                {
-                    var review = await _reviewsRepository.GetReviewAsync(reviewId);
-                    if (review is { IsDeleted: false })
-                    {
-                        relatedReviews.Add(review);
-                    }
-                }
+                var reviews = await _reviewsRepository.GetReviewsAsync(project.Reviews.Values);
+                relatedReviews = reviews
+                    .Where(r => r is { IsDeleted: false })
+                    .OrderBy(r => r.Language)
+                    .ToList();
             }
-
-            relatedReviews = relatedReviews.OrderBy(r => r.Language).ToList();
 
             return new LeanJsonResult(relatedReviews, StatusCodes.Status200OK);
         }
@@ -161,12 +157,6 @@ namespace APIViewWeb.LeanControllers
         [HttpPost("{projectId}/namespaces/{language}/approve", Name = "ApproveNamespace")]
         public async Task<ActionResult<Project>> ApproveNamespaceAsync(string projectId, string language)
         {
-            var project = await _projectsRepository.GetProjectAsync(projectId);
-            if (project == null)
-            {
-                return NotFound();
-            }
-
             var result = await _namespaceManager.ApproveNamespaceAsync(projectId, language, User);
             if (!result.IsSuccess)
             {
@@ -185,12 +175,6 @@ namespace APIViewWeb.LeanControllers
         [HttpPost("{projectId}/namespaces/{language}/reject", Name = "RejectNamespace")]
         public async Task<ActionResult<Project>> RejectNamespaceAsync(string projectId, string language, [FromBody] NamespaceDecisionRequest request = null)
         {
-            var project = await _projectsRepository.GetProjectAsync(projectId);
-            if (project == null)
-            {
-                return NotFound();
-            }
-
             var result = await _namespaceManager.RejectNamespaceAsync(projectId, language, request?.Notes, User);
             if (!result.IsSuccess)
             {
@@ -208,12 +192,6 @@ namespace APIViewWeb.LeanControllers
         [HttpPost("{projectId}/namespaces/{language}/withdraw", Name = "WithdrawNamespace")]
         public async Task<ActionResult<Project>> WithdrawNamespaceAsync(string projectId, string language)
         {
-            var project = await _projectsRepository.GetProjectAsync(projectId);
-            if (project == null)
-            {
-                return NotFound();
-            }
-
             var result = await _namespaceManager.WithdrawNamespaceAsync(projectId, language, User);
             if (!result.IsSuccess)
             {

@@ -33,9 +33,7 @@ public partial class PythonLanguageService : LanguageService
                 return new PackageCheckResponse(result.ExitCode, result.Output, "Some snippets were updated or need attention")
                 {
                     NextSteps = [
-                        "Review the snippet update output to identify which snippets need changes",
-                        "Ensure the code examples in your documentation match the actual implementation",
-                        "Manually update any code snippets that reference outdated APIs or methods"
+                        "Review the snippet update output to identify if any snippets need manual changes"
                     ]
                 };
             }
@@ -135,7 +133,6 @@ public partial class PythonLanguageService : LanguageService
                     NextSteps = [
                         "Review and update the minimum dependency versions declared in setup.py or pyproject.toml",
                         "Ensure that all dependent packages are compatible with the declared minimum versions",
-                        "Run 'pip install -e .' locally to test the package installation with minimum dependency constraints"
                     ]
                 };
             }

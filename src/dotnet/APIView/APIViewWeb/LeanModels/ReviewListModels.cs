@@ -111,9 +111,11 @@ namespace APIViewWeb.LeanModels
         public List<ReviewChangeHistoryModel> ChangeHistory { get; set; } = new List<ReviewChangeHistoryModel>();
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsClosed { get; set; }
-        public bool IsApproved { get; set; } // TODO: Deprecate in the future - redundant with NamespaceReviewStatus
+        public bool IsApproved { get; set; } 
         public PackageType? PackageType { get; set; } // Nullable - null means not yet classified
+        // TODO: Deprecated — will be removed once migration to the project-based namespace workflow (NamespaceDecisionStatus) is complete.
         public NamespaceReviewStatus NamespaceReviewStatus { get; set; } = NamespaceReviewStatus.NotStarted;
+        public NamespaceDecisionStatus? NamespaceDecisionStatus { get; set; }
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }

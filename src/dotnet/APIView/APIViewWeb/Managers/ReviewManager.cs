@@ -753,7 +753,7 @@ namespace APIViewWeb.Managers
                                !r.IsDeleted && 
                                !r.IsApproved).ToList();
 
-                var typeSpecReview = allReviews.FirstOrDefault(r => 
+                var typeSpecReview = allReviews.FirstOrDefault(r =>
                     r.NamespaceReviewStatus == NamespaceReviewStatus.Pending &&
                     r.Language == ApiViewConstants.TypeSpecLanguage &&
                     !r.IsDeleted);

@@ -251,7 +251,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 if (itemDetails.Classification == ClassificationTspApplicable)
                 {
                     tspApplicable++;
-                    feedbackItem!.AppendContext($"Iteration {tries+1}");
+                    feedbackItem.AppendContext($"Iteration {tries+1}");
                     logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
                     var languageTaggedRequest = $"For {languageService.Language}: {itemDetails.Text}";
                     var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);
@@ -581,8 +581,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         var host = uri.IdnHost;
         return host.Equals("apiview.dev", StringComparison.OrdinalIgnoreCase)
             || host.EndsWith(".apiview.dev", StringComparison.OrdinalIgnoreCase)
-            || host.Equals("apiview.org", StringComparison.OrdinalIgnoreCase)
-            || host.EndsWith(".apiview.org", StringComparison.OrdinalIgnoreCase)
             || host.Equals("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase)
             || host.EndsWith(".apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
     }

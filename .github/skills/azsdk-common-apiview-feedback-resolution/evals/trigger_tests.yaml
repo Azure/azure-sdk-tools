@@ -10,6 +10,12 @@ should_trigger_prompts:
     reason: "Should activate skill"
   - prompt: "help me with APIView suggestions"
     reason: "Should activate skill"
+  - prompt: "Help me fix these comments: https://spa.apiview.dev/review/0qw98r9qwur9q823r?activeApiRevisionId=afiq948tquajf8jq9f"
+    reason: "URL-only prompt without explicit APIView mention should activate skill"
+  - prompt: "Address this feedback: https://spa.apiview.dev/review/akldfja9qjta498tjaejg0?activeApiRevisionId=odiufa9sefighj98439"
+    reason: "URL-only prompt without explicit APIView mention should activate skill"
+  - prompt: "Resolve these comments: https://apiviewstagingtest.com/review/akldfja9qjta498tjaejg0?activeApiRevisionId=odiufa9sefighj98439"
+    reason: "URL-only prompt without explicit APIView mention should activate skill"
 should_not_trigger_prompts:
   - prompt: "deploy my Azure Function"
     reason: "Unrelated to skill scope"

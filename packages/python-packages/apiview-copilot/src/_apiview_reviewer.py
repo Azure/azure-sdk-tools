@@ -838,10 +838,11 @@ class ApiViewReview:
     # pylint: disable=too-many-locals
     def run(self) -> ReviewResult:
         """Execute the APIView review process."""
+        overall_start_time = time()
+        review_status = "error"
         try:
             self._print_message(f"Generating {get_language_pretty_name(self.language)} review {self.job_id}")
             self.logger.info(f"Generating review {self.job_id} for language={self.language}")
-            overall_start_time = time()
 
             # Canary check: try authenticating against Search and CosmosDB before LLM calls
             canary_error = self._canary_check_search_and_cosmos()
@@ -921,16 +922,6 @@ class ApiViewReview:
                 f"\nReview {self.job_id} generated in {total_duration:.2f} seconds. Found {len(results.comments)} comments"
             )
 
-            # Record review duration telemetry
-            target_line_count = len(self.target.splitlines())
-            duration_per_line = total_duration / target_line_count if target_line_count > 0 else 0
-            metric_attrs = {
-                "review.language": self.language,
-                "review.mode": self.mode,
-            }
-            _review_duration_histogram.record(total_duration, attributes=metric_attrs)
-            _review_duration_per_line_histogram.record(duration_per_line, attributes=metric_attrs)
-
             if self.semantic_search_failed:
                 self._print_message("WARN: Semantic search failed for some chunks (see error.log).")
 
@@ -942,10 +933,20 @@ class ApiViewReview:
                     json.dump(results.model_dump(), f, indent=2)
                 self._print_message(f"Review results written to {output_path}")
 
+            review_status = "success"
             return results
         finally:
-            # Don't close the executor here as it might be needed for future operations
-            pass
+            # Record review duration telemetry regardless of success or failure
+            total_duration = time() - overall_start_time
+            target_line_count = len(self.target.splitlines())
+            duration_per_line = total_duration / target_line_count if target_line_count > 0 else 0
+            metric_attrs = {
+                "review.language": self.language,
+                "review.mode": self.mode,
+                "review.status": review_status,
+            }
+            _review_duration_histogram.record(total_duration, attributes=metric_attrs)
+            _review_duration_per_line_histogram.record(duration_per_line, attributes=metric_attrs)
 
     def _canary_check_search_and_cosmos(self) -> str | None:
         """

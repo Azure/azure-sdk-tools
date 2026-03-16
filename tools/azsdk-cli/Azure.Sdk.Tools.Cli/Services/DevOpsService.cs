@@ -133,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<List<WorkItemRelationType>> GetCachedRelationTypes(CancellationToken ct)
         {
-            return _cachedRelationTypes ??= await connection.GetWorkItemClient(ct).GetRelationTypesAsync(ct);
+            return _cachedRelationTypes ??= await connection.GetWorkItemClient(ct).GetRelationTypesAsync(cancellationToken: ct);
         }
 
         private bool IsAgentTesting => Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING") == "true";
@@ -504,7 +504,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 if (relatedId != null)
                 {
-                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "related", targetId: relatedId);
+                    await CreateWorkItemRelationAsync(createdWorkItem.Id.Value, "related", targetId: relatedId, ct: ct);
                 }
             }
 
@@ -530,7 +530,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Handle target ID
             if (targetId != null)
             {
-                var targetWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(targetId.Value);
+                var targetWorkItem = await connection.GetWorkItemClient(ct).GetWorkItemAsync(targetId.Value, cancellationToken: ct);
 
                 // Ensure the target work item exists before creating the relation
                 if (targetWorkItem == null)

@@ -140,7 +140,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.CreateCIReviewAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
                 "Azure/azure-sdk-for-python", "azure-core", "internal",
-                "CI Build", false, null, false, null, null))
+                "CI Build", false, null, false, null, null, default))
             .ReturnsAsync((expectedContent, 200));
 
         var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
@@ -163,7 +163,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.CreateCIReviewAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
                 "Azure/azure-sdk-for-python", "azure-core", "internal",
-                "Source Branch:main", false, null, false, null, "main"))
+                "Source Branch:main", false, null, false, null, "main", default))
             .ReturnsAsync((expectedContent, 200));
 
         var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
@@ -185,7 +185,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.CreateCIReviewAsync(
                 "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
                 "Azure/azure-sdk-for-python", "azure-core", "internal",
-                "CI Build", true, "1.0.0", true, "client", "refs/heads/main"))
+                "CI Build", true, "1.0.0", true, "client", "refs/heads/main", default))
             .ReturnsAsync((expectedContent, 202));
 
         var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
@@ -207,7 +207,8 @@ public class ApiViewReviewToolTests
             .Setup(x => x.CreateCIReviewAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(((string?)null, 500));
 
         var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
@@ -228,7 +229,8 @@ public class ApiViewReviewToolTests
             .Setup(x => x.CreateCIReviewAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
         var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
@@ -249,7 +251,8 @@ public class ApiViewReviewToolTests
             .Setup(x => x.CreateCIReviewAsync(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
-                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(((string?)null, 204));
 
         var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
@@ -285,7 +288,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.CreatePullRequestRevisionAsync(
                 "99999", "packages", "azure-core/azure-core-1.0.0.whl", "abc123def",
                 "Azure/azure-sdk-for-python", "azure-core",
-                42, "azure-core_python.json", null, "python", "internal", null, null))
+                42, "azure-core_python.json", null, "python", "internal", null, null, default))
             .ReturnsAsync((expectedContent, 201));
 
         var commands = apiViewReviewTool.GetCommandInstances();
@@ -310,7 +313,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.CreatePullRequestRevisionAsync(
                 "99999", "packages", "azure-core/azure-core-1.0.0.whl", "abc123def",
                 "Azure/azure-sdk-for-python", "azure-core",
-                42, "azure-core_python.json", null, null, "internal", null, null))
+                42, "azure-core_python.json", null, null, "internal", null, null, default))
             .ReturnsAsync((expectedContent, 208));
 
         var commands = apiViewReviewTool.GetCommandInstances();
@@ -336,7 +339,7 @@ public class ApiViewReviewToolTests
                 "99999", "packages", "azure-core-1.0.0.whl", "abc123def",
                 "Azure/azure-sdk-for-python", "azure-core",
                 42, "azure-core_python.json", "azure-core_python_baseline.json",
-                "python", "internal", "client", "typespec-metadata.json"))
+                "python", "internal", "client", "typespec-metadata.json", default))
             .ReturnsAsync((expectedContent, 201));
 
         var commands = apiViewReviewTool.GetCommandInstances();
@@ -363,7 +366,8 @@ public class ApiViewReviewToolTests
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<string?>(),
-                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync(((string?)null, 500));
 
         var commands = apiViewReviewTool.GetCommandInstances();
@@ -386,7 +390,8 @@ public class ApiViewReviewToolTests
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<string?>(),
-                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>(),
+                It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
         var commands = apiViewReviewTool.GetCommandInstances();

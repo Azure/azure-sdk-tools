@@ -157,7 +157,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     protected override List<Command> GetCommands() =>
     [
         new McpCommand(GetCommentsCmd, "Get comments for a specific APIView URL", ApiViewGetCommentsToolName) { apiViewUrlOption },
-        new(GetContentCmd, "Get content by APIView URL") 
+        new(GetContentCmd, "Get content by APIView URL")
         {
             apiViewUrlOption, outputFileOption, contentReturnTypeOption
         },
@@ -186,7 +186,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             CreatePullRequestRevisionCmd => await CreatePullRequestRevision(parseResult, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
         };
-        
+
         return result;
     }
 
@@ -293,7 +293,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             (string? content, int statusCode) = await _apiViewService.CreateCIReviewAsync(
                 buildId!, artifactName!, originalFilePath!, reviewFilePath!,
                 repoName!, packageName!, project!,
-                label, compareAllRevisions, packageVersion, setReleaseTag, packageType, sourceBranch);
+                label, compareAllRevisions, packageVersion, setReleaseTag, packageType, sourceBranch, ct);
 
             return statusCode switch
             {
@@ -350,7 +350,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             (string? content, int statusCode) = await _apiViewService.CreatePullRequestRevisionAsync(
                 buildId!, artifactName!, filePath!, commitSha!,
                 repoName!, packageName!,
-                pullRequestNumber, codeFile, baselineCodeFile, language, project, packageType, metadataFile);
+                pullRequestNumber, codeFile, baselineCodeFile, language, project, packageType, metadataFile, ct);
 
             return statusCode switch
             {
@@ -392,7 +392,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             // Pattern: /review/{reviewId} in path and activeApiRevisionId={revisionId} in query string
             var match = Regex.Match(url, @"/review/([^/?]+).*[?&]activeApiRevisionId=([^&#]+)", RegexOptions.IgnoreCase);
-            
+
             if (!match.Success)
             {
                 throw new ArgumentException("APIView URL must contain both 'activeApiRevisionId' query parameter AND '/review/{reviewId}' path segment");

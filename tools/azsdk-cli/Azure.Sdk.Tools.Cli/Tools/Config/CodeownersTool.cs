@@ -661,7 +661,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
-                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false);
+                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false, ct: ct);
 
                 if (string.IsNullOrEmpty(result.Username))
                 {
@@ -1069,7 +1069,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     continue;
                 }
 
-                var validation = await codeownersValidatorHelper.ValidateCodeOwnerAsync(alias, verbose: false);
+                var validation = await codeownersValidatorHelper.ValidateCodeOwnerAsync(alias, verbose: false, ct: ct);
                 if (!validation.IsValidCodeOwner)
                 {
                     throw new InvalidOperationException(
@@ -1077,7 +1077,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
 
                 var ownerWi = new OwnerWorkItem { GitHubAlias = alias };
-                var created = await devOpsService.CreateWorkItemAsync(ownerWi, "Owner", alias);
+                var created = await devOpsService.CreateWorkItemAsync(ownerWi, "Owner", alias, ct: ct);
                 ownerWorkItems.Add(WorkItemMappers.MapToOwnerWorkItem(created));
             }
             return ownerWorkItems.ToArray();

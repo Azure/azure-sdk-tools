@@ -437,7 +437,7 @@ public class CodeownersManagementHelper(
 
         return new CodeownersModifyResponse
         {
-            View = await GetViewByPackage(packageName, repo)
+            View = await GetViewByPackage(packageName, repo, ct)
         };
     }
 
@@ -457,13 +457,13 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", label.WorkItemId);
+            await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", label.WorkItemId, ct: ct);
             logger.LogInformation("Added label '{LabelName}' to package '{PackageName}'.", label.LabelName, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            View = await GetViewByPackage(packageName, repo)
+            View = await GetViewByPackage(packageName, repo, ct)
         };
     }
 
@@ -481,7 +481,7 @@ public class CodeownersManagementHelper(
         {
             if (!labelOwnerWi.RelatedIds.Contains(labelWi.WorkItemId))
             {
-                await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", labelWi.WorkItemId);
+                await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", labelWi.WorkItemId, ct: ct);
             }
         }
 
@@ -495,7 +495,7 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", ownerWorkItem.WorkItemId);
+            await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", ownerWorkItem.WorkItemId, ct: ct);
             logger.LogInformation("Added @{GitHubAlias} and label(s) '{LabelNames}' to path '{Path}'.", ownerWorkItem.GitHubAlias, labelNames, path);
         }
 

@@ -19,17 +19,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             throw new NotImplementedException();
         }
-        
+
         Task<List<ReleasePlanWorkItem>> IDevOpsService.ListOverdueReleasePlansAsync(CancellationToken ct)
         {
             return Task.FromResult(new List<ReleasePlanWorkItem>());
         }
-        
+
         public Task<PackageWorkitemResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "", CancellationToken ct = default)
         {
             var sdkLanguage = SdkLanguageHelpers.GetSdkLanguage(language);
             var version = string.IsNullOrEmpty(packageVersion) ? "1.0.0" : packageVersion;
-            
+
             return Task.FromResult(
                 new PackageWorkitemResponse
                 {
@@ -133,14 +133,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             var releasePlans = new List<ReleasePlanWorkItem>();
             return Task.FromResult(releasePlans);
         }
-        
+
         Task<ReleasePlanWorkItem> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId, CancellationToken ct)
         {
             if (ConfiguredReleasePlanForWorkItem != null)
             {
                 return Task.FromResult(ConfiguredReleasePlanForWorkItem);
             }
-            
+
             var releasePlan = new ReleasePlanWorkItem
             {
                 WorkItemId = workItemId,
@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             {
                 return Task.FromResult(ConfiguredSDKPullRequest);
             }
-            
+
             // Simulate fetching a pull request URL based on the build ID and language
             return Task.FromResult($"https://github.com/Azure/azure-sdk-for-{language}/pull/1");
         }
@@ -247,7 +247,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                     ProductServiceTreeLink = "https://servicetree.msftcloudes.com/main.html#/ServiceModel/Service/12345678-1234-5678-9012-123456789012"
                 });
             }
-            
+
             // Return null for paths without release plans
             return Task.FromResult<ProductInfo?>(null);
         }
@@ -272,15 +272,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(new List<WorkItem>());
         }
 
-        public Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null)
+        public Task<WorkItem> CreateWorkItemAsync(WorkItemBase workItem, string workItemType, string title, int? parentId = null, int? relatedId = null, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }
-        public Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null)
+        public Task<WorkItem> CreateWorkItemRelationAsync(int id, string relationType, int? targetId = null, string? targetUrl = null, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }
-        public Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId)
+        public Task RemoveWorkItemRelationAsync(int id, string relationType, int targetId, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }

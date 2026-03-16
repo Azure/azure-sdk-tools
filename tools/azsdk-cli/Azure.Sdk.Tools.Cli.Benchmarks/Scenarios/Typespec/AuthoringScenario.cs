@@ -19,6 +19,8 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
     /// </summary>
     public class AuthoringScenario : BenchmarkScenario
     {
+        private const string DefaultTspProjectPath = "specification/widget/resource-manager/Microsoft.Widget/Widget";
+
         /// <inheritdoc />
         public override string Name { get; }
 
@@ -28,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <inheritdoc />
         public override string Prompt { get; }
 
-        public string tspProjectPath => "specification/widget/resource-manager/Microsoft.Widget/Widget";
+        public string tspProjectPath { get; }
 
         /// <summary>
         /// Gets or sets the verification plan for validating the scenario results.
@@ -55,6 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             Name = name;
             Description = description ?? string.Empty;
             Prompt = prompt ?? string.Empty;
+            this.tspProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? DefaultTspProjectPath : tspProjectPath;
             VerifyPlan = verifyPlan ?? "compile the project.";
             TestTspFiles = testTspFiles ?? new List<string>();
             // Enable MCP server mode for TypeSpec authoring scenarios
@@ -67,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             Owner = "Azure",
             Name = "azure-rest-api-specs",
             Ref = "main",
-            SparseCheckoutPaths = ["specification/widget/resource-manager/Microsoft.Widget/Widget", ".vscode", "eng/common"]
+            SparseCheckoutPaths = [tspProjectPath, ".vscode", "eng/common"]
         };
 
         /// <inheritdoc />

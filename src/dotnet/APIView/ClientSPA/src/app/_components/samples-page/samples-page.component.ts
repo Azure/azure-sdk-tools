@@ -512,7 +512,7 @@ export class SamplesPageComponent {
           });
       }
       else {
-        this.commentsService.createComment(this.reviewId!, this.activeSamplesRevisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.SampleRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity, commentUpdates.threadId)
+        this.commentsService.createComment(this.reviewId!, this.activeSamplesRevisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.SampleRevision, commentUpdates.allowAnyOneToResolve !== undefined ? !commentUpdates.allowAnyOneToResolve : false, commentUpdates.severity, commentUpdates.threadId)
           .pipe(take(1)).subscribe({
               next: (response: CommentItemModel) => {
                 commentThread!.comments = [...commentThread!.comments!, response];

@@ -21,7 +21,6 @@ from typing import Literal, Optional
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 from src._apiview import resolve_package
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._auth import AppRole, require_roles
@@ -195,15 +194,12 @@ async def agent_chat(
                 messages=request.messages,
             )
         return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
-    except AgentInvokeException as e:
+    except Exception as e:
         if "Rate limit is exceeded" in str(e):
             logger.warning("Rate limit exceeded: %s", e)
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait and try again.") from e
-        logger.error("AgentInvokeException: %s", e)
-        raise HTTPException(status_code=500, detail=f"Agent error: {e}") from e
-    except Exception as e:
         logger.error("Error in /agent/chat: %s", e, exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error") from e
+        raise HTTPException(status_code=500, detail=f"Agent error: {e}") from e
 
 
 class SummarizeRequest(BaseModel):

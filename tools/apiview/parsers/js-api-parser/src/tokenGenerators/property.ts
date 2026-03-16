@@ -4,13 +4,30 @@ import {
   ApiItemKind,
   ApiProperty,
   ApiPropertyItem,
+  ExcerptToken,
 } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import { ReviewLine, ReviewToken, TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import { createToken, parseTypeText } from "./helpers";
+import { createToken, parseTypeText, buildReferenceMap } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiPropertyItem {
   return item.kind === ApiItemKind.Property || item.kind === ApiItemKind.PropertySignature;
+}
+
+/**
+ * Processes the property type using parseTypeText with a reference map for navigation.
+ * This handles both simple types (with navigation links) and inline type literals (with children structure).
+ */
+function processPropertyType(
+  typeText: string,
+  spannedTokens: readonly ExcerptToken[] | undefined,
+  tokens: ReviewToken[],
+  deprecated?: boolean,
+): ReviewLine[] | undefined {
+  // Build a reference map from spanned tokens for navigation
+  const referenceMap = spannedTokens ? buildReferenceMap(spannedTokens) : undefined;
+  // Use parseTypeText which now handles both type structure and navigation via the reference map
+  return parseTypeText(typeText, tokens, deprecated, 0, referenceMap);
 }
 
 /**
@@ -92,7 +109,12 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult 
     let children;
 
     if (typeText) {
-      children = parseTypeText(typeText, tokens, deprecated);
+      children = processPropertyType(
+        typeText,
+        item.propertyTypeExcerpt.spannedTokens,
+        tokens,
+        deprecated,
+      );
       if (!children) {
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
       }
@@ -115,7 +137,13 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult 
 
     let children;
     if (paramType) {
-      children = parseTypeText(paramType, tokens, deprecated);
+      // For setters, use the spannedTokens from propertyTypeExcerpt for navigation
+      children = processPropertyType(
+        paramType,
+        item.propertyTypeExcerpt.spannedTokens,
+        tokens,
+        deprecated,
+      );
       if (!children) {
         tokens.push(createToken(TokenKind.Punctuation, ")", { deprecated }));
         tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
@@ -153,7 +181,12 @@ function generate(item: ApiPropertyItem, deprecated?: boolean): GeneratorResult 
   let children;
 
   if (typeText) {
-    children = parseTypeText(typeText, tokens, deprecated);
+    children = processPropertyType(
+      typeText,
+      item.propertyTypeExcerpt.spannedTokens,
+      tokens,
+      deprecated,
+    );
     if (!children) {
       tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
     }

@@ -81,8 +81,7 @@ describe('AdminPermissionsPageComponent', () => {
             showComments: true,
             showSystemComments: true,
             disableCodeLinesLazyLoading: false,
-            language: [],
-            approvedLanguages: []
+            language: []
         },
         permissions: mockAdminPermissions
     };

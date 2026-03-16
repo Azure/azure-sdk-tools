@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task GetRepoRemoteUriAsync_WithSshOrigin_ReturnsHttpsUri()
         {
             using var repo = await CreateTestRepoWithRemoteAsync("git@github.com:Azure/azure-rest-api-specs.git");
-            var result = await gitHelper.GetRepoRemoteUriAsync(repo.DirectoryPath);
+            var result = await gitHelper.GetRepoRemoteUriAsync(repo.DirectoryPath, ct: CancellationToken.None);
             Assert.That(result.ToString(), Is.EqualTo("https://github.com/Azure/azure-rest-api-specs.git"));
         }
 
@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task GetRepoRemoteUriAsync_WithHttpsOrigin_ReturnsHttpsUri()
         {
             using var repo = await CreateTestRepoWithRemoteAsync("https://github.com/Azure/azure-rest-api-specs.git");
-            var result = await gitHelper.GetRepoRemoteUriAsync(repo.DirectoryPath);
+            var result = await gitHelper.GetRepoRemoteUriAsync(repo.DirectoryPath, ct: CancellationToken.None);
             Assert.That(result.ToString(), Is.EqualTo("https://github.com/Azure/azure-rest-api-specs.git"));
         }
 
@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task GetRepoRemoteUriAsync_WithNoOrigin_ThrowsException()
         {
             using var repo = await CreateTestRepoWithoutRemoteAsync();
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.GetRepoRemoteUriAsync(repo.DirectoryPath));
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.GetRepoRemoteUriAsync(repo.DirectoryPath, ct: CancellationToken.None));
             Assert.That(ex.Message, Does.Contain("origin"));
         }
 
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void GetRepoRemoteUriAsync_WithNonGitDirectory_ThrowsException()
         {
             using var tempDir = TempDirectory.Create("non_git");
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.GetRepoRemoteUriAsync(tempDir.DirectoryPath));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.GetRepoRemoteUriAsync(tempDir.DirectoryPath, ct: CancellationToken.None));
         }
 
         #endregion
@@ -93,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             {
                 Assert.That(ex.ParamName, Is.EqualTo("pathInRepo"));
             }
-            
+
             // Test null
             try
             {
@@ -121,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task DiscoverRepoRootAsync_WithRepoRoot_ReturnsRepoRoot()
         {
             using var repo = await CreateTestRepoWithoutRemoteAsync();
-            var result = await gitHelper.DiscoverRepoRootAsync(repo.DirectoryPath);
+            var result = await gitHelper.DiscoverRepoRootAsync(repo.DirectoryPath, CancellationToken.None);
             Assert.That(NormalizePath(result), Is.EqualTo(NormalizePath(repo.DirectoryPath)));
         }
 
@@ -132,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var subDir = Path.Combine(repo.DirectoryPath, "src", "nested", "deep");
             Directory.CreateDirectory(subDir);
 
-            var result = await gitHelper.DiscoverRepoRootAsync(subDir);
+            var result = await gitHelper.DiscoverRepoRootAsync(subDir, CancellationToken.None);
             Assert.That(NormalizePath(result), Is.EqualTo(NormalizePath(repo.DirectoryPath)));
         }
 
@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var filePath = Path.Combine(repo.DirectoryPath, "test.txt");
             File.WriteAllText(filePath, "test content");
 
-            var result = await gitHelper.DiscoverRepoRootAsync(filePath);
+            var result = await gitHelper.DiscoverRepoRootAsync(filePath, CancellationToken.None);
             Assert.That(NormalizePath(result), Is.EqualTo(NormalizePath(repo.DirectoryPath)));
         }
 
@@ -151,14 +151,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void DiscoverRepoRootAsync_WithNonGitDirectory_ThrowsException()
         {
             using var tempDir = TempDirectory.Create("non_git");
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.DiscoverRepoRootAsync(tempDir.DirectoryPath));
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.DiscoverRepoRootAsync(tempDir.DirectoryPath, CancellationToken.None));
             Assert.That(ex.Message, Does.Contain("No git repository found"));
         }
 
         [Test]
         public void DiscoverRepoRootAsync_WithEmptyPath_ThrowsException()
         {
-            Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.DiscoverRepoRootAsync(""));
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.DiscoverRepoRootAsync("", CancellationToken.None));
         }
 
         #endregion
@@ -171,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             using var repo = await CreateTestRepoWithoutRemoteAsync();
             await GitTestHelper.GitCommitAsync(repo.DirectoryPath, "Initial commit");
 
-            var result = await gitHelper.GetBranchNameAsync(repo.DirectoryPath);
+            var result = await gitHelper.GetBranchNameAsync(repo.DirectoryPath, CancellationToken.None);
             Assert.That(result, Is.EqualTo("master").Or.EqualTo("main"));
         }
 
@@ -182,7 +182,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             await GitTestHelper.GitCommitAsync(repo.DirectoryPath, "Initial commit");
             await GitTestHelper.GitCreateBranchAsync(repo.DirectoryPath, "test-branch");
 
-            var result = await gitHelper.GetBranchNameAsync(repo.DirectoryPath);
+            var result = await gitHelper.GetBranchNameAsync(repo.DirectoryPath, CancellationToken.None);
             Assert.That(result, Is.EqualTo("test-branch"));
         }
 
@@ -194,18 +194,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task GetMergeBaseCommitShaAsync_WithValidBranches_ReturnsMergeBaseSha()
         {
             using var repo = await CreateTestRepoWithoutRemoteAsync();
-            
+
             // Create initial commit on default branch
             await GitTestHelper.GitCommitAsync(repo.DirectoryPath, "Initial commit");
-            var defaultBranch = await gitHelper.GetBranchNameAsync(repo.DirectoryPath);
-            
+            var defaultBranch = await gitHelper.GetBranchNameAsync(repo.DirectoryPath, CancellationToken.None);
+
             // Create and switch to feature branch
             await GitTestHelper.GitCreateBranchAsync(repo.DirectoryPath, "feature");
             await GitTestHelper.GitCommitAsync(repo.DirectoryPath, "Feature commit");
-            
+
             // The merge base should be the initial commit
-            var result = await gitHelper.GetMergeBaseCommitShaAsync(repo.DirectoryPath, defaultBranch);
-            
+            var result = await gitHelper.GetMergeBaseCommitShaAsync(repo.DirectoryPath, defaultBranch, CancellationToken.None);
+
             // Result should be a valid SHA (40 hex characters)
             Assert.That(result, Has.Length.EqualTo(40));
             Assert.That(result, Does.Match("^[0-9a-f]{40}$"));
@@ -218,7 +218,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             await GitTestHelper.GitCommitAsync(repo.DirectoryPath, "Initial commit");
 
             Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await gitHelper.GetMergeBaseCommitShaAsync(repo.DirectoryPath, "nonexistent-branch"));
+                await gitHelper.GetMergeBaseCommitShaAsync(repo.DirectoryPath, "nonexistent-branch", CancellationToken.None));
         }
 
         #endregion
@@ -229,14 +229,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task GetRepoNameAsync_WithValidRemote_ReturnsRepoName()
         {
             using var repo = await CreateTestRepoWithRemoteAsync("https://github.com/Azure/azure-sdk-tools.git");
-            var result = await gitHelper.GetRepoNameAsync(repo.DirectoryPath);
+            var result = await gitHelper.GetRepoNameAsync(repo.DirectoryPath, CancellationToken.None);
             Assert.That(result, Is.EqualTo("azure-sdk-tools"));
         }
 
         [Test]
         public void GetRepoNameAsync_WithEmptyPath_ThrowsArgumentException()
         {
-            Assert.ThrowsAsync<ArgumentException>(async () => await gitHelper.GetRepoNameAsync(""));
+            Assert.ThrowsAsync<ArgumentException>(async () => await gitHelper.GetRepoNameAsync("", CancellationToken.None));
         }
 
         #endregion

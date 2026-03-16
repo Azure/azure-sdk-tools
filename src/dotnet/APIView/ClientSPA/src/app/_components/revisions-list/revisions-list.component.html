@@ -133,13 +133,13 @@
         <p-select formControlName="selectedCRLanguage" [options]="crLanguages" optionLabel="label" placeholder="Language" (onChange)="onCRLanguageSelectChange()">
             <ng-template pTemplate="selectedItem">
                 <div class="flex align-items-center gap-2" *ngIf="createRevisionForm.get('selectedCRLanguage')!.value">
-                  <img src="{{assetsPath}}/images/{{ createRevisionForm.get('selectedCRLanguage')!.value!.label | languageNames }}-original.svg" style="width: 25px"/>
+                  <img src="{{assetsPath}}/images/{{ createRevisionForm.get('selectedCRLanguage')!.value!.label | languageNames: userProfile?.preferences?.theme }}-original.svg" style="width: 25px"/>
                   <span class="mx-2 mt-1">{{ createRevisionForm.get('selectedCRLanguage')!.value!.label }}</span>
                 </div>
             </ng-template>
             <ng-template let-crLanguage pTemplate="item">
                 <div class="flex align-items-center gap-2">
-                    <img src="{{assetsPath}}/images/{{ crLanguage.label | languageNames }}-original.svg" style="width: 25px"/>
+                    <img src="{{assetsPath}}/images/{{ crLanguage.label | languageNames: userProfile?.preferences?.theme }}-original.svg" style="width: 25px"/>
                     <span class="mx-2 mt-1">{{ crLanguage.label }}</span>
                 </div>
             </ng-template>

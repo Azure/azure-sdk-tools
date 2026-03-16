@@ -8,6 +8,8 @@ namespace Azure.Sdk.Tools.Cli.Models;
 public enum SdkLanguage
 {
     Unknown,
+    [JsonStringEnumMemberName("C++")]
+    Cpp,
     [JsonStringEnumMemberName(".NET")]
     DotNet,
     [JsonStringEnumMemberName("Java")]
@@ -42,7 +44,8 @@ public static class SdkLanguageHelpers
         { "azure-sdk-for-java", SdkLanguage.Java },
         { "azure-sdk-for-js", SdkLanguage.JavaScript },
         { "azure-sdk-for-python", SdkLanguage.Python },
-        { "azure-sdk-for-rust", SdkLanguage.Rust}
+        { "azure-sdk-for-rust", SdkLanguage.Rust},
+        {"azure-sdk-for-cpp", SdkLanguage.Cpp }
     }.ToImmutableDictionary();
 
     public static async Task<SdkLanguage> GetLanguageForRepoPathAsync(IGitHelper gitHelper, string pathInRepo, CancellationToken ct = default)
@@ -73,6 +76,9 @@ public static class SdkLanguageHelpers
     {
         switch (language.ToLower())
         {
+            case "c++":
+            case "cpp":
+                return SdkLanguage.Cpp;
             case ".net":
             case "dotnet":
             case "c#":

@@ -34,7 +34,7 @@ namespace APIViewWeb.LeanModels
         public int TotalActiveConversations { get; set; }
         public int ActiveConversationsInActiveAPIRevision { get; set; }
         public int ActiveConversationsInSampleRevisions { get; set; }
-        public HashSet<string> PreferredApprovers = new HashSet<string>();
+        public HashSet<string> LanguageApprovers = new HashSet<string>();
         public HashSet<GithubUser> TaggableUsers { get; set; }
         public bool PageHasLoadableSections { get; set; }
         public string NotificationMessage { get; set; }

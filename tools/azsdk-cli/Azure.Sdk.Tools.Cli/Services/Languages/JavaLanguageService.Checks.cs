@@ -50,7 +50,7 @@ public partial class JavaLanguageService : LanguageService
             // Determine the Maven goal based on fix parameter
             var goal = fixCheckErrors ? "spotless:apply" : "spotless:check";
 
-            var result = await _mavenHelper.Run(new(goal, [], pomPath, workingDirectory: packagePath, timeout: MavenFormatTimeout), cancellationToken);
+            var result = await mavenHelper.Run(new(goal, [], pomPath, workingDirectory: packagePath, timeout: MavenFormatTimeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -63,7 +63,7 @@ public partial class JavaLanguageService : LanguageService
             else
             {
                 var errorMessage = fixCheckErrors ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting";
-                
+
                 // Log command only for troubleshooting failed operations
                 var fullCommand = $"mvn {goal}";
                 logger.LogWarning("{ErrorMessage} with exit code {ExitCode}. To reproduce: {Command}", errorMessage, result.ExitCode, fullCommand);
@@ -135,9 +135,9 @@ public partial class JavaLanguageService : LanguageService
                     "-Drevapi.failBuildOnProblemsFound=false"
                     // Note: Javadoc doesn't have a failOnError flag - it contributes to build exit code
                 ]);
-            };
+            }
 
-            var result = await _mavenHelper.Run(new("install", [.. args], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
+            var result = await mavenHelper.Run(new("install", [.. args], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
 
             // Parse Maven output to determine which linting tools found issues
             var output = result.Output;
@@ -168,7 +168,7 @@ public partial class JavaLanguageService : LanguageService
                 var passedToolNames = passedTools.Count > 0 ? string.Join(", ", passedTools.Select(t => t.Tool)) : "None";
 
                 var errorMessage = $"Code linting found issues - Tools with issues: {failedToolNames}. Clean tools: {passedToolNames}";
-                
+
                 // Log command only for troubleshooting when linting issues are found
                 var fullCommand = $"mvn install {string.Join(" ", args)}";
                 logger.LogWarning(
@@ -215,7 +215,7 @@ public partial class JavaLanguageService : LanguageService
         }
     }
 
-    public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false,  CancellationToken cancellationToken = default)
+    public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -230,7 +230,7 @@ public partial class JavaLanguageService : LanguageService
             }
 
             // Use Azure SDK approach: mvn com.azure.tools:codesnippet-maven-plugin:update-codesnippet
-            var result = await _mavenHelper.Run(new("com.azure.tools:codesnippet-maven-plugin:update-codesnippet", [], pomPath, workingDirectory: packagePath, timeout: MavenSnippetTimeout), cancellationToken);
+            var result = await mavenHelper.Run(new("com.azure.tools:codesnippet-maven-plugin:update-codesnippet", [], pomPath, workingDirectory: packagePath, timeout: MavenSnippetTimeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -302,10 +302,10 @@ public partial class JavaLanguageService : LanguageService
     {
         var args = new[] { "-Dverbose" };
 
-        var result = await _mavenHelper.Run(new("dependency:tree", args, pomPath, workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(5)), cancellationToken);
+        var result = await mavenHelper.Run(new("dependency:tree", args, pomPath, workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(5)), cancellationToken);
 
         var output = result.Output;
-        
+
         // Simple check - if Maven succeeded and no conflict indicators, it's success
         if (output.Contains("[INFO] BUILD SUCCESS", StringComparison.OrdinalIgnoreCase))
         {
@@ -339,7 +339,7 @@ public partial class JavaLanguageService : LanguageService
     private async Task<PackageCheckResponse?> ValidateMavenPrerequisites(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
         // Check if Maven is available
-        var mavenCheckResult = await _mavenHelper.Run(new(["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+        var mavenCheckResult = await mavenHelper.Run(new(["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
         if (mavenCheckResult.ExitCode != 0)
         {
             logger.LogError("Maven is not installed or not available in PATH");
@@ -375,30 +375,30 @@ public partial class JavaLanguageService : LanguageService
     {
         return [
             ("Checkstyle", HasCheckstyleIssues(output)),
-            ("SpotBugs", HasSpotBugsIssues(output)), 
+            ("SpotBugs", HasSpotBugsIssues(output)),
             ("RevAPI", HasRevapiIssues(output)),
             ("Javadoc", HasJavadocIssues(output))
         ];
     }
 
     private static bool HasCheckstyleIssues(string output) =>
-        output.Contains("Checkstyle violations", StringComparison.OrdinalIgnoreCase) && 
-        !output.Contains("You have 0 Checkstyle violations.", StringComparison.OrdinalIgnoreCase) && 
+        output.Contains("Checkstyle violations", StringComparison.OrdinalIgnoreCase) &&
+        !output.Contains("You have 0 Checkstyle violations.", StringComparison.OrdinalIgnoreCase) &&
         !output.Contains("Audit done.", StringComparison.OrdinalIgnoreCase);
 
     private static bool HasSpotBugsIssues(string output) =>
-        output.Contains("BugInstance size is", StringComparison.OrdinalIgnoreCase) && 
+        output.Contains("BugInstance size is", StringComparison.OrdinalIgnoreCase) &&
         !output.Contains("BugInstance size is 0", StringComparison.OrdinalIgnoreCase);
 
     private static bool HasRevapiIssues(string output) =>
-        output.Contains("API problems detected", StringComparison.OrdinalIgnoreCase) && 
+        output.Contains("API problems detected", StringComparison.OrdinalIgnoreCase) &&
         !output.Contains("API checks completed without failures.", StringComparison.OrdinalIgnoreCase);
 
     private static bool HasJavadocIssues(string output) =>
         output.Contains("Error while generating Javadoc:", StringComparison.OrdinalIgnoreCase) ||
-        (output.Contains("maven-javadoc-plugin", StringComparison.OrdinalIgnoreCase) && 
+        (output.Contains("maven-javadoc-plugin", StringComparison.OrdinalIgnoreCase) &&
          output.Contains("[ERROR]", StringComparison.OrdinalIgnoreCase) &&
-         !output.Contains("Building jar:", StringComparison.OrdinalIgnoreCase) && 
+         !output.Contains("Building jar:", StringComparison.OrdinalIgnoreCase) &&
          !output.Contains("-javadoc.jar", StringComparison.OrdinalIgnoreCase));
 
     public override async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)

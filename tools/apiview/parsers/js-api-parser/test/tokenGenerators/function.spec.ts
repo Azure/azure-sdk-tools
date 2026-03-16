@@ -420,16 +420,17 @@ describe("functionTokenGenerator", () => {
       expect(tokens[0]).toMatchObject({ Kind: TokenKind.Keyword, Value: "export" });
       expect(tokens[1]).toMatchObject({ Kind: TokenKind.Keyword, Value: "function" });
       expect(tokens[2]).toMatchObject({ Kind: TokenKind.MemberName, Value: "addNumbers" });
-      expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(" });
+      expect(tokens[3]).toMatchObject({ Kind: TokenKind.Punctuation, Value: "(" });
       expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "a" });
-      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
+      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ":" });
       expect(tokens[6]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" });
-      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: "," });
+      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Punctuation, Value: "," });
       expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "b" });
-      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
+      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ":" });
       expect(tokens[10]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" });
-      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "):" });
-      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" });
+      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ")" });
+      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ":" });
+      expect(tokens[13]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" });
     });
 
     it("generates TypeName tokens for parameter type references", () => {
@@ -736,20 +737,21 @@ describe("functionTokenGenerator", () => {
 
       const { tokens } = functionTokenGenerator.generate(mockFunction, false);
 
-      // Should have: export, function, name, (, input, :, string, ,, count, :, number, ):, void
+      // Should have: export, function, name, (, input, :, string, ,, count, :, number, ), :, void
       expect(tokens[0]).toMatchObject({ Kind: TokenKind.Keyword, Value: "export" });
       expect(tokens[1]).toMatchObject({ Kind: TokenKind.Keyword, Value: "function" });
       expect(tokens[2]).toMatchObject({ Kind: TokenKind.MemberName, Value: "structuredFunc" });
-      expect(tokens[3]).toMatchObject({ Kind: TokenKind.Text, Value: "(" });
+      expect(tokens[3]).toMatchObject({ Kind: TokenKind.Punctuation, Value: "(" });
       expect(tokens[4]).toMatchObject({ Kind: TokenKind.Text, Value: "input" });
-      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
+      expect(tokens[5]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ":" });
       expect(tokens[6]).toMatchObject({ Kind: TokenKind.Keyword, Value: "string" }); // Changed from Text to Keyword
-      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Text, Value: "," });
+      expect(tokens[7]).toMatchObject({ Kind: TokenKind.Punctuation, Value: "," });
       expect(tokens[8]).toMatchObject({ Kind: TokenKind.Text, Value: "count" });
-      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Text, Value: ":" });
+      expect(tokens[9]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ":" });
       expect(tokens[10]).toMatchObject({ Kind: TokenKind.Keyword, Value: "number" }); // Changed from Text to Keyword
-      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Text, Value: "):" });
-      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Keyword, Value: "void" }); // Changed from Text to Keyword
+      expect(tokens[11]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ")" });
+      expect(tokens[12]).toMatchObject({ Kind: TokenKind.Punctuation, Value: ":" });
+      expect(tokens[13]).toMatchObject({ Kind: TokenKind.Keyword, Value: "void" }); // Changed from Text to Keyword
     });
 
     it("handles optional parameters with structured approach", () => {

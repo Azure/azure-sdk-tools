@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
                 "azsdk_example_azure_service",
                 "azsdk_example_ai_service",
                 "azsdk_example_error_handling",
-                "azsdk_example_microagent_fibonacci",
+                "azsdk_example_agent_fibonacci",
                 "azsdk_example_github_service",
                 "azsdk_example_devops_service"
             };

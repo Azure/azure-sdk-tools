@@ -32,6 +32,7 @@ internal class JavaScriptLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<JavaScriptLanguageService>.Instance,
             _commonValidationHelpersMock.Object,
+            Mock.Of<IPackageInfoHelper>(),
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -109,19 +110,22 @@ internal class JavaScriptLanguageSpecificChecksTests
     #region HasCustomizations Tests
 
     [Test]
-    public void HasCustomizations_ReturnsTrue_WhenGeneratedFolderExists()
+    public void HasCustomizations_ReturnsPath_WhenGeneratedFolderExists()
     {
         using var tempDir = TempDirectory.Create("js-customization-test");
+        var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
         var generatedDir = Path.Combine(tempDir.DirectoryPath, "generated");
+        Directory.CreateDirectory(srcDir);
         Directory.CreateDirectory(generatedDir);
 
         var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
 
-        Assert.That(result, Is.True);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Is.EqualTo(srcDir));
     }
 
     [Test]
-    public void HasCustomizations_ReturnsFalse_WhenNoGeneratedFolderExists()
+    public void HasCustomizations_ReturnsNull_WhenNoGeneratedFolderExists()
     {
         using var tempDir = TempDirectory.Create("js-no-customization-test");
         var srcDir = Path.Combine(tempDir.DirectoryPath, "src");
@@ -129,7 +133,7 @@ internal class JavaScriptLanguageSpecificChecksTests
 
         var result = _languageChecks.HasCustomizations(tempDir.DirectoryPath, CancellationToken.None);
 
-        Assert.That(result, Is.False);
+        Assert.That(result, Is.Null);
     }
 
     #endregion

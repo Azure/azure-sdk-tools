@@ -127,6 +127,11 @@ public sealed class McpRawOutputHelper(ILogger<McpRawOutputHelper> logger) : IRa
         logger.LogInformation("{Output}", output);
     }
 
+    public void OutputConsoleInfo(string output)
+    {
+        logger.LogInformation("{Output}", output);
+    }
+
     public void OutputConsoleWarning(string output)
     {
         logger.LogWarning("{Output}", output);

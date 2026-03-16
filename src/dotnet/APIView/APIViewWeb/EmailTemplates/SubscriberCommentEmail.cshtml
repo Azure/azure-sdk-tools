@@ -1,0 +1,18 @@
+@model APIViewWeb.Models.SubscriberCommentEmailModel
+@{
+	Layout = "/EmailTemplates/_EmailLayout.cshtml";
+	ViewData["EmailTitle"] = "New Comment on Review";
+}
+
+<p class="section"><a href="@Model.CommenterProfileUrl"><strong>@Model.CommentedBy</strong></a> commented on this review.</p>
+
+@if (Model.HasElementLink)
+{
+	<p class="section">In <a href="@Model.ElementUrl"><strong>@Model.ElementId</strong></a>:</p>
+}
+
+<div class="panel">
+	@Model.CommentBodyHtml
+</div>
+
+<p class="meta-note">You are receiving this because you are subscribed to this review.</p>

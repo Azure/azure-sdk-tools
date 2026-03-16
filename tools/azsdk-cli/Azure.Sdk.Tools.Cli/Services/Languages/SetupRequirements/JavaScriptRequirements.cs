@@ -18,6 +18,11 @@ public static class JavaScriptRequirements
     {
         public override string Name => "pnpm";
         public override string[] CheckCommand => ["pnpm", "--version"];
+        public override IReadOnlyList<string> DependsOn => ["Node.js"];
+        public override bool IsAutoInstallable => true;
+
+        public override string[][]? GetInstallCommands(RequirementContext ctx)
+            => [["npm", "install", "-g", "pnpm"]];
 
         public override bool ShouldCheck(RequirementContext ctx) 
             => ctx.Languages.Contains(SdkLanguage.JavaScript);

@@ -149,6 +149,13 @@ export class DifferenceDetector {
     });
   }
 
+  // Returns the operations group name with 'Operations' suffix.
+  // If the name is exactly 'Operations', it becomes 'OperationsOperations' to avoid collision.
+  // If the name already ends with 'Operations', it is returned as-is.
+  private getOperationsGroupName(name: string): string {
+    return (name === 'Operations' || !name.endsWith('Operations')) ? name + 'Operations' : name;
+  }
+
   private convertHighLevelClientToModularClientCode(code: string): string {
     const project = new Project({
       compilerOptions: {
@@ -174,7 +181,10 @@ export class DifferenceDetector {
       })
       .forEach((g) => {
         const methodSigs = g.getMembers().filter((m) => m.getKind() === SyntaxKind.MethodSignature);
-        g.rename(g.getName() + 'Operations');
+        const newName = this.getOperationsGroupName(g.getName());
+        if (newName !== g.getName()) {
+          g.rename(newName);
+        }
         for (const method of methodSigs) {
           const methodSig = method.asKindOrThrow(SyntaxKind.MethodSignature);
           const name = methodSig.getName();

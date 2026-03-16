@@ -130,7 +130,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	var prompt string
 	promptTemplate := tenantConfig.PromptTemplate
 
-	if intention != nil && !intention.NeedsRagProcessing {
+	if !intention.NeedsRagProcessing {
 		// Skip RAG workflow for non-technical messages
 		log.Printf("Skipping RAG workflow - non-technical message detected")
 		knowledges = []model.Knowledge{}
@@ -223,7 +223,7 @@ func (s *CompletionService) RecognizeIntention(tenantID model.TenantID, promptTe
 		return nil, model.NewLLMServiceFailureError(fmt.Errorf("no valid response received from LLM"))
 	}
 	result, err := promptParser.ParseResponse(resp.Choices[0].Message.Content, promptTemplate)
-	if err != nil {
+	if err != nil || result == nil {
 		respStr := resp.RawJSON()
 		log.Printf("Failed to parse intention response: %v, response:%s", err, respStr)
 		return nil, err
@@ -388,15 +388,36 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) []openai.Cha
 
 				// Check if this is a pipeline link and analyze it
 				if utils.IsPipelineLink(info.Link) {
-					log.Printf("Detected Azure DevOps pipeline link: %s", info.Link)
+					log.Printf("Detected Azure DevOps pipeline link: %s", utils.SanitizeForLog(info.Link))
 					analysisText, err := utils.AnalyzePipeline(info.Link, "", true) // Use agent analysis
 					if err != nil {
-						log.Printf("Failed to analyze pipeline: %v", err)
+						log.Printf("Failed to analyze pipeline: %s", utils.SanitizeForLog(err.Error()))
 						// Fall back to regular link processing
 					} else {
 						// Use the pipeline analysis as content
 						content = analysisText
 						log.Printf("Pipeline analysis completed successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				} else if utils.IsGitHubCheckLink(info.Link) {
+					// Fetch GitHub check logs so the LLM has actual error details
+					// before intention recognition and knowledge retrieval.
+					log.Printf("Detected GitHub check link: %s", info.Link)
+					checkContent, err := utils.GetGitHubClient().FetchCheckLogs(info.Link)
+					if err != nil {
+						log.Printf("Failed to fetch GitHub check logs: %v", err)
+					} else {
+						content = checkContent
+						log.Printf("GitHub check logs fetched successfully, result: %s", utils.SanitizeForLog(content))
+					}
+				} else if utils.IsGitHubPRLink(info.Link) {
+					// Fetch GitHub PR check runs so the LLM can see CI failures.
+					log.Printf("Detected GitHub PR link: %s", info.Link)
+					prContent, err := utils.GetGitHubClient().FetchPRChecks(info.Link)
+					if err != nil {
+						log.Printf("Failed to fetch GitHub PR checks: %v", err)
+					} else {
+						content = prContent
+						log.Printf("GitHub PR checks fetched successfully, result: %s", utils.SanitizeForLog(content))
 					}
 				}
 
@@ -811,13 +832,15 @@ func (s *CompletionService) mergeAndProcessSearchResults(agenticSearchedResults 
 // Returns the routed tenant config and true if routing occurred, otherwise returns empty config and false.
 func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelConfig *model.ModelConfig, messages []openai.ChatCompletionMessageParamUnion) (model.TenantID, bool) {
 	routingStart := time.Now()
-	log.Printf("Starting tenant routing for tenant: %s", originalTenantID)
+	log.Printf("Starting tenant routing for tenant: %s", utils.SanitizeForLog(string(originalTenantID)))
 
 	// Use the common tenant routing prompt
 	promptParser := prompt.RoutingTenantPromptParser{
 		DefaultPromptParser: &prompt.DefaultPromptParser{},
 	}
-	promptStr, err := promptParser.ParsePrompt(nil, "common/tenant_routing.md")
+	promptStr, err := promptParser.ParsePrompt(map[string]string{
+		"original_tenant": string(originalTenantID),
+	}, "common/tenant_routing.md")
 	if err != nil {
 		log.Printf("Failed to parse tenant routing prompt: %v", err)
 		return originalTenantID, false
@@ -868,21 +891,21 @@ func (s *CompletionService) RouteTenant(originalTenantID model.TenantID, modelCo
 	}
 
 	routedTenantID := model.TenantID(result.RouteTenant)
-	log.Printf("Tenant routing recommendation: %s", routedTenantID)
+	log.Printf("Tenant routing recommendation: %s", utils.SanitizeForLog(string(routedTenantID)))
 
 	// Validate and apply routing
 	if routedTenantID == "" || routedTenantID == originalTenantID {
-		log.Printf("No routing needed, staying with current tenant: %s", originalTenantID)
+		log.Printf("No routing needed, staying with current tenant: %s", utils.SanitizeForLog(string(originalTenantID)))
 		return originalTenantID, false
 	}
 
 	_, hasConfig := config.GetTenantConfig(routedTenantID)
 	if !hasConfig {
-		log.Printf("Routed tenant '%s' not found, staying with current tenant", routedTenantID)
+		log.Printf("Routed tenant '%s' not found, staying with current tenant", utils.SanitizeForLog(string(routedTenantID)))
 		return originalTenantID, false
 	}
 
 	// Apply routing
-	log.Printf("Routing: %s → %s (took %v)", originalTenantID, routedTenantID, time.Since(routingStart))
+	log.Printf("Routing: %s → %s (took %v)", utils.SanitizeForLog(string(originalTenantID)), utils.SanitizeForLog(string(routedTenantID)), time.Since(routingStart))
 	return routedTenantID, true
 }

@@ -33,4 +33,5 @@ export interface CommentUpdatesDto {
     severity?: CommentSeverity | null;
     feedback?: AICommentFeedback;
     threadId?: string;
+    isReply?: boolean;
 }

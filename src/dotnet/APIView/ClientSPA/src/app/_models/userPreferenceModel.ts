@@ -1,7 +1,6 @@
 export class UserPreferenceModel {
     userName : string
     language : string []
-    approvedLanguages: string []
     theme : string
     hideReviewPageOptions : boolean
     hideSamplesPageOptions : boolean
@@ -17,7 +16,6 @@ export class UserPreferenceModel {
     constructor() {
         this.userName = '';
         this.language = [];
-        this.approvedLanguages = [];
         this.theme = '';
         this.hideReviewPageOptions  = false;
         this.hideSamplesPageOptions  = false;

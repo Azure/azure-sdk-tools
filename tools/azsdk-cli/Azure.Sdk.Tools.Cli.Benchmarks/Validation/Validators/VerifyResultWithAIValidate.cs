@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
         public VerifyResultWithAIValidate(string name, string verificationPlan)
         {
             Name = name;
-            this.verificationPrompt = "please verify the following plan: " + verificationPlan + "\nprovide the verification result.";
+            this.verificationPrompt = "please verify the following plan: " + verificationPlan + "\nprovide the verification result. If all the verification steps are correct, respond with 'Verification successful'. Otherwise, respond with 'Verification failed'";
         }
 
         public async Task<ValidationResult> ValidateAsync(ValidationContext context, CancellationToken cancellationToken = default)
@@ -44,14 +44,6 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
-                        //if (input.ToolName == "skill")
-                        //{
-                        //    toolCalls.Add($"{input.ToolName} {input.ToolArgs?.ToString()}");
-                        //}
-                        //else
-                        //{
-                        //    toolCalls.Add(input.ToolName);
-                        //}
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },
@@ -69,8 +61,55 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
 
             await using var session = await client.CreateSessionAsync(sessionConfig);
             var done = new TaskCompletionSource();
+            session.On(evt =>
+            {
+                switch (evt)
+                {
+                    case AssistantMessageDeltaEvent delta:
+                        // Streaming message chunk - print incrementally
+                        Console.Write(delta.Data.DeltaContent);
+                        break;
+                    case AssistantReasoningDeltaEvent reasoningDelta:
+                        // Streaming reasoning chunk (if model supports reasoning)
+                        Console.Write(reasoningDelta.Data.DeltaContent);
+                        break;
+                    case AssistantMessageEvent msg:
+                        // Final message - complete content
+                        Console.WriteLine("\n--- Final message ---");
+                        Console.WriteLine(msg.Data.Content);
+                        Console.WriteLine("\n---End of Final message ---");
+                        break;
+                    case AssistantReasoningEvent reasoningEvt:
+                        // Final reasoning content (if model supports reasoning)
+                        Console.WriteLine("--- Reasoning ---");
+                        Console.WriteLine(reasoningEvt.Data.Content);
+                        Console.WriteLine("--- End of Reasoning ---");
+                        break;
+                    case ToolExecutionStartEvent toolStart:
+                        Console.WriteLine($"Tool execution started: {toolStart.Data.ToolName}, {toolStart.Data.Arguments?.ToString()}, {toolStart.Data.McpToolName}");
+                        break;
+                    case ToolExecutionCompleteEvent toolFinish:
+                        Console.WriteLine($"Tool {toolFinish.Data.ToolCallId} execution finished: {toolFinish.Data.Result?.DetailedContent}");
+                        break;
+                    case SessionIdleEvent:
+                        // Session finished processing
+                        done.SetResult();
+                        break;
+                }
+            });
+            // Send prompt and wait for completion
+            var messageOptions = new MessageOptions { Prompt = verificationPrompt };
 
-            return ValidationResult.Pass(Name, $"Verify pass");
+            var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5));
+
+            if (result!.Data.Content.Contains("Verification successful", StringComparison.OrdinalIgnoreCase))
+            {
+                return ValidationResult.Pass(Name, $"AI verification passed");
+            }
+            else
+            {
+                return ValidationResult.Fail(Name, $"AI verification failed", result.Data.Content);
+            }
         }
     }
 }

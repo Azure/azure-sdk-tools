@@ -128,6 +128,8 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
 
             // Enable MCP server mode for agent communication
             RunAzsdkInMcpServer = true;
+
+            // TODO: Download and Start Azure Knowledge Base locally. Currently we need to manually start the Azure Knowledge Base server locally.
         }
 
         /// <inheritdoc />

@@ -127,8 +127,8 @@ public class SessionExecutor : IDisposable
 
             // Send prompt and wait for completion
             var messageOptions = new MessageOptions { Prompt = config.Prompt };
-
-                await session.SendAndWaitAsync(messageOptions, config.Timeout);
+            
+            await session.SendAndWaitAsync(messageOptions, config.Timeout);
 
             // Get messages for debugging
             var messages = await session.GetMessagesAsync();

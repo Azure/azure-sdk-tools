@@ -87,4 +87,10 @@
   </Target>
   <!-- END Exclude asp net configs from release archives -->
 
+  <!-- The default auto-bundling breaks CI due to networking/compliance constraints -->
+  <!-- See https://github.com/github/copilot-sdk/pull/494 -->
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'True'">
+    <CopilotSkipCliDownload>true</CopilotSkipCliDownload>
+  </PropertyGroup>
+
 </Project>

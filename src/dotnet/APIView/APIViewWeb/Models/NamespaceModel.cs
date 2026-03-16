@@ -43,6 +43,7 @@ public enum NamespaceOperationError
     InvalidStateTransition
 }
 
+#nullable enable
 public class NamespaceOperationResult
 {
     public Project? Project { get; }
@@ -58,3 +59,4 @@ public class NamespaceOperationResult
     public static NamespaceOperationResult Success(Project project) => new(project, null);
     public static NamespaceOperationResult Failure(NamespaceOperationError error) => new(null, error);
 }
+#nullable restore

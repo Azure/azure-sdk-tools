@@ -323,3 +323,85 @@ class TestApiView:
         stub_gen._set_root_namespace(file_path, "namespace")
         # If the file is an extend_ file, the namespace should not be set
         assert (stub_gen.namespace == "") if extends else (stub_gen.namespace == "namespace")
+
+    @mark.parametrize("pkg_path", ALL_PATHS, ids=ALL_PATH_IDS)
+    def test_markdown_generation(self, pkg_path):
+        """Test that markdown generation works and produces valid output"""
+        from apistub import _export_markdown, _get_output_paths
+        temp_path = tempfile.mkdtemp()
+        try:
+            stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
+            apiview = stub_gen.generate_tokens()
+
+            json_path, md_path = _get_output_paths(temp_path, apiview.package_name)
+            json_tokens = stub_gen.serialize(apiview)
+            with open(json_path, "w") as f:
+                f.write(json_tokens)
+            _export_markdown(json_path, md_path)
+
+            with open(md_path, "r") as f:
+                md_content = f.read()
+
+            # Verify markdown structure
+            assert md_content.startswith("```py")
+            assert md_content.endswith("```")
+            assert "namespace apistubgentest" in md_content
+
+            # Verify hierarchical indentation exists
+            lines = md_content.split('\n')
+            # Find a class line and verify it has indentation
+            class_lines = [l for l in lines if 'class' in l and 'apistubgentest' in l]
+            assert len(class_lines) > 0
+            # Classes under namespace should have 4 spaces
+            assert any(l.startswith('    class') for l in class_lines)
+        finally:
+            shutil.rmtree(temp_path, ignore_errors=True)
+
+    def test_markdown_flags_and_naming(self):
+        """Test markdown flag and filename format (JSON is always generated)"""
+        from apistub import _get_output_paths
+        temp_path = tempfile.mkdtemp()
+        out_path = tempfile.mkdtemp()
+        try:
+            # Test flag storage: default (no flags)
+            stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
+            assert stub_gen.md == False
+
+            # Test --md flag
+            stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path, md=True)
+            assert stub_gen.md == True
+
+            # Test filename format
+            stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path, out_path=out_path, md=True)
+            apiview = stub_gen.generate_tokens()
+            _, md_path = _get_output_paths(out_path, apiview.package_name)
+            assert os.path.basename(md_path) == "api.md"
+        finally:
+            shutil.rmtree(temp_path, ignore_errors=True)
+            shutil.rmtree(out_path, ignore_errors=True)
+
+    def test_bundled_script_in_sync(self):
+        """When running inside the azure-sdk-tools repo, verify the bundled PS script matches eng/common/scripts/."""
+        import pytest
+        bundled = os.path.join(os.path.dirname(__file__), "..", "apistub", "scripts", "Export-APIViewMarkdown.ps1")
+        bundled = os.path.abspath(bundled)
+
+        # Walk up from test file looking for eng/common/scripts/
+        current = os.path.dirname(os.path.abspath(__file__))
+        source = None
+        for _ in range(10):
+            candidate = os.path.join(current, "eng", "common", "scripts", "Export-APIViewMarkdown.ps1")
+            if os.path.exists(candidate):
+                source = candidate
+                break
+            current = os.path.dirname(current)
+
+        if source is None:
+            pytest.skip("eng/common/scripts/Export-APIViewMarkdown.ps1 not found; skipping sync check.")
+
+        with open(bundled, "rb") as f1, open(source, "rb") as f2:
+            assert f1.read() == f2.read(), (
+                f"Bundled script is out of sync with eng/common/scripts/.\n"
+                f"Bundled: {bundled}\n"
+                f"Source:  {source}"
+            )

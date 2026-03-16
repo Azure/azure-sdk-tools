@@ -20,36 +20,7 @@ public partial class PythonLanguageService : LanguageService
         {
             logger.LogInformation("Starting snippet update for Python project at: {PackagePath}", packagePath);
 
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
-            var scriptPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools", "ci_tools", "snippet_update", "python_snippet_updater.py");
-
-            if (!File.Exists(scriptPath))
-            {
-                logger.LogError("Python snippet updater script not found at: {ScriptPath}", scriptPath);
-                return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}")
-                {
-                    NextSteps = [
-                        VerifySetupNextStepInstruction,
-                        "Verify the eng/tools/azure-sdk-tools directory exists in the repository root"
-                    ]
-                };
-            }
-
-            var pythonCheckResult = await pythonHelper.Run(new PythonOptions("python", ["--version"]), cancellationToken);
-            if (pythonCheckResult.ExitCode != 0)
-            {
-                logger.LogError("Python is not installed or not available in PATH");
-                return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.")
-                {
-                    NextSteps = [
-                        "Install Python and ensure it is added to your system PATH",
-                        "Verify installation by running 'python --version' in your terminal",
-                        VerifySetupNextStepInstruction
-                    ]
-                };
-            }
-
-            var result = await pythonHelper.Run(new PythonOptions("python", [scriptPath, packagePath], workingDirectory: packagePath), cancellationToken);
+            var result = await pythonHelper.Run(new PythonOptions("azpysdk", ["update_snippet", "--isolate", packagePath], workingDirectory: packagePath), cancellationToken);
 
             if (result.ExitCode == 0)
             {

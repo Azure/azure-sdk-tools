@@ -16,5 +16,5 @@ public static class BenchmarkDefaults
     /// <summary>
     /// The default maximum number of scenarios to run concurrently.
     /// </summary>
-    public const int DefaultMaxParallelism = 5;
+    public const int DefaultMaxParallelism = 1;
 }

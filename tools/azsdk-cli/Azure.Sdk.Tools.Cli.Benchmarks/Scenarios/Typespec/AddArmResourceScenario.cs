@@ -29,7 +29,8 @@ public class AddArmResourceScenario : BenchmarkScenario
     {
         Owner = "Azure",
         Name = "azure-rest-api-specs",
-        Ref = "main"
+        Ref = "main",
+        SparseCheckoutPaths = ["specification/widget/resource-manager/Microsoft.Widget/Widget"]
     };
 
     /// <inheritdoc />
@@ -39,7 +40,7 @@ public class AddArmResourceScenario : BenchmarkScenario
         """;
 
     /// <inheritdoc />
-    public override TimeSpan Timeout => TimeSpan.FromMinutes(3);
+    public override TimeSpan Timeout => TimeSpan.FromMinutes(5);
 
     /// <inheritdoc />
     public override async Task SetupAsync(Workspace workspace)

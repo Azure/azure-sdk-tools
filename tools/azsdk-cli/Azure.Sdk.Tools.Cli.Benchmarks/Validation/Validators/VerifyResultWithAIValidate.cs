@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
             };
 
             await using var session = await client.CreateSessionAsync(sessionConfig);
-            var done = new TaskCompletionSource();
+
             session.On(evt =>
             {
                 switch (evt)
@@ -93,7 +93,6 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
                         break;
                     case SessionIdleEvent:
                         // Session finished processing
-                        done.SetResult();
                         break;
                 }
             });

@@ -2,12 +2,12 @@ using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
 {
-    public class ToolAndSkillTriggerValidate : IValidator
+    public class ToolAndSkillTriggerValidator : IValidator
     {
         public string Name { get; }
         public IReadOnlyList<string> ToolAndSkillToCheck { get; }
 
-        public ToolAndSkillTriggerValidate(string name, IEnumerable<string> toolAndSkillToCheck)
+        public ToolAndSkillTriggerValidator(string name, IEnumerable<string> toolAndSkillToCheck)
         {
             Name = name;
             ToolAndSkillToCheck = toolAndSkillToCheck.ToList();

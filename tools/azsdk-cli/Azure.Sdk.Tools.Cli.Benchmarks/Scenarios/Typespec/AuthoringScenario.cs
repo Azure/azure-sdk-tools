@@ -138,7 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <inheritdoc />
         public override IEnumerable<IValidator> Validators =>
         [
-            new ToolAndSkillTriggerValidate("Expected tools and skills were triggered", new List<string>(){ "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan"}),
+            new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", new List<string>(){ "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan"}),
             new VerifyResultWithAIValidate("Verify results with AI", VerifyPlan)
         ];
     }

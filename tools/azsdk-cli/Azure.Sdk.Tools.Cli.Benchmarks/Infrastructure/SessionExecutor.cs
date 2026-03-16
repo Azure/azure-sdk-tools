@@ -84,7 +84,7 @@ public class SessionExecutor : IDisposable
             };
 
             await using var session = await _client.CreateSessionAsync(sessionConfig);
-            var done = new TaskCompletionSource();
+
             if (config.Verbose)
             {
                 session.On(evt =>
@@ -119,7 +119,6 @@ public class SessionExecutor : IDisposable
                             break;
                         case SessionIdleEvent:
                             // Session finished processing
-                            done.SetResult();
                             break;
                     }
                 });
@@ -161,7 +160,7 @@ public class SessionExecutor : IDisposable
     /// </summary>
     /// <param name="azsdkPath">Optional path to the azsdk MCP server executable.</param>
     /// <returns>MCP server configuration dictionary, or null if no path is available.</returns>
-    private static Dictionary<string, object>? BuildMcpServers(string? azsdkPath, bool? RunAzsdkInMcpServer)
+    private static Dictionary<string, object>? BuildMcpServers(string? azsdkPath, bool? runAzsdkInMcpServer)
     {
         // Priority: config param > env var > null (let SDK use repo config)
         var path = azsdkPath ?? Environment.GetEnvironmentVariable("AZSDK_MCP_PATH");
@@ -176,13 +175,13 @@ public class SessionExecutor : IDisposable
             {
                 Type = "local",
                 Command = path,
-                Args = RunAzsdkInMcpServer == true ? ["start"] : ["mcp", "run"],
+                Args = runAzsdkInMcpServer == true ? ["start"] : ["mcp", "run"],
                 Tools = ["*"],
                 Env = new Dictionary<string, string>
                 {
                     // Set any necessary environment variables for the MCP server here
                     // For example: ["AZURE_SDK_KB_ENDPOINT"] = "http://localhost:8088"
-                    ["AZURE_SDK_KB_ENDPOINT"] = "http://localhost:8088"
+                    ["AZURE_SDK_KB_ENDPOINT"] = BenchmarkDefaults.DefaultAzureKnowledgeBaseEndpoint
                 }
             }
         };

@@ -298,6 +298,96 @@
     },
     {
       "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-cpp.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "General guide for Azure SDK for C++",
+          "path": "/README.md",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Documentation for Azure SDK for C++",
+          "path": "/doc",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Contributing guidelines for Azure SDK for C++",
+          "path": "/CONTRIBUTING.md",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Samples guide for Azure SDK for C++",
+          "path": "/samples/README.md",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "CMake and vcpkg integration guide for Azure SDK for C++",
+          "path": "/samples/integration/cmake-vcpkg/README.md",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "CMake FetchContent integration guide for Azure SDK for C++",
+          "path": "/samples/integration/cmake-fetch-content/README.md",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Beta packages with vcpkg guide for Azure SDK for C++",
+          "path": "/samples/integration/beta-packages-vcpkg/README.md",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Storage FAQ and Best Practices for Azure SDK for C++",
+          "path": "/sdk/storage/faq.md",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Storage Testing Guide for Azure SDK for C++",
+          "path": "/sdk/storage/TestingGuide.md",
+          "folder": "azure_sdk_for_cpp_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-java.git",
         "branch": "main",
         "authType": "public"

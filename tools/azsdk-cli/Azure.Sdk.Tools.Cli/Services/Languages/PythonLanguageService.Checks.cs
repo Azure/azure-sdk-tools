@@ -11,29 +11,16 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// </summary>
 public partial class PythonLanguageService : LanguageService
 {
+    // Common NextSteps messages for Python tool issues
+    private const string VerifySetupNextStepInstruction = "Run 'azsdk_verify_setup' from the azure-sdk-for-python repo root to auto-install required Python tools";
+
     public override async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
             logger.LogInformation("Starting snippet update for Python project at: {PackagePath}", packagePath);
 
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, cancellationToken);
-            var scriptPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools", "ci_tools", "snippet_update", "python_snippet_updater.py");
-
-            if (!File.Exists(scriptPath))
-            {
-                logger.LogError("Python snippet updater script not found at: {ScriptPath}", scriptPath);
-                return new PackageCheckResponse(1, "", $"Python snippet updater script not found at: {scriptPath}");
-            }
-
-            var pythonCheckResult = await pythonHelper.Run(new PythonOptions("python", ["--version"]), cancellationToken);
-            if (pythonCheckResult.ExitCode != 0)
-            {
-                logger.LogError("Python is not installed or not available in PATH");
-                return new PackageCheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use snippet update functionality.");
-            }
-
-            var result = await pythonHelper.Run(new PythonOptions("python", [scriptPath, packagePath], workingDirectory: packagePath), cancellationToken);
+            var result = await pythonHelper.Run(new PythonOptions("azpysdk", ["update_snippet", "--isolate", packagePath], workingDirectory: packagePath), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -43,13 +30,21 @@ public partial class PythonLanguageService : LanguageService
             else
             {
                 logger.LogWarning("Snippet update detected out-of-date snippets with exit code {ExitCode}", result.ExitCode);
-                return new PackageCheckResponse(result.ExitCode, result.Output, "Some snippets were updated or need attention");
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Some snippets were updated or need attention")
+                {
+                    NextSteps = [
+                        "Review the snippet update output to identify if any snippets need manual changes"
+                    ]
+                };
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating snippets for Python project at: {PackagePath}", packagePath);
-            return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error updating snippets: {ex.Message}")
+            {
+                NextSteps = [VerifySetupNextStepInstruction]
+            };
         }
     }
 
@@ -89,14 +84,31 @@ public partial class PythonLanguageService : LanguageService
                 
                 logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
                     failedTools.Count, allResults.Length, failedToolNames);
-                
-                return new PackageCheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
+
+                var nextSteps = new List<string>();
+                if (failedTools.Any(t => t.toolName == "pylint"))
+                {
+                    nextSteps.Add("pylint: Review and manually fix code quality violations.");
+                }
+                if (failedTools.Any(t => t.toolName == "mypy"))
+                {
+                    nextSteps.Add("mypy: Review and manually fix type annotation issues.");
+                }
+                nextSteps.Add(VerifySetupNextStepInstruction);
+
+                return new PackageCheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}")
+                {
+                    NextSteps = nextSteps
+                };
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
-            return new PackageCheckResponse(1, "", $"Error running code linting: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error running code linting: {ex.Message}")
+            {
+                NextSteps = [VerifySetupNextStepInstruction]
+            };
         }
     }
 
@@ -116,13 +128,22 @@ public partial class PythonLanguageService : LanguageService
             else
             {
                 logger.LogWarning("Dependency analysis found issues with exit code {ExitCode}", result.ExitCode);
-                return new PackageCheckResponse(result.ExitCode, result.Output, "Dependency analysis found issues with minimum dependency versions");
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Dependency analysis found issues with minimum dependency versions")
+                {
+                    NextSteps = [
+                        "Review and update the minimum dependency versions declared in setup.py or pyproject.toml",
+                        "Ensure that all dependent packages are compatible with the declared minimum versions",
+                    ]
+                };
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error running dependency analysis for Python project at: {PackagePath}", packagePath);
-            return new PackageCheckResponse(1, "", $"Error running dependency analysis: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error running dependency analysis: {ex.Message}")
+            {
+                NextSteps = [VerifySetupNextStepInstruction]
+            };
         }
     }
 
@@ -131,8 +152,10 @@ public partial class PythonLanguageService : LanguageService
         try
         {
             logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
-            
-            var result = await pythonHelper.Run(new PythonOptions("azpysdk", ["black", "--isolate", packagePath], workingDirectory: packagePath), cancellationToken);
+
+            var blackArgs = new[] { "black", "--isolate", packagePath };
+
+            var result = await pythonHelper.Run(new PythonOptions("azpysdk", blackArgs, workingDirectory: packagePath), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -141,14 +164,21 @@ public partial class PythonLanguageService : LanguageService
             }
             else
             {
-                logger.LogWarning("Code formatting found issues with exit code {ExitCode}", result.ExitCode);
-                return new PackageCheckResponse(result.ExitCode, result.Output, "Code formatting found issues that need attention");
+                logger.LogWarning("Code formatting failed to apply with exit code {ExitCode}", result.ExitCode);
+
+                return new PackageCheckResponse(result.ExitCode, result.Output, "Code formatting failed to apply")
+                {
+                    NextSteps = ["Review the error output - some formatting issues could not be auto-fixed by black"]
+                };
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error running code formatting for Python project at: {PackagePath}", packagePath);
-            return new PackageCheckResponse(1, "", $"Error running code formatting: {ex.Message}");
+            return new PackageCheckResponse(1, "", $"Error running code formatting: {ex.Message}")
+            {
+                NextSteps = [VerifySetupNextStepInstruction]
+            };
         }
     }
 

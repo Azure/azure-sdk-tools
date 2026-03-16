@@ -164,6 +164,16 @@ public class Program
 
         Console.WriteLine("=== Azure SDK Benchmarks ===\n");
 
+        if (!File.Exists("/.dockerenv"))
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("⚠ Warning: Not running inside a container.");
+            Console.WriteLine("  During benchmark runs, Copilot CLI is executed with all permissions, and automatically approves permission prompts, which can affect the state of your local machine.");
+            Console.WriteLine("  For full isolation, consider running inside a container.");
+            Console.ResetColor();
+            Console.WriteLine();
+        }
+
         var effectiveModel = model ?? BenchmarkDefaults.DefaultModel;
         Console.WriteLine($"Model: {effectiveModel}");
         if (model != null)

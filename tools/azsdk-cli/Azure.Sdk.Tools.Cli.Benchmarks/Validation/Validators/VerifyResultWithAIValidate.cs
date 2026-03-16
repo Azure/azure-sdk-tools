@@ -102,7 +102,14 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
 
             var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5));
 
-            if (result!.Data.Content.Contains("Verification successful", StringComparison.OrdinalIgnoreCase))
+            if (result == null || result.Data == null || string.IsNullOrEmpty(result.Data.Content))
+            {
+                return ValidationResult.Fail(
+                    Name,
+                    "AI verification did not return a result within the expected time or returned empty content.");
+            }
+
+            if (result.Data.Content.Contains("Verification successful", StringComparison.OrdinalIgnoreCase))
             {
                 return ValidationResult.Pass(Name, $"AI verification passed");
             }

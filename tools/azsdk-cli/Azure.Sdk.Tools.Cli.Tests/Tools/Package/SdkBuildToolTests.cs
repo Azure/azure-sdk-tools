@@ -47,6 +47,9 @@ public class SdkBuildToolTests
         _mockGitHelper = new Mock<IGitHelper>();
         _mockProcessHelper = new Mock<IProcessHelper>();
         _mockPythonHelper = new Mock<IPythonHelper>();
+        _mockPythonHelper
+            .Setup(x => x.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0 });
         _mockSpecGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         _mockNpxHelper = new Mock<INpxHelper>();
         _mockPowerShellHelper = new Mock<IPowershellHelper>();
@@ -109,6 +112,7 @@ public class SdkBuildToolTests
         // Arrange - create a test directory structure
         var projectDir = Path.Combine(_tempDirectory.DirectoryPath, "sdk", "project");
         Directory.CreateDirectory(projectDir);
+        File.WriteAllText(Path.Combine(projectDir, "pyproject.toml"), "[project]");
 
         // Save the current directory
         var originalDir = Directory.GetCurrentDirectory();
@@ -146,6 +150,7 @@ public class SdkBuildToolTests
         // Arrange
         var pythonProjectPath = Path.Combine(_tempDirectory.DirectoryPath, "test-python-sdk");
         Directory.CreateDirectory(pythonProjectPath);
+        File.WriteAllText(Path.Combine(pythonProjectPath, "pyproject.toml"), "[project]");
 
         // Mock GitHelper to return a Python SDK repo name
         _mockGitHelper

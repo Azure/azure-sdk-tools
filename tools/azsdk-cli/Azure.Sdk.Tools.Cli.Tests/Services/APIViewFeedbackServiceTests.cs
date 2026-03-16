@@ -85,11 +85,11 @@ public class APIViewFeedbackServiceTests
         var comments = new[]
         {
             // Should be filtered: azure-sdk bot with downvotes
-            CreateAPIViewComment("thread1", 1, "Use List[str] instead of list[str]", createdBy: "azure-sdk", downvotes: 1),
+            CreateAPIViewComment("thread1", 1, "Use List[str] instead of list[str]", lineId: "line1", createdBy: "azure-sdk", downvotes: 1),
             // Should remain: azure-sdk bot with no downvotes
-            CreateAPIViewComment("thread2", 2, "Remove unused import", createdBy: "azure-sdk", downvotes: 0),
+            CreateAPIViewComment("thread2", 2, "Remove unused import", lineId: "line2", createdBy: "azure-sdk", downvotes: 0),
             // Should remain: non-bot comment with downvotes
-            CreateAPIViewComment("thread3", 3, "Rename parameter to media_id", createdBy: "reviewer", downvotes: 2),
+            CreateAPIViewComment("thread3", 3, "Rename parameter to media_id", lineId: "line3", createdBy: "reviewer", downvotes: 2),
         };
         var commentsJson = JsonSerializer.Serialize(comments);
         _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId))

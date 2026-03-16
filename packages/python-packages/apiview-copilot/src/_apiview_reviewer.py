@@ -20,6 +20,7 @@ from time import time
 from typing import List, Optional
 
 import yaml
+from opentelemetry import metrics, trace
 from src._comment_grouper import CommentGrouper
 from src._credential import get_credential
 from src._diff import create_diff_with_line_numbers
@@ -60,6 +61,20 @@ root_logger.addHandler(console_handler)
 
 # Create module-level logger
 logger = logging.getLogger(__name__)
+
+# OpenTelemetry instrumentation
+_tracer = trace.get_tracer(__name__)
+_meter = metrics.get_meter(__name__)
+_review_duration_histogram = _meter.create_histogram(
+    name="apiview.review.duration",
+    description="Total wall-clock duration of a review in seconds",
+    unit="s",
+)
+_review_duration_per_line_histogram = _meter.create_histogram(
+    name="apiview.review.duration_per_line",
+    description="Review duration divided by the number of lines in the target API view",
+    unit="s",
+)
 
 
 CREDENTIAL = get_credential()
@@ -900,10 +915,21 @@ class ApiViewReview:
             )
 
             overall_end_time = time()
+            total_duration = overall_end_time - overall_start_time
             self._print_message(
                 # pylint: disable=line-too-long
-                f"\nReview {self.job_id} generated in {overall_end_time - overall_start_time:.2f} seconds. Found {len(results.comments)} comments"
+                f"\nReview {self.job_id} generated in {total_duration:.2f} seconds. Found {len(results.comments)} comments"
             )
+
+            # Record review duration telemetry
+            target_line_count = len(self.target.splitlines())
+            duration_per_line = total_duration / target_line_count if target_line_count > 0 else 0
+            metric_attrs = {
+                "review.language": self.language,
+                "review.mode": self.mode,
+            }
+            _review_duration_histogram.record(total_duration, attributes=metric_attrs)
+            _review_duration_per_line_histogram.record(duration_per_line, attributes=metric_attrs)
 
             if self.semantic_search_failed:
                 self._print_message("WARN: Semantic search failed for some chunks (see error.log).")

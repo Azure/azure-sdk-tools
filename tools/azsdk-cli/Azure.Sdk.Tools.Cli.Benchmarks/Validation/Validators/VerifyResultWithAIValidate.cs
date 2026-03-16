@@ -12,11 +12,11 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
     {
         public string Name { get; }
 
-        public string verificationPrompt { get; } = string.Empty;
+        public string VerificationPrompt { get; } = string.Empty;
         public VerifyResultWithAIValidate(string name, string verificationPlan)
         {
             Name = name;
-            this.verificationPrompt = "please verify the following plan: " + verificationPlan + "\nprovide the verification result. If all the verification steps are correct, respond with 'Verification successful'. Otherwise, respond with 'Verification failed'";
+            this.VerificationPrompt = "please verify the following plan: " + verificationPlan + "\nprovide the verification result. If all the verification steps are correct, respond with 'Verification successful'. Otherwise, respond with 'Verification failed'";
         }
 
         public async Task<ValidationResult> ValidateAsync(ValidationContext context, CancellationToken cancellationToken = default)
@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
                 }
             });
             // Send prompt and wait for completion
-            var messageOptions = new MessageOptions { Prompt = verificationPrompt };
+            var messageOptions = new MessageOptions { Prompt = VerificationPrompt };
 
             var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5));
 

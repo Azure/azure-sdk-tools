@@ -19,6 +19,9 @@ compatibility:
 | `azure-sdk-mcp:azsdk_typespec_delegate_apiview_feedback` | Delegate feedback to CCA pipeline |
 | `azure-sdk-mcp:azsdk_run_typespec_validation` | Validate TypeSpec changes |
 | `azure-sdk-mcp:azsdk_package_generate_code` | Regenerate SDK |
+| `azure-sdk-mcp:azsdk_get_sdk_pull_request_link` | Track SDK PRs from spec changes |
+| `azure-sdk-mcp:azsdk_get_pull_request` | Get PR details and status |
+| `azure-sdk-mcp:azsdk_get_pipeline_status` | Monitor pipeline progress |
 
 ## Steps
 
@@ -26,7 +29,7 @@ compatibility:
 2. **Categorize** — Group as Critical/Suggestions/Informational. See [feedback steps](references/feedback-resolution-steps.md).
 3. **Resolve** — Use `azure-sdk-mcp:azsdk_typespec_customized_code_update` for TypeSpec changes (applies locally); for complex multi-file changes, delegate via `azure-sdk-mcp:azsdk_typespec_delegate_apiview_feedback`. Apply code-only fixes directly.
 4. **Validate** — Run validation, regenerate SDK, build and test.
-5. **Confirm** — Verify all items addressed, inform user to request re-review.
+5. **Confirm** — Verify all items addressed. If delegation was used, follow the [post-delegation follow-up](references/feedback-resolution-steps.md#post-delegation-follow-up) steps to share tracking links with the user. Inform user to request re-review.
 
 ## Examples
 

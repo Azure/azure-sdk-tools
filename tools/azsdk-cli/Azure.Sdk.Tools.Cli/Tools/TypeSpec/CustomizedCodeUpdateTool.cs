@@ -194,12 +194,13 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to fetch feedback items.");
+            logger.LogError(ex, "No feedback items to process.");
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
-                Message = $"Failed to fetch feedback: {ex.Message}",
-                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.UnexpectedError
+                Message = "No feedback items provided. Please supply a customization request or API review URL.",
+                ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.InvalidInput,
+                BuildResult = "No feedback items to process."
             };
         }
         var feedbackDictionary = feedbackItems.ToDictionary(i => i.Id, i => i);
@@ -254,8 +255,6 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     logger.LogWarning("Classifier returned non-existent feedback item ID '{ItemId}', skipping.", itemDetails.ItemId);
                     continue;
                 }
-
-                feedbackItem?.AppendContext($"Iteration {tries+1}");
 
                 if (itemDetails.Classification == ClassificationTspApplicable)
                 {

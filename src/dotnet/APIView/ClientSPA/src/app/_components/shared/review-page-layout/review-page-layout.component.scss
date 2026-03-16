@@ -4,7 +4,8 @@
         display: flex;
         align-items: center;
         gap: 0;
-        border-bottom: 1px solid var(--border-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
         background: var(--base-fg-color);
         padding: 0 0.5rem;
     }

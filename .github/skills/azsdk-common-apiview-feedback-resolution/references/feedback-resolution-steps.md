@@ -10,10 +10,7 @@
 
 **If TypeSpec change needed:**
 
-1. Run `azsdk_typespec_delegate_apiview_feedback` to apply AI-suggested fixes
-2. Review the proposed TypeSpec changes
-3. Apply changes to `client.tsp` (for SDK customizations) or `main.tsp` (for API changes)
-4. Use TypeSpec customization for complex customizations
+1. Run `azsdk_typespec_delegate_apiview_feedback` to create a GH issue with all actionable comments in the specs repo and assign to Copilot.
 
 **If code-only fix needed:**
 

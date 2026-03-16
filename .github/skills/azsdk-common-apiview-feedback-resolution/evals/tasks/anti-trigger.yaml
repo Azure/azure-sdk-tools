@@ -12,3 +12,5 @@ graders:
       not_contains:
         - "APIView"
         - "API review"
+        - "apiview.dev"
+        - "apiviewstagingtest.com"

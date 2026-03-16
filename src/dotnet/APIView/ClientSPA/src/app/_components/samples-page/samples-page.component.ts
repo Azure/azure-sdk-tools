@@ -1,10 +1,15 @@
-import { ChangeDetectorRef, Component, ElementRef, Injector, Renderer2, SimpleChange, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Injector, Input, Renderer2, SimpleChange, ViewContainerRef } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MenuItem, MessageService } from 'primeng/api';
 import { FileSelectEvent } from 'primeng/fileupload';
+import { DialogModule } from 'primeng/dialog';
+import { DrawerModule } from 'primeng/drawer';
+import { InputTextModule } from 'primeng/inputtext';
 import { Subject, take, takeUntil } from 'rxjs';
-import { ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
+import { ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
 import { PaginatedResult } from 'src/app/_models/pagination';
@@ -20,15 +25,34 @@ import { SamplesRevisionService } from 'src/app/_services/samples/samples.servic
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
+import { ReviewPageLayoutModule } from 'src/app/_modules/shared/review-page-layout.module';
+import { CodeEditorComponent } from '../shared/code-editor/code-editor.component';
+import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 
 @Component({
     selector: 'app-samples-page',
     templateUrl: './samples-page.component.html',
     styleUrls: ['./samples-page.component.scss'],
-    standalone: false
+    standalone: true,
+    imports: [
+      CommonModule,
+      FormsModule,
+      DialogModule,
+      DrawerModule,
+      InputTextModule,
+      ReviewPageLayoutModule,
+      CodeEditorComponent,
+      MarkdownToHtmlPipe,
+    ]
 })
 export class SamplesPageComponent {
   SAMPLES_CONTENT_PLACEHOLDER = "<!--- Enter Markdown Formated Content --->";
+
+  // Embedded mode inputs — when true, parent provides data and navigation uses query params
+  @Input() embedded = false;
+  @Input() embeddedReviewId: string | null = null;
+  @Input() embeddedReview: Review | undefined;
+  @Input() embeddedUserProfile: UserProfile | undefined;
 
   webAppUrl : string = this.configService.webAppUrl
 
@@ -41,6 +65,7 @@ export class SamplesPageComponent {
   sideMenu: MenuItem[] | undefined;
   latestApiRevision: APIRevision | undefined = undefined;
   samplesRevisions: SamplesRevision[] = [];
+  samplesRevisionTotalCount: number = 0;
   userProfile : UserProfile | undefined;
   comments: CommentItemModel[] = [];
   commentThreads: Map<string, CodePanelRowData> =  new Map<string, CodePanelRowData>;
@@ -51,11 +76,10 @@ export class SamplesPageComponent {
   commentsLoaded: boolean = false;
   commentableRegionsAdded : boolean = false;
 
+  activeView: 'list' | 'detail' = 'list';
+  sampleToDelete: SamplesRevision | null = null;
+
   samplesRevisionsPageSize = 50;
-  showPageOptions : boolean = true;
-  pageOptionsPanelSize = 16;
-  panelSizes = [84, this.pageOptionsPanelSize];
-  minSizes = [1, 0.1];
 
   samplesUpdateSidePanel = false
   samplesUpdateState: "add" | "edit" | undefined = undefined;
@@ -83,30 +107,47 @@ export class SamplesPageComponent {
     private injector: Injector, private viewContainerRef: ViewContainerRef, private titleService: Title) {}
 
   ngOnInit() {
-    this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
-
-    this.userProfileService.getUserProfile().subscribe(
-      (userProfile : any) => {
-        this.userProfile = userProfile;
-        if (this.userProfile?.preferences.hideSamplesPageOptions) {
-          this.showPageOptions = false;
-          this.updateRightPanelSize();
-        }
-    });
+    if (this.embedded) {
+      this.reviewId = this.embeddedReviewId;
+      this.review = this.embeddedReview;
+      this.userProfile = this.embeddedUserProfile;
+    } else {
+      this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
+      this.userProfileService.getUserProfile().subscribe(
+        (userProfile : any) => {
+          this.userProfile = userProfile;
+      });
+      this.loadReview(this.reviewId!);
+    }
 
     this.createSideMenu();
-    this.loadReview(this.reviewId!);
     this.loadLatestAPIRevision(this.reviewId!);
 
-    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      const navigationState = this.router.currentNavigation()?.extras.state;
-      if (!navigationState || !navigationState['skipStateUpdate']) {
-        this.updateStateBasedOnQueryParams(params);
-      }
-    });
+    if (this.embedded) {
+      // In embedded mode, load the list once on init and only react to
+      // query-param changes that target the samples view (e.g. selecting a sample).
+      this.loadSamplesRevisions(0, this.samplesRevisionsPageSize);
+      this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+        if (params['view'] !== 'samples') return;
+        const navigationState = this.router.currentNavigation()?.extras.state;
+        if (!navigationState || !navigationState['skipStateUpdate']) {
+          this.updateStateBasedOnQueryParams(params);
+        }
+      });
+    } else {
+      this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+        const navigationState = this.router.currentNavigation()?.extras.state;
+        if (!navigationState || !navigationState['skipStateUpdate']) {
+          this.updateStateBasedOnQueryParams(params);
+        }
+      });
+    }
   }
 
   ngAfterViewChecked(): void {
+    if (!this.samplesContent || !this.commentsLoaded || this.commentableRegionsAdded) {
+      return;
+    }
     setTimeout(() => {
       if (this.samplesContent && this.commentsLoaded && !this.commentableRegionsAdded) {
         this.addCommentableRegions();
@@ -116,26 +157,97 @@ export class SamplesPageComponent {
   }
 
   createSideMenu() {
-    this.sideMenu = [
-      {
-        icon: 'bi bi-braces',
-        tooltip: 'API',
-        command: () => this.openLatestAPIReivisonForReview()
-      }
-    ];
+    this.sideMenu = [];
+  }
+
+  navigateToConversations() {
+    const queryParams: any = {};
+    const revisionId = this.activeApiRevisionId ?? this.latestApiRevision?.id;
+    if (revisionId) {
+      queryParams['activeApiRevisionId'] = revisionId;
+    }
+    queryParams['view'] = 'conversations';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+  }
+
+  navigateToRevisions() {
+    const queryParams: any = {};
+    const revisionId = this.activeApiRevisionId ?? this.latestApiRevision?.id;
+    if (revisionId) {
+      queryParams['activeApiRevisionId'] = revisionId;
+    }
+    queryParams['view'] = 'revisions';
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+  }
+
+  navigateToReview() {
+    const queryParams: any = {};
+    const revisionId = this.activeApiRevisionId ?? this.latestApiRevision?.id;
+    if (revisionId) {
+      queryParams['activeApiRevisionId'] = revisionId;
+    }
+    if (this.diffApiRevisionId) {
+      queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+    }
+    this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
+  }
+
+  selectSample(sample: SamplesRevision) {
+    const queryParams: any = { activeSamplesRevisionId: sample.id };
+    if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+    this.navigateSamples(queryParams);
+  }
+
+  backToList() {
+    const queryParams: any = { activeSamplesRevisionId: null };
+    if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
+    this.navigateSamples(queryParams);
+  }
+
+  navigateToSamplesList() {
+    this.backToList();
+  }
+
+  confirmDeleteSample(sample: SamplesRevision, event: Event) {
+    event.stopPropagation();
+    this.sampleToDelete = sample;
+    this.showSamplesDeleteModal = true;
+  }
+
+  private navigateSamples(queryParams: any) {
+    if (this.embedded) {
+      const currentParams = getQueryParams(this.route);
+      this.router.navigate([], {
+        queryParams: { ...currentParams, ...queryParams, view: 'samples' },
+        state: { skipStateUpdate: true }
+      });
+      const merged = { ...currentParams, ...queryParams, view: 'samples' };
+      this.updateStateBasedOnQueryParams(merged);
+    } else {
+      this.router.navigate(['/samples', this.reviewId], { queryParams });
+    }
   }
 
   updateStateBasedOnQueryParams(params: Params) {
-    this.isLoading = true;
-    this.loadFailed = false;
-    this.commentableRegionsAdded = false;
-    this.commentsLoaded = false;
-    this.samplesContent = undefined;
-    this.changeDetectorRef.detectChanges();
     this.activeSamplesRevisionId = params[ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM];
     this.activeApiRevisionId = params[ACTIVE_API_REVISION_ID_QUERY_PARAM];
     this.diffApiRevisionId = params[DIFF_API_REVISION_ID_QUERY_PARAM];
-    this.loadComments();
+
+    if (this.activeSamplesRevisionId) {
+      this.activeView = 'detail';
+      this.isLoading = true;
+      this.loadFailed = false;
+      this.commentableRegionsAdded = false;
+      this.commentsLoaded = false;
+      this.samplesContent = undefined;
+      this.changeDetectorRef.detectChanges();
+      this.loadComments();
+    } else {
+      this.activeView = 'list';
+      this.isLoading = true;
+    }
     this.loadSamplesRevisions(0, this.samplesRevisionsPageSize);
   }
 
@@ -190,6 +302,7 @@ export class SamplesPageComponent {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (paginatedResult: PaginatedResult<SamplesRevision[]>) => {
           this.samplesRevisions = paginatedResult.result!;
+          this.samplesRevisionTotalCount = paginatedResult.pagination?.totalCount ?? this.samplesRevisions.length;
           this.activeSamplesRevision = this.samplesRevisions.filter(x => x.id === this.activeSamplesRevisionId)[0];
           this.loadActiveSampleRevisionData();
         }
@@ -197,20 +310,22 @@ export class SamplesPageComponent {
   }
 
   loadActiveSampleRevisionData() {
-    if (this.samplesRevisions && this.samplesRevisions.length > 0) {
-      if (this.activeSamplesRevisionId) {
-        this.activeSamplesRevision = this.samplesRevisions.filter(x => x.id === this.activeSamplesRevisionId)[0];
-      } else{
-        this.activeSamplesRevision = this.samplesRevisions[0];
-        this.activeSamplesRevisionId = this.activeSamplesRevision.id;
+    if (this.activeView === 'list') {
+      this.isLoading = false;
+      return;
+    }
+
+    if (this.samplesRevisions && this.samplesRevisions.length > 0 && this.activeSamplesRevisionId) {
+      this.activeSamplesRevision = this.samplesRevisions.filter(x => x.id === this.activeSamplesRevisionId)[0];
+      if (this.activeSamplesRevision) {
+        this.loadSamplesContent(this.reviewId!, this.activeSamplesRevision.id);
+        return;
       }
     }
 
-    if (this.activeSamplesRevision) {
-      this.loadSamplesContent(this.reviewId!, this.activeSamplesRevision.id);
-    } else {
-      this.isLoading = false;
-    }
+    // Sample not found or no ID - fall back to list
+    this.activeView = 'list';
+    this.isLoading = false;
   }
 
   loadSamplesContent(reviewId: string, activeSamplesRevisionId: string | null = null) {
@@ -229,6 +344,40 @@ export class SamplesPageComponent {
 
   onSamplesUploadFileSelect(event: FileSelectEvent) {
     this.samplesUploadFile = event.currentFiles[0];
+  }
+
+  onFileDrop(event: DragEvent) {
+    const file = event.dataTransfer?.files[0];
+    if (file && file.name.toLowerCase().endsWith('.md')) {
+      this.samplesUploadFile = file;
+    } else if (file) {
+      this.messageService.add({
+        severity: 'error',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Invalid file type',
+        detail: 'Only Markdown (.md) files can be uploaded as samples.',
+        key: 'bc',
+        life: 3000
+      });
+    }
+  }
+
+  onFileInputChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file && file.name.toLowerCase().endsWith('.md')) {
+      this.samplesUploadFile = file;
+    } else if (file) {
+      this.samplesUploadFile = undefined;
+      this.messageService.add({
+        severity: 'error',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Invalid file type',
+        detail: 'Only Markdown (.md) files can be uploaded as samples.',
+        key: 'bc',
+        life: 3000
+      });
+    }
   }
 
   openLatestAPIReivisonForReview() {
@@ -284,8 +433,7 @@ export class SamplesPageComponent {
           if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
           if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
 
-          this.router.navigate(['/samples', this.reviewId],
-           { queryParams: queryParams });
+          this.navigateSamples(queryParams);
         },
         error: (error: any) => {
           this.isCreatingSamples = false;
@@ -310,7 +458,13 @@ export class SamplesPageComponent {
           this.samplesUpdateSidePanel = false;
           this.isUpdatingSamples = false;
           this.updateSamplesButton = "Save";
-          this.reloadRoute();
+          // Reload the detail view content
+          this.commentableRegionsAdded = false;
+          this.commentsLoaded = false;
+          this.samplesContent = undefined;
+          this.changeDetectorRef.detectChanges();
+          this.loadSamplesContent(this.reviewId!, this.activeSamplesRevisionId!);
+          this.loadComments();
         },
         error: (error: any) => {
           this.isUpdatingSamples = false;
@@ -321,29 +475,29 @@ export class SamplesPageComponent {
   }
 
   deleteUsageSample() {
+    const revisionId = this.sampleToDelete?.id ?? this.activeSamplesRevisionId!;
     this.isDeletingSamples = true;
     this.deleteSamplesButton = "Deleting Usage Sample...";
-    this.samplesRevisionService.deleteSampleRevisions(this.reviewId!, [this.activeSamplesRevisionId!])
+    this.samplesRevisionService.deleteSampleRevisions(this.reviewId!, [revisionId])
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: () => {
           this.showSamplesDeleteModal = false;
           this.isDeletingSamples = false;
           this.deleteSamplesButton = "Delete";
 
-          const queryParams: any = {};
-          if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
-          if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
-
-          if (this.router.url === `/samples/${this.reviewId}`) {
-            this.reloadRoute();
+          if (this.activeView === 'detail') {
+            this.backToList();
           } else {
-            this.router.navigate([`/samples/${this.reviewId}`], { queryParams: queryParams });
+            this.samplesRevisions = this.samplesRevisions.filter(s => s.id !== revisionId);
+            this.samplesRevisionTotalCount = Math.max(0, this.samplesRevisionTotalCount - 1);
+            this.sampleToDelete = null;
           }
         },
         error: (error: any) => {
           this.showSamplesDeleteModal = false;
           this.isDeletingSamples = false;
           this.deleteSamplesButton = "Delete";
+          this.sampleToDelete = null;
           this.messageService.add({ severity: 'error', icon: 'bi bi-exclamation-triangle', summary: 'Samples Failure', detail: 'Failed to delete Usage Sample', key: 'bc', life: 3000 });
         }});
   }
@@ -353,66 +507,8 @@ export class SamplesPageComponent {
     return this.addEditSamplesContent.replace(placeholderRegex, "");
   }
 
-  updateRightPanelSize() {
-    const panelSize = new Array(3);
-    if  (this.userProfile!.preferences.hideSamplesPageOptions) {
-      this.showPageOptions = false;
-      panelSize[1] = 0.1;
-    } else {
-      this.showPageOptions = true;
-      panelSize[1] = this.pageOptionsPanelSize;
-    }
-    panelSize[0] = 100 - (panelSize[1]);
-    this.panelSizes = panelSize;
-  }
-
-  reloadRoute() {
-    this.router.navigateByUrl('/temporary-route', { skipLocationChange: true }).then(() => {
-      const queryParams: any = { activeSamplesRevisionId: this.activeSamplesRevisionId };
-      if (this.activeApiRevisionId) queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
-      if (this.diffApiRevisionId) queryParams['diffApiRevisionId'] = this.diffApiRevisionId;
-
-      this.router.navigate(['/samples', this.reviewId], {
-        queryParams: queryParams
-      });
-    });
-  }
-
-  handlePageOptionsEmitter(showPageOptions: boolean) {
-    this.userProfile!.preferences.hideSamplesPageOptions = !showPageOptions;
-    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.updateRightPanelSize();
-      }
-    });
-  }
-
   handleContentValueChange(content: string) {
     this.addEditSamplesContent = content;
-  }
-
-  handleSplitterResizeEnd(event: any) {
-    if (event.sizes[1] > 5) {
-      this.userProfile!.preferences.hideSamplesPageOptions = false;
-    } else {
-      this.userProfile!.preferences.hideSamplesPageOptions = true;
-      this.updateRightPanelSize();
-    }
-    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.showPageOptions = !this.userProfile!.preferences.hideSamplesPageOptions;
-
-        // need this to trigger change detection
-        const userProfile : UserProfile = {
-          userName: this.userProfile!.userName,
-          email: this.userProfile!.email,
-          languages: this.userProfile!.languages,
-          preferences: this.userProfile!.preferences,
-          permissions: this.userProfile!.permissions
-        };
-        this.userProfile = userProfile;
-      }
-    });
   }
 
   addCommentableRegions(): void {

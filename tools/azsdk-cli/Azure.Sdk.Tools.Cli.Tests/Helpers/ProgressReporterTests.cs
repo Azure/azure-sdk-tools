@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using System.Diagnostics;
 using ModelContextProtocol;
 using Moq;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
@@ -144,6 +145,16 @@ public class ProgressReporterTests
 
     #region Heartbeat tests
 
+    private static async Task DelayWithRetry<T>(List<T> counter, int maxWait)
+    {
+        var timeout = TimeSpan.FromMilliseconds(100);
+        var sw = Stopwatch.StartNew();
+        while (counter.Count < maxWait && sw.Elapsed < timeout)
+        {
+            await Task.Delay(10);
+        }
+    }
+
     [Test]
     public async Task StartHeartbeat_EmitsHeartbeatsUntilDisposed()
     {
@@ -158,7 +169,7 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await Task.Delay(20);
+            await DelayWithRetry(reported, 2);
         }
 
         // Should have initial step report + at least 1 heartbeat
@@ -185,7 +196,7 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await Task.Delay(20);
+            await DelayWithRetry(reported, 2);
         }
 
         var countAfterDispose = reported.Count;
@@ -205,7 +216,7 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await Task.Delay(20);
+            await DelayWithRetry(_consoleOutput, 2);
         }
 
         // At least the step message + some heartbeats
@@ -274,7 +285,7 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await Task.Delay(20);
+            await DelayWithRetry(reported, 4);
         }
 
         // Heartbeat messages should use step index 2 (current step after NextStep increments)

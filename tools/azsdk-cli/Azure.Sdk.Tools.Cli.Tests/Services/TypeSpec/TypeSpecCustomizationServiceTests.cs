@@ -62,7 +62,6 @@ internal class TypeSpecCustomizationServiceTests
     /// <summary>
     /// Live integration test that makes actual LLM calls through the GitHub Copilot SDK.
     /// Requires GitHub Copilot CLI to be installed and authenticated.
-    /// Will be skipped if Copilot is not available.
     /// </summary>
     [Test, Explicit]
     [Category(CopilotAgent)]

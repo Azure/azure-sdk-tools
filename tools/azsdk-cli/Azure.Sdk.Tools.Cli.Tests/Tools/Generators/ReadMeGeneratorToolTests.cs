@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         [Category(TestCategories.OpenAI)]
         public void TestReadmeGeneratorToolLive()
         {
-            var endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")
+            var _ = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")
                 ?? throw new InconclusiveException("AZURE_OPENAI_ENDPOINT is not set");
 
             var languageRepo = Environment.GetEnvironmentVariable("AZURE_SDK_FOR_GO_PATH")

@@ -34,7 +34,7 @@ public static class TestCategories
 
     /// <summary>
     /// Evaluation tests that require Azure OpenAI, MCP server, and related env vars.
-    /// Defined in the Evaluations project's Scenario base class.
+    /// Used to categorize evaluation scenarios in the Evaluations project.
     /// </summary>
     public const string Evals = "Evals";
 }

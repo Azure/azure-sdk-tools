@@ -113,21 +113,13 @@ namespace APIViewWeb.LeanControllers
 
             if (project.Reviews is { Count: > 0 })
             {
-                foreach (string relatedReviewId in project.Reviews.Values)
-                {
-                    ReviewListItemModel relatedReview = await _reviewsRepository.GetReviewAsync(relatedReviewId);
-                    if (relatedReview is { IsDeleted: false })
-                    {
-                        response.Reviews.Add(relatedReview);
-                    }
-                }
+                var reviews = await _reviewsRepository.GetReviewsAsync(project.Reviews.Values);
+                response.Reviews = reviews
+                    .Where(r => r is { IsDeleted: false })
+                    .OrderBy(r => r.Language == "TypeSpec" ? 0 : 1)
+                    .ThenBy(r => r.Language)
+                    .ToList();
             }
-
-            // Sort: TypeSpec first, then by language name
-            response.Reviews = response.Reviews
-                .OrderBy(r => r.Language == "TypeSpec" ? 0 : 1)
-                .ThenBy(r => r.Language)
-                .ToList();
 
             return new LeanJsonResult(response, StatusCodes.Status200OK);
         }

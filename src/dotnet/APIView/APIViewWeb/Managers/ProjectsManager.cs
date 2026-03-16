@@ -25,6 +25,7 @@ public class ProjectsManager : IProjectsManager
     private sealed record ReconciliationResult(
         List<ReviewListItemModel> ReviewsToUpsert,
         List<ReviewListItemModel> ReviewsToAdd,
+        List<ReviewListItemModel> StillLinkedReviews,
         HashSet<string> ReviewsToRemove,
         HashSet<string> HistoricalReviewIdsToAdd,
         List<ProjectChangeHistory> ChangeHistoryEntries);
@@ -217,7 +218,8 @@ public class ProjectsManager : IProjectsManager
             project.HistoricalReviewIds.UnionWith(reconciled.HistoricalReviewIdsToAdd);
             project.ChangeHistory.AddRange(reconciled.ChangeHistoryEntries);
             reviewsToUpsert = reconciled.ReviewsToUpsert;
-            project.NamespaceInfo = _namespaceManager.ResolvePackageNamespaceChanges(userName, project.NamespaceInfo, oldExpectedPackages, newExpectedPackages, reconciled.ReviewsToUpsert);
+            var allLinkedReviews = reconciled.StillLinkedReviews.Concat(reconciled.ReviewsToAdd).ToList();
+            project.NamespaceInfo = _namespaceManager.ResolvePackageNamespaceChanges(userName, project.NamespaceInfo, oldExpectedPackages, newExpectedPackages, allLinkedReviews);
         }
 
         if (changes.Count > 0)
@@ -267,6 +269,7 @@ public class ProjectsManager : IProjectsManager
         }
 
         var coveredLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var stillLinkedReviews = new List<ReviewListItemModel>();
         foreach (var review in reviews)
         {
             bool stillMatches = !string.IsNullOrEmpty(review.Language)
@@ -278,6 +281,7 @@ public class ProjectsManager : IProjectsManager
             if (stillMatches)
             {
                 coveredLanguages.Add(review.Language);
+                stillLinkedReviews.Add(review);
                 continue;
             }
 
@@ -306,7 +310,7 @@ public class ProjectsManager : IProjectsManager
 
         reviewsToUpsert.AddRange(discovered.ReviewsToAdd);
         changeEntries.AddRange(discovered.ChangeHistoryEntries);
-        return new ReconciliationResult(reviewsToUpsert, discovered.ReviewsToAdd, reviewIdsToRemove, historicalIdsToAdd, changeEntries);
+        return new ReconciliationResult(reviewsToUpsert, discovered.ReviewsToAdd, stillLinkedReviews, reviewIdsToRemove, historicalIdsToAdd, changeEntries);
     }
 
     private async Task<ReviewLinkChanges> DiscoverReviewsForLinkingAsync(

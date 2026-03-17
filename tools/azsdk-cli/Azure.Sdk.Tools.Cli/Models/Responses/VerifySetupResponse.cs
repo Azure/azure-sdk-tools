@@ -28,7 +28,7 @@ public class VerifySetupResponse : CommandResponse
     {
         get
         {
-            if (!string.IsNullOrEmpty(ResponseError) || (ResponseErrors?.Count ?? 0) > 0)
+            if (OperationStatus == Status.Failed)
             {
                 return ExitCodes.Blocking;
             }
@@ -48,6 +48,19 @@ public class VerifySetupResponse : CommandResponse
         set => throw new NotSupportedException(
             "Setting ExitCode on VerifySetupResponse is not supported; it is computed from verification results.");
     }
+
+    /// <summary>
+    /// True when all unresolved failures are auto-installable (re-run with 'install' to fix).
+    /// False when there are no failures or when any failure requires manual intervention.
+    /// </summary>
+    [JsonPropertyName("fixable")]
+    public bool IsFixable => ExitCode == ExitCodes.Fixable;
+
+    /// <summary>
+    /// True when at least one requirement failure requires manual intervention.
+    /// </summary>
+    [JsonPropertyName("blocking")]
+    public bool HasBlockingFailures => ExitCode == ExitCodes.Blocking;
 
     [JsonPropertyName("results")]
     public List<RequirementCheckResult>? Results { get; set; }
@@ -100,6 +113,16 @@ public class VerifySetupResponse : CommandResponse
         {
             sb.AppendLine("  Verify setup succeeded, no issues found.");
         }
+
+        if (HasBlockingFailures)
+        {
+            sb.AppendLine("\nStatus: BLOCKING - at least one issue requires manual intervention.");
+        }
+        else if (IsFixable)
+        {
+            sb.AppendLine("\nStatus: FIXABLE - all issues can be auto-remediated. Re-run with 'install' sub-command.");
+        }
+
         return sb.ToString();
     }
 }

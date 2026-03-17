@@ -538,4 +538,37 @@ internal class VerifySetupServiceTests
         Assert.That(tspResult?.AutoInstallSucceeded, Is.True);
         Assert.That(result.ExitCode, Is.EqualTo(VerifySetupResponse.ExitCodes.AllGood));
     }
+
+    [Test]
+    public async Task IsFixable_IsTrue_WhenOnlyAutoInstallableRequirementsFail()
+    {
+        SetupFailedProcessMock("tsp", 1, "tsp: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.DotNet }, "/test/path/dotnet");
+
+        Assert.That(result.IsFixable, Is.True);
+        Assert.That(result.HasBlockingFailures, Is.False);
+    }
+
+    [Test]
+    public async Task HasBlockingFailures_IsTrue_WhenNonAutoInstallableRequirementFails()
+    {
+        SetupFailedProcessMock("node", 1, "node: command not found");
+        RecreateService();
+
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.HasBlockingFailures, Is.True);
+        Assert.That(result.IsFixable, Is.False);
+    }
+
+    [Test]
+    public async Task IsFixable_And_HasBlockingFailures_BothFalse_WhenAllRequirementsMet()
+    {
+        var result = await verifySetupService.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path/python");
+
+        Assert.That(result.IsFixable, Is.False);
+        Assert.That(result.HasBlockingFailures, Is.False);
+    }
 }

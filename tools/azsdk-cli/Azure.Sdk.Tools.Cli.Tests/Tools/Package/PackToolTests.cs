@@ -25,6 +25,8 @@ public class PackToolTests
     /// Checks if a ProcessOptions instance matches the expected command name.
     /// On Windows, ProcessOptions wraps commands in cmd.exe /C, so the original
     /// command is at Args[1] instead of Command.
+    /// On Unix, PythonOptions may resolve executables to a full venv path when
+    /// AZSDKTOOLS_PYTHON_VENV_PATH is set, so also match by filename.
     /// </summary>
     private static bool CommandMatches(IProcessOptions p, string command)
     {
@@ -32,7 +34,7 @@ public class PackToolTests
         {
             return p.Command == ProcessOptions.CMD && p.Args.Count > 1 && p.Args[1] == command;
         }
-        return p.Command == command;
+        return p.Command == command || Path.GetFileName(p.Command) == command;
     }
 
     #endregion

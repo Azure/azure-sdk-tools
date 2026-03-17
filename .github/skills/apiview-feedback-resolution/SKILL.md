@@ -11,6 +11,8 @@ compatibility:
 
 # APIView Feedback Resolution
 
+**Prerequisites:** azure-sdk-mcp server required; no CLI fallback. Without MCP, this skill cannot retrieve APIView comments or apply TypeSpec changes. Connect the `azure-sdk-mcp` server before use.
+
 ## MCP Tools
 
 | Tool | Purpose |
@@ -38,3 +40,4 @@ compatibility:
 
 - **No comments**: Verify PR has APIView link and MCP server is connected.
 - **Validation fails**: Re-run after fixing TypeSpec errors.
+- **MCP unavailable**: Requires `azure-sdk-mcp` server; no CLI fallback. Connect the server and retry.

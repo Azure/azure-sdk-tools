@@ -75,6 +75,7 @@ public static class AuthoringScenarioLoader
                     prompt: testCase.Prompt,
                     tspProjectPath: null,
                     testTspFiles: testCase.TestFiles,
+                    toolsToCall: testCase.ToolsToCall,
                     verifyPlan: testCase.VerifyPlan ?? new List<string>(),
                     authoringSpecRepo: authoringSpecRepo,
                     authoringSkillPath: authoringSkillPath
@@ -109,7 +110,11 @@ public static class AuthoringScenarioLoader
         [JsonPropertyName("testfiles")]
         public List<string>? TestFiles { get; set; }
 
+        [JsonPropertyName("toolsToCall")]
+        public List<string>? ToolsToCall { get; set; }
+
         [JsonPropertyName("verifyPlan")]
         public List<string>? VerifyPlan { get; set; }
+
     }
 }

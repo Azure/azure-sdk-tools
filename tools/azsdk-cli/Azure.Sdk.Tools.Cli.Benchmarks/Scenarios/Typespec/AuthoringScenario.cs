@@ -34,7 +34,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <inheritdoc />
         public override RepoConfig Repo { get;}
 
-        public string tspProjectPath { get; }
+        public string TspProjectPath { get; }
+
+        public IReadOnlyList<string> ToolsToCall { get; set; } = new List<string>(){ "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan"};
 
         /// <summary>
         /// Gets or sets the verification plan for validating the scenario results.
@@ -61,12 +63,17 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <param name="verifyPlan">Optional verification plan for validating scenario results.</param>
         /// <param name="authoringSpecRepo">Optional repository for authoring specs.</param>
         /// <param name="authoringSkillPath">Optional path for authoring skills.</param>
-        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? verifyPlan = null, string? authoringSpecRepo = null, string? authoringSkillPath = null)
+        /// <param name="toolsToCall">Optional list of tools to call during the scenario.</param>
+        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, string? authoringSpecRepo = null, string? authoringSkillPath = null)
         {
             Name = name;
             Description = description ?? string.Empty;
             Prompt = prompt ?? string.Empty;
-            this.tspProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? DefaultTspProjectPath : tspProjectPath;
+            TspProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? DefaultTspProjectPath : tspProjectPath;
+            if (toolsToCall != null && toolsToCall.Any())
+            {
+                ToolsToCall = toolsToCall;
+            }
             VerifyPlan = verifyPlan ?? new List<string> { "compile the project." };
             TestTspFiles = testTspFiles ?? new List<string>();
             if (!string.IsNullOrWhiteSpace(authoringSpecRepo))
@@ -100,18 +107,18 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                     Owner = owner,
                     Name = repoName,
                     Ref = gitRef,
-                    SparseCheckoutPaths = [this.tspProjectPath, ".vscode", "eng/common"]
+                    SparseCheckoutPaths = [TspProjectPath, ".vscode", "eng/common"]
                 };
             }
             else
             {
-                // If no specific authoring skill repo is provided, default to checking out default azure-rest-api-specs repo.
+                // If no specific authoring spec repo is provided, default to checking out default azure-rest-api-specs repo.
                 Repo = new RepoConfig()
                 {
                     Owner = "Azure",
                     Name = "azure-rest-api-specs",
                     Ref = "main",
-                    SparseCheckoutPaths = [this.tspProjectPath]
+                    SparseCheckoutPaths = [TspProjectPath]
                 };
             }
         }
@@ -156,8 +163,8 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                             ? string.Join(Path.DirectorySeparatorChar, tspFile.Split(new[] { Path.DirectorySeparatorChar, '/' }, StringSplitOptions.RemoveEmptyEntries).Skip(1))
                             : tspFile;
 
-                        var destinationPath = Path.Combine(workspace.RepoPath, tspProjectPath, relativePath);
-                        await workspace.CopyToWorkspaceAsync(sourcePath, Path.Combine(tspProjectPath, relativePath));
+                        var destinationPath = Path.Combine(workspace.RepoPath, TspProjectPath, relativePath);
+                        await workspace.CopyToWorkspaceAsync(sourcePath, Path.Combine(TspProjectPath, relativePath));
                     }
                 }
             }
@@ -178,7 +185,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <inheritdoc />
         public override IEnumerable<IValidator> Validators =>
         [
-            new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", new List<string>(){ "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan"}),
+            new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", ToolsToCall),
             new VerifyResultWithAIValidate("Verify results with AI", string.Join("\n", VerifyPlan.ToArray()))
         ];
     }

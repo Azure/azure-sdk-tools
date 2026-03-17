@@ -163,3 +163,19 @@ jobs:
               -LastCommitOlderThan ((Get-Date).AddDays(-7))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
+
+      - ${{ each repo in parameters.RestAPISpecsDocsRepos }}:
+        - task: PowerShell@2
+          displayName: ${{ repo }} azure-rest-api-specs docs branch clean-up
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId "${{ repo }}"
+              -BranchRegex "^(result_)?([0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-)|(openapiHub_production_)|(openapiHub_preproduction_)[0-9a-z]{12}$"
+              -LastCommitOlderThan ((Get-Date).AddDays(-14))
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}

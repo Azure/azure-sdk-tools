@@ -20,7 +20,7 @@ from time import time
 from typing import List, Optional
 
 import yaml
-from opentelemetry import metrics, trace
+from opentelemetry import metrics
 from src._comment_grouper import CommentGrouper
 from src._credential import get_credential
 from src._diff import create_diff_with_line_numbers
@@ -63,7 +63,6 @@ root_logger.addHandler(console_handler)
 logger = logging.getLogger(__name__)
 
 # OpenTelemetry instrumentation
-_tracer = trace.get_tracer(__name__)
 _meter = metrics.get_meter(__name__)
 _review_duration_histogram = _meter.create_histogram(
     name="apiview.review.duration",
@@ -74,6 +73,11 @@ _review_normalized_duration_histogram = _meter.create_histogram(
     name="apiview.review.normalized_duration",
     description="Review duration normalized by the number of sections (chunks) processed",
     unit="s",
+)
+_review_request_counter = _meter.create_counter(
+    name="apiview.review.requests",
+    description="Total number of review requests",
+    unit="{request}",
 )
 
 
@@ -183,6 +187,7 @@ class ApiViewReview:
                 self._logger.exception(f"[{self._job_id}] {msg}", *args, **kwargs)
 
         self.logger = JobLogger(logger, self.job_id)
+        self._chunk_count = 0
         self.run_prompt = run_prompt  # Use shared prompt runner
 
     def __del__(self):
@@ -939,8 +944,7 @@ class ApiViewReview:
         finally:
             # Record review duration telemetry regardless of success or failure
             total_duration = time() - overall_start_time
-            chunk_count = getattr(self, "_chunk_count", 0)
-            normalized_duration = total_duration / chunk_count if chunk_count > 0 else 0
+            normalized_duration = total_duration / self._chunk_count if self._chunk_count > 0 else 0
             metric_attrs = {
                 "review.language": self.language,
                 "review.mode": self.mode,
@@ -948,6 +952,7 @@ class ApiViewReview:
             }
             _review_duration_histogram.record(total_duration, attributes=metric_attrs)
             _review_normalized_duration_histogram.record(normalized_duration, attributes=metric_attrs)
+            _review_request_counter.add(1, attributes=metric_attrs)
 
     def _canary_check_search_and_cosmos(self) -> str | None:
         """

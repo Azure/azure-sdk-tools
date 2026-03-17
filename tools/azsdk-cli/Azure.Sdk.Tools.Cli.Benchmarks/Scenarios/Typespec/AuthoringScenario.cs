@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
@@ -30,6 +31,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <inheritdoc />
         public override string Prompt { get; }
 
+        /// <inheritdoc />
+        public override RepoConfig Repo { get;}
+
         public string tspProjectPath { get; }
 
         /// <summary>
@@ -44,6 +48,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// </summary>
         public List<string> TestTspFiles { get; set; } = new List<string>();
 
+        public string? AuthoringSpecRepo { get; private set; }
+        public string? AuthoringSkillPath { get; private set; }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthoringScenario"/> class.
         /// </summary>
@@ -52,7 +59,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <param name="prompt">The prompt to send to the agent.</param>
         /// <param name="testTspFiles">Optional list of TypeSpec files relevant to this scenario.</param>
         /// <param name="verifyPlan">Optional verification plan for validating scenario results.</param>
-        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? verifyPlan = null)
+        /// <param name="authoringSpecRepo">Optional repository for authoring specs.</param>
+        /// <param name="authoringSkillPath">Optional path for authoring skills.</param>
+        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? verifyPlan = null, string? authoringSpecRepo = null, string? authoringSkillPath = null)
         {
             Name = name;
             Description = description ?? string.Empty;
@@ -60,16 +69,52 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             this.tspProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? DefaultTspProjectPath : tspProjectPath;
             VerifyPlan = verifyPlan ?? new List<string> { "compile the project." };
             TestTspFiles = testTspFiles ?? new List<string>();
-        }
+            if (!string.IsNullOrWhiteSpace(authoringSpecRepo))
+            {
+                AuthoringSpecRepo = authoringSpecRepo;
+                AuthoringSkillPath = authoringSkillPath;
 
-        /// <inheritdoc />
-        public override RepoConfig Repo => new()
-        {
-            Owner = "Azure",
-            Name = "azure-rest-api-specs",
-            Ref = "main",
-            SparseCheckoutPaths = [tspProjectPath, ".vscode", "eng/common"]
-        };
+                var _repoStringRegex = new Regex(@"^(?:(?<owner>[^/:\s]+)/)?(?<name>[^/:\s]+)(?::(?<ref>[^:\s]+))?$", RegexOptions.Compiled);
+                var match = _repoStringRegex.Match(authoringSpecRepo.Trim());
+                if (!match.Success)
+                {
+                    throw new ArgumentException(
+                        $"Invalid repository format: '{authoringSpecRepo}'. " +
+                        "Expected formats: 'owner/name', 'owner/name:ref', 'name', or 'name:ref'",
+                        nameof(authoringSpecRepo));
+                }
+
+                var owner = match.Groups["owner"].Success
+                    ? match.Groups["owner"].Value
+                    : "Azure";
+
+                var repoName = match.Groups["owner"].Success ? match.Groups["name"].Value : "azure-rest-api-specs";
+
+                var gitRef = match.Groups["ref"].Success
+                    ? match.Groups["ref"].Value
+                    : "main";
+
+
+                Repo = new RepoConfig()
+                {
+                    Owner = owner,
+                    Name = repoName,
+                    Ref = gitRef,
+                    SparseCheckoutPaths = [this.tspProjectPath, ".vscode", "eng/common"]
+                };
+            }
+            else
+            {
+                // If no specific authoring skill repo is provided, default to checking out default azure-rest-api-specs repo.
+                Repo = new RepoConfig()
+                {
+                    Owner = "Azure",
+                    Name = "azure-rest-api-specs",
+                    Ref = "main",
+                    SparseCheckoutPaths = [this.tspProjectPath]
+                };
+            }
+        }
 
         /// <inheritdoc />
         public override TimeSpan Timeout => TimeSpan.FromMinutes(5);
@@ -125,7 +170,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             // Configure the path to the installed MCP executable for this scenario
             AzsdkMcpPath = Path.Combine(workspace.RootPath, "azsdk.exe");
 
+            
             // TODO: Download and Start Azure Knowledge Base locally. Currently we need to manually start the Azure Knowledge Base server locally.
+            //await workspace.RunCommandAsync("")
         }
 
         /// <inheritdoc />

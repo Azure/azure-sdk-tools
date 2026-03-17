@@ -388,10 +388,10 @@
     },
     {
       "repository": {
-        "url": "git@github.com:Azure/typespec-cpp.git",
+        "url": "https://github.com/Azure/typespec-cpp.git",
         "branch": "main",
-        "authType": "ssh",
-        "sshHost": "github-microsoft"
+        "authType": "token",
+        "tokenEnvVar": "AZURE_SDK_GITHUB_PAT"
       },
       "paths": [
         {

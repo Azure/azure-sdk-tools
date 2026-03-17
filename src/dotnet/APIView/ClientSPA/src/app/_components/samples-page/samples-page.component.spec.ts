@@ -12,23 +12,13 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
 import { createMockSignalRService, createMockNotificationsService } from 'src/test-helpers/mock-services';
 
-// Mock ngx-simplemde before any component imports
+// Mock ngx-simplemde to prevent UMD import failure in test environment
 vi.mock('ngx-simplemde', () => ({
   SimplemdeModule: class {
-    static forRoot() {
-      return {
-        ngModule: this,
-        providers: []
-      };
-    }
+    static forRoot() { return { ngModule: this, providers: [] }; }
   },
   SimplemdeOptions: class {},
-  SimplemdeComponent: class {
-    value = '';
-    options = {};
-    delay = 0;
-    valueChange = { emit: vi.fn() };
-  }
+  SimplemdeComponent: class {}
 }));
 
 import { SamplesPageComponent } from './samples-page.component';
@@ -47,7 +37,7 @@ describe('SamplesPageComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       schemas: [NO_ERRORS_SCHEMA],
-      declarations: [SamplesPageComponent],
+      imports: [SamplesPageComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -65,6 +55,9 @@ describe('SamplesPageComponent', () => {
         },
         MessageService
       ]
+    });
+    TestBed.overrideComponent(SamplesPageComponent, {
+      set: { imports: [], schemas: [NO_ERRORS_SCHEMA] }
     });
     fixture = TestBed.createComponent(SamplesPageComponent);
     component = fixture.componentInstance;

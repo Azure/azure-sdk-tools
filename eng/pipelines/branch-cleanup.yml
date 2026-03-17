@@ -99,7 +99,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -CentralRepoId "Azure/azure-sdk-tools"
-              -BranchRegex "^sync-.github/workflows.*-(?<PrNumber>\d+).*$"
+              -BranchRegex "^sync-.github.*-(?<PrNumber>\d+).*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 

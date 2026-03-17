@@ -70,9 +70,9 @@ _review_duration_histogram = _meter.create_histogram(
     description="Total wall-clock duration of a review in seconds",
     unit="s",
 )
-_review_duration_per_line_histogram = _meter.create_histogram(
-    name="apiview.review.duration_per_line",
-    description="Review duration divided by the number of lines in the target API view",
+_review_normalized_duration_histogram = _meter.create_histogram(
+    name="apiview.review.normalized_duration",
+    description="Review duration normalized by the number of sections (chunks) processed",
     unit="s",
 )
 
@@ -299,6 +299,7 @@ class ApiViewReview:
         sectioned_doc = self._create_sectioned_document()
 
         sections_to_process = [(i, section) for i, section in enumerate(sectioned_doc)]
+        self._chunk_count = len(sections_to_process)
 
         # Select appropriate prompts based on mode
         if self.mode == ApiViewReviewMode.FULL:
@@ -938,15 +939,15 @@ class ApiViewReview:
         finally:
             # Record review duration telemetry regardless of success or failure
             total_duration = time() - overall_start_time
-            target_line_count = len(self.target.splitlines())
-            duration_per_line = total_duration / target_line_count if target_line_count > 0 else 0
+            chunk_count = getattr(self, "_chunk_count", 0)
+            normalized_duration = total_duration / chunk_count if chunk_count > 0 else 0
             metric_attrs = {
                 "review.language": self.language,
                 "review.mode": self.mode,
                 "review.status": review_status,
             }
             _review_duration_histogram.record(total_duration, attributes=metric_attrs)
-            _review_duration_per_line_histogram.record(duration_per_line, attributes=metric_attrs)
+            _review_normalized_duration_histogram.record(normalized_duration, attributes=metric_attrs)
 
     def _canary_check_search_and_cosmos(self) -> str | None:
         """

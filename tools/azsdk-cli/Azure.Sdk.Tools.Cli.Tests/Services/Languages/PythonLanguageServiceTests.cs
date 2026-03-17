@@ -125,7 +125,7 @@ public class PythonLanguageServiceTests
     /// <summary>
     /// Three-step live roundtrip using a minimal local Python package:
     ///   1. Verify the clean package lints without errors.
-    ///   2. Rename Widget → OldWidget in the class definition only, verify lint fails.
+    ///   2. Rename Widget → OldWidget in the class definition only and verify lint fails.
     ///   3. Feed the build errors to ApplyPatchesAsync with a live Copilot runner,
     ///      then verify lint passes again.
     ///

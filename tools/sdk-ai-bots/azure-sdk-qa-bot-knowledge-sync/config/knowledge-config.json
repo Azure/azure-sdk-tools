@@ -404,24 +404,6 @@
           }
         },
         {
-          "description": "Codegen Engine README for TypeSpec C++ code generation",
-          "path": "/packages/codegen.cpp/README.md",
-          "folder": "typespec_cpp_docs",
-          "relativeByRepoPath": true,
-          "metadata": {
-            "scope": "branded"
-          }
-        },
-        {
-          "description": "Architecture Guide for TypeSpec C++ code generation",
-          "path": "/.github/copilot-instructions.md",
-          "folder": "typespec_cpp_docs",
-          "relativeByRepoPath": true,
-          "metadata": {
-            "scope": "branded"
-          }
-        },
-        {
           "description": "Development Guide for TypeSpec C++ code generation",
           "path": "/docs/development.md",
           "folder": "typespec_cpp_docs",

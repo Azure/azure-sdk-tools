@@ -43,13 +43,30 @@ public class NamespaceManager : INamespaceManager
         return project?.NamespaceInfo;
     }
 
-    // Allowed transitions: maps (currentStatus) → set of valid target statuses.
-    private static readonly Dictionary<NamespaceDecisionStatus, HashSet<NamespaceDecisionStatus>> AllowedTransitions = new()
+    public async Task<bool> IsNamespaceApprovedAsync(string projectId, string language)
     {
-        [NamespaceDecisionStatus.Proposed]  = [NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Rejected, NamespaceDecisionStatus.Withdrawn],
+        if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(language))
+        {
+            return false;
+        }
+
+        ProjectNamespaceInfo info = await GetNamespaceInfoAsync(projectId);
+        if (info == null)
+        {
+            return false;
+        }
+
+        language = LanguageServiceHelpers.MapLanguageAlias(language);
+        return info.CurrentNamespaceStatus.TryGetValue(language, out var entry)
+            && entry.Status == NamespaceDecisionStatus.Approved;
+    }
+
+    // Allowed transitions: maps (currentStatus) → set of valid target statuses.
+    private static readonly Dictionary<NamespaceDecisionStatus, HashSet<NamespaceDecisionStatus>> allowedManualTransitions = new()
+    {
+        [NamespaceDecisionStatus.Proposed]  = [NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Rejected],
         [NamespaceDecisionStatus.Approved]  = [NamespaceDecisionStatus.Rejected],
-        [NamespaceDecisionStatus.Rejected]  = [NamespaceDecisionStatus.Approved],
-        [NamespaceDecisionStatus.Withdrawn] = [NamespaceDecisionStatus.Proposed],
+        [NamespaceDecisionStatus.Rejected]  = [NamespaceDecisionStatus.Approved]
     };
 
     public async Task<NamespaceOperationResult> UpdateNamespaceStatusAsync(
@@ -73,7 +90,7 @@ public class NamespaceManager : INamespaceManager
             return NamespaceOperationResult.Failure(NamespaceOperationError.LanguageNotFound);
         }
 
-        if (!AllowedTransitions.TryGetValue(entry.Status, out var allowed) || !allowed.Contains(newStatus))
+        if (!allowedManualTransitions.TryGetValue(entry.Status, out var allowed) || !allowed.Contains(newStatus))
         {
             return NamespaceOperationResult.Failure(NamespaceOperationError.InvalidStateTransition);
         }
@@ -113,12 +130,6 @@ public class NamespaceManager : INamespaceManager
         });
         project.LastUpdatedOn = DateTime.UtcNow;
         await _projectsRepository.UpsertProjectAsync(project);
-
-        project.Reviews ??= new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (project.Reviews.TryGetValue(language, out var reviewId) && !string.IsNullOrEmpty(reviewId))
-        {
-            await SyncReviewNamespaceStatusAsync(reviewId, newStatus);
-        }
 
         return NamespaceOperationResult.Success(project);
     }
@@ -285,18 +296,6 @@ public class NamespaceManager : INamespaceManager
             .ToList();
 
         return currentInfo;
-    }
-
-    private async Task SyncReviewNamespaceStatusAsync(string reviewId, NamespaceDecisionStatus status)
-    {
-        ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
-        if (review == null)
-        {
-            return;
-        }
-
-        review.IsApproved = status == NamespaceDecisionStatus.Approved;
-        await _reviewsRepository.UpsertReviewAsync(review);
     }
 
     private static void ApplyAutoApproval(NamespaceDecisionEntry entry, ReviewListItemModel approvedReview)

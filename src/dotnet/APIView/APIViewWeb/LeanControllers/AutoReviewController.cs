@@ -27,13 +27,15 @@ public class AutoReviewController : ControllerBase
     private readonly IEnumerable<LanguageService> _languageServices;
     private readonly IConfiguration _configuration;
     private readonly TelemetryClient _telemetryClient;
+    private readonly INamespaceManager _namespaceManager;
 
     public AutoReviewController(ICodeFileManager codeFileManager, 
         IAPIRevisionsManager apiRevisionsManager,
         IAutoReviewService autoReviewService,
         IEnumerable<LanguageService> languageServices,
         IConfiguration configuration,
-        TelemetryClient telemetryClient)
+        TelemetryClient telemetryClient,
+        INamespaceManager namespaceManager)
     {
         _codeFileManager = codeFileManager;
         _apiRevisionsManager = apiRevisionsManager;
@@ -41,6 +43,7 @@ public class AutoReviewController : ControllerBase
         _languageServices = languageServices;
         _configuration = configuration;
         _telemetryClient = telemetryClient;
+        _namespaceManager = namespaceManager;
     }
 
     // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
@@ -75,7 +78,7 @@ public class AutoReviewController : ControllerBase
                     {
                         return Ok(reviewUrl);
                     }
-                    if (review.IsApproved)
+                    if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
                     {
                         return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                     }
@@ -156,7 +159,7 @@ public class AutoReviewController : ControllerBase
             {
                 return Ok(reviewUrl);
             }
-            if (review.IsApproved)
+            if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
             {
                 return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
             }

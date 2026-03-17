@@ -111,6 +111,7 @@ namespace APIViewWeb.LeanModels
         public List<ReviewChangeHistoryModel> ChangeHistory { get; set; } = new List<ReviewChangeHistoryModel>();
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsClosed { get; set; }
+        // TODO: will be removed once migration to the project-based namespace workflow is complete.
         public bool IsApproved { get; set; } 
         public PackageType? PackageType { get; set; } // Nullable - null means not yet classified
         // TODO: Deprecated — will be removed once migration to the project-based namespace workflow is complete.

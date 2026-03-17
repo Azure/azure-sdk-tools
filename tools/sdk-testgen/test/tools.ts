@@ -4,10 +4,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license output.pushrmation.
  *--------------------------------------------------------------------------------------------*/
 
-import * as fs from 'fs';
-import * as path from 'path';
 import { AllSchemaTypes, ArraySchema, CodeModel, Languages, Parameter, Property, Schema, SchemaType } from '@autorest/codemodel';
 import { deserialize } from '@azure-tools/codegen';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class MockTool {
     public static createSchema(type: AllSchemaTypes = SchemaType.String, others: Record<string, any> = {}): Schema {

@@ -5,28 +5,20 @@
 # --------------------------------------------------------------------------
 
 """
-Grant access to the APIView Cosmos DB for the current user.
+Grant or revoke access to the APIView Cosmos DB accounts for a given principal.
 This script requires the user has elevated access to the Azure SDK Engineering System
 subscription. It will assign the "DocumentDB Account Contributor" ARM role and the
-"Built-in Data Reader" SQL role to the current user for the production and staging
-APIView Cosmos DB accounts.
-
-Note: Uses AZURE_APP_CONFIG_ENDPOINT and ENVIRONMENT_NAME from .env file.
+"Built-in Data Contributor" SQL role to the principal for all APIView Cosmos DB
+accounts (production, staging, and uxtest).
 """
 
 import argparse
-import sys
-from pathlib import Path
 from uuid import uuid4
 
 import requests
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from src._settings import SettingsManager
 
 
 def get_principal_type(credential, principal_id: str) -> str:
@@ -65,14 +57,17 @@ def modify_permissions():
         help="The principal ID (user or service principal) to grant/revoke permissions for.",
     )
     parser.add_argument("--revoke", action="store_true", help="Revoke permissions instead of granting them.")
+    parser.add_argument(
+        "--environments",
+        nargs="+",
+        choices=["production", "staging", "uxtest"],
+        default=None,
+        help="Space-separated list of environments to process (production, staging, uxtest). Defaults to all.",
+    )
     args = parser.parse_args()
-
-    settings = SettingsManager()
-    environment = settings.label
 
     user_principal_id = args.principal_id
     print(f"Principal ID: {user_principal_id}")
-    print(f"Environment: {environment}")
 
     subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
 
@@ -186,21 +181,26 @@ def modify_permissions():
             assign_arm_role()
             assign_sql_role()
 
-    settings_map = {
+    environments = {
+        "production": {"resource_group": "apiview", "cosmos_account": "apiview-cosmos"},
         "staging": {"resource_group": "apiviewstagingrg", "cosmos_account": "apiviewstaging"},
-        "prod": {"resource_group": "apiview", "cosmos_account": "apiview-cosmos"},
+        "uxtest": {"resource_group": "APIView-UI", "cosmos_account": "apiviewuitest"},
     }
 
-    if environment not in settings_map:
-        valid_environments = ", ".join(sorted(settings_map.keys()))
-        print(f"Error: Unsupported environment '{environment}'. Expected one of: {valid_environments}.")
-        sys.exit(1)
+    selected = {k: v for k, v in environments.items() if k in args.environments} if args.environments else environments
 
-    data = settings_map[environment]
-    print(f"\n=== Processing {environment} ===")
-    resource_group = data["resource_group"]
-    cosmos_account = data["cosmos_account"]
-    process_permissions(resource_group, cosmos_account)
+    failures = []
+    for env_name, data in selected.items():
+        print(f"\n=== Processing {env_name} ===")
+        try:
+            process_permissions(data["resource_group"], data["cosmos_account"])
+        except Exception as e:
+            print(f"ERROR: Failed to process {env_name}: {e}")
+            failures.append(env_name)
+
+    if failures:
+        print(f"\nFailed environments: {', '.join(failures)}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

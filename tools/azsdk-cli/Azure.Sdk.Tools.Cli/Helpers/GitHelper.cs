@@ -11,11 +11,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         // Get the owner
         public Task<string> GetRepoOwnerNameAsync(string pathInRepo, bool findUpstreamParent = true, CancellationToken ct = default);
         public Task<string> GetRepoFullNameAsync(string pathInRepo, bool findUpstreamParent = true, CancellationToken ct = default);
-        public Task<Uri> GetRepoRemoteUriAsync(string pathInRepo, CancellationToken ct = default);
-        public Task<string> GetBranchNameAsync(string pathInRepo, CancellationToken ct = default);
-        public Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranch, CancellationToken ct = default);
-        public Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct = default);
-        public Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct = default);
+        public Task<Uri> GetRepoRemoteUriAsync(string pathInRepo, CancellationToken ct);
+        public Task<string> GetBranchNameAsync(string pathInRepo, CancellationToken ct);
+        public Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranch, CancellationToken ct);
+        public Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct);
+        public Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct);
+        public Task<List<string>> GetChangedFilesAsync(string repoRoot, string targetCommitish, string sourceCommitish, string? diffPath, string diffFilterType, CancellationToken ct);
     }
 
     public class GitHelper(IGitHubService gitHubService, IGitCommandHelper gitCommandHelper, ILogger<GitHelper> logger) : IGitHelper
@@ -31,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="targetBranchName">The name of the target branch to find the merge base with</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>The SHA of the merge base commit, or empty string if not found or on error</returns>
-        public async Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranchName, CancellationToken ct = default)
+        public async Task<string> GetMergeBaseCommitShaAsync(string pathInRepo, string targetBranchName, CancellationToken ct)
         {
             var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
             var options = new GitOptions($"merge-base HEAD {targetBranchName}", repoRoot);
@@ -57,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>The friendly name of the current branch</returns>
-        public async Task<string> GetBranchNameAsync(string pathInRepo, CancellationToken ct = default)
+        public async Task<string> GetBranchNameAsync(string pathInRepo, CancellationToken ct)
         {
             var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
             var options = new GitOptions("rev-parse --abbrev-ref HEAD", repoRoot);
@@ -77,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>The HTTPS URI of the remote origin</returns>
-        public async Task<Uri> GetRepoRemoteUriAsync(string pathInRepo, CancellationToken ct = default)
+        public async Task<Uri> GetRepoRemoteUriAsync(string pathInRepo, CancellationToken ct)
         {
             var repoRoot = await DiscoverRepoRootAsync(pathInRepo, ct);
             var options = new GitOptions("remote get-url origin", repoRoot);
@@ -163,7 +164,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="ct">Cancellation token</param>
         /// <returns>The absolute path to the repository root directory</returns>
         /// <exception cref="InvalidOperationException">Thrown when no git repository is found at or above the specified path</exception>
-        public async Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct = default)
+        public async Task<string> DiscoverRepoRootAsync(string pathInRepo, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(pathInRepo))
             {
@@ -227,7 +228,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <returns>The name of the repository (without the owner)</returns>
         /// <exception cref="ArgumentException">Thrown when pathInRepo is null or empty</exception>
         /// <exception cref="InvalidOperationException">Thrown when unable to determine repository name from remote URL</exception>
-        public async Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct = default)
+        public async Task<string> GetRepoNameAsync(string pathInRepo, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(pathInRepo))
             {
@@ -244,6 +245,55 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             string repoName = segments[^1].Replace(".git", "");
             return repoName;
+        }
+
+        /// <summary>
+        /// Gets the list of changed files between two commits using git diff.
+        /// </summary>
+        /// <param name="repoRoot">The root directory of the git repository</param>
+        /// <param name="targetCommitish">The target commit/branch to diff against</param>
+        /// <param name="sourceCommitish">The source commit/branch</param>
+        /// <param name="diffPath">Optional path to limit the diff scope</param>
+        /// <param name="diffFilterType">Git diff filter type (e.g., "d" for non-deleted, "D" for deleted only)</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>List of changed file paths relative to the repository root</returns>
+        public async Task<List<string>> GetChangedFilesAsync(
+            string repoRoot,
+            string targetCommitish,
+            string sourceCommitish,
+            string? diffPath,
+            string diffFilterType,
+            CancellationToken ct)
+        {
+            var args = new List<string>
+            {
+                "-c", "core.quotepath=off",
+                "-c", "i18n.logoutputencoding=utf-8",
+                "diff",
+                $"{targetCommitish}...{sourceCommitish}",
+                "--name-only",
+                $"--diff-filter={diffFilterType}"
+            };
+
+            if (!string.IsNullOrEmpty(diffPath))
+            {
+                args.Add("--");
+                args.Add(diffPath);
+            }
+
+            var options = new GitOptions([.. args], repoRoot, logOutputStream: false);
+            var result = await gitCommandHelper.Run(options, ct);
+
+            if (result.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"git diff failed: {result.Output}");
+            }
+
+            return result.Stdout
+                .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Trim())
+                .Where(line => !string.IsNullOrEmpty(line))
+                .ToList();
         }
 
         /// <summary>

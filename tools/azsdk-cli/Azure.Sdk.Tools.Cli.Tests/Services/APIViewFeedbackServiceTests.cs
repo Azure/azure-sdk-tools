@@ -78,6 +78,37 @@ public class APIViewFeedbackServiceTests
     }
 
     [Test]
+    public async Task GetConsolidatedComments_WithDownvotedAzureSdkBotComment_FiltersItOut()
+    {
+        // Arrange
+        var revisionId = "test-revision";
+        var comments = new[]
+        {
+            // Should be filtered: azure-sdk bot with downvotes
+            CreateAPIViewComment("thread1", 1, "Use List[str] instead of list[str]", createdBy: "azure-sdk", downvotes: 1),
+            // Should remain: azure-sdk bot with no downvotes
+            CreateAPIViewComment("thread2", 2, "Remove unused import", createdBy: "azure-sdk", downvotes: 0),
+            // Should remain: non-bot comment with downvotes
+            CreateAPIViewComment("thread3", 3, "Rename parameter to media_id", createdBy: "reviewer", downvotes: 2),
+        };
+        var commentsJson = JsonSerializer.Serialize(comments);
+        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId))
+            .ReturnsAsync(commentsJson);
+
+        // Act
+        var result = await _service.GetConsolidatedComments(revisionId);
+
+        // Assert
+        Assert.That(result, Has.Count.EqualTo(2));
+        Assert.That(result.Select(c => c.ThreadId), Does.Not.Contain("thread1"),
+            "Downvoted azure-sdk bot comment should be filtered out");
+        Assert.That(result.Select(c => c.ThreadId), Contains.Item("thread2"),
+            "Non-downvoted azure-sdk bot comment should remain");
+        Assert.That(result.Select(c => c.ThreadId), Contains.Item("thread3"),
+            "Non-bot comment with downvotes should remain");
+    }
+
+    [Test]
     public async Task GetConsolidatedComments_WithSingleCommentThread_ReturnsWithoutConsolidation()
     {
         // Arrange
@@ -500,7 +531,8 @@ repo: 'Azure/azure-rest-api-specs'
         bool isResolved = false,
         string? severity = null,
         string? createdBy = null,
-        string? createdOn = null)
+        string? createdOn = null,
+        int downvotes = 0)
     {
         return new
         {
@@ -514,7 +546,7 @@ repo: 'Azure/azure-rest-api-specs'
             createdBy,
             createdOn,
             upvotes = 0,
-            downvotes = 0
+            downvotes
         };
     }
 

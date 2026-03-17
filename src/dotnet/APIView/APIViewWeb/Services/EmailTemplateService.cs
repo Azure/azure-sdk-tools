@@ -1,130 +1,85 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using System.Linq;
-using APIViewWeb.LeanModels;
-using Microsoft.Extensions.Configuration;
-using System.Reflection;
+using APIViewWeb.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace APIViewWeb.Services
 {
-    public interface IEmailTemplateService
-    {
-        Task<string> GetNamespaceReviewRequestEmailAsync(
-            string packageName,
-            string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews,
-            string notes = null);
-
-        Task<string> GetNamespaceReviewApprovedEmailAsync(
-            string packageName,
-            string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews);
-    }
-
     public class EmailTemplateService : IEmailTemplateService
     {
-        private readonly string _apiviewEndpoint;
+        private const string EmailLogoUrl = "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/src/dotnet/APIView/APIViewWeb/wwwroot/icons/apiview.png";
+        private readonly IServiceProvider _serviceProvider;
 
-        public EmailTemplateService(IConfiguration configuration)
+        public EmailTemplateService(IServiceProvider serviceProvider)
         {
-            _apiviewEndpoint = configuration.GetValue<string>("APIVIew-Host-Url");
+            _serviceProvider = serviceProvider;
         }
 
-        private async Task<string> LoadEmbeddedTemplateAsync(string templateName)
+        public async Task<string> RenderAsync<TModel>(EmailTemplateKey templateKey, TModel model)
         {
-            var assembly = typeof(EmailTemplateService).GetTypeInfo().Assembly;
-            var resourceName = $"APIViewWeb.EmailTemplates.{templateName}";
-            
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            var templateName = ResolveTemplateName(templateKey);
+
+            using var scope = _serviceProvider.CreateScope();
+            var scopedServices = scope.ServiceProvider;
+
+            var viewEngine = scopedServices.GetRequiredService<IRazorViewEngine>();
+            var tempDataProvider = scopedServices.GetRequiredService<ITempDataProvider>();
+
+            var actionContext = new ActionContext(
+                new DefaultHttpContext { RequestServices = scopedServices },
+                new RouteData(),
+                new ActionDescriptor());
+
+            var viewPath = $"/EmailTemplates/{templateName}";
+            var viewResult = viewEngine.GetView(executingFilePath: null, viewPath: viewPath, isMainPage: true);
+
+            if (!viewResult.Success)
             {
-                if (stream == null)
-                    throw new FileNotFoundException($"Template {templateName} not found as embedded resource. Resource name: {resourceName}");
-                    
-                using (var reader = new StreamReader(stream))
-                {
-                    return await reader.ReadToEndAsync();
-                }
+                throw new FileNotFoundException($"Template '{templateName}' was not found. Path attempted: {viewPath}");
             }
-        }
 
-        public async Task<string> GetNamespaceReviewRequestEmailAsync(
-            string packageName,
-            string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews,
-            string notes = null)
-        {
-            var template = await LoadEmbeddedTemplateAsync("NamespaceReviewRequestEmail.html");
-
-            // Generate language links HTML like the pending namespace approval tab
-            var languageLinksHtml = GenerateLanguageLinksHtml(languageReviews);
-
-            // Generate notes section HTML if notes are provided
-            var notesSectionHtml = string.IsNullOrEmpty(notes) 
-                ? "" 
-                : $@"<div class=""notes-section"">
-                        <div class=""notes-title"">Additional Notes:</div>
-                        <div>{notes}</div>
-                     </div>";
-
-            // Replace all placeholders
-            return template
-                .Replace("{{PackageName}}", packageName)
-                .Replace("{{TypeSpecUrl}}", typeSpecUrl)
-                .Replace("{{LanguageLinks}}", languageLinksHtml)
-                .Replace("{{NotesSection}}", notesSectionHtml);
-        }
-
-        public async Task<string> GetNamespaceReviewApprovedEmailAsync(
-            string packageName,
-            string typeSpecUrl,
-            IEnumerable<ReviewListItemModel> languageReviews)
-        {
-            var template = await LoadEmbeddedTemplateAsync("NamespaceReviewApprovedEmail.html");
-
-            // Generate language package names in the simple format
-            var languagePackagesHtml = GenerateLanguagePackagesHtml(languageReviews);
-
-            // Replace all placeholders
-            return template
-                .Replace("{{PackageName}}", packageName)
-                .Replace("{{TypeSpecUrl}}", typeSpecUrl)
-                .Replace("{{LanguageViews}}", languagePackagesHtml);
-        }
-
-        private string GenerateLanguagePackagesHtml(IEnumerable<ReviewListItemModel> languageReviews)
-        {
-            if (languageReviews == null || !languageReviews.Any())
-                return "<li class=\"package-item\">No language-specific package names available yet.</li>";
-
-            var packagesHtml = "";
-            foreach (var review in languageReviews)
+            await using var output = new StringWriter();
+            var viewData = new ViewDataDictionary<TModel>(
+                metadataProvider: new EmptyModelMetadataProvider(),
+                modelState: new ModelStateDictionary())
             {
-                // Build format to match the request email styling
-                packagesHtml += $@"
-                    <li class=""package-item"">
-                        <span class=""language-name"">{review.Language}:</span>{review.PackageName}
-                    </li>";
-            }
-            return packagesHtml;
+                Model = model,
+            };
+            viewData["EmailLogoUrl"] = EmailLogoUrl;
+
+            var viewContext = new ViewContext(
+                actionContext,
+                viewResult.View,
+                viewData,
+                new TempDataDictionary(actionContext.HttpContext, tempDataProvider),
+                output,
+                new HtmlHelperOptions());
+
+            await viewResult.View.RenderAsync(viewContext);
+            return output.ToString();
         }
 
-        private string GenerateLanguageLinksHtml(IEnumerable<ReviewListItemModel> languageReviews)
+        private static string ResolveTemplateName(EmailTemplateKey templateKey)
         {
-            if (languageReviews == null || !languageReviews.Any())
-                return "<li class=\"language-item\">No language-specific reviews available yet.</li>";
-
-            var linksHtml = "";
-            foreach (var review in languageReviews)
+            return templateKey switch
             {
-                linksHtml += $@"
-                    <li class=""language-item"">
-                        <span class=""language-name"">{review.Language}:</span>
-                        <a href=""{_apiviewEndpoint}/Assemblies/Review/{review.Id}"" class=""package-link"">{review.PackageName}</a>
-                    </li>";
-            }
-            return linksHtml;
+                EmailTemplateKey.NamespaceReviewRequest => "NamespaceReviewRequestEmail.cshtml",
+                EmailTemplateKey.NamespaceReviewApproved => "NamespaceReviewApprovedEmail.cshtml",
+                EmailTemplateKey.ReviewerAssigned => "ReviewerAssignedEmail.cshtml",
+                EmailTemplateKey.CommentTag => "CommentTagEmail.cshtml",
+                EmailTemplateKey.SubscriberComment => "SubscriberCommentEmail.cshtml",
+                EmailTemplateKey.NewRevision => "NewRevisionEmail.cshtml",
+                _ => throw new ArgumentOutOfRangeException(nameof(templateKey), templateKey, "Unsupported email template key"),
+            };
         }
     }
 }

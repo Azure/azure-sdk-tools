@@ -162,8 +162,8 @@ namespace APIViewWeb.Managers
 
             if (!comment.IsResolved)
             {
-                await _notificationManager.NotifyUserOnCommentTag(comment);
-                await _notificationManager.NotifySubscribersOnComment(user, comment);
+                await _notificationManager.NotifyUserOnCommentTagAsync(comment);
+                await _notificationManager.NotifySubscribersOnCommentAsync(user, comment);
             }
 
             await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
@@ -203,8 +203,8 @@ namespace APIViewWeb.Managers
             }
 
             await _commentsRepository.UpsertCommentAsync(comment);
-            await _notificationManager.NotifyUserOnCommentTag(comment);
-            await _notificationManager.NotifySubscribersOnComment(user, comment);
+            await _notificationManager.NotifyUserOnCommentTagAsync(comment);
+            await _notificationManager.NotifySubscribersOnCommentAsync(user, comment);
 
             await _signalRHubContext.Clients.All.SendAsync("ReceiveCommentUpdates",
                 new CommentUpdatesDto()

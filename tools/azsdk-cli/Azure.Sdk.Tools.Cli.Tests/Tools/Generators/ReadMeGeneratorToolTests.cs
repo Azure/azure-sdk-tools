@@ -1,7 +1,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using Moq;
-using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Telemetry;
@@ -15,19 +15,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         private OutputHelper outputHelper { get; set; }
 
         private ReadMeGeneratorTool tool;
-        private Mock<IMicroagentHostService>? mockMicroAgentService;
+        private Mock<ICopilotAgentRunner>? mockCopilotAgentRunner;
         private Mock<ITelemetryService>? telemetryServiceMock;
 
         [SetUp]
         public void Setup()
         {
             outputHelper = new();
-            mockMicroAgentService = new Mock<IMicroagentHostService>();
+            mockCopilotAgentRunner = new Mock<ICopilotAgentRunner>();
             telemetryServiceMock = new Mock<ITelemetryService>();
 
             tool = new ReadMeGeneratorTool(
                 new TestLogger<ReadMeGeneratorTool>(),
-                mockMicroAgentService.Object
+                mockCopilotAgentRunner.Object
             );
             tool.Initialize(outputHelper, telemetryServiceMock.Object, new MockUpgradeService());
         }
@@ -36,8 +36,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         public async Task TestReadmeGeneratorTool()
         {
             var readmeContents = "This is a test response for the readme generation.";
-            mockMicroAgentService?.Setup(svc => svc.RunAgentToCompletion(
-                It.IsAny<Microagent<ReadmeGenerator.ReadmeContents>>(), It.IsAny<CancellationToken>())
+            mockCopilotAgentRunner?.Setup(svc => svc.RunAsync(
+                It.IsAny<CopilotAgent<ReadmeGenerator.ReadmeContents>>(), It.IsAny<CancellationToken>())
             ).Returns(() => Task.FromResult(new ReadmeGenerator.ReadmeContents(readmeContents)));
 
             (DirectoryInfo root, string packagePath) = await CreateFakeLanguageRepo();
@@ -118,8 +118,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             "The readme contains placeholders ((package path)) that should be removed and replaced with a proper package name")]
         public async Task TestBadReadmeContent(string readmeContent, string expectedFeedback)
         {
-            mockMicroAgentService?.Setup(svc => svc.RunAgentToCompletion(
-                It.IsAny<Microagent<ReadmeGenerator.ReadmeContents>>(), It.IsAny<CancellationToken>())
+            mockCopilotAgentRunner?.Setup(svc => svc.RunAsync(
+                It.IsAny<CopilotAgent<ReadmeGenerator.ReadmeContents>>(), It.IsAny<CancellationToken>())
             ).Returns(() => Task.FromResult(new ReadmeGenerator.ReadmeContents(readmeContent)));
 
             (DirectoryInfo root, string packagePath) = await CreateFakeLanguageRepo();

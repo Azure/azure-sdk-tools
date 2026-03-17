@@ -14,8 +14,6 @@ model UserPreferences {
     userName: string;
     /** No idea what this does? Seems like legacy. */
     language: string[];
-    /** Languages for which the user can approve reviews. */
-    approvedLanguages: string[];
     /** The UI theme */
     theme: string;
     /** Toggle the display of the options panel on the review page on or off. */

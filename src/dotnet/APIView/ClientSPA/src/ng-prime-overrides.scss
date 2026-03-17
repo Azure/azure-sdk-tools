@@ -61,6 +61,19 @@ p-contextmenusub {
     transition: box-shadow 0.15s;
 }
 
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
+    background: var(--border-color-transparent) !important;
+    color: var(--base-text-color);
+}
+
+.p-datatable {
+    --p-datatable-row-striped-background: var(--border-color-transparent);
+    --p-datatable-header-cell-background: var(--base-fg-color);
+    --p-datatable-footer-cell-background: var(--base-fg-color);
+    --p-datatable-header-background: var(--base-fg-color);
+    --p-datatable-footer-background: var(--base-fg-color);
+}
+
 .p-datatable .p-datatable-footer {
     background: var(--base-fg-color);
     color: var(--base-text-color);
@@ -1299,10 +1312,17 @@ p-selectbutton {
     background: var(--base-fg-color) !important;
     color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
+    border-radius: 12px 0 0 12px !important;
 
     .p-inputtext {
         background-color: var(--base-fg-color) !important;
         color: var(--base-text-color) !important;
+    }
+
+    .p-drawer-header {
+        background: var(--base-bg-color);
+        border-bottom: 1px solid var(--border-color);
+        border-radius: 12px 0 0 0;
     }
 
     .p-float-label {
@@ -1313,12 +1333,102 @@ p-selectbutton {
         }
     }
 
+    .nav-pills {
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        overflow: hidden;
+        display: inline-flex;
+        padding: 0;
+
+        .nav-item {
+            margin: 0;
+        }
+
+        .nav-link {
+            border-radius: 0;
+            font-size: 0.85rem;
+            padding: 0.35rem 0.85rem;
+            color: var(--base-text-color);
+            background: var(--border-color);
+
+            &.active {
+                background: var(--base-fg-color);
+                color: var(--base-text-color);
+                font-weight: 600;
+            }
+
+            &:hover:not(.active) {
+                color: var(--base-text-color);
+                background: var(--base-bg-color);
+            }
+        }
+
+        .nav-item:not(:last-child) .nav-link {
+            border-right: 1px solid var(--border-color);
+        }
+    }
+
     .samples-editor-panel {
         height: calc(100vh - 350px);
         border-radius: 6px;
         overflow: hidden;
         border: solid 1px var(--border-color);
     }
+}
+
+// Shared file drop zone styles (used by both .edit-samples-sidebar and .create-revision-sidebar)
+.file-drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    background: var(--base-fg-color);
+
+    &:hover {
+        border-color: var(--primary-color);
+        background: var(--base-bg-color);
+    }
+}
+
+.drop-zone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.drop-zone-icon {
+    font-size: 2rem;
+    color: var(--base-text-color);
+    opacity: 0.45;
+    margin-bottom: 0.5rem;
+}
+
+.drop-zone-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--base-text-color);
+    margin: 0;
+}
+
+.drop-zone-subtitle {
+    font-size: 0.8rem;
+    color: var(--base-text-color);
+    opacity: 0.6;
+    margin: 0 0 0.75rem 0;
+}
+
+.drop-zone-browse {
+    cursor: pointer;
+}
+
+.drop-zone-selected {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--base-text-color);
 }
 
 // Calendar
@@ -1437,6 +1547,34 @@ p-selectbutton {
     background: var(--base-fg-color) !important;
     color: var(--base-text-color) !important;
     border: 1px solid var(--border-color) !important;
+
+}
+
+.options-popover {
+    .p-popover-content {
+        padding: 0 !important;
+    }
+
+    .options-popover-content {
+        padding: 0.75rem 1rem;
+        min-width: 220px;
+    }
+
+    .options-popover-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted-color);
+        margin-bottom: 0.6rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-check-label {
+        font-size: 0.85rem;
+        color: var(--base-text-color);
+    }
 }
 
 .options-sidebar {

@@ -67,6 +67,8 @@ function executeCommand(
     maxRetries = 3,
     retryDelayMs = 1000
 ): shell.ShellString | null {
+    const currentRepo = shell.pwd().stdout.trim();
+    logger.info(`Executing git command in repo: ${currentRepo}`);
     logger.info(`Executing command with retry mode (max attempts: ${maxRetries}): ${command}`);
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -119,15 +121,6 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     const tag = `${packageName}_${version}`;
     const defaultContent = "```ts\n```";
     logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);
-
-    // Check if tag exists
-    if (!checkGitTagExists(tag)) {
-        logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
-        if (file !== "CHANGELOG.md") {
-            fs.writeFileSync(targetFilePath, defaultContent, { encoding: 'utf-8' });
-        }
-        return;
-    }
 
     try {
         if (file === "CHANGELOG.md") {
@@ -184,12 +177,6 @@ export async function checkDirectoryExistsInGithub(
 ): Promise<boolean> {
     try {
         const tag = `${packageName}_${version}`;
-
-        // Check if tag exists
-        if (!checkGitTagExists(tag)) {
-            logger.warn(`Warning: Git tag '${tag}' does not exist in the repository.`);
-            return false;
-        }
 
         // Get SDK root path
         const sdkRootPath = process.cwd(); // Assuming we're running from SDK root

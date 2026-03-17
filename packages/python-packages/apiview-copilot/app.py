@@ -18,10 +18,10 @@ import time
 from enum import Enum
 from typing import Literal, Optional
 
+from azure.monitor.opentelemetry import configure_azure_monitor
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
-from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 from src._apiview import resolve_package
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._auth import AppRole, require_roles
@@ -37,6 +37,11 @@ from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_age
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
 db_manager = DatabaseManager.get_instance()
 settings = SettingsManager()
+
+# Application Insights telemetry — enabled when connection string is available
+_appinsights_conn_str = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
+if _appinsights_conn_str:
+    configure_azure_monitor(connection_string=_appinsights_conn_str)
 
 app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
 
@@ -195,15 +200,12 @@ async def agent_chat(
                 messages=request.messages,
             )
         return AgentChatResponse(response=response, thread_id=thread_id_out, messages=messages)
-    except AgentInvokeException as e:
+    except Exception as e:
         if "Rate limit is exceeded" in str(e):
             logger.warning("Rate limit exceeded: %s", e)
             raise HTTPException(status_code=429, detail="Rate limit exceeded. Please wait and try again.") from e
-        logger.error("AgentInvokeException: %s", e)
-        raise HTTPException(status_code=500, detail=f"Agent error: {e}") from e
-    except Exception as e:
         logger.error("Error in /agent/chat: %s", e, exc_info=True)
-        raise HTTPException(status_code=500, detail="Internal server error") from e
+        raise HTTPException(status_code=500, detail=f"Agent error: {e}") from e
 
 
 class SummarizeRequest(BaseModel):

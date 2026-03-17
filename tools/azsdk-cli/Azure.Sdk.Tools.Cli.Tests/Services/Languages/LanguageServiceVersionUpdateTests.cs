@@ -49,6 +49,7 @@ public class LanguageServiceVersionUpdateTests
             _mockGitHelper.Object,
             NullLogger<TestableLanguageService>.Instance,
             _mockCommonValidationHelpers.Object,
+            Mock.Of<IPackageInfoHelper>(),
             _mockFileHelper.Object,
             _mockSpecGenSdkConfigHelper.Object,
             _mockChangelogHelper.Object);
@@ -267,10 +268,11 @@ public class LanguageServiceVersionUpdateTests
             IGitHelper gitHelper,
             ILogger<TestableLanguageService> logger,
             ICommonValidationHelpers commonValidationHelpers,
+            IPackageInfoHelper packageInfoHelper,
             IFileHelper fileHelper,
             ISpecGenSdkConfigHelper specGenSdkConfigHelper,
             IChangelogHelper changelogHelper)
-            : base(processHelper, gitHelper, logger, commonValidationHelpers, fileHelper, specGenSdkConfigHelper, changelogHelper)
+            : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
         {
         }
 

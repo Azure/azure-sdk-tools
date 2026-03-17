@@ -6,11 +6,13 @@ import { functionTokenGenerator } from "./function";
 import { interfaceTokenGenerator } from "./interfaces";
 import { classTokenGenerator } from "./class";
 import { constructorTokenGenerator } from "./constructor";
+import { callableSignatureTokenGenerator } from "./callableSignature";
 import { methodTokenGenerator } from "./method";
 import { propertyTokenGenerator } from "./property";
 import { typeAliasTokenGenerator } from "./typeAlias";
 import { variableTokenGenerator } from "./variable";
 import { namespaceTokenGenerator } from "./namespace";
+import { indexSignatureTokenGenerator } from "./indexSignature";
 
 export interface GeneratorResult {
   tokens: ReviewToken[];
@@ -29,9 +31,11 @@ export const generators: TokenGenerator[] = [
   functionTokenGenerator,
   interfaceTokenGenerator,
   constructorTokenGenerator,
+  callableSignatureTokenGenerator,
   methodTokenGenerator,
   propertyTokenGenerator,
   typeAliasTokenGenerator,
   variableTokenGenerator,
   namespaceTokenGenerator,
+  indexSignatureTokenGenerator,
 ];

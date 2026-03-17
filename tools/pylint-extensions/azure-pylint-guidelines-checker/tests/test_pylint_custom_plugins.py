@@ -4318,3 +4318,132 @@ class TestDoNotUseDeprecatedAsyncioIscoroutinefunction(pylint.testutils.CheckerT
         with self.assertNoMessages():
             self.checker.visit_call(call_node1)
             self.checker.visit_call(call_node2)
+
+
+class TestDoNotUseLoggingDirectly(pylint.testutils.CheckerTestCase):
+    """Test that we flag direct logging.<method>() calls without a named logger instance."""
+
+    CHECKER_CLASS = checker.DoNotUseLoggingDirectly
+
+    @pytest.fixture(scope="class")
+    def setup(self):
+        with open(
+            os.path.join(TEST_FOLDER, "test_files", "do_not_use_logging_directly.py")
+        ) as file:
+            node = astroid.parse(file.read())
+        return node
+
+    def _find_logging_call(self, node, method_name, module_name="logging"):
+        """Helper to find a specific logging call in the AST."""
+        for call_node in node.nodes_of_class(astroid.nodes.Call):
+            if (hasattr(call_node.func, 'attrname') and 
+                call_node.func.attrname == method_name and
+                hasattr(call_node.func, 'expr') and
+                hasattr(call_node.func.expr, 'name') and
+                call_node.func.expr.name == module_name):
+                return call_node
+        return None
+
+    def test_flags_direct_logging_info(self, setup):
+        """Test that logging.info() is flagged."""
+        call_node = self._find_logging_call(setup, "info")
+        assert call_node is not None, "Could not find logging.info() call"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_flags_direct_logging_debug(self, setup):
+        """Test that logging.debug() is flagged."""
+        call_node = self._find_logging_call(setup, "debug")
+        assert call_node is not None, "Could not find logging.debug() call"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_flags_direct_logging_warning(self, setup):
+        """Test that logging.warning() is flagged."""
+        call_node = self._find_logging_call(setup, "warning")
+        assert call_node is not None, "Could not find logging.warning() call"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_allows_logger_instance_calls(self, setup):
+        """Test that logger.info() on named logger is NOT flagged."""
+        call_node = self._find_logging_call(setup, "info", "logger")
+        assert call_node is not None, "Could not find logger.info() call"
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_allows_logging_getlogger(self, setup):
+        """Test that logging.getLogger() is NOT flagged."""
+        call_node = self._find_logging_call(setup, "getLogger")
+        assert call_node is not None, "Could not find logging.getLogger() call"
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_allows_logging_basicconfig(self, setup):
+        """Test that logging.basicConfig() is NOT flagged."""
+        call_node = self._find_logging_call(setup, "basicConfig")
+        assert call_node is not None, "Could not find logging.basicConfig() call"
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)
+
+    def test_flags_aliased_logging_import(self, setup):
+        """Test that aliased logging imports (import logging as log) are flagged."""
+        # Visit the module to reset state
+        self.checker.visit_module(setup)
+        
+        # Visit all imports to register aliases
+        for import_node in setup.nodes_of_class(astroid.nodes.Import):
+            self.checker.visit_import(import_node)
+        
+        # Find the log.info() call
+        call_node = self._find_logging_call(setup, "info", "log")
+        assert call_node is not None, "Could not find log.info() call"
+        
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="do-not-use-logging-directly",
+                node=call_node,
+            ),
+            ignore_position=True
+        ):
+            self.checker.visit_call(call_node)
+
+    def test_does_not_flag_unrelated_alias(self, setup):
+        """Test that non-logging aliases named 'unrelated_log' are NOT flagged."""
+        # Visit the module to reset state
+        self.checker.visit_module(setup)
+        
+        # Visit all imports to register aliases
+        for import_node in setup.nodes_of_class(astroid.nodes.Import):
+            self.checker.visit_import(import_node)
+        
+        # Find the unrelated_log.sqrt() call
+        call_node = self._find_logging_call(setup, "sqrt", "unrelated_log")
+        assert call_node is not None, "Could not find unrelated_log.sqrt() call"
+        
+        with self.assertNoMessages():
+            self.checker.visit_call(call_node)

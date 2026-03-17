@@ -2,8 +2,9 @@ using System.ComponentModel;
 using System.Threading;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Microagents.Tools;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
+using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
+using Microsoft.Extensions.AI;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
@@ -72,20 +73,20 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<CommonValidationHelpers> _logger;
-    private readonly IMicroagentHostService _microagentHostService;
+    private readonly ICopilotAgentRunner _copilotAgentRunner;
 
     public CommonValidationHelpers(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
         ILogger<CommonValidationHelpers> logger,
-        IMicroagentHostService microagentHostService)
+        ICopilotAgentRunner copilotAgentRunner)
     {
         _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
         _npxHelper = npxHelper ?? throw new ArgumentNullException(nameof(npxHelper));
         _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _microagentHostService = microagentHostService ?? throw new ArgumentNullException(nameof(microagentHostService));
+        _copilotAgentRunner = copilotAgentRunner ?? throw new ArgumentNullException(nameof(copilotAgentRunner));
     }
 
     public async Task<PackageCheckResponse> ValidateChangelog(
@@ -226,17 +227,17 @@ public class CommonValidationHelpers : ICommonValidationHelpers
                 return new PackageCheckResponse(0, processResult.Output);
             }
 
-            // If fix is requested and there are spelling issues, use Microagent to automatically apply fixes
+            // If fix is requested and there are spelling issues, use CopilotAgent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
             {
                 try
                 {
-                    var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, ct);
+                    var fixResult = await RunSpellingFixAgent(packageRepoRoot, processResult.Output, ct);
                     return new PackageCheckResponse(0, fixResult.Summary);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error running spelling fix microagent");
+                    _logger.LogError(ex, "Error running spelling fix agent");
                     return new PackageCheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
             }
@@ -274,35 +275,34 @@ public class CommonValidationHelpers : ICommonValidationHelpers
     }
 
     /// <summary>
-    /// Result of the spelling fix microagent operation.
+    /// Result of the spelling fix agent operation.
     /// </summary>
     public record SpellingFixResult(
         [property: Description("Summary of the operations performed")] string Summary
     );
 
     /// <summary>
-    /// Runs a microagent to automatically fix spelling issues by either correcting typos or adding legitimate terms to cspell.json.
+    /// Runs a copilot agent to automatically fix spelling issues by either correcting typos or adding legitimate terms to cspell.json.
     /// </summary>
     /// <param name="repoRoot">Repository root path</param>
     /// <param name="cspellOutput">Output from cspell lint command</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling fix operation</returns>
-    private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, CancellationToken ct)
+    private async Task<SpellingFixResult> RunSpellingFixAgent(string repoRoot, string cspellOutput, CancellationToken ct)
     {
         var spellingTemplate = new SpellingValidationTemplate(cspellOutput, repoRoot);
-        var agent = new Microagent<SpellingFixResult>
+        var agent = new CopilotAgent<SpellingFixResult>
         {
             Instructions = spellingTemplate.BuildPrompt(),
-            MaxToolCalls = 10,
-            Model = "gpt-4",
-            Tools = new IAgentTool[]
-            {
-                new ReadFileTool(repoRoot),
-                new WriteFileTool(repoRoot),
-                new UpdateCspellWordsTool(repoRoot)
-            }
+            MaxIterations = 10,
+            Tools =
+            [
+                FileTools.CreateReadFileTool(repoRoot),
+                FileTools.CreateWriteFileTool(repoRoot),
+                CspellTools.CreateUpdateCspellWordsTool(repoRoot)
+            ]
         };
 
-        return await _microagentHostService.RunAgentToCompletion(agent, ct);
+        return await _copilotAgentRunner.RunAsync(agent, ct);
     }
 }

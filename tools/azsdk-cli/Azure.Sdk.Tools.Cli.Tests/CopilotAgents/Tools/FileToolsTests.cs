@@ -108,7 +108,7 @@ internal class FileToolsTests
     {
         // Arrange
         var customDescription = "Read TypeSpec project files";
-        var tool = FileTools.CreateReadFileTool(baseDir, customDescription);
+        var tool = FileTools.CreateReadFileTool(baseDir, description: customDescription);
 
         Assert.Multiple(() =>
         {

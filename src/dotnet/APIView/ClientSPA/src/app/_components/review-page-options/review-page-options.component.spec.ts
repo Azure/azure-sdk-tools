@@ -148,6 +148,21 @@ describe('ReviewPageOptionsComponent', () => {
       const message : HTMLElement = fixture.nativeElement.querySelector('#first-release-approval-message');
       expect(message.textContent).toEqual("First release approval pending");
     });
+    it('should emit reviewApprovalEmitter when first release approval button is clicked', () => {
+      mockPermissionsService.isApproverFor.mockReturnValue(true);
+      component.reviewIsApproved = false;
+      component.review = { language: 'Python' } as Review;
+      component.userProfile = new UserProfile();
+      component.userProfile.userName = "test-user";
+      component.userProfile.permissions = mockApproverPermissions;
+      component.loadingStatus = "completed";
+      fixture.detectChanges();
+      const emitSpy = vi.spyOn(component.reviewApprovalEmitter, 'emit');
+      const button: HTMLButtonElement = fixture.nativeElement.querySelector('#first-release-approval-button');
+      expect(button).toBeTruthy();
+      button.click();
+      expect(emitSpy).toHaveBeenCalledWith(true);
+    });
   });
 
   describe('Page Option Values', () => {
@@ -264,9 +279,9 @@ describe('ReviewPageOptionsComponent', () => {
         expect(result).toBe(false);
       });
 
-      it('should return false when user has already approved', () => {
+      it('should return false when revision is already approved', () => {
         component.activeAPIRevision!.approvers = ['test-user'];
-        component.activeAPIRevisionIsApprovedByCurrentUser = true;
+        component.activeAPIRevision!.isApproved = true;
         const isReviewByCopilotRequired = true;
         const isVersionReviewedByCopilot = false;
         const result = component['shouldDisableApproval'](isReviewByCopilotRequired, isVersionReviewedByCopilot);
@@ -424,8 +439,9 @@ describe('ReviewPageOptionsComponent', () => {
         expect(component.isAPIRevisionApprovalDisabled).toBe(false);
       });
 
-      it('should not disable approval when user has already approved', () => {
+      it('should not disable approval when revision is already approved', () => {
         component.activeAPIRevision!.approvers = ['testuser'];
+        component.activeAPIRevision!.isApproved = true;
 
         component['updateApprovalStates'](true, false);
 

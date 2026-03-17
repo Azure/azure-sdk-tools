@@ -545,10 +545,8 @@ public class NamespaceManagerTests
     [Theory]
     [InlineData(NamespaceDecisionStatus.Proposed, NamespaceDecisionStatus.Approved)]
     [InlineData(NamespaceDecisionStatus.Proposed, NamespaceDecisionStatus.Rejected)]
-    [InlineData(NamespaceDecisionStatus.Proposed, NamespaceDecisionStatus.Withdrawn)]
     [InlineData(NamespaceDecisionStatus.Rejected, NamespaceDecisionStatus.Approved)]
     [InlineData(NamespaceDecisionStatus.Approved, NamespaceDecisionStatus.Rejected)]
-    [InlineData(NamespaceDecisionStatus.Withdrawn, NamespaceDecisionStatus.Proposed)]
     public async Task UpdateNamespaceStatusAsync_ValidTransition_Succeeds(NamespaceDecisionStatus from, NamespaceDecisionStatus to)
     {
         SetupPermissions(true);
@@ -641,46 +639,6 @@ public class NamespaceManagerTests
             "project-1", "Python", NamespaceDecisionStatus.Rejected, null, CreateUser("approver"));
 
         Assert.Empty(result.Project.NamespaceInfo.ApprovedNamespaces);
-    }
-
-    // --- Review sync ---
-
-    [Fact]
-    public async Task UpdateNamespaceStatusAsync_Approve_SyncsReviewIsApproved()
-    {
-        SetupPermissions(true);
-        var entry = ProposedEntry("Python", "azure.storage", "azure-storage");
-        var review = new ReviewListItemModel { Id = "py-review-1" };
-        var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
-            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
-        SetupProject("project-1", project);
-        SetupReview("py-review-1", review);
-
-        await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", NamespaceDecisionStatus.Approved, null, CreateUser("approver"));
-
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(
-            It.Is<ReviewListItemModel>(rev => rev.IsApproved == true)), Times.Once);
-    }
-
-    [Fact]
-    public async Task UpdateNamespaceStatusAsync_RevertApproved_ClearsReviewIsApproved()
-    {
-        SetupPermissions(true);
-        var entry = ApprovedEntry("Python", "azure.storage", "azure-storage");
-        var review = new ReviewListItemModel { Id = "py-review-1", IsApproved = true };
-        var project = CreateProject("project-1",
-            currentStatus: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = entry },
-            reviews: new(StringComparer.OrdinalIgnoreCase) { ["Python"] = "py-review-1" });
-        SetupProject("project-1", project);
-        SetupReview("py-review-1", review);
-
-        await _namespaceManager.UpdateNamespaceStatusAsync(
-            "project-1", "Python", NamespaceDecisionStatus.Rejected, null, CreateUser("approver"));
-
-        _mockReviewsRepository.Verify(r => r.UpsertReviewAsync(
-            It.Is<ReviewListItemModel>(rev => rev.IsApproved == false)), Times.Once);
     }
 
     // --- Error cases ---

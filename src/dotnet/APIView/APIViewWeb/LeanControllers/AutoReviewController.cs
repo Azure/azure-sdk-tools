@@ -34,16 +34,16 @@ public class AutoReviewController : ControllerBase
         IAutoReviewService autoReviewService,
         IEnumerable<LanguageService> languageServices,
         IConfiguration configuration,
-        TelemetryClient telemetryClient,
-        INamespaceManager namespaceManager)
+        INamespaceManager namespaceManager,
+        TelemetryClient telemetryClient)
     {
         _codeFileManager = codeFileManager;
         _apiRevisionsManager = apiRevisionsManager;
         _autoReviewService = autoReviewService;
         _languageServices = languageServices;
         _configuration = configuration;
-        _telemetryClient = telemetryClient;
         _namespaceManager = namespaceManager;
+        _telemetryClient = telemetryClient;
     }
 
     // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released

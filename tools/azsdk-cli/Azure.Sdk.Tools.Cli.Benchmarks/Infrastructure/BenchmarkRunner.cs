@@ -69,7 +69,6 @@ public class BenchmarkRunner : IDisposable
                 Prompt = scenario.Prompt,
                 Timeout = scenario.Timeout,
                 AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath,
-                RunAzsdkInMcpServer = options.RunAzsdkInMcpServer ?? scenario.RunAzsdkInMcpServer,
                 Model = options.Model ?? BenchmarkDefaults.DefaultModel,
                 OnActivity = onActivity,
                 Verbose = options.Verbose

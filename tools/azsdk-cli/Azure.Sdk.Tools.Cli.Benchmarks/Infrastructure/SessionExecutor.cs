@@ -33,7 +33,7 @@ public class SessionExecutor : IDisposable
             _client = new CopilotClient();
 
             // Build MCP server config - try explicit path first, then load from workspace
-            var mcpServers = BuildMcpServers(config.AzsdkMcpPath, config.RunAzsdkInMcpServer) 
+            var mcpServers = BuildMcpServers(config.AzsdkMcpPath) 
                 ?? await McpConfigLoader.LoadFromWorkspaceAsync(config.WorkingDirectory);
 
             var sessionConfig = new SessionConfig
@@ -160,7 +160,7 @@ public class SessionExecutor : IDisposable
     /// </summary>
     /// <param name="azsdkPath">Optional path to the azsdk MCP server executable.</param>
     /// <returns>MCP server configuration dictionary, or null if no path is available.</returns>
-    private static Dictionary<string, object>? BuildMcpServers(string? azsdkPath, bool? runAzsdkInMcpServer)
+    private static Dictionary<string, object>? BuildMcpServers(string? azsdkPath)
     {
         // Priority: config param > env var > null (let SDK use repo config)
         var path = azsdkPath ?? Environment.GetEnvironmentVariable("AZSDK_MCP_PATH");
@@ -175,7 +175,7 @@ public class SessionExecutor : IDisposable
             {
                 Type = "local",
                 Command = path,
-                Args = runAzsdkInMcpServer == true ? ["start"] : ["mcp", "run"],
+                Args = ["mcp"],
                 Tools = ["*"],
                 Env = new Dictionary<string, string>
                 {

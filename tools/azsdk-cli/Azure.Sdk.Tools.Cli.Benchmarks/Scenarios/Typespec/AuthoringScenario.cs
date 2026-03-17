@@ -60,8 +60,6 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             this.tspProjectPath = string.IsNullOrWhiteSpace(tspProjectPath) ? DefaultTspProjectPath : tspProjectPath;
             VerifyPlan = verifyPlan ?? new List<string> { "compile the project." };
             TestTspFiles = testTspFiles ?? new List<string>();
-            // Enable MCP server mode for TypeSpec authoring scenarios
-            RunAzsdkInMcpServer = true;
         }
 
         /// <inheritdoc />
@@ -126,9 +124,6 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
 
             // Configure the path to the installed MCP executable for this scenario
             AzsdkMcpPath = Path.Combine(workspace.RootPath, "azsdk.exe");
-
-            // Enable MCP server mode for agent communication
-            RunAzsdkInMcpServer = true;
 
             // TODO: Download and Start Azure Knowledge Base locally. Currently we need to manually start the Azure Knowledge Base server locally.
         }

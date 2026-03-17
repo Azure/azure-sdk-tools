@@ -27,7 +27,7 @@ compatibility:
 2. **Generate** — Run `azure-sdk-mcp:azsdk_package_generate_code` with `tspconfig.yaml` or `tsp-location.yaml` path.
 3. **Build** — Run `azure-sdk-mcp:azsdk_package_build_code`. On failure, use typespec-customization.
 4. **Validate** — Run `azure-sdk-mcp:azsdk_package_run_check` and `azure-sdk-mcp:azsdk_package_run_tests`.
-5. **Metadata** — Update metadata, changelog, and version.
+5. **Metadata** — Update metadata, changelog, and version. _(Note: For .NET data plane, skip this step — metadata, changelog, and version updates are per-commit tasks, not part of the generate/build/test workflow.)_
 
 [SDK repos](references/sdk-repos.md)
 

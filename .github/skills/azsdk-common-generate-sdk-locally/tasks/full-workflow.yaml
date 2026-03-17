@@ -14,6 +14,17 @@ expected:
     - "build"
     - "test"
     - "changelog"
+  outcomes:
+    - type: tool_called
+      tool_name: azsdk_verify_setup
+    - type: tool_called
+      tool_name: azsdk_package_generate_code
+    - type: tool_called
+      tool_name: azsdk_package_build_code
+    - type: tool_called
+      tool_name: azsdk_package_run_check
+    - type: tool_called
+      tool_name: azsdk_package_run_tests
   behavior:
     max_tool_calls: 15
     max_response_time_ms: 120000

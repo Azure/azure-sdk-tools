@@ -145,11 +145,11 @@ public class ProgressReporterTests
 
     #region Heartbeat tests
 
-    private static async Task DelayWithRetry<T>(List<T> counter, int maxWait)
+    private static async Task DelayWithRetry<T>(List<T> counter, int maxRetries)
     {
         var timeout = TimeSpan.FromMilliseconds(100);
         var sw = Stopwatch.StartNew();
-        while (counter.Count < maxWait && sw.Elapsed < timeout)
+        while (counter.Count < maxRetries && sw.Elapsed < timeout)
         {
             await Task.Delay(10);
         }
@@ -285,7 +285,7 @@ public class ProgressReporterTests
 
         await using (reporter.StartHeartbeat("Working", heartbeatInterval: TimeSpan.FromMilliseconds(5)))
         {
-            await DelayWithRetry(reported, 4);
+            await DelayWithRetry(reported, 3);
         }
 
         // Heartbeat messages should use step index 2 (current step after NextStep increments)

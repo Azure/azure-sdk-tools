@@ -15,12 +15,12 @@ All changes made will cause a PR to be created in all subscribed azure-sdk langu
 ## Workflow
 
 When you create a PR against `azure-sdk-tools` repo that changes contents of the `.github/workflows` directory or `.github/skills/azsdk-common-*`, the PR
-triggers an [`azure-sdk-tools - sync - eng-github-config` pipeline][pipeline] that will mirror all changes the corresponding directories in the language repositories. The pipeline also triggers language-repository-specific tests for you to review. This process of mirroring involves multiple stages and requires your manual reviews & approvals before the changes are fully reflected to the language repositories. Your approval is needed first to allow automatic creation of PRs, then to allow them being merged on your behalf.
+triggers an [`tools - sync-.github` pipeline][pipeline] that will mirror all changes the corresponding directories in the language repositories. The pipeline also triggers language-repository-specific tests for you to review. This process of mirroring involves multiple stages and requires your manual reviews & approvals before the changes are fully reflected to the language repositories. Your approval is needed first to allow automatic creation of PRs, then to allow them being merged on your behalf.
 
 This process is set up in such a way to make it easier for changes to be tested in azure-sdk and each individual language repo before merging the changes in the `azure-sdk-tools` repo. The workflow is explained below:
 
 1. You create a PR (let's call it here the **Tools PR**) in the `azure-sdk-tools` repo with changes to the `.github/workflows` or `.github/skills/azsdk-common-*` directories.
-2. The [`azure-sdk-tools - sync - eng-github-config` pipeline][pipeline] is automatically triggered for the **Tools PR**.
+2. The [`tools - sync-.github` pipeline][pipeline] is automatically triggered for the **Tools PR**.
 3. That pipeline creates branches mirroring your changes, one branch in azure-sdk and one per each language repository to whose `.github` directory the changes are mirrored. You can use these branches to run your tests on these repos. The pipeline also queues test runs for template pipelines for each repo. These help you test your changes in the **Tools PR**.  All of this is done in `Create Sync` stage (display name: `Sync .github Directory`) [of the pipeline sync-.github.yml file][yml], specifically, the logic lives in `template: ./templates/steps/sync-directory.yml`.
 4. If you make additional changes to your **Tools PR** repeat steps 1 - 3 until you have completed the necessary testing of your changes. This includes full releases of the template package, if necessary.
 5. Once you reviewed all the test runs and did any of additional ad-hoc tests from the created branches in language repositories, you must manually approve in your pipeline execution instance the next stage - creation of PRs.

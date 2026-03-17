@@ -31,6 +31,17 @@ extends:
     VerifyChangelog: true
     # GitHub.Copilot.SDK dependency is not strong name signed. Skip validation in order to sign azsdk cli.
     RequireStrongNames: false
+    # Install copilot-cli separately from the copilot agent sdk.
+    # We skip the auto-bundling due to network/compliance restrictions
+    TestPreSteps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '24.x'
+        displayName: Install Node.js
+      - script: |
+          npm install --global @github/copilot@1.0.5  --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+          copilot --version
+        displayName: Install Copilot CLI
     StandaloneExeMatrix:
       - rid: linux-x64
         framework: net8.0

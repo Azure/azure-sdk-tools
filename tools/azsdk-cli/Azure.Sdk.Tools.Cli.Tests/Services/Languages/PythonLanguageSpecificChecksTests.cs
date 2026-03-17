@@ -239,7 +239,7 @@ internal class PythonLanguageSpecificChecksTests
         // Arrange
         using var tempDir = TempDirectory.Create("python-lint-success-test");
         var packagePath = tempDir.DirectoryPath;
-        File.WriteAllText(Path.Combine(packagePath, "setup.py"), "");
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
 
         var successResult = new ProcessResult
         {
@@ -267,7 +267,7 @@ internal class PythonLanguageSpecificChecksTests
         // Arrange
         using var tempDir = TempDirectory.Create("python-lint-pylint-fail-test");
         var packagePath = tempDir.DirectoryPath;
-        File.WriteAllText(Path.Combine(packagePath, "setup.py"), "");
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
 
         _pythonHelperMock
             .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("pylint")), It.IsAny<CancellationToken>()))
@@ -295,7 +295,7 @@ internal class PythonLanguageSpecificChecksTests
         // Arrange
         using var tempDir = TempDirectory.Create("python-lint-mypy-fail-test");
         var packagePath = tempDir.DirectoryPath;
-        File.WriteAllText(Path.Combine(packagePath, "setup.py"), "");
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
 
         _pythonHelperMock
             .Setup(p => p.Run(It.Is<PythonOptions>(o => o.Args.Contains("pylint")), It.IsAny<CancellationToken>()))
@@ -323,7 +323,7 @@ internal class PythonLanguageSpecificChecksTests
         // Arrange
         using var tempDir = TempDirectory.Create("python-lint-exception-test");
         var packagePath = tempDir.DirectoryPath;
-        File.WriteAllText(Path.Combine(packagePath, "setup.py"), "");
+        File.WriteAllText(Path.Combine(packagePath, "pyproject.toml"), "");
 
         _pythonHelperMock.Setup(p => p.Run(It.IsAny<PythonOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("azpysdk not found"));

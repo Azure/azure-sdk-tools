@@ -1,6 +1,6 @@
-name: azsdk-common-pipeline-troubleshooting-evals
-description: Evaluations for the pipeline troubleshooting skill
-skill: azsdk-common-pipeline-troubleshooting
+name: apiview-feedback-resolution-evals
+description: Evaluations for the APIView feedback resolution skill
+skill: apiview-feedback-resolution
 version: "1.0"
 config:
   model: gpt-4o

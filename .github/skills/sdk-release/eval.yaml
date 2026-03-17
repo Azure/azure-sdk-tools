@@ -1,6 +1,6 @@
-name: azsdk-common-prepare-release-plan-eval
-description: Evaluation suite for release plan management skill.
-skill: azsdk-common-prepare-release-plan
+name: sdk-release-eval
+description: Evaluation suite for SDK release skill.
+skill: sdk-release
 version: '1.0'
 config:
   model: gpt-4o

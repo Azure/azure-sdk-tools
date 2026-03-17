@@ -25,7 +25,7 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
-    package_data={"apistub": ["scripts/*.ps1"], "": [".pylintrc"]},
+    package_data={"": [".pylintrc"]},
     include_package_data=True,
     install_requires=[
         "charset-normalizer",

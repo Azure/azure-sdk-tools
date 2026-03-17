@@ -444,7 +444,10 @@ public sealed partial class DotnetLanguageService: LanguageService
                         description: "Search for text or regex patterns in files. Use this to find specific symbols or references without reading entire files."),
                     CodePatchTools.CreateCodePatchTool(customizationRoot,
                         description: "Apply code patches to customization files only (never generated code)",
-                        onPatchApplied: patchLog.Add)
+                        onPatchApplied: patchLog.Add),
+                    FileTools.CreateRenameFileTool(customizationRoot,
+                        description: "Rename a customization file (e.g., when a class is renamed, the file should be renamed to match). Paths are relative to the customization root.",
+                        onFileRenamed: (oldPath, newPath) => patchLog.Add(new AppliedPatch(newPath, $"Renamed file from {oldPath} to {newPath}", 1)))
                 ]
             };
 

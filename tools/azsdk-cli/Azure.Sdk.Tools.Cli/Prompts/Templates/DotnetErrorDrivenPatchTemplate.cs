@@ -62,7 +62,7 @@ public class DotnetErrorDrivenPatchTemplate(
         the customization partial classes may reference stale names and fail to compile.
 
         ## TOOLS & FILE PATHS
-        Three tools are available. They use DIFFERENT base directories:
+        Four tools are available. They use DIFFERENT base directories:
 
         **GrepSearch** — resolves paths relative to the package path: `{{packagePath}}`
         - Search for text patterns in files without reading entire files.
@@ -78,6 +78,12 @@ public class DotnetErrorDrivenPatchTemplate(
         - Use ONLY the filename or path relative to the customization root.
         - Example: if customization root is `.../src`, use just `WidgetClientExtensions.cs`
           or `Customized/WidgetClient.cs`.
+
+        **RenameFile** — resolves paths relative to the customization root: `{{customizationRoot}}`
+        - Renames a customization file. Use when a class has been renamed and the file name
+          should match the new class name.
+        - Parameters: `oldFilePath` (current relative path), `newFilePath` (new relative path).
+        - Example: `RenameFile oldFilePath: "OldClient.cs" newFilePath: "NewClient.cs"`
 
         ## WORKFLOW
 
@@ -104,6 +110,16 @@ public class DotnetErrorDrivenPatchTemplate(
         - Type was renamed → update type references and using directives
         - Namespace changed → update using statements
         - Method was removed → update to use the replacement method if one exists
+
+        ### Step 3b — Rename files when classes are renamed
+        When a class or type is renamed (e.g., error CS0246 "type or namespace name could not be found"),
+        and you patch the partial class declaration to use the new class name, you MUST ALSO rename the
+        customization file to match the new class name.
+        - In .NET, the convention is that the file name matches the class name (e.g., `WidgetClient.cs`
+          contains `partial class WidgetClient`).
+        - Use the **RenameFile** tool to rename the file AFTER applying the code patch.
+        - Example: if you rename `partial class OldClient` to `partial class NewClient`,
+          also call `RenameFile oldFilePath: "OldClient.cs" newFilePath: "NewClient.cs"`.
 
         ### Step 4 — Return summary
         If you applied patches, return a brief summary of what was fixed.

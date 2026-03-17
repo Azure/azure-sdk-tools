@@ -110,6 +110,33 @@ public class DotnetLanguageServicePatchTests
     }
 
     [Test]
+    public async Task ApplyPatchesAsync_WithCsFiles_IncludesRenameFileTool()
+    {
+        var customizationRoot = Path.Combine(_tempDir.DirectoryPath, "src");
+        Directory.CreateDirectory(customizationRoot);
+        await File.WriteAllTextAsync(
+            Path.Combine(customizationRoot, "WidgetClient.cs"),
+            "public partial class WidgetClient { }");
+
+        _copilotAgentRunner
+            .Setup(r => r.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult("done"));
+
+        await _service.ApplyPatchesAsync(
+            customizationRoot,
+            _tempDir.DirectoryPath,
+            "error CS0246: type or namespace name 'WidgetClient' could not be found",
+            CancellationToken.None);
+
+        _copilotAgentRunner.Verify(
+            r => r.RunAsync(
+                It.Is<CopilotAgent<string>>(a =>
+                    a.Tools.Any(t => t.Name == "RenameFile")),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
     public async Task ApplyPatchesAsync_AgentThrows_ReturnsEmptyList()
     {
         var customizationRoot = Path.Combine(_tempDir.DirectoryPath, "src");

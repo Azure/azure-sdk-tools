@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.CommandLine;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
@@ -53,6 +47,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         public string? AuthoringSpecRepo { get; private set; }
         public string? AuthoringSkillPath { get; private set; }
 
+        /// <inheritdoc />
+        public override string[] Tags => ["typespec", "authoring"];
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthoringScenario"/> class.
         /// </summary>
@@ -79,7 +76,6 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             if (!string.IsNullOrWhiteSpace(authoringSpecRepo))
             {
                 AuthoringSpecRepo = authoringSpecRepo;
-                AuthoringSkillPath = authoringSkillPath;
 
                 var _repoStringRegex = new Regex(@"^(?:(?<owner>[^/:\s]+)/)?(?<name>[^/:\s]+)(?::(?<ref>[^:\s]+))?$", RegexOptions.Compiled);
                 var match = _repoStringRegex.Match(authoringSpecRepo.Trim());
@@ -121,6 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                     SparseCheckoutPaths = [TspProjectPath]
                 };
             }
+            AuthoringSkillPath = authoringSkillPath;
         }
 
         /// <inheritdoc />
@@ -166,6 +163,20 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                         var destinationPath = Path.Combine(workspace.RepoPath, TspProjectPath, relativePath);
                         await workspace.CopyToWorkspaceAsync(sourcePath, Path.Combine(TspProjectPath, relativePath));
                     }
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(AuthoringSkillPath))
+            {
+                // Copy authoring skill to workspace if AuthoringSkillPath is provided
+                if (!Directory.Exists(AuthoringSkillPath))
+                {
+                    Console.Error.WriteLine($"Warning: Authoring skill file not found at '{AuthoringSkillPath}'");
+                }
+                else
+                {
+                    var destRelativePath = Path.Combine(".github", "skills", "azure-typespec-author");
+                    await workspace.RemoveFromWorkspace(destRelativePath);
+                    await workspace.CopyToWorkspaceAsync(AuthoringSkillPath, destRelativePath);
                 }
             }
             // Install npm dependencies required for TypeSpec compilation

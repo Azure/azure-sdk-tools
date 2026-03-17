@@ -46,7 +46,7 @@ public class Program
         var tagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
         var repoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
         var authoringSpecRepoOption = new Option<string?>("--authoring-spec-repo") { Description = "The repository containing the authoring skill to override (e.g. Azure/azure-rest-api-specs or Azure/azure-rest-api-specs:<branch>)" };
-        var authoringSkillPathOption = new Option<string?>("--authoring-skill-path") { Description = "The path of the authoring skill to use" };
+        var authoringSkillPathOption = new Option<string?>("--authoring-skill-path") { Description = "The filesystem path of the authoring skill directory to be used." };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);

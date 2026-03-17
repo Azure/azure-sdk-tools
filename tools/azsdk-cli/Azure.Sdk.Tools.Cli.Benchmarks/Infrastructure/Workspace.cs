@@ -231,6 +231,28 @@ public class Workspace : IDisposable
     }
 
     /// <summary>
+    /// Removes a file or directory from the workspace.
+    /// If the path is a directory, removes the entire directory recursively.
+    /// </summary>
+    /// <param name="relativePath">The path relative to the repository root to remove.</param>
+    public async Task RemoveFromWorkspace(string relativePath)
+    {
+        var targetPath = Path.Combine(RepoPath, relativePath);
+        
+        if (Directory.Exists(targetPath))
+        {
+            // Remove entire directory recursively
+            await Task.Run(() => Directory.Delete(targetPath, recursive: true));
+        }
+        else if (File.Exists(targetPath))
+        {
+            // Remove single file
+            await Task.Run(() => File.Delete(targetPath));
+        }
+        // If path doesn't exist, no-op (already removed)
+    }
+
+    /// <summary>
     /// Recursively copies a directory and all its contents.
     /// </summary>
     /// <param name="sourceDir">The source directory path.</param>

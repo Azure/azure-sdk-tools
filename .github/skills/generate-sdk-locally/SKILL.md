@@ -39,5 +39,5 @@ compatibility:
 
 ## Troubleshooting
 
-- Run `azure-sdk-mcp:azsdk_verify_setup` to confirm MCP and tools are ready.
-- Without MCP, use `npx tsp-client init` or `npx tsp-client update`.
+- Run `azure-sdk-mcp:azsdk_verify_setup` to confirm MCP and tools.
+- Without MCP, use `npx tsp-client` CLI.

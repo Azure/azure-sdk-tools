@@ -38,4 +38,4 @@ compatibility:
 
 ## Troubleshooting
 
-If `azure-sdk-mcp:azsdk_analyze_pipeline` returns no data, verify build ID and MCP connection. Without MCP, check pipeline logs in Azure DevOps UI.
+If `azure-sdk-mcp:azsdk_analyze_pipeline` returns no data, verify build ID and MCP. Without MCP, check pipeline logs in Azure DevOps UI.

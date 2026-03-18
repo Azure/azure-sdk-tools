@@ -334,24 +334,6 @@ def run_evals(
         runner.cleanup()
 
 
-def run_all_evals(
-    num_runs: int = 1,
-    save: bool = False,
-    use_recording: bool = False,
-    style: str = "compact",
-):
-    """
-    Runs all evaluation workflows (equivalent to `avc eval run -p evals/tests`).
-    """
-    run_evals(
-        test_paths=[],
-        num_runs=num_runs,
-        save=save,
-        use_recording=use_recording,
-        style=style,
-    )
-
-
 def deploy_flask_app():
     """Command to deploy the Flask app."""
     # pylint: disable=import-outside-toplevel
@@ -1740,7 +1722,6 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("run", "run_evals")
-            g.command("run-all", "run_all_evals")
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
@@ -1908,24 +1889,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--test-paths", "-p"],
                 default=[],
                 help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
-            )
-            ac.argument(
-                "use_recording",
-                options_list=["--use-recording"],
-                action="store_true",
-                help="Use recordings instead of executing LLM calls to speed up runs. If recordings are not available, LLM calls will be made and saved as recordings.",
-            )
-            ac.argument(
-                "style",
-                options_list=["--style", "-s"],
-                type=str,
-                choices=["compact", "verbose"],
-                default="compact",
-                help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
-            )
-        with ArgumentsContext(self, "eval run-all") as ac:
-            ac.argument(
-                "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run each test case."
             )
             ac.argument(
                 "use_recording",

@@ -67,7 +67,6 @@ python run.py --test-paths tests/mention_action
 ## Gotchas
 
 - **Use `python cli.py` not `.\avc`**: The `avc.bat` script calls bare `python` which may resolve to the system Python instead of the venv. Use `.venv\Scripts\activate; python cli.py eval run ...` to ensure the venv Python is used.
-- **`OPENAI_ENDPOINT` required**: Evals read `OPENAI_ENDPOINT` directly from the environment (not from App Configuration). Ensure it's in your `.env` file.
 - **Field name mismatch**: Test YAML fields must exactly match target function parameter names (excluding `testcase` and `response`)
 - **Stale recordings**: After changing a prompt, delete recordings or run without `--use-recording` to get fresh results
 - **Testcase uniqueness**: The `testcase` field must be unique across all test files in a workflow — it's the cache key

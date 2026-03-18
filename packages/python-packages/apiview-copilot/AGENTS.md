@@ -51,7 +51,7 @@ The review pipeline in `ApiViewReview.run()` follows these stages:
 ## Key Patterns
 
 - **Singletons**: `SettingsManager` uses `_instance` + `threading.Lock`. `DatabaseManager` uses `get_instance()` class method.
-- **Prompt Execution**: `.prompty` files in `prompts/`, executed via `run_prompty()` in `_utils.py`. Retry logic in `_prompt_runner.py`. In CI, API key from settings; locally, `DefaultAzureCredential`.
+- **Prompt Execution**: `.prompty` files in `prompts/`, parsed and executed via `_prompt_runner.py` (`_parse_prompty`, `_execute_prompt_template`, `run_prompt`). Uses Azure AI Foundry inference endpoint. In CI, API key from settings; locally, `DefaultAzureCredential`.
 - **Data Models**: Pydantic v2 `BaseModel`. Cosmos DB models use field aliases matching their sources (`ExistingComment` uses camelCase with `populate_by_name = True`; `APIViewComment` uses PascalCase like `ReviewId`).
 - **Knowledge Base**: Three entity types (`Guideline`, `Example`, `Memory`) in separate Cosmos DB containers, indexed in Azure AI Search.
 
@@ -61,7 +61,7 @@ The review pipeline in `ApiViewReview.run()` follows these stages:
 - **Azure Key Vault** — Secret storage, referenced from App Configuration.
 - **Azure Cosmos DB** — Guidelines, examples, memories, review jobs, metrics, evals.
 - **Azure AI Search** — Semantic search index for RAG.
-- **Azure OpenAI** — LLM backend for prompt execution.
+- **Azure AI Foundry** — LLM backend for prompt execution (inference endpoint).
 - **Azure AI Agent Service** — Agent-based chat functionality.
 - **Azure App Service** — Hosting for the FastAPI application.
 
@@ -147,7 +147,7 @@ applyTo: "evals/**"
 - Eval test cases are YAML files in `evals/tests/<workflow_name>/`.
 - Each workflow has a `test-config.yaml` defining name and kind.
 - Target functions are registered in `evals/_custom.py`.
-- Evals use the `prompty` library directly to execute prompts and compare results.
+- Evals call `_execute_prompt_template` from `src/_prompt_runner.py` to execute prompts and compare results.
 - Use `--use-recording` to cache LLM responses for faster iteration.
 
 ---
@@ -156,7 +156,7 @@ applyTo: "prompts/**"
 
 # Prompt Files
 
-- Prompts are `.prompty` template files executed via `run_prompty()` in `src/_utils.py`.
+- Prompts are `.prompty` template files parsed and executed via `src/_prompt_runner.py`.
 - When modifying `.prompty` files, always run the relevant eval tests: `avc eval run --test-paths evals/tests/<workflow>`.
 
 ---

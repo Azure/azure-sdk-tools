@@ -134,6 +134,9 @@ stages:
                   --package-types compat `
                   --package-types data `
                   --section "Client Libraries"
+            env:
+              # Explicit mapping required for secrets
+              GH_TOKEN: $(GH_TOKEN)
 
           - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
             parameters:

@@ -6,13 +6,11 @@ using System.Text;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Services.TypeSpec;
 using Azure.Sdk.Tools.Cli.Tools.Core;
-using Microsoft.Graph.Models;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec;
@@ -207,12 +205,12 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
 
         List<string> changesMade = new();
         List<string> manualInterventions = new();
-        StringBuilder classifierAnalysis = new();
+        StringBuilder codeCustomizationLog = new();
         StringBuilder tspFixFailedReasons = new();
         bool buildSucceeded = false;
         string? buildError = null;
 
-        // ── Pass 1: Classify feedback and apply TSP fixes ──
+        // Step 1: Classify feedback and apply TSP fixes
         // TODO - need to update this to avoid casting to/from list
         var response = await _classifierService.ClassifyItemsAsync([.. feedbackDictionary.Values], globalContext: string.Join(";", changesMade), tspProjectPath, ct: ct);
 
@@ -273,7 +271,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             {
                 codeCustomizations++;
                 logger.LogInformation("Item '{ItemId}' classified as CODE_CUSTOMIZATION — will be handled via code patching.", itemDetails.ItemId);
-                classifierAnalysis.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
+                codeCustomizationLog.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
                 feedbackDictionary.Remove(itemDetails.ItemId);
             }
             else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
@@ -296,7 +294,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         {
             return new CustomizedCodeUpdateResponse
             {
-                Success = true,
+                Success = false,
                 Message = "The requested changes require manual intervention and cannot be applied via TypeSpec customizations.",
                 NextSteps = manualInterventions,
                 ErrorCode = CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired
@@ -339,10 +337,13 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     logger.LogInformation("Build passed after TypeSpec customizations.");
                     return new CustomizedCodeUpdateResponse
                     {
-                        Success = true,
-                        Message = "Build passed after attempting TypeSpec customizations.",
+                        Success = manualInterventions.Count == 0,
+                        Message = manualInterventions.Count == 0
+                            ? "Build passed after attempting TypeSpec customizations."
+                            : "Build passed after attempting TypeSpec customizations, but some items require manual intervention.",
                         TypeSpecChangesSummary = changesMade,
                         NextSteps = manualInterventions,
+                        ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
                     };
                 }
 
@@ -372,7 +373,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     {
                         codeCustomizations++;
                         logger.LogInformation("Item '{ItemId}' reclassified as CODE_CUSTOMIZATION on second pass.", itemDetails.ItemId);
-                        classifierAnalysis.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
+                        codeCustomizationLog.AppendLine($"[{itemDetails.ItemId}] Classification: {itemDetails.Classification}, Reason: {itemDetails.Reason}");
                         feedbackDictionary.Remove(itemDetails.ItemId);
                     }
                     else if (itemDetails.Classification == ClassificationRequiresManualIntervention)
@@ -402,10 +403,13 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             logger.LogInformation("Build passed after TypeSpec customizations.");
             return new CustomizedCodeUpdateResponse
             {
-                Success = true,
-                Message = "Build passed after attempting TypeSpec customizations.",
+                Success = manualInterventions.Count == 0,
+                Message = manualInterventions.Count == 0
+                    ? "Build passed after attempting TypeSpec customizations."
+                    : "Build passed after attempting TypeSpec customizations, but some items require manual intervention.",
                 TypeSpecChangesSummary = changesMade,
                 NextSteps = manualInterventions,
+                ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
             };
         }
 
@@ -441,7 +445,7 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         }
 
         // Step 4: Apply patches based on build errors
-        var patchContext = BuildPatchContext(customizationRequest, classifierAnalysis, buildError);
+        var patchContext = BuildPatchContext(customizationRequest, codeCustomizationLog, buildError);
 
         logger.LogInformation("Applying patches to fix build errors...");
         var patches = await languageService.ApplyPatchesAsync(
@@ -500,11 +504,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             logger.LogInformation("Build passed after code customization patches.");
             return new CustomizedCodeUpdateResponse
             {
-                Success = true,
-                Message = "Build passed after code customization patches.",
+                Success = manualInterventions.Count == 0,
+                Message = manualInterventions.Count == 0
+                    ? "Build passed after code customization patches."
+                    : "Build passed after code customization patches, but some items require manual intervention.",
                 TypeSpecChangesSummary = changesMade,
                 AppliedPatches = patches,
                 NextSteps = manualInterventions,
+                ErrorCode = manualInterventions.Count > 0 ? CustomizedCodeUpdateResponse.KnownErrorCodes.ManualInterventionRequired : null,
             };
         }
 
@@ -558,10 +565,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     /// classifier analysis, and build errors into labeled markdown sections.
     /// </summary>
     /// <param name="customizationRequest">The original user customization request text.</param>
-    /// <param name="classifierAnalysis">Accumulated classifier analysis from all classification iterations.</param>
+    /// <param name="codeCustomizationLog">Accumulated code customization classification log from all classification passes.</param>
     /// <param name="buildError">The build error output, if any.</param>
     /// <returns>A formatted markdown string combining all available context sections.</returns>
-    internal static string BuildPatchContext(string? customizationRequest, StringBuilder classifierAnalysis, string? buildError)
+    internal static string BuildPatchContext(string? customizationRequest, StringBuilder codeCustomizationLog, string? buildError)
     {
         var sb = new StringBuilder();
         if (!string.IsNullOrWhiteSpace(customizationRequest))
@@ -570,10 +577,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             sb.AppendLine(customizationRequest);
             sb.AppendLine();
         }
-        if (classifierAnalysis.Length > 0)
+        if (codeCustomizationLog.Length > 0)
         {
             sb.AppendLine("## Classifier Analysis");
-            sb.AppendLine(classifierAnalysis.ToString());
+            sb.AppendLine(codeCustomizationLog.ToString());
         }
         if (!string.IsNullOrWhiteSpace(buildError))
         {

@@ -155,7 +155,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
     }
 
     // ========================================================================
@@ -284,7 +284,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
-        Assert.That(result.Success, Is.True);
+        Assert.That(result.Success, Is.False);
         Assert.That(result.Message, Does.Contain("manual intervention"));
     }
 
@@ -702,7 +702,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
     }
 
@@ -800,7 +800,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         // Verify the CODE_CUSTOMIZATION route succeeded end-to-end
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
         Assert.That(result.AppliedPatches![0].FilePath, Is.EqualTo("SpeechTranscriptionCustomization.java"));
         Assert.That(result.AppliedPatches[0].ReplacementCount, Is.EqualTo(2));

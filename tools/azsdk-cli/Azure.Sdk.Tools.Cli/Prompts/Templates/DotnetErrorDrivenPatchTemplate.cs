@@ -62,7 +62,7 @@ public class DotnetErrorDrivenPatchTemplate(
         the customization partial classes may reference stale names and fail to compile.
 
         ## TOOLS & FILE PATHS
-        Four tools are available. They use DIFFERENT base directories:
+        The following tools are available. They use DIFFERENT base directories:
 
         **GrepSearch** — resolves paths relative to the package path: `{{packagePath}}`
         - Search for text patterns in files without reading entire files.
@@ -135,7 +135,6 @@ public class DotnetErrorDrivenPatchTemplate(
     private string BuildTaskConstraints()
     {
         return """
-        ## CONSTRAINTS
 
         ### 1. CUSTOMIZATION FILES ONLY
         You may patch ONLY the customization files provided. Never patch generated code in the `Generated/` folder.
@@ -202,7 +201,6 @@ public class DotnetErrorDrivenPatchTemplate(
     private string BuildOutputRequirements()
     {
         return """
-        ## OUTPUT
         Return a brief summary of what you did:
         - If patches were applied: describe each fix
         - If no patches could be applied: return empty string ""

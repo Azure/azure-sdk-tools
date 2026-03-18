@@ -198,11 +198,11 @@ public class DotnetLanguageServicePatchTests
     }
 
     [Test]
-    public async Task ApplyPatchesAsync_CancellationRequested_ReturnsEmptyList()
+    public void ApplyPatchesAsync_CancellationRequested_Throws()
     {
         var customizationRoot = Path.Combine(_tempDir.DirectoryPath, "src");
         Directory.CreateDirectory(customizationRoot);
-        await File.WriteAllTextAsync(
+        File.WriteAllText(
             Path.Combine(customizationRoot, "Test.cs"),
             "public partial class Test { }");
 
@@ -210,12 +210,11 @@ public class DotnetLanguageServicePatchTests
             .Setup(r => r.RunAsync(It.IsAny<CopilotAgent<string>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new OperationCanceledException());
 
-        var result = await _service.ApplyPatchesAsync(
-            customizationRoot,
-            _tempDir.DirectoryPath,
-            "error CS0117: some error",
-            CancellationToken.None);
-
-        Assert.That(result, Is.Empty);
+        Assert.ThrowsAsync<OperationCanceledException>(() =>
+            _service.ApplyPatchesAsync(
+                customizationRoot,
+                _tempDir.DirectoryPath,
+                "error CS0117: some error",
+                CancellationToken.None));
     }
 }

@@ -1,4 +1,10 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+parameters:
+  - name: RunBenchmarks
+    displayName: Run Benchmarks
+    type: boolean
+    default: false
+
 trigger:
   branches:
     include:
@@ -71,4 +77,72 @@ extends:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:
           ToolDirectory: $(ToolDir)
+      - ${{ if eq(parameters.RunBenchmarks, true) }}:
+        - job: Run_Benchmark
+          displayName: 'Run Benchmark'
+          variables:
+            - group: 'AzSDK_Eval_Variable_group'
+          pool:
+            name: $(LINUXPOOL)
+            image: $(LINUXVMIMAGE)
+            os: linux
+          steps:
+          - checkout: self
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+          - script: |
+              echo "Downloading Go 1.24.0..."
+              curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
 
+              echo "Removing existing Go installation..."
+              sudo rm -rf /usr/local/go
+
+              echo "Extracting Go 1.24.0..."
+              sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
+
+              echo "Setting environment variables..."
+              echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
+              echo "##vso[task.prependpath]/usr/local/go/bin"
+            displayName: 'install go'
+          - script: |
+              go version
+            displayName: 'check go'
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: 'azuresdkqabot-dev'
+              addSpnToEnvironment: true
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+                echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+                echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+                echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+          
+          - script: |
+              export GOPROXY=https://proxy.golang.org,direct
+              go build -o qa-bot-service
+              chmod +x qa-bot-service
+              ./qa-bot-service &
+              sleep 20
+              lsof -ti:8088
+            displayName: 'start backend AI agent service'
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+            env:
+              AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+              AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+              AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+              AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
+              AZURE_APPCONFIG_ENDPOINT: https://azuresdkqabot-dev-config.azconfig.io
+          - task: PowerShell@2
+            displayName: 'Run benchmarks'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(Build.SourcesDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
+              pwsh: true
+              script: dotnet run -- run --all --parallel 5 --cleanup "always"
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+              COPILOT_GITHUB_TOKEN: $(azuresdk-copilot-github-pat)

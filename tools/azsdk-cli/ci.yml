@@ -4,6 +4,10 @@ parameters:
     displayName: Run Benchmarks
     type: boolean
     default: false
+  - name: AuthoringSpecRepo
+    displayName: Authoring spec repo
+    type: string
+    default: Azure/azure-rest-api-specs:main
 
 trigger:
   branches:
@@ -137,7 +141,7 @@ extends:
               targetType: 'inline'
               workingDirectory: '$(Build.SourcesDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
               pwsh: true
-              script: dotnet run -- run --all --parallel 5 --cleanup "always"
+              script: dotnet run -- run --all --parallel 5 --cleanup "always" --authoring-spec-repo ${{ parameters.AuthoringSpecRepo }}
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1

@@ -1,4 +1,10 @@
 # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+parameters:
+  - name: RunBenchmarks
+    displayName: Run Benchmarks
+    type: boolean
+    default: false
+
 trigger:
   branches:
     include:
@@ -31,6 +37,17 @@ extends:
     VerifyChangelog: true
     # GitHub.Copilot.SDK dependency is not strong name signed. Skip validation in order to sign azsdk cli.
     RequireStrongNames: false
+    # Install copilot-cli separately from the copilot agent sdk.
+    # We skip the auto-bundling due to network/compliance restrictions
+    TestPreSteps:
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '24.x'
+        displayName: Install Node.js
+      - script: |
+          npm install --global @github/copilot@1.0.5  --registry https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-tools/npm/registry/
+          copilot --version
+        displayName: Install Copilot CLI
     StandaloneExeMatrix:
       - rid: linux-x64
         framework: net8.0
@@ -56,8 +73,41 @@ extends:
           TargetRepoName: azure-rest-api-specs
           TargetRepoOwner: Azure
           TargetRepoCommit: main
+      - ${{ if and(eq(parameters.RunBenchmarks, true), ne(variables['Build.Reason'], 'PullRequest')) }}:
+        - job: Run_Benchmark
+          displayName: 'Run Benchmark'
+          variables:
+            - group: 'AzSDK_Eval_Variable_group'
+          pool:
+            name: $(LINUXPOOL)
+            image: $(LINUXVMIMAGE)
+            os: linux
+          steps:
+          - checkout: none
+          - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+            parameters:
+              SkipCheckoutNone: true
+              Repositories:
+                - Name: $(Build.Repository.Name)
+                  Commitish: $(Build.SourceVersion)
+                  WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)
+              Paths:
+                - 'tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks/**'
+                - 'eng/common/**'
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+          - task: PowerShell@2
+            displayName: 'Run benchmarks'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
+              pwsh: true
+              script: dotnet run -- run --all --parallel 5 --cleanup "always"
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+              COPILOT_GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
       CustomReleaseJobs:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:
           ToolDirectory: $(ToolDir)
-

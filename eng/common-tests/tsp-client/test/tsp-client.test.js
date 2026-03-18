@@ -150,7 +150,8 @@ describe.concurrent.each([SdkName.Go, SdkName.Java, SdkName.Js, SdkName.Net, Sdk
           "tspconfig.yaml",
         );
 
-        await execTspClient(["init", "-c", localConfig], initLocalWorktree);
+        // use --update-if-exists for local init test to align with the command used in the SDK repo automations.
+        await execTspClient(["init", "--update-if-exists", "-c", localConfig], initLocalWorktree);
       });
 
       it("updates template", async (ctx) => {

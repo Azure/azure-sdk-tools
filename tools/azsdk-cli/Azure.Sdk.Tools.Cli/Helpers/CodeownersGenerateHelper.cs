@@ -74,7 +74,7 @@ public class CodeownersGenerateHelper(
 
         logger.LogInformation("Updating CODEOWNERS file...");
         var codeownersPath = Path.Combine(repoRoot, ".github", "CODEOWNERS");
-        await WriteCodeownersFile(codeownersPath, entries, sectionName);
+        await WriteCodeownersFile(codeownersPath, entries, sectionName, ct);
     }
 
     private async Task<List<RepoPackage>> GetPackagesFromRepoAsync(string repoRoot, CancellationToken ct)
@@ -132,7 +132,8 @@ public class CodeownersGenerateHelper(
         // Fetch Packages by language and package type
         var allPackages = await FetchWorkItemsAsync<PackageWorkItem>(
             packageQuery,
-            WorkItemMappers.MapToPackageWorkItem);
+            WorkItemMappers.MapToPackageWorkItem,
+            ct);
         logger.LogInformation("Packages (all versions): {Count}", allPackages.Count);
 
         // Group packages by name then take the package with the latest "Custom.PackageVersionMajorMinor"
@@ -142,19 +143,22 @@ public class CodeownersGenerateHelper(
         // Fetch all Owners (no filter needed)
         var owners = await FetchWorkItemsAsync<OwnerWorkItem>(
             "[System.WorkItemType] = 'Owner'",
-            WorkItemMappers.MapToOwnerWorkItem);
+            WorkItemMappers.MapToOwnerWorkItem,
+            ct);
         logger.LogInformation("Owners: {Count}", owners.Count);
 
         // Fetch all Labels (no filter needed)
         var labels = await FetchWorkItemsAsync<LabelWorkItem>(
             "[System.WorkItemType] = 'Label'",
-            WorkItemMappers.MapToLabelWorkItem);
+            WorkItemMappers.MapToLabelWorkItem,
+            ct);
         logger.LogInformation("Labels: {Count}", labels.Count);
 
         // Fetch Label Owners by repository
         var labelOwners = await FetchWorkItemsAsync<LabelOwnerWorkItem>(
             $"[System.WorkItemType] = 'Label Owner' AND [Custom.Repository] = '{repoName}'",
-            WorkItemMappers.MapToLabelOwnerWorkItem);
+            WorkItemMappers.MapToLabelOwnerWorkItem,
+            ct);
         logger.LogInformation("Label Owners: {Count}", labelOwners.Count);
 
         var data = new WorkItemData(
@@ -171,10 +175,11 @@ public class CodeownersGenerateHelper(
 
     private async Task<List<T>> FetchWorkItemsAsync<T>(
         string whereClause,
-        Func<WorkItem, T> factory)
+        Func<WorkItem, T> factory,
+        CancellationToken ct)
     {
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND {whereClause}";
-        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         return workItems.Select(factory).ToList();
     }
 
@@ -372,7 +377,7 @@ public class CodeownersGenerateHelper(
         return "/" + normalized.TrimStart('/') + "/";
     }
 
-    private async Task WriteCodeownersFile(string path, List<CodeownersEntry> entries, string sectionName)
+    private async Task WriteCodeownersFile(string path, List<CodeownersEntry> entries, string sectionName, CancellationToken ct)
     {
         if (!File.Exists(path))
         {
@@ -380,7 +385,7 @@ public class CodeownersGenerateHelper(
             throw new FileNotFoundException($"CODEOWNERS file not found: {path}");
         }
 
-        var lines = (await File.ReadAllLinesAsync(path)).ToList();
+        var lines = (await File.ReadAllLinesAsync(path, ct)).ToList();
         var (headerStart, contentStart, sectionEnd) = CodeownersSectionFinder.FindSection(lines, sectionName);
 
         if (contentStart == -1)
@@ -416,7 +421,7 @@ public class CodeownersGenerateHelper(
         // Newline at end of file
         output.Add("");
 
-        await File.WriteAllTextAsync(path, string.Join("\n", output));
+        await File.WriteAllTextAsync(path, string.Join("\n", output), ct);
         logger.LogInformation("Updated: {Path}", path);
     }
 }

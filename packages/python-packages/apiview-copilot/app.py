@@ -18,6 +18,7 @@ import time
 from enum import Enum
 from typing import Literal, Optional
 
+from azure.monitor.opentelemetry import configure_azure_monitor
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -36,6 +37,11 @@ from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_age
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
 db_manager = DatabaseManager.get_instance()
 settings = SettingsManager()
+
+# Application Insights telemetry — enabled when connection string is available
+_appinsights_conn_str = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
+if _appinsights_conn_str:
+    configure_azure_monitor(connection_string=_appinsights_conn_str)
 
 app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
 

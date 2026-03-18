@@ -48,6 +48,11 @@ function tryAddItemInArray<TItem>(
     return needUpdate;
 }
 
+function pathInclude(array: string[], item: string): boolean {
+    const normalize = (p: string) => p.replace(/\/$/, '');
+    return array.some((a) => normalize(a) === normalize(item));
+}
+
 function makeSureArrayAvailableInCiYaml(current: any, path: string[]) {
     path.forEach((p, i) => {
         if (!current?.[p]) {
@@ -134,39 +139,24 @@ async function updateDataPlaneCiYaml(
 
     const artifact: ArtifactInfo = getArtifact(npmPackageInfo);
     const artifactInclude = (array: ArtifactInfo[], item: ArtifactInfo) => array.map((a) => a.name).includes(item.name);
-    const serviceDirectory = serviceDirToSdkRoot;
-    const ciMgmtPath = posix.join(serviceDirToSdkRoot, 'ci.mgmt.yml');
 
     let needUpdate = false;
     needUpdate = tryAddItemInArray(parsed.trigger.branches.exclude, 'feature/v4') || needUpdate;
     needUpdate = tryAddItemInArray(parsed.pr.branches.exclude, 'feature/v4') || needUpdate;
-    
-    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, serviceDirectory) || needUpdate;
-    needUpdate = tryAddItemInArray(parsed.pr.paths.include, serviceDirectory) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, serviceDirToSdkRoot, pathInclude) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, ciPath, pathInclude) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.pr.paths.include, serviceDirToSdkRoot, pathInclude) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciPath, pathInclude) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
 
     // Ensure ServiceDirectory is set correctly under extends.parameters
-    const expectedServiceDirectory = serviceDirToSdkRoot;
+    const expectedServiceDirectory = serviceDirToSdkRoot.split('/')[1];
     if (parsed.extends.parameters.ServiceDirectory !== expectedServiceDirectory) {
         parsed.extends.parameters.ServiceDirectory = expectedServiceDirectory;
         needUpdate = true;
     }
-    // Sync exclusions from ci.mgmt.yml if it exists
-    if (await existsAsync(ciMgmtPath)) {
-        const mgmtContent = await readFile(ciMgmtPath, { encoding: 'utf-8' });
-        const mgmtParsed = parse(mgmtContent.toString());
-        const mgmtPaths = Array.from(new Set([ciMgmtPath, ...(mgmtParsed?.trigger?.paths?.include ?? [])]));
-        makeSureArrayAvailableInCiYaml(parsed, ['trigger', 'paths', 'exclude']);
-        makeSureArrayAvailableInCiYaml(parsed, ['pr', 'paths', 'exclude']);
-        for (const p of mgmtPaths) {
-            needUpdate = tryAddItemInArray(parsed.trigger.paths.exclude, p) || needUpdate;
-            needUpdate = tryAddItemInArray(parsed.pr.paths.exclude, p) || needUpdate;
-        }
-    }
 
-    if (needUpdate) {
-        await writeCiYaml(ciPath, parsed);
-    }
+    await writeCiYaml(ciPath, parsed);
 }
 
 async function createDataPlaneCiYaml(
@@ -179,26 +169,14 @@ async function createDataPlaneCiYaml(
     const templatePath = posix.join(__dirname, 'ciYamlTemplates/ci.template.yml');
     const template = await readFile(templatePath, { encoding: 'utf-8' });
     const parsed = parse(template.toString());
-    const serviceDirectory = serviceDirToSdkRoot;
-    const ciMgmtPath = posix.join(serviceDirToSdkRoot, 'ci.mgmt.yml');
 
-    parsed.trigger.paths.include = [serviceDirectory];
-    parsed.pr.paths.include = [serviceDirectory];
+    parsed.trigger.paths.include = [serviceDirToSdkRoot];
+    parsed.pr.paths.include = [serviceDirToSdkRoot];
     parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot.split('/')[1];
     parsed.extends.parameters.Artifacts = [artifact];
 
-    // Exclude management plane paths if ci.mgmt.yml exists
-    if (await existsAsync(ciMgmtPath)) {
-        const mgmtContent = await readFile(ciMgmtPath, { encoding: 'utf-8' });
-        const mgmtParsed = parse(mgmtContent.toString());
-        const mgmtPaths = Array.from(new Set([ciMgmtPath, ...(mgmtParsed?.trigger?.paths?.include ?? [])]));
-        parsed.trigger.paths.exclude = mgmtPaths;
-        parsed.pr.paths.exclude = mgmtPaths;
-    } else {
-        // When no ci.mgmt.yml exists, omit exclude keys entirely
-        delete parsed.trigger.paths.exclude;
-        delete parsed.pr.paths.exclude;
-    }
+    delete parsed.trigger.paths.exclude;
+    delete parsed.pr.paths.exclude;
 
     await writeCiYaml(ciPath, parsed);
 }
@@ -212,7 +190,6 @@ async function createOrUpdateDataPlaneCiYaml(
 
     if (!(await existsAsync(ciPath))) {
         await createDataPlaneCiYaml(ciPath, serviceDirToSDKDir, npmPackageInfo);
-        return ciPath;
     }
     await updateDataPlaneCiYaml(ciPath, serviceDirToSDKDir, npmPackageInfo);
     return ciPath;

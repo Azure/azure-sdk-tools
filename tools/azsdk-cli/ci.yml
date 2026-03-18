@@ -64,19 +64,15 @@ extends:
       - rid: win-x64
         framework: net8.0
         assembly: azsdk
-    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-      CustomJobs:
-      - template: /eng/common/pipelines/templates/jobs/ai-eval-job.yml
-        parameters:
-          EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations
-          EvalRepoCommit: $(Build.SourceVersion)
-          TargetRepoName: azure-rest-api-specs
-          TargetRepoOwner: Azure
-          TargetRepoCommit: main
-      CustomReleaseJobs:
-      - template: /tools/azsdk-cli/auto-documentation.yml
-        parameters:
-          ToolDirectory: $(ToolDir)
+    CustomJobs:
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        - template: /eng/common/pipelines/templates/jobs/ai-eval-job.yml
+          parameters:
+            EvalProject: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Evaluations
+            EvalRepoCommit: $(Build.SourceVersion)
+            TargetRepoName: azure-rest-api-specs
+            TargetRepoOwner: Azure
+            TargetRepoCommit: main
       - ${{ if eq(parameters.RunBenchmarks, true) }}:
         - job: Run_Benchmark
           displayName: 'Run Benchmark'
@@ -118,7 +114,6 @@ extends:
                 echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
                 echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
                 echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
-          
           - script: |
               export GOPROXY=https://proxy.golang.org,direct
               go build -o qa-bot-service
@@ -146,3 +141,8 @@ extends:
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
               COPILOT_GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+      CustomReleaseJobs:
+      - template: /tools/azsdk-cli/auto-documentation.yml
+        parameters:
+          ToolDirectory: $(ToolDir)

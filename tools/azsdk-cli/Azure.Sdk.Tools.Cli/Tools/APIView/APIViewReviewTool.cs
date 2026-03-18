@@ -157,7 +157,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     protected override List<Command> GetCommands() =>
     [
         new McpCommand(GetCommentsCmd, "Get comments for a specific APIView URL", ApiViewGetCommentsToolName) { apiViewUrlOption },
-        new(GetContentCmd, "Get content by APIView URL") 
+        new(GetContentCmd, "Get content by APIView URL")
         {
             apiViewUrlOption, outputFileOption, contentReturnTypeOption
         },
@@ -186,18 +186,18 @@ public class APIViewReviewTool : MCPMultiCommandTool
             CreatePullRequestRevisionCmd => await CreatePullRequestRevision(parseResult, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
         };
-        
+
         return result;
     }
 
     [McpServerTool(Name = ApiViewGetCommentsToolName), Description("Get API review comments and feedback from APIView for a package. Retrieves all reviewer comments left on the API review.")]
-    public async Task<APIViewResponse> GetComments(string apiViewUrl)
+    public async Task<APIViewResponse> GetComments(string apiViewUrl, CancellationToken ct = default)
     {
         try
         {
             (string revisionId, _) = ExtractIdsFromUrl(apiViewUrl);
 
-            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
+            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, ct);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Failed to retrieve comments for API View: {apiViewUrl}" };
@@ -217,7 +217,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
     private async Task<APIViewResponse> GetComments(ParseResult parseResult, CancellationToken ct)
     {
         string? apiViewUrl = parseResult.GetValue(apiViewUrlOption);
-        return await GetComments(apiViewUrl!);
+        return await GetComments(apiViewUrl!, ct);
     }
 
     private async Task<APIViewResponse> GetContent(ParseResult parseResult, CancellationToken ct)
@@ -235,7 +235,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         (string revisionId, string reviewId) = ExtractIdsFromUrl(apiViewUrl!);
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, contentType, ct);
             if (result == null)
             {
                 return new APIViewResponse { ResponseError = $"Content not found" };
@@ -293,7 +293,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             (string? content, int statusCode) = await _apiViewService.CreateCIReviewAsync(
                 buildId!, artifactName!, originalFilePath!, reviewFilePath!,
                 repoName!, packageName!, project!,
-                label, compareAllRevisions, packageVersion, setReleaseTag, packageType, sourceBranch);
+                label, compareAllRevisions, packageVersion, setReleaseTag, packageType, sourceBranch, ct);
 
             return statusCode switch
             {
@@ -350,7 +350,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
             (string? content, int statusCode) = await _apiViewService.CreatePullRequestRevisionAsync(
                 buildId!, artifactName!, filePath!, commitSha!,
                 repoName!, packageName!,
-                pullRequestNumber, codeFile, baselineCodeFile, language, project, packageType, metadataFile);
+                pullRequestNumber, codeFile, baselineCodeFile, language, project, packageType, metadataFile, ct);
 
             return statusCode switch
             {
@@ -392,7 +392,7 @@ public class APIViewReviewTool : MCPMultiCommandTool
         {
             // Pattern: /review/{reviewId} in path and activeApiRevisionId={revisionId} in query string
             var match = Regex.Match(url, @"/review/([^/?]+).*[?&]activeApiRevisionId=([^&#]+)", RegexOptions.IgnoreCase);
-            
+
             if (!match.Success)
             {
                 throw new ArgumentException("APIView URL must contain both 'activeApiRevisionId' query parameter AND '/review/{reviewId}' path segment");

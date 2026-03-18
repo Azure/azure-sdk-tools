@@ -9,14 +9,14 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages;
 /// Uses tools like dotnet CLI, MSBuild, NuGet, etc. for .NET development workflows.
 /// </summary>
 public partial class DotnetLanguageService : LanguageService
-{ 
+{
     public override async Task<PackageCheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
             logger.LogInformation("Starting generated code checks for .NET project at: {PackagePath}", packagePath);
 
-            var dotnetVersionValidation = await VerifyDotnetVersion();
+            var dotnetVersionValidation = await VerifyDotnetVersion(ct);
             if (dotnetVersionValidation.ExitCode != 0)
             {
                 logger.LogError("Dotnet version validation failed for generated code checks");
@@ -66,7 +66,7 @@ public partial class DotnetLanguageService : LanguageService
         {
             logger.LogInformation("Starting AOT compatibility check for .NET project at: {PackagePath}", packagePath);
 
-            var dotnetVersionValidation = await VerifyDotnetVersion();
+            var dotnetVersionValidation = await VerifyDotnetVersion(ct);
             if (dotnetVersionValidation.ExitCode != 0)
             {
                 logger.LogError("Dotnet version validation failed for AOT compatibility check");
@@ -120,9 +120,9 @@ public partial class DotnetLanguageService : LanguageService
         }
     }
 
-    private async ValueTask<PackageCheckResponse> VerifyDotnetVersion()
+    private async ValueTask<PackageCheckResponse> VerifyDotnetVersion(CancellationToken ct)
     {
-        var dotnetSDKCheck = await processHelper.Run(new ProcessOptions(DotNetCommand, ["--list-sdks"]), CancellationToken.None);
+        var dotnetSDKCheck = await processHelper.Run(new ProcessOptions(DotNetCommand, ["--list-sdks"]), ct);
         if (dotnetSDKCheck.ExitCode != 0)
         {
             logger.LogError(".NET SDK is not installed or not available in PATH");
@@ -204,10 +204,10 @@ public partial class DotnetLanguageService : LanguageService
         try
         {
             var csprojFiles = Directory.GetFiles(packagePath, "*.csproj", SearchOption.AllDirectories);
-            var mainCsprojFile = csprojFiles.FirstOrDefault(f => 
+            var mainCsprojFile = csprojFiles.FirstOrDefault(f =>
                 Path.GetFileNameWithoutExtension(f).Equals(packageName, StringComparison.OrdinalIgnoreCase));
             var csprojFile = mainCsprojFile ?? csprojFiles.FirstOrDefault();
-            
+
             if (csprojFile == null)
             {
                 logger.LogDebug("No .csproj file found in package path: {PackagePath}", packagePath);
@@ -215,15 +215,15 @@ public partial class DotnetLanguageService : LanguageService
             }
 
             var projectContent = await File.ReadAllTextAsync(csprojFile, ct);
-            
+
             var hasAotOptOut = projectContent.Contains("<AotCompatOptOut>true</AotCompatOptOut>", StringComparison.OrdinalIgnoreCase);
-            
+
             if (hasAotOptOut)
             {
                 logger.LogInformation("Found AotCompatOptOut=true in project file: {CsprojFile}", csprojFile);
                 return true;
             }
-            
+
             return false;
         }
         catch (Exception ex)

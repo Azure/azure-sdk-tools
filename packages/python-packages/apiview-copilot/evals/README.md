@@ -227,13 +227,13 @@ def _your_workflow_name(testcase: str, param1: str, param2: str, response: str):
         "param2": param2,
         # Map parameters to prompty (exclude testcase and response as they're for evaluation framework)
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 ```
 
 5. **Add your target function** to the registry in `evals/_custom.py` under an evaluator's `target_function` callable.
 ```python
-# Under PromptyEvaluator, PromptySummaryEvaluator, or similar
+# Under PromptEvaluator, PromptSummaryEvaluator, or similar
 @property
 def target_function(self) -> callable:
     workflow_targets = {
@@ -257,7 +257,7 @@ python run.py --test-paths tests/your_workflow_name
 **Pattern Notes:**
 - Function name starts with `_` and uses underscores
 - Parameters must match test file fields exactly
-- Use `prompty.execute()` to run the prompt with mapped parameters
+- Use `_execute_prompt_template()` from `src._prompt_runner` to run the prompt with mapped parameters
 
 ## Editing Test Cases
 

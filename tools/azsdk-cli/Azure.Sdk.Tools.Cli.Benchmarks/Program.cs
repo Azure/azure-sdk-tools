@@ -48,6 +48,8 @@ public class Program
         var outputOption = new Option<string?>("--output") { Description = "Output file path for the report (used with --report)" };
         var tagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
         var repoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
+        var authoringSpecRepoOption = new Option<string?>("--authoring-spec-repo") { Description = "The repository containing the authoring skill to override (e.g. Azure/azure-rest-api-specs or Azure/azure-rest-api-specs:<branch>)" };
+        var authoringSkillPathOption = new Option<string?>("--authoring-skill-path") { Description = "The filesystem path of the authoring skill directory to be used." };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);
@@ -59,6 +61,8 @@ public class Program
         runCommand.Options.Add(outputOption);
         runCommand.Options.Add(tagOption);
         runCommand.Options.Add(repoOption);
+        runCommand.Options.Add(authoringSpecRepoOption);
+        runCommand.Options.Add(authoringSkillPathOption);
 
         runCommand.SetAction(async (parseResult, _) =>
         {
@@ -72,7 +76,9 @@ public class Program
             var output = parseResult.GetValue(outputOption);
             var tags = parseResult.GetValue(tagOption);
             var repo = parseResult.GetValue(repoOption);
-            return await HandleRunCommand(name, all, tags, repo, model, cleanup, verbose, parallel, report, output);
+            var authoringSpecRepo = parseResult.GetValue(authoringSpecRepoOption);
+            var authoringSkillPath = parseResult.GetValue(authoringSkillPathOption);
+            return await HandleRunCommand(name, all, tags, repo, model, cleanup, verbose, parallel, authoringSpecRepo, authoringSkillPath, report, output);
         });
         rootCommand.Subcommands.Add(runCommand);
 
@@ -125,7 +131,7 @@ public class Program
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? repo, string? model, CleanupPolicy cleanup, bool verbose, int parallel, bool report, string? output)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? repo, string? model, CleanupPolicy cleanup, bool verbose, int parallel, string? authoringSpecRepo, string? authoringSkillPath, bool report, string? output)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -157,7 +163,7 @@ public class Program
 
         if (all)
         {
-            scenariosToRun.AddRange(FilterScenarios(ScenarioDiscovery.DiscoverAll(), tags, repo));
+            scenariosToRun.AddRange(FilterScenarios(ScenarioDiscovery.DiscoverAll(authoringSpecRepo, authoringSkillPath), tags, repo));
             if (scenariosToRun.Count == 0)
             {
                 var filters = new List<string>();
@@ -172,12 +178,12 @@ public class Program
         }
         else
         {
-            var scenario = ScenarioDiscovery.FindByName(name!);
+            var scenario = ScenarioDiscovery.FindByName(name!, authoringSpecRepo, authoringSkillPath);
             if (scenario == null)
             {
                 Console.WriteLine($"Error: Scenario '{name}' not found.");
                 Console.WriteLine("\nAvailable scenarios:");
-                foreach (var s in ScenarioDiscovery.DiscoverAll())
+                foreach (var s in ScenarioDiscovery.DiscoverAll(authoringSpecRepo, authoringSkillPath))
                 {
                     Console.WriteLine($"  - {s.Name}");
                 }
@@ -239,7 +245,7 @@ public class Program
 
         // Summary for multiple scenarios
         var resultsList = results.ToList();
-        if (resultsList.Count > 1)
+        if (resultsList.Count > 0)
         {
             Console.WriteLine("\n=== Summary ===");
             var passed = resultsList.Count(r => r.Result.Passed);

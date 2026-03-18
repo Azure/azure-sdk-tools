@@ -67,25 +67,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 case checkServiceLabelCommandName:
                     var serviceLabel = parseResult.GetValue(serviceLabelArg);
-                    return await CheckServiceLabel(serviceLabel);
+                    return await CheckServiceLabel(serviceLabel, ct);
                 case createServiceLabelCommandName:
                     var proposedServiceLabel = parseResult.GetValue(serviceLabelArg);
                     var documentationLink = parseResult.GetValue(documentationLinkOpt);
-                    return await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
+                    return await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "", ct);
                 case syncAdoCommandName:
                     var dryRun = parseResult.GetValue(dryRunOpt);
-                    return await SyncLabelsToAdo(dryRun);
+                    return await SyncLabelsToAdo(dryRun, ct);
                 default:
                     return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
             }
         }
 
         [McpServerTool(Name = CheckServiceLabelToolName), Description("Checks if a service label exists and returns its details")]
-        public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
+        public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel, CancellationToken ct = default)
         {
             try
             {
-                var labelStatus = (await getServiceLabelInfo(serviceLabel)).ToString();
+                var labelStatus = (await getServiceLabelInfo(serviceLabel, ct)).ToString();
                 return new ServiceLabelResponse
                 {
                     Status = labelStatus,
@@ -102,9 +102,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
+        private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel, CancellationToken ct)
         {
-            var csvContents = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+            var csvContents = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, ct: ct);
 
             var result = LabelHelper.CheckServiceLabel(csvContents.Content, serviceLabel);
             if (result == LabelHelper.ServiceLabelStatus.Exists)
@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 return result;
             }
 
-            var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
+            var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label", ct: ct);
             if (LabelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
             {
                 return LabelHelper.ServiceLabelStatus.InReview;
@@ -121,13 +121,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         }
 
         [McpServerTool(Name = CreateServiceLabelToolName), Description("Creates a pull request to add a new service label")]
-        public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
+        public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link, CancellationToken ct = default)
         {
             try
             {
                 var normalizedLabel = LabelHelper.NormalizeLabel(label);
 
-                var checkResult = await getServiceLabelInfo(normalizedLabel);
+                var checkResult = await getServiceLabelInfo(normalizedLabel, ct);
 
                 // Create a new branch
                 if (checkResult == LabelHelper.ServiceLabelStatus.Exists)
@@ -148,7 +148,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                var branchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, $"add_service_label_{normalizedLabel}", "main");
+                var branchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, $"add_service_label_{normalizedLabel}", "main", ct);
 
                 // If branch already exists, return early with the compare URL
                 if (branchResult == CreateBranchStatus.AlreadyExists)
@@ -162,11 +162,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
 
                 // Update the common-labels.csv file
-                var csvContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+                var csvContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, ct: ct);
 
                 var updatedFile = LabelHelper.CreateServiceLabel(csvContent.Content, label); // Contains updated CSV content with the new service label added
 
-                await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, $"Adding {label}", updatedFile, csvContent.Sha, $"add_service_label_{normalizedLabel}");
+                await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, $"Adding {label}", updatedFile, csvContent.Sha, $"add_service_label_{normalizedLabel}", ct);
 
                 // Create the pull request
                 var result = await githubService.CreatePullRequestAsync(
@@ -176,7 +176,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     headBranch: $"add_service_label_{normalizedLabel}",
                     title: $"[Service Label] Add service label: {label}",
                     body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
-                    draft: true
+                    draft: true,
+                    ct: ct
                 );
 
                 // Extract the pull request URL from the result
@@ -208,7 +209,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         /// </summary>
         /// <param name="dryRun">If true, preview changes without creating Work Items</param>
         /// <returns>GitHubLabelSyncResponse with details of the sync operation</returns>
-        public async Task<GitHubLabelSyncResponse> SyncLabelsToAdo(bool dryRun)
+        public async Task<GitHubLabelSyncResponse> SyncLabelsToAdo(bool dryRun, CancellationToken ct)
         {
             var response = new GitHubLabelSyncResponse { DryRun = dryRun };
 
@@ -219,7 +220,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var csvContents = await githubService.GetContentsSingleAsync(
                     Constants.AZURE_OWNER_PATH,
                     Constants.AZURE_SDK_TOOLS_PATH,
-                    Constants.AZURE_COMMON_LABELS_PATH);
+                    Constants.AZURE_COMMON_LABELS_PATH,
+                    ct: ct);
 
                 var csvContent = csvContents.Content;
                 var serviceLabels = LabelHelper.GetAllServiceLabels(csvContent);
@@ -244,7 +246,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 List<GitHubLableWorkItem> existingWorkItems;
                 try
                 {
-                    existingWorkItems = await devOpsService.GetGitHubLableWorkItemsAsync();
+                    existingWorkItems = await devOpsService.GetGitHubLableWorkItemsAsync(ct);
                 }
                 catch (Exception ex)
                 {
@@ -310,7 +312,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                     try
                     {
-                        var createdWorkItem = await devOpsService.CreateGitHubLableWorkItemAsync(label);
+                        var createdWorkItem = await devOpsService.CreateGitHubLableWorkItemAsync(label, ct);
                         response.CreatedWorkItems.Add(createdWorkItem);
                         logger.LogInformation("Created work item {id} for label '{label}'", createdWorkItem.WorkItemId, label);
                     }

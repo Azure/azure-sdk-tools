@@ -175,10 +175,10 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             };
         }
 
-        // Get language info
-        var languageService = await GetLanguageServiceAsync(packagePath, ct);
-        // TODO - do this once we add API view option
-        // var language = await feedbackService.GetLanguageAsync(apiViewUrl, ct);
+        // Detect if customizationRequest is an APIView URL (prod or staging)
+        string? apiViewUrl = IsApiViewUrl(customizationRequest) ? customizationRequest : null;
+
+        var languageService = await ResolveLanguageServiceAsync(packagePath, apiViewUrl, ct);
 
         // Step 1: try tsp fixes
         var tries = 0;
@@ -186,9 +186,14 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
         bool buildSucceeded = false;
         string? buildError = null;
 
-        var feedbackItems = await GetFeedbackItems(plainTextFeedback: customizationRequest, ct: ct);
-        if (feedbackItems.Count == 0)
+        List<FeedbackItem> feedbackItems;
+        try
         {
+            feedbackItems = await GetFeedbackItems(apiViewUrl: apiViewUrl, plainTextFeedback: customizationRequest, ct: ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No feedback items to process.");
             return new CustomizedCodeUpdateResponse
             {
                 Success = false,
@@ -248,7 +253,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     tspApplicable++;
                     feedbackItem.AppendContext($"Iteration {tries+1}");
                     logger.LogDebug("Applying tsp customization for: {feedback}", itemDetails.Text);
-                    var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, itemDetails.Text, ct: ct);
+                    var languageTaggedRequest = $"For {languageService.Language}: {itemDetails.Text}";
+                    var tspCustomizationResult = await typeSpecCustomizationService.ApplyCustomizationAsync(tspProjectPath, languageTaggedRequest, ct: ct);
 
                     if (tspCustomizationResult.Success)
                     {
@@ -292,6 +298,8 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                 }
             }
 
+            logger.LogInformation("Classification summary: TSP_APPLICABLE={TspApplicable}, CODE_CUSTOMIZATION={CodeCustomization}, REQUIRES_MANUAL_INTERVENTION={Manual}, SUCCESS={Success}", tspApplicable, codeCustomizations, manualChanges, noChanges);
+
             // Exit cases for the first attempt
             if (tries == 0)
             {
@@ -328,16 +336,20 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
                     };
                 }
 
-                // All items are code customizations — no TSP changes were made, skip regen
-                // but still build to get error context for the patch agent
-                if (tspApplicable == 0 && codeCustomizations > 0)
+            }
+
+            // No more TSP-applicable items — remaining items need code customization, skip re-gen
+            if (tspApplicable == 0 && codeCustomizations > 0)
+            {
+                logger.LogInformation("No TSP-applicable items remain; {CodeCustomizations} item(s) require code customization.", codeCustomizations);
+                // if first attempt, still build to get error context for the patch agent
+                if (tries == 0)
                 {
-                    logger.LogInformation("All items classified as CODE_CUSTOMIZATION — skipping regen, building for error context.");
                     var (codeCustSuccess, codeCustError, _) = await languageService.BuildAsync(packagePath, CommandTimeoutInMinutes, ct);
                     buildSucceeded = codeCustSuccess;
                     buildError = codeCustError;
-                    break;
                 }
+                break;
             }
 
             // Don't waste time regenerating if no TSP fixes were successfully applied
@@ -432,6 +444,11 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             patchContext,
             ct);
 
+        foreach (var patch in patches)
+        {
+            logger.LogInformation("{Description}", patch.Description);
+        }
+
         if (patches.Count == 0)
         {
             logger.LogInformation("No patches applied.");
@@ -494,6 +511,34 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
     }
 
     /// <summary>
+    /// Resolves the language service to use: prefers language detected from an APIView URL,
+    /// falls back to detecting from the package path.
+    /// </summary>
+    private async Task<LanguageService> ResolveLanguageServiceAsync(string packagePath, string? apiViewUrl, CancellationToken ct)
+    {
+        if (apiViewUrl != null)
+        {
+            try
+            {
+                var language = await feedbackService.GetLanguageAsync(apiViewUrl, ct);
+                var sdkLanguage = language != null ? SdkLanguageHelpers.GetSdkLanguage(language) : SdkLanguage.Unknown;
+                if (sdkLanguage != SdkLanguage.Unknown)
+                {
+                    return GetLanguageService(sdkLanguage);
+                }
+                logger.LogWarning("Could not determine language from APIView URL; falling back to package path detection.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to detect language from APIView URL; falling back to package path detection.");
+            }
+        }
+
+        logger.LogInformation("Detecting language from package path: {PackagePath}", packagePath);
+        return await GetLanguageServiceAsync(packagePath, ct);
+    }
+
+    /// <summary>
     /// Builds a formatted context string for the patch agent, combining the original request,
     /// classifier analysis, and build errors into labeled markdown sections.
     /// </summary>
@@ -521,6 +566,23 @@ public class CustomizedCodeUpdateTool : LanguageMcpTool
             sb.AppendLine(buildError);
         }
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if <paramref name="value"/> is an absolute HTTP/HTTPS URL
+    /// whose host matches a known APIView environment (production or staging).
+    /// Recognised hosts: <c>apiview.dev</c>, <c>*.apiview.dev</c>, <c>apiview.org</c>, <c>*.apiview.org</c>, <c>apiviewstagingtest.com</c>, <c>*.apiviewstagingtest.com</c>.
+    /// </summary>
+    internal static bool IsApiViewUrl(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) { return false; }
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)) { return false; }
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) { return false; }
+        var host = uri.IdnHost;
+        return host.Equals("apiview.dev", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".apiview.dev", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".apiviewstagingtest.com", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

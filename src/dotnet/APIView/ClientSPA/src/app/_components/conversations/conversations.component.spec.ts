@@ -454,6 +454,60 @@ describe('ConversationComponent', () => {
       expect(notifySpy).toHaveBeenCalled();
     });
 
+    it('should pass undefined threadId to API when resolving legacy comments without a real threadId', () => {
+      const resolveSpy = vi.spyOn(commentsService, 'resolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      // Simulate legacy comments that have no threadId
+      component.comments = [
+        { id: 'c1', elementId: 'elem-1', threadId: undefined, apiRevisionId: 'rev-1', isResolved: false } as any,
+        { id: 'c2', elementId: 'elem-1', threadId: null, apiRevisionId: 'rev-1', isResolved: false } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'elem-1', // synthetic threadId == elementId (no real threadId exists)
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+      } as CommentUpdatesDto);
+
+      // The third argument (threadId) must be undefined, not 'elem-1'
+      expect(resolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', undefined);
+    });
+
+    it('should pass undefined threadId to API when unresolving legacy comments without a real threadId', () => {
+      const unresolveSpy = vi.spyOn(commentsService, 'unresolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.comments = [
+        { id: 'c1', elementId: 'elem-1', threadId: undefined, apiRevisionId: 'rev-1', isResolved: true } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'elem-1',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentUnResolved,
+      } as CommentUpdatesDto);
+
+      expect(unresolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', undefined);
+    });
+
+    it('should pass real threadId to API when resolving comments that have a threadId', () => {
+      const resolveSpy = vi.spyOn(commentsService, 'resolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.comments = [
+        { id: 'c1', elementId: 'elem-1', threadId: 'thread-abc', apiRevisionId: 'rev-1', isResolved: false } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'thread-abc',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+      } as CommentUpdatesDto);
+
+      expect(resolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', 'thread-abc');
+    });
+
     it('should call notifyQualityScoreRefresh after creating a new thread', () => {
       const mockResponse = { threadId: 'new-thread' } as CommentItemModel;
       vi.spyOn(commentsService, 'createComment').mockReturnValue(of(mockResponse));

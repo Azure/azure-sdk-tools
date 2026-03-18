@@ -513,7 +513,9 @@ public class UpgradeService(
         // CancellationToken.None so it is not tied to the caller's
         // cancellation, and attach a continuation to observe/log
         // any failures to avoid unobserved exceptions.
+#pragma warning disable AZSDK002 // Intentional: upgrade process must outlive caller
         var upgradeTask = processHelper.Run(options, CancellationToken.None);
+#pragma warning restore AZSDK002
         _ = upgradeTask.ContinueWith(
             t =>
             {

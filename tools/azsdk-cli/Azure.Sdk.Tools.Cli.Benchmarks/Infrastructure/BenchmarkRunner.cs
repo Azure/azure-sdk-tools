@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
+using System.Linq;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
@@ -69,7 +70,8 @@ public class BenchmarkRunner : IDisposable
                 Timeout = scenario.Timeout,
                 AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath,
                 Model = options.Model ?? BenchmarkDefaults.DefaultModel,
-                OnActivity = onActivity
+                OnActivity = onActivity,
+                Verbose = options.Verbose
             };
             var execResult = await executor.ExecuteAsync(execConfig);
 

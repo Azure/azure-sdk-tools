@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,9 +13,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Remove="TestData\**" />
+    <TypeSpec Remove="TestData\**\*.tsp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestData\TypeSpec\version-add-preview-after-preview\" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Reporting\report-template.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+    
 
 </Project>

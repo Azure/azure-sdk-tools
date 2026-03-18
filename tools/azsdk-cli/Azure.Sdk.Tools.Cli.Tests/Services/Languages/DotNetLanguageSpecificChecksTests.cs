@@ -14,6 +14,7 @@ internal class DotNetLanguageSpecificChecksTests
     private Mock<IGitHelper> _gitHelperMock = null!;
     private Mock<IPowershellHelper> _powerShellHelperMock = null!;
     private Mock<ICommonValidationHelpers> _commonValidationHelperMock = null!;
+    private Mock<IPackageInfoHelper> _packageInfoHelperMock = null!;
     private DotnetLanguageService _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
@@ -27,6 +28,12 @@ internal class DotNetLanguageSpecificChecksTests
         _gitHelperMock.Setup(g => g.GetRepoNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync("azure-sdk-for-net");
         _powerShellHelperMock = new Mock<IPowershellHelper>();
         _commonValidationHelperMock = new Mock<ICommonValidationHelpers>();
+        _packageInfoHelperMock = new Mock<IPackageInfoHelper>();
+
+        // Default: return empty strings so path parsing safely falls through to validation
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string.Empty, string.Empty, string.Empty));
 
         _languageChecks = new DotnetLanguageService(
             _processHelperMock.Object,
@@ -34,7 +41,7 @@ internal class DotNetLanguageSpecificChecksTests
             _gitHelperMock.Object,
             NullLogger<DotnetLanguageService>.Instance,
             _commonValidationHelperMock.Object,
-            Mock.Of<IPackageInfoHelper>(),
+            _packageInfoHelperMock.Object,
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -61,6 +68,16 @@ internal class DotNetLanguageSpecificChecksTests
         _gitHelperMock
             .Setup(x => x.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_repoRoot);
+
+        // Dynamically compute relative path from sdk/ for any package path
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns<string, CancellationToken>((path, _) =>
+            {
+                var sdkRoot = Path.Combine(_repoRoot, "sdk");
+                var relativePath = Path.GetRelativePath(sdkRoot, path);
+                return Task.FromResult((_repoRoot, relativePath, path));
+            });
     }
 
     [Test]

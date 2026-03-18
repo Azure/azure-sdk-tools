@@ -1,0 +1,52 @@
+{
+  "Language": "Python",
+  "ReviewLines": [
+    {
+      "LineId": "GLOBAL",
+      "Tokens": [
+        { "Kind": 0, "Value": "namespace", "HasPrefixSpace": false, "HasSuffixSpace": true },
+        { "Kind": 3, "Value": "azure.core", "HasPrefixSpace": false, "HasSuffixSpace": false }
+      ],
+      "Children": [
+        {
+          "LineId": "azure.core.MyClass",
+          "Tokens": [
+            { "Kind": 2, "Value": "class", "HasPrefixSpace": false, "HasSuffixSpace": true },
+            { "Kind": 3, "Value": "MyClass", "HasPrefixSpace": false, "HasSuffixSpace": false },
+            { "Kind": 1, "Value": ":", "HasPrefixSpace": false, "HasSuffixSpace": false }
+          ],
+          "Children": [
+            {
+              "LineId": "azure.core.MyClass.my_method",
+              "Tokens": [
+                { "Kind": 2, "Value": "def", "HasPrefixSpace": false, "HasSuffixSpace": true },
+                { "Kind": 4, "Value": "my_method", "HasPrefixSpace": false, "HasSuffixSpace": false },
+                { "Kind": 1, "Value": "(", "HasPrefixSpace": false, "HasSuffixSpace": false },
+                { "Kind": 0, "Value": "self", "HasPrefixSpace": false, "HasSuffixSpace": false },
+                { "Kind": 1, "Value": ")", "HasPrefixSpace": false, "HasSuffixSpace": false },
+                { "Kind": 1, "Value": ":", "HasPrefixSpace": false, "HasSuffixSpace": true },
+                { "Kind": 1, "Value": "...", "HasPrefixSpace": false, "HasSuffixSpace": false }
+              ],
+              "Children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Tokens": []
+    },
+    {
+      "LineId": "azure.core.standalone_func",
+      "Tokens": [
+        { "Kind": 2, "Value": "def", "HasPrefixSpace": false, "HasSuffixSpace": true },
+        { "Kind": 4, "Value": "standalone_func", "HasPrefixSpace": false, "HasSuffixSpace": false },
+        { "Kind": 1, "Value": "(", "HasPrefixSpace": false, "HasSuffixSpace": false },
+        { "Kind": 1, "Value": ")", "HasPrefixSpace": false, "HasSuffixSpace": false },
+        { "Kind": 1, "Value": ":", "HasPrefixSpace": false, "HasSuffixSpace": true },
+        { "Kind": 1, "Value": "...", "HasPrefixSpace": false, "HasSuffixSpace": false }
+      ],
+      "Children": []
+    }
+  ]
+}

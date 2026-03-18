@@ -35,15 +35,15 @@ public class DelegateAPIViewFeedbackToolTests
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
         var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
         
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(new List<ConsolidatedComment>());
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<ConsolidatedComment>());
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
 
         // Not using dry run - should still not create issue when no comments
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
 
         Assert.That(response.Message, Does.Contain("No actionable comments"));
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -57,9 +57,9 @@ public class DelegateAPIViewFeedbackToolTests
         var comments = CreateSampleComments();
         var metadata = CreateMetadataWithPullRequest(prNumber: 12345, prRepo: "Azure/azure-rest-api-specs");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync(("abc123sha", "specification/widget/Widget", "Azure/azure-rest-api-specs"));
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
@@ -69,7 +69,7 @@ public class DelegateAPIViewFeedbackToolTests
         Assert.That(response.Message, Does.Contain("specification/widget/Widget"));
         Assert.That(response.Message, Does.Contain("Target: Azure/azure-rest-api-specs"));
         
-        _mockService.Verify(x => x.DetectShaAndTspPath(metadata), Times.Once);
+        _mockService.Verify(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -79,9 +79,9 @@ public class DelegateAPIViewFeedbackToolTests
         var comments = CreateSampleComments();
         var metadata = CreateMetadataWithPullRequest(prNumber: 12345, prRepo: "Azure/azure-rest-api-specs-pr");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync(("prsha789", "specification/widget/Widget", "Azure/azure-rest-api-specs-pr"));
 
         var mockIssue = CreateMockIssue(99, "https://github.com/Azure/azure-rest-api-specs-pr/issues/99");
@@ -90,7 +90,7 @@ public class DelegateAPIViewFeedbackToolTests
             "azure-rest-api-specs-pr", 
             It.IsAny<string>(),
             It.IsAny<string>(),
-            It.IsAny<List<string>?>()))
+            It.IsAny<List<string>?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockIssue);
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
@@ -100,7 +100,7 @@ public class DelegateAPIViewFeedbackToolTests
         
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
             "Azure", "azure-rest-api-specs-pr", It.IsAny<string>(), It.IsAny<string>(), 
-            It.Is<List<string>>(a => a != null && a.Count == 1 && a[0] == "copilot-swe-agent[bot]")), Times.Once);
+            It.Is<List<string>>(a => a != null && a.Count == 1 && a[0] == "copilot-swe-agent[bot]"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -111,10 +111,10 @@ public class DelegateAPIViewFeedbackToolTests
         var comments = CreateSampleComments();
         var metadata = CreateMetadataWithPullRequest(prNumber: 99999, prRepo: "Azure/azure-sdk-for-python");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
         // Helper detects SHA, directory, and repo from tsp-location.yaml in SDK PR
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync(("sdksha456", "specification/widget/Widget", "Azure/azure-rest-api-specs"));
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
@@ -138,9 +138,9 @@ public class DelegateAPIViewFeedbackToolTests
         var comments = CreateSampleComments();
         var metadata = CreateMetadataWithBranch(branchLabel: "Source Branch:main");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync(("branchsha456", "specification/widget/Widget.Management", "Azure/azure-rest-api-specs"));
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
@@ -158,9 +158,9 @@ public class DelegateAPIViewFeedbackToolTests
         var comments = CreateSampleComments();
         var metadata = CreateMetadataWithBranch(branchLabel: "nonexistent-branch");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync((null, null, null));
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
@@ -193,9 +193,9 @@ public class DelegateAPIViewFeedbackToolTests
         };
         var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
@@ -218,15 +218,15 @@ public class DelegateAPIViewFeedbackToolTests
         var comments = CreateSampleComments();
         var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: true);
 
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()), Times.Never);
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -236,9 +236,9 @@ public class DelegateAPIViewFeedbackToolTests
         var comments = CreateSampleComments();
         var metadata = CreateMetadataWithPullRequest(prNumber: 555, prRepo: "Azure/azure-rest-api-specs");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync(("commitsha123", "specification/widget/Widget", "Azure/azure-rest-api-specs"));
 
         var mockIssue = CreateMockIssue(42, "https://github.com/Azure/azure-rest-api-specs/issues/42");
@@ -254,7 +254,7 @@ public class DelegateAPIViewFeedbackToolTests
                 body.Contains("## Constraints") &&
                 body.Contains("## Output Requirements") &&
                 body.Contains("| LineNo | Element | LineText | CommentText |")),
-            It.IsAny<List<string>?>()))
+            It.IsAny<List<string>?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mockIssue);
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);
@@ -264,7 +264,7 @@ public class DelegateAPIViewFeedbackToolTests
         
         _mockGitHubService.Verify(x => x.CreateIssueAsync(
             "Azure", "azure-rest-api-specs", It.IsAny<string>(), It.IsAny<string>(), 
-            It.Is<List<string>>(a => a != null && a.Count == 1 && a[0] == "copilot-swe-agent[bot]")), Times.Once);
+            It.Is<List<string>>(a => a != null && a.Count == 1 && a[0] == "copilot-swe-agent[bot]"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -275,7 +275,7 @@ public class DelegateAPIViewFeedbackToolTests
     public async Task DelegateAPIViewFeedbackAsync_WhenHelperThrowsException_ReturnsError()
     {
         var apiViewUrl = "https://apiview.dev/review/123?activeApiRevisionId=abc";
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>()))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("APIView service unavailable"));
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl);
@@ -291,11 +291,11 @@ public class DelegateAPIViewFeedbackToolTests
         var comments = CreateSampleComments();
         var metadata = CreateMetadataWithPullRequest(prNumber: 123, prRepo: "Azure/azure-rest-api-specs");
 
-        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>())).ReturnsAsync(comments);
-        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>())).ReturnsAsync(metadata);
-        _mockService.Setup(x => x.DetectShaAndTspPath(metadata))
+        _mockService.Setup(x => x.GetConsolidatedComments(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(comments);
+        _mockService.Setup(x => x.ParseReviewMetadata(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(metadata);
+        _mockService.Setup(x => x.DetectShaAndTspPath(metadata, It.IsAny<CancellationToken>()))
             .ReturnsAsync(("sha123", null, "Azure/azure-rest-api-specs"));
-        _mockGitHubService.Setup(x => x.CreateIssueAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>()))
+        _mockGitHubService.Setup(x => x.CreateIssueAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Octokit.ApiException("GitHub API rate limit exceeded", System.Net.HttpStatusCode.Forbidden));
 
         var response = await _tool.DelegateAPIViewFeedbackAsync(apiViewUrl, dryRun: false);

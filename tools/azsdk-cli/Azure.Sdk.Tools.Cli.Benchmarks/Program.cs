@@ -17,9 +17,15 @@ public class Program
 
         // list command
         var listCommand = new Command("list", "List all available scenarios");
-        listCommand.SetAction((_, _) =>
+        var listTagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
+        var listRepoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
+        listCommand.Options.Add(listTagOption);
+        listCommand.Options.Add(listRepoOption);
+        listCommand.SetAction((parseResult, _) =>
         {
-            HandleListCommand();
+            var tags = parseResult.GetValue(listTagOption);
+            var repo = parseResult.GetValue(listRepoOption);
+            HandleListCommand(tags, repo);
             return Task.FromResult(0);
         });
         rootCommand.Subcommands.Add(listCommand);
@@ -37,6 +43,10 @@ public class Program
         };
         var verboseOption = new Option<bool>("--verbose") { Description = "Show agent activity during execution" };
         var parallelOption = new Option<int>("--parallel") { Description = $"Maximum number of scenarios to run concurrently (default: {BenchmarkDefaults.DefaultMaxParallelism})", DefaultValueFactory = _ => BenchmarkDefaults.DefaultMaxParallelism };
+        var tagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
+        var repoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
+        var authoringSpecRepoOption = new Option<string?>("--authoring-spec-repo") { Description = "The repository containing the authoring skill to override (e.g. Azure/azure-rest-api-specs or Azure/azure-rest-api-specs:<branch>)" };
+        var authoringSkillPathOption = new Option<string?>("--authoring-skill-path") { Description = "The filesystem path of the authoring skill directory to be used." };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);
@@ -44,6 +54,10 @@ public class Program
         runCommand.Options.Add(cleanupOption);
         runCommand.Options.Add(verboseOption);
         runCommand.Options.Add(parallelOption);
+        runCommand.Options.Add(tagOption);
+        runCommand.Options.Add(repoOption);
+        runCommand.Options.Add(authoringSpecRepoOption);
+        runCommand.Options.Add(authoringSkillPathOption);
 
         runCommand.SetAction(async (parseResult, _) =>
         {
@@ -53,16 +67,20 @@ public class Program
             var cleanup = parseResult.GetValue(cleanupOption);
             var verbose = parseResult.GetValue(verboseOption);
             var parallel = parseResult.GetValue(parallelOption);
-            return await HandleRunCommand(name, all, model, cleanup, verbose, parallel);
+            var tags = parseResult.GetValue(tagOption);
+            var repo = parseResult.GetValue(repoOption);
+            var authoringSpecRepo = parseResult.GetValue(authoringSpecRepoOption);
+            var authoringSkillPath = parseResult.GetValue(authoringSkillPathOption);
+            return await HandleRunCommand(name, all, tags, repo, model, cleanup, verbose, parallel, authoringSpecRepo, authoringSkillPath);
         });
         rootCommand.Subcommands.Add(runCommand);
 
         return await rootCommand.Parse(args).InvokeAsync();
     }
 
-    private static void HandleListCommand()
+    private static void HandleListCommand(string[]? tags, string? repo)
     {
-        var scenarios = ScenarioDiscovery.DiscoverAll().ToList();
+        var scenarios = FilterScenarios(ScenarioDiscovery.DiscoverAll(), tags, repo).ToList();
 
         if (scenarios.Count == 0)
         {
@@ -82,14 +100,14 @@ public class Program
         // Print rows
         foreach (var scenario in scenarios)
         {
-            var tags = string.Join(", ", scenario.Tags);
-            Console.WriteLine($"{scenario.Name.PadRight(nameWidth)} | {scenario.Description.PadRight(descWidth)} | {tags.PadRight(tagsWidth)}");
+            var tagDisplay = string.Join(", ", scenario.Tags);
+            Console.WriteLine($"{scenario.Name.PadRight(nameWidth)} | {scenario.Description.PadRight(descWidth)} | {tagDisplay.PadRight(tagsWidth)}");
         }
 
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string? model, CleanupPolicy cleanup, bool verbose, int parallel)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? repo, string? model, CleanupPolicy cleanup, bool verbose, int parallel, string? authoringSpecRepo, string? authoringSkillPath)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -105,6 +123,12 @@ public class Program
             return 1;
         }
 
+        if ((tags is { Length: > 0 } || repo != null) && !all)
+        {
+            Console.WriteLine("Error: --tag and --repo can only be used with --all");
+            return 1;
+        }
+
         if (parallel < 1)
         {
             Console.WriteLine("Error: --parallel must be at least 1");
@@ -115,21 +139,27 @@ public class Program
 
         if (all)
         {
-            scenariosToRun.AddRange(ScenarioDiscovery.DiscoverAll());
+            scenariosToRun.AddRange(FilterScenarios(ScenarioDiscovery.DiscoverAll(authoringSpecRepo, authoringSkillPath), tags, repo));
             if (scenariosToRun.Count == 0)
             {
-                Console.WriteLine("No scenarios found.");
+                var filters = new List<string>();
+                if (tags is { Length: > 0 }) filters.Add($"tag(s): {string.Join(", ", tags)}");
+                if (repo != null) filters.Add($"repo: {repo}");
+                var message = filters.Count > 0
+                    ? $"No scenarios found matching {string.Join(" and ", filters)}"
+                    : "No scenarios found.";
+                Console.WriteLine(message);
                 return 1;
             }
         }
         else
         {
-            var scenario = ScenarioDiscovery.FindByName(name!);
+            var scenario = ScenarioDiscovery.FindByName(name!, authoringSpecRepo, authoringSkillPath);
             if (scenario == null)
             {
                 Console.WriteLine($"Error: Scenario '{name}' not found.");
                 Console.WriteLine("\nAvailable scenarios:");
-                foreach (var s in ScenarioDiscovery.DiscoverAll())
+                foreach (var s in ScenarioDiscovery.DiscoverAll(authoringSpecRepo, authoringSkillPath))
                 {
                     Console.WriteLine($"  - {s.Name}");
                 }
@@ -139,6 +169,16 @@ public class Program
         }
 
         Console.WriteLine("=== Azure SDK Benchmarks ===\n");
+
+        if (!File.Exists("/.dockerenv"))
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("⚠ Warning: Not running inside a container.");
+            Console.WriteLine("  During benchmark runs, Copilot CLI is executed with all permissions, and automatically approves permission prompts, which can affect the state of your local machine.");
+            Console.WriteLine("  For full isolation, consider running inside a container.");
+            Console.ResetColor();
+            Console.WriteLine();
+        }
 
         var effectiveModel = model ?? BenchmarkDefaults.DefaultModel;
         Console.WriteLine($"Model: {effectiveModel}");
@@ -181,7 +221,7 @@ public class Program
 
         // Summary for multiple scenarios
         var resultsList = results.ToList();
-        if (resultsList.Count > 1)
+        if (resultsList.Count > 0)
         {
             Console.WriteLine("\n=== Summary ===");
             var passed = resultsList.Count(r => r.Result.Passed);
@@ -196,6 +236,17 @@ public class Program
         }
 
         return resultsList.All(r => r.Result.Passed) ? 0 : 1;
+    }
+
+    private static IEnumerable<BenchmarkScenario> FilterScenarios(IEnumerable<BenchmarkScenario> scenarios, string[]? tags, string? repo)
+    {
+        if (tags is { Length: > 0 })
+            scenarios = scenarios.Where(s => tags.Any(t => s.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)));
+
+        if (!string.IsNullOrEmpty(repo))
+            scenarios = scenarios.Where(s => $"{s.Repo.Owner}/{s.Repo.Name}".Equals(repo, StringComparison.OrdinalIgnoreCase));
+
+        return scenarios;
     }
 
     private static void PrintResult(BenchmarkResult result)

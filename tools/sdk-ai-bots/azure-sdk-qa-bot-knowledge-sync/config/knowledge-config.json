@@ -416,6 +416,96 @@
     },
     {
       "repository": {
+        "url": "https://github.com/Azure/azure-sdk-for-rust.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "General guide for Azure SDK for Rust",
+          "path": "/README.md",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Consumer documentation for Azure SDK for Rust",
+          "path": "/doc",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Developer guides for Azure SDK for Rust",
+          "path": "/doc/dev",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Contributing guidelines for Azure SDK for Rust",
+          "path": "/CONTRIBUTING.md",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Core README for Azure SDK for Rust",
+          "path": "/sdk/core/azure_core/README.md",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Identity README for Azure SDK for Rust",
+          "path": "/sdk/identity/azure_identity/README.md",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "TypeSpec Client Core README for Azure SDK for Rust",
+          "path": "/sdk/core/typespec_client_core/README.md",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Performance Testing Framework README for Azure SDK for Rust",
+          "path": "/sdk/core/azure_core_test/src/perf/README.md",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
+          "description": "Identity Troubleshooting Guide for Azure SDK for Rust",
+          "path": "/sdk/identity/azure_identity/TROUBLESHOOTING.md",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
+    },
+    {
+      "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-java.git",
         "branch": "main",
         "authType": "public"

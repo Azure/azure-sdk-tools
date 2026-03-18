@@ -105,9 +105,10 @@ stages:
         - ${{ each repo in parameters.CodeownerTargetRepos }}:
           - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
             parameters:
+              SkipCheckoutNone: true
+              Paths:
+                - .github/CODEOWNERS
               Repositories:
-                - Paths:
-                  - .github/CODEOWNERS
                 - Name: "Azure/${{ repo.RepoName }}"
                   Commitish: main
                   WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.RepoName }}"

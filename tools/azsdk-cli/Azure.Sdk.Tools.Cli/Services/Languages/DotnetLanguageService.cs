@@ -3,7 +3,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -470,10 +469,6 @@ public sealed partial class DotnetLanguageService: LanguageService
             // The patchLog was populated directly by the tool on each successful patch
             var appliedPatches = patchLog.ToList();
 
-            // Post-processing: ensure customization file names match their class declarations.
-            // The agent may rename the class inside a file but fail to rename the file itself.
-            RenameFilesToMatchClassNames(customizationRoot, generatedDirMarker, appliedPatches);
-
             logger.LogInformation("Patch application completed, patches applied: {PatchCount}", appliedPatches.Count);
             return appliedPatches;
         }
@@ -481,84 +476,6 @@ public sealed partial class DotnetLanguageService: LanguageService
         {
             logger.LogError(ex, "Failed to apply patches");
             return [];
-        }
-    }
-
-    // Matches "partial class ClassName" — captures the class name.
-    private static readonly Regex PartialClassRegex = new(@"\bpartial\s+class\s+(\w+)", RegexOptions.Compiled);
-
-    /// <summary>
-    /// Scans customization files that were patched and renames any whose file name no longer
-    /// matches the primary partial class declaration inside. This is a safety net for cases
-    /// where the agent renames the class but does not call the RenameFile tool.
-    /// </summary>
-    public void RenameFilesToMatchClassNames(
-        string customizationRoot,
-        string generatedDirMarker,
-        List<AppliedPatch> appliedPatches)
-    {
-        try
-        {
-            // Build a set of files the agent touched (relative paths from patch log)
-            var patchedRelPaths = new HashSet<string>(
-                appliedPatches.Select(p => p.FilePath),
-                StringComparer.OrdinalIgnoreCase);
-
-            var csFiles = Directory.GetFiles(customizationRoot, "*.cs", SearchOption.AllDirectories)
-                .Where(f => !f.Contains(generatedDirMarker, StringComparison.OrdinalIgnoreCase));
-
-            foreach (var filePath in csFiles)
-            {
-                var relPath = Path.GetRelativePath(customizationRoot, filePath);
-
-                // Only consider files the agent actually patched
-                if (!patchedRelPaths.Contains(relPath))
-                {
-                    continue;
-                }
-
-                var content = File.ReadAllText(filePath);
-                var match = PartialClassRegex.Match(content);
-                if (!match.Success)
-                {
-                    continue;
-                }
-
-                var className = match.Groups[1].Value;
-                var currentName = Path.GetFileNameWithoutExtension(filePath);
-
-                if (string.Equals(currentName, className, StringComparison.Ordinal))
-                {
-                    continue; // Already matches
-                }
-
-                var dir = Path.GetDirectoryName(filePath)!;
-                var targetPath = Path.Combine(dir, className + ".cs");
-
-                if (File.Exists(targetPath))
-                {
-                    // Target already exists — it may be a duplicate the agent created.
-                    // Keep the patched original (which has the real customization content)
-                    // and remove the duplicate target so we can move the original there.
-                    logger.LogInformation(
-                        "Removing duplicate file {Target} to make room for rename from {Source}",
-                        targetPath, filePath);
-                    File.Delete(targetPath);
-                }
-
-                File.Move(filePath, targetPath);
-                var targetRelPath = Path.GetRelativePath(customizationRoot, targetPath);
-                appliedPatches.Add(new AppliedPatch(
-                    targetRelPath,
-                    $"Renamed file from {currentName}.cs to {className}.cs to match class name",
-                    1));
-
-                logger.LogInformation("Auto-renamed {Old} → {New} to match partial class name", relPath, targetRelPath);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Error during post-patch file rename check");
         }
     }
 }

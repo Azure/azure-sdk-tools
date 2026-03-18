@@ -60,13 +60,13 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
                 }
             };
 
-            await using var session = await client.CreateSessionAsync(sessionConfig);
+            await using var session = await client.CreateSessionAsync(sessionConfig, cancellationToken);
 
             SessionConfigHelper.ConfigureAgentActivityLogging(session);
             // Send prompt and wait for completion
             var messageOptions = new MessageOptions { Prompt = VerificationPrompt };
 
-            var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5));
+            var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5), cancellationToken);
 
             if (result == null || result.Data == null || string.IsNullOrEmpty(result.Data.Content))
             {

@@ -112,9 +112,8 @@ public class DotnetErrorDrivenPatchTemplate(
         - Method was removed → update to use the replacement method if one exists
 
         ### Step 3b — Rename files when classes are renamed
-        When a class or type is renamed (e.g., error CS0246 "type or namespace name could not be found"),
-        and you patch the partial class declaration to use the new class name, you MUST ALSO rename the
-        customization file to match the new class name.
+        When a class or type is renamed and you patch the partial class declaration to use
+        the new class name, you MUST ALSO rename the customization file to match the new class name.
         - In .NET, the convention is that the file name matches the class name (e.g., `WidgetClient.cs`
           contains `partial class WidgetClient`).
         - Use the **RenameFile** tool to rename the file AFTER applying the code patch.

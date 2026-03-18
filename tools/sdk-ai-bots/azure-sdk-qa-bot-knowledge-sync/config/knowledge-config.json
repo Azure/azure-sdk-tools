@@ -440,6 +440,15 @@
           }
         },
         {
+          "description": "Developer guides for Azure SDK for Rust",
+          "path": "/doc/dev",
+          "folder": "azure_sdk_for_rust_docs",
+          "relativeByRepoPath": true,
+          "metadata": {
+            "scope": "branded"
+          }
+        },
+        {
           "description": "Contributing guidelines for Azure SDK for Rust",
           "path": "/CONTRIBUTING.md",
           "folder": "azure_sdk_for_rust_docs",

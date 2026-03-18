@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
@@ -186,9 +187,11 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             await workspace.RunCommandAsync("pwsh", "./eng/common/mcp/azure-sdk-mcp.ps1", "-InstallDirectory", workspace.RootPath);
 
             // Configure the path to the installed MCP executable for this scenario
-            AzsdkMcpPath = Path.Combine(workspace.RootPath, "azsdk.exe");
+            // Check if running on Windows
+            bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            AzsdkMcpPath = Path.Combine(workspace.RootPath, isWindows ? "azsdk.exe" : "azsdk");
 
-            
+
             // TODO: Download and Start Azure Knowledge Base locally. Currently we need to manually start the Azure Knowledge Base server locally.
             //await workspace.RunCommandAsync("")
         }

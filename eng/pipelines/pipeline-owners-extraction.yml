@@ -136,11 +136,11 @@ stages:
 
           - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
             parameters:
-              OpenAsDraft: true
               WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.RepoName }}"
               BaseBranchName: main
               PRBranchName: "$(PRBranchName)"
               PushArgs: '-f'
+              OpenAsDraft: ${{ repo.DraftPr }}
               PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'
               PRBody: |
                 Updating CODEOWNERS

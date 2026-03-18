@@ -9,24 +9,13 @@ parameters:
     default:
       - Name: azure-sdk-for-net
         DraftPr: true
-      # - Name: azure-sdk-for-java
-      #   DraftPr: true
-      # - Name: azure-sdk-for-js
-      #   DraftPr: true
-      # - Name: azure-sdk-for-python
-      #   DraftPr: true
-      # - Name: azure-sdk-for-go
-      #   DraftPr: true
-      # - Name: azure-sdk-for-cpp
-      #   DraftPr: true
-      # - Name: azure-sdk-for-rust
-      #   DraftPr: true
-
+        SetUp:
+          - task: UseDotNet@2
+            inputs:
+              version: '10.0.x'
 
 stages:
 - stage: Run
-  # TODO: Remove before merge, this is here to tighten the scope while developing the pipeline
-  condition: False
   variables:
   - template: ./templates/variables/globals.yml
 
@@ -100,15 +89,13 @@ stages:
         # TODO: Sparse checkout eng/?
         - checkout: self
 
-        - task: UseDotNet@2
-          inputs:
-            version: '10.0.x'
-
         - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
 
         - template: /eng/common/pipelines/templates/steps/login-to-github.yml
 
         - ${{ each repo in parameters.CodeownerTargetRepos }}:
+          - ${{ repo.SetUp }}
+
           - pwsh: |
               git clone --filter=tree:0 "https://x-access-token:${{ parameters.GH_TOKEN }}@github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
             displayName: Clone ${{ repo.Name }}

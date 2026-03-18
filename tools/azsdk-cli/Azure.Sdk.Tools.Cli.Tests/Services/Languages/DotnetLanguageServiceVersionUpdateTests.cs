@@ -374,6 +374,53 @@ internal class DotnetLanguageServiceVersionUpdateTests
             Times.Never);
     }
 
+    [Test]
+    public async Task UpdateVersionInFiles_ScriptUsesPackageNameFromMSBuild()
+    {
+        // Arrange - folder name differs from actual MSBuild package name
+        using var tempDir = TempDirectory.Create("dotnet-version-msbuild-name");
+        var repoRoot = tempDir.DirectoryPath;
+
+        // Folder is "Azure.Storage" but actual package name is "Azure.Storage.Blobs"
+        var packagePath = Path.Combine(repoRoot, "sdk", "storage", "Azure.Storage");
+        var srcDir = Path.Combine(packagePath, "src");
+        Directory.CreateDirectory(srcDir);
+        await File.WriteAllTextAsync(
+            Path.Combine(srcDir, "Azure.Storage.Blobs.csproj"),
+            CreateSampleCsproj("12.0.0"));
+
+        var scriptDir = Path.Combine(repoRoot, "eng", "scripts");
+        Directory.CreateDirectory(scriptDir);
+        await File.WriteAllTextAsync(
+            Path.Combine(scriptDir, "Update-PkgVersion.ps1"), "# mock");
+
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((repoRoot, "storage/Azure.Storage", packagePath));
+
+        // Mock MSBuild GetPackageInfo to return the real package name
+        var msbuildJson = """{"TargetResults":{"GetPackageInfo":{"Items":[{"Identity":"'path' 'storage' 'Azure.Storage.Blobs' '12.0.0' 'client'"}]}}}""";
+        _processHelperMock
+            .Setup(p => p.Run(
+                It.Is<ProcessOptions>(o => o.Args.Contains("-getTargetResult:GetPackageInfo")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateProcessResult(0, msbuildJson));
+
+        PowershellOptions? capturedOptions = null;
+        _powershellHelperMock
+            .Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .Callback<PowershellOptions, CancellationToken>((opts, _) => capturedOptions = opts)
+            .ReturnsAsync(CreateProcessResult(0, "Done"));
+
+        // Act
+        await InvokeUpdatePackageVersionInFilesAsync(packagePath, "13.0.0", "stable");
+
+        // Assert - script should use MSBuild name "Azure.Storage.Blobs", not folder name "Azure.Storage"
+        Assert.That(capturedOptions, Is.Not.Null);
+        Assert.That(capturedOptions!.Args, Does.Contain("Azure.Storage.Blobs"));
+        Assert.That(capturedOptions.Args, Does.Not.Contain("Azure.Storage'"));
+    }
+
     #endregion
 
     #region Helpers

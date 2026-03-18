@@ -117,7 +117,11 @@ public sealed partial class DotnetLanguageService : LanguageService
         }
 
         var serviceDirectory = parts[0];
-        var packageName = parts[1];
+
+        // Get accurate package name from MSBuild project metadata rather than folder name,
+        // since the folder name may not match the actual package name.
+        var (msbuildPackageName, _, _) = await TryGetPackageInfoAsync(packagePath, ct);
+        var packageName = msbuildPackageName ?? parts[1];
 
         logger.LogInformation("Running Update-PkgVersion.ps1 for {PackageName} in service {ServiceDirectory}",
             packageName, serviceDirectory);

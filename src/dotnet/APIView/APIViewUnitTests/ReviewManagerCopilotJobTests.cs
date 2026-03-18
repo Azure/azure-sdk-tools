@@ -109,9 +109,9 @@ public class ReviewManagerCopilotJobTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>(async (req, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) =>
             {
-                capturedBody = await req.Content.ReadAsStringAsync();
+                capturedBody = req.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             })
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -187,9 +187,9 @@ public class ReviewManagerCopilotJobTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>(async (req, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) =>
             {
-                capturedBody = await req.Content.ReadAsStringAsync();
+                capturedBody = req.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             })
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -227,9 +227,9 @@ public class ReviewManagerCopilotJobTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>(async (req, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) =>
             {
-                capturedBody = await req.Content.ReadAsStringAsync();
+                capturedBody = req.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             })
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -347,9 +347,9 @@ public class ReviewManagerCopilotJobTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .Callback<HttpRequestMessage, CancellationToken>(async (req, _) =>
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) =>
             {
-                capturedBody = await req.Content.ReadAsStringAsync();
+                capturedBody = req.Content.ReadAsStringAsync().GetAwaiter().GetResult();
             })
             .ReturnsAsync(new HttpResponseMessage
             {

@@ -636,6 +636,8 @@ namespace APIViewWeb.Managers
                     nameof(request));
             }
 
+            language = LanguageServiceHelpers.GetLanguageAliasForCopilotService(language);
+
             string copilotEndpoint = _configuration["CopilotServiceEndpoint"];
             string startUrl = $"{copilotEndpoint}/api-review/start";
             HttpClient client = _httpClientFactory.CreateClient();
@@ -661,13 +663,13 @@ namespace APIViewWeb.Managers
             {
                 _logger.LogInformation("Starting AVC review job via API. Language: {Language}", language);
 
-                var httpRequest = new HttpRequestMessage(HttpMethod.Post, startUrl)
+                using var httpRequest = new HttpRequestMessage(HttpMethod.Post, startUrl)
                 {
                     Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
                 };
                 httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
 
-                HttpResponseMessage response = await client.SendAsync(httpRequest);
+                using HttpResponseMessage response = await client.SendAsync(httpRequest);
                 string responseString = await response.Content.ReadAsStringAsync();
 
                 if (!response.IsSuccessStatusCode)
@@ -719,7 +721,7 @@ namespace APIViewWeb.Managers
             catch (Exception e)
             {
                 _logger.LogError(e, "Failed to get AVC review job status. JobId: {JobId}", jobId);
-                throw new Exception($"Failed to get review job status: {e.Message}");
+                throw;
             }
         }
 

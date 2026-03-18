@@ -268,7 +268,7 @@ public class ReviewsTokenAuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error starting review job");
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while starting the review job.");
         }
     }
 

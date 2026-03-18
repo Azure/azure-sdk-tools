@@ -187,7 +187,7 @@ public class ReviewsTokenAuthControllerTests
 
         ObjectResult objectResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
-        objectResult.Value.ToString().Should().Contain("Copilot service returned 500");
+        objectResult.Value.ToString().Should().Contain("An error occurred while starting the review job.");
     }
 
     #endregion

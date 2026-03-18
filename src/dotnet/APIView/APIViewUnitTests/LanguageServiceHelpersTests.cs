@@ -60,7 +60,7 @@ namespace APIViewUnitTests
         [Theory]
         [InlineData(null)]
         [InlineData("")]
-        public void GetLanguageAliasForCopilotService_ReturnsInputForNullOrEmpty(string input)
+        public void GetLanguageAliasForCopilotService_NullOrEmptyInput_ReturnsNull(string input)
         {
             var result = LanguageServiceHelpers.GetLanguageAliasForCopilotService(input);
             Assert.Null(result);

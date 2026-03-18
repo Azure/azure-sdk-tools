@@ -13,6 +13,7 @@ using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
@@ -28,6 +29,7 @@ public class PipelineAnalysisTool(
     IDevOpsService devopsService,
     ILogAnalysisHelper logAnalysisHelper,
     ITestHelper testHelper,
+    ICopilotAgentRunner copilotAgentRunner,
     ILogger<PipelineAnalysisTool> logger
 ) : MCPTool
 {
@@ -43,6 +45,13 @@ public class PipelineAnalysisTool(
         Required = false,
     };
 
+    private readonly Option<bool> copilotOpt = new("--copilot")
+    {
+        Description = "Use Copilot agent to analyze pipeline failures",
+        Required = false,
+        DefaultValueFactory = _ => false,
+    };
+
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
     private const string AnalyzePipelineToolName = "azsdk_analyze_pipeline";
@@ -50,7 +59,7 @@ public class PipelineAnalysisTool(
     protected override Command GetCommand() =>
         new McpCommand("analyze", "Analyze a pipeline run", AnalyzePipelineToolName)
         {
-            SharedOptions.PipelineLocator, projectOpt, logIdOpt,
+            SharedOptions.PipelineLocator, projectOpt, logIdOpt, copilotOpt,
         };
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -58,9 +67,65 @@ public class PipelineAnalysisTool(
         var pipelineIdentifier = parseResult.GetValue(SharedOptions.PipelineLocator);
         var project = parseResult.GetValue(projectOpt);
         var logId = parseResult.GetValue(logIdOpt);
+        var useCopilot = parseResult.GetValue(copilotOpt);
 
         logger.LogInformation("Analyzing pipeline {pipelineIdentifier}...", pipelineIdentifier);
-        return await AnalyzePipeline(pipelineIdentifier, project, logId != 0 ? logId : null, ct);
+        var result = await AnalyzePipeline(pipelineIdentifier, project, logId != 0 ? logId : null, ct);
+
+        if (!useCopilot)
+        {
+            return result;
+        }
+
+        return await AnalyzeWithCopilot(result, pipelineIdentifier, ct);
+    }
+
+    private async Task<CommandResponse> AnalyzeWithCopilot(AnalyzePipelineResponse pipelineResult, string pipelineIdentifier, CancellationToken ct)
+    {
+        try
+        {
+            var pipelineData = pipelineResult.ToString();
+
+            var tempPath = Path.Combine(Path.GetTempPath(), $"pipeline-analysis-{Guid.NewGuid():N}.md");
+            await File.WriteAllTextAsync(tempPath, pipelineData, ct);
+            logger.LogInformation("Pipeline analysis data written to {tempPath}", tempPath);
+            logger.LogInformation("Run `copilot -i 'Fix the pipeline failures detailed in {tempPath}'` to attempt a fix", tempPath);
+
+            var instructions = $"""
+                You are a pipeline failure analyst. You have been given the output of a CI/CD pipeline analysis.
+                Your job is to examine the failed tasks and failed tests, identify root causes, and provide
+                a clear, actionable summary for a developer.
+
+                Respond in markdown format. Structure your response as:
+                1. **Summary** - A brief overview of what failed
+                2. **Root Cause Analysis** - What likely caused each failure
+                3. **Recommended Actions** - Concrete steps the developer should take to fix the issues
+
+                If there are no failures, state that the pipeline appears healthy.
+
+                Here is the pipeline analysis data:
+
+                {pipelineData}
+                """;
+
+            var agent = new CopilotAgent<string>
+            {
+                Instructions = instructions,
+                MaxIterations = 3,
+            };
+
+            var analysis = await copilotAgentRunner.RunAsync(agent, ct);
+
+            return new DefaultCommandResponse { Message = analysis };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to run Copilot analysis for pipeline {pipelineIdentifier}", pipelineIdentifier);
+            return new DefaultCommandResponse
+            {
+                ResponseError = $"Failed to run Copilot analysis: {ex.Message}"
+            };
+        }
     }
 
     private bool initialized = false;
@@ -282,7 +347,8 @@ public class PipelineAnalysisTool(
                 logFilePaths.Add(tempPath);
             }
 
-            LogAnalysisResponse response = new() {
+            LogAnalysisResponse response = new()
+            {
                 PipelineUrl = pipelineHelper.GetPipelineUrl(project, buildId),
                 Errors = []
             };

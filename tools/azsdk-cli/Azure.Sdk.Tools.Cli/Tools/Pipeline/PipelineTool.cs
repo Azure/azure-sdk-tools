@@ -44,17 +44,17 @@ public class PipelineTool(
         var pipelineIdentifier = parseResult.GetValue(SharedOptions.PipelineLocator);
         var project = parseResult.GetValue(projectOpt);
 
-        return await GetPipelineRunStatus(pipelineIdentifier, project);
+        return await GetPipelineRunStatus(pipelineIdentifier, ct);
     }
 
     [McpServerTool(Name = GetPipelineStatusToolName), Description("Get pipeline status for a given Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")]
     public async Task<ObjectCommandResponse> GetPipelineRunStatus(
         [Description("Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")] string pipelineIdentifier,
-        [Description("Pipeline project name (optional)")] string? project = null)
-    {
+        CancellationToken ct = default
+    ) {
         try
         {
-            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, project);
+            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, null, ct);
 
             if (builds.Count == 0)
             {
@@ -67,7 +67,7 @@ public class PipelineTool(
             var statuses = new List<BuildStatusResult>();
             foreach (var build in builds)
             {
-                var status = await GetSingleBuildStatus(build);
+                var status = await GetSingleBuildStatus(build, ct);
                 statuses.Add(status);
             }
 
@@ -83,12 +83,12 @@ public class PipelineTool(
         }
     }
 
-    private async Task<BuildStatusResult> GetSingleBuildStatus(ResolvedBuild build)
+    private async Task<BuildStatusResult> GetSingleBuildStatus(ResolvedBuild build, CancellationToken ct)
     {
         var buildProject = build.Project;
         if (string.IsNullOrEmpty(buildProject))
         {
-            buildProject = await pipelineHelper.GetPipelineProjectAsync(build.BuildId);
+            buildProject = await pipelineHelper.GetPipelineProjectAsync(build.BuildId, null, ct);
         }
 
         var httpClient = httpClientFactory.CreateClient();
@@ -96,16 +96,16 @@ public class PipelineTool(
         if (buildProject != Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
         {
             var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };
-            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
+            var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), ct);
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
         }
 
         var buildUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{buildProject}/_apis/build/builds/{build.BuildId}?api-version=7.1";
         logger.LogDebug("Getting build status from {url}", buildUrl);
-        var response = await httpClient.GetAsync(buildUrl);
+        var response = await httpClient.GetAsync(buildUrl, ct);
         response.EnsureSuccessStatusCode();
 
-        var json = await response.Content.ReadAsStringAsync();
+        var json = await response.Content.ReadAsStringAsync(ct);
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 

@@ -75,4 +75,22 @@ namespace APIViewWeb.Models
         public List<(string lineText, string lineId)> CodeLines { get; set; }
         public string CreatedBy { get; set; }
     }
+
+    public class StartReviewJobRequest
+    {
+        [JsonPropertyName("language")]
+        public string Language { get; set; }
+
+        [JsonPropertyName("target")]
+        public string Target { get; set; }
+
+        [JsonPropertyName("base")]
+        public string Base { get; set; }
+
+        [JsonPropertyName("existingComments")]
+        public List<ApiViewAgentComment> ExistingComments { get; set; }
+
+        [JsonPropertyName("outline")]
+        public string Outline { get; set; }
+    }
 }

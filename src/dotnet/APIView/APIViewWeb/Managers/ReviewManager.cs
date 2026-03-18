@@ -616,7 +616,142 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Logic to update Reviews in a blackground task
+        /// Start an AVC review job by sending raw API text to the copilot service.
+        /// </summary>
+        public async Task<AIReviewJobStartedResponseModel> StartCopilotReviewJobAsync(StartReviewJobRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Target))
+            {
+                throw new ArgumentException("Target API text is required.", nameof(request));
+            }
+
+            // If language wasn't explicitly provided, try to infer it from a markdown fence tag
+            string language = string.IsNullOrEmpty(request.Language)
+                ? InferLanguageFromMarkdown(request.Target)
+                : request.Language;
+
+            if (string.IsNullOrEmpty(language))
+            {
+                throw new ArgumentException("Language is required and could not be inferred from the input.",
+                    nameof(request));
+            }
+
+            string copilotEndpoint = _configuration["CopilotServiceEndpoint"];
+            string startUrl = $"{copilotEndpoint}/api-review/start";
+            HttpClient client = _httpClientFactory.CreateClient();
+
+            var payload = new Dictionary<string, object> { { "target", request.Target }, { "language", language } };
+
+            if (!string.IsNullOrEmpty(request.Base))
+            {
+                payload["base"] = request.Base;
+            }
+
+            if (!string.IsNullOrEmpty(request.Outline))
+            {
+                payload["outline"] = request.Outline;
+            }
+
+            if (request.ExistingComments is { Count: > 0 })
+            {
+                payload["comments"] = request.ExistingComments;
+            }
+
+            try
+            {
+                _logger.LogInformation("Starting AVC review job via API. Language: {Language}", language);
+
+                var httpRequest = new HttpRequestMessage(HttpMethod.Post, startUrl)
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+                };
+                httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
+
+                HttpResponseMessage response = await client.SendAsync(httpRequest);
+                string responseString = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Copilot service returned {StatusCode}: {ErrorBody}", response.StatusCode, responseString);
+                    throw new HttpRequestException($"Copilot service returned {(int)response.StatusCode}: {responseString}", null, response.StatusCode);
+                }
+
+                AIReviewJobStartedResponseModel jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
+                
+                _logger.LogInformation("AVC review job started successfully. JobId: {JobId}", jobStartedResponse.JobId);
+                return jobStartedResponse;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to start AVC review job via API");
+                throw;
+            }
+        }
+
+        /// <summary>
+        ///     Get the status/result of an AVC review job by polling the copilot service.
+        /// </summary>
+        public async Task<AIReviewJobPolledResponseModel> GetCopilotReviewJobAsync(string jobId)
+        {
+            if (string.IsNullOrEmpty(jobId))
+            {
+                throw new ArgumentException("Job ID is required.", nameof(jobId));
+            }
+
+            string copilotEndpoint = _configuration["CopilotServiceEndpoint"];
+            string pollUrl = $"{copilotEndpoint}/api-review/{jobId}";
+            HttpClient client = _httpClientFactory.CreateClient();
+
+            try
+            {
+                _logger.LogInformation("Polling AVC review job status. JobId: {JobId}", jobId);
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, pollUrl);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _copilotAuthService.GetAccessTokenAsync());
+
+                HttpResponseMessage response = await client.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                string responseString = await response.Content.ReadAsStringAsync();
+                AIReviewJobPolledResponseModel pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(responseString);
+
+                return pollResponse;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to get AVC review job status. JobId: {JobId}", jobId);
+                throw new Exception($"Failed to get review job status: {e.Message}");
+            }
+        }
+
+        private static string InferLanguageFromMarkdown(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return null;
+            }
+
+            string trimmed = input.Trim();
+            if (!trimmed.StartsWith("```"))
+            {
+                return null;
+            }
+
+            int firstNewline = trimmed.IndexOf('\n');
+            string tag;
+            if (firstNewline < 0)
+            {
+                tag = trimmed[3..].Trim();
+            }
+            else
+            {
+                tag = trimmed[3..firstNewline].Trim();
+            }
+
+            return !string.IsNullOrEmpty(tag) ? LanguageServiceHelpers.GetLanguageAliasForCopilotService(tag) : tag;
+        }
+
+        /// <summary>
+        /// Logic to update Reviews in a background task
         /// </summary>
         /// <param name="updateDisabledLanguages"></param>
         /// <param name="backgroundBatchProcessCount"></param>

@@ -31,7 +31,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync(revisionId, "production"))
             .ReturnsAsync(expectedComments);
 
-        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl);
+        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl, ct: CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedComments));
         Assert.That(response.ResponseError, Is.Null);
@@ -46,7 +46,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync("test-revision-456", "production"))
             .ReturnsAsync(expectedComments);
 
-        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl);
+        APIViewResponse response = await apiViewReviewTool.GetComments(apiViewUrl, ct: CancellationToken.None);
 
         Assert.That(response.Result, Is.EqualTo(expectedComments));
         Assert.That(response.ResponseError, Is.Null);
@@ -57,7 +57,7 @@ public class ApiViewReviewToolTests
     {
         string invalidUrl = "https://apiview.dev/review/123"; // Missing activeApiRevisionId
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(invalidUrl);
+        APIViewResponse result = await apiViewReviewTool.GetComments(invalidUrl, ct: CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("activeApiRevisionId"));
     }
@@ -67,13 +67,13 @@ public class ApiViewReviewToolTests
     {
         string malformedUrl = "not-a-valid-url";
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(malformedUrl);
+        APIViewResponse result = await apiViewReviewTool.GetComments(malformedUrl, ct: CancellationToken.None);
 
         _mockApiViewService
             .Setup(x => x.GetCommentsByRevisionAsync(malformedUrl))
             .ReturnsAsync((string?)null);
 
-        result = await apiViewReviewTool.GetComments(malformedUrl);
+        result = await apiViewReviewTool.GetComments(malformedUrl, ct: CancellationToken.None);
         Assert.That(result.ResponseError, Does.Contain("Failed to get comments: Input needs to be a valid APIView URL"));
     }
 
@@ -86,7 +86,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync(revisionId, "production"))
             .ReturnsAsync((string?)null);
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl);
+        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl, ct: CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("Failed to retrieve comments"));
     }
@@ -100,7 +100,7 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync(revisionId, "production"))
             .ThrowsAsync(new Exception("Service error"));
 
-        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl);
+        APIViewResponse result = await apiViewReviewTool.GetComments(apiViewUrl, ct: CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("Failed to get comments: Service error"));
     }
@@ -109,7 +109,7 @@ public class ApiViewReviewToolTests
     public async Task GetRevisionComments_WithEmptyRevisionId_ReturnsError()
     {
         string emptyRevisionId = "";
-        APIViewResponse result = await apiViewReviewTool.GetComments(emptyRevisionId);
+        APIViewResponse result = await apiViewReviewTool.GetComments(emptyRevisionId, ct: CancellationToken.None);
 
         Assert.That(result.ResponseError, Does.Contain("cannot be null or empty"));
     }
@@ -126,8 +126,33 @@ public class ApiViewReviewToolTests
             .Setup(x => x.GetCommentsByRevisionAsync(expectedRevisionId, "staging"))
             .ReturnsAsync(expectedComments);
 
-        await apiViewReviewTool.GetComments(apiViewUrl);
-        _mockApiViewService.Verify(x => x.GetCommentsByRevisionAsync(expectedRevisionId, "staging"), Times.Once);
+        await apiViewReviewTool.GetComments(apiViewUrl, ct: CancellationToken.None);
+        _mockApiViewService.Verify(x => x.GetCommentsByRevisionAsync(expectedRevisionId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // create-ci-revision CLI command tests
+
+    [Test]
+    public async Task CreateCIRevision_WithRequiredPipelineParams_ReturnsSuccess()
+    {
+        string expectedContent = "review created";
+        _mockApiViewService
+            .Setup(x => x.CreateCIReviewAsync(
+                "12345", "packages", "azure-core-1.0.0.whl", "azure-core_python.json",
+                "Azure/azure-sdk-for-python", "azure-core", "internal",
+                "CI Build", false, null, false, null, null, default))
+            .ReturnsAsync((expectedContent, 200));
+
+        var command = apiViewReviewTool.GetCommandInstances().First(c => c.Name == "create-ci-revision");
+        var parseResult = command.Parse(
+            "create-ci-revision --build-id 12345 --artifact-name packages " +
+            "--source-file-path azure-core-1.0.0.whl --code-token-file-path azure-core_python.json " +
+            "--label \"CI Build\" --repo-name Azure/azure-sdk-for-python --package-name azure-core --project internal");
+        var response = (APIViewResponse)await apiViewReviewTool.HandleCommand(parseResult, CancellationToken.None);
+
+        Assert.That(response.Result, Is.EqualTo(expectedContent));
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Message, Does.Contain("approved"));
     }
 
     [Test]

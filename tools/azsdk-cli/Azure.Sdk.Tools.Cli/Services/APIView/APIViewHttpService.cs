@@ -7,7 +7,9 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewHttpService
 {
-    Task<string?> GetAsync(string endpoint, string environment);
+    void ConfigureEnvironment(string environment);
+    Task<(string? content, int statusCode)> GetAsync(string endpoint, CancellationToken ct);
+    Task<(string? content, int statusCode)> PostAsync(string endpoint, CancellationToken ct);
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -15,7 +17,10 @@ public class APIViewHttpService : IAPIViewHttpService
     private readonly IAPIViewAuthenticationService _authService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<APIViewHttpService> _logger;
-    
+
+    private string _environment = "production";
+    private string _baseUrl = APIViewConfiguration.BaseUrlEndpoints["production"];
+
     private HttpClient? _cachedClient;
     private DateTime _cacheExpiry = DateTime.MinValue;
     private string? _cachedEnvironment;
@@ -32,9 +37,31 @@ public class APIViewHttpService : IAPIViewHttpService
         _logger = logger;
     }
 
+    public void ConfigureEnvironment(string environment)
+    {
+        // Skip invalidation if the environment hasn't changed
+        if (_environment == environment)
+        {
+            return;
+        }
+        _environment = environment;
+        _baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
+        // Invalidate cached client since auth scopes differ per environment
+        _cachedClient = null;
+        _cacheExpiry = DateTime.MinValue;
+    }
+
     public async Task<string?> GetAsync(string endpoint, string environment)
     {
-        try
+        string baseUrl = _baseUrl;
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(ct);
+
+        string requestUrl = $"{baseUrl}{endpoint}";
+        using HttpResponseMessage response = await httpClient.GetAsync(requestUrl, ct);
+
+        string content = await response.Content.ReadAsStringAsync(ct);
+
+        if (response.IsSuccessStatusCode)
         {
             string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
             HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(environment);
@@ -59,14 +86,13 @@ public class APIViewHttpService : IAPIViewHttpService
                 _logger.LogError("API call failed during {Endpoint} with status code {StatusCode}: {ReasonPhrase}",
                     endpoint, response.StatusCode, response.ReasonPhrase);
 
-                if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    _logger.LogError(
-                        "Authentication failed. Ensure you have a valid Azure credentials.");
-                }
+    public async Task<(string? content, int statusCode)> PostAsync(string endpoint, CancellationToken ct)
+    {
+        string baseUrl = _baseUrl;
+        HttpClient httpClient = await GetOrCreateAuthenticatedClientAsync(ct);
 
-                return null;
-            }
+        string requestUrl = $"{baseUrl}{endpoint}";
+        using HttpResponseMessage response = await httpClient.PostAsync(requestUrl, new StringContent(string.Empty), ct);
 
             string content = await response.Content.ReadAsStringAsync();
 

@@ -1,6 +1,7 @@
 # regular requirements
 aiohttp==3.13.3
 azure-ai-agents==1.1.0
+azure-ai-inference==1.0.0b9
 azure-monitor-opentelemetry==1.6.7
 azure-ai-projects==1.0.0b11
 azure-appconfiguration==1.7.1

@@ -65,37 +65,12 @@ def _load_file_reference(base_path: Path, value: str) -> Any:
     return value
 
 
-def _json_default(obj):
-    """JSON encoder for non-serializable types."""
-    from datetime import date, datetime
-
-    from pydantic import BaseModel
-
-    if isinstance(obj, BaseModel):
-        return obj.model_dump(mode="json")
-    if isinstance(obj, (date, datetime)):
-        return obj.isoformat()
-    if isinstance(obj, set):
-        return list(obj)
-    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
-
-
 def _render_template(template: str, variables: dict) -> str:
-    """Render a Jinja2-style template with simple {{variable}} substitution."""
-    result = template
-    for key, value in variables.items():
-        # Handle both {{key}} and {{ key }} patterns
-        patterns = [f"{{{{{key}}}}}", f"{{{{ {key} }}}}"]
-        # Convert dicts/lists to JSON for proper formatting
-        if isinstance(value, (dict, list)):
-            str_value = json.dumps(value, indent=2, default=_json_default)
-        elif value is not None:
-            str_value = str(value)
-        else:
-            str_value = ""
-        for pattern in patterns:
-            result = result.replace(pattern, str_value)
-    return result
+    """Render a Jinja2 template with variable substitution and control structures."""
+    from jinja2.sandbox import SandboxedEnvironment
+
+    env = SandboxedEnvironment()
+    return env.from_string(template).render(variables)
 
 
 def _parse_prompty(file_path: str | Path) -> PromptyConfig:
@@ -171,7 +146,6 @@ def _execute_prompt_template(
     file_path: str | Path,
     inputs: dict = None,
     configuration: dict = None,
-    **kwargs,
 ) -> Any:
     """Execute a .prompty template file using Azure AI Foundry.
 
@@ -181,15 +155,13 @@ def _execute_prompt_template(
         configuration: Optional configuration dict. If it contains an
             ``api_key`` entry, an ``AzureKeyCredential`` is used instead
             of ``DefaultAzureCredential``.
-        **kwargs: Additional arguments (for compatibility).
 
     Returns:
-        The response from the model, parsed as JSON if possible.
+        The string response content from the model.
 
     Raises:
         ValueError: If FOUNDRY_ENDPOINT or FOUNDRY_PROJECT are not configured.
     """
-    # azure.ai.inference is a transitive dependency of azure-ai-projects
     from azure.ai.inference import ChatCompletionsClient
     from azure.ai.inference.models import SystemMessage, UserMessage
     from azure.core.credentials import AzureKeyCredential
@@ -307,13 +279,10 @@ def _run_prompt_template(*, folder: str, filename: str, inputs: dict = None, **k
     :param inputs: Dictionary of inputs for the prompt.
     :param kwargs: Additional keyword arguments passed to the execute function.
     """
-    from src._settings import SettingsManager
     from src._utils import get_prompt_path
 
-    settings = SettingsManager()
-    os.environ["OPENAI_ENDPOINT"] = settings.get("OPENAI_ENDPOINT")
     prompt_path = get_prompt_path(folder=folder, filename=filename)
-    return _execute_prompt_template(prompt_path, inputs=inputs, **kwargs)
+    return _execute_prompt_template(prompt_path, inputs=inputs, configuration=kwargs.get("configuration"))
 
 
 def run_prompt(

@@ -146,7 +146,7 @@ def prompt_test(path: str):
     if not prompty_path.exists():
         print(f"Error: File '{path}' does not exist.")
         sys.exit(1)
-    if not prompty_path.suffix == ".prompty":
+    if prompty_path.suffix != ".prompty":
         print(f"Error: File '{path}' is not a .prompty file.")
         sys.exit(1)
 
@@ -495,7 +495,6 @@ def review_job_get(job_id: str, remote: bool = False):
         db = DatabaseManager.get_instance()
         try:
             job = db.review_jobs.get(job_id)
-            print(json.dumps(job, indent=2))
             return job
         except Exception as e:
             print(f"Error: Job '{job_id}' not found: {e}")

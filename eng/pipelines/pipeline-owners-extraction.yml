@@ -113,16 +113,6 @@ stages:
               # Explicit mapping required for secrets
               GH_TOKEN: $(GH_TOKEN)
 
-          - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-            parameters:
-              SkipCheckoutNone: true
-              Paths:
-                - .github/CODEOWNERS
-              Repositories:
-                - Name: "Azure/${{ repo.Name }}"
-                  Commitish: main
-                  WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.Name }}"
-
           - pwsh: git checkout -b "$(PRBranchName)"
             displayName: "Create $(PRBranchName) branch for ${{ repo.Name }}"
 

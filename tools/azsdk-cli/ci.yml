@@ -73,13 +73,10 @@ extends:
           TargetRepoName: azure-rest-api-specs
           TargetRepoOwner: Azure
           TargetRepoCommit: main
-      CustomReleaseJobs:
-      - template: /tools/azsdk-cli/auto-documentation.yml
-        parameters:
-          ToolDirectory: $(ToolDir)
       - ${{ if eq(parameters.RunBenchmarks, true) }}:
         - job: Run_Benchmark
           displayName: 'Run Benchmark'
+          condition: always()
           variables:
             - group: 'AzSDK_Eval_Variable_group'
           pool:
@@ -146,3 +143,7 @@ extends:
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
               COPILOT_GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+      CustomReleaseJobs:
+      - template: /tools/azsdk-cli/auto-documentation.yml
+        parameters:
+          ToolDirectory: $(ToolDir) 

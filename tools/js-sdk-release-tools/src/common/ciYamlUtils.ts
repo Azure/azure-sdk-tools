@@ -124,8 +124,8 @@ async function writeCiYaml(ciPath: string, config: any) {
 }
 
 async function updateDataPlaneCiYaml(
+    generatedPackageDirectory: string,
     ciPath: string,
-    serviceDirToSdkRoot: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<void> {
     const content = await readFile(ciPath, { encoding: 'utf-8' });
@@ -143,23 +143,17 @@ async function updateDataPlaneCiYaml(
     let needUpdate = false;
     needUpdate = tryAddItemInArray(parsed.trigger.branches.exclude, 'feature/v4') || needUpdate;
     needUpdate = tryAddItemInArray(parsed.pr.branches.exclude, 'feature/v4') || needUpdate;
-    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, serviceDirToSdkRoot, pathInclude) || needUpdate;
-    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, ciPath, pathInclude) || needUpdate;
-    needUpdate = tryAddItemInArray(parsed.pr.paths.include, serviceDirToSdkRoot, pathInclude) || needUpdate;
-    needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciPath, pathInclude) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, generatedPackageDirectory) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.trigger.paths.include, ciPath) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.pr.paths.include, generatedPackageDirectory) || needUpdate;
+    needUpdate = tryAddItemInArray(parsed.pr.paths.include, ciPath) || needUpdate;
     needUpdate = tryAddItemInArray(parsed.extends.parameters.Artifacts, artifact, artifactInclude) || needUpdate;
-
-    // Ensure ServiceDirectory is set correctly under extends.parameters
-    const expectedServiceDirectory = serviceDirToSdkRoot.split('/')[1];
-    if (parsed.extends.parameters.ServiceDirectory !== expectedServiceDirectory) {
-        parsed.extends.parameters.ServiceDirectory = expectedServiceDirectory;
-        needUpdate = true;
-    }
 
     await writeCiYaml(ciPath, parsed);
 }
 
 async function createDataPlaneCiYaml(
+    packageDirToSdkRoot: string,
     ciPath: string,
     serviceDirToSdkRoot: string,
     npmPackageInfo: NpmPackageInfo
@@ -170,28 +164,25 @@ async function createDataPlaneCiYaml(
     const template = await readFile(templatePath, { encoding: 'utf-8' });
     const parsed = parse(template.toString());
 
-    parsed.trigger.paths.include = [serviceDirToSdkRoot];
-    parsed.pr.paths.include = [serviceDirToSdkRoot];
+    parsed.trigger.paths.include = [packageDirToSdkRoot, ciPath];
+    parsed.pr.paths.include = [packageDirToSdkRoot, ciPath];
     parsed.extends.parameters.ServiceDirectory = serviceDirToSdkRoot.split('/')[1];
     parsed.extends.parameters.Artifacts = [artifact];
-
-    delete parsed.trigger.paths.exclude;
-    delete parsed.pr.paths.exclude;
 
     await writeCiYaml(ciPath, parsed);
 }
 
 async function createOrUpdateDataPlaneCiYaml(
-    generatedPackageDirectory: string,
+    packageDirToSdkRoot: string,
     npmPackageInfo: NpmPackageInfo
 ): Promise<string> {
-    const serviceDirToSDKDir = posix.join(generatedPackageDirectory, '..');
+    const serviceDirToSDKDir = posix.join(packageDirToSdkRoot, '..');
     const ciPath = posix.join(serviceDirToSDKDir, 'ci.yml');
 
     if (!(await existsAsync(ciPath))) {
-        await createDataPlaneCiYaml(ciPath, serviceDirToSDKDir, npmPackageInfo);
+        await createDataPlaneCiYaml(packageDirToSdkRoot, ciPath, serviceDirToSDKDir, npmPackageInfo);
     }
-    await updateDataPlaneCiYaml(ciPath, serviceDirToSDKDir, npmPackageInfo);
+    await updateDataPlaneCiYaml(packageDirToSdkRoot, ciPath,  npmPackageInfo);
     return ciPath;
 }
 

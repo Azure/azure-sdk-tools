@@ -120,6 +120,11 @@ public class DotnetErrorDrivenPatchTemplate(
         - Use the **RenameFile** tool to rename the file AFTER applying the code patch.
         - Example: if you rename `partial class OldClient` to `partial class NewClient`,
           also call `RenameFile oldFilePath: "OldClient.cs" newFilePath: "NewClient.cs"`.
+        - **CRITICAL**: When renaming a class, ONLY patch the class declaration line itself
+          (e.g., `partial class OldName` → `partial class NewName`). Do NOT modify, delete, or
+          rewrite any method bodies, properties, or other members inside the class. Errors about
+          missing members (CS0103) are cascading errors that resolve once the class name matches
+          the generated partial class again.
 
         ### Step 4 — Return summary
         If you applied patches, return a brief summary of what was fixed.
@@ -144,6 +149,7 @@ public class DotnetErrorDrivenPatchTemplate(
         - Add placeholder/dummy values
         - Guess at correct values
         - Remove `partial` keyword or change class hierarchy
+        - Delete or rewrite existing method bodies
 
         ### 3. SURGICAL PATCHING
         The CodePatchTool uses **surgical text replacement**:
@@ -164,6 +170,10 @@ public class DotnetErrorDrivenPatchTemplate(
 
         This surgically replaces ONLY that text, preserving all surrounding syntax.
 
+        **IMPORTANT**: Never replace large blocks of code (e.g., entire method bodies or whole file content).
+        Each patch should target the smallest possible text fragment. If you need to rename a class,
+        patch ONLY the class declaration line — do NOT touch method bodies inside the class.
+
         ### 4. GREP FIRST, READ RANGES, THEN PATCH
         - Use GrepSearch to locate the failing symbol in customization files.
         - Use ReadFile with startLine/endLine to read context around the matches.
@@ -173,6 +183,19 @@ public class DotnetErrorDrivenPatchTemplate(
         ### 5. NO DUPLICATE PATCHES
         - Each OldText can only be replaced once per file.
         - If a patch is rejected, STOP and return.
+
+        ### 6. IGNORE CASCADING ERRORS FROM CLASS RENAMES
+        When a partial class name no longer matches its generated counterpart, the compiler will report
+        multiple cascading errors for members that actually exist on the generated type (e.g., CS0103
+        for `ClientDiagnostics`, method names, properties). These errors are **NOT real** — they will
+        resolve automatically once the partial class name is corrected to match the generated class.
+        **DO NOT** try to fix these cascading errors individually (e.g., by removing method calls,
+        rewriting method bodies, or adding new members). Just rename the class declaration and the file.
+
+        ### 7. IGNORE ANALYZER RULES
+        Ignore analyzer warnings and errors with codes like `AZC0007`, `SA1517`, or any `AZC*`/`SA*`
+        prefixed codes. These are style/design analyzers, not compilation errors. Do NOT add constructors,
+        reformat code, or make any changes to satisfy analyzer rules.
 
         """;
     }

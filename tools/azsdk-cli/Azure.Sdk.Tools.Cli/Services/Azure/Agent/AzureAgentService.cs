@@ -122,7 +122,8 @@ Again, the entire response **MUST BE VALID JSON**";
             name: session,
             instructions: LogQueryPrompt,
             tools: [new FileSearchToolDefinition()],
-            toolResources: new ToolResources() { FileSearch = tool });
+            toolResources: new ToolResources() { FileSearch = tool },
+            cancellationToken: ct);
 
         PersistentAgentThread thread = await client.Threads.CreateThreadAsync(cancellationToken: ct);
         await client.Messages.CreateMessageAsync(thread.Id, MessageRole.User, query, cancellationToken: ct);

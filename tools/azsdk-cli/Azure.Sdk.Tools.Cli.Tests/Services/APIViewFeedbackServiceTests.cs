@@ -43,11 +43,11 @@ public class APIViewFeedbackServiceTests
         // Arrange
         var revisionId = "test-revision";
         var emptyCommentsJson = "[]";
-        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId))
+        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(emptyCommentsJson);
 
         // Act
-        var result = await _service.GetConsolidatedComments(revisionId);
+        var result = await _service.GetConsolidatedComments(revisionId, CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.Empty);
@@ -65,11 +65,11 @@ public class APIViewFeedbackServiceTests
             CreateAPIViewComment("thread3", 3, "Valid comment", isResolved: false)
         };
         var commentsJson = JsonSerializer.Serialize(comments);
-        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId))
+        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(commentsJson);
 
         // Act
-        var result = await _service.GetConsolidatedComments(revisionId);
+        var result = await _service.GetConsolidatedComments(revisionId, CancellationToken.None);
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -85,18 +85,18 @@ public class APIViewFeedbackServiceTests
         var comments = new[]
         {
             // Should be filtered: azure-sdk bot with downvotes
-            CreateAPIViewComment("thread1", 1, "Use List[str] instead of list[str]", createdBy: "azure-sdk", downvotes: 1),
+            CreateAPIViewComment("thread1", 1, "Use List[str] instead of list[str]", lineId: "line1", createdBy: "azure-sdk", downvotes: 1),
             // Should remain: azure-sdk bot with no downvotes
-            CreateAPIViewComment("thread2", 2, "Remove unused import", createdBy: "azure-sdk", downvotes: 0),
+            CreateAPIViewComment("thread2", 2, "Remove unused import", lineId: "line2", createdBy: "azure-sdk", downvotes: 0),
             // Should remain: non-bot comment with downvotes
-            CreateAPIViewComment("thread3", 3, "Rename parameter to media_id", createdBy: "reviewer", downvotes: 2),
+            CreateAPIViewComment("thread3", 3, "Rename parameter to media_id", lineId: "line3", createdBy: "reviewer", downvotes: 2),
         };
         var commentsJson = JsonSerializer.Serialize(comments);
-        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId))
+        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(commentsJson);
 
         // Act
-        var result = await _service.GetConsolidatedComments(revisionId);
+        var result = await _service.GetConsolidatedComments(revisionId, CancellationToken.None);
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(2));
@@ -118,11 +118,11 @@ public class APIViewFeedbackServiceTests
             CreateAPIViewComment("thread1", 1, "Single comment", lineId: "id1", lineText: "line text")
         };
         var commentsJson = JsonSerializer.Serialize(comments);
-        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId))
+        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(commentsJson);
 
         // Act
-        var result = await _service.GetConsolidatedComments(revisionId);
+        var result = await _service.GetConsolidatedComments(revisionId, CancellationToken.None);
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));
@@ -153,11 +153,11 @@ public class APIViewFeedbackServiceTests
             Revision = new RevisionMetadata { RevisionId = revisionId }
         };
         var metadataJson = JsonSerializer.Serialize(metadata);
-        _mockApiViewService.Setup(x => x.GetMetadata(revisionId))
+        _mockApiViewService.Setup(x => x.GetMetadata(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(metadataJson);
 
         // Act
-        var result = await _service.ParseReviewMetadata(revisionId);
+        var result = await _service.ParseReviewMetadata(revisionId, CancellationToken.None);
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -171,12 +171,12 @@ public class APIViewFeedbackServiceTests
     {
         // Arrange
         var revisionId = "test-revision";
-        _mockApiViewService.Setup(x => x.GetMetadata(revisionId))
+        _mockApiViewService.Setup(x => x.GetMetadata(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(string.Empty);
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await _service.ParseReviewMetadata(revisionId));
+            async () => await _service.ParseReviewMetadata(revisionId, It.IsAny<CancellationToken>()));
         Assert.That(ex!.Message, Does.Contain("Failed to get metadata for revision"));
     }
 
@@ -185,12 +185,12 @@ public class APIViewFeedbackServiceTests
     {
         // Arrange
         var revisionId = "test-revision";
-        _mockApiViewService.Setup(x => x.GetMetadata(revisionId))
+        _mockApiViewService.Setup(x => x.GetMetadata(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync("{invalid json");
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await _service.ParseReviewMetadata(revisionId));
+            async () => await _service.ParseReviewMetadata(revisionId, It.IsAny<CancellationToken>()));
         Assert.That(ex!.Message, Does.Contain("Failed to parse metadata for revision"));
     }
 
@@ -199,12 +199,12 @@ public class APIViewFeedbackServiceTests
     {
         // Arrange
         var revisionId = "test-revision";
-        _mockApiViewService.Setup(x => x.GetMetadata(revisionId))
+        _mockApiViewService.Setup(x => x.GetMetadata(revisionId, It.IsAny<CancellationToken>()))
             .ReturnsAsync("null");
 
         // Act & Assert
         var ex = Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await _service.ParseReviewMetadata(revisionId));
+            async () => await _service.ParseReviewMetadata(revisionId, It.IsAny<CancellationToken>()));
         Assert.That(ex!.Message, Does.Contain("Failed to deserialize metadata for revision"));
     }
 
@@ -227,11 +227,11 @@ public class APIViewFeedbackServiceTests
             }
         };
         var expectedSha = "abc123def456";
-        _mockGitHubService.Setup(x => x.GetPullRequestHeadSha("Azure", "azure-rest-api-specs", 123))
+        _mockGitHubService.Setup(x => x.GetPullRequestHeadSha("Azure", "azure-rest-api-specs", 123, It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedSha);
 
         // Act
-        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata);
+        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata, CancellationToken.None);
 
         // Assert
         Assert.That(commitSha, Is.EqualTo(expectedSha));
@@ -270,18 +270,18 @@ repo: 'Azure/azure-rest-api-specs'
             null,                                        // htmlUrl
             null);                                       // repository
         var searchResult = new Octokit.SearchCodeResult(1, false, new[] { searchCodeItem });
-        _mockGitHubService.Setup(x => x.SearchFilesAsync(It.Is<string>(q => q.Contains("azure-sdk-for-python"))))
+        _mockGitHubService.Setup(x => x.SearchFilesAsync(It.Is<string>(q => q.Contains("azure-sdk-for-python")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(searchResult);
         
-        _mockGitHubService.Setup(x => x.GetFileFromPullRequest("Azure", "azure-sdk-for-python", 456, "sdk/search/TestPackage/tsp-location.yaml"))
+        _mockGitHubService.Setup(x => x.GetFileFromPullRequest("Azure", "azure-sdk-for-python", 456, "sdk/search/TestPackage/tsp-location.yaml", It.IsAny<CancellationToken>()))
             .ReturnsAsync(tspLocationYaml);
 
         // Act
-        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata);
+        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata, CancellationToken.None);
 
         // Assert - verify mocks were called
-        _mockGitHubService.Verify(x => x.SearchFilesAsync(It.IsAny<string>()), Times.AtLeastOnce());
-        _mockGitHubService.Verify(x => x.GetFileFromPullRequest("Azure", "azure-sdk-for-python", 456, "sdk/search/TestPackage/tsp-location.yaml"), Times.AtLeastOnce());
+        _mockGitHubService.Verify(x => x.SearchFilesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce());
+        _mockGitHubService.Verify(x => x.GetFileFromPullRequest("Azure", "azure-sdk-for-python", 456, "sdk/search/TestPackage/tsp-location.yaml", It.IsAny<CancellationToken>()), Times.AtLeastOnce());
         
         Assert.That(commitSha, Is.EqualTo("sha789xyz"));
         Assert.That(tspProjectPath, Is.EqualTo("specification/foo/data-plane/Foo"));
@@ -318,14 +318,14 @@ repo: 'Azure/azure-rest-api-specs'
             null,                                      // htmlUrl
             null);                                     // repository
         var searchResult2 = new Octokit.SearchCodeResult(1, false, new[] { searchCodeItem2 });
-        _mockGitHubService.Setup(x => x.SearchFilesAsync(It.Is<string>(q => q.Contains("azure-sdk-for-python"))))
+        _mockGitHubService.Setup(x => x.SearchFilesAsync(It.Is<string>(q => q.Contains("azure-sdk-for-python")), It.IsAny<CancellationToken>()))
             .ReturnsAsync(searchResult2);
         
-        _mockGitHubService.Setup(x => x.GetFileFromBranch("Azure", "azure-sdk-for-python", "feature/my-branch", "sdk/bar/TestPackage/tsp-location.yaml"))
+        _mockGitHubService.Setup(x => x.GetFileFromBranch("Azure", "azure-sdk-for-python", "feature/my-branch", "sdk/bar/TestPackage/tsp-location.yaml", It.IsAny<CancellationToken>()))
             .ReturnsAsync(tspLocationYaml);
 
         // Act
-        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata);
+        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata, CancellationToken.None);
 
         // Assert
         Assert.That(commitSha, Is.EqualTo("branch-sha"));
@@ -349,13 +349,13 @@ repo: 'Azure/azure-rest-api-specs'
         };
 
         // Act
-        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata);
+        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata, CancellationToken.None);
 
         // Assert
         Assert.That(commitSha, Is.Null);
         Assert.That(tspProjectPath, Is.Null);
         Assert.That(targetRepo, Is.Null);
-        _mockGitHubService.Verify(x => x.GetPullRequestHeadSha(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
+        _mockGitHubService.Verify(x => x.GetPullRequestHeadSha(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -370,7 +370,7 @@ repo: 'Azure/azure-rest-api-specs'
         };
 
         // Act
-        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata);
+        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata, CancellationToken.None);
 
         // Assert
         Assert.That(commitSha, Is.Null);
@@ -394,7 +394,7 @@ repo: 'Azure/azure-rest-api-specs'
         };
 
         // Act
-        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata);
+        var (commitSha, tspProjectPath, targetRepo) = await _service.DetectShaAndTspPath(metadata, CancellationToken.None);
 
         // Assert
         Assert.That(commitSha, Is.Null);
@@ -500,7 +500,7 @@ repo: 'Azure/azure-rest-api-specs'
             CreateAPIViewComment("thread1", 1, "Comment 2", createdBy: "user2", createdOn: "2024-01-02")
         };
         var commentsJson = JsonSerializer.Serialize(comments);
-        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(It.IsAny<string>()))
+        _mockApiViewService.Setup(x => x.GetCommentsByRevisionAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(commentsJson);
 
         var mockChatClient = new Mock<ChatClient>();
@@ -510,7 +510,7 @@ repo: 'Azure/azure-rest-api-specs'
             .Returns(mockChatClient.Object);
 
         // Act
-        var result = await _service.GetConsolidatedComments("test-revision");
+        var result = await _service.GetConsolidatedComments("test-revision", CancellationToken.None);
 
         // Assert
         Assert.That(result, Has.Count.EqualTo(1));

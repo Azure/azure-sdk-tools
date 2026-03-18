@@ -49,7 +49,7 @@ $syncPipelineDefinitionIds = @(
 )
 
 $checks = gh pr checks $ToolsPRNumber -R $ToolsRepo --json "name,link" | ConvertFrom-Json
-$syncChecks = $checks | Where-Object { $_.name -match "azure-sdk-tools - sync - [^(]*$" }
+$syncChecks = $checks | Where-Object { $_.name -match "tools - sync-[^(]*$" }
 $prList = @()
 
 foreach ($check in $syncChecks) {

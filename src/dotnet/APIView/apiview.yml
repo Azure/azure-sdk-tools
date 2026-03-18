@@ -91,9 +91,9 @@ extends:
           - job: 'Build'
 
             pool:
-              name: $(LINUXPOOL)
-              image: $(LINUXVMIMAGE)
-              os: linux
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
 
             templateContext:
               sdl: 

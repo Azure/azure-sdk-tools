@@ -18,7 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static async Task<int> BuildAndRun(
             string[] args,
             IServiceProvider serviceProvider,
-            bool debug = false
+            bool debug = false,
+            CancellationToken ct = default
         )
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.");
@@ -86,7 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             };
 
             var parseResult = rootCommand.Parse(args, parseConfig);
-            return await parseResult.InvokeAsync();
+            return await parseResult.InvokeAsync(ct);
         }
 
         private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPToolBase> toolList)

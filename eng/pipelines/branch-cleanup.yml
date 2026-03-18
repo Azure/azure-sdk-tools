@@ -127,7 +127,7 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId "${{ repo }}"
-              -BranchRegex "^sdkAuto/.*$"
+              -BranchRegex "^sdkauto/.*$"
               -LastCommitOlderThan ((Get-Date).AddDays(-30))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
@@ -143,7 +143,7 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId "${{ repo }}"
-              -BranchRegex "^sdkAuto/.*$"
+              -BranchRegex "^sdkauto/.*$"
               -LastCommitOlderThan ((Get-Date).AddDays(-30))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

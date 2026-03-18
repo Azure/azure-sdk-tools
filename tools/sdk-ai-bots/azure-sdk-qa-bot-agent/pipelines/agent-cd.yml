@@ -1,0 +1,70 @@
+# Deployment pipeline for the Azure SDK QA Bot Agent.
+# Builds the container image, pushes to ACR, and deploys to Azure AI Foundry.
+
+name: Deploy Azure SDK QA Bot Agent
+
+trigger: none
+pr: none
+
+parameters:
+  - name: environment
+    displayName: 'Target Environment'
+    type: string
+    default: dev
+    values:
+      - dev
+      - preview
+      - prod
+  - name: agentName
+    displayName: 'Agent to Deploy'
+    type: string
+    default: chat_agent
+    values:
+      - chat_agent
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - template: /eng/pipelines/templates/variables/image.yml
+  - ${{ if eq(parameters.environment, 'dev') }}:
+    - group: 'Azure SDK QA Bot Agent Dev Variables'
+  - ${{ if eq(parameters.environment, 'preview') }}:
+    - group: 'Azure SDK QA Bot Agent Preview Variables'
+  - ${{ if eq(parameters.environment, 'prod') }}:
+    - group: 'Azure SDK QA Bot Agent Prod Variables'
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-agent'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: true
+    stages:
+      - stage: DeployAgent
+        displayName: 'Deploy ${{ parameters.agentName }} (${{ parameters.environment }})'
+        jobs:
+          - job: BuildAndDeploy
+            displayName: 'Build & Deploy'
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - checkout: self
+                displayName: 'Checkout repository'
+
+              - task: AzureCLI@2
+                displayName: 'Build, Push & Deploy Agent'
+                inputs:
+                  azureSubscription: $(SERVICE_CONNECTION)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  workingDirectory: $(workingDirectory)
+                  inlineScript: |
+                    set -euo pipefail
+
+                    pip install -r requirements.txt
+
+                    python scripts/deploy_hosted_agent.py \
+                      ${{ parameters.agentName }} \
+                      --tag "$(Build.BuildId)" \
+                      --appconfig-endpoint "$(APPCONFIG_ENDPOINT)"

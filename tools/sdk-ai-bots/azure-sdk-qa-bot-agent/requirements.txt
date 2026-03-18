@@ -1,0 +1,12 @@
+azure-ai-agentserver-agentframework==1.0.0b16
+azure-ai-projects>=2.0.0b4
+azure-appconfiguration>=1.7.0
+azure-identity>=1.17.0
+python-dotenv>=1.0.0
+agent-framework>=1.0.0rc3
+debugpy
+# Agent development CLI tool (preview)
+agent-dev-cli
+# Backend server
+fastapi
+uvicorn[standard]

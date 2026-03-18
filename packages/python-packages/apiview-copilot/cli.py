@@ -167,6 +167,7 @@ def prompt_test_all(workers: int = 4):
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
     from src._prompt_runner import _execute_prompt_template
+    from src._retry import retry_with_backoff
 
     prompts_dir = pathlib.Path(__file__).parent / "prompts"
     prompty_files = sorted(glob.glob(str(prompts_dir / "**" / "*.prompty"), recursive=True))
@@ -191,12 +192,18 @@ def prompt_test_all(workers: int = 4):
     print(f"{BOLD}collected {len(prompty_files)} prompt files{RESET}")
     print()
 
+    # Pre-initialize SettingsManager singleton on the main thread to avoid
+    # a race during first-time initialization when running prompts in parallel.
+    SettingsManager()
+
     results = []
 
     def _run_one(filepath: str) -> tuple[str, bool, str]:
         rel = pathlib.Path(filepath).relative_to(pathlib.Path(__file__).parent)
         try:
-            _execute_prompt_template(filepath)
+            # Use retry_with_backoff to avoid transient 429/5xx failures
+            # causing flaky smoke tests.
+            retry_with_backoff(lambda: _execute_prompt_template(filepath), description=str(rel))
             return (str(rel), True, "")
         except Exception as exc:
             return (str(rel), False, str(exc))

@@ -22,4 +22,7 @@ public class ExecutionResult
 
     /// <summary>Details of tool calls (name, arguments, results, etc.) made during execution.</summary>
     public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
+
+    /// <summary>Token usage accumulated during execution.</summary>
+    public TokenUsage? TokenUsage { get; init; }
 }

@@ -25,6 +25,7 @@ public class SessionExecutor : IDisposable
         var stopwatch = Stopwatch.StartNew();
         var toolCalls = new List<ToolCallRecord>();
         var pendingTimestamps = new ConcurrentStack<long>();
+        var tokenUsage = new TokenUsage();
 
         try
         {
@@ -94,6 +95,18 @@ public class SessionExecutor : IDisposable
 
             await using var session = await _client.CreateSessionAsync(sessionConfig);
 
+            // Track token usage from AssistantUsageEvent
+            session.On(evt =>
+            {
+                if (evt is AssistantUsageEvent usageEvent)
+                {
+                    tokenUsage.InputTokens += usageEvent.Data.InputTokens ?? 0;
+                    tokenUsage.OutputTokens += usageEvent.Data.OutputTokens ?? 0;
+                    tokenUsage.CacheReadTokens += usageEvent.Data.CacheReadTokens ?? 0;
+                    tokenUsage.CacheWriteTokens += usageEvent.Data.CacheWriteTokens ?? 0;
+                }
+            });
+
             // Send prompt and wait for completion
             var messageOptions = new MessageOptions { Prompt = config.Prompt };
             await session.SendAndWaitAsync(messageOptions, config.Timeout);
@@ -107,7 +120,8 @@ public class SessionExecutor : IDisposable
                 Completed = true,
                 Duration = stopwatch.Elapsed,
                 Messages = messages.Cast<object>().ToList(),
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                TokenUsage = tokenUsage
             };
         }
         catch (Exception ex)
@@ -118,7 +132,8 @@ public class SessionExecutor : IDisposable
                 Completed = false,
                 Error = ex.Message,
                 Duration = stopwatch.Elapsed,
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                TokenUsage = tokenUsage
             };
         }
     }

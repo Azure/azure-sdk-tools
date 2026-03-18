@@ -253,6 +253,24 @@ public class Program
             }
         }
 
+        // Print total token usage across all scenarios
+        var totalUsage = new Models.TokenUsage();
+        foreach (var (_, result) in resultsList)
+        {
+            if (result.TokenUsage != null)
+                totalUsage.Add(result.TokenUsage);
+        }
+
+        if (totalUsage.TotalTokens > 0)
+        {
+            Console.WriteLine("\n=== Token Usage (Total) ===");
+            Console.WriteLine($"  Input:       {totalUsage.InputTokens,12:N0}");
+            Console.WriteLine($"  Output:      {totalUsage.OutputTokens,12:N0}");
+            Console.WriteLine($"  Cache Read:  {totalUsage.CacheReadTokens,12:N0}");
+            Console.WriteLine($"  Cache Write: {totalUsage.CacheWriteTokens,12:N0}");
+            Console.WriteLine($"  Total:       {totalUsage.TotalTokens,12:N0}");
+        }
+
         // Generate report if requested
         if (report)
         {
@@ -296,6 +314,12 @@ public class Program
         if (result.Error != null)
         {
             Console.WriteLine($"Error: {result.Error}");
+        }
+
+        if (result.TokenUsage is { TotalTokens: > 0 } usage)
+        {
+            Console.WriteLine($"\nToken usage:");
+            Console.WriteLine($"  Input: {usage.InputTokens:N0}  Output: {usage.OutputTokens:N0}  Total: {usage.TotalTokens:N0}");
         }
 
         Console.WriteLine($"\nTool calls ({result.ToolCalls.Count}):");

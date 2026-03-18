@@ -106,6 +106,27 @@ For each scenario, list the sequence of tool calls made.
 
 ---
 
+## 🪙 Token Usage
+
+### Per-Scenario Token Usage
+
+| # | Scenario Name | Input Tokens | Output Tokens | Cache Read | Cache Write | Total Tokens |
+|---|---------------|-------------|---------------|------------|-------------|-------------|
+| {n} | {scenario-name} | {input} | {output} | {cache-read} | {cache-write} | {total} |
+| ... | ... | ... | ... | ... | ... | ... |
+
+### Aggregate Token Usage
+
+| Metric | Value |
+|--------|-------|
+| **Total Input Tokens** | {total-input} |
+| **Total Output Tokens** | {total-output} |
+| **Total Cache Read Tokens** | {total-cache-read} |
+| **Total Cache Write Tokens** | {total-cache-write} |
+| **Grand Total Tokens** | **{grand-total}** |
+
+---
+
 ## 🔑 Areas for Improvement
 
 Actionable suggestions based on problems discovered during testing. Each item should

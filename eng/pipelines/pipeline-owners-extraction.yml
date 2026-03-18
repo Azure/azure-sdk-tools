@@ -3,6 +3,26 @@ trigger: none
 
 pr: none
 
+parameters:
+  - name: CodeownerTargetRepos
+    type: object
+    default:
+      - RepoName: azure-sdk-for-net
+        DraftPr: true
+      # - RepoName: azure-sdk-for-java
+      #   DraftPr: true
+      # - RepoName: azure-sdk-for-js
+      #   DraftPr: true
+      # - RepoName: azure-sdk-for-python
+      #   DraftPr: true
+      # - RepoName: azure-sdk-for-go
+      #   DraftPr: true
+      # - RepoName: azure-sdk-for-cpp
+      #   DraftPr: true
+      # - RepoName: azure-sdk-for-rust
+      #   DraftPr: true
+
+
 stages:
 - stage: Run
 
@@ -60,3 +80,69 @@ stages:
         artifact: pipelineOwners
         condition: succeededOrFailed()
 
+- stage: GenerateCodeowners
+  variables:
+    - template: /eng/pipelines/templates/variables/image.yml
+
+  jobs:
+    - job: UpdateCodeownersFiles
+      pool:
+        name: $(LINUXPOOL)
+        demands: ImageOverride -equals $(LINUXVMIMAGE)
+
+      variables:
+        PRBranchName: "automation/codeowners-update"
+
+      steps:
+        # Check out current repo to get azure-sdk-mcp.ps1 and login-to-github.ps1
+        # TODO: Sparse checkout eng/?
+        - checkout: self
+
+        - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
+
+        - template: /eng/common/pipelines/templates/steps/login-to-github.yml
+
+        - ${{ each repo in parameters.CodeownerTargetRepos }}:
+          - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+            parameters:
+              Repositories:
+                - Paths:
+                  - .github/CODEOWNERS
+                - Name: "Azure/${{ repo.RepoName }}"
+                  Commitish: main
+                  WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.RepoName }}"
+
+          - pwsh: git checkout -b "$(PRBranchName)"
+            displayName: "Create $(PRBranchName) branch for ${{ repo.RepoName }}"
+
+          - task: AzureCLI@2
+            displayName: "Update CODEOWNERS for ${{ repo.RepoName }}"
+            inputs:
+              azureSubscription: 'opensource-api-connection'
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                & "$(AZSDK)" config codeowners generate `
+                  --repo-root "$(Build.SourcesDirectory)/${{ repo.RepoName }}" `
+                  --package-types mgmt `
+                  --section "Management Libraries"
+
+                & "$(AZSDK)" config codeowners generate `
+                  --repo-root "$(Build.SourcesDirectory)/${{ repo.RepoName }}" `
+                  --package-types client `
+                  --package-types compat `
+                  --package-types data `
+                  --section "Client Libraries"
+
+          - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+            parameters:
+              OpenAsDraft: true
+              WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.RepoName }}"
+              BaseBranchName: main
+              PRBranchName: "$(PRBranchName)"
+              PushArgs: '-f'
+              PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'
+              PRBody: |
+                Updating CODEOWNERS
+
+                This was run in $(System.CollectionUri)$(System.TeamProject)/_build/results?buildId=$(Build.BuildId)

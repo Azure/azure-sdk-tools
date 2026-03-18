@@ -23,14 +23,15 @@ public partial class DotnetLanguageService : LanguageService
                 return dotnetVersionValidation;
             }
 
-            var serviceDirectory = GetServiceDirectoryFromPath(packagePath);
-            if (serviceDirectory == null)
+            var (repoRoot, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
+            var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (pathParts.Length < 1 || pathParts[0] == "..")
             {
                 logger.LogError("Failed to determine service directory from package path: {PackagePath}", packagePath);
                 return new PackageCheckResponse(1, "", "Failed to determine service directory from the provided package path.");
             }
 
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            var serviceDirectory = pathParts[0];
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "CodeChecks.ps1");
             if (!File.Exists(scriptPath))
             {
@@ -73,13 +74,15 @@ public partial class DotnetLanguageService : LanguageService
                 return dotnetVersionValidation;
             }
 
-            var serviceDirectory = GetServiceDirectoryFromPath(packagePath);
-            var packageName = GetPackageNameFromPath(packagePath);
-            if (serviceDirectory == null || packageName == null)
+            var (repoRoot, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
+            var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (pathParts.Length < 2 || pathParts[0] == "..")
             {
                 logger.LogError("Failed to determine service directory or package name from package path: {PackagePath}", packagePath);
                 return new PackageCheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");
             }
+            var serviceDirectory = pathParts[0];
+            var packageName = pathParts[1];
 
             var isAotOptedOut = await CheckAotCompatOptOut(packagePath, packageName, ct);
             if (isAotOptedOut)
@@ -88,7 +91,6 @@ public partial class DotnetLanguageService : LanguageService
                 return new PackageCheckResponse(0, "AOT compatibility check skipped - AotCompatOptOut is set to true in project file");
             }
 
-            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
             if (!File.Exists(scriptPath))
             {
@@ -153,52 +155,6 @@ public partial class DotnetLanguageService : LanguageService
         }
     }
 
-    private string? GetServiceDirectoryFromPath(string packagePath)
-    {
-        string? serviceDirectory = null;
-        var normalizedPath = packagePath.Replace('\\', '/');
-        var sdkIndex = normalizedPath.IndexOf("/sdk/", StringComparison.OrdinalIgnoreCase);
-
-        if (sdkIndex >= 0)
-        {
-            var pathAfterSdk = normalizedPath.Substring(sdkIndex + 5); // Skip "/sdk/"
-            var segments = pathAfterSdk.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            if (segments.Length > 0)
-            {
-                serviceDirectory = segments[0];
-                logger.LogDebug("Extracted service directory: {ServiceDirectory}", serviceDirectory);
-            }
-            else
-            {
-                logger.LogDebug("No segments found after /sdk/ in path");
-            }
-        }
-        else
-        {
-            logger.LogDebug("Path does not contain /sdk/ segment");
-        }
-
-        return serviceDirectory;
-    }
-
-    private string? GetPackageNameFromPath(string packagePath)
-    {
-        string? packageName = null;
-        var normalizedPath = packagePath.Replace('\\', '/');
-        var sdkIndex = normalizedPath.IndexOf("/sdk/", StringComparison.OrdinalIgnoreCase);
-
-        if (sdkIndex >= 0)
-        {
-            var pathAfterSdk = normalizedPath.Substring(sdkIndex + 5); // Skip "/sdk/"
-            var segments = pathAfterSdk.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            if (segments.Length > 1)
-            {
-                packageName = segments[1];
-            }
-        }
-        return packageName;
-    }
-
     private async ValueTask<bool> CheckAotCompatOptOut(string packagePath, string packageName, CancellationToken ct)
     {
         try
@@ -241,7 +197,18 @@ public partial class DotnetLanguageService : LanguageService
 
     public override async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        var packageName = GetPackageNameFromPath(packagePath);
+        string? packageName = null;
+        try
+        {
+            var (_, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, cancellationToken);
+            var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            packageName = pathParts.Length > 1 && pathParts[0] != ".." ? pathParts[1] : null;
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Failed to parse package path for changelog validation: {PackagePath}", packagePath);
+        }
+
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 }

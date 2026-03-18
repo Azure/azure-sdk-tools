@@ -83,13 +83,14 @@ public sealed partial class DotnetLanguageService : LanguageService
         string packagePath, string version, string? releaseType, CancellationToken ct)
     {
         string repoRoot;
+        string relativePath;
         try
         {
-            repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            (repoRoot, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Failed to discover repo root for {PackagePath}; script update skipped", packagePath);
+            logger.LogDebug(ex, "Failed to parse package path for {PackagePath}; script update skipped", packagePath);
             return VersionScriptResult.NotAvailable("Failed to discover repository root.");
         }
 
@@ -105,20 +106,18 @@ public sealed partial class DotnetLanguageService : LanguageService
             return VersionScriptResult.NotAvailable("Update-PkgVersion.ps1 was not found under eng/scripts.");
         }
 
-        // Determine service directory and package name from the package path
-        // .NET SDK packages follow the pattern: sdk/<service>/<PackageName>/
-        var relativePath = Path.GetRelativePath(repoRoot, packagePath).Replace('\\', '/');
-        var parts = relativePath.Split('/');
+        // ParsePackagePathAsync returns path relative to sdk/, e.g. "storage/Azure.Storage.Blobs"
+        var parts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
 
-        if (parts.Length < 3 || !parts[0].Equals("sdk", StringComparison.OrdinalIgnoreCase))
+        if (parts.Length < 2 || parts[0] == "..")
         {
             logger.LogDebug("Package path {PackagePath} does not follow expected sdk/<service>/<package> layout", packagePath);
             return VersionScriptResult.NotAvailable(
                 $"Package path does not follow expected sdk/<service>/<package> layout: {relativePath}");
         }
 
-        var serviceDirectory = parts[1];
-        var packageName = parts[2];
+        var serviceDirectory = parts[0];
+        var packageName = parts[1];
 
         logger.LogInformation("Running Update-PkgVersion.ps1 for {PackageName} in service {ServiceDirectory}",
             packageName, serviceDirectory);

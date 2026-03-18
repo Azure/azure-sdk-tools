@@ -17,6 +17,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<IPowershellHelper> _powershellHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
+    private Mock<IPackageInfoHelper> _packageInfoHelperMock = null!;
     private DotnetLanguageService _service = null!;
 
     [SetUp]
@@ -25,6 +26,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
         _processHelperMock = new Mock<IProcessHelper>();
         _powershellHelperMock = new Mock<IPowershellHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
+        _packageInfoHelperMock = new Mock<IPackageInfoHelper>();
 
         _service = new DotnetLanguageService(
             _processHelperMock.Object,
@@ -32,7 +34,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
             _gitHelperMock.Object,
             new TestLogger<DotnetLanguageService>(),
             Mock.Of<ICommonValidationHelpers>(),
-            Mock.Of<IPackageInfoHelper>(),
+            _packageInfoHelperMock.Object,
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
             Mock.Of<IChangelogHelper>());
@@ -92,9 +94,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
             Path.Combine(scriptDir, "Update-PkgVersion.ps1"),
             "# mock script");
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repoRoot);
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((repoRoot, "testservice/Azure.Test.Package", packagePath));
 
         _powershellHelperMock
             .Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
@@ -137,9 +139,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
             Path.Combine(scriptDir, "Update-PkgVersion.ps1"),
             "# mock script");
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repoRoot);
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((repoRoot, "testservice/Azure.Test.Package", packagePath));
 
         _powershellHelperMock
             .Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
@@ -169,9 +171,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
         await File.WriteAllTextAsync(csprojPath, CreateSampleCsproj("1.0.0-beta.1"));
 
         // No script exists, repo root exists but no eng/scripts
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repoRoot);
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((repoRoot, "testservice/Azure.Test.Package", packagePath));
 
         // Act
         var result = await InvokeUpdatePackageVersionInFilesAsync(
@@ -195,8 +197,8 @@ internal class DotnetLanguageServiceVersionUpdateTests
         var csprojPath = Path.Combine(srcDir, "TestPackage.csproj");
         await File.WriteAllTextAsync(csprojPath, CreateSampleCsproj("1.0.0"));
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Not a git repo"));
 
         // Act
@@ -227,9 +229,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
         await File.WriteAllTextAsync(
             Path.Combine(srcDir, "TestPackage.csproj"), csprojContent);
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(string.Empty);
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string.Empty, string.Empty, tempDir.DirectoryPath));
 
         // Act
         var result = await InvokeUpdatePackageVersionInFilesAsync(
@@ -251,9 +253,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
         var csprojPath = Path.Combine(srcDir, "TestPackage.csproj");
         await File.WriteAllTextAsync(csprojPath, CreateSampleCsproj("2.0.0"));
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(string.Empty);
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string.Empty, string.Empty, tempDir.DirectoryPath));
 
         // Act
         var result = await InvokeUpdatePackageVersionInFilesAsync(
@@ -275,9 +277,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
         var csprojPath = Path.Combine(srcDir, "TestPackage.csproj");
         await File.WriteAllTextAsync(csprojPath, CreateSampleCsproj("1.0.0"));
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(string.Empty);
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string.Empty, string.Empty, tempDir.DirectoryPath));
 
         // Act
         var result = await InvokeUpdatePackageVersionInFilesAsync(
@@ -308,9 +310,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
         await File.WriteAllTextAsync(
             Path.Combine(scriptDir, "Update-PkgVersion.ps1"), "# mock");
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repoRoot);
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((repoRoot, "storage/Azure.Storage.Blobs", packagePath));
 
         PowershellOptions? capturedOptions = null;
         _powershellHelperMock
@@ -347,15 +349,15 @@ internal class DotnetLanguageServiceVersionUpdateTests
         var csprojPath = Path.Combine(srcDir, "MyPackage.csproj");
         await File.WriteAllTextAsync(csprojPath, CreateSampleCsproj("1.0.0"));
 
-        // Script exists but layout is non-standard
+        // Script exists but layout is non-standard (path is outside sdk/ directory)
         var scriptDir = Path.Combine(repoRoot, "eng", "scripts");
         Directory.CreateDirectory(scriptDir);
         await File.WriteAllTextAsync(
             Path.Combine(scriptDir, "Update-PkgVersion.ps1"), "# mock");
 
-        _gitHelperMock
-            .Setup(g => g.DiscoverRepoRootAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(repoRoot);
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((repoRoot, "../custom/MyPackage", packagePath));
 
         // Act
         var result = await InvokeUpdatePackageVersionInFilesAsync(

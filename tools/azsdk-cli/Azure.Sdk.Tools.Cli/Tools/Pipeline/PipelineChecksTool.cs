@@ -45,18 +45,19 @@ public class PipelineChecksTool(
         var failed = parseResult.GetValue(failedOpt);
         var blocking = parseResult.GetValue(blockingOpt);
 
-        return await GetPrChecks(prLink, failed, blocking);
+        return await GetPrChecks(prLink, failed, blocking, ct);
     }
 
     [McpServerTool(Name = GetPrChecksToolName), Description("Get pipeline and CI check results from a GitHub Pull Request link or PR number")]
     public async Task<PrChecksResponse> GetPrChecks(
         [Description("GitHub Pull Request link or PR number")] string prLink,
         [Description("Filter to FAILURE only")] bool failed = false,
-        [Description("Filter to conclusion != SUCCESS (blocking merge)")] bool blocking = false)
+        [Description("Filter to conclusion != SUCCESS (blocking merge)")] bool blocking = false,
+        CancellationToken ct = default)
     {
         try
         {
-            var parsed = await pipelineHelper.TryResolveGitHubPrAsync(prLink);
+            var parsed = await pipelineHelper.TryResolveGitHubPrAsync(prLink, ct);
             if (parsed == null)
             {
                 return new PrChecksResponse
@@ -66,7 +67,7 @@ public class PipelineChecksTool(
             }
 
             logger.LogInformation("Getting check runs for {owner}/{repo}#{prNumber}", parsed.Owner, parsed.Repo, parsed.PrNumber);
-            var checks = await pipelineHelper.GetPrCheckRunsAsync(parsed.Owner, parsed.Repo, parsed.PrNumber);
+            var checks = await pipelineHelper.GetPrCheckRunsAsync(parsed.Owner, parsed.Repo, parsed.PrNumber, ct);
 
             if (failed)
             {

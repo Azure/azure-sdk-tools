@@ -36,17 +36,17 @@ public class PipelineTestsTool(
         var pipelineIdentifier = parseResult.GetValue(SharedOptions.PipelineLocator);
         var project = parseResult.GetValue(projectOpt);
 
-        return await GetPipelineLlmArtifacts(pipelineIdentifier, project);
+        return await GetPipelineLlmArtifacts(pipelineIdentifier, ct);
     }
 
     [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run. Accepts an Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number.")]
     public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(
         [Description("Azure Pipeline link, Build ID, GitHub Pull Request link, or PR number")] string pipelineIdentifier,
-        [Description("Pipeline project name (optional)")] string? project = null)
+        CancellationToken ct = default)
     {
         try
         {
-            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, project);
+            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, null, ct);
 
             if (builds.Count == 0)
             {
@@ -62,11 +62,11 @@ public class PipelineTestsTool(
                 var buildProject = build.Project;
                 if (string.IsNullOrEmpty(buildProject))
                 {
-                    buildProject = await pipelineHelper.GetPipelineProjectAsync(build.BuildId);
+                    buildProject = await pipelineHelper.GetPipelineProjectAsync(build.BuildId, null, ct);
                 }
 
                 logger.LogInformation("Fetching artifacts for build {buildId} in project {project}", build.BuildId, buildProject);
-                var result = await devopsService.GetPipelineLlmArtifacts(buildProject, build.BuildId);
+                var result = await devopsService.GetPipelineLlmArtifacts(buildProject, build.BuildId, ct);
                 var buildKey = build.PipelineUrl ?? pipelineHelper.GetPipelineUrl(buildProject, build.BuildId);
                 allArtifacts[buildKey] = result;
             }

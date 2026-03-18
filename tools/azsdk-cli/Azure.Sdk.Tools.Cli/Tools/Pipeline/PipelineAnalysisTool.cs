@@ -380,7 +380,7 @@ public class PipelineAnalysisTool(
     {
         try
         {
-            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, project);
+            var builds = await pipelineHelper.ResolveBuildsAsync(pipelineIdentifier, project, ct);
 
             if (builds.Count == 0)
             {
@@ -447,7 +447,7 @@ public class PipelineAnalysisTool(
         {
             if (string.IsNullOrEmpty(project))
             {
-                project = await pipelineHelper.GetPipelineProjectAsync(buildId, project, ct);
+                project = await pipelineHelper.GetPipelineProjectAsync(buildId, null, ct);
             }
 
             var failureLogIds = await getPipelineFailureLogIds(project, buildId, ct);

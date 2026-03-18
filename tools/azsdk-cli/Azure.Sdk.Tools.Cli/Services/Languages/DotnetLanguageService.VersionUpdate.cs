@@ -123,15 +123,15 @@ public sealed partial class DotnetLanguageService : LanguageService
         logger.LogInformation("Running Update-PkgVersion.ps1 for {PackageName} in service {ServiceDirectory}",
             packageName, serviceDirectory);
 
+        // Changelog updates are handled by the base LanguageService class, so we
+        // explicitly disable ReplaceLatestEntryTitle to avoid a double-write.
         var scriptArgs = new List<string>
         {
             "-ServiceDirectory", serviceDirectory,
             "-PackageName", packageName,
-            "-NewVersionString", version
+            "-NewVersionString", version,
+            "-ReplaceLatestEntryTitle", "$false"
         };
-
-        // Add ReplaceLatestEntryTitle flag (default behavior in SetPackageVersion)
-        scriptArgs.AddRange(["-ReplaceLatestEntryTitle", "$true"]);
 
         var result = await powershellHelper.Run(new PowershellOptions(
             scriptPath: updatePkgVersionScript,

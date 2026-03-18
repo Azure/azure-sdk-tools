@@ -43,8 +43,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
     [Test]
     public async Task UpdateVersionInFiles_ReturnsFailure_WhenNoCsprojFound()
     {
-        // Arrange
+        // Arrange - src/ directory exists but contains no .csproj files
         using var tempDir = TempDirectory.Create("dotnet-version-no-csproj");
+        Directory.CreateDirectory(Path.Combine(tempDir.DirectoryPath, "src"));
 
         // Act
         var result = await InvokeUpdatePackageVersionInFilesAsync(
@@ -324,6 +325,12 @@ internal class DotnetLanguageServiceVersionUpdateTests
         // Assert - verify correct arguments were passed
         Assert.That(capturedOptions, Is.Not.Null);
         Assert.That(capturedOptions!.ScriptPath, Does.Contain("Update-PkgVersion.ps1"));
+        Assert.That(capturedOptions.Args, Does.Contain("-ServiceDirectory"));
+        Assert.That(capturedOptions.Args, Does.Contain("storage"));
+        Assert.That(capturedOptions.Args, Does.Contain("-PackageName"));
+        Assert.That(capturedOptions.Args, Does.Contain("Azure.Storage.Blobs"));
+        Assert.That(capturedOptions.Args, Does.Contain("-NewVersionString"));
+        Assert.That(capturedOptions.Args, Does.Contain("13.0.0"));
     }
 
     [Test]

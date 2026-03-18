@@ -72,8 +72,8 @@ public class Program
             return level >= logLevel;
         });
 
-        // add the console logger
-        builder.Services.ConfigureDefaultLogging(logLevel, isCommandLine, debug);
+        // Set the minimum log level
+        builder.Services.ConfigureDefaultLogging(logLevel);
 
         var outputMode = !isCommandLine ? OutputHelper.OutputModes.Mcp : outputFormat switch
         {

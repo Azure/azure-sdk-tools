@@ -46,14 +46,10 @@ public static class LoggingExtensions
         }
     }
 
-    public static void ConfigureDefaultLogging(this IServiceCollection services, LogLevel logLevel, bool isCommandLine, bool debug = false)
+    public static void ConfigureDefaultLogging(this IServiceCollection services, LogLevel logLevel)
     {
         services.AddLogging(logging =>
         {
-            if (isCommandLine)
-            {
-                AddCliConsoleLogger(logging, debug);
-            }
             logging.SetMinimumLevel(logLevel);
         });
     }
@@ -65,7 +61,7 @@ public static class LoggingExtensions
             // Debug mode: use built-in SimpleConsole formatter (shows level + category + message)
             builder.AddSimpleConsole(options =>
             {
-                options.ColorBehavior = LoggerColorBehavior.Enabled;
+                options.ColorBehavior = LoggerColorBehavior.Default;
             });
         }
         else

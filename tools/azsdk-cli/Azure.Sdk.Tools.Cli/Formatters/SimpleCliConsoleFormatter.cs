@@ -25,6 +25,7 @@ public sealed class SimpleCliConsoleFormatter : ConsoleFormatter, IDisposable
     private const string AnsiRed = "\x1b[31m";
 
     private readonly IDisposable? _optionsReloadToken;
+    private readonly bool _useColor;
     private ConsoleFormatterOptions _options;
 
     public SimpleCliConsoleFormatter(IOptionsMonitor<ConsoleFormatterOptions> options)
@@ -32,6 +33,7 @@ public sealed class SimpleCliConsoleFormatter : ConsoleFormatter, IDisposable
     {
         _options = options.CurrentValue;
         _optionsReloadToken = options.OnChange(updated => _options = updated);
+        _useColor = !Console.IsErrorRedirected;
     }
 
     public override void Write<TState>(
@@ -45,12 +47,12 @@ public sealed class SimpleCliConsoleFormatter : ConsoleFormatter, IDisposable
             return;
         }
 
-        var (colorStart, colorEnd) = logEntry.LogLevel switch
+        var (colorStart, colorEnd) = _useColor ? logEntry.LogLevel switch
         {
             LogLevel.Warning => (AnsiYellow, AnsiReset),
             LogLevel.Error or LogLevel.Critical => (AnsiRed, AnsiReset),
             _ => ((string?)null, (string?)null),
-        };
+        } : ((string?)null, (string?)null);
 
         if (colorStart is not null)
         {

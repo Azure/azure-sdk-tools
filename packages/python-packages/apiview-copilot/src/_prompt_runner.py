@@ -160,7 +160,7 @@ def _execute_prompt_template(
         The string response content from the model.
 
     Raises:
-        ValueError: If FOUNDRY_ENDPOINT or FOUNDRY_PROJECT are not configured.
+        ValueError: If FOUNDRY_ENDPOINT is not configured.
     """
     from azure.ai.inference import ChatCompletionsClient
     from azure.ai.inference.models import SystemMessage, UserMessage
@@ -183,11 +183,10 @@ def _execute_prompt_template(
 
     # Use Azure AI Foundry endpoint for inference
     foundry_endpoint = settings.get("FOUNDRY_ENDPOINT")
-    foundry_project = settings.get("FOUNDRY_PROJECT")
 
-    if not foundry_endpoint or not foundry_project:
+    if not foundry_endpoint:
         raise ValueError(
-            "FOUNDRY_ENDPOINT and FOUNDRY_PROJECT must be configured in AppConfiguration to execute prompty files."
+            "FOUNDRY_ENDPOINT must be configured in AppConfiguration to execute prompty files."
         )
 
     # Construct the inference endpoint (similar to how agents does it)

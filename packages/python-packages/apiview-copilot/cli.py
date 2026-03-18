@@ -2264,6 +2264,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 "path",
                 type=str,
                 options_list=["--path", "-p"],
+                required=True,
                 help="Path to the .prompty file to test.",
             )
         with ArgumentsContext(self, "prompt test-all") as ac:

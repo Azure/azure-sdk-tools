@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             typeSpecHelper = typeSpecHelperMock.Object;
 
             var userHelperMock = new Mock<IUserHelper>();
-            userHelperMock.Setup(x => x.GetUserEmail()).ReturnsAsync("test@example.com");
+            userHelperMock.Setup(x => x.GetUserEmail(It.IsAny<CancellationToken>())).ReturnsAsync("test@example.com");
             userHelper = userHelperMock.Object;
 
             var environmentHelperMock = new Mock<IEnvironmentHelper>();
@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(updateStatus);
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion"));
 
-            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId);
+            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId, CancellationToken.None);
             Assert.That(exclusionJustification, Is.EqualTo(releasePlanInfo.LanguageExclusionRequesterNote));
         }
 
@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
             Assert.IsNotNull(updateStatus);
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion"));
 
-            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId);
+            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId, CancellationToken.None);
             Assert.That(exclusionJustification, Is.EqualTo(releasePlanInfo.LanguageExclusionRequesterNote));
         }
 
@@ -93,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.ReleasePlan
         public async Task Test_Get_ReleaseExclusionStatus()
         {
             int releasePlan = 28940; // replace with a real release plan ID
-            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlan);
+            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlan, CancellationToken.None);
             Assert.IsNotNull(releasePlanInfo);
             
             var pythonSdk = releasePlanInfo.SDKInfo.FirstOrDefault(sdk => sdk.Language.Equals("Python", StringComparison.OrdinalIgnoreCase));

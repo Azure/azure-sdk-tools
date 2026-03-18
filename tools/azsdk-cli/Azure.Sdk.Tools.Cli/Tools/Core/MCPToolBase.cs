@@ -47,7 +47,7 @@ public abstract class MCPToolBase
             throw new InvalidOperationException("Tool must be initialized with Initialize() before use");
         }
 
-        using var activity = await telemetryService.StartActivity(ActivityName.CommandExecuted);
+        using var activity = await telemetryService.StartActivity(ActivityName.CommandExecuted, cancellationToken);
         Activity.Current = activity;  // Required so things like TokenUsageHelper can add activity properties and tags
 
         try

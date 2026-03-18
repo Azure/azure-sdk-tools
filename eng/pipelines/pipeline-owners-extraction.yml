@@ -99,15 +99,24 @@ stages:
         - checkout: self
 
         - template: /eng/common/pipelines/templates/steps/install-azsdk-cli.yml
-          parameters:
-            SourceRootPath: $(Build.SourcesDirectory)/$(Build.Repository.Name)
 
         - template: /eng/common/pipelines/templates/steps/login-to-github.yml
-          parameters:
-            ScriptDirectory: $(Build.SourcesDirectory)/$(Build.Repository.Name)/eng/common/scripts
 
         - ${{ each repo in parameters.CodeownerTargetRepos }}:
-          - checkout: Azure/${{ repo.Name }}
+          - pwsh: |
+              git clone --filter=tree:0 "https://github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
+            displayName: Clone ${{ repo.Name }}
+            workingDirectory: $(Build.SourcesDirectory)
+
+          - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+            parameters:
+              SkipCheckoutNone: true
+              Paths:
+                - .github/CODEOWNERS
+              Repositories:
+                - Name: "Azure/${{ repo.Name }}"
+                  Commitish: main
+                  WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.Name }}"
 
           - pwsh: git checkout -b "$(PRBranchName)"
             displayName: "Create $(PRBranchName) branch for ${{ repo.Name }}"

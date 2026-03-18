@@ -96,14 +96,25 @@ function executeCommand(
 }
 
 /**
- * Check if a Git tag exists in the repository
- * @param tag The Git tag to check
- * @returns boolean indicating if the tag exists
+ * Check if a Git tag exists locally, and if not, attempt to fetch it from origin.
+ * Works correctly in shallow clones (CI pipelines) by using --depth=1.
+ * @param tag The Git tag to ensure is available
+ * @returns boolean indicating if the tag is now available
  */
-function checkGitTagExists(tag: string): boolean {
+function ensureTagAvailable(tag: string): boolean {
     const tagCheckCommand = `git tag -l ${tag}`;
     const tagExists = executeCommand(tagCheckCommand)?.stdout.trim();
-    return !!tagExists;
+    if (tagExists) {
+        return true;
+    }
+    logger.info(`Tag ${tag} not found locally, attempting to fetch from origin.`);
+    const fetchResult = executeCommand(`git fetch origin refs/tags/${tag}:refs/tags/${tag} --depth=1`);
+    if (!fetchResult || fetchResult.code !== 0) {
+        logger.warn(`Failed to fetch tag ${tag} from origin.`);
+        return false;
+    }
+    logger.info(`Successfully fetched tag ${tag} from origin.`);
+    return true;
 }
 
 // TODO: refactor this function to support praparing files from github in general way
@@ -123,6 +134,9 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);
 
     try {
+        if (!ensureTagAvailable(tag)) {
+            throw new Error(`Tag ${tag} is not available locally and could not be fetched from origin.`);
+        }
         if (file === "CHANGELOG.md") {
             sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
             // For CHANGELOG.md, use sdkFilePath directly

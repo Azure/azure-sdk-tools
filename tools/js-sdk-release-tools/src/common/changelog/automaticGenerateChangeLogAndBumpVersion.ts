@@ -155,8 +155,13 @@ export async function generateChangelogAndBumpVersion(
                             sdkRootPath: jsSdkRepoPath,
                             npmPackagePath: nextNPMPackageRoot,
                         }
-                        originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, latestNextChangelog);
-                        logger.info('Keep previous preview changelog.');
+                        const nextChangelogContent = tryReadNpmPackageChangelog(nextChangelogPath, latestNextChangelog);
+                        if (nextChangelogContent.trim()) {
+                            originalChangeLogContent = nextChangelogContent;
+                            logger.info('Keep previous preview changelog.');
+                        } else {
+                            logger.warn(`Failed to get content from preview changelog (${nextVersion}), falling back to stable changelog (${stableVersion}).`);
+                        }
                     }
                 }
                 if (originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")) {

@@ -25,7 +25,8 @@ parameters:
 
 stages:
 - stage: Run
-
+  # TODO: Remove before merge, this is here to tighten the scope while developing the pipeline
+  condition: never()
   variables:
   - template: ./templates/variables/globals.yml
 

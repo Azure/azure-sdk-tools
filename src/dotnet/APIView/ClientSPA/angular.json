@@ -39,7 +39,8 @@
             ],
             "styles": [
               "src/styles.scss",
-              "src/styles.less"
+              "src/styles.less",
+              "node_modules/@vscode/codicons/dist/codicon.css"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",

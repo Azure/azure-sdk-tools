@@ -33,7 +33,7 @@ public class InstrumentedTool(
     public override async ValueTask<CallToolResult> InvokeAsync(RequestContext<CallToolRequestParams> request, CancellationToken ct = default)
     {
         mcpServerContextAccessor.Initialize(request?.Server);
-        using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo);
+        using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo, ct);
         Activity.Current = activity;  // Required so things like TokenUsageHelper can add activity properties and tags
         if (request?.Params == null || string.IsNullOrEmpty(request.Params.Name))
         {

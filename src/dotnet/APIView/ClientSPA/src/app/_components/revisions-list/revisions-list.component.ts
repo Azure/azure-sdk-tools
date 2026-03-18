@@ -1,14 +1,14 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MenuItem, MessageService, SortEvent } from 'primeng/api';
-import { FileSelectEvent, FileUpload, FileUploadModule } from 'primeng/fileupload';
 import { Table, TableContextMenuSelectEvent, TableFilterEvent, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { DrawerModule } from 'primeng/drawer';
 import { SelectModule } from 'primeng/select';
+import { PopoverModule } from 'primeng/popover';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { TimeagoModule } from 'ngx-timeago';
@@ -37,9 +37,9 @@ import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
         TableModule,
         ButtonModule,
         MenuModule,
-        FileUploadModule,
         DrawerModule,
         SelectModule,
+        PopoverModule,
         MultiSelectModule,
         ContextMenuModule,
         LanguageNamesPipe,
@@ -54,7 +54,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   @Output() apiRevisionsEmitter : EventEmitter<APIRevision[]> = new EventEmitter<APIRevision[]>();
 
-  @ViewChild("revisionCreationFileUpload") revisionCreationFileUpload!: FileUpload;
+  revisionUploadFile: File | undefined;
 
   assetsPath : string = environment.assetsPath;
   reviewPageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Review/";
@@ -69,7 +69,6 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   sortField : string = "lastUpdatedOn";
   sortOrder : number = 1;
   filters: any = null;
-  dummyModel: any; // Used to ensure p-fileUpload has a binding
 
   createRevisionSidebarVisible : boolean = false;
   optionsSidebarVisible : boolean = false;
@@ -245,8 +244,11 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.badgeClass.set("false", "fa-solid fa-circle-minus text-warning");
     this.badgeClass.set("true", "fas fa-check-circle text-success");
     this.badgeClass.set("Manual", "fa-solid fa-arrow-up-from-bracket");
+    this.badgeClass.set("manual", "fa-solid fa-arrow-up-from-bracket");
     this.badgeClass.set("PullRequest", "fa-solid fa-code-pull-request");
+    this.badgeClass.set("pullrequest", "fa-solid fa-code-pull-request");
     this.badgeClass.set("Automatic", "fa-solid fa-robot");
+    this.badgeClass.set("automatic", "fa-solid fa-robot");
   }
 
   viewDiffOfSelectedAPIRevisions() {
@@ -320,6 +322,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     if (table) {
       table.clear();
     }
+    this.selectedDetails = [];
     this.showAPIRevisionsAssignedToMe = false;
     this.showDeletedAPIRevisions = false;
     this.loadAPIRevisions(0, this.pageSize * 2, true);
@@ -452,17 +455,61 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   // Show or hide the sidebar for creating a review
   onHideCreateRevisionSidebar() {
     this.createRevisionForm.reset();
+    this.revisionUploadFile = undefined;
     this.createRevisionInstruction = [];
     this.setCreateRevisionLanguageBasedOnReview();
   }
 
   /**
-   * Callback to invoke on file selction for review creation
-   * @param event the Filter event
+   * Callback to invoke on file drop for revision creation
    */
-  onFileSelect(event: FileSelectEvent) {
-    const uploadFile = event.currentFiles[0];
-    this.createRevisionForm.get('selectedFile')?.setValue(uploadFile);
+  onRevisionFileDrop(event: DragEvent) {
+    const file = event.dataTransfer?.files[0];
+    if (file && this.isAcceptedRevisionFile(file.name)) {
+      this.revisionUploadFile = file;
+      this.createRevisionForm.get('selectedFile')?.setValue(file);
+    } else if (file) {
+      this.messageService.add({
+        severity: 'error',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Invalid file type',
+        detail: `Only ${this.acceptedFilesForReviewUpload} files are accepted.`,
+        key: 'bc',
+        life: 3000
+      });
+    }
+  }
+
+  onRevisionFileInputChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file && this.isAcceptedRevisionFile(file.name)) {
+      this.revisionUploadFile = file;
+      this.createRevisionForm.get('selectedFile')?.setValue(file);
+    } else if (file) {
+      this.revisionUploadFile = undefined;
+      this.createRevisionForm.get('selectedFile')?.reset();
+      this.messageService.add({
+        severity: 'error',
+        icon: 'bi bi-exclamation-triangle',
+        summary: 'Invalid file type',
+        detail: `Only ${this.acceptedFilesForReviewUpload} files are accepted.`,
+        key: 'bc',
+        life: 3000
+      });
+    }
+  }
+
+  private isAcceptedRevisionFile(fileName: string): boolean {
+    if (!this.acceptedFilesForReviewUpload) return true;
+    const extensions = this.acceptedFilesForReviewUpload.split(',').map(ext => ext.trim().toLowerCase());
+    const lowerName = fileName.toLowerCase();
+    return extensions.some(ext => lowerName.endsWith(ext));
+  }
+
+  removeRevisionFile() {
+    this.revisionUploadFile = undefined;
+    this.createRevisionForm.get('selectedFile')?.reset();
   }
 
   onContextMenuSelect(event : TableContextMenuSelectEvent) {
@@ -622,9 +669,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         this.acceptedFilesForReviewUpload = undefined;
     }
 
-    if (this.revisionCreationFileUpload) {
-      this.revisionCreationFileUpload.clear();
-    }
+    this.revisionUploadFile = undefined;
 
     this.createRevisionForm.get('label')?.reset();
     this.createRevisionForm.get('selectedFile')?.reset();

@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 import { CodeEditorComponent } from './code-editor.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
-import { ReviewNavComponent } from '../../review-nav/review-nav.component';
 import { FormsModule } from '@angular/forms';
 
 describe('CodeEditorComponent', () => {
@@ -20,11 +19,8 @@ describe('CodeEditorComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        CodeEditorComponent,
-        ReviewNavComponent
-      ],
       imports: [
+        CodeEditorComponent,
         FormsModule,
         MonacoEditorModule.forRoot()
       ],

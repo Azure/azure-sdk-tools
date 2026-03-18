@@ -33,39 +33,39 @@ public class PipelineTestsTool(
 
     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        Initialize();
+        Initialize(ct);
         var buildId = parseResult.GetValue(buildIdArg);
 
         logger.LogInformation("Getting test results for pipeline {buildId}...", buildId);
-        return await GetPipelineLlmArtifacts(buildId);
+        return await GetPipelineLlmArtifacts(buildId, ct);
     }
 
     private BuildHttpClient buildClient;
     private readonly bool initialized = false;
 
-    private void Initialize()
+    private void Initialize(CancellationToken ct = default)
     {
         if (initialized)
         {
             return;
         }
         var tokenScope = new[] { Constants.AZURE_DEVOPS_TOKEN_SCOPE };  // Azure DevOps scope
-        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
+        var token = azureService.GetCredential().GetToken(new TokenRequestContext(tokenScope), ct);
         var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
         var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
         buildClient = connection.GetClient<BuildHttpClient>();
     }
 
     [McpServerTool(Name = GetPipelineLlmArtifactsToolName), Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
-    public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId)
+    public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId, CancellationToken ct = default)
     {
         string project = "";
         try
         {
-            var build = await GetPipelineRun(buildId);
+            var build = await GetPipelineRun(buildId, ct: ct);
             project = build.Project.Name;
             logger.LogInformation("Fetching artifacts for build {buildId} in project {project}", buildId, project);
-            var result = await devopsService.GetPipelineLlmArtifacts(project, buildId);
+            var result = await devopsService.GetPipelineLlmArtifacts(project, buildId, ct);
             return new ObjectCommandResponse { Result = result };
         }
         catch (Exception ex)
@@ -78,19 +78,19 @@ public class PipelineTestsTool(
         }
     }
 
-    private async Task<Build> GetPipelineRun(int buildId, string? project = null)
+    private async Task<Build> GetPipelineRun(int buildId, string? project = null, CancellationToken ct = default)
     {
         if (!string.IsNullOrEmpty(project))
         {
-            return await buildClient.GetBuildAsync(project, buildId);
+            return await buildClient.GetBuildAsync(project, buildId, cancellationToken: ct);
         }
         try
         {
-            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT, buildId);
+            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT, buildId, cancellationToken: ct);
         }
         catch (Exception)
         {
-            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId);
+            return await buildClient.GetBuildAsync(Constants.AZURE_SDK_DEVOPS_INTERNAL_PROJECT, buildId, cancellationToken: ct);
         }
     }
 }

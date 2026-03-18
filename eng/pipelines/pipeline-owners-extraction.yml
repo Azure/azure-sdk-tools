@@ -148,6 +148,8 @@ stages:
               WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.Name }}"
               BaseBranchName: main
               PRBranchName: "$(PRBranchName)"
+              PROwner: Azure
+              RepoName: ${{ repo.Name }}
               PushArgs: '-f'
               OpenAsDraft: ${{ repo.DraftPr }}
               PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'

@@ -82,6 +82,7 @@ stages:
         condition: succeededOrFailed()
 
 - stage: GenerateCodeowners
+  dependsOn: []
   variables:
     - template: /eng/pipelines/templates/variables/image.yml
 

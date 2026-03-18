@@ -7,19 +7,19 @@ parameters:
   - name: CodeownerTargetRepos
     type: object
     default:
-      - RepoName: azure-sdk-for-net
+      - Name: azure-sdk-for-net
         DraftPr: true
-      # - RepoName: azure-sdk-for-java
+      # - Name: azure-sdk-for-java
       #   DraftPr: true
-      # - RepoName: azure-sdk-for-js
+      # - Name: azure-sdk-for-js
       #   DraftPr: true
-      # - RepoName: azure-sdk-for-python
+      # - Name: azure-sdk-for-python
       #   DraftPr: true
-      # - RepoName: azure-sdk-for-go
+      # - Name: azure-sdk-for-go
       #   DraftPr: true
-      # - RepoName: azure-sdk-for-cpp
+      # - Name: azure-sdk-for-cpp
       #   DraftPr: true
-      # - RepoName: azure-sdk-for-rust
+      # - Name: azure-sdk-for-rust
       #   DraftPr: true
 
 
@@ -103,33 +103,38 @@ stages:
         - template: /eng/common/pipelines/templates/steps/login-to-github.yml
 
         - ${{ each repo in parameters.CodeownerTargetRepos }}:
+          - pwsh: |
+              git clone --filter=tree:0 "https://github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
+            displayName: Clone ${{ repo.Name }}
+            workingDirectory: $(Build.SourcesDirectory)
+
           - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
             parameters:
               SkipCheckoutNone: true
               Paths:
                 - .github/CODEOWNERS
               Repositories:
-                - Name: "Azure/${{ repo.RepoName }}"
+                - Name: "Azure/${{ repo.Name }}"
                   Commitish: main
-                  WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.RepoName }}"
+                  WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.Name }}"
 
           - pwsh: git checkout -b "$(PRBranchName)"
-            displayName: "Create $(PRBranchName) branch for ${{ repo.RepoName }}"
+            displayName: "Create $(PRBranchName) branch for ${{ repo.Name }}"
 
           - task: AzureCLI@2
-            displayName: "Update CODEOWNERS for ${{ repo.RepoName }}"
+            displayName: "Update CODEOWNERS for ${{ repo.Name }}"
             inputs:
               azureSubscription: 'opensource-api-connection'
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
                 & "$(AZSDK)" config codeowners generate `
-                  --repo-root "$(Build.SourcesDirectory)/${{ repo.RepoName }}" `
+                  --repo-root "$(Build.SourcesDirectory)/${{ repo.Name }}" `
                   --package-types mgmt `
                   --section "Management Libraries"
 
                 & "$(AZSDK)" config codeowners generate `
-                  --repo-root "$(Build.SourcesDirectory)/${{ repo.RepoName }}" `
+                  --repo-root "$(Build.SourcesDirectory)/${{ repo.Name }}" `
                   --package-types client `
                   --package-types compat `
                   --package-types data `
@@ -140,7 +145,7 @@ stages:
 
           - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
             parameters:
-              WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.RepoName }}"
+              WorkingDirectory: "$(Build.SourcesDirectory)/${{ repo.Name }}"
               BaseBranchName: main
               PRBranchName: "$(PRBranchName)"
               PushArgs: '-f'

@@ -104,9 +104,12 @@ stages:
 
         - ${{ each repo in parameters.CodeownerTargetRepos }}:
           - pwsh: |
-              git clone --filter=tree:0 "https://github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
+              git clone --filter=tree:0 "https://x-access-token:${{ parameters.GH_TOKEN }}@github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
             displayName: Clone ${{ repo.Name }}
             workingDirectory: $(Build.SourcesDirectory)
+            env:
+              # Explicit mapping required for secrets
+              GH_TOKEN: $(GH_TOKEN)
 
           - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
             parameters:

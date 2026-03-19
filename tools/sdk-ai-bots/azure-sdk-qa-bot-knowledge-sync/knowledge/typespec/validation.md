@@ -20,6 +20,12 @@ TypeSpec does not support hiding a whole operation group via a decorator on the 
 
 When applying `@access(Access.internal)` to individual operations or a namespace, ensure those operations and their models are not also referenced by any public operation — any shared public reference forces them back to `public`.
 
+## Sharing models between control plane and data plane
+
+To prevent ARM library dependencies in the data plane, use aliases or common types for modeling items like resource IDs.
+
+Apply `@useDependency` when referencing versioned namespaces such as `Azure.Core` or `Azure.ResourceManager`.
+
 ## visibility-sealed error when armResourceInternal is applied twice
 
 `TrackedResource<T>` already applies `@Azure.ResourceManager.Private.armResourceInternal` internally. Adding it again explicitly on a model that uses `is TrackedResource<T>` causes "Visibility of property 'name' is sealed and cannot be changed."

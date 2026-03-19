@@ -12,15 +12,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# sys.path — add the project root so top-level packages (config, tools,
-# utils, …) are importable both locally (via agentdev) and in the
-# container (where cwd is /app).
+# sys.path — add the project root so top-level packages
 _project_root = str(Path(__file__).resolve().parent.parent.parent)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-# Environment — load .env before config/app_config.py is imported,
-# since it reads AZURE_APPCONFIG_ENDPOINT at module level.
+# Environment
 load_dotenv(override=False)
 
 from agent_framework import Agent

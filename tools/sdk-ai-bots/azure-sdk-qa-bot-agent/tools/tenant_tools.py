@@ -24,6 +24,8 @@ from config.tenant_config import (
     get_tenant_sources_display,
     load_tenant_qa_guideline,
 )
+from models.chat import RouteTenantResult
+from tools import tool
 from utils.llm import LLMError, PromptTemplate, execute_prompt
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,7 @@ _ROUTING_TEMPLATE = PromptTemplate(
 class TenantTools:
     """Tools for routing conversations to the most appropriate tenant."""
 
+    @tool
     async def route_tenant(
         self,
         *,
@@ -50,7 +53,7 @@ class TenantTools:
             "core question or topic. Used to determine which specialised tenant "
             "should handle the conversation.",
         ],
-    ) -> str:
+    ) -> RouteTenantResult:
         """Route the conversation to the best-matching tenant.
 
         Analyses the user's question domain and the original tenant to decide
@@ -86,14 +89,11 @@ class TenantTools:
             # Routing disabled — stay with the original tenant
             guideline = load_tenant_qa_guideline(original_tenant_id)
             sources = get_tenant_sources_display(original_tenant_id)
-            return json.dumps(
-                {
-                    "route_tenant": original_tenant_id,
-                    "tenant_guideline": guideline,
-                    "knowledge_sources": sources,
-                    "routed": False,
-                },
-                ensure_ascii=False,
+            return RouteTenantResult(
+                route_tenant=original_tenant_id,
+                tenant_guideline=guideline,
+                knowledge_sources=sources,
+                routed=False,
             )
 
         # ------------------------------------------------------------------
@@ -106,14 +106,11 @@ class TenantTools:
         guideline = load_tenant_qa_guideline(recommended)
         sources = get_tenant_sources_display(recommended)
 
-        return json.dumps(
-            {
-                "route_tenant": recommended,
-                "tenant_guideline": guideline,
-                "knowledge_sources": sources,
-                "routed": recommended != original_tenant_id,
-            },
-            ensure_ascii=False,
+        return RouteTenantResult(
+            route_tenant=recommended,
+            tenant_guideline=guideline,
+            knowledge_sources=sources,
+            routed=recommended != original_tenant_id,
         )
 
     # ------------------------------------------------------------------

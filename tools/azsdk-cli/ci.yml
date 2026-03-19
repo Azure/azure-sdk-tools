@@ -152,12 +152,13 @@ extends:
               targetType: 'inline'
               workingDirectory: '$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
               pwsh: true
-              script: dotnet run -- run --all --parallel 5 --cleanup "always" --authoring-spec-repo ${{ parameters.AuthoringSpecRepo }}
+              script: dotnet run -- run --all --parallel 5 --cleanup "always" --authoring-spec-repo "$env:AUTHORING_SPEC_REPO"
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
               COPILOT_GITHUB_TOKEN: $(azuresdk-copilot-github-pat)
+              AUTHORING_SPEC_REPO: ${{ parameters.AuthoringSpecRepo }}
       CustomReleaseJobs:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:

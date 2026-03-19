@@ -293,8 +293,8 @@ func GetIndexLink(chunk Index) string {
 		path = TrimFileFormat(path)
 		return "https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/" + path + ".tsp"
 	case Source_TypeSpecMigration:
-		// link to the migration faq page
-		return "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange"
+		path = TrimFileFormat(path)
+		return "https://azure.github.io/typespec-azure/docs/" + path
 	case Source_AzureSDKForGo:
 		return "https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/" + path
 	case Source_AzureSDKForJava:

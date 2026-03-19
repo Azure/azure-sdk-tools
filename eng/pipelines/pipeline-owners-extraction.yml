@@ -97,7 +97,7 @@ stages:
             - ${{ item }}
 
           - pwsh: |
-              git clone --filter=tree:0 "https://x-access-token:${{ parameters.GH_TOKEN }}@github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
+              git clone --depth=1 "https://x-access-token:${{ parameters.GH_TOKEN }}@github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
             displayName: Clone ${{ repo.Name }}
             workingDirectory: $(Build.SourcesDirectory)
             env:

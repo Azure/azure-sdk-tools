@@ -39,7 +39,7 @@ namespace Azure.Sdk.Tools.SnippetGenerator.Tests
         }
 
         [Test]
-        public async System.Threading.Tasks.Task MarkdownOnlyPrefixNoSpacePreservesIndentation()
+        public async System.Threading.Tasks.Task MarkdownOnlyPrefixWorksWithoutSeparatorSpace()
         {
             var path = Path.Join(TestContext.CurrentContext.TestDirectory, "TestData");
             var mdFile = Path.Join(path, "MarkdownOnlyNoSpace.md");

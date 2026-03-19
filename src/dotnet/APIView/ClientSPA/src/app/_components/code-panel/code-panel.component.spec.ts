@@ -399,6 +399,86 @@ describe('CodePanelComponent', () => {
     });
   });
 
+  describe('Legacy threadId handling in handleCommentResolutionActionEmitter', () => {
+    let commentsService: CommentsService;
+
+    beforeEach(() => {
+      commentsService = TestBed.inject(CommentsService);
+      component.reviewId = 'test-review';
+      component.activeApiRevisionId = 'test-revision';
+    });
+
+    it('should pass undefined threadId to API when resolving legacy comments without a real threadId', () => {
+      const resolveSpy = vi.spyOn(commentsService, 'resolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      // Legacy comments have no threadId in allComments
+      component.allComments = [
+        { id: 'c1', elementId: 'elem-1', threadId: undefined, apiRevisionId: 'rev-1', isResolved: false } as any,
+        { id: 'c2', elementId: 'elem-1', threadId: null, apiRevisionId: 'rev-1', isResolved: false } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'elem-1', // synthetic threadId == elementId (no real threadId exists)
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+      } as CommentUpdatesDto);
+
+      expect(resolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', undefined);
+    });
+
+    it('should pass undefined threadId to API when unresolving legacy comments without a real threadId', () => {
+      const unresolveSpy = vi.spyOn(commentsService, 'unresolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.allComments = [
+        { id: 'c1', elementId: 'elem-1', threadId: undefined, apiRevisionId: 'rev-1', isResolved: true } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'elem-1',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentUnResolved,
+      } as CommentUpdatesDto);
+
+      expect(unresolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', undefined);
+    });
+
+    it('should pass real threadId to API when resolving comments that have a threadId', () => {
+      const resolveSpy = vi.spyOn(commentsService, 'resolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.allComments = [
+        { id: 'c1', elementId: 'elem-1', threadId: 'thread-abc', apiRevisionId: 'rev-1', isResolved: false } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'thread-abc',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+      } as CommentUpdatesDto);
+
+      expect(resolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', 'thread-abc');
+    });
+
+    it('should pass real threadId to API when unresolving comments that have a threadId', () => {
+      const unresolveSpy = vi.spyOn(commentsService, 'unresolveComments').mockReturnValue(of({}));
+      vi.spyOn(component as any, 'applyCommentResolutionUpdate').mockImplementation(() => {});
+
+      component.allComments = [
+        { id: 'c1', elementId: 'elem-1', threadId: 'thread-xyz', apiRevisionId: 'rev-1', isResolved: true } as any,
+      ];
+
+      component.handleCommentResolutionActionEmitter({
+        elementId: 'elem-1',
+        threadId: 'thread-xyz',
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentUnResolved,
+      } as CommentUpdatesDto);
+
+      expect(unresolveSpy).toHaveBeenCalledWith('test-review', 'elem-1', 'thread-xyz');
+    });
+  });
+
   describe('Severity change propagation', () => {
     let commentsService: CommentsService;
 

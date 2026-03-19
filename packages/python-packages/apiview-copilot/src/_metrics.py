@@ -16,7 +16,7 @@ from src._apiview import (
 )
 from src._database_manager import get_database_manager
 from src._models import APIViewComment
-from src._utils import run_prompty
+from src._prompt_runner import run_prompt
 
 
 @dataclass
@@ -125,7 +125,7 @@ def get_metrics_report(
         _generate_charts(report, start_date, end_date)
     if markdown:
         inputs = {"data": report}
-        summary = run_prompty(folder="other", filename="summarize_metrics", inputs=inputs)
+        summary = run_prompt(folder="other", filename="summarize_metrics", inputs=inputs)
         print(summary)
     else:
         return report

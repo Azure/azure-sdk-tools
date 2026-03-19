@@ -343,17 +343,25 @@ class EvaluationRunner:
                 raw = result.raw_results[0]
                 for filename, eval_result in raw.items():
                     for res in eval_result["rows"]:
-                        testcase = res["inputs.testcase"]
-                        score = res["outputs.metrics.score"]
-                        success = res["outputs.metrics.success"]
+                        testcase = res.get("inputs.testcase", "unknown")
+                        score = res.get("outputs.metrics.score")
+                        success = res.get("outputs.metrics.success", False)
+                        details = {
+                            "expected_action": res.get("outputs.metrics.expected_action", ""),
+                            "actual_action": res.get("outputs.metrics.actual_action", ""),
+                        }
+
+                        if score is None:
+                            failed_tests.append((testcase, 0, details))
+                            continue
 
                         if success:
                             if score < 100:
-                                partial_tests.append((testcase, score))
+                                partial_tests.append((testcase, score, details))
                             else:
-                                passed_tests.append((testcase, score))
+                                passed_tests.append((testcase, score, details))
                         else:
-                            failed_tests.append((testcase, score))
+                            failed_tests.append((testcase, score, details))
 
                 workflow_stats.append(
                     {
@@ -386,9 +394,12 @@ class EvaluationRunner:
             for stat in failed:
                 result = stat["result"]
                 print(f"{RED}_________________________ {result.workflow_name} _________________________{RESET}")
-                for testcase, score in stat["failed_testcases"]:
+                for testcase, score, details in stat["failed_testcases"]:
                     print(f"{RED}FAILED{RESET} {result.workflow_name}::{testcase}")
                     print(f"  score: {score}")
+                    if details.get("expected_action") or details.get("actual_action"):
+                        print(f"  expected: {details['expected_action']}")
+                        print(f"  actual:   {details['actual_action']}")
                     print()
 
         if has_partial:
@@ -400,9 +411,12 @@ class EvaluationRunner:
                 if stat["partial_testcases"]:
                     result = stat["result"]
                     print(f"{YELLOW}_________________________ {result.workflow_name} _________________________{RESET}")
-                    for testcase, score in stat["partial_testcases"]:
+                    for testcase, score, details in stat["partial_testcases"]:
                         print(f"{YELLOW}PARTIAL{RESET} {result.workflow_name}::{testcase}")
                         print(f"  score: {score}")
+                        if details.get("expected_action") or details.get("actual_action"):
+                            print(f"  expected: {details['expected_action']}")
+                            print(f"  actual:   {details['actual_action']}")
                         print()
 
         if self._verbose and any(len(s["passed_testcases"]) > 0 for s in workflow_stats):
@@ -414,7 +428,7 @@ class EvaluationRunner:
                 if stat["passed_testcases"]:
                     result = stat["result"]
                     print(f"{GREEN}_________________________ {result.workflow_name} _________________________{RESET}")
-                    for testcase, score in stat["passed_testcases"]:
+                    for testcase, score, _details in stat["passed_testcases"]:
                         print(f"{GREEN}✓{RESET} {result.workflow_name}::{testcase}")
                         print(f"  score: {score}")
                         print()
@@ -431,13 +445,13 @@ class EvaluationRunner:
 
             for stat in failed:
                 result = stat["result"]
-                for testcase, _ in stat["failed_testcases"]:
+                for testcase, _, _details in stat["failed_testcases"]:
                     print(f"{RED}FAILED{RESET} {result.workflow_name}::{testcase}")
 
             for stat in workflow_stats:
                 if stat["partial_testcases"]:
                     result = stat["result"]
-                    for testcase, score in stat["partial_testcases"]:
+                    for testcase, score, _details in stat["partial_testcases"]:
                         print(f"{YELLOW}PARTIAL{RESET} {result.workflow_name}::{testcase} - score: {score}")
 
             print()

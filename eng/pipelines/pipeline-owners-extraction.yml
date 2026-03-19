@@ -16,6 +16,8 @@ parameters:
 
 stages:
 - stage: Run
+  # TODO: Remove before merging
+  condition: false
   variables:
   - template: ./templates/variables/globals.yml
 

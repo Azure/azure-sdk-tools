@@ -53,6 +53,59 @@ The Azure SDK QA Bot Backend is designed to help developers with Azure SDK quest
    go run main.go
    ```
 
+## Use Pre-built Binaries
+
+Pre-built binaries are available on the [GitHub Releases](https://github.com/Azure/azure-sdk-tools/releases?q=azure-sdk-qa-bot-backend) page. This lets you run the backend without installing Go or building from source.
+
+### Download
+
+Download the archive matching your platform from the latest release:
+
+| Platform | Archive |
+|---|---|
+| Linux x64 | `azure-sdk-qa-bot-backend-standalone-linux-x64.tar.gz` |
+| Linux ARM64 | `azure-sdk-qa-bot-backend-standalone-linux-arm64.tar.gz` |
+| macOS x64 | `azure-sdk-qa-bot-backend-standalone-osx-x64.tar.gz` |
+| macOS ARM64 | `azure-sdk-qa-bot-backend-standalone-osx-arm64.tar.gz` |
+| Windows x64 | `azure-sdk-qa-bot-backend-standalone-win-x64.zip` |
+
+### Run
+
+1. Extract the archive:
+
+   ```bash
+   # Linux / macOS
+   tar -xzf azure-sdk-qa-bot-backend-standalone-<platform>.tar.gz
+
+   # Windows (PowerShell)
+   Expand-Archive azure-sdk-qa-bot-backend-standalone-win-x64.zip -DestinationPath .
+   ```
+
+2. Set the required environment variable:
+
+   ```bash
+   export AZURE_APPCONFIG_ENDPOINT=https://azuresdkqabot-dev-config.azconfig.io
+   ```
+
+3. Ensure you are logged in to Azure CLI (`az login`) with access to the Azure SDK Engineering System subscription.
+
+4. Start the server:
+
+   ```bash
+   # Linux / macOS
+   ./azure-sdk-qa-bot-backend
+
+   # Windows
+   .\azure-sdk-qa-bot-backend.exe
+   ```
+
+   The server listens on port **8088** by default. Verify with:
+
+   ```bash
+   curl http://localhost:8088/ping
+   # Expected: pong
+   ```
+
 ## API Usage
 
 The main endpoint for querying the bot is `/completion`. [Here](test/api_test.rest) is an example of how to use it

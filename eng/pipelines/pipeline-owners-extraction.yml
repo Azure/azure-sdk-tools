@@ -139,6 +139,8 @@ stages:
               RepoName: ${{ repo.Name }}
               PushArgs: '-f'
               OpenAsDraft: ${{ repo.DraftPr }}
+              # TODO: Remove when this is ready for production
+              CloseAfterOpenForTesting: true
               PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'
               PRBody: |
                 Updating CODEOWNERS

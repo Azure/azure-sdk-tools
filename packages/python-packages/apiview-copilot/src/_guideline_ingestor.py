@@ -30,14 +30,10 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
 import httpx
+import markdown_it
 from bs4 import BeautifulSoup
 
-try:
-    import markdown_it
-
-    MARKDOWN_IT = markdown_it.MarkdownIt()
-except ImportError:
-    MARKDOWN_IT = None
+MARKDOWN_IT = markdown_it.MarkdownIt()
 
 from src._database_manager import DatabaseManager
 from src._models import Guideline
@@ -387,10 +383,6 @@ class GuidelineIngestor:
         - Uses BeautifulSoup to parse HTML structure
         - Extracts guidelines from list items and paragraphs with requirement IDs
         """
-        if MARKDOWN_IT is None:
-            logger.warning("markdown-it-py not installed, falling back to regex-based parsing")
-            return self._parse_markdown_fallback(file_path, content)
-
         # Determine language from file path
         parts = file_path.replace("\\", "/").split("/")
         language = None
@@ -457,69 +449,6 @@ class GuidelineIngestor:
                             entries[-1].text += "\n" + item_text
 
         return entries
-
-    def _parse_markdown_fallback(self, file_path: str, content: str) -> List[ParsedGuideline]:
-        """
-        Fallback regex-based parsing when markdown-it is not available.
-
-        This uses the header anchor pattern: ## Header Text {#anchor-id}
-        """
-        guidelines = []
-
-        # Determine language from file path
-        parts = file_path.replace("\\", "/").split("/")
-        language = None
-        if len(parts) >= 2:
-            try:
-                docs_idx = parts.index("docs")
-                if docs_idx + 1 < len(parts):
-                    folder = parts[docs_idx + 1]
-                    language = LANGUAGE_FOLDER_MAP.get(folder)
-            except ValueError:
-                pass
-
-        # Extract filename without extension for ID prefix
-        filename = parts[-1].replace(".md", "") if parts else "unknown"
-
-        # Pattern to match headers with explicit anchors: ## Text {#anchor}
-        header_pattern = re.compile(r"^(#{1,6})\s+(.+?)\s*\{#([a-zA-Z0-9_-]+)\}\s*$", re.MULTILINE)
-
-        matches = list(header_pattern.finditer(content))
-
-        for i, match in enumerate(matches):
-            header_level = len(match.group(1))
-            anchor = match.group(3)
-
-            # Content starts after this header and ends at the next header of same or higher level
-            start_pos = match.end()
-            end_pos = len(content)
-
-            # Find the next header of same or higher level
-            for next_match in matches[i + 1 :]:
-                next_level = len(next_match.group(1))
-                if next_level <= header_level:
-                    end_pos = next_match.start()
-                    break
-
-            guideline_content = content[start_pos:end_pos].strip()
-
-            # Skip empty guidelines
-            if not guideline_content:
-                continue
-
-            # Create ID in format: {language}_{filename}=html={anchor}
-            guideline_id = f"{language}_{filename}=html={anchor}" if language else f"{filename}=html={anchor}"
-
-            guidelines.append(
-                ParsedGuideline(
-                    id=guideline_id,
-                    text=guideline_content,
-                    language=language,
-                    source_file_path=file_path,
-                )
-            )
-
-        return guidelines
 
     # ========================================================================
     # Content Hashing and Validation

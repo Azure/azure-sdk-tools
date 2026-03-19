@@ -22,6 +22,7 @@ The ingestion process follows the original archagent-ai approach:
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import re
 from collections import Counter
@@ -36,7 +37,8 @@ from bs4 import BeautifulSoup
 MARKDOWN_IT = markdown_it.MarkdownIt()
 
 from src._database_manager import DatabaseManager
-from src._models import Guideline
+from src._models import Example, ExampleType, Guideline
+from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 
@@ -49,6 +51,9 @@ GUIDELINES_PATH_PREFIX = "docs/"
 
 # App Configuration key for tracking sync state
 LAST_SYNCED_COMMIT_SHA_KEY = "guidelines:last_synced_commit_sha"
+
+# Batch size for LLM parsing (matches original archagent-ai process)
+LLM_BATCH_SIZE = 10
 
 # Files to parse from the azure-sdk repo (matches original process)
 FILES_TO_PARSE = [
@@ -530,7 +535,6 @@ class GuidelineIngestor:
         *,
         dry_run: bool = False,
         force: bool = False,
-        use_llm: bool = False,
         base_sha: Optional[str] = None,
         target_sha: Optional[str] = None,
     ) -> SyncResult:
@@ -540,7 +544,6 @@ class GuidelineIngestor:
         Args:
             dry_run: If True, report changes without writing to the database.
             force: If True, ignore the last synced SHA and process all files.
-            use_llm: If True, use LLM to parse guidelines into structured format with examples.
             base_sha: If provided, use this SHA as the baseline instead of the last synced SHA from AppConfig.
             target_sha: If provided, use this SHA as the target instead of the latest on main.
 
@@ -595,9 +598,9 @@ class GuidelineIngestor:
 
         # For incremental sync, we need to parse BOTH base and target to find actual differences
         if is_incremental:
-            return self._sync_incremental(files_to_process, last_sha, current_sha, dry_run, use_llm, result)
+            return self._sync_incremental(files_to_process, last_sha, current_sha, dry_run, result)
         else:
-            return self._sync_full(files_to_process, current_sha, dry_run, use_llm, result)
+            return self._sync_full(files_to_process, current_sha, dry_run, result)
 
     def _parse_files_at_sha(
         self, files: List[str], commit_sha: str, label: str
@@ -632,7 +635,6 @@ class GuidelineIngestor:
         base_sha: str,
         target_sha: str,
         dry_run: bool,
-        use_llm: bool,
         result: SyncResult,
     ) -> SyncResult:
         """Perform incremental sync by comparing guidelines between two SHAs."""
@@ -657,16 +659,42 @@ class GuidelineIngestor:
 
         print(f"\nComparing {len(all_ids)} unique guideline IDs...")
 
+        # First pass: identify which guidelines changed
+        changed_guidelines: List[ParsedGuideline] = []
+        changed_guideline_ids: set[str] = set()
+
         for gid in all_ids:
             in_base = gid in base_map
             in_target = gid in target_map
+
+            if in_target and not in_base:
+                changed_guidelines.append(target_map[gid][0])
+                changed_guideline_ids.add(gid)
+            elif in_base and in_target:
+                if base_map[gid][1] != target_map[gid][1]:
+                    changed_guidelines.append(target_map[gid][0])
+                    changed_guideline_ids.add(gid)
+
+        # Run LLM enrichment on changed guidelines only
+        enriched_map: Dict[str, dict] = {}
+        all_examples: List[ParsedExample] = []
+        if changed_guidelines:
+            enriched_list, all_examples = self._parse_guidelines_with_llm(changed_guidelines, result)
+            for item in enriched_list:
+                enriched_map[item["id"]] = item
+
+        # Second pass: apply changes
+        for gid in all_ids:
+            in_base = gid in base_map
+            in_target = gid in target_map
+            enriched = enriched_map.get(gid)
 
             if in_target and not in_base:
                 # New guideline
                 result.guidelines_created.append(gid)
                 print(f"  Created: {gid}")
                 if not dry_run:
-                    self._upsert_guideline(target_map[gid][0], target_map[gid][1], target_sha)
+                    self._upsert_guideline(target_map[gid][0], target_map[gid][1], target_sha, enriched=enriched)
 
             elif in_base and not in_target:
                 # Deleted guideline
@@ -695,12 +723,16 @@ class GuidelineIngestor:
                     except Exception:
                         print(f"    WARNING: Not found in database - will be created")
                     if not dry_run:
-                        self._upsert_guideline(target_map[gid][0], target_hash, target_sha)
+                        self._upsert_guideline(target_map[gid][0], target_hash, target_sha, enriched=enriched)
 
         # Run indexer once at the end (if not dry run)
         if not dry_run and (result.guidelines_created or result.guidelines_updated or result.guidelines_deleted):
             print("Running search indexer...")
             SearchManager.run_indexers(["guidelines"])
+
+        # Sync examples
+        if all_examples:
+            self._sync_examples(all_examples, target_sha, changed_guideline_ids, dry_run, result)
 
         # Update the last synced SHA
         if not dry_run:
@@ -713,7 +745,6 @@ class GuidelineIngestor:
         files_to_process: List[str],
         target_sha: str,
         dry_run: bool,
-        use_llm: bool,
         result: SyncResult,
     ) -> SyncResult:
         """Perform full sync by comparing target SHA against database."""
@@ -750,9 +781,12 @@ class GuidelineIngestor:
 
         print(f"After validation: {len(good_guidelines)} valid guidelines\n")
 
-        # Step 2: Optionally use LLM to enrich guidelines with examples
-        if use_llm:
-            print("LLM parsing is enabled but not yet implemented - using raw guidelines")
+        # Step 2: Use LLM to enrich guidelines with examples
+        enriched_map: Dict[str, dict] = {}
+        all_examples: List[ParsedExample] = []
+        enriched_list, all_examples = self._parse_guidelines_with_llm(good_guidelines, result)
+        for item in enriched_list:
+            enriched_map[item["id"]] = item
 
         # Step 3: Sync to database
         print("Syncing to database...")
@@ -766,6 +800,9 @@ class GuidelineIngestor:
             # Compute hash of the new content
             new_hash = self.compute_content_hash(parsed.text)
 
+            # Get LLM enrichment if available
+            enriched = enriched_map.get(parsed.id)
+
             # Check if guideline exists and compare hash
             try:
                 existing = self._db.guidelines.get(parsed.id)
@@ -778,13 +815,13 @@ class GuidelineIngestor:
                 # Content changed - update
                 result.guidelines_updated.append(parsed.id)
                 if not dry_run:
-                    self._upsert_guideline(parsed, new_hash, target_sha, existing)
+                    self._upsert_guideline(parsed, new_hash, target_sha, existing, enriched)
 
             except Exception:
                 # Guideline doesn't exist - create
                 result.guidelines_created.append(parsed.id)
                 if not dry_run:
-                    self._upsert_guideline(parsed, new_hash, target_sha)
+                    self._upsert_guideline(parsed, new_hash, target_sha, enriched=enriched)
 
         # Handle deletions: find guidelines that were in processed files but are no longer present
         for file_path in files_with_guidelines:
@@ -809,6 +846,10 @@ class GuidelineIngestor:
             print("Running search indexer...")
             SearchManager.run_indexers(["guidelines"])
 
+        # Step 4: Sync examples
+        if all_examples:
+            self._sync_examples(all_examples, target_sha, seen_guideline_ids, dry_run, result)
+
         # Update the last synced SHA
         if not dry_run:
             self.set_last_synced_commit_sha(target_sha)
@@ -821,25 +862,251 @@ class GuidelineIngestor:
         content_hash: str,
         commit_sha: str,
         existing: Optional[dict] = None,
+        enriched: Optional[dict] = None,
     ) -> None:
-        """Create or update a guideline in the database."""
-        # Extract a title from the text
-        title_lines = parsed.text.strip().split("\n")
-        title = title_lines[0][:100] if title_lines else "Untitled Guideline"
-        title = re.sub(r"(DO|YOU SHOULD|YOU MAY|DO NOT|YOU SHOULD NOT)\s*", "", title).strip()
+        """Create or update a guideline in the database.
+
+        Args:
+            parsed: The raw parsed guideline.
+            content_hash: SHA-256 hash of normalized content.
+            commit_sha: Git commit SHA.
+            existing: Existing DB record (for preserving relationship fields).
+            enriched: LLM-enriched guideline dict (with title, tags, related_guidelines).
+        """
+        # Use LLM-enriched title/tags/content if available, otherwise derive from raw text
+        if enriched:
+            title = enriched.get("title", "")[:100] or "Untitled Guideline"
+            content = enriched.get("content") or parsed.text
+            tags = enriched.get("tags")
+            related_guidelines = enriched.get("related_guidelines", [])
+            # Merge with existing related_examples — LLM examples are synced separately
+            related_examples = existing.get("related_examples", []) if existing else []
+        else:
+            title_lines = parsed.text.strip().split("\n")
+            title = title_lines[0][:100] if title_lines else "Untitled Guideline"
+            title = re.sub(r"(DO|YOU SHOULD|YOU MAY|DO NOT|YOU SHOULD NOT)\s*", "", title).strip()
+            content = parsed.text
+            tags = existing.get("tags") if existing else None
+            related_guidelines = existing.get("related_guidelines", []) if existing else []
+            related_examples = existing.get("related_examples", []) if existing else []
 
         guideline = Guideline(
             id=parsed.id,
             title=title,
-            content=parsed.text,
+            content=content,
             language=parsed.language,
             content_hash=content_hash,
             source_file_path=parsed.source_file_path,
             source_commit_sha=commit_sha,
             last_synced_at=datetime.now(timezone.utc),
-            related_guidelines=existing.get("related_guidelines", []) if existing else [],
-            related_examples=existing.get("related_examples", []) if existing else [],
+            related_guidelines=related_guidelines,
+            related_examples=related_examples,
             related_memories=existing.get("related_memories", []) if existing else [],
-            tags=existing.get("tags") if existing else None,
+            tags=tags,
         )
         self._db.guidelines.upsert(parsed.id, data=guideline, run_indexer=False)
+
+    # ========================================================================
+    # LLM-based Example Extraction
+    # ========================================================================
+
+    def _parse_guidelines_with_llm(
+        self,
+        guidelines: List[ParsedGuideline],
+        result: SyncResult,
+    ) -> Tuple[List[dict], List[ParsedExample]]:
+        """
+        Use LLM to enrich guidelines and extract code examples.
+
+        Follows the original archagent-ai Step 2 process:
+        - Sends batches of guidelines to the LLM
+        - LLM returns enriched guidelines (with title, tags, clarity) and extracted examples
+        - Examples are code blocks separated into good/bad classifications
+
+        Args:
+            guidelines: Raw parsed guidelines from Step 1.
+            result: SyncResult to append errors to.
+
+        Returns:
+            Tuple of (enriched_guidelines_dicts, parsed_examples).
+        """
+        enriched_guidelines: List[dict] = []
+        all_examples: List[ParsedExample] = []
+
+        batch_count = (len(guidelines) + LLM_BATCH_SIZE - 1) // LLM_BATCH_SIZE
+        print(f"\nParsing {len(guidelines)} guidelines with LLM in {batch_count} batches...")
+
+        for batch_idx in range(batch_count):
+            start = batch_idx * LLM_BATCH_SIZE
+            end = min(start + LLM_BATCH_SIZE, len(guidelines))
+            batch = guidelines[start:end]
+
+            # Convert batch to JSON input format (matches original archagent-ai)
+            batch_input = [{"id": g.id, "text": g.text} for g in batch]
+
+            try:
+                result_str = run_prompt(
+                    folder="other",
+                    filename="parse_guidelines",
+                    inputs={"question": json.dumps(batch_input)},
+                    max_retries=3,
+                    logger=logger,
+                )
+                parsed_result = json.loads(result_str)
+                items = parsed_result.get("items", [])
+
+                for item in items:
+                    enriched_guidelines.append(item)
+
+                    # Extract examples from the guideline's related_examples
+                    guideline_id = item.get("id", "")
+                    for ex in item.get("related_examples", []):
+                        # Find source file path from the original parsed guideline
+                        source_file = ""
+                        lang = None
+                        for g in batch:
+                            if g.id == guideline_id:
+                                source_file = g.source_file_path
+                                lang = g.language
+                                break
+
+                        all_examples.append(
+                            ParsedExample(
+                                id=ex.get("id", ""),
+                                title=ex.get("title", ""),
+                                content=ex.get("content", ""),
+                                example_type=ex.get("example_type", "good"),
+                                guideline_ids=ex.get("guideline_ids", [guideline_id]),
+                                language=lang or ex.get("language"),
+                                source_file_path=source_file,
+                            )
+                        )
+
+                print(f"  Batch {batch_idx + 1}/{batch_count}: {len(items)} guidelines, "
+                      f"{sum(len(i.get('related_examples', [])) for i in items)} examples")
+
+            except Exception as e:
+                logger.error(f"LLM parsing failed for batch {batch_idx + 1}: {e}")
+                result.errors.append(f"LLM batch {batch_idx + 1}: {e}")
+                # Fall through — guidelines without LLM enrichment will use raw data
+
+        print(f"LLM parsing complete: {len(enriched_guidelines)} guidelines enriched, "
+              f"{len(all_examples)} examples extracted")
+        return enriched_guidelines, all_examples
+
+    def _sync_examples(
+        self,
+        examples: List[ParsedExample],
+        commit_sha: str,
+        guideline_ids_to_process: set[str],
+        dry_run: bool,
+        result: SyncResult,
+    ) -> None:
+        """
+        Sync extracted examples to the database.
+
+        Creates/updates/deletes Example records and updates the parent
+        Guideline.related_examples lists.
+
+        Args:
+            examples: Parsed examples from LLM extraction.
+            commit_sha: Target commit SHA for source tracking.
+            guideline_ids_to_process: Set of guideline IDs that were processed
+                (used to scope deletion checks).
+            dry_run: If True, report changes without modifying the database.
+            result: SyncResult to record outcomes.
+        """
+        if not examples:
+            return
+
+        print(f"\nSyncing {len(examples)} examples...")
+        seen_example_ids: set[str] = set()
+
+        # Group examples by parent guideline for relationship updates
+        guideline_example_map: Dict[str, List[str]] = {}
+
+        for parsed_ex in examples:
+            if not parsed_ex.id:
+                continue
+            seen_example_ids.add(parsed_ex.id)
+
+            # Track guideline -> example relationships
+            for gid in parsed_ex.guideline_ids:
+                guideline_example_map.setdefault(gid, []).append(parsed_ex.id)
+
+            new_hash = self.compute_content_hash(parsed_ex.content)
+
+            try:
+                existing = self._db.examples.get(parsed_ex.id)
+                existing_hash = existing.get("content_hash")
+
+                if existing_hash == new_hash:
+                    result.examples_unchanged.append(parsed_ex.id)
+                    continue
+
+                result.examples_updated.append(parsed_ex.id)
+                if not dry_run:
+                    self._upsert_example(parsed_ex, new_hash, commit_sha, existing)
+            except Exception:
+                result.examples_created.append(parsed_ex.id)
+                if not dry_run:
+                    self._upsert_example(parsed_ex, new_hash, commit_sha)
+
+        # Handle deletions: find examples linked to processed guidelines
+        # that are no longer in the extracted set
+        for gid in guideline_ids_to_process:
+            try:
+                existing = self._db.guidelines.get(gid)
+                old_example_ids = existing.get("related_examples", [])
+                for ex_id in old_example_ids:
+                    if ex_id not in seen_example_ids:
+                        result.examples_deleted.append(ex_id)
+                        if not dry_run:
+                            try:
+                                self._db.examples.delete(ex_id, run_indexer=False)
+                            except Exception:
+                                pass
+            except Exception:
+                pass
+
+        # Update guideline related_examples fields
+        if not dry_run:
+            for gid, ex_ids in guideline_example_map.items():
+                try:
+                    existing = self._db.guidelines.get(gid)
+                    existing["related_examples"] = ex_ids
+                    guideline = Guideline(**{k: v for k, v in existing.items() if k != "kind" and k != "isDeleted"})
+                    self._db.guidelines.upsert(gid, data=guideline, run_indexer=False)
+                except Exception as e:
+                    logger.error(f"Failed to update related_examples for {gid}: {e}")
+
+        # Run examples indexer
+        if not dry_run and (result.examples_created or result.examples_updated or result.examples_deleted):
+            print("Running examples search indexer...")
+            SearchManager.run_indexers(["examples"])
+
+    def _upsert_example(
+        self,
+        parsed: ParsedExample,
+        content_hash: str,
+        commit_sha: str,
+        existing: Optional[dict] = None,
+    ) -> None:
+        """Create or update an example in the database."""
+        example = Example(
+            id=parsed.id,
+            title=parsed.title,
+            content=parsed.content,
+            example_type=ExampleType(parsed.example_type),
+            language=parsed.language,
+            guideline_ids=parsed.guideline_ids,
+            content_hash=content_hash,
+            source_file_path=parsed.source_file_path,
+            source_commit_sha=commit_sha,
+            last_synced_at=datetime.now(timezone.utc),
+            service=existing.get("service") if existing else None,
+            is_exception=existing.get("is_exception", False) if existing else False,
+            tags=existing.get("tags") if existing else None,
+            memory_ids=existing.get("memory_ids", []) if existing else [],
+        )
+        self._db.examples.upsert(parsed.id, data=example, run_indexer=False)

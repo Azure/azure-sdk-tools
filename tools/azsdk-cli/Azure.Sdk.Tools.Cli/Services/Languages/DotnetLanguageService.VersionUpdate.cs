@@ -72,10 +72,69 @@ public sealed partial class DotnetLanguageService : LanguageService
                 nextSteps: [$"Use --release-type beta, or remove the pre-release suffix from the version (e.g., '{targetVersion.Split('-')[0]}')"]);
         }
 
+        // The base class changelog update does an exact version lookup, but during
+        // version promotion (e.g., 12.28.0-beta.2 → 12.28.0) the target version won't
+        // match the latest entry. Rename the latest changelog entry first so the base
+        // class lookup succeeds. This matches Prepare-Release.ps1's ReplaceLatestEntryTitle
+        // behavior: take the latest entry, replace its version/date, preserve content.
+        var changelogPath = changelogHelper.GetChangelogPath(packagePath);
+        if (changelogPath != null)
+        {
+            var changelog = changelogHelper.ParseChangelog(changelogPath);
+            if (changelog?.Entries.Count > 0)
+            {
+                var latestEntry = changelog.Entries[0];
+                if (!string.Equals(latestEntry.Version, targetVersion, StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation(
+                        "Renaming changelog entry from {OldVersion} to {NewVersion}",
+                        latestEntry.Version, targetVersion);
+
+                    var atxHeader = changelog.InitialAtxHeader + "#";
+                    latestEntry.ReleaseTitle = $"{atxHeader} {targetVersion} {latestEntry.ReleaseStatus}";
+
+                    try
+                    {
+                        // Write the renamed entry back; the base class will then update the date
+                        var lines = new List<string>();
+                        if (!string.IsNullOrEmpty(changelog.HeaderBlock))
+                        {
+                            lines.Add(changelog.HeaderBlock);
+                        }
+                        else
+                        {
+                            lines.Add($"{changelog.InitialAtxHeader} Release History");
+                            lines.Add(string.Empty);
+                        }
+                        foreach (var entry in changelog.Entries)
+                        {
+                            lines.Add(entry.ReleaseTitle);
+                            if (entry.ReleaseContent.Count == 0)
+                            {
+                                lines.Add(string.Empty);
+                                lines.Add(string.Empty);
+                            }
+                            else
+                            {
+                                lines.AddRange(entry.ReleaseContent);
+                            }
+                        }
+                        File.WriteAllLines(changelogPath, lines);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to rename changelog entry");
+                        return PackageOperationResponse.CreateFailure(
+                            $"Failed to rename changelog entry: {ex.Message}",
+                            packageInfo: packageInfo,
+                            nextSteps: ["Check the CHANGELOG.md file format"]);
+                    }
+                }
+            }
+        }
+
         // Delegate to the base class which handles:
-        // 1. Changelog entry title update (version + date) via ChangelogHelper.UpdateReleaseDate
-        //    This always replaces the latest entry title, matching Prepare-Release.ps1 behavior,
-        //    so version promotion (e.g., 12.28.0-beta.2 → 12.28.0) is handled automatically.
+        // 1. Changelog release date update via ChangelogHelper.UpdateReleaseDate
         // 2. Language-specific version file updates via UpdatePackageVersionInFilesAsync
         return await base.UpdateVersionAsync(packagePath, releaseType, targetVersion, releaseDate, ct);
     }

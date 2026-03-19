@@ -355,8 +355,12 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
 
   handleCommentResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
     commentUpdates.reviewId = this.review?.id!;
+    const hasRealThreadId = commentUpdates.threadId != null &&
+      this.comments.some(c => c.threadId === commentUpdates.threadId);
+    const threadIdForApi = hasRealThreadId ? commentUpdates.threadId : undefined;
+
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved) {
-      this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
+      this.commentsService.resolveComments(this.review?.id!, commentUpdates.elementId!, threadIdForApi).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
           this.commentsService.notifyQualityScoreRefresh();
@@ -364,7 +368,7 @@ export class ConversationsComponent implements OnChanges, OnDestroy {
       });
     }
     if (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentUnResolved) {
-      this.commentsService.unresolveComments(this.review?.id!, commentUpdates.elementId!, commentUpdates.threadId).pipe(take(1)).subscribe({
+      this.commentsService.unresolveComments(this.review?.id!, commentUpdates.elementId!, threadIdForApi).pipe(take(1)).subscribe({
         next: () => {
           this.applyCommentResolutionUpdate(commentUpdates);
           this.commentsService.notifyQualityScoreRefresh();

@@ -263,7 +263,7 @@ public class ChangelogHelperTests
     }
 
     [Test]
-    public void UpdateReleaseDate_WithDifferentVersion_RenamesLatestEntry()
+    public void UpdateReleaseDate_WithVersionNotFound_ReturnsFailure()
     {
         // Arrange
         var changelogContent = """
@@ -277,16 +277,12 @@ public class ChangelogHelperTests
             """;
         var changelogPath = CreateChangelog(changelogContent);
 
-        // Act — target version differs from latest entry version (version promotion)
+        // Act
         var result = _changelogHelper.UpdateReleaseDate(changelogPath, "2.0.0", "2025-01-30");
 
-        // Assert — latest entry title should be renamed to target version with date
-        Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("1.0.0").And.Contain("2.0.0"));
-        var updatedContent = File.ReadAllText(changelogPath);
-        Assert.That(updatedContent, Does.Contain("## 2.0.0 (2025-01-30)"));
-        Assert.That(updatedContent, Does.Not.Contain("1.0.0"));
-        Assert.That(updatedContent, Does.Contain("Feature A"));
+        // Assert
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Message, Does.Contain("No changelog entry found for version 2.0.0"));
     }
 
     [Test]

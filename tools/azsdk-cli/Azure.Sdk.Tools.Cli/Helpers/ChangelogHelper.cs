@@ -227,46 +227,32 @@ public partial class ChangelogHelper : IChangelogHelper
             return ChangelogUpdateResult.CreateFailure("Failed to parse changelog file.");
         }
 
-        if (data.Entries.Count == 0)
+        if (!data.TryGetEntry(version, out var entry) || entry == null)
         {
             return ChangelogUpdateResult.CreateFailure(
-                "No changelog entries found. Run another tool first to update changelog content for this version.");
+                $"No changelog entry found for version {version}. Run another tool first to update changelog content for this version.");
         }
 
-        var latestEntry = data.Entries[0];
+        // Format the new release status
         var formattedDate = parsedDate.ToString(DateFormat);
         var newReleaseStatus = $"({formattedDate})";
-        var releaseTitleAtxHeader = data.InitialAtxHeader + "#";
 
-        // Check if already up to date (same version and date)
-        if (string.Equals(latestEntry.Version, version, StringComparison.OrdinalIgnoreCase)
-            && latestEntry.ReleaseStatus == newReleaseStatus)
+        // Check if already has this date
+        if (entry.ReleaseStatus == newReleaseStatus)
         {
             _logger.LogDebug("Version {Version} already has release date {ReleaseDate}. No change made.", version, formattedDate);
             return ChangelogUpdateResult.CreateSuccess($"Version {version} already has release date {formattedDate}. No change needed.");
         }
 
-        // Always replace the latest entry title with the target version and date.
-        // This matches the Prepare-Release.ps1 behavior (ReplaceLatestEntryTitle = $true):
-        // take the latest entry, update its version and release status, preserve content.
-        var previousVersion = latestEntry.Version;
-        latestEntry.ReleaseStatus = newReleaseStatus;
-        latestEntry.ReleaseTitle = $"{releaseTitleAtxHeader} {version} {newReleaseStatus}";
+        // Update the entry
+        var releaseTitleAtxHeader = data.InitialAtxHeader + "#";
+        entry.ReleaseStatus = newReleaseStatus;
+        entry.ReleaseTitle = $"{releaseTitleAtxHeader} {version} {newReleaseStatus}";
 
         // Write back to file
         try
         {
             WriteChangelog(changelogPath, data);
-
-            if (!string.Equals(previousVersion, version, StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogInformation(
-                    "Replaced changelog entry {PreviousVersion} → {Version} with release date {ReleaseDate}",
-                    previousVersion, version, formattedDate);
-                return ChangelogUpdateResult.CreateSuccess(
-                    $"Replaced changelog entry {previousVersion} → {version} with release date {formattedDate}.");
-            }
-
             _logger.LogInformation("Updated changelog entry for version {Version} with release date {ReleaseDate}", version, formattedDate);
             return ChangelogUpdateResult.CreateSuccess($"Updated release date for version {version} to {formattedDate}.");
         }

@@ -694,9 +694,8 @@ namespace APIViewWeb.Managers
 
         /// <summary>
         ///     Get the status/result of an AVC review job by polling the copilot service.
-        ///     Returns the raw JSON response from the copilot service.
         /// </summary>
-        public async Task<string> GetCopilotReviewJobAsync(string jobId)
+        public async Task<AIReviewJobPolledResponseModel> GetCopilotReviewJobAsync(string jobId)
         {
             if (string.IsNullOrEmpty(jobId))
             {
@@ -716,7 +715,8 @@ namespace APIViewWeb.Managers
 
                 HttpResponseMessage response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
-                return await response.Content.ReadAsStringAsync();
+                string responseString = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(responseString);
             }
             catch (Exception e)
             {

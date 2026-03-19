@@ -318,19 +318,20 @@ public class ReviewManagerCopilotJobTests
     #region GetCopilotReviewJobAsync Tests
 
     [Fact]
-    public async Task GetCopilotReviewJobAsync_WithValidJobId_ReturnsRawJson()
+    public async Task GetCopilotReviewJobAsync_WithValidJobId_ReturnsStatus()
     {
         var polledResponse = new AIReviewJobPolledResponseModel { Status = "completed", Details = "done" };
-        string expectedJson = JsonSerializer.Serialize(polledResponse);
-        SetupHttpResponse(HttpStatusCode.OK, expectedJson);
+        SetupHttpResponse(HttpStatusCode.OK, JsonSerializer.Serialize(polledResponse));
 
-        string result = await _reviewManager.GetCopilotReviewJobAsync("job-123");
+        AIReviewJobPolledResponseModel result = await _reviewManager.GetCopilotReviewJobAsync("job-123");
 
-        Assert.Equal(expectedJson, result);
+        Assert.NotNull(result);
+        Assert.Equal("completed", result.Status);
+        Assert.Equal("done", result.Details);
     }
 
     [Fact]
-    public async Task GetCopilotReviewJobAsync_WithComments_ReturnsRawJsonWithComments()
+    public async Task GetCopilotReviewJobAsync_WithComments_ReturnsComments()
     {
         var polledResponse = new AIReviewJobPolledResponseModel
         {
@@ -348,24 +349,29 @@ public class ReviewManagerCopilotJobTests
                 }
             }
         };
-        string expectedJson = JsonSerializer.Serialize(polledResponse);
-        SetupHttpResponse(HttpStatusCode.OK, expectedJson);
+        SetupHttpResponse(HttpStatusCode.OK, JsonSerializer.Serialize(polledResponse));
 
-        string result = await _reviewManager.GetCopilotReviewJobAsync("job-with-comments");
+        AIReviewJobPolledResponseModel result = await _reviewManager.GetCopilotReviewJobAsync("job-with-comments");
 
-        Assert.Equal(expectedJson, result);
+        Assert.NotNull(result);
+        Assert.Equal("Success", result.Status);
+        Assert.Single(result.Comments);
+        Assert.Equal("Consider renaming", result.Comments[0].Comment);
+        Assert.Equal("SHOULD", result.Comments[0].Severity);
+        Assert.Equal(0.9f, result.Comments[0].ConfidenceScore);
     }
 
     [Fact]
-    public async Task GetCopilotReviewJobAsync_WithNullComments_ReturnsRawJson()
+    public async Task GetCopilotReviewJobAsync_WithNullComments_ReturnsNullCommentsList()
     {
         var polledResponse = new AIReviewJobPolledResponseModel { Status = "InProgress", Comments = null };
-        string expectedJson = JsonSerializer.Serialize(polledResponse);
-        SetupHttpResponse(HttpStatusCode.OK, expectedJson);
+        SetupHttpResponse(HttpStatusCode.OK, JsonSerializer.Serialize(polledResponse));
 
-        string result = await _reviewManager.GetCopilotReviewJobAsync("job-in-progress");
+        AIReviewJobPolledResponseModel result = await _reviewManager.GetCopilotReviewJobAsync("job-in-progress");
 
-        Assert.Equal(expectedJson, result);
+        Assert.NotNull(result);
+        Assert.Equal("InProgress", result.Status);
+        Assert.Null(result.Comments);
     }
 
     [Theory]

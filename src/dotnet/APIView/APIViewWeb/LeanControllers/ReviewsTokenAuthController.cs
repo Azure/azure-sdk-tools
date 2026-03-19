@@ -279,7 +279,7 @@ public class ReviewsTokenAuthController : ControllerBase
     /// <param name="jobId">The unique identifier for the job (obtained from start-copilot-review-job).</param>
     /// <returns>The job status and results.</returns>
     [HttpGet("get-copilot-review-job/{jobId}", Name = "GetCopilotReviewJob")]
-    public async Task<IActionResult> GetReviewJob([FromRoute] string jobId)
+    public async Task<ActionResult<AIReviewJobPolledResponseModel>> GetReviewJob([FromRoute] string jobId)
     {
         if (string.IsNullOrEmpty(jobId))
         {
@@ -288,8 +288,8 @@ public class ReviewsTokenAuthController : ControllerBase
 
         try
         {
-            string result = await _reviewManager.GetCopilotReviewJobAsync(jobId);
-            return Content(result, "application/json");
+            AIReviewJobPolledResponseModel result = await _reviewManager.GetCopilotReviewJobAsync(jobId);
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
         catch (Exception ex)
         {

@@ -199,23 +199,21 @@ public class ReviewsTokenAuthControllerTests
     [InlineData("")]
     public async Task GetReviewJob_WithEmptyJobId_ReturnsBadRequest(string jobId)
     {
-        IActionResult result = await _controller.GetReviewJob(jobId);
-        Assert.IsType<BadRequestObjectResult>(result);
+        ActionResult<AIReviewJobPolledResponseModel> result = await _controller.GetReviewJob(jobId);
+        Assert.IsType<BadRequestObjectResult>(result.Result);
     }
 
     [Fact]
-    public async Task GetReviewJob_WithValidJobId_Returns200WithJson()
+    public async Task GetReviewJob_WithValidJobId_Returns200WithStatus()
     {
-        string expectedJson = "{\"status\":\"completed\"}";
+        var expectedResponse = new AIReviewJobPolledResponseModel { Status = "completed" };
         _mockReviewManager
             .Setup(m => m.GetCopilotReviewJobAsync("job-123"))
-            .ReturnsAsync(expectedJson);
+            .ReturnsAsync(expectedResponse);
 
-        IActionResult result = await _controller.GetReviewJob("job-123");
+        ActionResult<AIReviewJobPolledResponseModel> result = await _controller.GetReviewJob("job-123");
 
-        var contentResult = Assert.IsType<ContentResult>(result);
-        Assert.Equal("application/json", contentResult.ContentType);
-        Assert.Equal(expectedJson, contentResult.Content);
+        Assert.IsType<LeanJsonResult>(result.Result);
     }
 
     [Fact]
@@ -225,9 +223,9 @@ public class ReviewsTokenAuthControllerTests
             .Setup(m => m.GetCopilotReviewJobAsync("bad-job"))
             .ThrowsAsync(new Exception("connection failed"));
 
-        IActionResult result = await _controller.GetReviewJob("bad-job");
+        ActionResult<AIReviewJobPolledResponseModel> result = await _controller.GetReviewJob("bad-job");
 
-        ObjectResult objectResult = Assert.IsType<ObjectResult>(result);
+        ObjectResult objectResult = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
     }
 

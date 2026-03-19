@@ -65,7 +65,11 @@ public class VerifySetupTool : LanguageMcpTool
 
     protected override Command GetCommand()
     {
-        var checkCommand = new McpCommand("check", "Verify environment setup for MCP release tools", VerifySetupToolName);
+        var checkCommand = new McpCommand("check",
+            "Verify environment setup for MCP release tools. "
+            + "Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed), "
+            + "2 = fixable (re-run with 'install' to auto-remediate). ",
+            VerifySetupToolName);
         checkCommand.Options.Add(LanguagesOption);
         checkCommand.Options.Add(SharedOptions.PackagePath);
         return checkCommand;

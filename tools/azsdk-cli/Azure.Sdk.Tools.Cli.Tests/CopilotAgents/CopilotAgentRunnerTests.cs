@@ -6,6 +6,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Moq;
 
+using static Azure.Sdk.Tools.Cli.Tests.TestHelpers.TestCategories;
+
 namespace Azure.Sdk.Tools.Cli.Tests.CopilotAgents;
 
 [TestFixture]
@@ -599,7 +601,8 @@ internal class CopilotAgentRunnerTests
 
     }
 
-    [Test]
+    [Test, Explicit]
+    [Category(CopilotAgent)]
     public void RunAsync_WithInvalidGitHubToken_ThrowsNotAuthenticatedError()
     {
         // Arrange - Use an invalid GitHub token
@@ -608,7 +611,7 @@ internal class CopilotAgentRunnerTests
             UseStdio = true,
             AutoStart = true,
             UseLoggedInUser = false,
-            GithubToken = "invalid_token_that_will_not_work"
+            GitHubToken = "invalid_token_that_will_not_work"
         });
         var copilotClientWrapper = new CopilotClientWrapper(copilotClient);
         var localTokenUsageHelper = new TokenUsageHelper(Mock.Of<IRawOutputHelper>());

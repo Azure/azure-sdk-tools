@@ -49,7 +49,7 @@ public abstract class BenchmarkScenario
     /// Gets the optional path to the azsdk-mcp executable.
     /// When null, uses the repo's config or falls back to the AZSDK_MCP_PATH environment variable.
     /// </summary>
-    public virtual string? AzsdkMcpPath => null;
+    public virtual string? AzsdkMcpPath { get; set; }
 
     // === SETUP ===
 

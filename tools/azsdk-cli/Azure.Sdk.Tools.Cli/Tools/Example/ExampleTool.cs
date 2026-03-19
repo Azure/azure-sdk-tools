@@ -187,7 +187,7 @@ public class ExampleTool(
                 ["service_type"] = "Azure DevOps"
             };
 
-            var pkg = await devOpsService.GetPackageWorkItemAsync(packageName, language);
+            var pkg = await devOpsService.GetPackageWorkItemAsync(packageName, language, ct: ct);
             details["package_pipeline_url"] = pkg.PipelineDefinitionUrl;
 
             return new ExampleServiceResponse
@@ -218,7 +218,7 @@ public class ExampleTool(
                 ["service_type"] = "GitHub API",
             };
 
-            var user = await gitHubService.GetGitUserDetailsAsync();
+            var user = await gitHubService.GetGitUserDetailsAsync(ct);
             details["user_login"] = user.Login;
             details["user_id"] = user.Id.ToString();
             var result = $"Retrieved user details: {user.Login} (ID: {user.Id})";

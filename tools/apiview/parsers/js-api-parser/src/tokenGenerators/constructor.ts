@@ -1,8 +1,8 @@
 import { ApiConstructor, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import * as ts from "typescript";
-import { ReviewToken, TokenKind } from "../models";
+import { TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import { createToken, processExcerptTokens } from "./helpers";
+import { createToken, processExcerptTokens, TokenCollector } from "./helpers";
 
 const PARAMETER_PROPERTY_MODIFIERS = new Set([
   "public",
@@ -61,7 +61,7 @@ function getParameterPropertyModifiers(item: ApiConstructor): string[][] {
 }
 
 function generate(item: ApiConstructor, deprecated?: boolean): GeneratorResult {
-  const tokens: ReviewToken[] = [];
+  const collector = new TokenCollector();
 
   if (item.kind !== ApiItemKind.Constructor) {
     throw new Error(
@@ -73,7 +73,7 @@ function generate(item: ApiConstructor, deprecated?: boolean): GeneratorResult {
   const parameterModifiersByIndex = getParameterPropertyModifiers(item);
 
   if (item.isProtected) {
-    tokens.push(
+    collector.push(
       createToken(TokenKind.Keyword, "protected", {
         hasSuffixSpace: true,
         deprecated,
@@ -81,15 +81,15 @@ function generate(item: ApiConstructor, deprecated?: boolean): GeneratorResult {
     );
   }
 
-  tokens.push(createToken(TokenKind.Keyword, "constructor", { deprecated }));
-  tokens.push(createToken(TokenKind.Text, "(", { deprecated }));
+  collector.push(createToken(TokenKind.Keyword, "constructor", { deprecated }));
+  collector.push(createToken(TokenKind.Text, "(", { deprecated }));
 
   if (parameters?.length > 0) {
     parameters.forEach((param, index) => {
       const parameterModifiers = parameterModifiersByIndex[index] ?? [];
 
       parameterModifiers.forEach((modifier, modifierIndex) => {
-        tokens.push(
+        collector.push(
           createToken(TokenKind.Keyword, modifier, {
             hasPrefixSpace: index > 0 && modifierIndex === 0,
             hasSuffixSpace: true,
@@ -98,7 +98,7 @@ function generate(item: ApiConstructor, deprecated?: boolean): GeneratorResult {
         );
       });
 
-      tokens.push(
+      collector.push(
         createToken(TokenKind.Text, param.name, {
           hasPrefixSpace: index > 0 && parameterModifiers.length === 0,
           deprecated,
@@ -106,22 +106,22 @@ function generate(item: ApiConstructor, deprecated?: boolean): GeneratorResult {
       );
 
       if (param.isOptional) {
-        tokens.push(createToken(TokenKind.Text, "?", { deprecated }));
+        collector.push(createToken(TokenKind.Text, "?", { deprecated }));
       }
 
-      tokens.push(createToken(TokenKind.Text, ":", { hasSuffixSpace: true, deprecated }));
-      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, tokens, deprecated);
+      collector.push(createToken(TokenKind.Text, ":", { hasSuffixSpace: true, deprecated }));
+      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, collector, deprecated);
 
       if (index < parameters.length - 1) {
-        tokens.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
+        collector.push(createToken(TokenKind.Text, ",", { hasSuffixSpace: true, deprecated }));
       }
     });
   }
 
-  tokens.push(createToken(TokenKind.Text, ")", { deprecated }));
-  tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+  collector.push(createToken(TokenKind.Text, ")", { deprecated }));
+  collector.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 
-  return { tokens };
+  return collector.toResult();
 }
 
 export const constructorTokenGenerator: TokenGenerator<ApiConstructor> = {

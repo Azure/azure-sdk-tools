@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
@@ -79,13 +80,24 @@ public class CommandValidator : IValidator
 
         var startInfo = new ProcessStartInfo
         {
-            FileName = Command,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
             WorkingDirectory = workDir
         };
+
+        // On Windows, wrap with cmd /c to resolve .cmd/.bat files (e.g., npm, tsp)
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            startInfo.FileName = "cmd.exe";
+            startInfo.ArgumentList.Add("/c");
+            startInfo.ArgumentList.Add(Command);
+        }
+        else
+        {
+            startInfo.FileName = Command;
+        }
 
         foreach (var arg in Arguments)
         {

@@ -27,12 +27,14 @@ public class AutoReviewController : ControllerBase
     private readonly IEnumerable<LanguageService> _languageServices;
     private readonly IConfiguration _configuration;
     private readonly TelemetryClient _telemetryClient;
+    private readonly INamespaceManager _namespaceManager;
 
     public AutoReviewController(ICodeFileManager codeFileManager, 
         IAPIRevisionsManager apiRevisionsManager,
         IAutoReviewService autoReviewService,
         IEnumerable<LanguageService> languageServices,
         IConfiguration configuration,
+        INamespaceManager namespaceManager,
         TelemetryClient telemetryClient)
     {
         _codeFileManager = codeFileManager;
@@ -40,6 +42,7 @@ public class AutoReviewController : ControllerBase
         _autoReviewService = autoReviewService;
         _languageServices = languageServices;
         _configuration = configuration;
+        _namespaceManager = namespaceManager;
         _telemetryClient = telemetryClient;
     }
 
@@ -75,7 +78,7 @@ public class AutoReviewController : ControllerBase
                     {
                         return Ok(reviewUrl);
                     }
-                    if (review.IsApproved)
+                    if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
                     {
                         return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                     }
@@ -156,7 +159,7 @@ public class AutoReviewController : ControllerBase
             {
                 return Ok(reviewUrl);
             }
-            if (review.IsApproved)
+            if (review.IsApproved || await _namespaceManager.IsNamespaceApprovedAsync(review.ProjectId, review.Language))
             {
                 return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
             }

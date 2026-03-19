@@ -16,18 +16,32 @@ public class ProjectsManager : IProjectsManager
     private readonly ILogger<ProjectsManager> _logger;
     private readonly ICosmosProjectRepository _projectsRepository;
     private readonly ICosmosReviewRepository _reviewsRepository;
+    private readonly INamespaceManager _namespaceManager;
+
+    private sealed record ReviewLinkChanges(
+        List<ReviewListItemModel> ReviewsToAdd,
+        List<ProjectChangeHistory> ChangeHistoryEntries);
+
+    private sealed record ReconciliationResult(
+        List<ReviewListItemModel> ReviewsToUpsert,
+        List<ReviewListItemModel> ReviewsToAdd,
+        List<ReviewListItemModel> StillLinkedReviews,
+        HashSet<string> ReviewsToRemove,
+        HashSet<string> HistoricalReviewIdsToAdd,
+        List<ProjectChangeHistory> ChangeHistoryEntries);
 
     public ProjectsManager(ICosmosProjectRepository projectsRepository,
         ICosmosReviewRepository reviewsRepository,
+        INamespaceManager namespaceManager,
         ILogger<ProjectsManager> logger)
     {
         _projectsRepository = projectsRepository;
         _reviewsRepository = reviewsRepository;
+        _namespaceManager = namespaceManager;
         _logger = logger;
     }
 
-    public async Task<Project> UpsertProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata,
-        ReviewListItemModel typeSpecReview)
+    public async Task<Project> UpsertProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata, ReviewListItemModel typeSpecReview)
     {
         if (typeSpecReview.Language != ApiViewConstants.TypeSpecLanguage || metadata?.TypeSpec == null)
         {
@@ -42,9 +56,7 @@ public class ProjectsManager : IProjectsManager
         return await CreateProjectFromMetadataAsync(userName, metadata, typeSpecReview);
     }
 
-    public async Task<Project> TryLinkReviewToProjectAsync(
-        string userName,
-        ReviewListItemModel review)
+    public async Task<Project> TryLinkReviewToProjectAsync(string userName, ReviewListItemModel review)
     {
         Project project = null;
 
@@ -53,9 +65,13 @@ public class ProjectsManager : IProjectsManager
             project = await _projectsRepository.GetProjectByCrossLanguagePackageIdAsync(review.CrossLanguagePackageId);
         }
 
-        if (project == null && !string.IsNullOrEmpty(review.Language) && !string.IsNullOrEmpty(review.PackageName))
+        string normalizedLanguage = !string.IsNullOrWhiteSpace(review.Language)
+            ? LanguageServiceHelpers.MapLanguageAlias(review.Language)
+            : null;
+
+        if (project == null && !string.IsNullOrEmpty(normalizedLanguage) && !string.IsNullOrEmpty(review.PackageName))
         {
-            project = await _projectsRepository.GetProjectByExpectedPackageAsync(review.Language, review.PackageName);
+            project = await _projectsRepository.GetProjectByExpectedPackageAsync(normalizedLanguage, review.PackageName);
         }
 
         if (project == null)
@@ -66,10 +82,9 @@ public class ProjectsManager : IProjectsManager
             return null;
         }
 
-        project.ReviewIds ??= new HashSet<string>();
-        project.ChangeHistory ??= new List<ProjectChangeHistory>();
+        project.ChangeHistory ??= [];
 
-        if (project.ReviewIds.Add(review.Id))
+        if (!string.IsNullOrEmpty(normalizedLanguage) && project.Reviews.TryAdd(normalizedLanguage, review.Id))
         {
             project.ChangeHistory.Add(new ProjectChangeHistory
             {
@@ -90,9 +105,9 @@ public class ProjectsManager : IProjectsManager
         return project;
     }
 
-    private async Task<Project> CreateProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata,
-        ReviewListItemModel typeSpecReview)
+    private async Task<Project> CreateProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata, ReviewListItemModel typeSpecReview)
     {
+        Dictionary<string, PackageInfo> expectedPackages = BuildExpectedPackages(metadata);
         var project = new Project
         {
             Id = Guid.NewGuid().ToString(),
@@ -100,9 +115,9 @@ public class ProjectsManager : IProjectsManager
             DisplayName = metadata.TypeSpec.Namespace,
             Description = metadata.TypeSpec.Documentation,
             Namespace = metadata.TypeSpec.Namespace,
-            ExpectedPackages = BuildExpectedPackages(metadata),
+            ExpectedPackages = expectedPackages,
+            Reviews = { [ApiViewConstants.TypeSpecLanguage] = typeSpecReview.Id },
             Owners = [userName],
-            ReviewIds = [typeSpecReview.Id],
             ChangeHistory =
             [
                 new ProjectChangeHistory
@@ -118,21 +133,31 @@ public class ProjectsManager : IProjectsManager
             IsDeleted = false
         };
 
+        var packagesToSearch = expectedPackages.Where(ep => !string.IsNullOrEmpty(ep.Value?.PackageName));
+        ReviewLinkChanges relatedReviews = await DiscoverReviewsForLinkingAsync(
+            project.Id, userName, packagesToSearch, excludeReviewIds: [typeSpecReview.Id]);
+        foreach (ReviewListItemModel review in relatedReviews.ReviewsToAdd)
+        {
+            project.Reviews[review.Language] = review.Id;
+        }
+
+        project.NamespaceInfo = _namespaceManager.BuildInitialNamespaceInfo(userName, metadata, relatedReviews.ReviewsToAdd);
+        project.ChangeHistory.AddRange(relatedReviews.ChangeHistoryEntries);
         await _projectsRepository.UpsertProjectAsync(project);
+
         typeSpecReview.ProjectId = project.Id;
-        await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
+        relatedReviews.ReviewsToAdd.Add(typeSpecReview);
+        await _reviewsRepository.UpsertReviewsAsync(relatedReviews.ReviewsToAdd);
 
         return project;
     }
 
-    private async Task<Project> UpdateProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata,
-        ReviewListItemModel typeSpecReview)
+    private async Task<Project> UpdateProjectFromMetadataAsync(string userName, TypeSpecMetadata metadata, ReviewListItemModel typeSpecReview)
     {
         Project project = await _projectsRepository.GetProjectAsync(typeSpecReview.ProjectId);
         if (project == null)
         {
-            _logger.LogWarning("Project {ProjectId} not found for review {ReviewId}. Creating new project.",
-                typeSpecReview.ProjectId, typeSpecReview.Id);
+            _logger.LogWarning("Project {ProjectId} not found for review {ReviewId}. Creating new project.", typeSpecReview.ProjectId, typeSpecReview.Id);
             typeSpecReview.ProjectId = null;
             return await CreateProjectFromMetadataAsync(userName, metadata, typeSpecReview);
         }
@@ -141,10 +166,14 @@ public class ProjectsManager : IProjectsManager
 
         if (!string.Equals(project.Namespace, metadata.TypeSpec.Namespace, StringComparison.OrdinalIgnoreCase))
         {
+            var oldNamespace = project.Namespace;
             project.Namespace = metadata.TypeSpec.Namespace;
             project.DisplayName = metadata.TypeSpec.Namespace;
             changes.Add("Namespace");
             changes.Add("DisplayName");
+
+            project.NamespaceInfo = _namespaceManager.ResolveTypeSpecNamespaceChange(
+                userName, project.NamespaceInfo, oldNamespace, metadata.TypeSpec.Namespace);
         }
 
         if (!string.Equals(project.CrossLanguagePackageId, typeSpecReview.CrossLanguagePackageId,
@@ -161,14 +190,35 @@ public class ProjectsManager : IProjectsManager
             changes.Add("Description");
         }
 
+        var reviewsToUpsert = new List<ReviewListItemModel>();
         var newExpectedPackages = BuildExpectedPackages(metadata);
         if (!AreExpectedPackagesEqual(project.ExpectedPackages, newExpectedPackages))
         {
+            var oldExpectedPackages = project.ExpectedPackages;
             project.ExpectedPackages = newExpectedPackages;
             changes.Add("ExpectedPackages");
 
-            // Mutates project in-place (ReviewIds, HistoricalReviewIds, ChangeHistory). Caller persists afterward.
-            await ReconcileReviewLinksAsync(userName, project, typeSpecReview.Id);
+            var reconciled = await ReconcileReviewLinksAsync(userName, project, typeSpecReview.Id);
+
+            project.ChangeHistory ??= [];
+
+            foreach (string key in project.Reviews.Where(r => reconciled.ReviewsToRemove.Contains(r.Value))
+                         .Select(r => r.Key).ToList())
+            {
+                project.Reviews.Remove(key);
+            }
+
+            foreach (ReviewListItemModel reviewListItemModel in reconciled.ReviewsToAdd)
+            {
+                project.Reviews[reviewListItemModel.Language] = reviewListItemModel.Id;
+            }
+
+            project.HistoricalReviewIds ??= [];
+            project.HistoricalReviewIds.UnionWith(reconciled.HistoricalReviewIdsToAdd);
+            project.ChangeHistory.AddRange(reconciled.ChangeHistoryEntries);
+            reviewsToUpsert = reconciled.ReviewsToUpsert;
+            var allLinkedReviews = reconciled.StillLinkedReviews.Concat(reconciled.ReviewsToAdd).ToList();
+            project.NamespaceInfo = _namespaceManager.ResolvePackageNamespaceChanges(userName, project.NamespaceInfo, oldExpectedPackages, newExpectedPackages, allLinkedReviews);
         }
 
         if (changes.Count > 0)
@@ -182,17 +232,24 @@ public class ProjectsManager : IProjectsManager
             });
             project.LastUpdatedOn = DateTime.UtcNow;
             await _projectsRepository.UpsertProjectAsync(project);
+
+            if (reviewsToUpsert.Count > 0)
+            {
+                await _reviewsRepository.UpsertReviewsAsync(reviewsToUpsert);
+            }
         }
 
         return project;
     }
 
-    private async Task ReconcileReviewLinksAsync(string userName, Project project, string typeSpecReviewId)
+    private async Task<ReconciliationResult> ReconcileReviewLinksAsync(string userName, Project project, string typeSpecReviewId)
     {
-        project.HistoricalReviewIds ??= [];
-        project.ReviewIds ??= [];
+        var reviewIdsToRemove = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var historicalIdsToAdd = new HashSet<string>();
+        var changeEntries = new List<ProjectChangeHistory>();
+        var reviewsToUpsert = new List<ReviewListItemModel>();
 
-        List<string> reviewIdsToCheck = project.ReviewIds.Where(id => id != typeSpecReviewId).ToList();
+        List<string> reviewIdsToCheck = project.Reviews.Values.Where(id => id != typeSpecReviewId).ToList();
         var reviews = reviewIdsToCheck.Count > 0
             ? (await _reviewsRepository.GetReviewsAsync(reviewIdsToCheck)).ToList()
             : [];
@@ -202,17 +259,16 @@ public class ProjectsManager : IProjectsManager
         if (orphanedIds.Count > 0)
         {
             _logger.LogWarning(
-                "Project {ProjectId} has review IDs not found in database: {OrphanedIds}. Removing from ReviewIds.",
+                "Project {ProjectId} has review IDs not found in database: {OrphanedIds}. Removing from Reviews.",
                 project.Id, string.Join(", ", orphanedIds));
             foreach (var orphanId in orphanedIds)
             {
-                project.ReviewIds.Remove(orphanId);
+                reviewIdsToRemove.Add(orphanId);
             }
         }
 
-        var reviewsToUpsert = new List<ReviewListItemModel>();
         var coveredLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
+        var stillLinkedReviews = new List<ReviewListItemModel>();
         foreach (var review in reviews)
         {
             bool stillMatches = !string.IsNullOrEmpty(review.Language)
@@ -224,52 +280,79 @@ public class ProjectsManager : IProjectsManager
             if (stillMatches)
             {
                 coveredLanguages.Add(review.Language);
+                stillLinkedReviews.Add(review);
                 continue;
             }
 
-            project.ReviewIds.Remove(review.Id);
-            project.HistoricalReviewIds.Add(review.Id);
+            reviewIdsToRemove.Add(review.Id);
+            historicalIdsToAdd.Add(review.Id);
             review.ProjectId = null;
             reviewsToUpsert.Add(review);
         }
 
         if (reviewsToUpsert.Count > 0)
         {
-            project.ChangeHistory.Add(new ProjectChangeHistory
+            changeEntries.Add(new ProjectChangeHistory
             {
                 ChangedOn = DateTime.UtcNow,
                 ChangedBy = userName,
                 ChangeAction = ProjectChangeAction.ReviewUnlinked,
                 Notes = $"Reviews unlinked (ExpectedPackages changed): {string.Join(", ", reviewsToUpsert.Select(r => r.Id))}"
             });
-
-            await _reviewsRepository.UpsertReviewsAsync(reviewsToUpsert);
         }
 
         // For every expected-package language without a linked review, try to find and link one.
-        var languagesToSearch = (project.ExpectedPackages ?? new Dictionary<string, PackageInfo>())
-            .Where(ep => !coveredLanguages.Contains(ep.Key) && !string.IsNullOrEmpty(ep.Value?.PackageName))
-            .ToList();
+        var uncoveredPackages = (project.ExpectedPackages ?? new Dictionary<string, PackageInfo>())
+            .Where(ep => !coveredLanguages.Contains(ep.Key) && !string.IsNullOrEmpty(ep.Value?.PackageName));
+        var discovered = await DiscoverReviewsForLinkingAsync(
+            project.Id, userName, uncoveredPackages, excludeReviewIds: [typeSpecReviewId]);
 
-        foreach (var (language, pkg) in languagesToSearch)
+        reviewsToUpsert.AddRange(discovered.ReviewsToAdd);
+        changeEntries.AddRange(discovered.ChangeHistoryEntries);
+        return new ReconciliationResult(reviewsToUpsert, discovered.ReviewsToAdd, stillLinkedReviews, reviewIdsToRemove, historicalIdsToAdd, changeEntries);
+    }
+
+    private async Task<ReviewLinkChanges> DiscoverReviewsForLinkingAsync(
+        string projectId,
+        string userName,
+        IEnumerable<KeyValuePair<string, PackageInfo>> packagesToSearch,
+        HashSet<string> excludeReviewIds)
+    {
+        var reviews = new List<ReviewListItemModel>();
+        var changeEntries = new List<ProjectChangeHistory>();
+
+        foreach (var (language, pkg) in packagesToSearch)
         {
             ReviewListItemModel candidate = await _reviewsRepository.GetReviewAsync(language, pkg.PackageName, false);
-            if (candidate != null)
+            if (candidate == null || excludeReviewIds.Contains(candidate.Id))
             {
-                candidate.ProjectId = project.Id;
-                project.ReviewIds.Add(candidate.Id);
-                project.ChangeHistory.Add(new ProjectChangeHistory
-                {
-                    ChangedOn = DateTime.UtcNow,
-                    ChangedBy = userName,
-                    ChangeAction = ProjectChangeAction.ReviewLinked,
-                    Notes = $"Review {candidate.Id} ({candidate.Language}/{candidate.PackageName}) linked to project"
-                });
-                await _reviewsRepository.UpsertReviewAsync(candidate);
-                _logger.LogInformation("Linked review {ReviewId} to project {ProjectId} during reconciliation",
-                    candidate.Id, project.Id);
+                continue;
             }
+
+            string previousProjectId = candidate.ProjectId;
+
+            if (string.Equals(previousProjectId, projectId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            candidate.ProjectId = projectId;
+
+            string notes = !string.IsNullOrEmpty(previousProjectId)
+                ? $"Review {candidate.Id} ({candidate.Language}/{candidate.PackageName}) re-linked from project {previousProjectId}"
+                : $"Review {candidate.Id} ({candidate.Language}/{candidate.PackageName}) linked to project";
+
+            changeEntries.Add(new ProjectChangeHistory
+            {
+                ChangedOn = DateTime.UtcNow,
+                ChangedBy = userName,
+                ChangeAction = ProjectChangeAction.ReviewLinked,
+                Notes = notes
+            });
+            reviews.Add(candidate);
         }
+
+        return new ReviewLinkChanges(reviews, changeEntries);
     }
 
     private static Dictionary<string, PackageInfo> BuildExpectedPackages(TypeSpecMetadata metadata)
@@ -282,7 +365,7 @@ public class ProjectsManager : IProjectsManager
         return metadata.Languages
             .Where(lang => !string.IsNullOrEmpty(lang.Value.Namespace) || !string.IsNullOrEmpty(lang.Value.PackageName))
             .ToDictionary(
-                lang => lang.Key,
+                lang => LanguageServiceHelpers.MapLanguageAlias(lang.Key),
                 lang => new PackageInfo { Namespace = lang.Value.Namespace, PackageName = lang.Value.PackageName },
                 StringComparer.OrdinalIgnoreCase);
     }

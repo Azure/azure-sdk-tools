@@ -1,12 +1,11 @@
 import 'reflect-metadata';
-import * as _ from 'lodash';
-import * as fs from 'fs';
-import * as path from 'path';
+
 import {
     ArraySchema,
     BinarySchema,
     BooleanSchema,
     CodeModel,
+    codeModelSchema,
     ComplexSchema,
     DateTimeSchema,
     DictionarySchema,
@@ -25,12 +24,13 @@ import {
     SecurityScheme,
     StringSchema,
     UriSchema,
-    codeModelSchema,
 } from '@autorest/codemodel';
 import { AutorestExtensionHost, Session, startSession } from '@autorest/extension-base';
-import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
-import { Helper } from '../util/helper';
+import * as _ from 'lodash';
+
+import { Config } from '../common/constant';
 import { TestConfig } from '../common/testConfig';
+import { Helper } from '../util/helper';
 
 export enum ExtensionName {
     xMsExamples = 'x-ms-examples',
@@ -338,7 +338,10 @@ export class OutputVariableModel {
     index?: number;
     key?: string;
     languages?: Languages;
-    public constructor(public type: OutputVariableModelType, value: number | string | Languages) {
+    public constructor(
+        public type: OutputVariableModelType,
+        value: number | string | Languages,
+    ) {
         if (typeof value === 'number') {
             this.index = value;
         } else if (typeof value === 'string') {
@@ -367,7 +370,10 @@ function findResponseSchema(operation: Operation, statusCode: string): SchemaRes
 export class TestCodeModeler {
     public static instance: TestCodeModeler;
     public testConfig: TestConfig;
-    private constructor(public codeModel: TestCodeModel, testConfig: TestConfig) {
+    private constructor(
+        public codeModel: TestCodeModel,
+        testConfig: TestConfig,
+    ) {
         this.testConfig = testConfig;
     }
 
@@ -475,9 +481,7 @@ export class TestCodeModeler {
         return await startSession<TestCodeModel>(host, codeModelSchema);
     }
 
-    public findOperationByOperationId(
-        operationId: string,
-    ): {
+    public findOperationByOperationId(operationId: string): {
         operation: Operation;
         operationGroup: OperationGroup;
     } {
@@ -512,5 +516,4 @@ export class TestCodeModeler {
         };
         return { ...options, ...this.testConfig.getValue(Config.apiScenarioLoaderOption, {}) };
     }
-
 }

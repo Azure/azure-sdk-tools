@@ -268,14 +268,9 @@ public class Program
         }
 
         // Print total token usage across all scenarios
-        var totalUsage = new Models.TokenUsage();
-        foreach (var (_, result) in resultsList)
-        {
-            if (result.TokenUsage != null)
-            {
-                totalUsage.Add(result.TokenUsage);
-            }
-        }
+        var totalUsage = resultsList
+            .Where(r => r.Result.TokenUsage != null)
+            .Aggregate(new Models.TokenUsage(), (acc, r) => acc + r.Result.TokenUsage!);
 
         if (totalUsage.TotalTokens > 0)
         {

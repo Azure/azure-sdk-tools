@@ -119,7 +119,7 @@ public class ToolCallValidator : IValidator
         }
 
         var orderStr = EnforceOrder ? " in correct order" : "";
-        var inputStr = ExpectedToolCalls.Any(tc => tc.ExpectedInputs != null) ? " with expected inputs" : "";
+        var inputStr = ExpectedToolCalls.Any(tc => tc.ExpectedInputs.Count > 0) ? " with expected inputs" : "";
         return Pass($"All {ExpectedToolCalls.Count} expected tool(s) called{orderStr}{inputStr}.");
     }
 
@@ -221,7 +221,7 @@ public class ToolCallValidator : IValidator
         for (int i = 0; i < ExpectedToolCalls.Count; i++)
         {
             var expected = ExpectedToolCalls[i];
-            if (expected.ExpectedInputs == null)
+            if (expected.ExpectedInputs.Count == 0)
             {
                 continue;
             }

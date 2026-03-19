@@ -99,7 +99,7 @@ public class ReviewManagerCopilotJobTests
     }
 
     [Fact]
-    public async Task StartCopilotReviewJobAsync_WithMarkdownFence_InfersLanguage()
+    public async Task StartCopilotReviewJobAsync_WithMarkdownFence_InfersLanguageAndStripsContent()
     {
         var expectedResponse = new AIReviewJobStartedResponseModel { JobId = "job-456" };
         string capturedBody = null;
@@ -126,6 +126,9 @@ public class ReviewManagerCopilotJobTests
         Assert.NotNull(result);
         Assert.Equal("job-456", result.JobId);
         Assert.Contains("\"language\":\"python\"", capturedBody);
+        // Verify the fences are stripped from the sent payload
+        Assert.DoesNotContain("```", capturedBody);
+        Assert.Contains("def hello(): pass", capturedBody);
     }
 
     [Fact]
@@ -217,6 +220,40 @@ public class ReviewManagerCopilotJobTests
     }
 
     [Fact]
+    public async Task StartCopilotReviewJobAsync_WithFencedBase_StripsBaseFences()
+    {
+        var expectedResponse = new AIReviewJobStartedResponseModel { JobId = "job-base" };
+        string capturedBody = null;
+
+        _mockHttpMessageHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) =>
+            {
+                capturedBody = req.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            })
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(expectedResponse))
+            });
+
+        var request = new StartReviewJobRequest
+        {
+            Target = "def hello(): pass",
+            Language = "python",
+            Base = "```python\ndef old_hello(): pass\n```"
+        };
+
+        await _reviewManager.StartCopilotReviewJobAsync(request);
+
+        Assert.Contains("def old_hello(): pass", capturedBody);
+        Assert.DoesNotContain("```", capturedBody);
+    }
+
+    [Fact]
     public async Task StartCopilotReviewJobAsync_WithoutOptionalFields_OmitsThemFromPayload()
     {
         var expectedResponse = new AIReviewJobStartedResponseModel { JobId = "job-000" };
@@ -281,15 +318,54 @@ public class ReviewManagerCopilotJobTests
     #region GetCopilotReviewJobAsync Tests
 
     [Fact]
-    public async Task GetCopilotReviewJobAsync_WithValidJobId_ReturnsStatus()
+    public async Task GetCopilotReviewJobAsync_WithValidJobId_ReturnsRawJson()
     {
-        var expectedResponse = new AIReviewJobPolledResponseModel { Status = "completed", Details = "done" };
-        SetupHttpResponse(HttpStatusCode.OK, JsonSerializer.Serialize(expectedResponse));
+        var polledResponse = new AIReviewJobPolledResponseModel { Status = "completed", Details = "done" };
+        string expectedJson = JsonSerializer.Serialize(polledResponse);
+        SetupHttpResponse(HttpStatusCode.OK, expectedJson);
 
-        AIReviewJobPolledResponseModel result = await _reviewManager.GetCopilotReviewJobAsync("job-123");
+        string result = await _reviewManager.GetCopilotReviewJobAsync("job-123");
 
-        Assert.NotNull(result);
-        Assert.Equal("completed", result.Status);
+        Assert.Equal(expectedJson, result);
+    }
+
+    [Fact]
+    public async Task GetCopilotReviewJobAsync_WithComments_ReturnsRawJsonWithComments()
+    {
+        var polledResponse = new AIReviewJobPolledResponseModel
+        {
+            Status = "Success",
+            Comments = new List<AIReviewComment>
+            {
+                new()
+                {
+                    LineNo = 1,
+                    Comment = "Consider renaming",
+                    Suggestion = "Use 'getFoo' instead",
+                    Severity = "SHOULD",
+                    ConfidenceScore = 0.9f,
+                    Source = "analyzer"
+                }
+            }
+        };
+        string expectedJson = JsonSerializer.Serialize(polledResponse);
+        SetupHttpResponse(HttpStatusCode.OK, expectedJson);
+
+        string result = await _reviewManager.GetCopilotReviewJobAsync("job-with-comments");
+
+        Assert.Equal(expectedJson, result);
+    }
+
+    [Fact]
+    public async Task GetCopilotReviewJobAsync_WithNullComments_ReturnsRawJson()
+    {
+        var polledResponse = new AIReviewJobPolledResponseModel { Status = "InProgress", Comments = null };
+        string expectedJson = JsonSerializer.Serialize(polledResponse);
+        SetupHttpResponse(HttpStatusCode.OK, expectedJson);
+
+        string result = await _reviewManager.GetCopilotReviewJobAsync("job-in-progress");
+
+        Assert.Equal(expectedJson, result);
     }
 
     [Theory]
@@ -329,15 +405,15 @@ public class ReviewManagerCopilotJobTests
     }
 
     #endregion
-
-    #region InferLanguageFromMarkdown (tested indirectly via StartCopilotReviewJobAsync)
+    
+    #region Language inference and stripping (tested indirectly via StartCopilotReviewJobAsync)
 
     [Theory]
-    [InlineData("```cs\npublic class Foo {}\n```", "dotnet")]
-    [InlineData("```js\nfunction foo() {}\n```", "typescript")]
-    [InlineData("```go\nfunc main() {}\n```", "golang")]
-    [InlineData("```java\nclass Foo {}\n```", "java")]
-    public async Task StartCopilotReviewJobAsync_InfersLanguageFromMarkdownFence(string target, string expectedLanguage)
+    [InlineData("```cs\npublic class Foo {}\n```", "dotnet", "public class Foo {}")]
+    [InlineData("```js\nfunction foo() {}\n```", "typescript", "function foo() {}")]
+    [InlineData("```go\nfunc main() {}\n```", "golang", "func main() {}")]
+    [InlineData("```java\nclass Foo {}\n```", "java", "class Foo {}")]
+    public async Task StartCopilotReviewJobAsync_InfersLanguageAndStripsMarkdownFence(string target, string expectedLanguage, string expectedContent)
     {
         var expectedResponse = new AIReviewJobStartedResponseModel { JobId = "job-lang" };
         string capturedBody = null;
@@ -361,6 +437,8 @@ public class ReviewManagerCopilotJobTests
         await _reviewManager.StartCopilotReviewJobAsync(request);
 
         Assert.Contains($"\"language\":\"{expectedLanguage}\"", capturedBody);
+        Assert.Contains(expectedContent, capturedBody);
+        Assert.DoesNotContain("```", capturedBody);
     }
 
     [Fact]

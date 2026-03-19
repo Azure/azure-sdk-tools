@@ -625,9 +625,10 @@ namespace APIViewWeb.Managers
                 throw new ArgumentException("Target API text is required.", nameof(request));
             }
 
-            // If language wasn't explicitly provided, try to infer it from a markdown fence tag
+            (string strippedTarget, string inferredLanguage) = StripMarkdownCodeBlock(request.Target);
+
             string language = string.IsNullOrEmpty(request.Language)
-                ? InferLanguageFromMarkdown(request.Target)
+                ? inferredLanguage
                 : request.Language;
 
             if (string.IsNullOrEmpty(language))
@@ -642,11 +643,12 @@ namespace APIViewWeb.Managers
             string startUrl = $"{copilotEndpoint}/api-review/start";
             HttpClient client = _httpClientFactory.CreateClient();
 
-            var payload = new Dictionary<string, object> { { "target", request.Target }, { "language", language } };
+            var payload = new Dictionary<string, object> { { "target", strippedTarget }, { "language", language } };
 
             if (!string.IsNullOrEmpty(request.Base))
             {
-                payload["base"] = request.Base;
+                (string strippedBase, _) = StripMarkdownCodeBlock(request.Base);
+                payload["base"] = strippedBase;
             }
 
             if (!string.IsNullOrEmpty(request.Outline))
@@ -692,8 +694,9 @@ namespace APIViewWeb.Managers
 
         /// <summary>
         ///     Get the status/result of an AVC review job by polling the copilot service.
+        ///     Returns the raw JSON response from the copilot service.
         /// </summary>
-        public async Task<AIReviewJobPolledResponseModel> GetCopilotReviewJobAsync(string jobId)
+        public async Task<string> GetCopilotReviewJobAsync(string jobId)
         {
             if (string.IsNullOrEmpty(jobId))
             {
@@ -713,10 +716,7 @@ namespace APIViewWeb.Managers
 
                 HttpResponseMessage response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
-                string responseString = await response.Content.ReadAsStringAsync();
-                AIReviewJobPolledResponseModel pollResponse = JsonSerializer.Deserialize<AIReviewJobPolledResponseModel>(responseString);
-
-                return pollResponse;
+                return await response.Content.ReadAsStringAsync();
             }
             catch (Exception e)
             {
@@ -725,31 +725,45 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private static string InferLanguageFromMarkdown(string input)
+        private static (string content, string language) StripMarkdownCodeBlock(string input)
         {
             if (string.IsNullOrEmpty(input))
             {
-                return null;
+                return (input, null);
             }
 
             string trimmed = input.Trim();
             if (!trimmed.StartsWith("```"))
             {
-                return null;
+                return (input, null);
             }
 
             int firstNewline = trimmed.IndexOf('\n');
             string tag;
+            string body;
+
             if (firstNewline < 0)
             {
                 tag = trimmed[3..].Trim();
+                body = string.Empty;
             }
             else
             {
                 tag = trimmed[3..firstNewline].Trim();
+                body = trimmed[(firstNewline + 1)..];
             }
 
-            return !string.IsNullOrEmpty(tag) ? LanguageServiceHelpers.GetLanguageAliasForCopilotService(tag) : tag;
+            if (body.TrimEnd().EndsWith("```"))
+            {
+                int lastFence = body.LastIndexOf("```");
+                body = body[..lastFence].TrimEnd();
+            }
+
+            string language = !string.IsNullOrEmpty(tag)
+                ? LanguageServiceHelpers.GetLanguageAliasForCopilotService(tag)
+                : null;
+
+            return (body, language);
         }
 
         /// <summary>

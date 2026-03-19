@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.Configuration;
 using Octokit;
 using System.Diagnostics;
 
@@ -19,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public class GitConnection
     {
+        private const int GitHubCliAuthTokenTimeoutMs = 120000;
         private GitHubClient? _gitHubClient; // Backing field for the property
 
         public GitHubClient gitHubClient
@@ -71,7 +73,23 @@ namespace Azure.Sdk.Tools.Cli.Services
             var stdoutTask = process.StandardOutput.ReadToEndAsync();
             var stderrTask = process.StandardError.ReadToEndAsync();
 
-            process.WaitForExit();
+            if (!process.WaitForExit(GitHubCliAuthTokenTimeoutMs))
+            {
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch
+                {
+                    // Best effort cleanup when the process is unresponsive.
+                }
+
+                throw new InvalidOperationException(
+                    $"Timed out after {GitHubCliAuthTokenTimeoutMs / 1000} seconds while running 'gh auth token'. " +
+                    "Please ensure GitHub CLI is installed, not awaiting interactive prompts, and authenticated via `gh auth login`."
+                );
+            }
+
             Task.WaitAll(stdoutTask, stderrTask);
 
             string output = stdoutTask.Result;
@@ -86,6 +104,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             var ghToken = output.Trim();
+            if (string.IsNullOrWhiteSpace(ghToken))
+            {
+                throw new InvalidOperationException(
+                    "GitHub CLI returned an empty authentication token. " +
+                    "Please run `gh auth status` to verify your login or re-authenticate with `gh auth login`."
+                );
+            }
+
             Environment.SetEnvironmentVariable("GITHUB_TOKEN", ghToken, EnvironmentVariableTarget.Process);
             return ghToken;
         }
@@ -125,8 +151,6 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class GitHubService : GitConnection, IGitHubService
     {
         private readonly ILogger<GitHubService> logger;
-        private const string CreatedByCopilotLabel = "Created By Copilot";
-
         public GitHubService(ILogger<GitHubService> _logger)
         {
             logger = _logger;
@@ -440,11 +464,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             try
             {
                 // Add label
-                await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, createdPullRequest.Number, [CreatedByCopilotLabel]);
+                await gitHubClient.Issue.Labels.AddToIssue(repoOwner, repoName, createdPullRequest.Number, [Constants.GITHUB_LABEL_CREATED_BY_COPILOT]);
             }
             catch (Exception ex)
             {
-                response.Messages.Add($"Failed to add label '{CreatedByCopilotLabel}' to the pull request. Error: {ex.Message}");
+                response.Messages.Add($"Failed to add label '{Constants.GITHUB_LABEL_CREATED_BY_COPILOT}' to the pull request. Error: {ex.Message}");
             }
             return response;
         }

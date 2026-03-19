@@ -13,3 +13,9 @@ These violations are suppressible. Follow the suppression docs for false positiv
 Avocado does not handle moves or renames of API paths. When using `@renamedFrom` on a custom action route, the old swagger path may not appear in the default tag, causing a `MISSING_APIS_IN_DEFAULT_TAG` error.
 
 **Fix**: Add the `Approved-Avocado` label to the PR to suppress this Avocado failure. No changes to the TypeSpec or readme.md are needed.
+
+## readme.md is required for SDK generation (Avocado failure)
+
+Even for brand-new TypeSpec-based APIs, Avocado validates that a `readme.md` exists somewhere in the spec directory to configure SDK generation. TypeSpec compilation succeeds without it, but the SDK pipeline needs it to determine which API versions to generate and where the OpenAPI files are.
+
+The location and factoring of `readme.md` can vary by service. You need at least one in your service directory structure.

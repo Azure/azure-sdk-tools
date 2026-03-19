@@ -40,3 +40,23 @@ Note: Prefer `/** */` doc comments over the `@doc` decorator for documentation.
 Azure specs should not use the `@example` or `@opExample` decorator to provide inline examples. The `typespec-autorest` emitter automatically matches and inserts `x-ms-examples` by operationId from separate example files.
 
 To generate or customize example values, use `oav generate-examples` or the api-scenario mechanism. You can also manually edit example files after generation.
+
+## Augmented decorators on resource name do not apply to LegacyOperations path parameters
+
+Decorators like `@@minLength` and `@@maxLength` applied to a resource model's `name` property are not propagated to LegacyOperations path parameters. LegacyOperations uses passed-in parameters, not the resource model's `name`.
+
+**Fix**: Define a named parameter model with the decorators applied and pass it to `LegacyOperations`:
+
+```typespec
+model MyResourceNameParameter {
+  @maxLength(256)
+  @minLength(1)
+  @path
+  resourceName: string;
+}
+interface MyResourceOperations {
+  ...LegacyOperations<MyResource, MyResourceNameParameter>;
+}
+```
+
+Note: Decorators can be applied to model statements, not model expressions.

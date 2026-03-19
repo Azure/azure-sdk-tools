@@ -12,26 +12,6 @@ npm install -g @typespec/compiler@latest
 
 If working in the `azure-rest-api-specs` repository, follow the repo-specific setup documentation rather than installing globally. Ensure you are using Node.js 20+ and npm 7+.
 
-## Augmented decorators on resource name do not apply to LegacyOperations path parameters
-
-Decorators like `@@minLength` and `@@maxLength` applied to a resource model's `name` property are not propagated to LegacyOperations path parameters. LegacyOperations uses passed-in parameters, not the resource model's `name`.
-
-**Fix**: Define a named parameter model with the decorators applied and pass it to `LegacyOperations`:
-
-```typespec
-model MyResourceNameParameter {
-  @maxLength(256)
-  @minLength(1)
-  @path
-  resourceName: string;
-}
-interface MyResourceOperations {
-  ...LegacyOperations<MyResource, MyResourceNameParameter>;
-}
-```
-
-Note: Decorators can be applied to model statements, not model expressions.
-
 ## Hiding an entire operation group from public SDK surface is not directly supported
 
 TypeSpec does not support hiding a whole operation group via a decorator on the interface. The `@access` decorator is not interpreted by the client generator (tcgc) when applied to an interface.
@@ -45,18 +25,6 @@ When applying `@access(Access.internal)` to individual operations or a namespace
 `TrackedResource<T>` already applies `@Azure.ResourceManager.Private.armResourceInternal` internally. Adding it again explicitly on a model that uses `is TrackedResource<T>` causes "Visibility of property 'name' is sealed and cannot be changed."
 
 **Fix**: Remove the redundant `@armResourceInternal` decorator. With `model is`, the decorator is already inherited from `TrackedResource<T>`. It was only needed when using `model extends` in older TypeSpec versions.
-
-## readme.md is required for SDK generation (Avocado failure)
-
-Even for brand-new TypeSpec-based APIs, Avocado validates that a `readme.md` exists somewhere in the spec directory to configure SDK generation. TypeSpec compilation succeeds without it, but the SDK pipeline needs it to determine which API versions to generate and where the OpenAPI files are.
-
-The location and factoring of `readme.md` can vary by service. You need at least one in your service directory structure.
-
-## PR bot adds WaitForARMFeedback label even when CI checks fail
-
-This is intentional behavior — the label is added when the PR enters the ARM review queue regardless of CI status. Open a draft PR first and only mark it "ready for review" after all required checks pass, to avoid wasting reviewer time. Reviewers who see failing checks will manually change the label to `ARMChangesRequested`.
-
-Note: Automatic label switching for failed checks is on the backlog and will be implemented once the labeling system migration to GitHub Actions is complete.
 
 ## Handling Documentation-Only TypeSpec Changes That Affect Multiple API Versions
 

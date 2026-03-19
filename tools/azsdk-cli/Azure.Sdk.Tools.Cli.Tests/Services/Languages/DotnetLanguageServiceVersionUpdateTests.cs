@@ -102,15 +102,14 @@ internal class DotnetLanguageServiceVersionUpdateTests
             .Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(CreateProcessResult(0, "Version updated"));
 
-        // Act
-        var result = await InvokeUpdatePackageVersionInFilesAsync(
-            packagePath, "2.0.0", "stable");
+        // Act — call UpdateVersionAsync directly (script path is handled here now)
+        var result = await _service.UpdateVersionAsync(
+            packagePath, "stable", "2.0.0", "2025-06-15", CancellationToken.None);
 
         // Assert
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
         Assert.That(result.Message, Does.Contain("Update-PkgVersion.ps1"));
 
-        // Verify the script was called with correct arguments
         _powershellHelperMock.Verify(
             p => p.Run(
                 It.Is<PowershellOptions>(opts =>
@@ -148,8 +147,8 @@ internal class DotnetLanguageServiceVersionUpdateTests
             .ReturnsAsync(CreateProcessResult(1, "Script error"));
 
         // Act
-        var result = await InvokeUpdatePackageVersionInFilesAsync(
-            packagePath, "2.0.0", "stable");
+        var result = await _service.UpdateVersionAsync(
+            packagePath, "stable", "2.0.0", "2025-06-15", CancellationToken.None);
 
         // Assert
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
@@ -321,8 +320,8 @@ internal class DotnetLanguageServiceVersionUpdateTests
             .ReturnsAsync(CreateProcessResult(0, "Done"));
 
         // Act
-        await InvokeUpdatePackageVersionInFilesAsync(
-            packagePath, "13.0.0", "stable");
+        await _service.UpdateVersionAsync(
+            packagePath, "stable", "13.0.0", "2025-06-15", CancellationToken.None);
 
         // Assert - verify correct arguments were passed
         Assert.That(capturedOptions, Is.Not.Null);
@@ -333,6 +332,9 @@ internal class DotnetLanguageServiceVersionUpdateTests
         Assert.That(capturedOptions.Args, Does.Contain("Azure.Storage.Blobs"));
         Assert.That(capturedOptions.Args, Does.Contain("-NewVersionString"));
         Assert.That(capturedOptions.Args, Does.Contain("13.0.0"));
+        Assert.That(capturedOptions.Args, Does.Contain("-ReleaseDate"));
+        Assert.That(capturedOptions.Args, Does.Contain("2025-06-15"));
+        Assert.That(capturedOptions.Args, Does.Contain("-ReplaceLatestEntryTitle"));
     }
 
     [Test]
@@ -413,7 +415,8 @@ internal class DotnetLanguageServiceVersionUpdateTests
             .ReturnsAsync(CreateProcessResult(0, "Done"));
 
         // Act
-        await InvokeUpdatePackageVersionInFilesAsync(packagePath, "13.0.0", "stable");
+        await _service.UpdateVersionAsync(
+            packagePath, "stable", "13.0.0", "2025-06-15", CancellationToken.None);
 
         // Assert - script should use MSBuild name "Azure.Storage.Blobs", not folder name "Azure.Storage"
         Assert.That(capturedOptions, Is.Not.Null);

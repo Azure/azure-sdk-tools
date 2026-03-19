@@ -79,16 +79,8 @@ public class SessionExecutor : IDisposable
                             ToolResult = input.ToolResult,
                             DurationMs = durationMs,
                             McpServerName = mcpServerName,
-                            Timestamp = startTs,
                         });
-                        if (input.ToolName == "skill")
-                        {
-                            toolCalls.Add($"{input.ToolName} {input.ToolArgs?.ToString()}");
-                        }
-                        else
-                        {
-                            toolCalls.Add(input.ToolName);
-                        }
+
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },

@@ -28,9 +28,6 @@ public class ToolCallRecord
     /// <summary>Gets the MCP server name extracted from the tool name prefix, or null.</summary>
     public string? McpServerName { get; init; }
 
-    /// <summary>Gets the timestamp when the tool call was recorded.</summary>
-    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
-
     /// <summary>
     /// Gets the tool arguments as a string-keyed dictionary of JsonElements.
     /// Returns an empty dictionary if args are null or not a JSON object.

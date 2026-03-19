@@ -167,8 +167,16 @@ public class Program
             if (scenariosToRun.Count == 0)
             {
                 var filters = new List<string>();
-                if (tags is { Length: > 0 }) filters.Add($"tag(s): {string.Join(", ", tags)}");
-                if (repo != null) filters.Add($"repo: {repo}");
+                if (tags is { Length: > 0 })
+                {
+                    filters.Add($"tag(s): {string.Join(", ", tags)}");
+                }
+
+                if (repo != null)
+                {
+                    filters.Add($"repo: {repo}");
+                }
+
                 var message = filters.Count > 0
                     ? $"No scenarios found matching {string.Join(" and ", filters)}"
                     : "No scenarios found.";
@@ -264,7 +272,9 @@ public class Program
         foreach (var (_, result) in resultsList)
         {
             if (result.TokenUsage != null)
+            {
                 totalUsage.Add(result.TokenUsage);
+            }
         }
 
         if (totalUsage.TotalTokens > 0)
@@ -303,10 +313,14 @@ public class Program
     private static IEnumerable<BenchmarkScenario> FilterScenarios(IEnumerable<BenchmarkScenario> scenarios, string[]? tags, string? repo)
     {
         if (tags is { Length: > 0 })
+        {
             scenarios = scenarios.Where(s => tags.Any(t => s.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)));
+        }
 
         if (!string.IsNullOrEmpty(repo))
+        {
             scenarios = scenarios.Where(s => $"{s.Repo.Owner}/{s.Repo.Name}".Equals(repo, StringComparison.OrdinalIgnoreCase));
+        }
 
         return scenarios;
     }

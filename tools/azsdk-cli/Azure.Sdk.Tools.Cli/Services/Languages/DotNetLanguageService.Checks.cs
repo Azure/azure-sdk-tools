@@ -234,6 +234,14 @@ public partial class DotnetLanguageService : LanguageService
             logger.LogDebug(ex, "Failed to parse package path for changelog validation: {PackagePath}", packagePath);
         }
 
+        if (string.IsNullOrEmpty(packageName))
+        {
+            return new PackageCheckResponse(1, "",
+                "Unable to determine package name for changelog validation. " +
+                "Ensure the package path follows the expected sdk/<service>/<package> layout " +
+                "and the .csproj file contains a valid <PackageId> element.");
+        }
+
         return await commonValidationHelpers.ValidateChangelog(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 }

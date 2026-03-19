@@ -48,7 +48,7 @@ internal class ExampleToolTests
 
         // Set up DevOps service mock
         mockDevOpsService
-            .Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PackageWorkitemResponse { PipelineDefinitionUrl = "https://dev.azure.com/test-pipeline" });
 
         // Create the tool instance
@@ -101,7 +101,7 @@ internal class ExampleToolTests
         Assert.That(result.Details["package_pipeline_url"], Is.EqualTo("https://dev.azure.com/test-pipeline"));
 
         // Verify the service was called with correct parameters
-        mockDevOpsService!.Verify(x => x.GetPackageWorkItemAsync(packageName, language, It.IsAny<string>()), Times.Once);
+        mockDevOpsService!.Verify(x => x.GetPackageWorkItemAsync(packageName, language, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]

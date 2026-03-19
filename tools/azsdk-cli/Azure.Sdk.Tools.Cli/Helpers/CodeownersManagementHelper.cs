@@ -37,29 +37,29 @@ public class CodeownersManagementHelper(
     ITeamUserCache teamUserCache
 ) : ICodeownersManagementHelper
 {
-    public async Task<CodeownersViewResponse> GetViewByUser(string alias, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByUser(string alias, string? repo, CancellationToken ct)
     {
         var normalizedAlias = NormalizeGitHubAlias(alias);
-        var ownerWi = await FindOwnerByGitHubAlias(normalizedAlias);
+        var ownerWi = await FindOwnerByGitHubAlias(normalizedAlias, ct);
         if (ownerWi == null)
         {
             return new CodeownersViewResponse { ResponseError = $"No Owner work item found for alias '{normalizedAlias}'." };
         }
 
-        var (relatedPackages, relatedLabelOwners) = await FetchRelatedPackagesAndLabelOwners(ownerWi.RelatedIds, repo);
+        var (relatedPackages, relatedLabelOwners) = await FetchRelatedPackagesAndLabelOwners(ownerWi.RelatedIds, repo, ct);
 
-        await HydratePackages(relatedPackages);
-        await HydrateLabelOwners(relatedLabelOwners);
+        await HydratePackages(relatedPackages, ct);
+        await HydrateLabelOwners(relatedLabelOwners, ct);
 
         return new CodeownersViewResponse(relatedPackages, relatedLabelOwners);
     }
 
-    public async Task<CodeownersViewResponse> GetViewByLabel(string[] labels, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByLabel(string[] labels, string? repo, CancellationToken ct)
     {
         var labelWorkItems = new List<LabelWorkItem>();
         foreach (var label in labels)
         {
-            var labelWi = await FindLabelByName(label);
+            var labelWi = await FindLabelByName(label, ct);
             if (labelWi == null)
             {
                 return new CodeownersViewResponse { ResponseError = $"No Label work item found for '{label}'." };
@@ -73,34 +73,34 @@ public class CodeownersManagementHelper(
             .Aggregate((a, b) => a.Intersect(b))
             .ToList();
 
-        var (relatedPackages, relatedLabelOwners) = await FetchRelatedPackagesAndLabelOwners(commonRelatedIds, repo);
+        var (relatedPackages, relatedLabelOwners) = await FetchRelatedPackagesAndLabelOwners(commonRelatedIds, repo, ct);
 
-        await HydratePackages(relatedPackages);
-        await HydrateLabelOwners(relatedLabelOwners);
+        await HydratePackages(relatedPackages, ct);
+        await HydrateLabelOwners(relatedLabelOwners, ct);
 
         return new CodeownersViewResponse(relatedPackages, relatedLabelOwners);
     }
 
-    public async Task<CodeownersViewResponse> GetViewByPath(string path, string? repo)
+    public async Task<CodeownersViewResponse> GetViewByPath(string path, string? repo, CancellationToken ct)
     {
-        var labelOwners = await QueryLabelOwnersByPath(path, repo);
-        await HydrateLabelOwners(labelOwners);
+        var labelOwners = await QueryLabelOwnersByPath(path, repo, ct);
+        await HydrateLabelOwners(labelOwners, ct);
 
         return new CodeownersViewResponse([], labelOwners);
     }
 
-    public async Task<CodeownersViewResponse> GetViewByPackage(string packageName, string? repo = null)
+    public async Task<CodeownersViewResponse> GetViewByPackage(string packageName, string? repo = null, CancellationToken ct = default)
     {
-        var packageWi = await FindPackageByName(packageName, repo);
+        var packageWi = await FindPackageByName(packageName, repo, ct);
         if (packageWi == null)
         {
             return new CodeownersViewResponse { ResponseError = $"No Package work item found for '{packageName}'." };
         }
 
-        await HydratePackages([packageWi]);
+        await HydratePackages([packageWi], ct);
 
-        var relatedLabelOwners = await FetchRelatedLabelOwners(packageWi.RelatedIds, repo);
-        await HydrateLabelOwners(relatedLabelOwners);
+        var relatedLabelOwners = await FetchRelatedLabelOwners(packageWi.RelatedIds, repo, ct);
+        await HydrateLabelOwners(relatedLabelOwners, ct);
 
         return new CodeownersViewResponse([packageWi], relatedLabelOwners);
     }
@@ -119,12 +119,12 @@ public class CodeownersManagementHelper(
         return language != SdkLanguage.Unknown ? language.ToWorkItemString() : repo;
     }
 
-    public async Task<OwnerWorkItem?> FindOwnerByGitHubAlias(string alias)
+    public async Task<OwnerWorkItem?> FindOwnerByGitHubAlias(string alias, CancellationToken ct)
     {
         var normalizedAlias = NormalizeGitHubAlias(alias);
         var escapedAlias = normalizedAlias.Replace("'", "''");
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Owner' AND [Custom.GitHubAlias] = '{escapedAlias}'";
-        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         if (workItems.Count == 0)
         {
             return null;
@@ -132,7 +132,7 @@ public class CodeownersManagementHelper(
         return WorkItemMappers.MapToOwnerWorkItem(workItems.First());
     }
 
-    private async Task<PackageWorkItem?> FindPackageByName(string packageName, string? repo = null)
+    private async Task<PackageWorkItem?> FindPackageByName(string packageName, string? repo = null, CancellationToken ct = default)
     {
         var escapedPackageName = packageName.Replace("'", "''");
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Package' AND [Custom.Package] = '{escapedPackageName}'";
@@ -147,7 +147,7 @@ public class CodeownersManagementHelper(
             }
         }
 
-        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         if (workItems.Count == 0)
         {
             return null;
@@ -158,11 +158,11 @@ public class CodeownersManagementHelper(
         return latest.FirstOrDefault();
     }
 
-    public async Task<LabelWorkItem?> FindLabelByName(string labelName)
+    public async Task<LabelWorkItem?> FindLabelByName(string labelName, CancellationToken ct)
     {
         var escapedLabel = labelName.Replace("'", "''");
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = 'release' AND [System.WorkItemType] = 'Label' AND [Custom.Label] = '{escapedLabel}'";
-        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         if (workItems.Count == 0)
         {
             return null;
@@ -178,9 +178,9 @@ public class CodeownersManagementHelper(
     /// Fetches Package and Label Owner work items from a set of work item IDs in a single API call,
     /// filtering packages by repo language and deduplicating versions, and optionally filtering label owners by repo.
     /// </summary>
-    private async Task<(List<PackageWorkItem> Packages, List<LabelOwnerWorkItem> LabelOwners)> FetchRelatedPackagesAndLabelOwners(IEnumerable<int> relatedIds, string? repo = null)
+    private async Task<(List<PackageWorkItem> Packages, List<LabelOwnerWorkItem> LabelOwners)> FetchRelatedPackagesAndLabelOwners(IEnumerable<int> relatedIds, string? repo = null, CancellationToken ct = default)
     {
-        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds, expand: WorkItemExpand.Relations);
+        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds, expand: WorkItemExpand.Relations, ct: ct);
 
         var packages = workItems
             .Where(wi => wi.Fields.TryGetValue("System.WorkItemType", out var type) && type?.ToString() == "Package")
@@ -214,9 +214,9 @@ public class CodeownersManagementHelper(
     /// <summary>
     /// Fetches Label Owner work items from a set of work item IDs, optionally filtering by repo.
     /// </summary>
-    private async Task<List<LabelOwnerWorkItem>> FetchRelatedLabelOwners(IEnumerable<int> relatedIds, string? repo = null)
+    private async Task<List<LabelOwnerWorkItem>> FetchRelatedLabelOwners(IEnumerable<int> relatedIds, string? repo = null, CancellationToken ct = default)
     {
-        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds, expand: WorkItemExpand.Relations);
+        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds, expand: WorkItemExpand.Relations, ct: ct);
 
         var labelOwners = workItems
             .Where(wi => wi.Fields.TryGetValue("System.WorkItemType", out var type) && type?.ToString() == "Label Owner")
@@ -231,7 +231,7 @@ public class CodeownersManagementHelper(
         return labelOwners;
     }
 
-    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByPath(string path, string? repo)
+    private async Task<List<LabelOwnerWorkItem>> QueryLabelOwnersByPath(string path, string? repo, CancellationToken ct)
     {
         var escapedPath = string.IsNullOrEmpty(path) ? string.Empty : path.Replace("'", "''");
         var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [System.WorkItemType] = 'Label Owner' AND [Custom.RepoPath] = '{escapedPath}'";
@@ -240,7 +240,7 @@ public class CodeownersManagementHelper(
             var escapedRepo = repo.Replace("'", "''");
             query += $" AND [Custom.Repository] = '{escapedRepo}'";
         }
-        var rawWorkItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        var rawWorkItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         return rawWorkItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
     }
 
@@ -251,9 +251,9 @@ public class CodeownersManagementHelper(
     /// <summary>
     /// Fetches Owner and Label work items for a set of related IDs, returning them as dictionaries keyed by work item ID.
     /// </summary>
-    private async Task<(Dictionary<int, OwnerWorkItem> Owners, Dictionary<int, LabelWorkItem> Labels)> FetchRelatedOwnersAndLabels(List<int> relatedIds)
+    private async Task<(Dictionary<int, OwnerWorkItem> Owners, Dictionary<int, LabelWorkItem> Labels)> FetchRelatedOwnersAndLabels(List<int> relatedIds, CancellationToken ct)
     {
-        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds);
+        var workItems = await devOpsService.GetWorkItemsByIdsAsync(relatedIds, ct: ct);
 
         var owners = workItems
             .Where(wi => wi.Fields.TryGetValue("System.WorkItemType", out var type) && type?.ToString() == "Owner")
@@ -268,7 +268,7 @@ public class CodeownersManagementHelper(
         return (owners, labels);
     }
 
-    private async Task HydrateLabelOwners(List<LabelOwnerWorkItem> labelOwners)
+    private async Task HydrateLabelOwners(List<LabelOwnerWorkItem> labelOwners, CancellationToken ct)
     {
         if (labelOwners.Count == 0)
         {
@@ -282,7 +282,7 @@ public class CodeownersManagementHelper(
             return;
         }
 
-        var (owners, labels) = await FetchRelatedOwnersAndLabels(allRelatedIds);
+        var (owners, labels) = await FetchRelatedOwnersAndLabels(allRelatedIds, ct);
 
         foreach (var lo in labelOwners)
         {
@@ -301,7 +301,7 @@ public class CodeownersManagementHelper(
         }
     }
 
-    private async Task HydratePackages(List<PackageWorkItem> packages)
+    private async Task HydratePackages(List<PackageWorkItem> packages, CancellationToken ct)
     {
         if (packages.Count == 0)
         {
@@ -314,7 +314,7 @@ public class CodeownersManagementHelper(
             return;
         }
 
-        var (owners, labels) = await FetchRelatedOwnersAndLabels(allRelatedIds);
+        var (owners, labels) = await FetchRelatedOwnersAndLabels(allRelatedIds, ct);
 
         foreach (var package in packages)
         {
@@ -356,7 +356,8 @@ public class CodeownersManagementHelper(
         string repo,
         OwnerType ownerType,
         string? repoPath,
-        LabelWorkItem[] labelWorkItems
+        LabelWorkItem[] labelWorkItems,
+        CancellationToken ct
     ) {
         var labelTypeString = ownerType.ToWorkItemString();
         var normalizedPath = repoPath ?? string.Empty;
@@ -371,11 +372,11 @@ public class CodeownersManagementHelper(
                     $" AND [Custom.LabelType] = '{escapedLabelType}'" +
                     $" AND [Custom.RepoPath] = '{escapedPath}'";
 
-        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations);
+        var workItems = await devOpsService.FetchWorkItemsPagedAsync(query, expand: WorkItemExpand.Relations, ct: ct);
         if (workItems.Count > 0)
         {
             var candidates = workItems.Select(WorkItemMappers.MapToLabelOwnerWorkItem).ToList();
-            await HydrateLabelOwners(candidates);
+            await HydrateLabelOwners(candidates, ct);
 
             var expectedLabelIds = labelWorkItems.Select(l => l.WorkItemId).ToHashSet();
             foreach (var candidate in candidates)
@@ -402,7 +403,7 @@ public class CodeownersManagementHelper(
             Repository = repo,
             RepoPath = normalizedPath
         };
-        var created = await devOpsService.CreateWorkItemAsync(labelOwnerWi, "Label Owner", title);
+        var created = await devOpsService.CreateWorkItemAsync(labelOwnerWi, "Label Owner", title, ct: ct);
         return WorkItemMappers.MapToLabelOwnerWorkItem(created);
     }
 
@@ -413,9 +414,10 @@ public class CodeownersManagementHelper(
     public async Task<CodeownersModifyResponse> AddOwnersToPackage(
         OwnerWorkItem[] owners,
         string packageName,
-        string repo
+        string repo,
+        CancellationToken ct
     ) {
-        var packageWi = await FindPackageByName(packageName, repo);
+        var packageWi = await FindPackageByName(packageName, repo, ct);
         if (packageWi == null)
         {
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
@@ -429,19 +431,19 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", owner.WorkItemId);
+            await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", owner.WorkItemId, ct: ct);
             logger.LogInformation("Added @{GitHubAlias} to package '{PackageName}'.", owner.GitHubAlias, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            View = await GetViewByPackage(packageName, repo)
+            View = await GetViewByPackage(packageName, repo, ct)
         };
     }
 
-    public async Task<CodeownersModifyResponse> AddLabelsToPackage(LabelWorkItem[] labels, string packageName, string repo)
+    public async Task<CodeownersModifyResponse> AddLabelsToPackage(LabelWorkItem[] labels, string packageName, string repo, CancellationToken ct)
     {
-        var packageWi = await FindPackageByName(packageName, repo);
+        var packageWi = await FindPackageByName(packageName, repo, ct);
         if (packageWi == null)
         {
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
@@ -455,13 +457,13 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", label.WorkItemId);
+            await devOpsService.CreateWorkItemRelationAsync(packageWi.WorkItemId, "related", label.WorkItemId, ct: ct);
             logger.LogInformation("Added label '{LabelName}' to package '{PackageName}'.", label.LabelName, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            View = await GetViewByPackage(packageName, repo)
+            View = await GetViewByPackage(packageName, repo, ct)
         };
     }
 
@@ -470,15 +472,16 @@ public class CodeownersManagementHelper(
         LabelWorkItem[] labels,
         string repo,
         string path,
-        OwnerType ownerType
+        OwnerType ownerType,
+        CancellationToken ct
     ) {
-        var labelOwnerWi = await FindOrCreateLabelOwnerAsync(repo, ownerType, path, labels);
+        var labelOwnerWi = await FindOrCreateLabelOwnerAsync(repo, ownerType, path, labels, ct);
 
         foreach (var labelWi in labels)
         {
             if (!labelOwnerWi.RelatedIds.Contains(labelWi.WorkItemId))
             {
-                await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", labelWi.WorkItemId);
+                await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", labelWi.WorkItemId, ct: ct);
             }
         }
 
@@ -492,15 +495,15 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", ownerWorkItem.WorkItemId);
+            await devOpsService.CreateWorkItemRelationAsync(labelOwnerWi.WorkItemId, "related", ownerWorkItem.WorkItemId, ct: ct);
             logger.LogInformation("Added @{GitHubAlias} and label(s) '{LabelNames}' to path '{Path}'.", ownerWorkItem.GitHubAlias, labelNames, path);
         }
 
         return new CodeownersModifyResponse
         {
             View = string.IsNullOrEmpty(path)
-                ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo)
-                : await GetViewByPath(path, repo)
+                ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo, ct)
+                : await GetViewByPath(path, repo, ct)
         };
     }
 
@@ -511,9 +514,10 @@ public class CodeownersManagementHelper(
     public async Task<CodeownersModifyResponse> RemoveOwnersFromPackage(
         OwnerWorkItem[] owners,
         string packageName,
-        string repo
+        string repo,
+        CancellationToken ct
     ) {
-        var packageWi = await FindPackageByName(packageName, repo);
+        var packageWi = await FindPackageByName(packageName, repo, ct);
         if (packageWi == null)
         {
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
@@ -527,22 +531,23 @@ public class CodeownersManagementHelper(
                 continue;
             }
 
-            await devOpsService.RemoveWorkItemRelationAsync(packageWi.WorkItemId, "related", ownerWi.WorkItemId);
+            await devOpsService.RemoveWorkItemRelationAsync(packageWi.WorkItemId, "related", ownerWi.WorkItemId, ct);
             logger.LogInformation("Removed @{GitHubAlias} from package '{PackageName}'.", ownerWi.GitHubAlias, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            View = await GetViewByPackage(packageName, repo)
+            View = await GetViewByPackage(packageName, repo, ct)
         };
     }
 
     public async Task<CodeownersModifyResponse> RemoveLabelsFromPackage(
         LabelWorkItem[] labels,
         string packageName,
-        string repo
+        string repo,
+        CancellationToken ct
     ) {
-        var packageWi = await FindPackageByName(packageName, repo);
+        var packageWi = await FindPackageByName(packageName, repo, ct);
         if (packageWi == null)
         {
             return new CodeownersModifyResponse { ResponseError = $"No Package work item found for '{packageName}'." };
@@ -555,13 +560,13 @@ public class CodeownersManagementHelper(
                 logger.LogInformation("Skipped removing label '{LabelName}', not linked to package '{PackageName}'.", labelWi.LabelName, packageName);
                 continue;
             }
-            await devOpsService.RemoveWorkItemRelationAsync(packageWi.WorkItemId, "related", labelWi.WorkItemId);
+            await devOpsService.RemoveWorkItemRelationAsync(packageWi.WorkItemId, "related", labelWi.WorkItemId, ct);
             logger.LogInformation("Removed label '{LabelName}' from package '{PackageName}'.", labelWi.LabelName, packageName);
         }
 
         return new CodeownersModifyResponse
         {
-            View = await GetViewByPackage(packageName, repo)
+            View = await GetViewByPackage(packageName, repo, ct)
         };
     }
 
@@ -570,14 +575,15 @@ public class CodeownersManagementHelper(
         LabelWorkItem[] labels,
         string repo,
         string path,
-        OwnerType ownerType
+        OwnerType ownerType,
+        CancellationToken ct
     ) {
-        var labelOwners = await QueryLabelOwnersByPath(path, repo);
+        var labelOwners = await QueryLabelOwnersByPath(path, repo, ct);
         if (labelOwners.Count == 0)
         {
             return new CodeownersModifyResponse { ResponseError = $"No Label Owner work item found for path '{path}'." };
         }
-        await HydrateLabelOwners(labelOwners);
+        await HydrateLabelOwners(labelOwners, ct);
 
         var labelOwner = labelOwners.Single(lo =>
             lo.LabelType.Equals(ownerType.ToWorkItemString(), StringComparison.OrdinalIgnoreCase)
@@ -591,15 +597,15 @@ public class CodeownersManagementHelper(
                 logger.LogInformation("Skipped removing @{GitHubAlias}, not linked as owner for label(s) '{LabelNames}' and path '{Path}'.", owner.GitHubAlias, labelNames, path);
                 continue;
             }
-            await devOpsService.RemoveWorkItemRelationAsync(labelOwner.WorkItemId, "related", owner.WorkItemId);
+            await devOpsService.RemoveWorkItemRelationAsync(labelOwner.WorkItemId, "related", owner.WorkItemId, ct);
             logger.LogInformation("Removed @{GitHubAlias} from owner of label(s) '{LabelNames}' and path '{Path}'.", owner.GitHubAlias, labelNames, path);
         }
 
         return new CodeownersModifyResponse
         {
             View = string.IsNullOrEmpty(path)
-                ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo)
-                : await GetViewByPath(path, repo)
+                ? await GetViewByLabel(labels.Select(l => l.LabelName).ToArray(), repo, ct)
+                : await GetViewByPath(path, repo, ct)
         };
     }
 

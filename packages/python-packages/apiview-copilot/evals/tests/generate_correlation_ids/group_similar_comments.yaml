@@ -1,0 +1,14 @@
+testcase: group_similar_comments
+language: Python
+content: |
+  {
+    1: "Consider using a more descriptive method name to convey its purpose.",
+    2: "This method name should be more descriptive to improve readability.",
+    3: "This parameter list is too long, consider using a builder or options pattern.",
+    4: "The class hierarchy could be simplified to reduce cognitive complexity.",
+    5: "The class hierarchy has unnecessary levels of inheritance.",
+    6: "This class has too many layers, consider flattening the hierarchy."
+  }
+response:
+  action: "(1, 2),(3,),(4, 5, 6)"
+  rationale: Comments 1 and 2 are about descriptive method naming. Comment 3 is about parameter list length and stands alone. Comments 4, 5, and 6 are about class hierarchy complexity.

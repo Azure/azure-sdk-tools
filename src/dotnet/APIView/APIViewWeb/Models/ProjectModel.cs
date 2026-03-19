@@ -13,7 +13,8 @@ public enum ProjectChangeAction
     Deleted,
     UnDeleted,
     ReviewLinked,
-    ReviewUnlinked
+    ReviewUnlinked,
+    NamespaceStatusChanged,
 }
 
 public class Project
@@ -28,7 +29,8 @@ public class Project
     public Dictionary<string, PackageInfo> ExpectedPackages { get; set; }
     public ProjectNamespaceInfo NamespaceInfo { get; set; }
     public List<ProjectChangeHistory> ChangeHistory { get; set; }
-    public HashSet<string> ReviewIds { get; set; }
+    // Maps language name (e.g. "Python", "JavaScript") to the associated review ID.
+    public Dictionary<string, string> Reviews { get; set; } = new (StringComparer.OrdinalIgnoreCase);
     public HashSet<string> HistoricalReviewIds { get; set; }
     public DateTime CreatedOn { get; set; }
     public DateTime LastUpdatedOn { get; set; }

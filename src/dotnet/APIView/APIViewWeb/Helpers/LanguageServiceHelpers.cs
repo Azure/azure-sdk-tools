@@ -30,6 +30,9 @@ namespace APIViewWeb.Helpers
             if (language.Equals("net", StringComparison.OrdinalIgnoreCase) || language.Equals(".NET", StringComparison.OrdinalIgnoreCase))
                 return "C#";
 
+            if (language.Equals("csharp", StringComparison.OrdinalIgnoreCase))
+                return "C#";
+
             if (language.Equals("cpp", StringComparison.OrdinalIgnoreCase))
                 return "C++";
 

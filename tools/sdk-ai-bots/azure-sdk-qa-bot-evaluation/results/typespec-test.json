@@ -1640,34 +1640,34 @@
         "overall_score": 8.625
     },
     {
-        "testcase": "How to version a spread property (ManagedServiceIdentityProperty)",
+        "testcase": "How to version a spread property",
         "expected": {
-            "answer": "add @@added(Employee.identity, Versions.`2025-11-01`);\n```\nmodel Employee is TrackedResource<EmployeeProperties> {\n...ResourceNameParameter<Employee>;\n...ManagedServiceIdentityProperty;\n}\n@@added(Employee.identity, Versions.`2025-11-01`);\n```",
+            "answer": "add @@added(Employee.MyExampleProperty, Versions.`2025-11-01`);\n```\nmodel Employee is TrackedResource<EmployeeProperties> {\n...ResourceNameParameter<Employee>;\n...MyExampleModel;\n}\n@@added(Employee.MyExampleProperty, Versions.`2025-11-01`);\n```",
             "references": [
-                {
-                    "title": "How to version a spread property (ManagedServiceIdentityProperty)? | answer",
-                    "link": ""
-                },
-                {
-                    "title": "Data types | Azure.ResourceManager | `ManagedServiceIdentityProperty`",
-                    "link": "https://azure.github.io/typespec-azure/docs/libraries/azure-resource-manager/reference/data-types"
-                },
                 {
                     "title": "Versioning | Simple Scenarios",
                     "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Converting Existing Specs to Single Active Preview | `@added(T, u)` decorator",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/arm/uncommon-scenarios/01-converting-specs"
+                },
+                {
+                    "title": "Handling multiple API versions using typespec | answer",
+                    "link": ""
                 }
             ]
         },
         "actual": {
-            "answer": "Use an extension decorator to version the `identity` property that comes from the spread, instead of trying to version the spread itself.\n\nIn your case, `ManagedServiceIdentityProperty` adds an `identity` property to `Employee`. You can keep the spread as-is and gate that property with `@added` using an extension decorator:\n\n````typespec\n/** Employee resource */\nmodel Employee is TrackedResource<EmployeeProperties> {\n  ...ResourceNameParameter<Employee>;\n  ...Azure.ResourceManager.ManagedServiceIdentityProperty;\n}\n\n// Only include `identity` starting in 2025-11-01\n@@added(Employee.identity, Versions.`2025-11-01`);\n````\n\nThis way:\n- All existing api-versions (before `2025-11-01`) do NOT see `identity`.\n- The new stable `2025-11-01` (and later) includes `identity` from `ManagedServiceIdentityProperty`.\n\nYou don\u2019t need to duplicate models or create a different `Employee` type per version; the extension decorator gives you versioned control over the spread property.",
+            "answer": "You can\u2019t directly place a versioning decorator on a spread, but you can version the properties introduced by that spread using an extension decorator on the target model.\n\nPattern:\n1. Keep the spread as-is so the `identity` (or other) property exists on the model at the type level.\n2. Use an `@@added` extension decorator on the concrete property to say it only appears starting in `2025-11-01`.\n\nExample (adapted to your `MyExampleModel`):\n\n````typespec\n/** Employee resource */\nmodel Employee is TrackedResource {\n  ...ResourceNameParameter;\n  ...MyExampleModel;  // introduces, say, property `exampleProp`\n}\n\n// Versioning: only show `exampleProp` starting in 2025-11-01\n@@added(Employee.exampleProp, Versions.`2025-11-01`);\n````\n\nHow this works:\n- The spread `...MyExampleModel` defines `exampleProp` on `Employee` for all versions.\n- `@@added(Employee.exampleProp, Versions.`2025-11-01`)` tells the ARM/TypeSpec versioning system to include that property only from `2025-11-01` onward in the emitted OpenAPI.\n- Earlier API versions remain unchanged; the new properties won\u2019t appear there.\n\nIf `MyExampleModel` introduces multiple properties and you need them all only from `2025-11-01`, repeat the `@@added` line per property:\n\n````typespec\n@@added(Employee.propA, Versions.`2025-11-01`);\n@@added(Employee.propB, Versions.`2025-11-01`);\n@@added(Employee.propC, Versions.`2025-11-01`);\n````\n\nThis keeps your resource envelope correct (using the shared template via spread) while making the new fields visible only in the desired API version, which aligns with Azure ARM versioning guidance.",
             "references": [
                 {
                     "title": "How to version a spread property (ManagedServiceIdentityProperty)? | answer",
                     "link": ""
                 },
                 {
-                    "title": "Versioning | Declaring Versions",
-                    "link": "https://azure.github.io/typespec-azure/docs/getstarted/versioning"
+                    "title": "Versioning | FAQ | How do I version a pattern?",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
                 }
             ]
         },
@@ -1677,18 +1677,18 @@
         "similarity_threshold": 4,
         "groundedness": 5.0,
         "gpt_groundedness": 5.0,
-        "groundedness_reason": "The response is fully grounded in the context, directly restating the recommended solution, providing a code example, and explaining the outcome. It is accurate, relevant, and complete.",
+        "groundedness_reason": "The response is fully grounded, accurate, and complete with respect to the context, directly addressing the question and providing correct, detailed guidance and examples.",
         "groundedness_result": "pass",
         "groundedness_threshold": 3,
         "response_completeness": 5.0,
         "response_completeness_result": "pass",
         "response_completeness_threshold": 4,
-        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, including the code, decorator usage, and versioning details.",
-        "reference_match": 0.3333333333333333,
+        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, including the use of @@added for versioning properties introduced by a spread, and provides a clear example and explanation. Minor differences in code details do not affect completeness.",
+        "reference_match": 0.0,
         "reference_match_result": "fail",
-        "knowledge_match": 0.4074074074074074,
+        "knowledge_match": 0.4827586206896552,
         "knowledge_match_result": "fail",
-        "overall_score": 7.7407407407407405
+        "overall_score": 7.482758620689655
     },
     {
         "testcase": "LRO header return 200",
@@ -1759,10 +1759,10 @@
     },
     {
         "average_score": NaN,
-        "total_evals": 33,
-        "similarity_pass_rate": 33,
+        "total_evals": 34,
+        "similarity_pass_rate": 34,
         "groundedness_pass_rate": 23,
-        "response_completeness_pass_rate": 32,
+        "response_completeness_pass_rate": 34,
         "reference_match_pass_rate": 17,
         "knowledge_match_pass_rate": 25,
         "similarity_fail_rate": 1,

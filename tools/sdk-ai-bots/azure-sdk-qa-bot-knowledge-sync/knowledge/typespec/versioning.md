@@ -65,7 +65,7 @@ This is not a breaking change for SDKs because there is no client-side validatio
 
 When adding properties, making fields optional, or changing models for a new API version, you must use versioning decorators (`@added`, `@madeOptional`, `@removed`, etc.). Without them, changes apply to all versions by default, including older ones — this is the most common cause of "generated swagger changed for old versions" validation failures.
 
-Spread parameters cannot be decorated with versioning decorators directly. Use operation-specific parameters instead for localized version changes. Linter warnings that don't apply to your service should be ignored rather than changing service behavior to satisfy them.
+Spread parameters cannot be decorated with versioning decorators directly. Use operation-specific parameters which you can decorate with versioning decorators(e.g., with an augment decorator)，instead for localized version changes.
 
 ## Pattern and constraint changes should apply to all API versions
 
@@ -90,21 +90,9 @@ model MyProperties {
 }
 ```
 
-Note: Do not use `@OpenAPI.extension("x-ms-identifiers", ...)` directly — use `@key` properties or the `@identifiers` decorator instead.
-
 ## Versioning a Spread Property in TypeSpec
 
-**Background**
-
-When adding a new **optional capability property** to a tracked ARM resource, directly spreading the property into the resource model will affect **all existing API versions**, resulting in a breaking change. At the same time, adding such a property directly to the resource envelope may be invalid and trigger warnings.
-
-The goal is to **introduce the new spread property only in a specific API version**, without creating a separate resource model.
-
-**Recommended Pattern**
-
-Use a **spread property combined with a versioning decorator** to scope the new property to a target API version.
-
-**Example**
+When adding a new **optional capability property** to a tracked ARM resource, directly spreading the property into the resource model will affect **all existing API versions**, resulting in a breaking change. At the same time, adding such a property directly to the resource envelope may be invalid and trigger warnings. Use a **spread property combined with a versioning decorator** to scope the new property to a target API version.
 
 ```typespec
 /** A ContosoProviderHub resource */
@@ -116,22 +104,7 @@ model Employee is TrackedResource<EmployeeProperties> {
 @@added(Employee.identity, Versions.`2024-10-01-preview`);
 ```
 
-**Key Takeaway**
-
-**To version a spread property without breaking existing APIs, spread the property into the resource model and apply `@@added` to the specific property for the target API version.**
-
-## Versioning LRO Behavior and Headers for an Existing PUT Operation
-
-**Scenario**
-
-An existing ARM **PUT** operation is extended in a **new API version** to:
-
-- Accept an **optional request body** (the original version had no body).
-- Enable **LRO behavior** (e.g., 201 + async headers) when a feature flag in the optional body is set.
-
-The goal is to apply this behavior **only in the new API version**, including LRO semantics and headers, without breaking existing clients.
-
-**Recommended Pattern**
+## Versioning Behavior for an Existing Operation
 
 The supported approach is to **version the operation itself**, rather than attempting to version individual LRO headers.
 
@@ -159,21 +132,5 @@ interface Employees {
     Employee,
     OptionalRequestBody = true
   >;
-
-  update is ArmCustomPatchSync<
-    Employee,
-    Azure.ResourceManager.Foundations.ResourceUpdateModel<
-      Employee,
-      EmployeeProperties
-    >
-  >;
-
-  delete is ArmResourceDeleteWithoutOkAsync<Employee>;
-  listByResourceGroup is ArmResourceListByParent<Employee>;
-  listBySubscription is ArmListBySubscription<Employee>;
 }
 ```
-
-**Key Takeaway**
-
-**When LRO behavior or request shape changes across versions, the recommended approach is to version the operation using `@sharedRoute` with old and new operations, rather than trying to version individual LRO headers.**

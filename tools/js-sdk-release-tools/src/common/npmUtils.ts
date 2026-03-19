@@ -108,7 +108,7 @@ function ensureTagAvailable(tag: string): boolean {
         return true;
     }
     logger.info(`Tag ${tag} not found locally, attempting to fetch from origin.`);
-    const fetchResult = executeCommand(`git fetch origin refs/tags/${tag}:refs/tags/${tag} --depth=1`);
+    const fetchResult = executeCommand(`git fetch --depth=1 origin refs/tags/${tag}:refs/tags/${tag}`);
     if (!fetchResult || fetchResult.code !== 0) {
         logger.warn(`Failed to fetch tag ${tag} from origin.`);
         return false;

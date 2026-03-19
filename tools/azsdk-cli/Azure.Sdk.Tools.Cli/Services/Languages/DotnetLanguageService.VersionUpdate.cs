@@ -49,6 +49,27 @@ public sealed partial class DotnetLanguageService : LanguageService
             releaseDate = DateTime.Now.ToString("yyyy-MM-dd");
         }
 
+        // Validate that releaseType matches the version format
+        var isPrerelease = targetVersion.Contains('-');
+        if (!string.IsNullOrWhiteSpace(releaseType))
+        {
+            if (releaseType.Equals("stable", StringComparison.OrdinalIgnoreCase) && isPrerelease)
+            {
+                return PackageOperationResponse.CreateFailure(
+                    $"Release type 'stable' does not match pre-release version '{targetVersion}'. Stable versions must not contain a pre-release suffix.",
+                    packageInfo: packageInfo,
+                    nextSteps: [$"Use --release-type beta, or remove the pre-release suffix from the version (e.g., '{targetVersion.Split('-')[0]}')"]);
+            }
+
+            if (releaseType.Equals("beta", StringComparison.OrdinalIgnoreCase) && !isPrerelease)
+            {
+                return PackageOperationResponse.CreateFailure(
+                    $"Release type 'beta' does not match stable version '{targetVersion}'. Beta versions must include a pre-release suffix (e.g., -beta.1).",
+                    packageInfo: packageInfo,
+                    nextSteps: [$"Use --release-type stable, or add a pre-release suffix to the version (e.g., '{targetVersion}-beta.1')"]);
+            }
+        }
+
         // Try to use the repo's Update-PkgVersion.ps1 which handles both
         // version file updates and changelog entry title rename in one step.
         var scriptResult = await TryUpdateVersionUsingScriptAsync(
@@ -173,7 +194,7 @@ public sealed partial class DotnetLanguageService : LanguageService
             "-PackageName", packageName,
             "-NewVersionString", version,
             "-ReleaseDate", releaseDate,
-            "-ReplaceLatestEntryTitle", "$true"
+            "-ReplaceLatestEntryTitle", "true"
         };
 
         var result = await powershellHelper.Run(new PowershellOptions(

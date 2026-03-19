@@ -426,6 +426,58 @@ internal class DotnetLanguageServiceVersionUpdateTests
 
     #endregion
 
+    #region Release Type Validation Tests
+
+    [Test]
+    public async Task UpdateVersion_ReturnsFailure_WhenStableReleaseTypeWithPrereleaseVersion()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("dotnet-version-mismatch-stable");
+        var packagePath = Path.Combine(tempDir.DirectoryPath, "sdk", "test", "Azure.Test");
+        var srcDir = Path.Combine(packagePath, "src");
+        Directory.CreateDirectory(srcDir);
+        await File.WriteAllTextAsync(Path.Combine(srcDir, "Azure.Test.csproj"), CreateSampleCsproj("1.0.0"));
+
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((tempDir.DirectoryPath, "test/Azure.Test", packagePath));
+
+        // Act — stable release type with beta version
+        var result = await _service.UpdateVersionAsync(
+            packagePath, "stable", "1.0.0-beta.1", null, CancellationToken.None);
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("stable"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("pre-release"));
+    }
+
+    [Test]
+    public async Task UpdateVersion_ReturnsFailure_WhenBetaReleaseTypeWithStableVersion()
+    {
+        // Arrange
+        using var tempDir = TempDirectory.Create("dotnet-version-mismatch-beta");
+        var packagePath = Path.Combine(tempDir.DirectoryPath, "sdk", "test", "Azure.Test");
+        var srcDir = Path.Combine(packagePath, "src");
+        Directory.CreateDirectory(srcDir);
+        await File.WriteAllTextAsync(Path.Combine(srcDir, "Azure.Test.csproj"), CreateSampleCsproj("1.0.0"));
+
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((tempDir.DirectoryPath, "test/Azure.Test", packagePath));
+
+        // Act — beta release type with stable version
+        var result = await _service.UpdateVersionAsync(
+            packagePath, "beta", "1.0.0", null, CancellationToken.None);
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("beta"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("pre-release suffix"));
+    }
+
+    #endregion
+
     #region Helpers
 
     private static string CreateSampleCsproj(string version) => $"""

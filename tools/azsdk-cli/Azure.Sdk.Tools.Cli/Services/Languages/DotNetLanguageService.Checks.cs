@@ -114,7 +114,7 @@ public partial class DotnetLanguageService : LanguageService
             }
 
             var workingDirectory = Path.Combine(repoRoot, "eng", "scripts", "compatibility");
-            var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-PackageName", packageName };
+            var args = new[] { "-ServiceDirectory", serviceDirectory, "-PackageName", packageName };
             var timeout = AotCompatTimeout;
             var options = new PowershellOptions(scriptPath, args, workingDirectory: workingDirectory, timeout: timeout);
             var result = await powershellHelper.Run(options, ct);

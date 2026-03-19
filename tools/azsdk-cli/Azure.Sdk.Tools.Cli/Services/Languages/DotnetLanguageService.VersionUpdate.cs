@@ -77,9 +77,11 @@ public sealed partial class DotnetLanguageService : LanguageService
 
         if (scriptResult.ScriptAvailable && scriptResult.Success)
         {
+            // Refetch package info so the response reflects the updated version
+            var updatedPackageInfo = await GetPackageInfo(packagePath, ct);
             return PackageOperationResponse.CreateSuccess(
                 $"Version updated to {targetVersion} with release date {releaseDate} via Update-PkgVersion.ps1.",
-                packageInfo: packageInfo);
+                packageInfo: updatedPackageInfo);
         }
 
         if (scriptResult.ScriptAvailable && !scriptResult.Success)

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Octokit;
-using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -21,7 +21,13 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class GitConnection
     {
         private const int GitHubCliAuthTokenTimeoutMs = 120000;
+        private readonly IProcessHelper processHelper;
         private GitHubClient? _gitHubClient; // Backing field for the property
+
+        protected GitConnection(IProcessHelper processHelper)
+        {
+            this.processHelper = processHelper;
+        }
 
         public GitHubClient gitHubClient
         {
@@ -39,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private static string GetGitHubAuthToken()
+        private string GetGitHubAuthToken()
         {
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
             if (!string.IsNullOrEmpty(token))
@@ -53,57 +59,31 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
                 return token;
             }
-            
-            // If the GITHUB_TOKEN environment variable is not set, try to get the token using the 'gh' CLI command
-            var psi = new ProcessStartInfo
+
+            ProcessResult result;
+            try
             {
-                FileName = "gh",
-                Arguments = "auth token",
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using var process = new Process { StartInfo = psi };
-            process.Start();
-            process.StandardInput.Close();
-
-            var stdoutTask = process.StandardOutput.ReadToEndAsync();
-            var stderrTask = process.StandardError.ReadToEndAsync();
-
-            if (!process.WaitForExit(GitHubCliAuthTokenTimeoutMs))
+                var options = new ProcessOptions("gh", ["auth", "token"], timeout: TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(GitHubCliAuthTokenTimeoutMs));
+                result = processHelper.Run(options, timeoutCts.Token).GetAwaiter().GetResult();
+            }
+            catch (OperationCanceledException)
             {
-                try
-                {
-                    process.Kill(entireProcessTree: true);
-                }
-                catch
-                {
-                    // Best effort cleanup when the process is unresponsive.
-                }
-
                 throw new InvalidOperationException(
                     $"Timed out after {GitHubCliAuthTokenTimeoutMs / 1000} seconds while running 'gh auth token'. " +
                     "Please ensure GitHub CLI is installed, not awaiting interactive prompts, and authenticated via `gh auth login`."
                 );
             }
 
-            Task.WaitAll(stdoutTask, stderrTask);
-
-            string output = stdoutTask.Result;
-            string errorOutput = stderrTask.Result;
-
-            if (process.ExitCode != 0)
+            if (result.ExitCode != 0)
             {
                 throw new InvalidOperationException(
-                    $"Failed to get GitHub auth token. Error:{Environment.NewLine}{errorOutput}{Environment.NewLine}{Environment.NewLine}" +
+                    $"Failed to get GitHub auth token. Error:{Environment.NewLine}{result.Output}{Environment.NewLine}{Environment.NewLine}" +
                     "Please make sure GitHub CLI is installed and login using `gh auth login`."
                 );
             }
 
-            var ghToken = output.Trim();
+            var ghToken = result.Stdout.Trim();
             if (string.IsNullOrWhiteSpace(ghToken))
             {
                 throw new InvalidOperationException(
@@ -151,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class GitHubService : GitConnection, IGitHubService
     {
         private readonly ILogger<GitHubService> logger;
-        public GitHubService(ILogger<GitHubService> _logger)
+        public GitHubService(ILogger<GitHubService> _logger, IProcessHelper processHelper) : base(processHelper)
         {
             logger = _logger;
         }

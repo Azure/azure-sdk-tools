@@ -52,18 +52,17 @@ export async function generateChangelogAndBumpVersion(
     if (!sdkRepoPath) {
         packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
     }
-    const apiVersionType = await getApiVersionType(packageFolderPath);
-    const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
     const packageName = getNpmPackageName(packageFolderPath);
-    const npmViewResult = await tryGetNpmView(packageName);
-    const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
-    const nextVersion = getNextBetaVersion(npmViewResult);
-
     const modularSDKType = getModularSDKType(packageFolderPath);
     if (modularSDKType === ModularSDKType.DataPlane) {
         logger.info(`Skipping changelog generation for DataPlane SDK: ${packageName}`);
         return;
     }
+    const apiVersionType = await getApiVersionType(packageFolderPath);
+    const isStableRelease = await isStableSDKReleaseType(apiVersionType, options)
+    const npmViewResult = await tryGetNpmView(packageName);
+    const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
+    const nextVersion = getNextBetaVersion(npmViewResult);
     const skdReleaseDate = options.skdReleaseDate ?? getCurrentDate();
     const isFirstRelease = shouldTreatAsFirstRelease(npmViewResult, stableVersion, isStableRelease);
     if (isFirstRelease) {

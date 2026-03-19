@@ -20,6 +20,7 @@ from time import time
 from typing import List, Optional
 
 import yaml
+from opentelemetry import metrics
 from src._comment_grouper import CommentGrouper
 from src._credential import get_credential
 from src._diff import create_diff_with_line_numbers
@@ -60,6 +61,24 @@ root_logger.addHandler(console_handler)
 
 # Create module-level logger
 logger = logging.getLogger(__name__)
+
+# OpenTelemetry instrumentation
+_meter = metrics.get_meter(__name__)
+_review_duration_histogram = _meter.create_histogram(
+    name="apiview.review.duration",
+    description="Total wall-clock duration of a review in seconds",
+    unit="s",
+)
+_review_normalized_duration_histogram = _meter.create_histogram(
+    name="apiview.review.normalized_duration",
+    description="Review duration normalized by the number of sections (chunks) processed",
+    unit="s",
+)
+_review_request_counter = _meter.create_counter(
+    name="apiview.review.requests",
+    description="Total number of review requests",
+    unit="{request}",
+)
 
 
 CREDENTIAL = get_credential()
@@ -168,6 +187,7 @@ class ApiViewReview:
                 self._logger.exception(f"[{self._job_id}] {msg}", *args, **kwargs)
 
         self.logger = JobLogger(logger, self.job_id)
+        self._chunk_count = 0
         self.run_prompt = run_prompt  # Use shared prompt runner
 
     def __del__(self):
@@ -284,6 +304,7 @@ class ApiViewReview:
         sectioned_doc = self._create_sectioned_document()
 
         sections_to_process = [(i, section) for i, section in enumerate(sectioned_doc)]
+        self._chunk_count = len(sections_to_process)
 
         # Select appropriate prompts based on mode
         if self.mode == ApiViewReviewMode.FULL:
@@ -823,10 +844,11 @@ class ApiViewReview:
     # pylint: disable=too-many-locals
     def run(self) -> ReviewResult:
         """Execute the APIView review process."""
+        overall_start_time = time()
+        review_status = "error"
         try:
             self._print_message(f"Generating {get_language_pretty_name(self.language)} review {self.job_id}")
             self.logger.info(f"Generating review {self.job_id} for language={self.language}")
-            overall_start_time = time()
 
             # Canary check: try authenticating against Search and CosmosDB before LLM calls
             canary_error = self._canary_check_search_and_cosmos()
@@ -900,9 +922,10 @@ class ApiViewReview:
             )
 
             overall_end_time = time()
+            total_duration = overall_end_time - overall_start_time
             self._print_message(
                 # pylint: disable=line-too-long
-                f"\nReview {self.job_id} generated in {overall_end_time - overall_start_time:.2f} seconds. Found {len(results.comments)} comments"
+                f"\nReview {self.job_id} generated in {total_duration:.2f} seconds. Found {len(results.comments)} comments"
             )
 
             if self.semantic_search_failed:
@@ -916,10 +939,20 @@ class ApiViewReview:
                     json.dump(results.model_dump(), f, indent=2)
                 self._print_message(f"Review results written to {output_path}")
 
+            review_status = "success"
             return results
         finally:
-            # Don't close the executor here as it might be needed for future operations
-            pass
+            # Record review duration telemetry regardless of success or failure
+            total_duration = time() - overall_start_time
+            normalized_duration = total_duration / self._chunk_count if self._chunk_count > 0 else 0
+            metric_attrs = {
+                "review.language": self.language,
+                "review.mode": self.mode,
+                "review.status": review_status,
+            }
+            _review_duration_histogram.record(total_duration, attributes=metric_attrs)
+            _review_normalized_duration_histogram.record(normalized_duration, attributes=metric_attrs)
+            _review_request_counter.add(1, attributes=metric_attrs)
 
     def _canary_check_search_and_cosmos(self) -> str | None:
         """

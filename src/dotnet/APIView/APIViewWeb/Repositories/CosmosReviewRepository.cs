@@ -13,7 +13,6 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-
 namespace APIViewWeb
 {
     public class CosmosReviewRepository : ICosmosReviewRepository
@@ -89,8 +88,7 @@ namespace APIViewWeb
             var queryText = $@"
                 SELECT * FROM Reviews r 
                 WHERE r.Language IN ({languageList}) 
-                AND r.NamespaceReviewStatus = 'Pending'
-                AND IS_DEFINED(r.NamespaceApprovalRequestedOn)
+                AND (r.NamespaceDecisionStatus = 'Proposed' OR r.NamespaceReviewStatus = 'Pending')
                 AND r.IsDeleted = false";
             
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryText);

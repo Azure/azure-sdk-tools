@@ -1,6 +1,6 @@
-import { Helper } from '../../../src/util/helper';
 import { TestCodeModeler } from '../../../src/core/model';
 import { processRequest } from '../../../src/core/testModeler';
+import { Helper } from '../../../src/util/helper';
 
 describe('TestModeler functions', () => {
     beforeEach(() => {

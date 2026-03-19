@@ -236,6 +236,29 @@ if __name__ == "__main__":
                 output_path = cache_result_path / cache_file_name
                 with open(str(output_path), "w") as f:
                     json.dump(result, indent=4, fp=f)
+            
+            # record failed cases
+            for name, results in all_results.items():
+                failed_cases_file_name = f"{name.split('_')[0]}-failed-cases-{now.strftime('%Y-%m-%d-%H-%S')}.json"
+                failed_case_output_path = cache_result_path / failed_cases_file_name
+                failed_cases = []
+                for ret in results[:-1]:
+                    is_failed_case = False
+                    for metric in metrics.keys():
+                        if metric in suppression["evaluators"]:
+                            continue
+                        if metric == "groundedness":
+                            if "groundedness_result" in ret and ret["groundedness_result"] == "fail":
+                                is_failed_case = True
+                        else:
+                            if ret[f"{metric}_result"] != "pass":
+                                is_failed_case = True
+                    if is_failed_case:
+                        failed_cases.append(ret)
+                        logging.info(f"test case: {ret['testcase']} - Failed")
+                if failed_cases:
+                    with open(str(failed_case_output_path), "w") as f:
+                        json.dump(failed_cases, indent=4, fp=f)
 
         evals_runner.evals_result.show_results(all_results, args.baseline_check)
         if args.baseline_check:
@@ -244,6 +267,7 @@ if __name__ == "__main__":
         if isPass == VerificationResult.PASS_WITH_WARNING:
             print("##vso[task.logissue type=warning]Evaluation succeeded with warning. Some tests failed but suppressed.")
         elif isPass == VerificationResult.FAIL:
+            logging.error("Evaluation failed; see the published failed-cases artifact for details.")
             sys.exit(1)
     except Exception as e:
         logging.info(f"❌ Error occurred: {str(e)}")

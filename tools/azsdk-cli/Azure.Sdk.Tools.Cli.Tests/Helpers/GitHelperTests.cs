@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             using var repo = await CreateTestRepoWithRemoteAsync("git@github.com:Azure/azure-rest-api-specs.git");
             var subDir = Path.Combine(repo.DirectoryPath, "subdirectory");
             Directory.CreateDirectory(subDir);
-            mockGitHubService.Setup(x => x.GetGitHubParentRepoUrlAsync("Azure", "azure-rest-api-specs"))
+            mockGitHubService.Setup(x => x.GetGitHubParentRepoUrlAsync("Azure", "azure-rest-api-specs", It.IsAny<CancellationToken>()))
                            .ReturnsAsync(string.Empty); // Not a fork
 
             var result = await gitHelper.GetRepoFullNameAsync(subDir);

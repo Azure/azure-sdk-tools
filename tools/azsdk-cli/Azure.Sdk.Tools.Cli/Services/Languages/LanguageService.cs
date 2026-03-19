@@ -311,7 +311,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         /// <param name="oldGenerationPath">Previous generation</param>
         /// <param name="newGenerationPath">New/current generation root.</param>
         /// <returns>List of detected API changes (empty if no differences).</returns>
-        public virtual Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+        public virtual Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath, CancellationToken ct)
         {
             List<ApiChange> result = [];
             return Task.FromResult(result);
@@ -329,19 +329,19 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
         }
 
         /// <summary>
-        /// Applies patches to customization files based on build errors.
+        /// Applies patches to customization files based on build context.
         /// This is a mechanical worker - it applies safe patches and returns results.
-        /// The Classifier (Phase A) does the thinking and routing.
+        /// The Classifier does the thinking and routing.
         /// </summary>
         /// <param name="customizationRoot">Path to the customization root directory</param>
         /// <param name="packagePath">Path to the package directory containing generated code</param>
-        /// <param name="buildError">The build error that triggered repair</param>
+        /// <param name="buildContext">Combined build errors and classifier analysis that triggered repair</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>List of applied patches</returns>
         public virtual Task<List<AppliedPatch>> ApplyPatchesAsync(
             string customizationRoot,
             string packagePath,
-            string buildError,
+            string buildContext,
             CancellationToken ct)
         {
             return Task.FromResult(new List<AppliedPatch>());
@@ -586,7 +586,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Languages
 
                 PackageInfo? packageInfo = await GetPackageInfo(packagePath, ct);
 
-                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build);
+                var (configContentType, configValue) = await specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.Build, ct);
                 if (configContentType == SpecGenSdkConfigContentType.Unknown || string.IsNullOrEmpty(configValue))
                 {
                     return (false, "No build configuration found or failed to prepare the build command.", packageInfo);

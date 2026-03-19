@@ -16,5 +16,10 @@ public static class BenchmarkDefaults
     /// <summary>
     /// The default maximum number of scenarios to run concurrently.
     /// </summary>
-    public const int DefaultMaxParallelism = 5;
+    public const int DefaultMaxParallelism = 1;
+
+    /// <summary>
+    /// The default endpoint for the Azure Knowledge Base.
+    /// </summary>
+    public const string DefaultAzureKnowledgeBaseEndpoint = "http://localhost:8088";
 }

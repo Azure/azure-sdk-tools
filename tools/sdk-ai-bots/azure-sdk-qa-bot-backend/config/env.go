@@ -45,6 +45,11 @@ type Config struct {
 	STORAGE_RECORDS_CONTAINER   string
 
 	KEYVAULT_ENDPOINT string
+
+	GITHUB_APP_ID                 string
+	GITHUB_APP_KEY_NAME           string
+	GITHUB_APP_KEYVAULT_URL       string
+	GITHUB_APP_INSTALLATION_OWNER string
 }
 
 var BotEnv *BotENV

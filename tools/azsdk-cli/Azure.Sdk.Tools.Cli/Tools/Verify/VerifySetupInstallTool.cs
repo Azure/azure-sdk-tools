@@ -39,7 +39,9 @@ public class VerifySetupInstallTool : MCPTool
 
     protected override Command GetCommand()
     {
-        var installCommand = new Command("install", "Install missing environment requirements");
+        var installCommand = new Command("install",
+            "Install missing environment requirements. "
+            + "Exit codes: 0 = all requirements met, 1 = blocking (manual intervention needed). ");
         installCommand.Options.Add(VerifySetupTool.LanguagesOption);
         installCommand.Options.Add(SharedOptions.PackagePath);
         installCommand.Options.Add(toolsParam);

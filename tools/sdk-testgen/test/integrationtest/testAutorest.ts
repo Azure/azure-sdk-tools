@@ -1,9 +1,10 @@
-import * as _ from 'lodash';
 import * as assert from 'assert';
-import * as fs from 'fs';
-import * as path from 'path';
-import { Helper } from '../../src/util/helper';
 import { exec } from 'child_process';
+import * as fs from 'fs';
+import * as _ from 'lodash';
+import * as path from 'path';
+
+import { Helper } from '../../src/util/helper';
 
 async function compare(dir1: string, dir2: string) {
     const cmd = 'diff -r --exclude=gen.zip --strip-trailing-cr -I _filePath -I x-ms-original-file -I file:/// ' + dir1 + ' ' + dir2;

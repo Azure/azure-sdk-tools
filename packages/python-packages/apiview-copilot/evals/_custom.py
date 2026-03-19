@@ -193,15 +193,17 @@ def _generate_correlation_ids(testcase: str, response: str, language: str, conte
         "content": content,
     }
     result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
-    # Transform: normalize groupings to canonical "action" string for PromptEvaluator
+    # Transform: normalize groupings to canonical "action" string for PromptEvaluator.
+    # Keep (group, theme) pairs together so that action and rationale orderings match.
     result_data = json.loads(result) if isinstance(result, str) else result
-    groups = []
+    pairs = []
     for item in result_data.get("results", []):
         group = sorted(item.get("result", []))
-        groups.append(group)
-    groups.sort(key=lambda g: g[0] if g else 0)
-    action_str = ",".join(str(tuple(g)) for g in groups)
-    themes = "; ".join(item.get("theme", "") for item in result_data.get("results", []))
+        theme = item.get("theme", "")
+        pairs.append((group, theme))
+    pairs.sort(key=lambda p: p[0][0] if p[0] else 0)
+    action_str = ",".join(str(tuple(g)) for g, _ in pairs)
+    themes = "; ".join(t for _, t in pairs)
     transformed = {"action": action_str, "rationale": themes}
     return {"actual": json.dumps(transformed)}
 

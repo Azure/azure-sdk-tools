@@ -24,7 +24,7 @@ public partial class DotnetLanguageService : LanguageService
             }
 
             var (repoRoot, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
-            var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var pathParts = (relativePath ?? string.Empty).Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
             if (pathParts.Length < 1 || pathParts[0] == "..")
             {
                 logger.LogError("Failed to determine service directory from package path: {PackagePath}", packagePath);
@@ -75,7 +75,7 @@ public partial class DotnetLanguageService : LanguageService
             }
 
             var (repoRoot, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
-            var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var pathParts = (relativePath ?? string.Empty).Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
             if (pathParts.Length < 2 || pathParts[0] == "..")
             {
                 logger.LogError("Failed to determine service directory or package name from package path: {PackagePath}", packagePath);
@@ -201,7 +201,7 @@ public partial class DotnetLanguageService : LanguageService
         try
         {
             var (_, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, cancellationToken);
-            var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var pathParts = (relativePath ?? string.Empty).Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
             packageName = pathParts.Length > 1 && pathParts[0] != ".." ? pathParts[1] : null;
         }
         catch (Exception ex)

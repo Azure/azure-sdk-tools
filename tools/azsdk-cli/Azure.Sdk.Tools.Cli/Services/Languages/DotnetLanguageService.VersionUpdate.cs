@@ -107,7 +107,7 @@ public sealed partial class DotnetLanguageService : LanguageService
         }
 
         // ParsePackagePathAsync returns path relative to sdk/, e.g. "storage/Azure.Storage.Blobs"
-        var parts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var parts = (relativePath ?? string.Empty).Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
 
         if (parts.Length < 2 || parts[0] == "..")
         {

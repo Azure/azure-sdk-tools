@@ -165,9 +165,12 @@ def _judge_comment_confidence(testcase: str, response: str, language: str, conte
     result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     # Transform to match PromptEvaluator expectations: map severity → action
     result_data = json.loads(result) if isinstance(result, str) else result
+    severity_rationale = result_data.get("severity_rationale", "")
+    question_rationales = "; ".join(r.get("rationale", "") for r in result_data.get("results", []))
+    rationale_parts = [p for p in [severity_rationale, question_rationales] if p]
     transformed = {
         "action": result_data.get("severity", ""),
-        "rationale": "; ".join(r.get("rationale", "") for r in result_data.get("results", [])),
+        "rationale": "; ".join(rationale_parts),
     }
     return {"actual": json.dumps(transformed)}
 

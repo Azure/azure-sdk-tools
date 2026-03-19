@@ -206,10 +206,10 @@ internal class DotnetLanguageServiceVersionUpdateTests
     }
 
     [Test]
-    public async Task UpdateVersion_ReturnsFailure_WhenBetaReleaseTypeWithStableVersion()
+    public async Task UpdateVersion_ReturnsFailure_WhenGAVersionWithoutExplicitStableReleaseType()
     {
-        // Arrange
-        using var tempDir = TempDirectory.Create("dotnet-version-mismatch-beta");
+        // Arrange — user passes a GA version but doesn't confirm with --release-type stable
+        using var tempDir = TempDirectory.Create("dotnet-version-ga-no-confirm");
         var packagePath = Path.Combine(tempDir.DirectoryPath, "sdk", "test", "Azure.Test");
         var srcDir = Path.Combine(packagePath, "src");
         Directory.CreateDirectory(srcDir);
@@ -219,14 +219,44 @@ internal class DotnetLanguageServiceVersionUpdateTests
             .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((tempDir.DirectoryPath, "test/Azure.Test", packagePath));
 
-        // Act — beta release type with stable version
+        // Act — GA version with default release type "beta"
         var result = await _service.UpdateVersionAsync(
             packagePath, "beta", "1.0.0", null, CancellationToken.None);
 
-        // Assert
+        // Assert — should require explicit --release-type stable
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("beta"));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("pre-release suffix"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("stable (GA)"));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("explicit confirmation"));
+    }
+
+    [Test]
+    public async Task UpdateVersion_ReturnsFailure_WhenInferredGAVersionWithDefaultBetaReleaseType()
+    {
+        // Arrange — stable package, version=null (inferred), releaseType="beta" (tool default)
+        using var tempDir = TempDirectory.Create("dotnet-version-inferred-ga");
+        var packagePath = tempDir.DirectoryPath;
+        var srcDir = Path.Combine(packagePath, "src");
+        Directory.CreateDirectory(srcDir);
+        await File.WriteAllTextAsync(
+            Path.Combine(srcDir, "TestPackage.csproj"),
+            CreateSampleCsproj("1.0.0"));
+
+        // Mock GetPackageInfo to return stable version
+        _processHelperMock
+            .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateProcessResult(0, """{"TargetResults":{"GetPackageInfo":{"Items":[{"Identity":"'path' 'test' 'TestPackage' '1.0.0' 'client'"}]}}}"""));
+
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string.Empty, string.Empty, packagePath));
+
+        // Act — version=null (inferred as "1.0.0"), releaseType="beta" (tool default)
+        var result = await _service.UpdateVersionAsync(
+            packagePath, "beta", null, "2025-06-15", CancellationToken.None);
+
+        // Assert — should require explicit --release-type stable
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
+        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("stable (GA)"));
     }
 
     #endregion

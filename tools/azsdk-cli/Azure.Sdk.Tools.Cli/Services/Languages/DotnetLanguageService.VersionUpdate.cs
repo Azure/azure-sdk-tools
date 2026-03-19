@@ -47,25 +47,29 @@ public sealed partial class DotnetLanguageService : LanguageService
             releaseDate = DateTime.Now.ToString("yyyy-MM-dd");
         }
 
-        // Validate that releaseType matches the version format
+        // Validate release type vs version format.
+        // Stable (GA) releases are guarded — they require the user to explicitly pass
+        // --release-type stable. This prevents accidental GA releases when the default
+        // release type is "beta" but the version happens to be stable.
         var isPrerelease = targetVersion.Contains('-');
-        if (!string.IsNullOrWhiteSpace(releaseType))
+        if (!isPrerelease)
         {
-            if (releaseType.Equals("stable", StringComparison.OrdinalIgnoreCase) && isPrerelease)
+            if (string.IsNullOrWhiteSpace(releaseType) ||
+                !releaseType.Equals("stable", StringComparison.OrdinalIgnoreCase))
             {
                 return PackageOperationResponse.CreateFailure(
-                    $"Release type 'stable' does not match pre-release version '{targetVersion}'. Stable versions must not contain a pre-release suffix.",
+                    $"Version '{targetVersion}' is a stable (GA) release. Stable releases require explicit confirmation.",
                     packageInfo: packageInfo,
-                    nextSteps: [$"Use --release-type beta, or remove the pre-release suffix from the version (e.g., '{targetVersion.Split('-')[0]}')"]);
+                    nextSteps: [$"Pass --release-type stable to confirm this is a GA release"]);
             }
-
-            if (releaseType.Equals("beta", StringComparison.OrdinalIgnoreCase) && !isPrerelease)
-            {
-                return PackageOperationResponse.CreateFailure(
-                    $"Release type 'beta' does not match stable version '{targetVersion}'. Beta versions must include a pre-release suffix (e.g., -beta.1).",
-                    packageInfo: packageInfo,
-                    nextSteps: [$"Use --release-type stable, or add a pre-release suffix to the version (e.g., '{targetVersion}-beta.1')"]);
-            }
+        }
+        else if (!string.IsNullOrWhiteSpace(releaseType) &&
+                 releaseType.Equals("stable", StringComparison.OrdinalIgnoreCase))
+        {
+            return PackageOperationResponse.CreateFailure(
+                $"Release type 'stable' does not match pre-release version '{targetVersion}'. Stable versions must not contain a pre-release suffix.",
+                packageInfo: packageInfo,
+                nextSteps: [$"Use --release-type beta, or remove the pre-release suffix from the version (e.g., '{targetVersion.Split('-')[0]}')"]);
         }
 
         // Delegate to the base class which handles:

@@ -31,7 +31,7 @@ public partial class DotnetLanguageService : LanguageService
             }
 
             var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-            if (pathParts.Length < 1 || pathParts[0] == "..")
+            if (pathParts.Length < 1 || pathParts[0] is ".." or ".")
             {
                 logger.LogError("Failed to determine service directory from package path: {PackagePath}", packagePath);
                 return new PackageCheckResponse(1, "", "Failed to determine service directory from the provided package path.");
@@ -88,7 +88,7 @@ public partial class DotnetLanguageService : LanguageService
             }
 
             var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-            if (pathParts.Length < 2 || pathParts[0] == "..")
+            if (pathParts.Length < 2 || pathParts[0] is ".." or ".")
             {
                 logger.LogError("Failed to determine service directory or package name from package path: {PackagePath}", packagePath);
                 return new PackageCheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");

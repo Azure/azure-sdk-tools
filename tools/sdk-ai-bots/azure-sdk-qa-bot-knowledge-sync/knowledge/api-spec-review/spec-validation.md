@@ -19,3 +19,7 @@ Avocado does not handle moves or renames of API paths. When using `@renamedFrom`
 Even for brand-new TypeSpec-based APIs, Avocado validates that a `readme.md` exists somewhere in the spec directory to configure SDK generation. TypeSpec compilation succeeds without it, but the SDK pipeline needs it to determine which API versions to generate and where the OpenAPI files are.
 
 The location and factoring of `readme.md` can vary by service. You need at least one in your service directory structure.
+
+## Swagger LintDiff Fails When Swagger Files Are Not Referenced by README
+
+When a PR fails with a Swagger LintDiff error stating that **no affected swaggers were found**, it means the Swagger file reported in the error is **not reachable from the service `readme.md`**, either directly listed or indirectly referenced. LintDiff only analyzes Swagger files that are discoverable through the README; if a Swagger exists on disk but is not referenced, LintDiff treats it as orphaned and fails. To fix this, either **add the Swagger file to the appropriate `readme.md`** or **remove the unused Swagger file** so that all Swagger inputs are consistently tracked by the README-driven spec model.

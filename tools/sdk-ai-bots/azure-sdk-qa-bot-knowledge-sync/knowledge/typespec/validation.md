@@ -89,10 +89,6 @@ Common validation failures indicate that:
 
 In most cases, the validation error message explicitly instructs you to replace the placeholder with a compliant value. The intended workflow is to **manually update the auto‑generated example values** so they conform to the constraints. Full placeholder materialization is not automated today and has not been prioritized, so manual adjustment is required to pass CI validation.
 
-## Swagger LintDiff Fails When Swagger Files Are Not Referenced by README
-
-When a PR fails with a Swagger LintDiff error stating that **no affected swaggers were found**, it means the Swagger file reported in the error is **not reachable from the service `readme.md`**, either directly listed or indirectly referenced. LintDiff only analyzes Swagger files that are discoverable through the README; if a Swagger exists on disk but is not referenced, LintDiff treats it as orphaned and fails. To fix this, either **add the Swagger file to the appropriate `readme.md`** or **remove the unused Swagger file** so that all Swagger inputs are consistently tracked by the README-driven spec model.
-
 ## Generating and Maintaining Examples in TypeSpec and Swagger
 
 When generating examples for a TypeSpec‑based API, tools like `oav generate-examples` are intended as **best‑effort helpers** and do not fully control naming, synchronization, or semantic correctness on their own.

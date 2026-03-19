@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using Microsoft.Extensions.Logging;
 using Octokit;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -46,39 +45,50 @@ public class GitConnection
             {
                 return token;
             }
+
             token = Environment.GetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN");
             if (!string.IsNullOrEmpty(token))
             {
+                Environment.SetEnvironmentVariable("GITHUB_TOKEN", token, EnvironmentVariableTarget.Process);
                 return token;
             }
+            
             // If the GITHUB_TOKEN environment variable is not set, try to get the token using the 'gh' CLI command
-            bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            string command = isWindows ? "cmd.exe" : "gh";
-            string args = isWindows ? "/C gh auth token" : "auth token";
-
-            var processStartInfo = new ProcessStartInfo
+            var psi = new ProcessStartInfo
             {
-                FileName = command,
-                Arguments = args,
+                FileName = "gh",
+                Arguments = "auth token",
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
-            using (var process = new Process())
+            using var process = new Process { StartInfo = psi };
+            process.Start();
+            process.StandardInput.Close();
+
+            var stdoutTask = process.StandardOutput.ReadToEndAsync();
+            var stderrTask = process.StandardError.ReadToEndAsync();
+
+            process.WaitForExit();
+            Task.WaitAll(stdoutTask, stderrTask);
+
+            string output = stdoutTask.Result;
+            string errorOutput = stderrTask.Result;
+
+            if (process.ExitCode != 0)
             {
-                process.StartInfo = processStartInfo;
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                string errorOutput = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-                if (process.ExitCode != 0)
-                {
-                    throw new InvalidOperationException($"Failed to get GitHub auth token. Error:{Environment.NewLine}{errorOutput}{Environment.NewLine}{Environment.NewLine}Please make sure GitHub CLI is installed and make sure to login using `gh auth login` to connect to GitHub.");
-                }
-                return output.Trim();
+                throw new InvalidOperationException(
+                    $"Failed to get GitHub auth token. Error:{Environment.NewLine}{errorOutput}{Environment.NewLine}{Environment.NewLine}" +
+                    "Please make sure GitHub CLI is installed and login using `gh auth login`."
+                );
             }
+
+            var ghToken = output.Trim();
+            Environment.SetEnvironmentVariable("GITHUB_TOKEN", ghToken, EnvironmentVariableTarget.Process);
+            return ghToken;
         }
     }
     public interface IGitHubService
@@ -111,7 +121,7 @@ public class GitConnection
     public class GitHubService : GitConnection, IGitHubService
     {
         private readonly ILogger<GitHubService> logger;
-        private const string CreatedByCopilotLabel = "Created by copilot";
+        private const string CreatedByCopilotLabel = "Created By Copilot";
 
         public GitHubService(ILogger<GitHubService> _logger)
         {
@@ -333,12 +343,12 @@ public class GitConnection
             }
         }
 
-        private async Task<bool> IsDiffMergeableAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch)
+        private async Task<CompareResult> CompareBranchesAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch)
         {
             logger.LogInformation("Comparing the head branch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
             logger.LogInformation("Comparison: {ComparisonStatus}", comparison?.Status);
-            return comparison?.MergeBaseCommit != null;
+            return comparison;
         }
 
         public async Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
@@ -367,11 +377,19 @@ public class GitConnection
             try
             {
                 response.Messages.Add($"Checking if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]...");
-                var isMergeable = await IsDiffMergeableAsync(repoOwner, repoName, baseBranch, headBranch);
-                if (!isMergeable)
+                var comparison = await CompareBranchesAsync(repoOwner, repoName, baseBranch, headBranch);
+                if (comparison?.MergeBaseCommit == null)
                 {
                     response.Messages.Add($"Changes from [{repoOwner}] are not mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]. Please resolve the conflicts and try again.");
                     response.Messages.Add($"By default, target branch in main. If you are trying to create a pull request to a different branch, please specify the target branch and try again.");
+                    return response;
+                }
+
+                // GitHub rejects PR creation when there are no commits on head that are not already in base.
+                if (comparison.AheadBy <= 0 || comparison.TotalCommits <= 0)
+                {
+                    response.Messages.Add($"No commits between {baseBranch} and {headBranch}. The source branch appears identical to the target branch, so a pull request cannot be created.");
+                    response.Messages.Add($"Push new commits to {headBranch} or verify you selected the correct target branch.");
                     return response;
                 }
             }

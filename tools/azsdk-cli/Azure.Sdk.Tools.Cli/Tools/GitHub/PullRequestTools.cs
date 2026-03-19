@@ -92,47 +92,65 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         [McpServerTool(Name = CreatePullRequestToolName), Description("Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch.")]
         public async Task<DefaultCommandResponse> CreatePullRequest(string title, string description, string repoPath, string targetBranch = "main", bool draft = true, CancellationToken ct = default)
         {
+            List<string> results = [];
             try
             {
-                List<string> results = [];
-                try
+                // Discover the repository root from the provided path
+                var repoRootPath = await gitHelper.DiscoverRepoRootAsync(repoPath, ct);
+                var headBranchName = await gitHelper.GetBranchNameAsync(repoRootPath, ct);
+                if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
                 {
-                    // Discover the repository root from the provided path
-                    var repoRootPath = await gitHelper.DiscoverRepoRootAsync(repoPath, ct);
-                    var headBranchName = await gitHelper.GetBranchNameAsync(repoRootPath, ct);
-                    if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
-                    {
-                        results.Add("Failed to create pull request. Pull request can not be created for changes in main branch. Select the GitHub branch for your spec changes using `git checkout <branch name>'");
-                    }
-
-                    // Get repo details like target owner, head owner, repo name
-                    var headRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false, ct);
-                    var targetRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, true, ct);
-                    var repoName = await gitHelper.GetRepoNameAsync(repoRootPath, ct);
-
-                    var headBranch = $"{headRepoOwner}:{headBranchName}";
-                    logger.LogInformation("Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}",
-                                            repoName, headRepoOwner, headBranchName, headBranch);
-                    logger.LogInformation("Creating pull request in {targetRepoOwner}:{repoName}", targetRepoOwner, repoName);
-                    // Create pull request
-                    var createResponse = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
-                    results.AddRange(createResponse.Messages);
-                    return new DefaultCommandResponse { Result = string.Join(Environment.NewLine, results) };
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to create a pull request");
                     return new DefaultCommandResponse
                     {
-                        Message = string.Join(Environment.NewLine, results),
-                        ResponseError = $"Failed to create a pull request, Error: {ex.Message}"
+                        ResponseError = "Failed to create pull request. Pull request can not be created for changes in main branch. Select the GitHub branch for your spec changes using `git checkout <branch name>'"
                     };
                 }
+
+                // Get repo details like target owner, head owner, repo name
+                var headRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false, ct);
+                var targetRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, true, ct);
+                var repoName = await gitHelper.GetRepoNameAsync(repoRootPath, ct);
+
+                var headBranch = $"{headRepoOwner}:{headBranchName}";
+                logger.LogInformation("Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}",
+                                        repoName, headRepoOwner, headBranchName, headBranch);
+
+                // Validate the source branch exists on GitHub before compare/create operations.
+                var headBranchExists = await gitHubService.IsExistingBranchAsync(headRepoOwner, repoName, headBranchName);
+                if (!headBranchExists)
+                {
+                    return new DefaultCommandResponse
+                    {
+                        Message = $"Head branch '{headBranch}' was not found on GitHub.",
+                        ResponseError = $"Push your branch first: `git push -u origin {headBranchName}` and then retry pull request creation."
+                    };
+                }
+
+                logger.LogInformation("Creating pull request in {targetRepoOwner}:{repoName}", targetRepoOwner, repoName);
+                // Create pull request
+                var createResponse = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
+                results.AddRange(createResponse.Messages);
+                var joinedResult = string.Join(Environment.NewLine, results);
+
+                if (string.IsNullOrWhiteSpace(createResponse.Url))
+                {
+                    return new DefaultCommandResponse
+                    {
+                        Message = joinedResult,
+                        ResponseError = "Failed to create pull request. See result details for the underlying GitHub error."
+                    };
+                }
+
+                return new DefaultCommandResponse { Result = joinedResult };
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpected error occurred while creating pull request");
-                return new DefaultCommandResponse { ResponseError = $"An unexpected error occurred: {ex.Message}" };
+                logger.LogError(ex, "Failed to create a pull request");
+                return new DefaultCommandResponse
+                {
+                    Message = string.Join(Environment.NewLine, results),
+                    ResponseError = $"Failed to create a pull request, Error: {ex.Message}"
+                };
             }
         }
 

@@ -2,8 +2,38 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from pydantic import BaseModel
 
+
+# ---------------------------------------------------------------------------
+# Knowledge source definition
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class KnowledgeSource:
+    """A searchable knowledge source in Azure AI Search.
+
+    Attributes:
+        name:        Unique identifier used as the index / source filter value.
+        description: Human-readable description so the LLM knows *when* to
+                     query this source.
+        filter:      Optional OData filter expression applied when searching
+                     this source (e.g. ``search.ismatch('python_*', 'title')``).
+    """
+
+    name: str
+    description: str
+    filter: str = ""
+
+    def to_display_dict(self) -> dict[str, str]:
+        """Return a minimal dict suitable for showing the LLM."""
+        return {"name": self.name, "description": self.description}
+
+
+# ---------------------------------------------------------------------------
+# Search result models
+# ---------------------------------------------------------------------------
 
 class KnowledgeChunk(BaseModel):
     """A single chunk returned from Azure AI Search."""

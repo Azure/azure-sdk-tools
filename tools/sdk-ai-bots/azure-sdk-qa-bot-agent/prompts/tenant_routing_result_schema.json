@@ -1,0 +1,18 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "tenant_routing_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "route_tenant": {
+          "type": "string",
+          "description": "The tenant ID to route the question to."
+        }
+      },
+      "required": ["route_tenant"],
+      "additionalProperties": false
+    }
+  }
+}

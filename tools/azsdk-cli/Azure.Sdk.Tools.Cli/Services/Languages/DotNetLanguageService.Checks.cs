@@ -94,7 +94,10 @@ public partial class DotnetLanguageService : LanguageService
                 return new PackageCheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");
             }
             var serviceDirectory = pathParts[0];
-            var packageName = pathParts[1];
+
+            // Get accurate package name from MSBuild project metadata rather than folder name
+            var (msbuildPackageName, _, _) = await TryGetPackageInfoAsync(packagePath, ct);
+            var packageName = msbuildPackageName ?? pathParts[1];
 
             var isAotOptedOut = await CheckAotCompatOptOut(packagePath, packageName, ct);
             if (isAotOptedOut)
@@ -213,7 +216,14 @@ public partial class DotnetLanguageService : LanguageService
         try
         {
             var (_, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, cancellationToken);
-            if (!string.IsNullOrEmpty(relativePath))
+
+            // Prefer MSBuild package name over folder name
+            var (msbuildPackageName, _, _) = await TryGetPackageInfoAsync(packagePath, cancellationToken);
+            if (msbuildPackageName != null)
+            {
+                packageName = msbuildPackageName;
+            }
+            else if (!string.IsNullOrEmpty(relativePath))
             {
                 var pathParts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
                 packageName = pathParts.Length > 1 && pathParts[0] != ".." ? pathParts[1] : null;

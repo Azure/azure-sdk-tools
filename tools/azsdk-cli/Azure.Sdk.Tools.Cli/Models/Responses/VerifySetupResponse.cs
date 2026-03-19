@@ -9,6 +9,59 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// </summary>
 public class VerifySetupResponse : CommandResponse
 {
+    /// <summary>
+    /// Exit code values for CI scenarios:
+    /// 0 = All good (environment is fully valid)
+    /// 1 = Blocking (at least one issue requires manual intervention)
+    /// 2 = Fixable (all issues can be auto-remediated)
+    /// </summary>
+    public static class ExitCodes
+    {
+        public const int AllGood = 0;
+        public const int Blocking = 1;
+        public const int Fixable = 2;
+    }
+
+    /// <inheritdoc/>
+    [JsonIgnore]
+    public override int ExitCode
+    {
+        get
+        {
+            if (OperationStatus == Status.Failed)
+            {
+                return ExitCodes.Blocking;
+            }
+
+            var unresolvedFailures = Results?.Where(r => !r.AutoInstallSucceeded).ToList() ?? [];
+            if (unresolvedFailures.Count == 0)
+            {
+                return ExitCodes.AllGood;
+            }
+
+            return unresolvedFailures.All(r => r.IsAutoInstallable && !r.AutoInstallAttempted)
+                ? ExitCodes.Fixable
+                : ExitCodes.Blocking;
+        }
+        // Setter is required by C# (base property is virtual get/set) but the getter
+        // always computes from Results/ResponseError, so setting a value would be silently ignored.
+        set => throw new NotSupportedException(
+            "Setting ExitCode on VerifySetupResponse is not supported; it is computed from verification results.");
+    }
+
+    /// <summary>
+    /// True when all unresolved failures are auto-installable (re-run with 'install' to fix).
+    /// False when there are no failures or when any failure requires manual intervention.
+    /// </summary>
+    [JsonPropertyName("fixable")]
+    public bool IsFixable => ExitCode == ExitCodes.Fixable;
+
+    /// <summary>
+    /// True when at least one requirement failure requires manual intervention.
+    /// </summary>
+    [JsonPropertyName("blocking")]
+    public bool HasBlockingFailures => ExitCode == ExitCodes.Blocking;
+
     [JsonPropertyName("results")]
     public List<RequirementCheckResult>? Results { get; set; }
 
@@ -60,6 +113,16 @@ public class VerifySetupResponse : CommandResponse
         {
             sb.AppendLine("  Verify setup succeeded, no issues found.");
         }
+
+        if (HasBlockingFailures)
+        {
+            sb.AppendLine("\nStatus: BLOCKING - at least one issue requires manual intervention.");
+        }
+        else if (IsFixable)
+        {
+            sb.AppendLine("\nStatus: FIXABLE - all issues can be auto-remediated. Re-run with 'install' sub-command.");
+        }
+
         return sb.ToString();
     }
 }

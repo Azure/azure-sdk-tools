@@ -27,6 +27,7 @@ namespace APIViewUnitTests
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
         private readonly Mock<IAutoReviewService> _mockAutoReviewService;
         private readonly Mock<IConfiguration> _mockConfiguration;
+        private readonly Mock<INamespaceManager> _mockNamespaceManager;
         private readonly List<LanguageService> _languageServices;
         private readonly TelemetryClient _telemetryClient;
         private readonly AutoReviewController _controller;
@@ -38,6 +39,7 @@ namespace APIViewUnitTests
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
             _mockAutoReviewService = new Mock<IAutoReviewService>();
             _mockConfiguration = new Mock<IConfiguration>();
+            _mockNamespaceManager = new Mock<INamespaceManager>();
             _languageServices = new List<LanguageService>
             {
                 new MockLanguageService("C#", false)
@@ -50,6 +52,7 @@ namespace APIViewUnitTests
                 _mockAutoReviewService.Object,
                 _languageServices,
                 _mockConfiguration.Object,
+                _mockNamespaceManager.Object,
                 _telemetryClient);
 
             // Set up the HTTP context with a mock user principal

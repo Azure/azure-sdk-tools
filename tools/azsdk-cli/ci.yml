@@ -77,7 +77,7 @@ extends:
           TargetRepoName: azure-rest-api-specs
           TargetRepoOwner: Azure
           TargetRepoCommit: main
-      - ${{ if eq(parameters.RunBenchmarks, true) }}:
+      - ${{ if and(eq(parameters.RunBenchmarks, true), ne(variables['Build.Reason'], 'PullRequest')) }}:
         - job: Run_Benchmark
           displayName: 'Run Benchmark'
           condition: always()
@@ -88,7 +88,18 @@ extends:
             image: $(LINUXVMIMAGE)
             os: linux
           steps:
-          - checkout: self
+          - checkout: none
+          - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+            parameters:
+              SkipCheckoutNone: true
+              Repositories:
+                - Name: $(Build.Repository.Name)
+                  Commitish: $(Build.SourceVersion)
+                  WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)
+              Paths:
+                - 'tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks/**'
+                - 'eng/common/**'
+                - 'tools/sdk-ai-bots/azure-sdk-qa-bot-backend/**'
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
           - script: |
               echo "Downloading Go 1.24.0..."
@@ -150,4 +161,4 @@ extends:
       CustomReleaseJobs:
       - template: /tools/azsdk-cli/auto-documentation.yml
         parameters:
-          ToolDirectory: $(ToolDir) 
+          ToolDirectory: $(ToolDir)

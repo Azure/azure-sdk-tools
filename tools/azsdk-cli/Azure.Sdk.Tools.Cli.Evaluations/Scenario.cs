@@ -11,6 +11,8 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 {
     [TestFixture]
+    [Explicit]
+    [Category("Evals")]
     public partial class Scenario
     {
         // Static services shared across all tests
@@ -27,15 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
         [OneTimeSetUp]
         public async Task GlobalSetup()
         {
-            if (!TestSetup.ShouldRunEvals())
-            {
-                Assert.Ignore("Skipping all tests: Required environment variables are not configured. " +
-                    "Set AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_MODEL_DEPLOYMENT_NAME, REPOSITORY_NAME, and COPILOT_INSTRUCTIONS_PATH_MCP_EVALS.");
-            }
-            else
-            {
-                TestSetup.ValidateEnvironmentConfiguration();
-            }
+            TestSetup.ValidateEnvironmentConfiguration();
 
             s_chatClient = TestSetup.GetChatClient();
             s_mcpClient = await TestSetup.GetMcpClientAsync();

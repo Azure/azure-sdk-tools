@@ -191,7 +191,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             AzsdkMcpPath = Path.Combine(workspace.RootPath, isWindows ? "azsdk.exe" : "azsdk");
 
-            
+
             // TODO: Download and Start Azure Knowledge Base locally. Currently we need to manually start the Azure Knowledge Base server locally.
             //await workspace.RunCommandAsync("")
         }

@@ -20,7 +20,6 @@ parameters:
 - name: ForkAutomationBranches
   type: object
   default:
-    - azure-sdk/azure-powershell
     - azure-sdk/azure-sdk-for-go
     - azure-sdk/azure-sdk-for-java
     - azure-sdk/azure-sdk-for-js
@@ -35,7 +34,6 @@ parameters:
     - Azure/azure-sdk-for-js-pr
     - Azure/azure-sdk-for-net-pr
     - Azure/azure-sdk-for-python-pr
-    - azure-sdk/azure-powershell-pr
     - azure-sdk/azure-sdk-for-go-pr
     - azure-sdk/azure-sdk-for-java-pr
     - azure-sdk/azure-sdk-for-js-pr
@@ -129,8 +127,8 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId "${{ repo }}"
-              -CentralRepoId "Azure/azure-rest-api-specs"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
+              -BranchRegex "^sdkauto/.*$"
+              -LastCommitOlderThan ((Get-Date).AddDays(-30))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 
@@ -145,8 +143,8 @@ jobs:
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
               -RepoId "${{ repo }}"
-              -CentralRepoId "Azure/azure-rest-api-specs-pr"
-              -BranchRegex "^sdkAuto/(?<PrNumber>\d{5,})/.*$"
+              -BranchRegex "^sdkauto/.*$"
+              -LastCommitOlderThan ((Get-Date).AddDays(-30))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 

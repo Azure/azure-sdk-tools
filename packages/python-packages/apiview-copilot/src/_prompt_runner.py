@@ -153,8 +153,8 @@ def _execute_prompt_template(
         file_path: Path to the .prompty file.
         inputs: Dictionary of input variables for template rendering.
         configuration: Optional configuration dict. If it contains an
-            ``api_key`` entry, an ``AzureKeyCredential`` is used instead
-            of ``DefaultAzureCredential``.
+            ``api_key`` entry, an ``AzureKeyCredential`` is used; otherwise,
+            the shared credential from ``get_credential()`` is used.
 
     Returns:
         The string response content from the model.
@@ -193,7 +193,8 @@ def _execute_prompt_template(
     # Format: {FOUNDRY_ENDPOINT}/models
     inference_endpoint = f"{foundry_endpoint.rstrip('/')}/models"
 
-    # Authenticate — prefer an explicit API key (used in CI), fall back to shared credential
+    # Authenticate — if an explicit API key is provided (e.g., in CI), use AzureKeyCredential;
+    # otherwise, fall back to the shared credential from get_credential().
     api_key = (configuration or {}).get("api_key")
     if api_key:
         credential = AzureKeyCredential(api_key)

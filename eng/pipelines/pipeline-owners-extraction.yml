@@ -93,8 +93,8 @@ stages:
 
         - ${{ each repo in parameters.CodeownerTargetRepos }}:
 
-          - ${{ each step in repo.SetUp }}:
-            - ${{ step }}
+          - ${{ each item in repo.SetUp }}:
+            - ${{ item }}
 
           - pwsh: |
               git clone --filter=tree:0 "https://x-access-token:${{ parameters.GH_TOKEN }}@github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}

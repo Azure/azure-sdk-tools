@@ -42,22 +42,39 @@ public class SessionExecutor : IDisposable
                 McpServers = mcpServers,
                 Model = config.Model,
                 Streaming = true,
+                // Auto-approve all permission requests (file edits, creates, etc.)
+                OnPermissionRequest = (request, invocation) =>
+                {
+                    return Task.FromResult(new PermissionRequestResult
+                    {
+                        Kind = "approved"
+                    });
+                },
                 Hooks = new SessionHooks
                 {
                     OnPreToolUse = (input, invocation) =>
                     {
+                        Console.WriteLine($"Model is calling tool: {input.ToolName}");
                         config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
                         return Task.FromResult<PreToolUseHookOutput?>(null);
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
-                        toolCalls.Add(input.ToolName);
+                        if (input.ToolName == "skill")
+                        {
+                            toolCalls.Add($"{input.ToolName} {input.ToolArgs?.ToString()}");
+                        }
+                        else
+                        {
+                            toolCalls.Add(input.ToolName);
+                        }
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },
                 // Auto-respond to ask_user with a simple response
                 OnUserInputRequest = (request, invocation) =>
                 {
+                    Console.WriteLine($"Model requested user input with prompt: {request.Question}");
                     return Task.FromResult(new UserInputResponse
                     {
                         Answer = "Please proceed with your best judgment.",
@@ -68,12 +85,19 @@ public class SessionExecutor : IDisposable
 
             await using var session = await _client.CreateSessionAsync(sessionConfig);
 
+            if (config.Verbose)
+            {
+                SessionConfigHelper.ConfigureAgentActivityLogging(session);
+            }
+
             // Send prompt and wait for completion
             var messageOptions = new MessageOptions { Prompt = config.Prompt };
+            
             await session.SendAndWaitAsync(messageOptions, config.Timeout);
 
             // Get messages for debugging
             var messages = await session.GetMessagesAsync();
+            // stream version
 
             stopwatch.Stop();
             return new ExecutionResult
@@ -106,7 +130,10 @@ public class SessionExecutor : IDisposable
     {
         // Priority: config param > env var > null (let SDK use repo config)
         var path = azsdkPath ?? Environment.GetEnvironmentVariable("AZSDK_MCP_PATH");
-        if (path == null) return null;
+        if (path == null)
+        {
+            return null;
+        }
 
         return new Dictionary<string, object>
         {
@@ -114,8 +141,14 @@ public class SessionExecutor : IDisposable
             {
                 Type = "local",
                 Command = path,
-                Args = ["mcp", "run"],
-                Tools = ["*"]
+                Args = ["mcp"],
+                Tools = ["*"],
+                Env = new Dictionary<string, string>
+                {
+                    // Set any necessary environment variables for the MCP server here
+                    // For example: ["AZURE_SDK_KB_ENDPOINT"] = "http://localhost:8088"
+                    ["AZURE_SDK_KB_ENDPOINT"] = BenchmarkDefaults.DefaultAzureKnowledgeBaseEndpoint
+                }
             }
         };
     }

@@ -15,6 +15,12 @@
                style="font-size: 0.8rem; color: var(--text-muted-color); margin-right: 0.5rem;"></i>
             <span class="text-muted" style="font-size: 0.9rem;">Comment on line {{ actualLineNumber }}</span>
         </div>
+        <a *ngIf="instanceLocation === 'conversations' && elementId"
+           class="go-to-code-link d-flex align-items-center"
+           (click)="navigateToElementEmitter.emit(elementId); $event.stopPropagation()">
+            <i class="bi bi-box-arrow-up-right"></i>
+            <span>{{ elementId }}</span>
+        </a>
         <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 &&
                     hasSeverity(codePanelRowData!.comments[0].severity)"
              class="severity-header-container ms-auto">
@@ -46,6 +52,12 @@
                     {{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}
                 </span>
             </div>
+        </div>
+    </div>
+    <div *ngIf="!isThreadCollapsed && instanceLocation === 'conversations' && conversationCodeRow" class="code-context-box">
+        <div class="code-context-line">
+            <span *ngIf="conversationCodeRow.lineNumber > 0" class="code-context-line-number">{{ conversationCodeRow.lineNumber }}</span>
+            <span class="code-context-tokens"><span *ngFor="let token of conversationCodeRow.rowOfTokens" [ngClass]="getTokenClass(token)">{{token.value}}</span></span>
         </div>
     </div>
     <div *ngIf="!isThreadCollapsed" class="timeline-container">

@@ -18,11 +18,11 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public interface IAPIViewFeedbackService
 {
-    Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId);
-    Task<ReviewMetadata> ParseReviewMetadata(string revisionId);
+    Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId, CancellationToken ct);
+    Task<ReviewMetadata> ParseReviewMetadata(string revisionId, CancellationToken ct);
     Task<List<FeedbackItem>> GetFeedbackItemsAsync(string apiViewUrl, CancellationToken ct = default);
     Task<string?> GetLanguageAsync(string apiViewUrl, CancellationToken ct = default);
-    Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata);
+    Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata, CancellationToken ct);
 }
 
 /// <summary>
@@ -50,12 +50,12 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
     /// <summary>
     /// Gets consolidated comments from an APIView revision by filtering, grouping, and consolidating comments
     /// </summary>
-    public async Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId)
+    public async Task<List<ConsolidatedComment>> GetConsolidatedComments(string revisionId, CancellationToken ct)
     {
         _logger.LogInformation("Getting comments for revision {RevisionId}", revisionId);
 
         // Get comments from APIViewService - returns JSON string
-        var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId);
+        var commentsJson = await _apiViewService.GetCommentsByRevisionAsync(revisionId, ct);
 
         if (string.IsNullOrWhiteSpace(commentsJson))
         {
@@ -98,9 +98,9 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
 
         _logger.LogInformation("Found {Count} actionable comment(s) after filtering", filteredComments.Count);
 
-        // 2. Group comments by threadId and order by createdOn
+        // 2. Group comments by line ID
         var groupedComments = filteredComments
-            .GroupBy(c => c.ThreadId ?? string.Empty)
+            .GroupBy(c => c.LineId ?? string.Empty)
             .ToDictionary(
                 g => g.Key,
                 g => g.OrderBy(c => c.CreatedOn).ToList()
@@ -111,12 +111,11 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
 
         foreach (var group in groupedComments)
         {
-            var consolidated = await ConsolidateComments(group.Value);
+            var consolidated = await ConsolidateComments(group.Value, ct);
             consolidatedComments.Add(consolidated);
 
             _logger.LogInformation(
-                "Consolidated discussion - ThreadId: {ThreadId}, LineNo: {LineNo}, Comment: {Comment}",
-                consolidated.ThreadId,
+                "Consolidated discussion - LineNo: {LineNo}, Comment: {Comment}",
                 consolidated.LineNo,
                 consolidated.Comment);
         }
@@ -127,7 +126,7 @@ public class APIViewFeedbackService : IAPIViewFeedbackService
     /// <summary>
     /// Consolidates grouped comments using OpenAI to determine conclusion
     /// </summary>
-    private async Task<ConsolidatedComment> ConsolidateComments(List<APIViewComment> groupedComments)
+    private async Task<ConsolidatedComment> ConsolidateComments(List<APIViewComment> groupedComments, CancellationToken ct)
     {
         var firstComment = groupedComments.First();
         var threadId = firstComment.ThreadId ?? string.Empty;
@@ -275,12 +274,12 @@ Respond in JSON format:
     /// <summary>
     /// Gets complete metadata (language, packageName, PR info, etc.) for an APIView revision
     /// </summary>
-    public async Task<ReviewMetadata> ParseReviewMetadata(string revisionId)
+    public async Task<ReviewMetadata> ParseReviewMetadata(string revisionId, CancellationToken ct)
     {
         _logger.LogInformation("Getting metadata for revision {RevisionId}", revisionId);
 
         // Get metadata from APIViewService
-        var metadataJson = await _apiViewService.GetMetadata(revisionId);
+        var metadataJson = await _apiViewService.GetMetadata(revisionId, ct);
 
         if (string.IsNullOrWhiteSpace(metadataJson))
         {
@@ -307,7 +306,7 @@ Respond in JSON format:
         }
 
         // Get additional metadata from resolve endpoint (includes revisionLabel)
-        await ParseRevisionLabel(metadata, revisionId);
+        await ParseRevisionLabel(metadata, revisionId, ct);
 
         _logger.LogInformation(
             "Retrieved metadata - Package: {PackageName}, Language: {Language}, PR: {PullRequestNo}, Repo: {PullRequestRepository}, Label: {RevisionLabel}",
@@ -324,7 +323,7 @@ Respond in JSON format:
     /// Retrieves and sets the RevisionLabel from the resolve endpoint
     /// </summary>
     // TODO: Resolve endpoint needs to be called to get RevisionLabel. This can be removed once SourceBranch field is available in metadata: https://github.com/Azure/azure-sdk-tools/issues/13661
-    private async Task ParseRevisionLabel(ReviewMetadata metadata, string revisionId)
+    private async Task ParseRevisionLabel(ReviewMetadata metadata, string revisionId, CancellationToken ct)
     {
         _logger.LogInformation("Attempting to get revisionLabel from resolve endpoint - ReviewId: {ReviewId}, HasRevision: {HasRevision}",
             metadata.ReviewId, metadata.Revision != null);
@@ -333,7 +332,7 @@ Respond in JSON format:
         {
             string apiViewUrl = $"https://apiview.dev/review/{metadata.ReviewId}?activeApiRevisionId={revisionId}";
             _logger.LogInformation("Calling Resolve endpoint for URL: {Url}", apiViewUrl);
-            var resolveJson = await _apiViewService.Resolve(apiViewUrl);
+            var resolveJson = await _apiViewService.Resolve(apiViewUrl, ct);
             if (!string.IsNullOrWhiteSpace(resolveJson))
             {
                 _logger.LogInformation("Resolve response received: {Response}", resolveJson);
@@ -373,7 +372,7 @@ Respond in JSON format:
     {
         _logger.LogInformation("Preprocessing APIView feedback from: {Url}", apiViewUrl);
         var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
-        var comments = await GetConsolidatedComments(revisionId);
+        var comments = await GetConsolidatedComments(revisionId, ct);
         var feedbackItems = comments.Select(c =>
         {
             var text = $"API Line {c.LineNo}: {c.LineId}, Code: {c.LineText.Trim()}, ReviewComment: {c.Comment}";
@@ -389,14 +388,14 @@ Respond in JSON format:
     public async Task<string?> GetLanguageAsync(string apiViewUrl, CancellationToken ct = default)
     {
         var (revisionId, _) = APIViewReviewTool.ExtractIdsFromUrl(apiViewUrl);
-        var metadata = await ParseReviewMetadata(revisionId);
+        var metadata = await ParseReviewMetadata(revisionId, ct);
         return metadata.Language;
     }
 
     /// <summary>
     /// Detects commit SHA, TypeSpec project path, and TypeSpec repository that an APIView was generated from given review metadata, if available
     /// </summary>
-    public async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata)
+    public async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> DetectShaAndTspPath(ReviewMetadata metadata, CancellationToken ct)
     {
         _logger.LogInformation("Detecting commit SHA and TypeSpec project path for {Package}", metadata.PackageName);
 
@@ -428,18 +427,18 @@ Respond in JSON format:
             if (prRepoName.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase) ||
                 prRepoName.Equals("azure-rest-api-specs-pr", StringComparison.OrdinalIgnoreCase))
             {
-                return await GetTspShaFromSpecsRepoPR(prOwner, prRepoName, prNumber, prRepo);
+                return await GetTspShaFromSpecsRepoPR(prOwner, prRepoName, prNumber, prRepo, ct);
             }
 
             // Scenario 2: If PR info is provided and PR is in language repo, tsp-location.yaml should be parsed to get specs repo and SHA
-            return await GetTspShaFromLanguageRepoPR(prOwner, prRepoName, prNumber, prRepo, metadata.PackageName, metadata.Language);
+            return await GetTspShaFromLanguageRepoPR(prOwner, prRepoName, prNumber, prRepo, metadata.PackageName, metadata.Language, ct);
         }
 
         // Scenario 3: If PR info is not provided, then APIView was generated from source branch in the language SDK repo and tsp-location.yaml should be parsed from there
         // TODO: RevisionLabel currently provides SourceBranch info. Should be updated to use SourceBranch field once it's available: https://github.com/Azure/azure-sdk-tools/issues/13661
         if (!string.IsNullOrEmpty(revision.RevisionLabel))
         {
-            return await GetTspShaFromLanguageRepoBranch(revision.RevisionLabel, metadata.PackageName, metadata.Language);
+            return await GetTspShaFromLanguageRepoBranch(revision.RevisionLabel, metadata.PackageName, metadata.Language, ct);
         }
 
         _logger.LogInformation("No commit SHA or TypeSpec path detected");
@@ -469,10 +468,11 @@ Respond in JSON format:
         string prOwner,
         string prRepoName,
         int prNumber,
-        string prRepo)
+        string prRepo,
+        CancellationToken ct)
     {
         _logger.LogInformation("PR is in {RepoName} - getting head SHA", prRepoName);
-        var sha = await GetPrHeadSha(prOwner, prRepoName, prNumber);
+        var sha = await GetPrHeadSha(prOwner, prRepoName, prNumber, ct);
         if (sha != null)
         {
             _logger.LogInformation("Retrieved commit SHA from specs PR: {Sha}", sha);
@@ -490,10 +490,11 @@ Respond in JSON format:
         int prNumber,
         string prRepo,
         string packageName,
-        string? language)
+        string? language,
+        CancellationToken ct)
     {
         _logger.LogInformation("PR is in SDK repo {PrRepo} - parsing tsp-location.yaml", prRepo);
-        var (sha, tspPath, specsRepo) = await ResolveTspSourceInfo(prOwner, prRepoName, packageName, language, prNumber: prNumber);
+        var (sha, tspPath, specsRepo) = await ResolveTspSourceInfo(prOwner, prRepoName, packageName, language, prNumber: prNumber, ct: ct);
         if (sha != null || tspPath != null || specsRepo != null)
         {
             _logger.LogInformation("Retrieved from tsp-location.yaml - SHA: {Sha}, TSP Path: {TspPath}, Repo: {Repo}", sha, tspPath, specsRepo);
@@ -508,7 +509,8 @@ Respond in JSON format:
     private async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> GetTspShaFromLanguageRepoBranch(
         string revisionLabel,
         string packageName,
-        string? language)
+        string? language,
+        CancellationToken ct)
     {
         // Parse branch from RevisionLabel (format: "Source Branch:main")
         var branch = revisionLabel;
@@ -524,7 +526,7 @@ Respond in JSON format:
         if (sdkRepo != null)
         {
             _logger.LogInformation("Parsing tsp-location.yaml from branch {Branch} in {Owner}/{Repo}", branch, branchOwner, sdkRepo);
-            var (sha, tspPath, specsRepo) = await ResolveTspSourceInfo(branchOwner, sdkRepo, packageName, language, branch: branch);
+            var (sha, tspPath, specsRepo) = await ResolveTspSourceInfo(branchOwner, sdkRepo, packageName, language, branch: branch, ct: ct);
             if (sha != null || tspPath != null || specsRepo != null)
             {
                 _logger.LogInformation("Retrieved from tsp-location.yaml in branch - SHA: {Sha}, TSP Path: {TspPath}, Repo: {Repo}", sha, tspPath, specsRepo);
@@ -537,12 +539,12 @@ Respond in JSON format:
     /// <summary>
     /// Gets the head SHA of a pull request
     /// </summary>
-    private async Task<string?> GetPrHeadSha(string owner, string repo, int prNumber)
+    private async Task<string?> GetPrHeadSha(string owner, string repo, int prNumber, CancellationToken ct)
     {
         try
         {
             _logger.LogInformation("Getting head SHA for PR #{PrNumber} in {Owner}/{Repo}", prNumber, owner, repo);
-            var sha = await _gitHubService.GetPullRequestHeadSha(owner, repo, prNumber);
+            var sha = await _gitHubService.GetPullRequestHeadSha(owner, repo, prNumber, ct);
             _logger.LogInformation("Retrieved head SHA: {Sha}", sha);
             return sha;
         }
@@ -557,12 +559,12 @@ Respond in JSON format:
     /// Resolves TypeSpec source location from tsp-location.yaml file, including the target specs repo
     /// Uses GitHub Code Search to find the file at pattern: sdk/*/packageName/tsp-location.yaml
     /// </summary>
-    private async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> ResolveTspSourceInfo(string owner, string repo, string packageName, string? language, int? prNumber = null, string? branch = null)
+    private async Task<(string? commitSha, string? tspProjectPath, string? targetRepo)> ResolveTspSourceInfo(string owner, string repo, string packageName, string? language, int? prNumber = null, string? branch = null, CancellationToken ct = default)
     {
         try
         {
             // Find tsp-location.yaml using GitHub Code Search with pattern: sdk/*/packageName/tsp-location.yaml
-            var tspLocationPath = await FindTspLocationPath(owner, repo, packageName);
+            var tspLocationPath = await FindTspLocationPath(owner, repo, packageName, ct);
 
             if (string.IsNullOrEmpty(tspLocationPath))
             {
@@ -577,12 +579,12 @@ Respond in JSON format:
             if (prNumber.HasValue)
             {
                 _logger.LogInformation("Getting tsp-location.yaml from PR #{PrNumber} in {Owner}/{Repo}", prNumber.Value, owner, repo);
-                fileContent = await _gitHubService.GetFileFromPullRequest(owner, repo, prNumber.Value, tspLocationPath);
+                fileContent = await _gitHubService.GetFileFromPullRequest(owner, repo, prNumber.Value, tspLocationPath, ct);
             }
             else if (!string.IsNullOrEmpty(branch))
             {
                 _logger.LogInformation("Getting tsp-location.yaml from branch {Branch} in {Owner}/{Repo}", branch, owner, repo);
-                fileContent = await _gitHubService.GetFileFromBranch(owner, repo, branch, tspLocationPath);
+                fileContent = await _gitHubService.GetFileFromBranch(owner, repo, branch, tspLocationPath, ct);
             }
             else
             {
@@ -609,7 +611,7 @@ Respond in JSON format:
     /// Finds tsp-location.yaml path using GitHub Code Search with pattern: sdk/*/packageName/tsp-location.yaml
     /// The * matches exactly one directory level (the service name)
     /// </summary>
-    private async Task<string?> FindTspLocationPath(string owner, string repo, string packageName)
+    private async Task<string?> FindTspLocationPath(string owner, string repo, string packageName, CancellationToken ct)
     {
         try
         {
@@ -620,7 +622,7 @@ Respond in JSON format:
 
             _logger.LogInformation("Searching for tsp-location.yaml with query: {SearchQuery}", searchQuery);
 
-            var results = await _gitHubService.SearchFilesAsync(searchQuery);
+            var results = await _gitHubService.SearchFilesAsync(searchQuery, ct);
 
             if (results.Items.Count == 0)
             {

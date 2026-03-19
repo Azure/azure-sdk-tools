@@ -28,4 +28,9 @@ public class ExecutionConfig
     /// Called with activity description (e.g., "Calling tool: view").
     /// </summary>
     public Action<string>? OnActivity { get; init; }
+
+    /// <summary>
+    /// Show agent activity during execution.
+    /// </summary>
+    public bool Verbose { get; init; }
 }

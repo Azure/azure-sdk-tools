@@ -1,0 +1,28 @@
+{
+    "testCases": [
+        {
+            "name": "version-add-preview-after-preview",
+            "description": "Add a new apiversion `2025-05-04-preview`.",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, Add a new preview version `2025-05-04-preview` to my service widget resource manager.",
+            "testfiles": [
+                "version-add-preview-after-preview/employee.tsp",
+                "version-add-preview-after-preview/main.tsp",
+                "version-add-preview-after-preview/examples" 
+
+            ],
+            "verifyPlan": [
+                "1.Add the new version `2025-05-04-preview` to the `Versions` enum and decoratored '@previewVersion'.",
+                "2. Example folders are correctly set up. rename the example folder from the old preview to the new one (e.g., `mv examples/2024-10-01-preview examples/2025-05-04-preview`), update the `api-version` parameter in all example files, and add or modify examples to reflect API changes.",
+                "3. For Any types or properties that were `@added` in the previous preview should be removed in the new preview, for each one, the agent should simply delete the type or property (along with its `@added` decorator).",
+                "4. For Any types or properties that were `@removed` in the previous preview should now appear in the new preview, For each one, the agent should remove the `@removed` decorator."
+            ]
+        },
+        {
+            "name": "add-arm-resource",
+            "description": "Add a new ARM resource to the specification.",
+            "prompt": "In the specification/widget/resource-manager/Microsoft.Widget/Widget project, add an ARM resource named 'Asset' with CRUD operations",
+            "testfiles": [],
+            "verifyPlan": []
+        }
+    ]
+}

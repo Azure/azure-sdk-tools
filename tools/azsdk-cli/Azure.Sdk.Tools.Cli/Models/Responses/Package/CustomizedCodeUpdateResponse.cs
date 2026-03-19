@@ -85,6 +85,14 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
                 sb.AppendLine($"  - {change}");
             }
         }
+        if (AppliedPatches is { Count: > 0 })
+        {
+            sb.AppendLine("Code customization patches:");
+            foreach (var patch in AppliedPatches)
+            {
+                sb.AppendLine($"  - {patch.FilePath}: {patch.Description} ({patch.ReplacementCount} replacement(s))");
+            }
+        }
         return sb.ToString();
     }
 }

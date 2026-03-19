@@ -15,6 +15,14 @@
         width: 2px;
     }
 
+    .p-timeline-event-content {
+        min-width: 0;
+    }
+
+    .conversation-group-threads {
+        overflow: hidden;
+    }
+
     .emphasis-badge {
         border-radius: 5px;
         padding: 0px 5px 2px 5px;
@@ -46,14 +54,257 @@
         }
     }
 
-    .conversation-group-element-id {
-        cursor: pointer;
-        color: var(--link-color);
-        text-decoration: none;
+}
 
-        &:hover {
-            color: var(--link-active);
-            text-decoration: underline;
-        }
+/* ================================================================
+   Filter Toolbar
+   ================================================================ */
+
+.filter-toolbar {
+    padding: 0rem 0.75rem 0.3rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.filter-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+}
+
+.filter-section {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.filter-section-labeled {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+}
+
+.filter-section-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.filter-group-label {
+    font-size: 0.58rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted-color, var(--base-text-color));
+    padding-left: 0.15rem;
+    user-select: none;
+    line-height: 1;
+}
+
+.filter-divider {
+    width: 1px;
+    height: 1.5rem;
+    background: var(--border-color);
+    margin: 0 0.125rem;
+    align-self: flex-end;
+    margin-bottom: 0.15rem;
+}
+
+/* --- Segmented control (Status: Active / Resolved / All) --- */
+
+.segmented-control {
+    display: inline-flex;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.seg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: var(--base-text-color);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    white-space: nowrap;
+
+    &:not(:last-child) {
+        border-right: 1px solid var(--border-color);
     }
+
+    &:hover:not(.seg-active) {
+        background: color-mix(in srgb, var(--base-text-color) 8%, transparent);
+    }
+
+    &.seg-active {
+        background: var(--primary-color, #0d6efd);
+        color: #fff;
+    }
+
+    i {
+        font-size: 0.7rem;
+    }
+}
+
+/* --- Severity buttons --- */
+
+.sev-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, box-shadow 0.12s;
+    white-space: nowrap;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--base-text-color);
+
+    &:hover:not(.sev-on) {
+        background: color-mix(in srgb, var(--base-text-color) 12%, transparent);
+    }
+
+    i { font-size: 0.7rem; }
+
+    // Active states use the existing severity theme variables from theme-colors.scss
+    &.sev-question.sev-on {
+        background: var(--severity-question-bg);
+        color: var(--severity-question-text);
+        border-color: var(--severity-question-border);
+        box-shadow: inset 0 0 0 1px var(--severity-question-border);
+    }
+
+    &.sev-suggestion.sev-on {
+        background: var(--severity-suggestion-bg);
+        color: var(--severity-suggestion-text);
+        border-color: var(--severity-suggestion-border);
+        box-shadow: inset 0 0 0 1px var(--severity-suggestion-border);
+    }
+
+    &.sev-shouldfix.sev-on {
+        background: var(--severity-should-fix-bg);
+        color: var(--severity-should-fix-text);
+        border-color: var(--severity-should-fix-border);
+        box-shadow: inset 0 0 0 1px var(--severity-should-fix-border);
+    }
+
+    &.sev-mustfix.sev-on {
+        background: var(--severity-must-fix-bg);
+        color: var(--severity-must-fix-text);
+        border-color: var(--severity-must-fix-border);
+        box-shadow: inset 0 0 0 1px var(--severity-must-fix-border);
+    }
+}
+
+/* --- Source buttons --- */
+
+.src-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s, box-shadow 0.12s;
+    white-space: nowrap;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--base-text-color);
+
+    &:hover:not(.src-on) {
+        background: color-mix(in srgb, var(--base-text-color) 12%, transparent);
+    }
+
+    i { font-size: 0.72rem; }
+
+    &.src-human.src-on {
+        background: var(--alert-info-bg);
+        color: var(--alert-info-color);
+        border-color: var(--alert-info-border-color);
+        box-shadow: inset 0 0 0 1px var(--alert-info-border-color);
+    }
+
+    &.src-ai.src-on {
+        background: var(--alert-success-bg);
+        color: var(--alert-success-color);
+        border-color: var(--alert-success-border-color);
+        box-shadow: inset 0 0 0 1px var(--alert-success-border-color);
+    }
+
+    &.src-diag.src-on {
+        background: var(--alert-warn-bg);
+        color: var(--alert-warn-color);
+        border-color: var(--alert-warn-border-color);
+        box-shadow: inset 0 0 0 1px var(--alert-warn-border-color);
+    }
+}
+
+/* --- Meta (count + reset) --- */
+
+.filter-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+    align-self: flex-end;
+    margin-bottom: 0.15rem;
+}
+
+.filter-count {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--base-text-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.filter-count-sep {
+    opacity: 0.35;
+    margin: 0 0.05rem;
+}
+
+.reset-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--base-text-color);
+    opacity: 0.55;
+    cursor: pointer;
+    transition: opacity 0.12s, background 0.12s;
+
+    &:hover {
+        opacity: 1;
+        background: color-mix(in srgb, var(--base-text-color) 10%, transparent);
+    }
+
+    i { font-size: 0.8rem; }
+}
+
+/* --- Empty state --- */
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 2rem 1rem;
+    color: var(--text-muted-color, var(--base-text-color));
+    font-size: 0.85rem;
+
+    i { font-size: 1rem; opacity: 0.5; }
 }

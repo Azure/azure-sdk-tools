@@ -72,7 +72,7 @@ public class LogAnalysisTool(
                 var contextLines = parseResult.GetValue(contextLinesOpt);
 
                 var keywords = ParseCustomKeywords(customKeywords);
-                var result = await AnalyzeLogFile(filePath, fullSearch, keywords, contextLines);
+                var result = await AnalyzeLogFile(filePath, fullSearch, keywords, contextLines, ct);
                 return result;
 
             default:
@@ -81,7 +81,7 @@ public class LogAnalysisTool(
     }
 
     [McpServerTool(Name = AnalyzeLogFileToolName), Description("Analyzes a log file for errors and issues")]
-    public async Task<LogAnalysisResponse> AnalyzeLogFile(string filePath, bool fullSearch = false, List<string> customKeywords = null, int contextLines = -1)
+    public async Task<LogAnalysisResponse> AnalyzeLogFile(string filePath, bool fullSearch = false, List<string> customKeywords = null, int contextLines = -1, CancellationToken ct = default)
     {
         try
         {
@@ -111,13 +111,13 @@ public class LogAnalysisTool(
                 customKeywords.Add("[31m");
                 var before = contextLines >= 0 ? contextLines : 20;
                 var after = contextLines >= 0 ? contextLines : 5;
-                errors = await logHelper.AnalyzeLogContent(filePath, customKeywords, before, after);
+                errors = await logHelper.AnalyzeLogContent(filePath, customKeywords, before, after, ct);
             }
             else
             {
                 var before = contextLines >= 0 ? contextLines : DEFAULT_CONTEXT_LINES;
                 var after = contextLines >= 0 ? contextLines : DEFAULT_CONTEXT_LINES;
-                errors = await logHelper.AnalyzeLogContent(filePath, customKeywords ?? null, before, after);
+                errors = await logHelper.AnalyzeLogContent(filePath, customKeywords ?? null, before, after, ct);
             }
 
             return new LogAnalysisResponse

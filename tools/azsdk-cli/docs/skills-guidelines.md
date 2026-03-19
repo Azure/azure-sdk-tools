@@ -104,18 +104,41 @@ Skills that are specific to a particular language or repository should be stored
 
 ### Multi-Repository Skills
 
-Skills that apply to multiple repositories with the same instructions should be placed in the `.github/skills/common` directory within the azure-sdk-tools repository. This enables sharing of common automation patterns across all Azure SDK repositories.
+Skills that apply to multiple repositories should be placed in the `.github/skills/` directory within the azure-sdk-tools repository, using an `azsdk-common-` directory name prefix. For example, a shared skill called `release-plan` would be at `.github/skills/azsdk-common-release-plan/SKILL.md`.
 
-### How to sync skills across the repos
+The `azsdk-common-` prefix ensures shared skills sort together in a distinct block when browsing the skills directory, clearly separated from repo-specific skills. The skill `name` field inside `SKILL.md` should match the directory name (e.g., `name: azsdk-common-release-plan`).
 
-Engineering system has a pipeline to sync all changes in the `eng/common` in azure-sdk-tools repo to `eng/common` in all repos. This can be enhanced to support the sync of skills to `.github/skills`.
+### How to sync skills across azure sdk repositories
 
-To distribute Skills from azure-sdk-tools to individual Azure SDK repositories:
+The `tools - sync-.github` pipeline syncs shared skills from `.github/skills/` in `azure-sdk-tools` to `.github/skills/` in all subscribed Azure SDK repositories. It uses `FilePatterns` to sync only `azsdk-common-*` directories, leaving repo-specific skills untouched. This works the same way as the `tools - sync-eng-common` pipeline.
 
-- submit a PR to create or edit a skill in `Azure/azure-sdk-tools`.
-- Skills in `.github/skills/common` are synced to `.github/skills` in individual SDK repositories using engsys pipeline.
-- Changes to the engineering systems common sync framework are required to enable this synchronization.
-- The sync process ensures that all repositories benefit from centralized Skill updates.
+The pipeline definition is at [`eng/pipelines/sync-.github.yml`](../../eng/pipelines/sync-.github.yml).
+
+To distribute skills from azure-sdk-tools to individual Azure SDK repositories:
+
+1. Create a new directory under `.github/skills/` with the `azsdk-common-` prefix (e.g., `azsdk-common-my-skill/`).
+2. Add a `SKILL.md` file using the following template. The `name` field should match the directory name.
+
+    ```markdown
+    ---
+    # SKILL.md Template - Copy this file to your skill directory and rename to SKILL.md
+    # Spec: https://agentskills.io/specification
+
+    # name: Max 64 characters. Lowercase letters, numbers, and hyphens only.
+    # Must not start or end with a hyphen. Must match parent directory name.
+    name: <azsdk-common-skill-name>
+    # Max 1024 chars in description
+    description: <One-line description of what the skill does.>
+    ---
+
+    # <Skill Title>
+
+    <Skill instructions and sub-sections here>
+    ```
+3. Submit a PR — the sync pipeline triggers automatically when files under `.github/skills/azsdk-common-*` change.
+4. The pipeline creates sync PRs in all subscribed repos following the standard sync workflow (see [common_engsys.md](../../doc/common/common_engsys.md) for details on the sync process).
+
+**Important:** Do **NOT** modify `azsdk-common-*` skill directories in individual language repos — they will be overwritten on the next sync.
 
 ## Service specific instruction
 

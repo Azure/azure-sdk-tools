@@ -2,3 +2,5 @@
 # disallow single if statements with no curly braces
 dotnet_diagnostic.IDE0011.severity = error
 dotnet_style_namespace_match_folder = false
+# Forward the CancellationToken parameter to methods that take one
+dotnet_diagnostic.CA2016.severity = error

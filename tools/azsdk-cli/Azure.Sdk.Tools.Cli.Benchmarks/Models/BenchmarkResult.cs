@@ -34,7 +34,7 @@ public class BenchmarkResult
     public string? GitDiff { get; init; }
 
     /// <summary>
-    /// Gets the list of tool calls made during execution.
+    /// Gets the tool calls made during execution.
     /// </summary>
     public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
 

@@ -1,29 +1,27 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
 
 namespace Azure.Sdk.Tools.Cli.Services.Languages;
 
 /// <summary>
 /// .NET-specific implementation of version file updates.
-/// Follows the logic implemented in SetPackageVersion from azure-sdk-for-net eng/scripts/Language-Settings.ps1,
-/// which delegates to Update-PkgVersion.ps1.
+/// Handles changelog updates (via base class) and .csproj version updates directly in C#,
+/// avoiding a PowerShell script dependency.
 /// </summary>
 public sealed partial class DotnetLanguageService : LanguageService
 {
-    private static readonly TimeSpan VersionScriptTimeout = TimeSpan.FromMinutes(2);
-
     // Regex to match <Version>...</Version> in .csproj XML
     private static readonly Regex CsprojVersionRegex = new(
         @"(<Version>)([^<]+)(</Version>)",
         RegexOptions.Compiled);
 
     /// <summary>
-    /// Overrides the base version update to let Update-PkgVersion.ps1 handle both the
-    /// version file updates and the changelog entry rename (beta → stable) in one step.
-    /// Falls back to the base class behavior when the script is not available.
+    /// Overrides the base version update to add .NET-specific validation that the
+    /// release type matches the version format (e.g., stable versions must not have
+    /// a pre-release suffix). Delegates to the base class for changelog and version
+    /// file updates.
     /// </summary>
     public override async Task<PackageOperationResponse> UpdateVersionAsync(
         string packagePath, string? releaseType, string? version, string? releaseDate, CancellationToken ct)
@@ -70,42 +68,16 @@ public sealed partial class DotnetLanguageService : LanguageService
             }
         }
 
-        // Try to use the repo's Update-PkgVersion.ps1 which handles both
-        // version file updates and changelog entry title rename in one step.
-        var scriptResult = await TryUpdateVersionUsingScriptAsync(
-            packagePath, targetVersion, releaseType, releaseDate, ct);
-
-        if (scriptResult.ScriptAvailable && scriptResult.Success)
-        {
-            // Refetch package info so the response reflects the updated version
-            var updatedPackageInfo = await GetPackageInfo(packagePath, ct);
-            return PackageOperationResponse.CreateSuccess(
-                $"Version updated to {targetVersion} with release date {releaseDate} via Update-PkgVersion.ps1.",
-                packageInfo: updatedPackageInfo);
-        }
-
-        if (scriptResult.ScriptAvailable && !scriptResult.Success)
-        {
-            return PackageOperationResponse.CreateFailure(
-                scriptResult.Message ?? "Update-PkgVersion.ps1 failed.",
-                packageInfo: packageInfo,
-                nextSteps:
-                [
-                    "Check that pwsh (PowerShell) is installed and available",
-                    "Ensure eng/scripts/Update-PkgVersion.ps1 exists in the repo",
-                    "Check the running logs for details about the error"
-                ]);
-        }
-
-        // Script not available — fall back to the base class which handles
-        // the changelog separately and then calls UpdatePackageVersionInFilesAsync.
-        logger.LogInformation("Update-PkgVersion.ps1 not available, falling back to base class version update");
+        // Delegate to the base class which handles:
+        // 1. Changelog entry title update (version + date) via ChangelogHelper.UpdateReleaseDate
+        //    This always replaces the latest entry title, matching Prepare-Release.ps1 behavior,
+        //    so version promotion (e.g., 12.28.0-beta.2 → 12.28.0) is handled automatically.
+        // 2. Language-specific version file updates via UpdatePackageVersionInFilesAsync
         return await base.UpdateVersionAsync(packagePath, releaseType, targetVersion, releaseDate, ct);
     }
 
     /// <summary>
     /// Updates the package version in .NET-specific files (.csproj).
-    /// Only used in the fallback path when Update-PkgVersion.ps1 is not available.
     /// </summary>
     protected override async Task<PackageOperationResponse> UpdatePackageVersionInFilesAsync(
         string packagePath, string version, string? releaseType, CancellationToken ct)
@@ -133,92 +105,7 @@ public sealed partial class DotnetLanguageService : LanguageService
     }
 
     /// <summary>
-    /// Attempts to run Update-PkgVersion.ps1 from the azure-sdk-for-net repo.
-    /// This follows the pattern of SetPackageVersion in Language-Settings.ps1.
-    /// </summary>
-    private async Task<VersionScriptResult> TryUpdateVersionUsingScriptAsync(
-        string packagePath, string version, string? releaseType, string releaseDate, CancellationToken ct)
-    {
-        string repoRoot;
-        string relativePath;
-        try
-        {
-            (repoRoot, relativePath, _) = await packageInfoHelper.ParsePackagePathAsync(packagePath, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogDebug(ex, "Failed to parse package path for {PackagePath}; script update skipped", packagePath);
-            return VersionScriptResult.NotAvailable("Failed to discover repository root.");
-        }
-
-        if (string.IsNullOrWhiteSpace(repoRoot))
-        {
-            return VersionScriptResult.NotAvailable("Repository root was not found.");
-        }
-
-        var updatePkgVersionScript = Path.Combine(repoRoot, "eng", "scripts", "Update-PkgVersion.ps1");
-        if (!File.Exists(updatePkgVersionScript))
-        {
-            logger.LogDebug("Update-PkgVersion.ps1 not found at {ScriptPath}", updatePkgVersionScript);
-            return VersionScriptResult.NotAvailable("Update-PkgVersion.ps1 was not found under eng/scripts.");
-        }
-
-        // ParsePackagePathAsync returns path relative to sdk/, e.g. "storage/Azure.Storage.Blobs"
-        if (string.IsNullOrEmpty(relativePath))
-        {
-            return VersionScriptResult.NotAvailable("Package path could not be resolved relative to sdk/.");
-        }
-
-        var parts = relativePath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-
-        if (parts.Length < 2 || parts[0] == "..")
-        {
-            logger.LogDebug("Package path {PackagePath} does not follow expected sdk/<service>/<package> layout", packagePath);
-            return VersionScriptResult.NotAvailable(
-                $"Package path does not follow expected sdk/<service>/<package> layout: {relativePath}");
-        }
-
-        var serviceDirectory = parts[0];
-
-        // Get accurate package name from MSBuild project metadata rather than folder name,
-        // since the folder name may not match the actual package name.
-        var (msbuildPackageName, _, _) = await TryGetPackageInfoAsync(packagePath, ct);
-        var packageName = msbuildPackageName ?? parts[1];
-
-        logger.LogInformation("Running Update-PkgVersion.ps1 for {PackageName} in service {ServiceDirectory}",
-            packageName, serviceDirectory);
-
-        // The script handles both version file updates and changelog entry title rename,
-        // so we enable ReplaceLatestEntryTitle and pass the release date.
-        var scriptArgs = new[]
-        {
-            "-ServiceDirectory", serviceDirectory,
-            "-PackageName", packageName,
-            "-NewVersionString", version,
-            "-ReleaseDate", releaseDate,
-            "-ReplaceLatestEntryTitle", "$true"
-        };
-
-        var result = await powershellHelper.Run(new PowershellOptions(
-            scriptPath: updatePkgVersionScript,
-            args: scriptArgs,
-            workingDirectory: repoRoot,
-            timeout: VersionScriptTimeout), ct);
-
-        if (result.ExitCode != 0)
-        {
-            logger.LogError("Update-PkgVersion.ps1 failed with exit code {ExitCode}: {Output}",
-                result.ExitCode, result.Output);
-            return VersionScriptResult.Failed($"Update-PkgVersion.ps1 failed (exit code {result.ExitCode}): {result.Output}");
-        }
-
-        logger.LogInformation("Update-PkgVersion.ps1 completed successfully for {PackageName}", packageName);
-        return VersionScriptResult.Succeeded($"Version updated to {version} via Update-PkgVersion.ps1 for {packageName}.");
-    }
-
-    /// <summary>
-    /// Falls back to directly updating the Version element in the .csproj file.
-    /// This is used when the repo's versioning script is not available.
+    /// Directly updates the Version element in the .csproj file.
     /// </summary>
     private async Task<PackageOperationResponse> UpdateCsprojVersionDirectlyAsync(
         string csprojPath, string version, CancellationToken ct)
@@ -258,7 +145,6 @@ public sealed partial class DotnetLanguageService : LanguageService
                 $"Updated version to {version} in {Path.GetFileName(csprojPath)}.",
                 nextSteps:
                 [
-                    "Note: Direct .csproj update was used because Update-PkgVersion.ps1 was not found",
                     "Central Package Management (CPM) files were NOT updated - update eng/Packages.Data.props manually if needed",
                     "Review the changes and run validation checks"
                 ]);
@@ -302,10 +188,4 @@ public sealed partial class DotnetLanguageService : LanguageService
         return true;
     }
 
-    private sealed record VersionScriptResult(bool ScriptAvailable, bool Success, string? Message)
-    {
-        public static VersionScriptResult NotAvailable(string message) => new(false, false, message);
-        public static VersionScriptResult Failed(string message) => new(true, false, message);
-        public static VersionScriptResult Succeeded(string message) => new(true, true, message);
-    }
 }

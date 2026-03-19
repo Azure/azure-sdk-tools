@@ -73,119 +73,6 @@ internal class DotnetLanguageServiceVersionUpdateTests
     }
 
     [Test]
-    public async Task UpdateVersionInFiles_UsesScriptWhenAvailable()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("dotnet-version-script");
-        var repoRoot = tempDir.DirectoryPath;
-
-        // Create package structure: sdk/<service>/<package>/src/<package>.csproj
-        var packagePath = Path.Combine(repoRoot, "sdk", "testservice", "Azure.Test.Package");
-        var srcDir = Path.Combine(packagePath, "src");
-        Directory.CreateDirectory(srcDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(srcDir, "Azure.Test.Package.csproj"),
-            CreateSampleCsproj("1.0.0-beta.1"));
-
-        // Create the versioning script
-        var scriptDir = Path.Combine(repoRoot, "eng", "scripts");
-        Directory.CreateDirectory(scriptDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(scriptDir, "Update-PkgVersion.ps1"),
-            "# mock script");
-
-        _packageInfoHelperMock
-            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((repoRoot, "testservice/Azure.Test.Package", packagePath));
-
-        _powershellHelperMock
-            .Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateProcessResult(0, "Version updated"));
-
-        // Act — call UpdateVersionAsync directly (script path is handled here now)
-        var result = await _service.UpdateVersionAsync(
-            packagePath, "stable", "2.0.0", "2025-06-15", CancellationToken.None);
-
-        // Assert
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
-        Assert.That(result.Message, Does.Contain("Update-PkgVersion.ps1"));
-
-        _powershellHelperMock.Verify(
-            p => p.Run(
-                It.Is<PowershellOptions>(opts =>
-                    opts.Args.Any(a => a.Contains("Update-PkgVersion.ps1"))),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [Test]
-    public async Task UpdateVersionInFiles_ScriptFailure_ReturnsFailure()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("dotnet-version-script-fail");
-        var repoRoot = tempDir.DirectoryPath;
-
-        var packagePath = Path.Combine(repoRoot, "sdk", "testservice", "Azure.Test.Package");
-        var srcDir = Path.Combine(packagePath, "src");
-        Directory.CreateDirectory(srcDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(srcDir, "Azure.Test.Package.csproj"),
-            CreateSampleCsproj("1.0.0"));
-
-        var scriptDir = Path.Combine(repoRoot, "eng", "scripts");
-        Directory.CreateDirectory(scriptDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(scriptDir, "Update-PkgVersion.ps1"),
-            "# mock script");
-
-        _packageInfoHelperMock
-            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((repoRoot, "testservice/Azure.Test.Package", packagePath));
-
-        _powershellHelperMock
-            .Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateProcessResult(1, "Script error"));
-
-        // Act
-        var result = await _service.UpdateVersionAsync(
-            packagePath, "stable", "2.0.0", "2025-06-15", CancellationToken.None);
-
-        // Assert
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
-        Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("Update-PkgVersion.ps1"));
-    }
-
-    [Test]
-    public async Task UpdateVersionInFiles_FallsBackToDirectUpdate_WhenScriptNotFound()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("dotnet-version-direct");
-        var repoRoot = tempDir.DirectoryPath;
-
-        var packagePath = Path.Combine(repoRoot, "sdk", "testservice", "Azure.Test.Package");
-        var srcDir = Path.Combine(packagePath, "src");
-        Directory.CreateDirectory(srcDir);
-
-        var csprojPath = Path.Combine(srcDir, "Azure.Test.Package.csproj");
-        await File.WriteAllTextAsync(csprojPath, CreateSampleCsproj("1.0.0-beta.1"));
-
-        // No script exists, repo root exists but no eng/scripts
-        _packageInfoHelperMock
-            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((repoRoot, "testservice/Azure.Test.Package", packagePath));
-
-        // Act
-        var result = await InvokeUpdatePackageVersionInFilesAsync(
-            packagePath, "1.0.0", "stable");
-
-        // Assert
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
-        var updatedContent = await File.ReadAllTextAsync(csprojPath);
-        Assert.That(updatedContent, Does.Contain("<Version>1.0.0</Version>"));
-        Assert.That(updatedContent, Does.Not.Contain("1.0.0-beta.1"));
-    }
-
-    [Test]
     public async Task UpdateVersionInFiles_FallsBackToDirectUpdate_WhenRepoRootNotFound()
     {
         // Arrange
@@ -290,141 +177,6 @@ internal class DotnetLanguageServiceVersionUpdateTests
         Assert.That(updatedContent, Does.Contain("<Version>1.1.0-beta.1</Version>"));
     }
 
-    [Test]
-    public async Task UpdateVersionInFiles_ScriptCalledWithCorrectServiceAndPackage()
-    {
-        // Arrange
-        using var tempDir = TempDirectory.Create("dotnet-version-args");
-        var repoRoot = tempDir.DirectoryPath;
-
-        var packagePath = Path.Combine(repoRoot, "sdk", "storage", "Azure.Storage.Blobs");
-        var srcDir = Path.Combine(packagePath, "src");
-        Directory.CreateDirectory(srcDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(srcDir, "Azure.Storage.Blobs.csproj"),
-            CreateSampleCsproj("12.0.0"));
-
-        var scriptDir = Path.Combine(repoRoot, "eng", "scripts");
-        Directory.CreateDirectory(scriptDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(scriptDir, "Update-PkgVersion.ps1"), "# mock");
-
-        _packageInfoHelperMock
-            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((repoRoot, "storage/Azure.Storage.Blobs", packagePath));
-
-        PowershellOptions? capturedOptions = null;
-        _powershellHelperMock
-            .Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<PowershellOptions, CancellationToken>((opts, _) => capturedOptions = opts)
-            .ReturnsAsync(CreateProcessResult(0, "Done"));
-
-        // Act
-        await _service.UpdateVersionAsync(
-            packagePath, "stable", "13.0.0", "2025-06-15", CancellationToken.None);
-
-        // Assert - verify correct arguments were passed
-        Assert.That(capturedOptions, Is.Not.Null);
-        Assert.That(capturedOptions!.Args.Any(a => a.Contains("Update-PkgVersion.ps1")), Is.True);
-        Assert.That(capturedOptions.Args, Does.Contain("-ServiceDirectory"));
-        Assert.That(capturedOptions.Args, Does.Contain("storage"));
-        Assert.That(capturedOptions.Args, Does.Contain("-PackageName"));
-        Assert.That(capturedOptions.Args, Does.Contain("Azure.Storage.Blobs"));
-        Assert.That(capturedOptions.Args, Does.Contain("-NewVersionString"));
-        Assert.That(capturedOptions.Args, Does.Contain("13.0.0"));
-        Assert.That(capturedOptions.Args, Does.Contain("-ReleaseDate"));
-        Assert.That(capturedOptions.Args, Does.Contain("2025-06-15"));
-        Assert.That(capturedOptions.Args, Does.Contain("-ReplaceLatestEntryTitle"));
-        Assert.That(capturedOptions.Args, Does.Contain("$true"));
-    }
-
-    [Test]
-    public async Task UpdateVersionInFiles_NonStandardLayout_FallsBackToDirectUpdate()
-    {
-        // Arrange - package not under sdk/<service>/<package> layout
-        using var tempDir = TempDirectory.Create("dotnet-version-nonstandard");
-        var repoRoot = tempDir.DirectoryPath;
-
-        var packagePath = Path.Combine(repoRoot, "custom", "MyPackage");
-        var srcDir = Path.Combine(packagePath, "src");
-        Directory.CreateDirectory(srcDir);
-
-        var csprojPath = Path.Combine(srcDir, "MyPackage.csproj");
-        await File.WriteAllTextAsync(csprojPath, CreateSampleCsproj("1.0.0"));
-
-        // Script exists but layout is non-standard (path is outside sdk/ directory)
-        var scriptDir = Path.Combine(repoRoot, "eng", "scripts");
-        Directory.CreateDirectory(scriptDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(scriptDir, "Update-PkgVersion.ps1"), "# mock");
-
-        _packageInfoHelperMock
-            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((repoRoot, "../custom/MyPackage", packagePath));
-
-        // Act
-        var result = await InvokeUpdatePackageVersionInFilesAsync(
-            packagePath, "2.0.0", "stable");
-
-        // Assert - should fall back to direct .csproj update
-        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
-        var updatedContent = await File.ReadAllTextAsync(csprojPath);
-        Assert.That(updatedContent, Does.Contain("<Version>2.0.0</Version>"));
-
-        // Script should not have been called
-        _powershellHelperMock.Verify(
-            p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Test]
-    public async Task UpdateVersionInFiles_ScriptUsesPackageNameFromMSBuild()
-    {
-        // Arrange - folder name differs from actual MSBuild package name
-        using var tempDir = TempDirectory.Create("dotnet-version-msbuild-name");
-        var repoRoot = tempDir.DirectoryPath;
-
-        // Folder is "Azure.Storage" but actual package name is "Azure.Storage.Blobs"
-        var packagePath = Path.Combine(repoRoot, "sdk", "storage", "Azure.Storage");
-        var srcDir = Path.Combine(packagePath, "src");
-        Directory.CreateDirectory(srcDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(srcDir, "Azure.Storage.Blobs.csproj"),
-            CreateSampleCsproj("12.0.0"));
-
-        var scriptDir = Path.Combine(repoRoot, "eng", "scripts");
-        Directory.CreateDirectory(scriptDir);
-        await File.WriteAllTextAsync(
-            Path.Combine(scriptDir, "Update-PkgVersion.ps1"), "# mock");
-
-        _packageInfoHelperMock
-            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((repoRoot, "storage/Azure.Storage", packagePath));
-
-        // Mock MSBuild GetPackageInfo to return the real package name
-        var msbuildJson = """{"TargetResults":{"GetPackageInfo":{"Items":[{"Identity":"'path' 'storage' 'Azure.Storage.Blobs' '12.0.0' 'client'"}]}}}""";
-        _processHelperMock
-            .Setup(p => p.Run(
-                It.Is<ProcessOptions>(o => o.Args.Contains("-getTargetResult:GetPackageInfo")),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(CreateProcessResult(0, msbuildJson));
-
-        PowershellOptions? capturedOptions = null;
-        _powershellHelperMock
-            .Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
-            .Callback<PowershellOptions, CancellationToken>((opts, _) => capturedOptions = opts)
-            .ReturnsAsync(CreateProcessResult(0, "Done"));
-
-        // Act
-        await _service.UpdateVersionAsync(
-            packagePath, "stable", "13.0.0", "2025-06-15", CancellationToken.None);
-
-        // Assert - script should use MSBuild name "Azure.Storage.Blobs", not folder name "Azure.Storage"
-        Assert.That(capturedOptions, Is.Not.Null);
-        Assert.That(capturedOptions!.Args, Does.Contain("Azure.Storage.Blobs"));
-        Assert.That(capturedOptions.Args, Does.Not.Contain("Azure.Storage'"));
-    }
-
     #endregion
 
     #region Release Type Validation Tests
@@ -475,6 +227,79 @@ internal class DotnetLanguageServiceVersionUpdateTests
         Assert.That(result.OperationStatus, Is.EqualTo(Status.Failed));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("beta"));
         Assert.That(result.ResponseErrors.FirstOrDefault(), Does.Contain("pre-release suffix"));
+    }
+
+    #endregion
+
+    #region Version Promotion Tests
+
+    [Test]
+    public async Task UpdateVersion_PromotesBetaToStable_RenamesChangelogEntry()
+    {
+        // Arrange — changelog has a beta entry, user wants to promote to stable
+        using var tempDir = TempDirectory.Create("dotnet-version-promote");
+        var packagePath = tempDir.DirectoryPath;
+        var srcDir = Path.Combine(packagePath, "src");
+        Directory.CreateDirectory(srcDir);
+        await File.WriteAllTextAsync(
+            Path.Combine(srcDir, "TestPackage.csproj"),
+            CreateSampleCsproj("12.28.0-beta.2"));
+
+        var changelogContent = """
+            # Release History
+
+            ## 12.28.0-beta.2 (Unreleased)
+
+            ### Features Added
+            - some random feature
+            - another random feature
+
+            ### Breaking Changes
+
+            ### Bugs Fixed
+
+            ### Other Changes
+
+            """;
+        var changelogPath = Path.Combine(packagePath, "CHANGELOG.md");
+        await File.WriteAllTextAsync(changelogPath, changelogContent);
+
+        _packageInfoHelperMock
+            .Setup(p => p.ParsePackagePathAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string.Empty, string.Empty, packagePath));
+
+        // This test exercises the full changelog flow, so use a real ChangelogHelper
+        var realChangelogHelper = new ChangelogHelper(new TestLogger<ChangelogHelper>());
+        var serviceWithRealChangelog = new DotnetLanguageService(
+            _processHelperMock.Object,
+            _powershellHelperMock.Object,
+            _gitHelperMock.Object,
+            new TestLogger<DotnetLanguageService>(),
+            Mock.Of<ICommonValidationHelpers>(),
+            _packageInfoHelperMock.Object,
+            Mock.Of<IFileHelper>(),
+            Mock.Of<ISpecGenSdkConfigHelper>(),
+            realChangelogHelper);
+
+        // Act — promote from 12.28.0-beta.2 to stable 12.28.0
+        var result = await serviceWithRealChangelog.UpdateVersionAsync(
+            packagePath, "stable", "12.28.0", "2025-06-15", CancellationToken.None);
+
+        // Assert
+        Assert.That(result.OperationStatus, Is.EqualTo(Status.Succeeded));
+
+        // Verify changelog was updated: entry title should now be "## 12.28.0 (2025-06-15)"
+        var updatedChangelog = await File.ReadAllTextAsync(changelogPath);
+        Assert.That(updatedChangelog, Does.Contain("## 12.28.0 (2025-06-15)"));
+        Assert.That(updatedChangelog, Does.Not.Contain("12.28.0-beta.2"));
+
+        // Verify features content was preserved
+        Assert.That(updatedChangelog, Does.Contain("some random feature"));
+        Assert.That(updatedChangelog, Does.Contain("another random feature"));
+
+        // Verify csproj was updated
+        var updatedCsproj = await File.ReadAllTextAsync(Path.Combine(srcDir, "TestPackage.csproj"));
+        Assert.That(updatedCsproj, Does.Contain("<Version>12.28.0</Version>"));
     }
 
     #endregion

@@ -189,7 +189,7 @@ class TestResolvePackageLLMFallback:
         """Test that LLM is called when no exact match is found."""
         with (
             patch("src._apiview.get_apiview_cosmos_client") as mock_client,
-            patch("src._utils.run_prompty") as mock_prompty,
+            patch("src._prompt_runner._run_prompt_template") as mock_run_prompt,
         ):
             reviews_container = MockContainerClient(mock_reviews_data)
             revisions_container = MockContainerClient(mock_revisions_data)
@@ -200,19 +200,19 @@ class TestResolvePackageLLMFallback:
                 return revisions_container
 
             mock_client.side_effect = get_container
-            mock_prompty.return_value = "azure-storage-blob"
+            mock_run_prompt.return_value = "azure-storage-blob"
 
             result = resolve_package("storage blob package", "python")
 
             assert result is not None
             assert result["package_name"] == "azure-storage-blob"
-            mock_prompty.assert_called_once()
+            mock_run_prompt.assert_called_once()
 
     def test_llm_returns_no_match(self, mock_reviews_data):
         """Test that None is returned when LLM returns NO_MATCH."""
         with (
             patch("src._apiview.get_apiview_cosmos_client") as mock_client,
-            patch("src._utils.run_prompty") as mock_prompty,
+            patch("src._prompt_runner._run_prompt_template") as mock_run_prompt,
         ):
             reviews_container = MockContainerClient(mock_reviews_data)
 
@@ -220,7 +220,7 @@ class TestResolvePackageLLMFallback:
                 return reviews_container
 
             mock_client.side_effect = get_container
-            mock_prompty.return_value = "NO_MATCH"
+            mock_run_prompt.return_value = "NO_MATCH"
 
             result = resolve_package("nonexistent-package", "python")
 
@@ -230,7 +230,7 @@ class TestResolvePackageLLMFallback:
         """Test that None is returned when LLM raises an exception."""
         with (
             patch("src._apiview.get_apiview_cosmos_client") as mock_client,
-            patch("src._utils.run_prompty") as mock_prompty,
+            patch("src._prompt_runner._run_prompt_template") as mock_run_prompt,
         ):
             reviews_container = MockContainerClient(mock_reviews_data)
 
@@ -238,7 +238,7 @@ class TestResolvePackageLLMFallback:
                 return reviews_container
 
             mock_client.side_effect = get_container
-            mock_prompty.side_effect = Exception("LLM error")
+            mock_run_prompt.side_effect = Exception("LLM error")
 
             result = resolve_package("some-package", "python")
 
@@ -420,7 +420,7 @@ class TestResolvePackageEdgeCases:
         """Test that None is returned when LLM returns a package not in results."""
         with (
             patch("src._apiview.get_apiview_cosmos_client") as mock_client,
-            patch("src._utils.run_prompty") as mock_prompty,
+            patch("src._prompt_runner._run_prompt_template") as mock_run_prompt,
         ):
             reviews_container = MockContainerClient(mock_reviews_data)
 
@@ -429,7 +429,7 @@ class TestResolvePackageEdgeCases:
 
             mock_client.side_effect = get_container
             # LLM returns a package name that doesn't exist in our data
-            mock_prompty.return_value = "nonexistent-package"
+            mock_run_prompt.return_value = "nonexistent-package"
 
             result = resolve_package("some description", "python")
 

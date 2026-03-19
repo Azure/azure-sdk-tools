@@ -7,15 +7,10 @@ version: 1.0.0
 model:
   api: chat
   configuration:
-    type: azure_openai
-    azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-4.1
+    azure_deployment: gpt-5-mini
     api_version: 2025-03-01-preview
   parameters:
-    temperature: 0.0
-    top_p: 1.0
-    stop: []
-    max_tokens: 16384
+    max_completion_tokens: 16384
 sample:
   language: python
   package_name: azure.widget
@@ -73,9 +68,10 @@ reapplied in the future.
 
 ## record_exception
 
-`record_exception` means that the conversation states or clearly implies that the suggestion made by either "azure-sdk" or the architect was not implemented, and the reason why. Usually, this means that the
-final comment from "azure-sdk" or the architect acknowledges that this is a permitted exception. In this case, we want to update the Knowledge Base to reflect this exception, for this language and this service
-only.
+`record_exception` means that the conversation states or clearly implies that the suggestion made by either "azure-sdk" or the architect was not implemented, and the reason why. This requires an
+**explicit** acknowledgment from "azure-sdk" or the architect that this is a permitted exception. The architect or "azure-sdk" must have clearly stated that the exception is allowed. If the service team argues
+for an exception but the architect has not yet responded or acknowledged it, this is NOT `record_exception` — it is `unclear`. In this case, we want to update the Knowledge Base to reflect this exception, for
+this language and this service only.
 
 ## no_action
 
@@ -85,9 +81,13 @@ decision. In this, no update should be made to the Knowledge Base.
 
 ## unclear
 
-`unclear` means that the conversation does not provide enough context to determine whether one of the other cases applies or not. In this case, we do not want to the update the Knowledge Base. We may
-want to seek clarity, but we MUST NOT make assumptions about the outcome. Usually, this means that the final comment is from "azure-sdk" or the architect, but it does not clearly state whether that the
-disputed code is fine.
+`unclear` means that the conversation does not provide enough context to determine whether one of the other cases applies or not. In this case, we do not want to update the Knowledge Base. We may
+want to seek clarity, but we MUST NOT make assumptions about the outcome. This includes cases where:
+- The final comment is from the service team disputing or pushing back, but the architect has not yet responded to acknowledge or reject their argument.
+- The final comment is from "azure-sdk" or the architect, but it does not clearly state whether the disputed code is acceptable.
+- The conversation is ambiguous and could go either way.
+
+Never assume an architect will agree with a service team's pushback. Without explicit acknowledgment, the outcome is unclear.
 
 user:
 This {{language}} code is being discussed for the {{package_name}} package.

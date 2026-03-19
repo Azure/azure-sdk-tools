@@ -12,8 +12,6 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any, Set
 
-import prompty
-import prompty.azure_beta
 import yaml
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -22,6 +20,7 @@ from pathlib import Path
 
 from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from evals._util import ensure_json_obj
+from src._prompt_runner import _execute_prompt_template
 from src._settings import SettingsManager
 
 
@@ -41,7 +40,7 @@ def _mention_summarize_workflow(testcase: str, results: dict):
         "testcase": testcase,
         "results": results,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -58,7 +57,7 @@ def _mention_action_workflow(
         "other_comments": other_comments,
         "trigger_comment": trigger_comment,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -76,7 +75,7 @@ def _thread_resolution_action_workflow(
         "code": code,
         "comments": comments,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -90,7 +89,7 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
         "outline": outline,
         "content": content,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -103,7 +102,7 @@ def _filter_existing_comment(testcase: str, response: str, language: str, existi
         "existing": existing,
         "comment": comment,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -120,7 +119,7 @@ def _deduplicate_parser_issue(
         "issue_context": issue_context,
         "existing_issues": existing_issues,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -137,7 +136,7 @@ def _deduplicate_guidelines_issue(
         "issue_context": issue_context,
         "existing_issues": existing_issues,
     }
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    result = _execute_prompt_template(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
 
@@ -202,7 +201,7 @@ class BaseEvaluator(ABC):
         pass
 
 
-class PromptyEvaluator(BaseEvaluator):
+class PromptEvaluator(BaseEvaluator):
     def __init__(self, config, jsonl_file=None):
         self.config = config
         self._jsonl_file = jsonl_file
@@ -212,7 +211,7 @@ class PromptyEvaluator(BaseEvaluator):
         self._model_config = {
             "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
             "api_key": settings.get("OPENAI_API_KEY"),
-            "azure_deployment": "gpt-4.1",
+            "azure_deployment": "gpt-5-mini",
             "api_version": "2025-03-01-preview",
         }
 
@@ -244,7 +243,7 @@ class PromptyEvaluator(BaseEvaluator):
         actual_rationale = actual_data.get("rationale", "").strip() if isinstance(actual_data, dict) else ""
 
         if expected_rationale or actual_rationale:
-            similarity_result = SimilarityEvaluator(model_config=self._model_config)(
+            similarity_result = SimilarityEvaluator(model_config=self._model_config, is_reasoning_model=True)(
                 response=actual_rationale,
                 query="",  # not used for rationale
                 ground_truth=expected_rationale,
@@ -361,13 +360,13 @@ class PromptyEvaluator(BaseEvaluator):
         return workflow_targets[workflow_name]
 
 
-class PromptySummaryEvaluator(PromptyEvaluator):
-    """Evaluator for summarization prompts using Prompty."""
+class PromptSummaryEvaluator(PromptEvaluator):
+    """Evaluator for summarization prompts."""
 
     def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
         expected_summary = response.strip()
         actual_summary = actual.strip()
-        similarity_result = SimilarityEvaluator(model_config=self._model_config)(
+        similarity_result = SimilarityEvaluator(model_config=self._model_config, is_reasoning_model=True)(
             response=actual_summary,
             query=expected_summary,
             ground_truth=expected_summary,

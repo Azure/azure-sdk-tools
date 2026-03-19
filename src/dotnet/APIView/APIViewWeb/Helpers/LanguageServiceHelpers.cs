@@ -30,6 +30,9 @@ namespace APIViewWeb.Helpers
             if (language.Equals("net", StringComparison.OrdinalIgnoreCase) || language.Equals(".NET", StringComparison.OrdinalIgnoreCase))
                 return "C#";
 
+            if (language.Equals("csharp", StringComparison.OrdinalIgnoreCase))
+                return "C#";
+
             if (language.Equals("cpp", StringComparison.OrdinalIgnoreCase))
                 return "C++";
 
@@ -39,7 +42,7 @@ namespace APIViewWeb.Helpers
             if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase))
                 return ApiViewConstants.TypeSpecLanguage;
 
-            return SupportedLanguages.Where(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? language;
+            return SupportedLanguages.FirstOrDefault(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)) ?? language;
         }
 
         public static string GetLanguageAliasForCopilotService(string language, string languageVariant = null)

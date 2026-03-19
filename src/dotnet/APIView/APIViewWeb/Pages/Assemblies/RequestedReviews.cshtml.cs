@@ -8,7 +8,6 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using APIViewWeb.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
@@ -211,7 +210,7 @@ namespace APIViewWeb.Pages.Assemblies
                 if (reviews.TryGetValue(apiRevision.ReviewId, out var parentReview))
                 {
                     bool isRevisionNamespaceRelated = parentReview.NamespaceReviewStatus == NamespaceReviewStatus.Pending;
-                    
+
                     if (isRevisionNamespaceRelated && !parentReview.IsApproved)
                     {
                         // Allow all users to see namespace approvals

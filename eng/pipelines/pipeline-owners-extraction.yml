@@ -92,7 +92,9 @@ stages:
         - template: /eng/common/pipelines/templates/steps/login-to-github.yml
 
         - ${{ each repo in parameters.CodeownerTargetRepos }}:
-          - ${{ repo.SetUp }}
+
+          - ${{ each step in repo.SetUp }}:
+            - ${{ step }}
 
           - pwsh: |
               git clone --filter=tree:0 "https://x-access-token:${{ parameters.GH_TOKEN }}@github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}

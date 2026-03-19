@@ -97,7 +97,7 @@ ARM resource operation keys are derived from parent keys and cannot be individua
 
 **Recommended**: Change the key name globally using the `@key` decorator on the parent resource's name property unless there is a blocking reason to keep different names.
 
-## the typespec-providerhub emitter is about generating RPaaS extensions, not about generating APIs
+## TypeSpec ProviderHub emitter is about generating RPaaS extensions, not about generating APIs
 
 When using the providerhub template to generate a new RP, adding a custom API in main.tsp does not generate the new models or controllers after build.
 

@@ -99,12 +99,9 @@ stages:
             - ${{ item }}
 
           - pwsh: |
-              git clone --filter=blob:none "https://x-access-token:${{ parameters.GH_TOKEN }}@github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
+              git clone --depth=1 "https://github.com/Azure/${{ repo.Name }}.git" ${{ repo.Name }}
             displayName: Clone ${{ repo.Name }}
             workingDirectory: $(Build.SourcesDirectory)
-            env:
-              # Explicit mapping required for secrets
-              GH_TOKEN: $(GH_TOKEN)
 
           - pwsh: git checkout -b "$(PRBranchName)"
             displayName: "Create $(PRBranchName) branch for ${{ repo.Name }}"

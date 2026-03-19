@@ -299,7 +299,7 @@ def _local_review(
             write_debug_logs=debug_log,
         )
     except ValueError as e:
-        raise CLIError(str(e))
+        raise CLIError(str(e)) from e
     reviewer.run()
     reviewer.close()
 

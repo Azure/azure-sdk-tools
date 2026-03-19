@@ -34,6 +34,7 @@ from src._utils import get_language_pretty_name
 
 # Set up package root for log and metadata paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+logger = logging.getLogger(__name__)
 
 # Configure logger to write to project root error.log and info.log
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
@@ -215,21 +216,27 @@ class ApiViewReview:
             return []
         parsed = []
         has_errors = False
+        first_error: Optional[ValidationError] = None
         for item in comments:
             if not isinstance(item, dict):
                 has_errors = True
+                logger.debug("Existing comment is not a dict and will be skipped: %r", item)
                 continue
             try:
                 normalized = ApiViewReview._normalize_comment_keys(dict(item))
                 parsed.append(ExistingComment(**normalized))
-            except ValidationError:
+            except ValidationError as exc:
                 has_errors = True
+                if first_error is None:
+                    first_error = exc
+                logger.debug("ValidationError while parsing existing comment %r", item, exc_info=exc)
         if has_errors:
-            raise ValueError(
+            message = (
                 "Existing comment schema did not match expected. "
                 "Each comment must have: lineNo (int), createdBy (str), commentText (str), createdOn (ISO datetime). "
                 "Optional: upvotes, downvotes, isResolved."
             )
+            raise ValueError(message) from first_error
         return parsed
 
     def _print_comment_counts(self):

@@ -100,7 +100,7 @@ async def submit_api_review_job(
             comments=job_request.comments,
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     job_id = reviewer.job_id
     db_manager.review_jobs.create(job_id, data={"status": ApiReviewJobStatus.InProgress, "finished": None})
 

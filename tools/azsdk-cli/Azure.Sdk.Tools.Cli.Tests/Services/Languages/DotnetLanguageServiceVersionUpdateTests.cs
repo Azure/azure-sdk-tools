@@ -113,7 +113,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
         _powershellHelperMock.Verify(
             p => p.Run(
                 It.Is<PowershellOptions>(opts =>
-                    opts.ScriptPath!.Contains("Update-PkgVersion.ps1")),
+                    opts.Args.Any(a => a.Contains("Update-PkgVersion.ps1"))),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -325,7 +325,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
 
         // Assert - verify correct arguments were passed
         Assert.That(capturedOptions, Is.Not.Null);
-        Assert.That(capturedOptions!.ScriptPath, Does.Contain("Update-PkgVersion.ps1"));
+        Assert.That(capturedOptions!.Args.Any(a => a.Contains("Update-PkgVersion.ps1")), Is.True);
         Assert.That(capturedOptions.Args, Does.Contain("-ServiceDirectory"));
         Assert.That(capturedOptions.Args, Does.Contain("storage"));
         Assert.That(capturedOptions.Args, Does.Contain("-PackageName"));
@@ -335,6 +335,7 @@ internal class DotnetLanguageServiceVersionUpdateTests
         Assert.That(capturedOptions.Args, Does.Contain("-ReleaseDate"));
         Assert.That(capturedOptions.Args, Does.Contain("2025-06-15"));
         Assert.That(capturedOptions.Args, Does.Contain("-ReplaceLatestEntryTitle"));
+        Assert.That(capturedOptions.Args, Does.Contain("$true"));
     }
 
     [Test]

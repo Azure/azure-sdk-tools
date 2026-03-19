@@ -188,17 +188,19 @@ public sealed partial class DotnetLanguageService : LanguageService
 
         // The script handles both version file updates and changelog entry title rename,
         // so we enable ReplaceLatestEntryTitle and pass the release date.
+        // We use -Command mode (not -File) because -File cannot pass [bool] parameters;
+        // -Command mode evaluates $true as a PowerShell boolean.
         var scriptArgs = new List<string>
         {
+            $"& '{updatePkgVersionScript}'",
             "-ServiceDirectory", serviceDirectory,
             "-PackageName", packageName,
             "-NewVersionString", version,
             "-ReleaseDate", releaseDate,
-            "-ReplaceLatestEntryTitle", "true"
+            "-ReplaceLatestEntryTitle", "$true"
         };
 
         var result = await powershellHelper.Run(new PowershellOptions(
-            scriptPath: updatePkgVersionScript,
             args: scriptArgs.ToArray(),
             workingDirectory: repoRoot,
             timeout: VersionScriptTimeout), ct);

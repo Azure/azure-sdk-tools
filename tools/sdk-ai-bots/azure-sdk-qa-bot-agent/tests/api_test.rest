@@ -1,12 +1,10 @@
 ### You need to install REST Client extension for your vscode, to run this test
 
 ### Local test
-POST https://localhost:8080/agent/chat HTTP/1.1
+POST http://localhost:8080/agent/chat HTTP/1.1
 Content-type: application/json; charset=utf-8
+
 {
     "tenant_id": "azure_sdk_qa_bot",
-    "message": {
-        "role": "user",
-        "content": "how to onboard typespec?"
-    }
+    "message": "how to onboard typespec?"
 }

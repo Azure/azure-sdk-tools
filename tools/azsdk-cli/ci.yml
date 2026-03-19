@@ -139,7 +139,7 @@ extends:
               sleep 20
               lsof -ti:8088
             displayName: 'start backend AI agent service'
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+            workingDirectory: $(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
             env:
               AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
               AZURE_TENANT_ID: $(AZURE_TENANT_ID)
@@ -150,7 +150,7 @@ extends:
             displayName: 'Run benchmarks'
             inputs:
               targetType: 'inline'
-              workingDirectory: '$(Build.SourcesDirectory)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
               pwsh: true
               script: dotnet run -- run --all --parallel 5 --cleanup "always" --authoring-spec-repo ${{ parameters.AuthoringSpecRepo }}
             env:

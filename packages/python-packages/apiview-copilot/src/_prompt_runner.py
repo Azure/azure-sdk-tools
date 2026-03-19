@@ -153,8 +153,8 @@ def _execute_prompt_template(
         file_path: Path to the .prompty file.
         inputs: Dictionary of input variables for template rendering.
         configuration: Optional configuration dict. If it contains an
-            ``api_key`` entry, an ``AzureKeyCredential`` is used instead
-            of ``DefaultAzureCredential``.
+            ``api_key`` entry, an ``AzureKeyCredential`` is used; otherwise,
+            the shared credential from ``get_credential()`` is used.
 
     Returns:
         The string response content from the model.
@@ -165,7 +165,7 @@ def _execute_prompt_template(
     from azure.ai.inference import ChatCompletionsClient
     from azure.ai.inference.models import SystemMessage, UserMessage
     from azure.core.credentials import AzureKeyCredential
-    from azure.identity import DefaultAzureCredential
+    from src._credential import get_credential
     from src._settings import SettingsManager
 
     config = _parse_prompty(file_path)
@@ -193,7 +193,8 @@ def _execute_prompt_template(
     # Format: {FOUNDRY_ENDPOINT}/models
     inference_endpoint = f"{foundry_endpoint.rstrip('/')}/models"
 
-    # Authenticate — prefer an explicit API key (used in CI), fall back to DefaultAzureCredential
+    # Authenticate — if an explicit API key is provided (e.g., in CI), use AzureKeyCredential;
+    # otherwise, fall back to the shared credential from get_credential().
     api_key = (configuration or {}).get("api_key")
     if api_key:
         credential = AzureKeyCredential(api_key)
@@ -202,7 +203,7 @@ def _execute_prompt_template(
             credential=credential,
         )
     else:
-        credential = DefaultAzureCredential()
+        credential = get_credential()
         # Specify the cognitive services scope for Azure AI
         client = ChatCompletionsClient(
             endpoint=inference_endpoint,

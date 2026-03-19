@@ -24,6 +24,7 @@ from opentelemetry import metrics
 from src._comment_grouper import CommentGrouper
 from src._credential import get_credential
 from src._diff import create_diff_with_line_numbers
+from pydantic import ValidationError
 from src._models import Comment, ExistingComment, ReviewResult
 from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
@@ -33,6 +34,7 @@ from src._utils import get_language_pretty_name
 
 # Set up package root for log and metadata paths
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+logger = logging.getLogger(__name__)
 
 # Configure logger to write to project root error.log and info.log
 error_log_file = os.path.join(_PACKAGE_ROOT, "error.log")
@@ -138,9 +140,7 @@ class ApiViewReview:
         self.results = ReviewResult()
         self.summary = None
         self.outline = outline
-        self.existing_comments = (
-            [ExistingComment(**self._normalize_comment_keys(data)) for data in comments] if comments else []
-        )
+        self.existing_comments = self._parse_existing_comments(comments)
         self.executor = concurrent.futures.ThreadPoolExecutor()
         self.filter_expression = f"language eq '{language}' and not (tags/any(t: t eq 'documentation' or t eq 'vague'))"
         if include_general_guidelines:
@@ -198,8 +198,9 @@ class ApiViewReview:
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
 
-    def _normalize_comment_keys(self, data):
-        # Map alternative keys to the canonical ones
+    @staticmethod
+    def _normalize_comment_keys(data):
+        """Map alternative keys to the canonical ones."""
         if "author" in data:
             data["createdBy"] = data.pop("author")
         if "text" in data:
@@ -207,6 +208,36 @@ class ApiViewReview:
         if "timestamp" in data:
             data["createdOn"] = data.pop("timestamp")
         return data
+
+    @staticmethod
+    def _parse_existing_comments(comments: Optional[list]) -> list:
+        """Validate and parse existing comments, raising ValueError on schema mismatch."""
+        if not comments:
+            return []
+        parsed = []
+        has_errors = False
+        first_error: Optional[ValidationError] = None
+        for item in comments:
+            if not isinstance(item, dict):
+                has_errors = True
+                logger.debug("Existing comment is not a dict and will be skipped: %r", item)
+                continue
+            try:
+                normalized = ApiViewReview._normalize_comment_keys(dict(item))
+                parsed.append(ExistingComment(**normalized))
+            except ValidationError as exc:
+                has_errors = True
+                if first_error is None:
+                    first_error = exc
+                logger.debug("ValidationError while parsing existing comment %r", item, exc_info=exc)
+        if has_errors:
+            message = (
+                "Existing comment schema did not match expected. "
+                "Each comment must have: lineNo (int), createdBy (str), commentText (str), createdOn (ISO datetime). "
+                "Optional: upvotes, downvotes, isResolved."
+            )
+            raise ValueError(message) from first_error
+        return parsed
 
     def _print_comment_counts(self):
         """

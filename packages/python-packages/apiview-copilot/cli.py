@@ -21,8 +21,6 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import colorama
-import prompty
-import prompty.azure
 import requests
 import yaml
 from azure.core.exceptions import ClientAuthenticationError
@@ -48,10 +46,11 @@ from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
+from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, run_prompty
+from src._utils import get_language_pretty_name
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -129,7 +128,124 @@ helps[
     short-summary: Commands for managing permissions.
 """
 
+helps[
+    "prompt"
+] = """
+    type: group
+    short-summary: Commands for testing prompt template files.
+"""
+
 # COMMANDS
+
+
+def prompt_test(path: str):
+    """Run a single prompt file with its sample inputs and print the result."""
+    from src._prompt_runner import _execute_prompt_template
+
+    prompty_path = pathlib.Path(path)
+    if not prompty_path.exists():
+        print(f"Error: File '{path}' does not exist.")
+        sys.exit(1)
+    if prompty_path.suffix != ".prompty":
+        print(f"Error: File '{path}' is not a .prompty file.")
+        sys.exit(1)
+
+    print(f"Executing prompt: {path}")
+    print("-" * 60)
+    result = _execute_prompt_template(str(prompty_path))
+    print(result)
+
+
+def prompt_test_all(workers: int = 4):
+    """Smoke-test all prompt files to verify none throw exceptions.
+
+    NOTE: A passing result only means the prompt executed without errors.
+    It does NOT verify that the prompt produces correct or intended output.
+    Use 'avc prompt test -p <file>' to inspect individual outputs.
+    """
+    import glob
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    from src._prompt_runner import _execute_prompt_template
+    from src._retry import retry_with_backoff
+
+    prompts_dir = pathlib.Path(__file__).parent / "prompts"
+    prompty_files = sorted(glob.glob(str(prompts_dir / "**" / "*.prompty"), recursive=True))
+
+    if not prompty_files:
+        print("No .prompty files found.")
+        return
+
+    BOLD = "\033[1m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RESET = "\033[0m"
+
+    print(f"{'=' * 60}")
+    print("prompt smoke test")
+    print(f"{'=' * 60}")
+    print(f"{YELLOW}NOTE: A passing result means the prompt executed without errors.")
+    print(f"It does NOT verify that the prompt produces correct or intended output.")
+    print(f"Use 'avc prompt test -p <file>' to inspect individual outputs.{RESET}")
+    print()
+    print(f"{BOLD}collected {len(prompty_files)} prompt files{RESET}")
+    print()
+
+    # Pre-initialize SettingsManager singleton on the main thread to avoid
+    # a race during first-time initialization when running prompts in parallel.
+    SettingsManager()
+
+    results = []
+
+    def _run_one(filepath: str) -> tuple[str, bool, str]:
+        rel = pathlib.Path(filepath).relative_to(pathlib.Path(__file__).parent)
+        try:
+            # Use retry_with_backoff to avoid transient 429/5xx failures
+            # causing flaky smoke tests.
+            retry_with_backoff(lambda: _execute_prompt_template(filepath), description=str(rel))
+            return (str(rel), True, "")
+        except Exception as exc:
+            return (str(rel), False, str(exc))
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        future_to_file = {
+            executor.submit(_run_one, f): f for f in prompty_files
+        }
+        for future in as_completed(future_to_file):
+            rel_path, passed, error = future.result()
+            results.append((rel_path, passed, error))
+            status = f"{GREEN}PASS{RESET}" if passed else f"{RED}FAIL{RESET}"
+            print(f"  {status} {rel_path}")
+
+    # Sort results for consistent display in summary
+    results.sort(key=lambda r: r[0])
+    passed = [r for r in results if r[1]]
+    failed = [r for r in results if not r[1]]
+
+    # Summary
+    print()
+    if failed:
+        print(f"{RED}{BOLD}{'=' * 60}")
+        print("FAILURES")
+        print(f"{'=' * 60}{RESET}")
+        for rel_path, _, error in failed:
+            print(f"  {RED}{rel_path}{RESET}")
+            print(f"    {error}")
+            print()
+
+    print(f"{'=' * 60}")
+    print("smoke test summary")
+    print(f"{'=' * 60}")
+    summary_parts = []
+    if passed:
+        summary_parts.append(f"{GREEN}{len(passed)} passed{RESET}")
+    if failed:
+        summary_parts.append(f"{RED}{len(failed)} failed{RESET}")
+    print(f"{', '.join(summary_parts)}, {len(results)} total")
+
+    if failed:
+        sys.exit(1)
 
 
 def _local_review(
@@ -275,7 +391,7 @@ def generate_review(
             print(job_info)
             return
         for _ in range(1800):  # up to 30 minutes
-            status_info = review_job_get(job_id)
+            status_info = review_job_get(job_id, remote=True)
             status = status_info.get("status") if status_info else None
             if not status_info:
                 print(f"Error: Could not get status for job {job_id}")
@@ -350,19 +466,27 @@ def review_job_start(
         print(f"Error: {resp.status_code} {resp.text}")
 
 
-def review_job_get(job_id: str):
+def review_job_get(job_id: str, remote: bool = False):
     """Get the status/result of an API review job."""
-    settings = SettingsManager()
-    base_url = settings.get("WEBAPP_ENDPOINT")
-    api_endpoint = f"{base_url}/api-review"
-    url = f"{api_endpoint.rstrip('/')}/{job_id}"
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review"
+        url = f"{api_endpoint.rstrip('/')}/{job_id}"
 
-    headers = _build_auth_header()
-    resp = requests.get(url, headers=headers, timeout=10)
-    if resp.status_code == 200:
-        return resp.json()
+        headers = _build_auth_header()
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            print(f"Error: {resp.status_code} {resp.text}")
     else:
-        print(f"Error: {resp.status_code} {resp.text}")
+        db = DatabaseManager.get_instance()
+        try:
+            job = db.review_jobs.get(job_id)
+            return job
+        except Exception as e:
+            print(f"Error: Job '{job_id}' not found: {e}")
 
 
 def get_all_guidelines(language: str, markdown: bool = False):
@@ -450,23 +574,41 @@ def reindex_search(containers: Optional[list[str]] = None):
     return SearchManager.run_indexers(container_names=containers)
 
 
-def review_summarize(language: str, target: str, base: str = None):
+def review_summarize(language: str, target: str, base: str = None, remote: bool = False):
     """
-    Summarize an API or a diff of two APIs using the deployed API review service.
+    Summarize an API or a diff of two APIs.
     """
-    payload = {"language": language, "target": target}
-    if base:
-        payload["base"] = base
-    settings = SettingsManager()
-    base_url = settings.get("WEBAPP_ENDPOINT")
-    api_endpoint = f"{base_url}/api-review/summarize"
+    if remote:
+        payload = {"language": language, "target": target}
+        if base:
+            payload["base"] = base
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/summarize"
 
-    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
-    if response.status_code == 200:
-        summary = response.json().get("summary")
-        print(summary)
+        response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        if response.status_code == 200:
+            summary = response.json().get("summary")
+            print(summary)
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
     else:
-        print(f"Error: {response.status_code} - {response.text}")
+        from src._diff import create_diff_with_line_numbers
+
+        with open(target, "r", encoding="utf-8") as f:
+            target_content = f.read()
+
+        pretty_language = get_language_pretty_name(language)
+
+        if base:
+            with open(base, "r", encoding="utf-8") as f:
+                base_content = f.read()
+            content = create_diff_with_line_numbers(old=base_content, new=target_content)
+            summary = run_prompt(folder="summarize", filename="summarize_diff", inputs={"language": pretty_language, "content": content})
+        else:
+            summary = run_prompt(folder="summarize", filename="summarize_api", inputs={"language": pretty_language, "content": target_content})
+
+        print(summary)
 
 
 def handle_agent_chat(
@@ -1491,7 +1633,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
 
     comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
 
-    theme_output = run_prompty(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
+    theme_output = run_prompt(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
     print(theme_output)
 
     print(f"Comment count: {len(comment_texts)}")
@@ -1599,6 +1741,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "permissions", "__main__#{}") as g:
             g.command("grant", "grant_permissions")
             g.command("revoke", "revoke_permissions")
+        with CommandGroup(self, "prompt", "__main__#{}") as g:
+            g.command("test", "prompt_test")
+            g.command("test-all", "prompt_test_all")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -1843,6 +1988,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The job ID to poll.",
                 options_list=["--job-id"],
             )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Query the remote API service instead of the local database.",
+            )
         with ArgumentsContext(self, "review summarize") as ac:
             ac.argument(
                 "language",
@@ -1858,6 +2008,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API service instead of local processing.",
             )
         with ArgumentsContext(self, "agent") as ac:
             ac.argument(
@@ -2066,6 +2221,22 @@ class CliCommandsLoader(CLICommandsLoader):
                 "remote",
                 action="store_true",
                 help="Use the remote API instead of local processing.",
+            )
+        with ArgumentsContext(self, "prompt test") as ac:
+            ac.argument(
+                "path",
+                type=str,
+                options_list=["--path", "-p"],
+                required=True,
+                help="Path to the .prompty file to test.",
+            )
+        with ArgumentsContext(self, "prompt test-all") as ac:
+            ac.argument(
+                "workers",
+                type=int,
+                options_list=["--workers", "-w"],
+                default=4,
+                help="Number of parallel workers for executing prompts (default: 4).",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

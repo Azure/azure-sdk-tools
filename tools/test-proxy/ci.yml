@@ -54,9 +54,7 @@ extends:
         displayName: Override Acceptable Password Iteration Count
     TestPostSteps:
       - task: NodeTool@0
-        inputs:
-          versionSpec: 24.x
-        displayName: "Use Node 24"
+        displayName: "Use Node"
       - pwsh: |
           npm ci
           npm exec --no -- tsp compile .

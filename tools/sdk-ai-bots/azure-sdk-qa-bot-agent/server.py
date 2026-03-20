@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv(override=False)
 
 from fastapi import FastAPI
-import tools
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage
 from models.feedback import FeedbackRequest, FeedbackResponse
@@ -22,11 +21,13 @@ from services.feedback_service import FeedbackService
 from utils.azure_ai_foundry import close_clients
 from utils.azure_credential import close_credential
 from pydantic import BaseModel
+import config.app_config as app_config
 
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     """Startup / shutdown lifecycle for the FastAPI app."""
+    await app_config.init()
     yield
     # Cleanup SDK clients on shutdown
     await close_clients()

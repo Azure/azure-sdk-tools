@@ -8,6 +8,11 @@ import logging
 from openai.types.responses import ResponseFunctionToolCall, ResponseOutputMessage
 
 from config.app_config import get as cfg
+from config.tenant_config import (
+    get_tenant_scope_description,
+    get_tenant_sources_display,
+    load_tenant_qa_guideline,
+)
 from models.chat import ChatRequest, ChatResponse
 from services.conversation_service import ConversationService
 from tools import TOOL_REGISTRY
@@ -113,8 +118,25 @@ class ChatService:
         return new_id, True
 
     def _build_tenant_system_message(self, tenant_id: str) -> str:
-        """Inject tenant id for routing in the hosted agent."""
-        return f"[tenant_context] original_tenant_id={tenant_id}"
+        """Inject tenant context so the agent knows the current domain."""
+        parts: list[str] = [f"[tenant_context] original_tenant_id={tenant_id}"]
+
+        scope_desc = get_tenant_scope_description(tenant_id)
+        if scope_desc:
+            parts.append(f"\n[tenant_scope]\n{scope_desc}")
+
+        guideline = load_tenant_qa_guideline(tenant_id)
+        if guideline:
+            parts.append(f"\n[tenant_guideline]\n{guideline}")
+
+        sources = get_tenant_sources_display(tenant_id)
+        if sources:
+            src_lines = [f"- {s['name']}: {s['description']}" for s in sources]
+            parts.append(
+                "\n[tenant_knowledge_sources]\n" + "\n".join(src_lines)
+            )
+
+        return "\n".join(parts)
 
     def _postprocess(self, response, conversation_id: str) -> ChatResponse:
         """Map hosted-agent response to `ChatResponse`."""

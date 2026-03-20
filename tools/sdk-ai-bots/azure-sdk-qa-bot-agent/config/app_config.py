@@ -1,25 +1,38 @@
 """Centralized configuration loaded from Azure App Configuration.
 
 On startup, connects to the App Configuration store specified by the
-``AZURE_APPCONFIG_ENDPOINT`` environment variable using ``DefaultAzureCredential``
-and fetches all key-values. Every other module reads config through the
-``settings`` dict exposed here instead of calling ``os.getenv`` directly.
+``AZURE_APPCONFIG_ENDPOINT`` environment variable and fetches all key-values.
+Reuses the shared async credential from ``utils.azure_credential``.
+Every other module reads config through the ``settings`` dict exposed here
+instead of calling ``os.getenv`` directly.
+
+Call ``await init()`` once during application startup (inside the async
+event loop) before any calls to ``get()``.
 """
 
 from __future__ import annotations
 
+import logging
 import os
 
-from azure.appconfiguration import AzureAppConfigurationClient
-from azure.identity import DefaultAzureCredential
+from azure.appconfiguration.aio import AzureAppConfigurationClient
 
-
-import logging
+from utils.azure_credential import get_credential
 
 _logger = logging.getLogger(__name__)
 
+_settings: dict[str, str] | None = None
 
-def _load_settings() -> dict[str, str]:
+
+async def init() -> None:
+    """Load all settings from Azure App Configuration.
+
+    Must be awaited once at startup before calling ``get()``.
+    """
+    global _settings
+    if _settings is not None:
+        return
+
     endpoint = os.environ.get("AZURE_APPCONFIG_ENDPOINT")
     if not endpoint:
         raise RuntimeError(
@@ -27,28 +40,26 @@ def _load_settings() -> dict[str, str]:
         )
 
     _logger.info("Loading settings from App Configuration: %s", endpoint)
-    credential = DefaultAzureCredential()
+    credential = get_credential()
     client = AzureAppConfigurationClient(base_url=endpoint, credential=credential)
 
     config: dict[str, str] = {}
-    for item in client.list_configuration_settings():
+    async for item in client.list_configuration_settings():
         if item.value is not None:
             config[item.key] = item.value
+    await client.close()
 
-    _logger.info("Loaded %d settings from App Configuration", len(config))
-    return config
-
-
-_settings: dict[str, str] | None = None
-
-
-def _ensure_loaded() -> dict[str, str]:
-    global _settings
-    if _settings is None:
-        _settings = _load_settings()
-    return _settings
+    _settings = config
+    _logger.info("Loaded %d settings from App Configuration", len(_settings))
 
 
 def get(key: str, default: str | None = None) -> str | None:
-    """Return a config value, falling back to *default*."""
-    return _ensure_loaded().get(key, default)
+    """Return a config value, falling back to *default*.
+
+    Raises if ``init()`` has not been called yet.
+    """
+    if _settings is None:
+        raise RuntimeError(
+            "App Configuration not loaded. Call 'await app_config.init()' first."
+        )
+    return _settings.get(key, default)

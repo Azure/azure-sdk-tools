@@ -23,6 +23,7 @@ load_dotenv(override=False)
 from agent_framework import Agent
 from azure.ai.agentserver.agentframework import from_agent_framework
 
+import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
 from tools.pipeline_tools import PipelineTools
@@ -42,6 +43,7 @@ def _load_instructions(file_path: Path) -> str:
 
 async def main() -> None:
     """Start the hosted Chat Agent as an HTTP server."""
+    await app_config.init()
     agent_client = get_agent_client()
     instructions = _load_instructions(Path(__file__).parent / "instruction.md")
     knowledge_tools = KnowledgeTools()
@@ -59,7 +61,8 @@ async def main() -> None:
         ],
     )
 
-    model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.1")
+    # model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.1")
+    model = "gpt-5.4"
     logger.info(f"Azure SDK QA Bot Agent running — model: {model}")
 
     server = from_agent_framework(agent)

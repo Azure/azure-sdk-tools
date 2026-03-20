@@ -94,7 +94,7 @@ _register(
     # -- TypeSpec --
     KnowledgeSource(
         name=SRC_TYPESPEC_DOCS,
-        description="Core TypeSpec language documentation covering fundamental syntax, semantics, and usage patterns.",
+        description="Core TypeSpec language documentation covering fundamental syntax, semantics, and basic usage patterns. Only search this source when the user asks about basic TypeSpec language features (e.g. syntax, data types, decorators basics) — for Azure-specific patterns, prefer typespec_azure_docs instead.",
         base_url="https://typespec.io/docs/",
         trim_format=True,
     ),
@@ -269,7 +269,10 @@ def get_knowledge_source(name: str) -> KnowledgeSource | None:
 
 @dataclass(frozen=True)
 class TenantConfig:
-    """Lightweight per-tenant configuration.
+    """Per-tenant configuration.
+
+    ``display_name`` and ``scope`` are used to auto-generate the routing prompt
+    and to provide the LLM with the current tenant's scope at conversation start.
 
     ``sources`` is an ordered list of :class:`KnowledgeSource` objects
     available to this tenant.  Each source carries its own description and
@@ -277,6 +280,10 @@ class TenantConfig:
     ``source_filter``.
     """
 
+    display_name: str = ""
+    scope: str = ""
+    topics: list[str] = field(default_factory=list)
+    exclusions: list[str] = field(default_factory=list)
     sources: list[KnowledgeSource] = field(default_factory=list)
     source_filter: dict[str, str] = field(default_factory=dict)
     qa_guideline_file: str = ""
@@ -336,6 +343,13 @@ _AZURE_TYPESPEC_AUTHORING_SOURCES = _sources(
 
 _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
     TenantID.PYTHON_CHANNEL_QA_BOT: TenantConfig(
+        display_name="Python SDK",
+        scope="Python SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
+        topics=[
+            "Python SDK generation and validation errors",
+            "Python SDK testing and development",
+            "Python SDK release processes and pipeline issues",
+        ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_PYTHON_DOCS,
             SRC_AZURE_SDK_FOR_PYTHON_WIKI,
@@ -353,6 +367,13 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         qa_guideline_file="tenants/language_python.md",
     ),
     TenantID.DOTNET_CHANNEL_QA_BOT: TenantConfig(
+        display_name=".NET (C#) SDK",
+        scope=".NET SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
+        topics=[
+            ".NET/C# SDK generation and validation errors",
+            ".NET SDK testing and development",
+            ".NET SDK release processes and pipeline issues",
+        ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_NET_DOCS,
             SRC_AZURE_SDK_GUIDELINES,
@@ -368,6 +389,13 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         qa_guideline_file="tenants/language_channel.md",
     ),
     TenantID.GOLANG_CHANNEL_QA_BOT: TenantConfig(
+        display_name="Go SDK",
+        scope="Go SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
+        topics=[
+            "Go SDK generation and validation errors",
+            "Go SDK testing and development",
+            "Go SDK release processes and pipeline issues",
+        ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_GO_DOCS,
             SRC_AZURE_SDK_GUIDELINES,
@@ -383,6 +411,13 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         qa_guideline_file="tenants/language_channel.md",
     ),
     TenantID.JAVA_CHANNEL_QA_BOT: TenantConfig(
+        display_name="Java SDK",
+        scope="Java SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
+        topics=[
+            "Java SDK generation and validation errors",
+            "Java SDK testing and development",
+            "Java SDK release processes and pipeline issues",
+        ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_JAVA_DOCS,
             SRC_AZURE_SDK_FOR_JAVA_WIKI,
@@ -400,6 +435,13 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         qa_guideline_file="tenants/language_channel.md",
     ),
     TenantID.JAVASCRIPT_CHANNEL_QA_BOT: TenantConfig(
+        display_name="JavaScript SDK",
+        scope="JavaScript/TypeScript SDK generation, validation, testing, release, and pipeline/CI/CD issues.",
+        topics=[
+            "JavaScript/TypeScript SDK generation and validation errors",
+            "JavaScript SDK testing and development",
+            "JavaScript SDK release processes and pipeline issues",
+        ],
         sources=_sources(
             SRC_AZURE_SDK_FOR_JS_DOCS,
             SRC_AZURE_SDK_FOR_JS_WIKI,
@@ -416,6 +458,17 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         qa_guideline_file="tenants/language_channel.md",
     ),
     TenantID.AZURE_SDK_QA_BOT: TenantConfig(
+        display_name="TypeSpec",
+        scope="TypeSpec authoring, TypeSpec validation, and Azure API design.",
+        topics=[
+            "TypeSpec syntax, decorators, models, operations usage",
+            "Azure management-plane or data-plane patterns",
+            "TypeSpec migration from OpenAPI",
+            "TypeSpec validation and configurations (tspconfig.yaml)",
+            "TypeSpec generated OpenAPI/Swagger review",
+            "Client customization for SDKs (even if a specific language is mentioned, if the core topic is TypeSpec authoring)",
+            "API design guidelines and best practices",
+        ],
         sources=[*_TYPESPEC_SOURCES, *_sources(SRC_AZURE_SDK_DOCS_ENG)],
         source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
@@ -424,14 +477,45 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         enable_routing=True,
     ),
     TenantID.AZURE_SDK_ONBOARDING: TenantConfig(
+        display_name="Azure SDK Onboarding",
+        scope="Azure API specification & SDK onboarding process, SDK lifecycle, Azure MCP, and retirement processes.",
+        topics=[
+            "Prerequisites and setup for onboarding Azure API or SDK",
+            "Permission issues for specification repo or SDK repo access, workflow visibility",
+            "SDK development, SDK generation (reproduce SDK validation locally), SDK release tooling and guidance",
+            "Service, API and SDK deprecation guidance",
+            "API documentation publishing",
+            "AzSDK agent, Azure MCP tool usage guidance",
+            "Creating new service based on TypeSpec or OpenAPI (Swagger)",
+        ],
         sources=_sources(SRC_AZURE_SDK_DOCS_ENG),
         qa_guideline_file="tenants/azure_sdk_onboarding.md",
     ),
     TenantID.AZURE_TYPESPEC_AUTHORING: TenantConfig(
+        display_name="Azure TypeSpec Authoring",
+        scope="Advanced TypeSpec authoring for ARM and data-plane API design.",
+        topics=[
+            "TypeSpec language, syntax, decorators, Azure patterns",
+            "ARM/data-plane API authoring with TypeSpec",
+            "TypeSpec code generation and Azure Templates",
+        ],
         sources=_AZURE_TYPESPEC_AUTHORING_SOURCES,
         qa_guideline_file="tenants/azure_typespec_authoring.md",
     ),
     TenantID.API_SPEC_REVIEW_BOT: TenantConfig(
+        display_name="API Spec Review",
+        scope="Azure REST API specification PR review process and failing checks (not API design questions).",
+        topics=[
+            "Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories",
+            "How to fix specification PR pipeline errors, SDK validation errors, check failures or CI failures",
+            "How to suppress specification PR pipeline errors, SDK validation errors, check failures or CI failures",
+        ],
+        exclusions=[
+            "Language-specific SDK generation/validation errors — route to that language's SDK tenant",
+            "TypeSpec validation errors — route to azure_sdk_qa_bot",
+            "API design or spec authoring questions — route to azure_sdk_qa_bot",
+            "Permission or access issues for API spec repos — route to azure_sdk_onboarding",
+        ],
         sources=_sources(
             SRC_STATIC_AZURE_DOCS,
             SRC_STATIC_API_SPEC_VIEW_QA,
@@ -447,6 +531,8 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
         enable_routing=True,
     ),
     TenantID.GENERAL_QA_BOT: TenantConfig(
+        display_name="General",
+        scope="Questions that don't clearly fit any single domain above. General specialist with all knowledge sources.",
         qa_guideline_file="tenants/general.md",
         enable_routing=True,
     ),
@@ -497,3 +583,62 @@ def load_tenant_qa_guideline(tenant_id: str) -> str:
     if not guideline_path.exists():
         return ""
     return guideline_path.read_text(encoding="utf-8").strip()
+
+
+def get_tenant_scope_description(tenant_id: str) -> str:
+    """Return a human-readable description of the tenant's scope and topics.
+
+    Used to inject into the system message so the LLM knows the current
+    tenant's domain without calling route_tenant first.
+    """
+    config = get_tenant_config(tenant_id)
+    if config is None:
+        return ""
+    parts: list[str] = []
+    name = config.display_name or tenant_id
+    parts.append(f"**Tenant**: {name} (`{tenant_id}`)")
+    if config.scope:
+        parts.append(f"**Scope**: {config.scope}")
+    if config.topics:
+        parts.append("**Topics**:")
+        for topic in config.topics:
+            parts.append(f"- {topic}")
+    if config.exclusions:
+        parts.append("**Exclusions** (out of scope — requires routing):")
+        for exc in config.exclusions:
+            parts.append(f"- {exc}")
+    return "\n".join(parts)
+
+
+def build_tenant_routing_table() -> str:
+    """Generate the tenant options section for the routing prompt.
+
+    This is auto-generated from the config so adding a new tenant only
+    requires a new entry in ``_TENANT_CONFIG_MAP``.
+    """
+    lines: list[str] = []
+    lines.append("## Tenant Options\n")
+    lines.append("| # | Tenant Name | Tenant ID |")
+    lines.append("|---|-------------|-----------|")
+    for i, (tid, cfg) in enumerate(_TENANT_CONFIG_MAP.items(), 1):
+        name = cfg.display_name or tid.value
+        lines.append(f"| {i} | {name} | `{tid.value}` |")
+
+    lines.append("\n---\n")
+
+    for i, (tid, cfg) in enumerate(_TENANT_CONFIG_MAP.items(), 1):
+        name = cfg.display_name or tid.value
+        lines.append(f"### {i}. `{tid.value}` — {name}")
+        if cfg.scope:
+            lines.append(f"**Scope**: {cfg.scope}")
+        if cfg.topics:
+            lines.append("**Topics**:")
+            for topic in cfg.topics:
+                lines.append(f"- {topic}")
+        if cfg.exclusions:
+            lines.append("**Exclusions** (route elsewhere instead):")
+            for exc in cfg.exclusions:
+                lines.append(f"- {exc}")
+        lines.append("")
+
+    return "\n".join(lines)

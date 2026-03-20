@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from collections.abc import Callable
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
@@ -83,7 +83,12 @@ class KnowledgeChunk(BaseModel):
     header1: str = Field(default="", validation_alias="header_1")
     header2: str = Field(default="", validation_alias="header_2")
     header3: str = Field(default="", validation_alias="header_3")
-    rerank_score: float = 0.0
+    rerank_score: float = Field(default=0.0, validation_alias="@search.reranker_score")
+
+    @field_validator("rerank_score", mode="before")
+    @classmethod
+    def _coerce_rerank_score(cls, v: object) -> float:
+        return float(v) if v is not None else 0.0
 
 
 class KnowledgeResult(BaseModel):

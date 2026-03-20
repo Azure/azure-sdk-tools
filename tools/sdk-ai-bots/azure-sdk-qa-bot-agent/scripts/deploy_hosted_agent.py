@@ -12,6 +12,7 @@ Usage:
 """
 
 import argparse
+import asyncio
 import os
 import subprocess
 import sys
@@ -35,6 +36,7 @@ from azure.ai.projects.models import (
 )
 from azure.identity import DefaultAzureCredential
 
+import config.app_config as app_config
 from config.app_config import get as cfg
 
 
@@ -60,12 +62,16 @@ def main() -> None:
     parser.add_argument("--tag", default=None, help="Image tag (default: git short SHA)")
     parser.add_argument("--appconfig-endpoint", default=os.environ.get("AZURE_APPCONFIG_ENDPOINT"),
                         help="Override App Configuration endpoint")
+    parser.add_argument("--client_id", default=os.environ.get("AZURE_CLIENT_ID"),
+                        help="Override Azure client ID")
     args = parser.parse_args()
+
+    asyncio.run(app_config.init())
 
     registry = cfg("ACR_LOGIN_SERVER")
     project_endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
     appconfig_endpoint = args.appconfig_endpoint
-
+    client_id = args.client_id
     if not registry:
         sys.exit("ERROR: ACR_LOGIN_SERVER not found in App Configuration")
     if not project_endpoint:
@@ -117,10 +123,32 @@ def main() -> None:
             image=image,
             environment_variables={
                 "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
+                "AZURE_CLIENT_ID": client_id,
             },
         ),
     )
-    print(f"Done — agent: {agent.name}, version: {agent.version}")
+    print(f"Created — agent: {agent.name}, version: {agent.version}")
+
+    # Start the new agent version
+    account_name = cfg("AI_FOUNDRY_ACCOUNT_NAME")
+    project_name = cfg("AI_FOUNDRY_PROJECT")
+    if not account_name or not project_name:
+        sys.exit(
+            "ERROR: AI_FOUNDRY_ACCOUNT_NAME and AI_FOUNDRY_PROJECT "
+            "must be set in App Configuration to start the agent."
+        )
+
+    print(f"Starting agent: {agent.name} version {agent.version}")
+    _run([
+        "az", "cognitiveservices", "agent", "start",
+        "--account-name", account_name,
+        "--project-name", project_name,
+        "--name", agent.name,
+        "--agent-version", str(agent.version),
+        "--min-replicas", "1",
+        "--max-replicas", "2",
+    ], shell=True)
+    print(f"Done — agent {agent.name} v{agent.version} is starting.")
 
 
 if __name__ == "__main__":

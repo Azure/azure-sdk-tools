@@ -4,6 +4,11 @@ This module uses the Azure AI Search Python SDK (not raw REST).  Each search
 result is automatically expanded by its header hierarchy so the agent gets
 full section context in a single call.  Sibling queries run concurrently
 via ``asyncio.gather`` for fast response times.
+
+Two search strategies are provided and run in parallel:
+  - **Agentic search** – uses the KnowledgeBaseRetrievalClient for
+    intent-aware multi-step retrieval.
+  - **Vector search** – hybrid semantic + vector query.
 """
 
 from __future__ import annotations
@@ -19,6 +24,10 @@ from azure.search.documents.knowledgebases.models import (
     KnowledgeRetrievalSemanticIntent,
     SearchIndexKnowledgeSourceParams,
 )
+from azure.search.documents.models import (
+    QueryType,
+    VectorizableTextQuery,
+)
 from utils.azure_credential import get_credential
 
 from config.app_config import get as cfg
@@ -26,6 +35,9 @@ from config.tenant_config import get_knowledge_source
 from models.knowledge import KnowledgeChunk
 
 logger = logging.getLogger(__name__)
+
+# Chunks below this rerank score are considered low-relevance and dropped.
+_RERANK_SCORE_LOW_RELEVANCE_THRESHOLD = 2.0
 
 
 class SearchClient:
@@ -52,7 +64,6 @@ class SearchClient:
     async def agentic_search(
         self,
         query: str,
-        sources: list[str],
         source_filters: dict[str, str],
     ) -> list[KnowledgeChunk]:
         """Retrieve references and expand each by header hierarchy.
@@ -62,8 +73,7 @@ class SearchClient:
         receives full contextual content in a single call.
         """
         kb_params: list[SearchIndexKnowledgeSourceParams] = []
-        for source_name in sources:
-            filter_add_on = source_filters.get(source_name, "")
+        for source_name, filter_add_on in source_filters.items():
             kb_params.append(
                 SearchIndexKnowledgeSourceParams(
                     knowledge_source_name=self._knowledge_source_name,
@@ -92,22 +102,86 @@ class SearchClient:
             source_data = getattr(ref, "source_data", None) or {}
             raw_refs.append(KnowledgeChunk.model_validate(source_data))
 
-        # Deduplicate: skip chunks whose header section is already covered
-        # by a broader expansion earlier in the list.
-        unique_refs: list[KnowledgeChunk] = []
-        seen_chunk_ids: set[str] = set()
-        expanded_h1: set[str] = set()  # "context_id|title|header1"
-        expanded_h2: set[str] = set()  # "context_id|title|header1|header2"
-        expanded_h3: set[str] = set()  # "context_id|title|header1|header2|header3"
+        # Deduplicate, then expand by hierarchy
+        unique_refs = self._deduplicate_chunks(
+            raw_refs[: max(self._top_k, 1)]
+        )
+        tasks = [self._expand_by_hierarchy(raw) for raw in unique_refs]
+        return await asyncio.gather(*tasks)
 
-        for chunk in raw_refs[: max(self._top_k, 1)]:
+    async def vector_search(
+        self,
+        query: str,
+        source_filters: dict[str, str],
+        top_k: int | None = None,
+    ) -> list[KnowledgeChunk]:
+        """Hybrid semantic + vector search mirroring the Go backend's SearchTopKRelatedDocuments.
+
+        Combines all source filters into a single query for efficiency,
+        filters by rerank score, and returns the top-k results sorted by
+        relevance.
+        """
+        k = top_k or self._top_k
+
+        vector_query = VectorizableTextQuery(
+            text=query,
+            k_nearest_neighbors=k,
+            fields="text_vector",
+        )
+
+        select_fields = [
+            "chunk_id", "title", "chunk", "context_id",
+            "header_1", "header_2", "header_3",
+            "ordinal_position", "scope", "service_type",
+        ]
+
+        # Combine per-source filters into a single OData expression with OR
+        combined_filter = " or ".join(
+            f"({f})" for f in source_filters.values() if f
+        )
+
+        results = await self._search_client.search(
+            search_text=query,
+            filter=combined_filter or None,
+            query_type=QueryType.SEMANTIC,
+            query_language="en-us",
+            top=k,
+            select=select_fields,
+            vector_queries=[vector_query],
+        )
+
+        scored_chunks: list[tuple[float, KnowledgeChunk]] = []
+        async for doc in results:
+            chunk = KnowledgeChunk.model_validate(dict(doc))
+            if chunk.rerank_score < _RERANK_SCORE_LOW_RELEVANCE_THRESHOLD:
+                continue
+            scored_chunks.append((chunk.rerank_score, chunk))
+
+        # Sort by rerank score descending and limit to top-k
+        scored_chunks.sort(key=lambda x: x[0], reverse=True)
+        top_chunks = [chunk for _, chunk in scored_chunks[:k]]
+
+        # Deduplicate and expand by hierarchy (reuse agentic search logic)
+        unique_refs = self._deduplicate_chunks(top_chunks)
+        expand_tasks = [self._expand_by_hierarchy(raw) for raw in unique_refs]
+        return await asyncio.gather(*expand_tasks)
+
+    @staticmethod
+    def _deduplicate_chunks(chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]:
+        """Remove chunks whose header section is already covered by a broader expansion."""
+        unique: list[KnowledgeChunk] = []
+        seen_chunk_ids: set[str] = set()
+        expanded_h1: set[str] = set()
+        expanded_h2: set[str] = set()
+        expanded_h3: set[str] = set()
+
+        for chunk in chunks:
             if chunk.chunk_id in seen_chunk_ids:
                 continue
             seen_chunk_ids.add(chunk.chunk_id)
 
             hierarchy = _detect_hierarchy(chunk.header1, chunk.header2, chunk.header3)
 
-            # Skip if a parent hierarchy was already expanded
             if chunk.header1:
                 h1_key = f"{chunk.source}|{chunk.title}|{chunk.header1}"
                 if h1_key in expanded_h1 and hierarchy in ("header2", "header3"):
@@ -121,9 +195,8 @@ class SearchClient:
                 if h3_key in expanded_h3:
                     continue
 
-            unique_refs.append(chunk)
+            unique.append(chunk)
 
-            # Track this expansion for future iterations
             if hierarchy == "header1" and chunk.header1:
                 expanded_h1.add(f"{chunk.source}|{chunk.title}|{chunk.header1}")
             elif hierarchy == "header2" and chunk.header1 and chunk.header2:
@@ -131,9 +204,7 @@ class SearchClient:
             elif hierarchy == "header3" and chunk.header1 and chunk.header2 and chunk.header3:
                 expanded_h3.add(f"{chunk.source}|{chunk.title}|{chunk.header1}|{chunk.header2}|{chunk.header3}")
 
-        # Expand all chunks by header hierarchy concurrently
-        tasks = [self._expand_by_hierarchy(raw) for raw in unique_refs]
-        return await asyncio.gather(*tasks)
+        return unique
 
     async def _expand_by_hierarchy(self, chunk: KnowledgeChunk) -> KnowledgeChunk:
         """Fetch sibling chunks for a single ref and assemble content."""

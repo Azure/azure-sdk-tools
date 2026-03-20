@@ -19,6 +19,7 @@ from typing import Annotated
 from config.app_config import get as cfg
 from config.tenant_config import (
     TenantID,
+    build_tenant_routing_table,
     get_all_tenant_ids,
     get_tenant_config,
     get_tenant_sources_display,
@@ -128,7 +129,10 @@ class TenantTools:
         try:
             result = await execute_prompt(
                 _ROUTING_TEMPLATE,
-                variables={"original_tenant": original_tenant_id},
+                variables={
+                    "original_tenant": original_tenant_id,
+                    "tenant_options": build_tenant_routing_table(),
+                },
                 user_message=summary,
                 model=cfg("AOAI_CHAT_REASONING_MODEL", "gpt-5.1"),
                 reasoning_effort=cfg(

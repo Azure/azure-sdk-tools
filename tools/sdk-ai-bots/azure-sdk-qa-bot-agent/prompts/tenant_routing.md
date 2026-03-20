@@ -10,72 +10,7 @@ The user is currently in the **`{{original_tenant}}`** tenant. Follow these step
 1. **Check current tenant first**: Determine the core technical topic of the question. If it falls within `{{original_tenant}}`'s scope, route to `{{original_tenant}}` and stop.
 2. **Re-route if needed**: If the topic is outside the current tenant's scope (or the current tenant is `general_qa_bot`), select the best-matching tenant from the options below.
 
-## Tenant Options
-
-Each tenant below lists its **ID**, **scope**, and **matching topics**. Some tenants also have **exclusions** — topics that look similar but must be routed elsewhere.
-
-| # | Tenant Name | Tenant ID |
-|---|-------------|-----------|
-| 1 | Azure SDK Onboarding | `azure_sdk_onboarding` |
-| 2 | API Spec Review | `api_spec_review_bot` |
-| 3 | TypeSpec | `azure_sdk_qa_bot` |
-| 4 | Python SDK | `python_channel_qa_bot` |
-| 5 | Go SDK | `golang_channel_qa_bot` |
-| 6 | Java SDK | `java_channel_qa_bot` |
-| 7 | JavaScript SDK | `javascript_channel_qa_bot` |
-| 8 | .NET(C#) SDK | `dotnet_channel_qa_bot` |
-| 9 | General | `general_qa_bot` |
-
----
-
-### 1. `azure_sdk_onboarding` — Azure SDK Onboarding
-**Scope**: Azure API specification & SDK onboarding process, SDK lifecycle, Azure MCP, and retirement processes.
-**Topics**:
-- Prerequisites and setup for onboarding Azure API or SDK
-- Permission issues for specification repo or SDK repo access, workflow visibility
-- SDK development, SDK generation (reproduce SDK validation locally), SDK release tooling and guidance
-- Service, API and SDK deprecation guidance
-- API documentation publishing
-- AzSDK agent, Azure MCP tool usage guidance
-- Creating new service based on TypeSpec or OpenAPI (Swagger)
-
-### 2. `api_spec_review_bot` — API Spec Review
-**Scope**: Azure REST API specification PR review process and failing checks (**not** API design questions).
-**Topics**:
-- Specification PR review process in azure-rest-api-specs and azure-rest-api-specs-pr repositories
-- How to fix specification PR pipeline errors, SDK validation errors, check failures or CI failures
-- How to suppress specification PR pipeline errors, SDK validation errors, check failures or CI failures
-**Exclusions** (route elsewhere instead):
-- Language-specific SDK generation/validation errors → route to that language's SDK tenant
-- TypeSpec validation errors → route to `azure_sdk_qa_bot`
-- Core topic is about API design or spec authoring questions → route to `azure_sdk_qa_bot`
-- Permission or access issues for API spec repos → route to `azure_sdk_onboarding`
-
-### 3. `azure_sdk_qa_bot` — TypeSpec
-**Scope**: TypeSpec authoring, TypeSpec validation, and Azure API design.
-**Topics**:
-- TypeSpec syntax, decorators, models, operations usage
-- Azure management-plane or data-plane patterns
-- TypeSpec migration from OpenAPI
-- TypeSpec validation
-- TypeSpec configurations (tspconfig.yaml)
-- TypeSpec generated OpenAPI/Swagger review
-- Client customization for SDKs (even if a specific language is mentioned, if the core topic is TypeSpec authoring)
-- API design guidelines and best practices
-
-### 4–8. Language SDK Tenants
-Each language SDK tenant covers **generation/validation issues, testing, release processes, and pipeline/CI/CD issues** for its language.
-
-| Language | Tenant ID |
-|----------|-----------|
-| Python | `python_channel_qa_bot` |
-| Go | `golang_channel_qa_bot` |
-| Java | `java_channel_qa_bot` |
-| JavaScript | `javascript_channel_qa_bot` |
-| .NET (C#) | `dotnet_channel_qa_bot` |
-
-### 9. `general_qa_bot` — General
-**Scope**: Questions that don't clearly fit any single domain above. General specialist with all knowledge sources.
+{{tenant_options}}
 
 ## Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):

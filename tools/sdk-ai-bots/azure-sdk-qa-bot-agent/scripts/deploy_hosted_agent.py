@@ -145,8 +145,6 @@ def main() -> None:
         "--project-name", project_name,
         "--name", agent.name,
         "--agent-version", str(agent.version),
-        "--min-replicas", "1",
-        "--max-replicas", "2",
     ], shell=True)
     print(f"Done — agent {agent.name} v{agent.version} is starting.")
 

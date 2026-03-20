@@ -1,25 +1,69 @@
+import { vi } from 'vitest';
+vi.mock('ngx-simplemde', () => ({
+  SimplemdeModule: class {
+    static ɵmod = { id: 'SimplemdeModule', type: this, declarations: [], imports: [], exports: [] };
+    static ɵinj = { imports: [], providers: [] };
+    static forRoot() { return { ngModule: this, providers: [] }; }
+  },
+  SimplemdeOptions: class {},
+  SimplemdeComponent: class { value = ''; options = {}; valueChange = { emit: vi.fn() }; }
+}));
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { initializeTestBed } from '../../../test-setup';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { NamespacePageComponent } from './namespace-page.component';
+import { SignalRService } from 'src/app/_services/signal-r/signal-r.service';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { WorkerService } from 'src/app/_services/worker/worker.service';
+import { 
+  createMockSignalRService, 
+  createMockNotificationsService, 
+  createMockWorkerService,
+  setupMatchMediaMock 
+} from 'src/test-helpers/mock-services';
 
 describe('NamespacePageComponent', () => {
   let component: NamespacePageComponent;
   let fixture: ComponentFixture<NamespacePageComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  const mockSignalRService = createMockSignalRService();
+  const mockNotificationsService = createMockNotificationsService();
+  const mockWorkerService = createMockWorkerService();
+
+  beforeAll(() => {
+    initializeTestBed();
+    setupMatchMediaMock();
+  });
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       imports: [
         NamespacePageComponent,
-        RouterTestingModule,
-        HttpClientTestingModule
+        BrowserAnimationsModule
       ],
       providers: [
-        MessageService
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        MessageService,
+        { provide: SignalRService, useValue: mockSignalRService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: WorkerService, useValue: mockWorkerService },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({ reviewId: 'test' }),
+              queryParamMap: convertToParamMap({ activeApiRevisionId: 'test' })
+            }
+          }
+        }
       ]
-    }).compileComponents();
+    });
 
     fixture = TestBed.createComponent(NamespacePageComponent);
     component = fixture.componentInstance;

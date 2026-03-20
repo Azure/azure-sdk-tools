@@ -11,6 +11,10 @@
           "enum": ["SUGGESTION", "SHOULD", "MUST", "QUESTION"],
           "description": "The severity level of the comment. Must be one of: Suggestion, Should Fix, Must Fix, Question."
         },
+        "severity_rationale": {
+          "type": "string",
+          "description": "A concise explanation for why this severity level was chosen, referencing the specific language used in the guideline or memory context (e.g., 'DO NOT', 'YOU SHOULD', hedging language) that drove the classification."
+        },
         "results": {
           "type": "array",
           "items": {
@@ -35,7 +39,7 @@
           }
         }
       },
-      "required": ["results", "severity"],
+      "required": ["results", "severity", "severity_rationale"],
       "additionalProperties": false
     }
   }

@@ -77,6 +77,11 @@ public class CustomizedCodeUpdateResponse : PackageResponseBase
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
         }
+        if (!string.IsNullOrWhiteSpace(BuildResult))
+        {
+            sb.AppendLine("Build Output:");
+            sb.AppendLine(BuildResult);
+        }
         if (TypeSpecChangesSummary is { Count: > 0 })
         {
             sb.AppendLine("TypeSpec Changes:");

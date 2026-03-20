@@ -22,7 +22,8 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
-        var toolCalls = new List<string>();
+        var toolCalls = new List<ToolCallRecord>();
+        var pendingTimestamps = new Dictionary<string, double>();
 
         try
         {
@@ -56,10 +57,28 @@ public class SessionExecutor : IDisposable
                     {
                         Console.WriteLine($"Model is calling tool: {input.ToolName}");
                         config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
+                        pendingTimestamps[input.ToolName] = input.Timestamp;
                         return Task.FromResult<PreToolUseHookOutput?>(null);
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
+                        double? durationMs = pendingTimestamps.TryGetValue(input.ToolName, out var startTs)
+                            ? input.Timestamp - startTs
+                            : null;
+
+                        var mcpServerName = input.ToolName.Contains("__")
+                            ? input.ToolName.Split("__", 2)[0]
+                            : null;
+
+                        toolCalls.Add(new ToolCallRecord
+                        {
+                            ToolName = input.ToolName,
+                            ToolArgs = input.ToolArgs,
+                            ToolResult = input.ToolResult,
+                            DurationMs = durationMs,
+                            McpServerName = mcpServerName,
+                            Timestamp = startTs,
+                        });
                         if (input.ToolName == "skill")
                         {
                             toolCalls.Add($"{input.ToolName} {input.ToolArgs?.ToString()}");

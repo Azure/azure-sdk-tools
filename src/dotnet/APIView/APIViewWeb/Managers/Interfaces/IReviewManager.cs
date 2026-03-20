@@ -30,6 +30,8 @@ namespace APIViewWeb.Managers
         public Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId, string revisionId);
         public Task<List<ReviewListItemModel>> GetPendingNamespaceApprovalsBatchAsync(int limit = 100);
         public Task GenerateAIReview(ClaimsPrincipal user, string reviewId, string activeApiRevisionId, string diffApiRevisionId = null);
+        public Task<AIReviewJobStartedResponseModel> StartCopilotReviewJobAsync(StartReviewJobRequest request);
+        public Task<AIReviewJobPolledResponseModel> GetCopilotReviewJobAsync(string jobId);
         public Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount, bool verifyUpgradabilityOnly, string packageNameFilterForUpgrade);
     }
 }

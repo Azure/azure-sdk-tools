@@ -70,7 +70,12 @@ class ApiReviewJobRequest(BaseModel):
     base: str = None
     outline: str = None
     comments: list = None
-    target_id: str = None
+    target_id: Optional[str] = Field(None, alias="targetId")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 class ApiReviewJobStatusResponse(BaseModel):
@@ -166,17 +171,27 @@ def cleanup_job_store():
 class AgentChatRequest(BaseModel):
     """Request model for agent chat interaction."""
 
-    user_input: str
-    thread_id: str = None
+    user_input: str = Field(..., alias="userInput")
+    thread_id: Optional[str] = Field(None, alias="threadId")
     messages: list = None  # Optional: for multi-turn
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 class AgentChatResponse(BaseModel):
     """Response model for agent chat interaction."""
 
     response: str
-    thread_id: str
+    thread_id: str = Field(..., alias="threadId")
     messages: list
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
 
 
 @app.post("/agent/chat", response_model=AgentChatResponse)
@@ -258,7 +273,7 @@ class MentionRequest(BaseModel):
     language: str
     package_name: str = Field(..., alias="packageName")
     code: str
-    source_thread_id: Optional[str] = Field(None, alias="sourceThreadId")
+    source_comment_id: Optional[str] = Field(None, alias="sourceCommentId")
 
     class Config:
         """Configuration for Pydantic model."""
@@ -285,7 +300,7 @@ async def handle_mention(
             language=pretty_language,
             package_name=request.package_name,
             code=request.code,
-            source_thread_id=request.source_thread_id,
+            source_comment_id=request.source_comment_id,
         )
         return AgentChatResponse(
             response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
@@ -314,7 +329,7 @@ async def handle_thread_resolution(
             language=pretty_language,
             package_name=request.package_name,
             code=request.code,
-            source_thread_id=request.source_thread_id,
+            source_comment_id=request.source_comment_id,
         )
         return AgentChatResponse(
             response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return

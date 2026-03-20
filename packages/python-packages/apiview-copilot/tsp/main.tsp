@@ -4,23 +4,16 @@ using TypeSpec.Http;
 
 @service(#{ title: "APIView Copilot Service" })
 namespace ApiViewCopilot {
-  /** Requests a synchronous API review */
-  #deprecated "Use /api-review/start instead"
-  @route("/{language}")
-  @post
-  op legacyApiReview(
-    @path language: string,
-    @body request: ApiReviewRequest,
-    @header("Authorization") authorization: string,
-  ): ApiReviewResponse;
-
   /** Starts a new API review job */
   @route("/api-review/start")
   @post
   op startApiReviewJob(
     @body request: ApiReviewJobRequest,
     @header("Authorization") authorization: string,
-  ): ApiReviewJobStartResponse;
+  ): {
+    @statusCode statusCode: 202;
+    @body body: ApiReviewJobStartResponse;
+  };
 
   /** Gets the status of an API review job */
   @route("/api-review/{jobId}")
@@ -94,9 +87,15 @@ namespace ApiViewCopilot {
 
     /** The comments in the APIView thread. */
     comments: ApiViewComment[];
+
+    /** The APIView comment ID that triggered this request, for audit traceability. */
+    sourceCommentId?: string;
   }
 
-  model ApiReviewRequest {
+  model ApiReviewJobRequest {
+    /** The programming language of the APIView */
+    language: string;
+
     /** The API specification to review */
     target: string;
 
@@ -108,11 +107,9 @@ namespace ApiViewCopilot {
 
     /** Any existing comments on the API */
     comments?: ApiViewComment[];
-  }
 
-  model ApiReviewResponse {
-    /** The list of review comments */
-    comments: ReviewComment[];
+    /** An optional identifier for the target */
+    targetId?: string;
   }
 
   /** An existing comment in APIView */
@@ -164,19 +161,12 @@ namespace ApiViewCopilot {
 
     /** An ID that correlates this comment with other related comments */
     correlationId?: string;
-    
+
     /** A score from 0 to 1 estimating the confidence in this comment's validity */
     confidenceScore?: float32;
 
     /** The severity level of the comment */
-    severity: "SUGGESTION" | "SHOULD" | "MUST" | "QUESTION";
-  }
-
-  model ApiReviewJobRequest {
-    /** The programming language of the APIView */
-    language: string;
-
-    ...ApiReviewRequest;
+    severity?: string;
   }
 
   model ApiReviewJobStartResponse {

@@ -28,7 +28,7 @@ class MentionWorkflow(ABC):
         trigger_comment: dict,
         other_comments: dict,
         reasoning: str,
-        source_thread_id: str = None,
+        source_comment_id: str = None,
     ):
         self.language = language
         self.code = code
@@ -36,7 +36,7 @@ class MentionWorkflow(ABC):
         self.trigger_comment = trigger_comment
         self.other_comments = other_comments
         self.reasoning = reasoning
-        self.source_thread_id = source_thread_id
+        self.source_comment_id = source_comment_id
         self.plan = None
         self.results = None
 

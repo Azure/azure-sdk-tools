@@ -14,7 +14,6 @@ Usage:
     python scripts/top_guidelines_by_memories.py
 """
 
-import json
 import sys
 import os
 
@@ -75,7 +74,7 @@ def main():
         print(f"  Language: {guideline.get('language', 'general')}")
         if guideline.get("tags"):
             print(f"  Tags:     {', '.join(guideline['tags'])}")
-        print(f"\n  Guideline Content:")
+        print("\n  Guideline Content:")
         for line in guideline.get("content", "").splitlines():
             print(f"    {line}")
 

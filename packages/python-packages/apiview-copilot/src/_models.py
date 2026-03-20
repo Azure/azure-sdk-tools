@@ -257,9 +257,9 @@ class Memory(BaseModel):
         description="Indicates if this memory provides an exception to the guidelines rather than an amplification.",
     )
     source: str = Field(description="The source of the memory, such as 'mention_agent' or 'thread_resolution'.")
-    source_thread_id: Optional[str] = Field(
+    source_comment_id: Optional[str] = Field(
         None,
-        description="The ID of the comment thread that triggered the creation of this memory, for auditing.",
+        description="The ID of the APIView comment that triggered the creation of this memory, for auditing.",
     )
     tags: Optional[List[str]] = Field(
         None,

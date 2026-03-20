@@ -86,7 +86,7 @@ For ongoing Q&A collected from weekly badcase reviews:
 
 ### Data Source
 
-https://ms.portal.azure.com/#view/Microsoft_Azure_Storage/ContainerMenuBlade/~/overview/storageAccountId/%2Fsubscriptions%2Fa18897a6-7e44-457d-9260-f2854c0aca42%2FresourceGroups%2Fazure-sdk-qa-bot%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Fazuresdkqabotstorage/path/evaluation-dataset/etag/%220x8DDEF6EC73F0C18%22/defaultId//publicAccessVal/None
+The `evaluation-dataset` folder of the production environment storage resource.
 
 ### Criteria for Good Candidates
 
@@ -202,7 +202,7 @@ Before adding new knowledge, follow this verification process:
 
 If the bot cannot answer correctly, search for existing knowledge:
 
-- AI Search Portal: [azure-sdk-knowledge index](https://ms.portal.azure.com/#view/Microsoft_Azure_Search/Index.ReactView/id/%2Fsubscriptions%2Fa18897a6-7e44-457d-9260-f2854c0aca42%2FresourceGroups%2Fazure-sdk-qa-bot-dev%2Fproviders%2FMicrosoft.Search%2FsearchServices%2Fazuresdkqabot-dev-search%23azure-sdk-knowledge/location/West%20US%202/sku/standard)
+- Open the production environment Azure AI Search resource
 - Search for keywords related to the question
 - Check if similar content already exists
 

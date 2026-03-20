@@ -150,7 +150,9 @@ public class ReportGenerator
         foreach (var (_, result) in results)
         {
             if (result.TokenUsage != null)
+            {
                 totalUsage.Add(result.TokenUsage);
+            } 
         }
 
         return new
@@ -162,14 +164,7 @@ public class ReportGenerator
             TotalPassed = results.Count(r => r.Result.Passed),
             TotalFailed = results.Count(r => !r.Result.Passed),
             TotalDurationSeconds = results.Sum(r => r.Result.Duration.TotalSeconds),
-            TotalTokenUsage = new
-            {
-                totalUsage.InputTokens,
-                totalUsage.OutputTokens,
-                totalUsage.CacheReadTokens,
-                totalUsage.CacheWriteTokens,
-                totalUsage.TotalTokens
-            },
+            TotalTokenUsage = totalUsage,
             Scenarios = results.Select((r, i) => new
             {
                 Index = i + 1,
@@ -179,14 +174,7 @@ public class ReportGenerator
                 r.Scenario.Prompt,
                 Repo = r.Scenario.Repo.CloneUrl,
                 r.Result,
-                TokenUsage = r.Result.TokenUsage != null ? new
-                {
-                    r.Result.TokenUsage.InputTokens,
-                    r.Result.TokenUsage.OutputTokens,
-                    r.Result.TokenUsage.CacheReadTokens,
-                    r.Result.TokenUsage.CacheWriteTokens,
-                    r.Result.TokenUsage.TotalTokens
-                } : null
+                r.Result.TokenUsage
             }).ToList()
         };
     }

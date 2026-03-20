@@ -13,6 +13,7 @@
     (navigateToRevisionsEmitter)="navigateToRevisions()"
     (navigateToReviewsEmitter)="showReviewView()"
     (navigateToConversationsEmitter)="showConversationsView()"
+    (navigateToNamespaceEmitter)="navigateToNamespace()"
     (pageOptionsEmitter)="handlePageOptionsEmitter($event)"
     (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)">
     <div [hidden]="activeView !== 'conversations'" class="conversation-panel overflow-auto border rounded py-3">

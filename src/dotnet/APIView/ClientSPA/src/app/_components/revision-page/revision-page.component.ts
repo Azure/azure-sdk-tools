@@ -69,6 +69,14 @@ export class RevisionPageComponent {
     this.router.navigate(['/review', this.reviewId], { queryParams: queryParams });
   }
 
+  navigateToNamespace() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/namespace', this.reviewId], { queryParams: queryParams });
+  }
+
   noop() { }
 
   handleApiRevisionsEmitter(apiRevisions: APIRevision[]) {

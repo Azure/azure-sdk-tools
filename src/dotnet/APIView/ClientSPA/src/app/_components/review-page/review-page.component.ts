@@ -459,6 +459,14 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     });
   }
 
+  navigateToNamespace() {
+    const queryParams: any = {};
+    if (this.activeApiRevisionId) {
+      queryParams['activeApiRevisionId'] = this.activeApiRevisionId;
+    }
+    this.router.navigate(['/namespace', this.reviewId], { queryParams: queryParams });
+  }
+
   navigateToConversations() {
     const queryParams: any = {};
     if (this.activeApiRevisionId) {

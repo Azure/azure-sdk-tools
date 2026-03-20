@@ -48,11 +48,6 @@ function tryAddItemInArray<TItem>(
     return needUpdate;
 }
 
-function pathInclude(array: string[], item: string): boolean {
-    const normalize = (p: string) => p.replace(/\/$/, '');
-    return array.some((a) => normalize(a) === normalize(item));
-}
-
 function makeSureArrayAvailableInCiYaml(current: any, path: string[]) {
     path.forEach((p, i) => {
         if (!current?.[p]) {

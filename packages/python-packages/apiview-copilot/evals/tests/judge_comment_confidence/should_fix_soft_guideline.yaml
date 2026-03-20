@@ -1,0 +1,34 @@
+testcase: should_fix_soft_guideline
+language: Python
+context: |
+  > **guideline_id:** python_implementation.html#python-codestyle-long-args<br>**score:** 85<br>
+  ## Avoid methods with more than five positional parameters
+
+  YOU SHOULD NOT have methods that require more than five positional parameters. Optional/flag parameters can be accepted using keyword-only arguments, or **kwargs.
+
+  ### BAD Examples
+
+  ```python
+  def create(self, a, b, c, d, e, f):
+      ...
+  ```
+
+  ### GOOD Examples
+
+  ```python
+  def create(self, a, b, *, c=None, d=None, e=None, f=None):
+      ...
+  ```
+content: |
+  {
+    "line_no": 30,
+    "bad_code": "def create_resource(self, name: str, group: str, location: str, sku: str, kind: str, tags: dict) -> Resource:",
+    "suggestion": "def create_resource(self, name: str, group: str, *, location: str, sku: str, kind: str, tags: dict = ...) -> Resource:",
+    "comment": "This method has six positional parameters. Move the less-used ones to keyword-only arguments.",
+    "guideline_ids": ["python_implementation.html#python-codestyle-long-args"],
+    "memory_ids": [],
+    "is_generic": false
+  }
+response:
+  action: SHOULD
+  rationale: The referenced guideline uses 'YOU SHOULD NOT' language, indicating a strong recommendation but not a mandatory requirement. The comment is tied to the correct element, provides a syntactically correct fix, and cites the guideline.

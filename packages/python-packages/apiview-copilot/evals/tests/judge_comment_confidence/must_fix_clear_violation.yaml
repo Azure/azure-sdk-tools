@@ -1,0 +1,34 @@
+testcase: must_fix_clear_violation
+language: Python
+context: |
+  > **guideline_id:** python_design.html#python-models-no-class-suffix<br>**score:** 92<br>
+  ## Don't use 'Client' suffix on non-client types
+
+  DO NOT append 'Client' to types that are not service clients.
+
+  ### BAD Examples
+
+  ```python
+  class WidgetResponseClient:
+      ...
+  ```
+
+  ### GOOD Examples
+
+  ```python
+  class WidgetResponse:
+      ...
+  ```
+content: |
+  {
+    "line_no": 45,
+    "bad_code": "class azure.widget.models.WidgetResponseClient:",
+    "suggestion": "class azure.widget.models.WidgetResponse:",
+    "comment": "The 'Client' suffix should only be used for service client types. Rename this model class to 'WidgetResponse'.",
+    "guideline_ids": ["python_design.html#python-models-no-class-suffix"],
+    "memory_ids": [],
+    "is_generic": false
+  }
+response:
+  action: MUST
+  rationale: The guideline uses 'DO NOT' language which indicates a must-fix violation. The comment is clearly tied to the correct API element; the suggestion is syntactically correct; a specific guideline is cited; the language is unambiguous; and the developer can immediately act on it.

@@ -54,7 +54,8 @@ extends:
         displayName: Override Acceptable Password Iteration Count
     TestPostSteps:
       - task: UseNode@1
-        version: ">=24"
+        inputs:
+          version: ">=24"
         displayName: "Use Node"
       - pwsh: |
           npm ci

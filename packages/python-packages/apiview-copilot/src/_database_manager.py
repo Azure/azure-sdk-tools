@@ -19,6 +19,7 @@ from azure.search.documents.indexes import SearchIndexerClient
 from pydantic import BaseModel
 from src._credential import get_credential
 from src._settings import SettingsManager
+from src._utils import guideline_id_to_db
 
 
 class ContainerNames(Enum):
@@ -123,6 +124,8 @@ class BasicContainer:
 
     def _to_dict(self, data):
         if BaseModel and isinstance(data, BaseModel):
+            if hasattr(data, "model_dump_db"):
+                return data.model_dump_db()
             return data.model_dump()
         return dict(data) if not isinstance(data, dict) else data
 
@@ -208,7 +211,7 @@ class GuidelinesContainer(BasicContainer):
 
     def __init__(self, manager: DatabaseManager, container_name: str):
         super().__init__(manager, container_name)
-        self.preprocess_id = lambda x: x.replace(".html#", "=html=")
+        self.preprocess_id = guideline_id_to_db
 
 
 class ReviewJobsContainer(BasicContainer):

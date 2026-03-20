@@ -1,0 +1,18 @@
+testcase: retain_service_specific_memory
+guideline: |
+  {
+    "id": "python_design=html=python-logging-standard",
+    "title": "Use Python standard logging module",
+    "content": "DO use the Python standard logging module for all diagnostic output. Create a module-level logger with logging.getLogger(__name__). Do not use print statements for diagnostic output. Do not configure the root logger or add handlers."
+  }
+memories: |
+  [
+    {
+      "id": "mem-040",
+      "title": "Storage SDK: log retry attempts at WARNING level",
+      "content": "Feedback from Storage SDK review: For the azure-storage-blob library specifically, all retry attempts should be logged at WARNING level, not DEBUG. This is because storage customers frequently hit throttling and need visibility without enabling debug logging."
+    }
+  ]
+response:
+  action: NONE
+  rationale: The memory provides a service-specific logging requirement for azure-storage-blob that is not covered by the general logging guideline. The guideline only says to use the standard logging module, not what level to log retry attempts at.

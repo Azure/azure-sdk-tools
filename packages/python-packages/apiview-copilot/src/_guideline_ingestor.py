@@ -37,7 +37,7 @@ from bs4 import BeautifulSoup
 MARKDOWN_IT = markdown_it.MarkdownIt()
 
 from src._database_manager import DatabaseManager
-from src._models import Example, ExampleType, Guideline
+from src._models import Example, ExampleType, Guideline, Memory
 from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
@@ -148,6 +148,8 @@ class SyncResult:
     examples_updated: list[str] = field(default_factory=list)
     examples_deleted: list[str] = field(default_factory=list)
     examples_unchanged: list[str] = field(default_factory=list)
+    memories_absorbed: list[str] = field(default_factory=list)
+    memories_retained: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
     @property
@@ -168,15 +170,24 @@ class SyncResult:
             + len(self.examples_unchanged)
         )
 
+    @property
+    def total_memories(self) -> int:
+        return len(self.memories_absorbed) + len(self.memories_retained)
+
     def summary(self) -> str:
-        return (
-            f"Sync complete: "
+        parts = [
+            "Sync complete: ",
             f"Guidelines: {len(self.guidelines_created)} created, {len(self.guidelines_updated)} updated, "
-            f"{len(self.guidelines_deleted)} deleted, {len(self.guidelines_unchanged)} unchanged | "
+            f"{len(self.guidelines_deleted)} deleted, {len(self.guidelines_unchanged)} unchanged | ",
             f"Examples: {len(self.examples_created)} created, {len(self.examples_updated)} updated, "
-            f"{len(self.examples_deleted)} deleted, {len(self.examples_unchanged)} unchanged | "
-            f"{len(self.errors)} errors"
-        )
+            f"{len(self.examples_deleted)} deleted, {len(self.examples_unchanged)} unchanged",
+        ]
+        if self.memories_absorbed or self.memories_retained:
+            parts.append(
+                f" | Memories: {len(self.memories_absorbed)} absorbed, {len(self.memories_retained)} retained"
+            )
+        parts.append(f" | {len(self.errors)} errors")
+        return "".join(parts)
 
 
 class GuidelineIngestor:
@@ -734,6 +745,10 @@ class GuidelineIngestor:
         if all_examples:
             self._sync_examples(all_examples, target_sha, changed_guideline_ids, dry_run, result)
 
+        # Reconcile memories for changed guidelines
+        changed_set = set(result.guidelines_created) | set(result.guidelines_updated)
+        self._reconcile_memories(changed_set, enriched_map, dry_run, result)
+
         # Update the last synced SHA
         if not dry_run:
             self.set_last_synced_commit_sha(target_sha)
@@ -849,6 +864,10 @@ class GuidelineIngestor:
         # Step 4: Sync examples
         if all_examples:
             self._sync_examples(all_examples, target_sha, seen_guideline_ids, dry_run, result)
+
+        # Step 5: Reconcile memories for changed guidelines
+        changed_set = set(result.guidelines_created) | set(result.guidelines_updated)
+        self._reconcile_memories(changed_set, enriched_map, dry_run, result)
 
         # Update the last synced SHA
         if not dry_run:
@@ -1110,3 +1129,215 @@ class GuidelineIngestor:
             memory_ids=existing.get("memory_ids", []) if existing else [],
         )
         self._db.examples.upsert(parsed.id, data=example, run_indexer=False)
+
+    # ========================================================================
+    # Memory Reconciliation
+    # ========================================================================
+
+    def _reconcile_memories(
+        self,
+        changed_guideline_ids: set[str],
+        enriched_map: Dict[str, dict],
+        dry_run: bool,
+        result: SyncResult,
+    ) -> None:
+        """
+        Reconcile memories against updated guidelines.
+
+        For each changed guideline that has related memories, asks the LLM
+        whether those memories are now redundant (absorbed by the guideline).
+        Absorbed memories are unlinked and soft-deleted if orphaned.
+
+        Args:
+            changed_guideline_ids: IDs of guidelines that were created or updated.
+            enriched_map: LLM-enriched guideline dicts keyed by ID.
+            dry_run: If True, report changes without modifying the database.
+            result: SyncResult to record outcomes.
+        """
+        if not changed_guideline_ids:
+            return
+
+        # Collect guidelines that have related memories
+        guidelines_with_memories: List[dict] = []
+        for gid in changed_guideline_ids:
+            try:
+                db_guideline = self._db.guidelines.get(gid)
+                related_mems = db_guideline.get("related_memories", [])
+                if related_mems:
+                    guidelines_with_memories.append(db_guideline)
+            except Exception:
+                continue
+
+        if not guidelines_with_memories:
+            return
+
+        total_memories = sum(len(g.get("related_memories", [])) for g in guidelines_with_memories)
+        prefix = "[DRY RUN] " if dry_run else ""
+        print(f"\n{prefix}Reconciling memories for {len(guidelines_with_memories)} guidelines "
+              f"({total_memories} memories to check)...")
+
+        any_deletions = False
+        guidelines_needing_reindex = False
+
+        for db_guideline in guidelines_with_memories:
+            gid = db_guideline["id"]
+            memory_ids = db_guideline.get("related_memories", [])
+
+            # Fetch all related memories, skip already-deleted ones
+            memories: List[dict] = []
+            for mid in memory_ids:
+                try:
+                    mem = self._db.memories.get(mid)
+                    if not mem.get("isDeleted", False):
+                        memories.append(mem)
+                except Exception:
+                    logger.warning(f"Memory {mid} referenced by guideline {gid} not found, skipping")
+
+            if not memories:
+                continue
+
+            # Build the guideline content for the LLM — prefer enriched version
+            enriched = enriched_map.get(gid)
+            guideline_content = {
+                "id": gid,
+                "title": enriched.get("title", "") if enriched else db_guideline.get("title", ""),
+                "content": enriched.get("content", "") if enriched else db_guideline.get("content", ""),
+            }
+
+            memory_inputs = [
+                {"id": m["id"], "title": m.get("title", ""), "content": m.get("content", "")}
+                for m in memories
+            ]
+
+            prompt_input = json.dumps({"guideline": guideline_content, "memories": memory_inputs})
+
+            print(f"  Guideline: {gid} — checking {len(memories)} memories")
+
+            try:
+                result_str = run_prompt(
+                    folder="other",
+                    filename="reconcile_memories",
+                    inputs={"question": prompt_input},
+                    max_retries=3,
+                    logger=logger,
+                )
+                parsed_result = json.loads(result_str)
+                absorbed_ids = set(parsed_result.get("absorbed_memory_ids", []))
+                reasoning = parsed_result.get("reasoning", {})
+            except Exception as e:
+                logger.error(f"Memory reconciliation failed for guideline {gid}: {e}")
+                result.errors.append(f"reconcile memories for {gid}: {e}")
+                # On failure, retain all memories
+                for m in memories:
+                    result.memories_retained.append(m["id"])
+                continue
+
+            for mem in memories:
+                mid = mem["id"]
+                if mid in absorbed_ids:
+                    reason = reasoning.get(mid, "no reason provided")
+                    print(f"    {prefix}Absorbed: {mid} — {reason}")
+                    result.memories_absorbed.append(mid)
+
+                    if not dry_run:
+                        self._absorb_memory(db_guideline, mem)
+                        any_deletions = True
+                        guidelines_needing_reindex = True
+                else:
+                    reason = reasoning.get(mid, "")
+                    if reason:
+                        print(f"    Retained: {mid} — {reason}")
+                    else:
+                        print(f"    Retained: {mid}")
+                    result.memories_retained.append(mid)
+
+        # Run indexers if any memories were modified/deleted
+        if not dry_run and any_deletions:
+            print(f"{prefix}Running memories search indexer...")
+            SearchManager.run_indexers(["memories"])
+        if not dry_run and guidelines_needing_reindex:
+            print(f"{prefix}Running guidelines search indexer...")
+            SearchManager.run_indexers(["guidelines"])
+
+    def _absorb_memory(self, guideline: dict, memory: dict) -> None:
+        """
+        Absorb a memory into its parent guideline.
+
+        Removes bidirectional links between the guideline and memory,
+        cleans up any example cross-links, and soft-deletes the memory
+        if it becomes orphaned (no remaining relationships).
+
+        Args:
+            guideline: The guideline DB record (dict).
+            memory: The memory DB record (dict).
+        """
+        gid = guideline["id"]
+        mid = memory["id"]
+
+        # 1. Remove memory from guideline's related_memories
+        related_memories = guideline.get("related_memories", [])
+        if mid in related_memories:
+            related_memories.remove(mid)
+            guideline["related_memories"] = related_memories
+            cleaned = {k: v for k, v in guideline.items() if k not in ("kind", "isDeleted")}
+            g = Guideline(**cleaned)
+            self._db.guidelines.upsert(gid, data=g, run_indexer=False)
+
+        # 2. Remove guideline from memory's related_guidelines
+        mem_guidelines = memory.get("related_guidelines", [])
+        if gid in mem_guidelines:
+            mem_guidelines.remove(gid)
+            memory["related_guidelines"] = mem_guidelines
+
+        # 3. Clean up example cross-links (memory.related_examples <-> example.memory_ids)
+        mem_examples = memory.get("related_examples", [])
+        for ex_id in mem_examples:
+            try:
+                ex = self._db.examples.get(ex_id)
+                ex_memory_ids = ex.get("memory_ids", [])
+                if mid in ex_memory_ids:
+                    ex_memory_ids.remove(mid)
+                    ex["memory_ids"] = ex_memory_ids
+                    cleaned_ex = {k: v for k, v in ex.items() if k not in ("kind", "isDeleted")}
+                    e = Example(**cleaned_ex)
+                    self._db.examples.upsert(ex_id, data=e, run_indexer=False)
+            except Exception as e:
+                logger.warning(f"Failed to clean example {ex_id} cross-link for memory {mid}: {e}")
+        memory["related_examples"] = []
+
+        # 4. Clean up memory-to-memory cross-links
+        mem_memories = memory.get("related_memories", [])
+        for sibling_mid in mem_memories:
+            try:
+                sibling = self._db.memories.get(sibling_mid)
+                sibling_related = sibling.get("related_memories", [])
+                if mid in sibling_related:
+                    sibling_related.remove(mid)
+                    sibling["related_memories"] = sibling_related
+                    cleaned_sib = {k: v for k, v in sibling.items() if k not in ("kind", "isDeleted")}
+                    s = Memory(**cleaned_sib)
+                    self._db.memories.upsert(sibling_mid, data=s, run_indexer=False)
+            except Exception as e:
+                logger.warning(f"Failed to clean sibling memory {sibling_mid} cross-link for {mid}: {e}")
+
+        # 5. Check if memory is orphaned (no remaining relationships)
+        is_orphaned = (
+            not memory.get("related_guidelines", [])
+            and not memory.get("related_examples", [])
+            and not memory.get("related_memories", [])
+        )
+
+        if is_orphaned:
+            print(f"      Soft-deleting orphaned memory: {mid}")
+            self._db.memories.delete(mid, run_indexer=False)
+        else:
+            # Memory still has other relationships — update it but don't delete
+            remaining = []
+            if memory.get("related_guidelines"):
+                remaining.append(f"{len(memory['related_guidelines'])} guidelines")
+            if memory.get("related_memories"):
+                remaining.append(f"{len(memory['related_memories'])} memories")
+            print(f"      Memory {mid} unlinked but retained (still linked to {', '.join(remaining)})")
+            cleaned_mem = {k: v for k, v in memory.items() if k not in ("kind", "isDeleted")}
+            m = Memory(**cleaned_mem)
+            self._db.memories.upsert(mid, data=m, run_indexer=False)

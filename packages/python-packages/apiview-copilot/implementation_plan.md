@@ -58,18 +58,18 @@ Moved `beautifulsoup4` and `markdown-it-py` from dev-only to runtime dependencie
 
 ## What Remains To Be Done
 
-### Phase 1: Core Completion
+### Phase 1: Core Completion — ✅ DONE
 
-#### 1.1 Example Extraction via LLM
-The `use_llm` parameter is plumbed through the sync pipeline but the actual implementation is stubbed out (`"LLM parsing is enabled but not yet implemented"`). This step would:
-- Use an LLM prompt to parse guidelines into structured examples (good/bad code samples)
-- Create/update `Example` records in Cosmos DB linked to their parent guidelines
-- Populate the `ParsedExample` dataclass fields already defined in the module
+#### 1.1 Example Extraction via LLM — ✅ DONE
+LLM enrichment now always runs during sync. The `_parse_guidelines_with_llm()` method batches guidelines (10 per batch), sends them to gpt-5.4 via `prompts/other/parse_guidelines.prompty`, and returns enriched guideline dicts + extracted `ParsedExample` objects with good/bad classifications.
 
-#### 1.2 Example Sync Logic
-The `SyncResult` dataclass already tracks `examples_created`, `examples_updated`, `examples_deleted`, and `examples_unchanged`, but no example sync code exists yet. Both `_sync_incremental` and `_sync_full` need example-handling counterparts.
+#### 1.2 Example Sync Logic — ✅ DONE
+The `_sync_examples()` method creates/updates/deletes Example records in Cosmos DB, updates parent Guideline `related_examples` lists, and triggers the examples search indexer. Content hash comparison avoids unnecessary updates.
 
-#### 1.3 Unit Tests
+#### 1.3 Memory Reconciliation — ✅ DONE
+The `_reconcile_memories()` method runs after example sync for all created/updated guidelines. For each guideline with `related_memories`, it sends the updated guideline content + related memories to the LLM (`prompts/other/reconcile_memories.prompty`) to determine which memories are now redundant. Absorbed memories are unlinked bidirectionally (guideline ↔ memory, example ↔ memory, sibling memory ↔ memory) and soft-deleted if orphaned. The `SyncResult` dataclass tracks `memories_absorbed` and `memories_retained`.
+
+#### 1.4 Unit Tests
 No tests exist for the guideline ingestor. Needed tests include:
 - Markdown parsing (Jekyll tag replacement, ID extraction, BeautifulSoup parsing)
 - Content hashing (normalization, stability)
@@ -114,10 +114,8 @@ The incremental sync detects deletions by comparing parsed guidelines between tw
 - Periodic full sync to catch drift
 - Storing source file metadata in the database for cross-referencing
 
-#### 3.4 Memory/Relationship Updates
-When guidelines change, related memories and cross-guideline relationships may need review. Consider:
-- Flagging guidelines with changed content for manual relationship review
-- Automatically re-running relationship inference after sync
+#### 3.4 Memory/Relationship Updates — ✅ DONE (via reconciliation)
+Handled automatically by `_reconcile_memories()` during sync. When guidelines change, related memories are evaluated for absorption and unlinked/deleted as appropriate.
 
 ### Phase 4: Knowledge Base Management API
 
@@ -139,11 +137,14 @@ Surface sync status and KB health in existing tooling or a simple admin page.
 |------|--------|-------------|
 | `src/_models.py` | ✅ Done | Content tracking fields on `Guideline` and `Example` |
 | `src/_settings.py` | ✅ Done | `set()` method for writing to App Configuration |
-| `src/_guideline_ingestor.py` | 🟡 Partial | Core sync works; LLM example extraction stubbed |
+| `src/_guideline_ingestor.py` | ✅ Done | Full sync pipeline with LLM enrichment, example sync, memory reconciliation |
 | `cli.py` | ✅ Done | `avc db ingest-guidelines` command with all flags |
 | `requirements.txt` | ✅ Done | Added `beautifulsoup4`, `markdown-it-py` |
 | `dev_requirements.txt` | ✅ Done | Moved deps to runtime section |
+| `prompts/other/parse_guidelines.prompty` | ✅ Done | LLM prompt for guideline parsing + example extraction |
+| `prompts/other/guideline_parsing_result_schema.json` | ✅ Done | JSON schema for parsing structured output |
+| `prompts/other/reconcile_memories.prompty` | ✅ Done | LLM prompt for memory absorption detection |
+| `prompts/other/reconcile_memories_schema.json` | ✅ Done | JSON schema for reconciliation structured output |
 | `tests/*_ingestor_test.py` | ❌ Missing | No tests for ingestion |
 | `app.py` | ❌ Missing | No webhook/sync endpoints |
 | `ci.yml` | ❌ Missing | No scheduled sync job |
-| `prompts/` | ❌ Missing | No LLM prompt for example extraction |

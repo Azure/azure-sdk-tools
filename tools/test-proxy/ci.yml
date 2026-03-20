@@ -55,13 +55,10 @@ extends:
     TestPostSteps:
       - task: NodeTool@0
         inputs:
-          versionSpec: 20.x
-        displayName: "Use Node 20"
-      - pwsh: |
-          npm install -g @typespec/compiler
-        displayName: Install typespec and tooling
+          versionSpec: 24.x
+        displayName: "Use Node 24"
       - pwsh: |
           npm ci
-          tsp compile .
+          npm exec --no -- tsp compile .
         displayName: TSP Compile
         workingDirectory: tools/test-proxy/typespec

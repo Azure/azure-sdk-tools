@@ -16,7 +16,7 @@
             <span>Comments</span>
             <span *ngIf="conversationCount > 0" class="tab-badge">{{ conversationCount }}</span>
         </button>
-        <button type="button" class="page-tab" [class.active]="activePage === 'namespace'" (click)="navigateToNamespaceEmitter.emit()" title="View namespace review status">
+        <button *ngIf="showNamespaceTab" type="button" class="page-tab" [class.active]="activePage === 'namespace'" (click)="navigateToNamespaceEmitter.emit()" title="View namespace review status">
             <i class="bi bi-tag"></i>
             <span>Namespace</span>
         </button>

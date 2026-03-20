@@ -6,6 +6,7 @@ import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/revi
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { isAdmin } from 'src/app/_models/permissions';
 
 @Component({
     selector: 'app-review-page-layout',
@@ -40,6 +41,10 @@ export class ReviewPageLayoutComponent {
   @Output() navigateToNamespaceEmitter : EventEmitter<void> = new EventEmitter<void>();
 
   showPageOptions: boolean = true;
+
+  get showNamespaceTab(): boolean {
+    return isAdmin(this.userProfile?.permissions);
+  }
 
   handlePageOptionsEmitter(showPageOptions: boolean) {
     this.pageOptionsEmitter.emit(showPageOptions);

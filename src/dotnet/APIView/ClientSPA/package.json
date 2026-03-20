@@ -86,13 +86,12 @@
   "overrides": {
     "glob@<10.5.0": "10.5.0",
     "serialize-javascript": "^7.0.3",
-    "workbox-cli": {
-      "update-notifier": "5.1.0"
-    },
     "@angular/build": {
       "vitest": "^4.0.18"
     },
-    "tmp": "^0.2.5"
+    "external-editor": {
+      "tmp": "^0.2.5"
+    }
   },
   "optionalDependencies": {
     "esbuild": "^0.27.2"

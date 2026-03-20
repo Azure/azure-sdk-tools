@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 
-from models.knowledge import KnowledgeSource
+from models.knowledge import KnowledgeSource, _trim_file_format
 
 # ---------------------------------------------------------------------------
 # Tenant IDs
@@ -95,18 +95,28 @@ _register(
     KnowledgeSource(
         name=SRC_TYPESPEC_DOCS,
         description="Core TypeSpec language documentation covering fundamental syntax, semantics, and usage patterns.",
+        base_url="https://typespec.io/docs/",
+        trim_format=True,
     ),
     KnowledgeSource(
         name=SRC_TYPESPEC_AZURE_DOCS,
         description="Azure-specific TypeSpec documentation, patterns, and templates for management and data-plane services.",
+        base_url="https://azure.github.io/typespec-azure/docs/",
+        trim_format=True,
     ),
     KnowledgeSource(
         name=SRC_TYPESPEC_AZURE_HTTP_SPECS,
         description="All Azure TypeSpec scenarios that should be supported by client & service generators.",
+        base_url="https://github.com/Azure/typespec-azure/blob/main/packages/azure-http-specs/specs/",
+        trim_format=True,
+        suffix=".tsp",
     ),
     KnowledgeSource(
         name=SRC_TYPESPEC_HTTP_SPECS,
         description="All scenarios that should be supported by client & service generators.",
+        base_url="https://github.com/microsoft/typespec/tree/main/packages/http-specs/specs/",
+        trim_format=True,
+        suffix=".tsp",
     ),
     KnowledgeSource(
         name=SRC_STATIC_TYPESPEC_QA,
@@ -115,6 +125,7 @@ _register(
     KnowledgeSource(
         name=SRC_STATIC_TYPESPEC_MIGRATION_DOCS,
         description="TypeSpec migration guides and conversion patterns from OpenAPI/Swagger.",
+        link_fn=lambda _title: "https://azure.github.io/typespec-azure/docs/migrate-swagger/faq/breakingchange",
     ),
     KnowledgeSource(
         name=SRC_STATIC_TYPESPEC_TO_SWAGGER_MAPPING,
@@ -123,86 +134,122 @@ _register(
     KnowledgeSource(
         name=SRC_TYPESPEC_AZURE_RESOURCE_MANAGER_LIB,
         description="TypeSpec Azure Resource Manager library documentation covering ARM-specific decorators and templates.",
+        base_url="https://github.com/Azure/typespec-azure/blob/main/packages/typespec-azure-resource-manager/lib/",
+        trim_format=True,
+        suffix=".tsp",
     ),
 
     # -- Azure Guidelines & Standards --
     KnowledgeSource(
         name=SRC_AZURE_API_GUIDELINES,
         description="Comprehensive Azure REST API guidelines, OpenAPI standards, and development best practices for data-plane APIs.",
+        base_url="https://github.com/microsoft/api-guidelines/blob/vNext/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_RESOURCE_MANAGER_RPC,
         description="Azure Resource Manager (ARM) RPC specs including RBAC, tags, templates, and ARM compliance requirements.",
+        base_url="https://github.com/cloud-and-ai-microsoft/resource-provider-contract/blob/master/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_REST_API_SPECS_WIKI,
         description="Guidelines for Azure REST API specifications using Swagger or TypeSpec, including PR review process.",
+        base_url="https://github.com/Azure/azure-rest-api-specs/wiki/",
+        trim_format=True,
     ),
     KnowledgeSource(
         name=SRC_AZURE_REST_API_SPECS_DOCS,
         description="Azure REST API specification documentation covering spec structure and conventions.",
+        base_url="https://github.com/Azure/azure-rest-api-specs/blob/main/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_OPENAPI_DIFF_DOCS,
         description="OpenAPI diff documentation for detecting and managing breaking changes in API specifications.",
+        base_url="https://github.com/Azure/openapi-diff/blob/main/",
     ),
 
     # -- SDK language docs --
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_PYTHON_DOCS,
         description="Azure SDK for Python documentation covering installation, usage patterns, and API reference.",
+        base_url="https://github.com/Azure/azure-sdk-for-python/blob/main/doc/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_PYTHON_WIKI,
         description="Azure SDK for Python wiki with guides, troubleshooting, and development best practices.",
+        base_url="https://github.com/Azure/azure-sdk-for-python/wiki/",
+        trim_format=True,
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_NET_DOCS,
         description="Azure SDK for .NET documentation covering installation, usage patterns, and API reference.",
+        base_url="https://github.com/Azure/azure-sdk-for-net/blob/main/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_GO_DOCS,
         description="Azure SDK for Go documentation covering installation, usage patterns, and API reference.",
+        base_url="https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_JAVA_DOCS,
         description="Azure SDK for Java documentation covering installation, usage patterns, and API reference.",
+        base_url="https://github.com/Azure/azure-sdk-for-java/blob/main/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_JAVA_WIKI,
         description="Azure SDK for Java wiki with guides, troubleshooting, and development best practices.",
+        base_url="https://github.com/Azure/azure-sdk-for-java/wiki/",
+        trim_format=True,
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_JS_DOCS,
         description="Azure SDK for JavaScript/TypeScript documentation covering installation, usage patterns, and API reference.",
+        base_url="https://github.com/Azure/azure-sdk-for-js/blob/main/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_FOR_JS_WIKI,
         description="Azure SDK for JavaScript/TypeScript wiki with guides, troubleshooting, and development best practices.",
+        base_url="https://github.com/Azure/azure-sdk-for-js/wiki/",
+        trim_format=True,
     ),
     KnowledgeSource(
         name=SRC_AUTOREST_JAVA_DOCS,
         description="AutoRest Java code generator documentation for Azure SDK Java generation from OpenAPI specs.",
+        base_url="https://github.com/Azure/autorest.java/blob/main/",
     ),
 
     # -- Cross-language SDK resources --
     KnowledgeSource(
         name=SRC_AZURE_SDK_GUIDELINES,
         description="Cross-language Azure SDK design guidelines and best practices for all supported languages.",
+        base_url="https://azure.github.io/azure-sdk/",
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_DOCS_ENG,
         description="Azure SDK engineering documentation covering onboarding, release processes, and engineering systems.",
+        link_fn=lambda title: (
+            "https://eng.ms/docs/products/azure-developer-experience"
+            if _trim_file_format(title.replace("#", "/")) == "index"
+            else "https://eng.ms/docs/products/azure-developer-experience/" + _trim_file_format(title.replace("#", "/"))
+        ),
     ),
     KnowledgeSource(
         name=SRC_AZURE_SDK_INTERNAL_WIKI,
         description="Internal Azure SDK wiki with team-specific guidance and operational knowledge.",
+        link_fn=lambda title: (
+            "https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki"
+            "?wikiVersion=GBwikiMaster&pagePath=/" + _trim_file_format(title.replace("#", "/"))
+        ),
     ),
 
     # -- General Azure & review resources --
     KnowledgeSource(
         name=SRC_STATIC_AZURE_DOCS,
         description="Static Azure documentation and reference materials for general Azure services.",
+        link_fn=lambda title: (
+            "http://aka.ms/azbreakingchangespolicy"
+            if title == "Azure Versioning and Breaking Changes Policy V1.3.2"
+            else ""
+        ),
     ),
     KnowledgeSource(
         name=SRC_STATIC_API_SPEC_VIEW_QA,
@@ -227,24 +274,13 @@ class TenantConfig:
     ``sources`` is an ordered list of :class:`KnowledgeSource` objects
     available to this tenant.  Each source carries its own description and
     default filter; tenants can override a source's filter via
-    ``source_filter_overrides``.
+    ``source_filter``.
     """
 
     sources: list[KnowledgeSource] = field(default_factory=list)
-    source_filter_overrides: dict[str, str] = field(default_factory=dict)
+    source_filter: dict[str, str] = field(default_factory=dict)
     qa_guideline_file: str = ""
     enable_routing: bool = False
-
-    def get_source_filter(self, source_name: str) -> str:
-        """Return the effective filter for *source_name*.
-
-        Checks tenant-level overrides first, then falls back to the
-        source's default filter.
-        """
-        if source_name in self.source_filter_overrides:
-            return self.source_filter_overrides[source_name]
-        src = get_knowledge_source(source_name)
-        return src.filter if src else ""
 
 
 # ---------------------------------------------------------------------------
@@ -309,10 +345,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
         ),
-        source_filter_overrides={
-            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('python_*', 'title')",
-            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-python*', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK*', 'title')",
+        source_filter={
+            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('python', 'title')",
+            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-python', 'title') or search.ismatch('generate*', 'title')",
+            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_file="tenants/language_python.md",
     ),
@@ -324,10 +360,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
         ),
-        source_filter_overrides={
-            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('dotnet_*', 'title')",
-            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-csharp*', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK*', 'title')",
+        source_filter={
+            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('dotnet', 'title')",
+            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-csharp', 'title') or search.ismatch('generate*', 'title')",
+            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_file="tenants/language_channel.md",
     ),
@@ -339,10 +375,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
         ),
-        source_filter_overrides={
-            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('golang_*', 'title')",
-            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-go*', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK*', 'title')",
+        source_filter={
+            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('golang', 'title')",
+            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-go', 'title') or search.ismatch('generate*', 'title')",
+            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_file="tenants/language_channel.md",
     ),
@@ -356,10 +392,10 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
         ),
-        source_filter_overrides={
-            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('java_*', 'title')",
-            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-java*', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK*', 'title')",
+        source_filter={
+            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('java', 'title')",
+            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-java', 'title') or search.ismatch('generate*', 'title')",
+            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_file="tenants/language_channel.md",
     ),
@@ -372,16 +408,16 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_TYPESPEC_AZURE_DOCS,
             SRC_AZURE_REST_API_SPECS_WIKI,
         ),
-        source_filter_overrides={
-            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript_*', 'title')",
-            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-ts*', 'title') or search.ismatch('generate*', 'title')",
-            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK*', 'title')",
+        source_filter={
+            SRC_AZURE_SDK_GUIDELINES: "search.ismatch('typescript', 'title')",
+            SRC_TYPESPEC_AZURE_DOCS: "search.ismatch('typespec-ts', 'title') or search.ismatch('generate*', 'title')",
+            SRC_AZURE_REST_API_SPECS_WIKI: "search.ismatch('SDK', 'title')",
         },
         qa_guideline_file="tenants/language_channel.md",
     ),
     TenantID.AZURE_SDK_QA_BOT: TenantConfig(
         sources=[*_TYPESPEC_SOURCES, *_sources(SRC_AZURE_SDK_DOCS_ENG)],
-        source_filter_overrides={
+        source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
         },
         qa_guideline_file="tenants/typespec.md",
@@ -404,7 +440,7 @@ _TENANT_CONFIG_MAP: dict[TenantID, TenantConfig] = {
             SRC_AZURE_OPENAPI_DIFF_DOCS,
             SRC_AZURE_SDK_DOCS_ENG,
         ),
-        source_filter_overrides={
+        source_filter={
             SRC_AZURE_SDK_DOCS_ENG: "search.ismatch('design*', 'title')",
         },
         qa_guideline_file="tenants/api_spec_review.md",

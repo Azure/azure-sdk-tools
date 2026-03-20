@@ -54,7 +54,6 @@ async def main() -> None:
         instructions=instructions,
         tools=[
             knowledge_tools.search_knowledge_base,
-            knowledge_tools.get_document_context,
             pipeline_tools.analyze_pipeline_failure,
             tenant_tools.route_tenant,
         ],

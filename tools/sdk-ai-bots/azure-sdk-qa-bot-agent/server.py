@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv(override=False)
 
 from fastapi import FastAPI
-
+import tools
 from models.chat import ChatRequest, ChatResponse
 from models.conversation import ConversationMessage
 from models.feedback import FeedbackRequest, FeedbackResponse

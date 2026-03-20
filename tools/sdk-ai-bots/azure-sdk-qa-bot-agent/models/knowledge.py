@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pydantic import BaseModel
+from collections.abc import Callable
+from pydantic import BaseModel, Field
 
 
 # ---------------------------------------------------------------------------
@@ -18,17 +19,47 @@ class KnowledgeSource:
         name:        Unique identifier used as the index / source filter value.
         description: Human-readable description so the LLM knows *when* to
                      query this source.
-        filter:      Optional OData filter expression applied when searching
-                     this source (e.g. ``search.ismatch('python_*', 'title')``).
+        base_url:    Base URL prefix for resolving documentation links.
+        trim_format: Whether to strip .md/.mdx suffix and ``docs/`` prefix
+                     from the title before appending to *base_url*.
+        suffix:      String appended to the path after trimming (e.g. ".tsp").
+        link_fn:     Optional callable ``(title) -> str`` for sources that need
+                     custom link logic (overrides *base_url* when set).
     """
 
     name: str
     description: str
-    filter: str = ""
+    base_url: str = ""
+    trim_format: bool = False
+    suffix: str = ""
+    link_fn: "Callable[[str], str] | None" = field(default=None, repr=False)
+
+    def get_link(self, title: str) -> str:
+        """Resolve the documentation URL for a chunk title."""
+        if title.startswith("version-release-notes-index"):
+            return "Please reference link from document content"
+        if self.link_fn is not None:
+            return self.link_fn(title)
+        if not self.base_url:
+            return ""
+        path = title.replace("#", "/")
+        if self.trim_format:
+            path = _trim_file_format(path)
+        return self.base_url + path + self.suffix
 
     def to_display_dict(self) -> dict[str, str]:
         """Return a minimal dict suitable for showing the LLM."""
         return {"name": self.name, "description": self.description}
+
+
+def _trim_file_format(path: str) -> str:
+    """Strip .md / .mdx suffix and leading ``docs/`` prefix."""
+    for ext in (".md", ".mdx"):
+        if path.endswith(ext):
+            path = path[: -len(ext)]
+    if path.startswith("docs/"):
+        path = path[5:]
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -36,16 +67,22 @@ class KnowledgeSource:
 # ---------------------------------------------------------------------------
 
 class KnowledgeChunk(BaseModel):
-    """A single chunk returned from Azure AI Search."""
+    """A single chunk returned from Azure AI Search.
 
-    chunk_id: str
-    title: str
-    content: str
-    source: str
+    Field aliases allow direct construction from the search index
+    ``source_data`` dict via ``model_validate(source_data)``.
+    """
+
+    model_config = {"populate_by_name": True}
+
+    chunk_id: str = ""
+    title: str = ""
+    content: str = Field(default="", validation_alias="chunk")
+    source: str = Field(default="", validation_alias="context_id")
     link: str = ""
-    header1: str = ""
-    header2: str = ""
-    header3: str = ""
+    header1: str = Field(default="", validation_alias="header_1")
+    header2: str = Field(default="", validation_alias="header_2")
+    header3: str = Field(default="", validation_alias="header_3")
     rerank_score: float = 0.0
 
 

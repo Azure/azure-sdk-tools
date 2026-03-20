@@ -5,23 +5,19 @@ The response model is inferred from the method's return type annotation.
 """
 
 from __future__ import annotations
-
-import logging
+import importlib
+import pkgutil
 import sys
+from pathlib import Path
 from typing import get_type_hints
 
-logger = logging.getLogger(__name__)
-
 TOOL_REGISTRY: dict[str, type] = {}
-
 
 def tool(fn):
     """Mark a method as a hosted-agent tool and register it.
 
     The response model is inferred from the method's return type annotation.
     """
-    # Resolve the caller's module globals so that get_type_hints can
-    # evaluate forward references from ``from __future__ import annotations``.
     module = sys.modules.get(fn.__module__, None)
     globalns = getattr(module, "__dict__", None)
     try:
@@ -31,12 +27,11 @@ def tool(fn):
     response_model = hints.get("return")
     if response_model is not None:
         TOOL_REGISTRY[fn.__name__] = response_model
-    else:
-        logger.warning(
-            "Tool %s has no return type annotation, skipping registration",
-            fn.__qualname__,
-        )
     return fn
 
 
-__all__ = ["TOOL_REGISTRY", "tool"]
+# Auto-import all *_tools modules to trigger @tool registration.
+_package_dir = str(Path(__file__).parent)
+for _info in pkgutil.iter_modules([_package_dir]):
+    if _info.name.endswith("_tools"):
+        importlib.import_module(f"tools.{_info.name}")

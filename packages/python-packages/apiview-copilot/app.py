@@ -258,6 +258,7 @@ class MentionRequest(BaseModel):
     language: str
     package_name: str = Field(..., alias="packageName")
     code: str
+    source_thread_id: Optional[str] = Field(None, alias="sourceThreadId")
 
     class Config:
         """Configuration for Pydantic model."""
@@ -284,6 +285,7 @@ async def handle_mention(
             language=pretty_language,
             package_name=request.package_name,
             code=request.code,
+            source_thread_id=request.source_thread_id,
         )
         return AgentChatResponse(
             response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
@@ -312,6 +314,7 @@ async def handle_thread_resolution(
             language=pretty_language,
             package_name=request.package_name,
             code=request.code,
+            source_thread_id=request.source_thread_id,
         )
         return AgentChatResponse(
             response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return

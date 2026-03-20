@@ -23,6 +23,8 @@ class UpdateKnowledgeBaseWorkflow(MentionWorkflow):
         guideline_ids = plan.get("guideline_ids", [])
         raw_memory = plan.get("memory", {})
         raw_memory["source"] = "mention_agent"
+        if self.source_thread_id:
+            raw_memory["source_thread_id"] = self.source_thread_id
         raw_memory["service"] = None
         raw_examples = raw_memory.pop("related_examples", [])
 

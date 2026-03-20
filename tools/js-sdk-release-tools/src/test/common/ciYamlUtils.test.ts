@@ -297,4 +297,204 @@ extends:
             })
         ).rejects.toThrow("Unsupported version policy name: unsupported");
     });
+
+    describe("updateDataPlaneCiYaml — edge cases via existing ci.yml", () => {
+        const npmPackageInfo = { name: "@azure/myservice", version: "1.0.0" };
+        const packageDir = "sdk/myservice/myservice";
+        const ciPath = "sdk/myservice/ci.yml";
+
+        test("creates branches.exclude and adds feature/v4 when section is missing", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            // No branches.exclude at all
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice/myservice
+      - sdk/myservice/ci.yml
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - sdk/myservice/myservice
+      - sdk/myservice/ci.yml
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+    Artifacts:
+      - name: azure-myservice
+        safeName: azuremyservice
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            const parsed = parse(content);
+
+            expect(parsed.trigger.branches.exclude).toContain("feature/v4");
+            expect(parsed.pr.branches.exclude).toContain("feature/v4");
+        });
+
+        test("creates paths.include and adds packageDir and ciPath when section is missing", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            // No paths.include at all
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+    exclude:
+      - feature/v4
+pr:
+  branches:
+    include:
+      - main
+    exclude:
+      - feature/v4
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+    Artifacts:
+      - name: azure-myservice
+        safeName: azuremyservice
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            const parsed = parse(content);
+
+            expect(parsed.trigger.paths.include).toContain(packageDir);
+            expect(parsed.trigger.paths.include).toContain(ciPath);
+            expect(parsed.pr.paths.include).toContain(packageDir);
+            expect(parsed.pr.paths.include).toContain(ciPath);
+        });
+
+        test("creates Artifacts list and adds artifact when section is missing", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            // No extends.parameters.Artifacts at all
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+    exclude:
+      - feature/v4
+  paths:
+    include:
+      - sdk/myservice/myservice
+      - sdk/myservice/ci.yml
+pr:
+  branches:
+    include:
+      - main
+    exclude:
+      - feature/v4
+  paths:
+    include:
+      - sdk/myservice/myservice
+      - sdk/myservice/ci.yml
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            const parsed = parse(content);
+
+            expect(parsed.extends.parameters.Artifacts).toHaveLength(1);
+            expect(parsed.extends.parameters.Artifacts[0].name).toBe("azure-myservice");
+            expect(parsed.extends.parameters.Artifacts[0].safeName).toBe("azuremyservice");
+        });
+
+        test("adds ci.yml path itself to trigger.paths.include and pr.paths.include", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            // paths.include exists but ci.yml path is absent
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+    exclude:
+      - feature/v4
+  paths:
+    include:
+      - sdk/myservice/myservice
+pr:
+  branches:
+    include:
+      - main
+    exclude:
+      - feature/v4
+  paths:
+    include:
+      - sdk/myservice/myservice
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+    Artifacts:
+      - name: azure-myservice
+        safeName: azuremyservice
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            const parsed = parse(content);
+
+            expect(parsed.trigger.paths.include).toContain(ciPath);
+            expect(parsed.pr.paths.include).toContain(ciPath);
+        });
+
+        test("written file starts with the required comment header", async () => {
+            await ensureDir(path.join(tempDir, "sdk/myservice"));
+            const existingContent = `trigger:
+  branches:
+    include:
+      - main
+    exclude:
+      - feature/v4
+  paths:
+    include:
+      - sdk/myservice/myservice
+      - sdk/myservice/ci.yml
+pr:
+  branches:
+    include:
+      - main
+    exclude:
+      - feature/v4
+  paths:
+    include:
+      - sdk/myservice/myservice
+      - sdk/myservice/ci.yml
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+  parameters:
+    ServiceDirectory: myservice
+    Artifacts:
+      - name: azure-myservice
+        safeName: azuremyservice
+`;
+            await writeFile(path.join(tempDir, ciPath), existingContent, "utf-8");
+
+            await createOrUpdateCiYaml(packageDir, "client", npmPackageInfo);
+
+            const content = await readFile(path.join(tempDir, ciPath), "utf-8");
+            expect(content).toMatch(
+                /^# NOTE: Please refer to https:\/\/aka\.ms\/azsdk\/engsys\/ci-yaml before editing this file\./
+            );
+        });
+    });
 });

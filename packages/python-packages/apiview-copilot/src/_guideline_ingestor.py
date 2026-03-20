@@ -41,6 +41,7 @@ from src._models import Example, ExampleType, Guideline, Memory
 from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
+from src._utils import guideline_id_to_db
 
 logger = logging.getLogger(__name__)
 
@@ -1284,10 +1285,13 @@ class GuidelineIngestor:
             self._db.guidelines.upsert(gid, data=g, run_indexer=False)
 
         # 2. Remove guideline from memory's related_guidelines
+        #    Normalize all entries to DB-safe format before comparing, in case
+        #    some were stored in web format (foo.html#bar) by older code paths.
         mem_guidelines = memory.get("related_guidelines", [])
-        if gid in mem_guidelines:
-            mem_guidelines.remove(gid)
-            memory["related_guidelines"] = mem_guidelines
+        normalized = [guideline_id_to_db(g) for g in mem_guidelines]
+        if gid in normalized:
+            normalized.remove(gid)
+            memory["related_guidelines"] = normalized
 
         # 3. Clean up example cross-links (memory.related_examples <-> example.memory_ids)
         mem_examples = memory.get("related_examples", [])

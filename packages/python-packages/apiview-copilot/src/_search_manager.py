@@ -408,6 +408,7 @@ class SearchManager:
         for item in search_results:
             if item.kind == "guidelines":
                 web_id = guideline_id_from_db(item.id)
+                item.id = web_id
                 guidelines[web_id] = item
             elif item.kind == "examples":
                 examples[item.id] = item

@@ -10,6 +10,11 @@
 Tests for guideline ID format conversion across models, utilities, and DB layer.
 """
 
+from unittest.mock import MagicMock
+
+import azure.cosmos.exceptions as _cosmos_exc
+
+from src._database_manager import BasicContainer, GuidelinesContainer
 from src._models import Example, ExampleType, Guideline, Memory, ReviewResult
 from src._utils import guideline_id_from_db, guideline_id_to_db
 
@@ -371,3 +376,76 @@ class TestReviewResultAllowedIds:
             section=section,
         )
         assert rr.comments[0].guideline_ids == ["python_design.html#naming"]
+
+
+# ---------------------------------------------------------------------------
+# Database layer dict-payload write path tests
+# ---------------------------------------------------------------------------
+
+
+class TestGuidelinesContainerIdPreprocessing:
+    """Ensures web-format IDs in plain dict payloads are converted to DB format."""
+
+    def _make_container(self):
+        """Create a GuidelinesContainer with a mocked Cosmos client."""
+        manager = MagicMock()
+        container = GuidelinesContainer(manager, "guidelines")
+        container.client = MagicMock()
+        # Simulate item not found for create
+        container.client.read_item.side_effect = _cosmos_exc.CosmosResourceNotFoundError(
+            status_code=404, message="Not found"
+        )
+        return container
+
+    def test_create_with_dict_converts_id_to_db_format(self):
+        container = self._make_container()
+        data = {
+            "id": "python_design.html#naming",
+            "title": "Naming",
+            "content": "Content",
+        }
+        container.create("python_design.html#naming", data=data, run_indexer=False)
+        created_body = container.client.create_item.call_args[1]["body"]
+        assert created_body["id"] == "python_design=html=naming"
+
+    def test_create_with_model_converts_id_to_db_format(self):
+        container = self._make_container()
+        g = Guideline(
+            id="python_design.html#naming",
+            title="Naming",
+            content="Content",
+        )
+        container.create("python_design.html#naming", data=g, run_indexer=False)
+        created_body = container.client.create_item.call_args[1]["body"]
+        assert created_body["id"] == "python_design=html=naming"
+
+    def test_upsert_with_dict_converts_id_to_db_format(self):
+        container = self._make_container()
+        data = {
+            "id": "python_design.html#naming",
+            "title": "Naming",
+            "content": "Content",
+        }
+        container.upsert("python_design.html#naming", data=data, run_indexer=False)
+        upserted_body = container.client.upsert_item.call_args[0][0]
+        assert upserted_body["id"] == "python_design=html=naming"
+
+    def test_create_without_id_in_dict_uses_preprocessed_item_id(self):
+        container = self._make_container()
+        data = {"title": "Naming", "content": "Content"}
+        container.create("python_design.html#naming", data=data, run_indexer=False)
+        created_body = container.client.create_item.call_args[1]["body"]
+        assert created_body["id"] == "python_design=html=naming"
+
+    def test_basic_container_without_preprocess_id_passes_through(self):
+        """BasicContainer (no preprocess_id) should not alter dict IDs."""
+        manager = MagicMock()
+        container = BasicContainer(manager, "examples")
+        container.client = MagicMock()
+        container.client.read_item.side_effect = _cosmos_exc.CosmosResourceNotFoundError(
+            status_code=404, message="Not found"
+        )
+        data = {"id": "ex-1", "title": "Example", "content": "code"}
+        container.create("ex-1", data=data, run_indexer=False)
+        created_body = container.client.create_item.call_args[1]["body"]
+        assert created_body["id"] == "ex-1"

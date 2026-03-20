@@ -139,8 +139,11 @@ class BasicContainer:
         data_dict = self._to_dict(data)
         # Remove None values
         data_dict = {k: v for k, v in data_dict.items() if v is not None}
-        # Ensure 'id' is set
-        if not data_dict.get("id"):
+        # Ensure 'id' is set and preprocessed
+        if data_dict.get("id") and self.preprocess_id:
+            # pylint: disable=not-callable
+            data_dict["id"] = self.preprocess_id(data_dict["id"])
+        elif not data_dict.get("id"):
             data_dict["id"] = item_id
         # Check if item exists
         try:
@@ -163,6 +166,10 @@ class BasicContainer:
             # pylint: disable=not-callable
             item_id = self.preprocess_id(item_id)
         data_dict = self._to_dict(data)
+        # Ensure the id in the payload is also preprocessed
+        if "id" in data_dict and self.preprocess_id:
+            # pylint: disable=not-callable
+            data_dict["id"] = self.preprocess_id(data_dict["id"])
         value = self.client.upsert_item({"id": item_id, **data_dict})
         if run_indexer:
             self.run_indexer()

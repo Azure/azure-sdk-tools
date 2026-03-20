@@ -26,7 +26,8 @@ def get_credential() -> AsyncTokenCredential:
             credentials.append(ManagedIdentityCredential(client_id=client_id))
             _logger.info("Managed Identity credential added (client_id=%s)", client_id)
         else:
-            _logger.info("AZURE_CLIENT_ID not set; skipping Managed Identity credential")
+            credentials.append(ManagedIdentityCredential())
+            _logger.info("AZURE_CLIENT_ID not set; using system-assigned Managed Identity")
 
         credentials.append(AzureCliCredential())
         _logger.info("Azure CLI credential added")

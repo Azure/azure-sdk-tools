@@ -1,0 +1,12 @@
+testcase: no_similar_comments
+language: Python
+content: |
+  {
+    1: "This method name is too generic and should be more descriptive.",
+    2: "The return type annotation is missing on this public method.",
+    3: "Consider adding a docstring to this public class.",
+    4: "This parameter should be keyword-only since it is optional."
+  }
+response:
+  action: "(1,),(2,),(3,),(4,)"
+  rationale: Each comment addresses a distinct concern. Comment 1 is about method naming. Comment 2 is about return type annotations. Comment 3 is about documentation. Comment 4 is about parameter style.

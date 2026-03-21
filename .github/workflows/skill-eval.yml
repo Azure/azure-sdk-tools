@@ -52,7 +52,7 @@ jobs:
 
       - name: Upload compliance report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: skill-compliance
           path: compliance.md
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload eval results
         if: always() && steps.changes.outputs.SHOULD_RUN == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: eval-results-${{ github.run_id }}
           path: results/

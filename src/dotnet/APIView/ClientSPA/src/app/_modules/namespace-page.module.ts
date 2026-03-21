@@ -3,7 +3,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NamespacePageComponent } from '../_components/namespace-page/namespace-page.component';
 import { ReviewPageLayoutModule } from './shared/review-page-layout.module';
-import { TableModule } from 'primeng/table';
 
 const routes: Routes = [
   { path: '', component: NamespacePageComponent }
@@ -12,7 +11,6 @@ const routes: Routes = [
 @NgModule({
   imports: [
     CommonModule,
-    TableModule,
     ReviewPageLayoutModule,
     NamespacePageComponent,
     RouterModule.forChild(routes),

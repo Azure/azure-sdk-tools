@@ -21,8 +21,7 @@ export class ProjectsService {
 
   getRelatedReviews(reviewId: string): Observable<RelatedReviewsResponse> {
     const url = `${this.baseUrl}/reviews/${reviewId}/related`;
-    return this.http.get<RelatedReviewsResponse>(this.baseUrl + `/reviews/${reviewId}/related`, { withCredentials: true });
-    
+    return this.http.get<RelatedReviewsResponse>(url, { withCredentials: true });
   }
 
   getProjectNamespaces(projectId: string): Observable<ProjectNamespaceInfo> {
@@ -31,9 +30,13 @@ export class ProjectsService {
   }
 
   updateNamespaceStatus(projectId: string, language: string, status: NamespaceDecisionStatus, notes?: string): Observable<Project> {
+    const body: { status: NamespaceDecisionStatus; notes?: string } = { status };
+    if (notes != null) {
+      body.notes = notes;
+    }
     return this.http.patch<Project>(
       `${this.baseUrl}/${projectId}/namespaces/${encodeURIComponent(language)}`,
-      { status, notes },
+      body,
       { withCredentials: true }
     );
   }

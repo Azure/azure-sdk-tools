@@ -7,13 +7,13 @@ export enum NamespaceDecisionStatus {
 
 export interface NamespaceDecisionEntry {
   language: string;
-  packageName: string;
+  packageName?: string | null;
   namespace: string;
   status: NamespaceDecisionStatus;
-  notes: string;
+  notes?: string | null;
   proposedBy: string;
   proposedOn: string | null;
-  decidedBy: string;
+  decidedBy?: string | null;
   decidedOn: string | null;
 }
 

@@ -4,7 +4,6 @@ import { Title } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
-import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { Subject, takeUntil, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -40,7 +39,6 @@ interface NamespaceTableRow {
         CommonModule,
         FormsModule,
         RouterLink,
-        TableModule,
         DialogModule,
         ReviewPageLayoutModule,
     ]
@@ -93,12 +91,15 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
     } else {
       this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
       
-      this.userProfileService.getUserProfile().subscribe((userProfile: UserProfile) => {
-        this.userProfile = userProfile;
-        if (this.tableRows.length > 0) {
-          this.buildTableRows();
-        }
-      });
+      this.userProfileService
+        .getUserProfile()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((userProfile: UserProfile) => {
+          this.userProfile = userProfile;
+          if (this.tableRows.length > 0) {
+            this.buildTableRows();
+          }
+        });
       
       this.loadReview(this.reviewId!);
     }
@@ -177,8 +178,16 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
           this.isLoading = false;
         },
         error: (err) => {
-          this.buildTableRows();
-          this.isLoading = false;
+          // If error is 404, treat it as "no namespace info configured" and show empty state
+          if (err && err.status === 404) {
+            this.namespaceInfo = null;
+            this.buildTableRows();
+            this.isLoading = false;
+          } else {
+            // For other errors, mark load as failed so the user gets feedback
+            this.loadFailed = true;
+            this.isLoading = false;
+          }
         }
       });
   }
@@ -317,7 +326,7 @@ export class NamespacePageComponent implements OnInit, OnDestroy {
   approveNamespace(row: NamespaceTableRow): void {
     if (!this.projectId) return;
     
-    this.projectsService.updateNamespaceStatus(this.projectId, row.language, NamespaceDecisionStatus.Approved)
+    this.projectsService.updateNamespaceStatus(this.projectId, row.language, NamespaceDecisionStatus.Approved, row.notes ?? '')
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {

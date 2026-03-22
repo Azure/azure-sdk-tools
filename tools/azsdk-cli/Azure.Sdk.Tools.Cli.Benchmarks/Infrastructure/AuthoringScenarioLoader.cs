@@ -3,6 +3,7 @@
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
@@ -36,7 +37,8 @@ public static class AuthoringScenarioLoader
             yield break;
         }
 
-        var jsonFiles = Directory.GetFiles(testDataPath, "*.json", SearchOption.AllDirectories);
+        var jsonFiles = Directory.GetFiles(testDataPath, "*.json", SearchOption.AllDirectories)
+            .Where(f => !f.EndsWith(".schema.json", StringComparison.OrdinalIgnoreCase));
 
         foreach (var jsonFile in jsonFiles)
         {
@@ -77,6 +79,7 @@ public static class AuthoringScenarioLoader
                     testTspFiles: testCase.TestFiles,
                     toolsToCall: testCase.ToolsToCall,
                     verifyPlan: testCase.VerifyPlan ?? new List<string>(),
+                    questionAndAnswers: testCase.QuestionAndAnswers,
                     authoringSpecRepo: authoringSpecRepo,
                     authoringSkillPath: authoringSkillPath
                 );
@@ -116,5 +119,7 @@ public static class AuthoringScenarioLoader
         [JsonPropertyName("verifyPlan")]
         public List<string>? VerifyPlan { get; set; }
 
+        [JsonPropertyName("qas")]
+        public List<QuestionAndAnswer>? QuestionAndAnswers { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators;
@@ -28,6 +29,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
 
         /// <inheritdoc />
         public override RepoConfig Repo { get;}
+
+        /// <inheritdoc />
+        public override IReadOnlyList<QuestionAndAnswer>? QuestionAndAnswers { get; }
 
         public string TspProjectPath { get; }
 
@@ -57,12 +61,14 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <param name="name">The unique name of the scenario.</param>
         /// <param name="description">The description of what the scenario tests.</param>
         /// <param name="prompt">The prompt to send to the agent.</param>
+        /// <param name="tspProjectPath">Optional TypeSpec project path. If null or empty, uses the default path.</param>
         /// <param name="testTspFiles">Optional list of TypeSpec files relevant to this scenario.</param>
+        /// <param name="toolsToCall">Optional list of tools to call during the scenario.</param>
         /// <param name="verifyPlan">Optional verification plan for validating scenario results.</param>
+        /// <param name="questionAndAnswers">Optional list of questions and answers for agent interaction.</param>
         /// <param name="authoringSpecRepo">Optional repository for authoring specs.</param>
         /// <param name="authoringSkillPath">Optional path for authoring skills.</param>
-        /// <param name="toolsToCall">Optional list of tools to call during the scenario.</param>
-        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, string? authoringSpecRepo = null, string? authoringSkillPath = null)
+        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, List<QuestionAndAnswer>? questionAndAnswers = null,string ? authoringSpecRepo = null, string? authoringSkillPath = null)
         {
             Name = name;
             Description = description ?? string.Empty;
@@ -74,6 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             }
             VerifyPlan = verifyPlan ?? new List<string> { "compile the project." };
             TestTspFiles = testTspFiles ?? new List<string>();
+            QuestionAndAnswers = questionAndAnswers;
             if (!string.IsNullOrWhiteSpace(authoringSpecRepo))
             {
                 AuthoringSpecRepo = authoringSpecRepo;

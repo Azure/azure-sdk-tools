@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 
@@ -13,6 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 public class SessionExecutor : IDisposable
 {
     private CopilotClient? _client;
+    private SyntheticAICustomer? _aiCustomer;
 
     /// <summary>
     /// Executes a benchmark scenario with the provided configuration.
@@ -23,6 +25,10 @@ public class SessionExecutor : IDisposable
     {
         var stopwatch = Stopwatch.StartNew();
         var toolCalls = new List<string>();
+        if (config.QuestionAndAnswers != null)
+        {
+            _aiCustomer = new SyntheticAICustomer(config.QuestionAndAnswers);
+        }
 
         try
         {
@@ -72,14 +78,23 @@ public class SessionExecutor : IDisposable
                     }
                 },
                 // Auto-respond to ask_user with a simple response
-                OnUserInputRequest = (request, invocation) =>
+                OnUserInputRequest = async (request, invocation) =>
                 {
                     Console.WriteLine($"Model requested user input with prompt: {request.Question}");
-                    return Task.FromResult(new UserInputResponse
+                    string answer = "Please proceed with your best judgment.";
+                    if (_aiCustomer != null)
                     {
-                        Answer = "Please proceed with your best judgment.",
+                        var result = await _aiCustomer.AskQuestionAsync(request.Question);
+                        if(string.IsNullOrEmpty(result))
+                        {
+                            answer = result;
+                        }
+                    }
+                    return new UserInputResponse
+                    {
+                        Answer = answer,
                         WasFreeform = true
-                    });
+                    };
                 }
             };
 

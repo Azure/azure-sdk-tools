@@ -67,6 +67,7 @@ public class BenchmarkRunner : IDisposable
             {
                 WorkingDirectory = workspace.RepoPath,
                 Prompt = scenario.Prompt,
+                QuestionAndAnswers = scenario.QuestionAndAnswers,
                 Timeout = scenario.Timeout,
                 AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath,
                 Model = options.Model ?? BenchmarkDefaults.DefaultModel,

@@ -1,26 +1,29 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using GitHub.Copilot.SDK;
 
-namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
+namespace Azure.Sdk.Tools.Cli.Benchmarks.Interaction
 {
-    public class VerifyResultWithAIValidate : IValidator
+    public class SyntheticAICustomer
     {
-        public string Name { get; }
-
-        public string VerificationPrompt { get; } = string.Empty;
-        public VerifyResultWithAIValidate(string name, string verificationPlan)
+        public IReadOnlyList<QuestionAndAnswer> QuestionsAndAnswers { get; }
+        public SyntheticAICustomer(IReadOnlyList<QuestionAndAnswer> questionsAndAnswers)
         {
-            Name = name;
-            this.VerificationPrompt = "please verify the following plan: " + verificationPlan + "\nprovide the verification result. If all the verification steps are correct, respond with 'Verification successful'. Otherwise, respond with 'Verification failed'";
+            QuestionsAndAnswers = questionsAndAnswers;
         }
 
-        public async Task<ValidationResult> ValidateAsync(ValidationContext context, CancellationToken cancellationToken = default)
+        public async Task<string> AskQuestionAsync(string question)
         {
             CopilotClient client = new CopilotClient();
             var sessionConfig = new SessionConfig
             {
-                WorkingDirectory = context.RepoPath,
                 Streaming = true,
                 Model = BenchmarkDefaults.DefaultModel,
                 // Auto-approve all permission requests (file edits, creates, etc.)
@@ -55,30 +58,34 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
                 }
             };
 
-            await using var session = await client.CreateSessionAsync(sessionConfig, cancellationToken);
+            await using var session = await client.CreateSessionAsync(sessionConfig);
 
             SessionConfigHelper.ConfigureAgentActivityLogging(session);
-            // Send prompt and wait for completion
-            var gitDiff = await context.Workspace.GetGitDiffAsync();
-            var messageOptions = new MessageOptions { Prompt = VerificationPrompt + "\n\n## Typespec Git Diff:\n" + gitDiff };
+            var messageOptions = new MessageOptions { Prompt = buildPrompt(question) };
 
-            var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5), cancellationToken);
-
+            var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5));
             if (result == null || result.Data == null || string.IsNullOrEmpty(result.Data.Content))
             {
-                return ValidationResult.Fail(
-                    Name,
-                    "AI verification did not return a result within the expected time or returned empty content.");
+                return "";
             }
-
-            if (result.Data.Content.Contains("Verification successful", StringComparison.OrdinalIgnoreCase))
+            return result.Data.Content;
+        }
+        private string buildPrompt(string question)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("You are a synthetic customer in a benchmark test. Please answer the question:");
+            sb.AppendLine(question);
+            sb.AppendLine("Here are some questions and answers for context:");
+            foreach (var qa in QuestionsAndAnswers)
             {
-                return ValidationResult.Pass(Name, $"AI verification passed");
+                sb.AppendLine($"Q: {qa.Question}");
+                sb.AppendLine($"A: {qa.Answer}");
+                sb.AppendLine();
             }
-            else
-            {
-                return ValidationResult.Fail(Name, $"AI verification failed", result.Data.Content);
-            }
+            sb.AppendLine("Please provide a detailed answer to the question based on the context provided. If you cannot find out answer, please reply empty string.");
+            return sb.ToString();
         }
     }
+
+    public record QuestionAndAnswer(string Question, string Answer);
 }

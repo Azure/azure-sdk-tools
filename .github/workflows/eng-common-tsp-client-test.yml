@@ -27,7 +27,8 @@ jobs:
 
     steps:
       - name: Checkout self
-        uses: actions/checkout@v6
+        # SHA corresponds to actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           path: tools
           sparse-checkout: |
@@ -36,7 +37,8 @@ jobs:
             eng/common-tests/tsp-client
 
       - name: Setup node
-        uses: actions/setup-node@v6
+        # SHA corresponds to actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
           # default node-version on agent should be sufficient for this test
           cache: "npm"
@@ -70,7 +72,8 @@ jobs:
         run: npm run format:check:ci
 
       - name: Checkout specs
-        uses: actions/checkout@v6
+        # SHA corresponds to actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           repository: Azure/azure-rest-api-specs
           path: specs
@@ -78,7 +81,8 @@ jobs:
             specification/widget
 
       - name: Checkout go
-        uses: actions/checkout@v6
+        # SHA corresponds to actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           repository: Azure/azure-sdk-for-go
           path: go
@@ -87,7 +91,8 @@ jobs:
             sdk/template
 
       - name: Checkout java
-        uses: actions/checkout@v6
+        # SHA corresponds to actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           repository: Azure/azure-sdk-for-java
           path: java
@@ -96,7 +101,8 @@ jobs:
             sdk/template
 
       - name: Checkout js
-        uses: actions/checkout@v6
+        # SHA corresponds to actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           repository: Azure/azure-sdk-for-js
           path: js
@@ -105,7 +111,8 @@ jobs:
             sdk/template
 
       - name: Checkout net
-        uses: actions/checkout@v6
+        # SHA corresponds to actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           repository: Azure/azure-sdk-for-net
           path: net
@@ -114,7 +121,8 @@ jobs:
             sdk/template
 
       - name: Checkout python
-        uses: actions/checkout@v6
+        # SHA corresponds to actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           repository: Azure/azure-sdk-for-python
           path: python

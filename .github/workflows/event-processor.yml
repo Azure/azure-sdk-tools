@@ -32,7 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Az CLI login'
-        uses: azure/login@v2
+        # SHA corresponds to azure/login@v2
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5
         if: ${{ github.event_name == 'issues' && github.event.action == 'opened' }}
         with:
             client-id: a6dd2dfe-7352-41a7-9020-05301c3bca1a
@@ -107,7 +108,8 @@ jobs:
           APP_CONFIG_ENDPOINT: ${{ env.APP_CONFIG_ENDPOINT }}
 
       - name: Archive github event data
-        uses: actions/upload-artifact@v7
+        # SHA corresponds to actions/upload-artifact@v7
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         if: always()
         with:
           name: event

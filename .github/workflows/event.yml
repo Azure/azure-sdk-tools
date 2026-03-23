@@ -20,6 +20,7 @@ jobs:
     name: Handle ${{ github.event_name }} ${{ github.event.action }} event
     runs-on: ubuntu-latest # This image is intentionally set to "latest", and not to a specific version
     steps:
-      - uses: azure/azure-sdk-actions@main
+      # SHA corresponds to azure/azure-sdk-actions@main
+      - uses: azure/azure-sdk-actions@f6b1a0e4a4856f7ac4767149ec7a74f0f8191e64
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

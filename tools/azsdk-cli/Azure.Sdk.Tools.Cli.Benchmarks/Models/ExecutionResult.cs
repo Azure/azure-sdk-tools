@@ -20,6 +20,9 @@ public class ExecutionResult
     /// <summary>The conversation messages from the session.</summary>
     public IReadOnlyList<object> Messages { get; init; } = [];
 
-    /// <summary>Tool calls made during execution (for debugging).</summary>
-    public IReadOnlyList<string> ToolCalls { get; init; } = [];
+    /// <summary>Details of tool calls (name, arguments, results, etc.) made during execution.</summary>
+    public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
+
+    /// <summary>Token usage accumulated during execution.</summary>
+    public TokenUsage? TokenUsage { get; init; }
 }

@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
-using System.Linq;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
@@ -125,6 +124,7 @@ public class BenchmarkRunner : IDisposable
                 stopwatch.Elapsed,
                 passed,
                 validation,
+                execResult.TokenUsage,
                 execResult.Error);
 
             // Determine if cleanup will happen based on policy
@@ -146,7 +146,8 @@ public class BenchmarkRunner : IDisposable
                 ToolCalls = execResult.ToolCalls,
                 WorkspacePath = workspace.RootPath,
                 WorkspaceCleanedUp = willCleanup,
-                Validation = validation
+                Validation = validation,
+                TokenUsage = execResult.TokenUsage
             };
 
             // 7. Cleanup

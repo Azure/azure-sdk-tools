@@ -19,7 +19,6 @@ import time as _time
 from datetime import datetime, timedelta, timezone
 
 import httpx
-from azure.keyvault.keys.aio import KeyClient
 from azure.keyvault.keys.crypto.aio import CryptographyClient
 from azure.keyvault.keys.crypto import SignatureAlgorithm
 from agent_framework_azure_ai import AzureAIClient
@@ -49,19 +48,19 @@ def _b64url(data: bytes) -> str:
 
 
 async def _sign_with_keyvault(vault_url: str, key_name: str, digest: bytes) -> bytes:
-    """Sign *digest* with the RSA key in Key Vault using RS256."""
+    """Sign *digest* with the RSA key in Key Vault using RS256.
+
+    Constructs the key ID directly to avoid needing the ``keys/get``
+    permission — only ``keys/sign`` is required (matches Go backend).
+    """
     credential = get_frontend_credential()
-    key_client = KeyClient(vault_url=vault_url, credential=credential)
+    key_id = f"{vault_url.rstrip('/')}/keys/{key_name}"
+    crypto = CryptographyClient(key_id, credential=credential)
     try:
-        key = await key_client.get_key(key_name)
-        crypto = CryptographyClient(key.id, credential=credential)
-        try:
-            result = await crypto.sign(SignatureAlgorithm.rs256, digest)
-            return result.signature
-        finally:
-            await crypto.close()
+        result = await crypto.sign(SignatureAlgorithm.rs256, digest)
+        return result.signature
     finally:
-        await key_client.close()
+        await crypto.close()
 
 
 async def _create_app_jwt(vault_url: str, key_name: str, app_id: str) -> str:

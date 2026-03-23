@@ -25,8 +25,8 @@ class MentionWorkflow(ABC):
         language: str,
         code: str,
         package_name: str,
-        trigger_comment: str,
-        other_comments: list,
+        trigger_comment: dict,
+        other_comments: list[dict],
         reasoning: str,
         source_comment_id: str = None,
     ):

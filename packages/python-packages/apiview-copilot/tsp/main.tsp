@@ -86,7 +86,7 @@ namespace ApiViewCopilot {
     code: string;
 
     /** The comments in the APIView thread. */
-    comments: string[];
+    comments: ApiViewComment[];
 
     /** The APIView comment ID that triggered this request, for audit traceability. */
     sourceCommentId?: string;

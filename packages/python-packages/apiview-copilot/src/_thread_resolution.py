@@ -19,7 +19,7 @@ from src._search_manager import SearchManager
 
 
 def handle_thread_resolution_request(
-    *, comments: list[str], language: str, package_name: str, code: str, source_comment_id: str = None
+    *, comments: list[dict], language: str, package_name: str, code: str, source_comment_id: str = None
 ) -> str:
     """
     Handles the chat thread resolution request by parsing the comments and executing the plan.
@@ -57,7 +57,7 @@ def handle_thread_resolution_request(
         return "Something went wrong!"
 
 
-def _parse_action(*, language: str, code: str, package_name: str, comments: list[str]):
+def _parse_action(*, language: str, code: str, package_name: str, comments: list[dict]):
     inputs = {
         "language": language,
         "code": code,
@@ -72,7 +72,7 @@ def _parse_action(*, language: str, code: str, package_name: str, comments: list
         return raw_results
 
 
-def _parse_plan(*, language: str, code: str, package_name: str, comments: list[str], reasoning: str):
+def _parse_plan(*, language: str, code: str, package_name: str, comments: list[dict], reasoning: str):
     inputs = {
         "language": language,
         "code": code,

@@ -793,10 +793,31 @@ def handle_agent_mention(
             print(f"No feedback associated with comment '{fetch_comment_id}'. Nothing to process.")
             return
 
-        # Manufacture a conversation: the original AI comment followed by the feedback
+        # Manufacture a conversation matching the ApiViewAgentComment dict shape
+        # that the production C# caller sends.
         comments = [
-            f"[APIView Copilot]: {original_text}",
-            f"[Reviewer feedback]: {feedback_text}",
+            {
+                "lineNo": 0,
+                "createdOn": original_comment.get("CreatedOn", ""),
+                "createdBy": original_comment.get("CreatedBy", "APIView Copilot"),
+                "commentText": original_text,
+                "upvotes": len(original_comment.get("Upvotes", [])) if isinstance(original_comment.get("Upvotes"), list) else original_comment.get("Upvotes", 0),
+                "downvotes": len(original_comment.get("Downvotes", [])) if isinstance(original_comment.get("Downvotes"), list) else original_comment.get("Downvotes", 0),
+                "isResolved": original_comment.get("IsResolved", False),
+                "severity": original_comment.get("Severity", ""),
+                "threadId": original_comment.get("ThreadId", ""),
+            },
+            {
+                "lineNo": 0,
+                "createdOn": "",
+                "createdBy": "Reviewer",
+                "commentText": feedback_text,
+                "upvotes": 0,
+                "downvotes": 0,
+                "isResolved": False,
+                "severity": "",
+                "threadId": original_comment.get("ThreadId", ""),
+            },
         ]
 
         print(f"Processing feedback for comment '{fetch_comment_id}':")

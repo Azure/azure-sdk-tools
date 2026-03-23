@@ -26,7 +26,7 @@ WORKFLOW_REGISTRY = {
 
 
 def _parse_conversation_action(
-    *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str]
+    *, language: str, code: str, package_name: str, trigger_comment: dict, other_comments: list[dict]
 ):
     inputs = {
         "language": language,
@@ -52,7 +52,7 @@ def _run_workflow(workflow_name, **kwargs):
 
 
 def handle_mention_request(
-    *, comments: list[str], language: str, package_name: str, code: str, source_comment_id: str = None
+    *, comments: list[dict], language: str, package_name: str, code: str, source_comment_id: str = None
 ) -> str:
     """
     Central entry point for @mention requests. Parses the action and dispatches to the appropriate workflow.

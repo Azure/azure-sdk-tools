@@ -337,8 +337,6 @@ public sealed partial class DotnetLanguageService: LanguageService
             ?? new DotnetCiPipelineYamlParameters();
 
         packageInfo.CiParameters.BuildSnippets = parameters.BuildSnippets;
-        packageInfo.CiParameters.CheckAotCompat = parameters.CheckAotCompat;
-        packageInfo.CiParameters.AotTestInputs = parameters.AotTestInputs;
     }
 
     public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
@@ -394,12 +392,6 @@ public sealed partial class DotnetLanguageService: LanguageService
     {
         [YamlMember(Alias = "BuildSnippets")]
         public bool? BuildSnippets { get; set; } = true;
-
-        [YamlMember(Alias = "CheckAOTCompat")]
-        public bool? CheckAotCompat { get; set; } = false;
-
-        [YamlMember(Alias = "AOTTestInputs")]
-        public List<Dictionary<string, object?>>? AotTestInputs { get; set; }
     }
         
     /// <summary>

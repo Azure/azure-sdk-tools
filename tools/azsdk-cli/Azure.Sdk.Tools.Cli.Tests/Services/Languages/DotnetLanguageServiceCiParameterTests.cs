@@ -40,7 +40,6 @@ public class DotnetLanguageServiceCiParameterTests
 extends:
   parameters:
     BuildSnippets: false
-    CheckAOTCompat: true
     Artifacts:
       - name: Azure.AI.DocumentIntelligence
 """);
@@ -57,7 +56,6 @@ extends:
 
         Assert.That(parameters, Is.Not.Null);
         Assert.That(parameters!.BuildSnippets, Is.False);
-        Assert.That(parameters.CheckAotCompat, Is.True);
     }
 
     [Test]
@@ -87,8 +85,6 @@ extends:
 
         Assert.That(parameters, Is.Not.Null);
         Assert.That(parameters!.BuildSnippets, Is.True, "BuildSnippets should default to true");
-        Assert.That(parameters.CheckAotCompat, Is.False, "CheckAotCompat should default to false");
-        Assert.That(parameters.AotTestInputs, Is.Null, "AotTestInputs should default to null");
     }
 
     [Test]
@@ -122,7 +118,6 @@ extends:
 extends:
   parameters:
     BuildSnippets: false
-    CheckAOTCompat: true
     Artifacts:
       - name: Azure.AI.DocumentIntelligence
 """);
@@ -140,12 +135,8 @@ extends:
             ?? new TestDotnetCiPipelineYamlParametersWithDefaults();
 
         info.CiParameters.BuildSnippets = parameters.BuildSnippets;
-        info.CiParameters.CheckAotCompat = parameters.CheckAotCompat;
-        info.CiParameters.AotTestInputs = parameters.AotTestInputs;
 
         Assert.That(info.CiParameters.BuildSnippets, Is.False);
-        Assert.That(info.CiParameters.CheckAotCompat, Is.True);
-        Assert.That(info.CiParameters.AotTestInputs, Is.Null);
     }
 
     [Test]
@@ -166,46 +157,8 @@ extends:
             ?? new TestDotnetCiPipelineYamlParametersWithDefaults();
 
         info.CiParameters.BuildSnippets = parameters.BuildSnippets;
-        info.CiParameters.CheckAotCompat = parameters.CheckAotCompat;
-        info.CiParameters.AotTestInputs = parameters.AotTestInputs;
 
         Assert.That(info.CiParameters.BuildSnippets, Is.True, "Should default to true when no ci.yml");
-        Assert.That(info.CiParameters.CheckAotCompat, Is.False, "Should default to false when no ci.yml");
-        Assert.That(info.CiParameters.AotTestInputs, Is.Null);
-    }
-
-    [Test]
-    public void ApplyLanguageCiParameters_ParsesAotTestInputs()
-    {
-        var repoRoot = _tempDir.DirectoryPath;
-        var serviceDirectory = "ai";
-        var ciDirectory = Path.Combine(repoRoot, "sdk", serviceDirectory);
-        Directory.CreateDirectory(ciDirectory);
-
-        File.WriteAllText(Path.Combine(ciDirectory, "ci.yml"), """
-extends:
-  parameters:
-    CheckAOTCompat: true
-    AOTTestInputs:
-      - BuildConfiguration: Release
-    Artifacts:
-      - name: Azure.AI.DocumentIntelligence
-""");
-
-        var info = new PackageInfo
-        {
-            RepoRoot = repoRoot,
-            ServiceDirectory = serviceDirectory,
-            ArtifactName = "Azure.AI.DocumentIntelligence",
-            Language = SdkLanguage.DotNet
-        };
-
-        var parameters = _packageInfoHelper.GetLanguageCiParameters<TestDotnetCiPipelineYamlParameters>(info);
-
-        Assert.That(parameters, Is.Not.Null);
-        Assert.That(parameters!.CheckAotCompat, Is.True);
-        Assert.That(parameters.AotTestInputs, Is.Not.Null);
-        Assert.That(parameters.AotTestInputs, Has.Count.EqualTo(1));
     }
 
     [Test]
@@ -251,7 +204,6 @@ extends:
 extends:
   parameters:
     BuildSnippets: true
-    CheckAOTCompat: false
     Artifacts:
       - name: Azure.Storage.Blobs
       - name: Azure.Storage.Queues
@@ -270,7 +222,6 @@ extends:
 
         Assert.That(parameters, Is.Not.Null);
         Assert.That(parameters!.BuildSnippets, Is.True);
-        Assert.That(parameters.CheckAotCompat, Is.False);
     }
 
     // Test helper classes (mirrors the pattern used in PackageInfoHelperTests for Go)
@@ -278,23 +229,11 @@ extends:
     {
         [YamlMember(Alias = "BuildSnippets")]
         public bool? BuildSnippets { get; set; }
-
-        [YamlMember(Alias = "CheckAOTCompat")]
-        public bool? CheckAotCompat { get; set; }
-
-        [YamlMember(Alias = "AOTTestInputs")]
-        public List<Dictionary<string, object?>>? AotTestInputs { get; set; }
     }
 
     private class TestDotnetCiPipelineYamlParametersWithDefaults : CiPipelineYamlParametersBase
     {
         [YamlMember(Alias = "BuildSnippets")]
         public bool? BuildSnippets { get; set; } = true;
-
-        [YamlMember(Alias = "CheckAOTCompat")]
-        public bool? CheckAotCompat { get; set; } = false;
-
-        [YamlMember(Alias = "AOTTestInputs")]
-        public List<Dictionary<string, object?>>? AotTestInputs { get; set; }
     }
 }

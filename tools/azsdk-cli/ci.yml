@@ -101,23 +101,10 @@ extends:
                 - 'eng/common/**'
                 - 'tools/sdk-ai-bots/azure-sdk-qa-bot-backend/**'
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
-          - script: |
-              echo "Downloading Go 1.24.0..."
-              curl -LO https://go.dev/dl/go1.24.0.linux-amd64.tar.gz
-
-              echo "Removing existing Go installation..."
-              sudo rm -rf /usr/local/go
-
-              echo "Extracting Go 1.24.0..."
-              sudo tar -C /usr/local -xzf go1.24.0.linux-amd64.tar.gz
-
-              echo "Setting environment variables..."
-              echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
-              echo "##vso[task.prependpath]/usr/local/go/bin"
-            displayName: 'install go'
-          - script: |
-              go version
-            displayName: 'check go'
+          - task: GoTool@0
+            inputs:
+              version: "1.24.1"
+            displayName: "Install Go"
           - task: AzureCLI@2
             inputs:
               azureSubscription: 'azuresdkqabot-dev'

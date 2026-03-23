@@ -57,7 +57,7 @@ public class AgentChatResponse
     [JsonPropertyName("response")]
     public string Response { get; set; }
 
-    [JsonPropertyName("thread_id")]
+    [JsonPropertyName("threadId")]
     public string ThreadId { get; set; }
 
     [JsonPropertyName("messages")]

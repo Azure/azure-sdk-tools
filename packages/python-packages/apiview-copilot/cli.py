@@ -668,14 +668,14 @@ def handle_agent_chat(
                 if not user_input.strip():
                     continue
                 try:
-                    payload = {"user_input": user_input}
+                    payload = {"userInput": user_input}
                     if current_thread_id:
-                        payload["thread_id"] = current_thread_id
+                        payload["threadId"] = current_thread_id
                     resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
-                        thread_id_out = data.get("thread_id", current_thread_id)
+                        thread_id_out = data.get("threadId", current_thread_id)
                         print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
                         current_thread_id = thread_id_out
                     else:

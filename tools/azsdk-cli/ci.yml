@@ -28,7 +28,7 @@ variables:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+    ${{ if and(eq(variables['Build.SourceBranchName'], 'main'), ne(variables['Build.Reason'], 'Schedule')) }}:
       SkipReleaseStage: false
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
@@ -73,7 +73,7 @@ extends:
           TargetRepoName: azure-rest-api-specs
           TargetRepoOwner: Azure
           TargetRepoCommit: main
-      - ${{ if and(eq(parameters.RunBenchmarks, true), ne(variables['Build.Reason'], 'PullRequest')) }}:
+      - ${{ if or(eq(parameters.RunBenchmarks, true), eq(variables['Build.Reason'], 'Schedule')) }}:
         - job: Run_Benchmark
           displayName: 'Run Benchmark'
           variables:

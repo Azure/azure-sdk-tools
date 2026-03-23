@@ -6,7 +6,6 @@ import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/revi
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { UserProfile } from 'src/app/_models/userProfile';
-import { isAdmin } from 'src/app/_models/permissions';
 
 @Component({
     selector: 'app-review-page-layout',
@@ -31,6 +30,7 @@ export class ReviewPageLayoutComponent {
   @Input() activePage: 'reviews' | 'revisions' | 'samples' | 'conversations' | 'namespace' = 'reviews';
   @Input() samplesRevisionCount: number = 0;
   @Input() conversationCount: number = 0;
+  @Input() namespaceNeedsAttention: boolean = false; // True if current language namespace is not approved
 
   @Output() pageOptionsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -43,7 +43,8 @@ export class ReviewPageLayoutComponent {
   showPageOptions: boolean = true;
 
   get showNamespaceTab(): boolean {
-    return isAdmin(this.userProfile?.permissions);
+    // Only show tab if namespace review is pending
+    return this.review?.namespaceReviewStatus === 'Pending';
   }
 
   handlePageOptionsEmitter(showPageOptions: boolean) {

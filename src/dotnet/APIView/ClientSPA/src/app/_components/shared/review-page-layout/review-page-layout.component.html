@@ -19,6 +19,7 @@
         <button *ngIf="showNamespaceTab" type="button" class="page-tab" [class.active]="activePage === 'namespace'" (click)="navigateToNamespaceEmitter.emit()" title="View namespace review status">
             <i class="bi bi-tag"></i>
             <span>Namespace</span>
+            <span *ngIf="namespaceNeedsAttention" class="tab-badge tab-badge-attention" title="Namespace approval needed for this language">!</span>
         </button>
         <button type="button" class="page-tab" [class.active]="activePage === 'samples'" (click)="navigateToSamplesEmitter.emit()" title="View code samples ({{ samplesRevisionCount }} revisions)">
             <i class="bi bi-journal-code"></i>

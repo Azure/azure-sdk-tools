@@ -107,6 +107,16 @@
         background: var(--red-500, #ef4444);
         color: #fff;
         margin-left: 0.1rem;
+
+        &.tab-badge-attention {
+            background: var(--warning-color, #f59e0b);
+            animation: pulse-attention 2s infinite;
+        }
+    }
+
+    @keyframes pulse-attention {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
     }
 
     .layout-body {

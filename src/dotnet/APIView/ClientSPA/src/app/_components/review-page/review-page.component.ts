@@ -30,6 +30,8 @@ import { NotificationsService } from 'src/app/_services/notifications/notificati
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 import { ReviewContextService } from 'src/app/_services/review-context/review-context.service';
 import { PermissionsService } from 'src/app/_services/permissions/permissions.service';
+import { ProjectsService } from 'src/app/_services/projects/projects.service';
+import { NamespaceDecisionStatus } from 'src/app/_models/namespaceModel';
 
 @Component({
     selector: 'app-review-page',
@@ -77,6 +79,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   loadingMessage: string | undefined = undefined;
 
   samplesRevisionCount: number = 0;
+  namespaceNeedsAttention: boolean = false;
 
   // Lazy-once flags: components are created on first visit, then stay alive via [hidden]
   revisionsActivated = false;
@@ -107,7 +110,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
     private samplesRevisionService: SamplesRevisionService, private titleService: Title, private notificationsService: NotificationsService,
-    private reviewContextService: ReviewContextService, private permissionsService: PermissionsService) { }
+    private reviewContextService: ReviewContextService, private permissionsService: PermissionsService,
+    private projectsService: ProjectsService) { }
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
@@ -291,10 +295,34 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
           if (review.language) {
             this.loadApproversForLanguage(review.language);
           }
+          // Check if namespace needs attention for current language
+          if (review.namespaceReviewStatus === 'Pending') {
+            this.checkNamespaceAttention(reviewId, review.language);
+          }
         },
         error: (error) => {
           this.loadFailed = true;
           this.loadFailedMessage = "Failed to load review. Please refresh the page or try again later.";
+        }
+      });
+  }
+
+  checkNamespaceAttention(reviewId: string, language: string) {
+    this.projectsService.getRelatedReviews(reviewId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          if (response.projectId) {
+            this.projectsService.getProjectNamespaces(response.projectId)
+              .pipe(takeUntil(this.destroy$))
+              .subscribe({
+                next: (namespaceInfo) => {
+                  const langStatus = namespaceInfo?.currentNamespaceStatus?.[language];
+                  // Needs attention if not approved
+                  this.namespaceNeedsAttention = langStatus && langStatus.status !== NamespaceDecisionStatus.Approved;
+                }
+              });
+          }
         }
       });
   }

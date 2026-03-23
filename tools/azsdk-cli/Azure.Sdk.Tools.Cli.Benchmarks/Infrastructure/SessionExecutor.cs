@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
@@ -22,7 +23,9 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
-        var toolCalls = new List<string>();
+        var toolCalls = new List<ToolCallRecord>();
+        var pendingTimestamps = new Dictionary<string, double>();
+        var tokenUsage = new TokenUsage();
 
         try
         {
@@ -33,7 +36,7 @@ public class SessionExecutor : IDisposable
             _client = new CopilotClient();
 
             // Build MCP server config - try explicit path first, then load from workspace
-            var mcpServers = BuildMcpServers(config.AzsdkMcpPath) 
+            var mcpServers = BuildMcpServers(config.AzsdkMcpPath)
                 ?? await McpConfigLoader.LoadFromWorkspaceAsync(config.WorkingDirectory);
 
             var sessionConfig = new SessionConfig
@@ -42,22 +45,49 @@ public class SessionExecutor : IDisposable
                 McpServers = mcpServers,
                 Model = config.Model,
                 Streaming = true,
+                // Auto-approve all permission requests (file edits, creates, etc.)
+                OnPermissionRequest = (request, invocation) =>
+                {
+                    return Task.FromResult(new PermissionRequestResult
+                    {
+                        Kind = "approved"
+                    });
+                },
                 Hooks = new SessionHooks
                 {
                     OnPreToolUse = (input, invocation) =>
                     {
+                        Console.WriteLine($"Model is calling tool: {input.ToolName}");
                         config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
+                        pendingTimestamps[input.ToolName] = input.Timestamp;
                         return Task.FromResult<PreToolUseHookOutput?>(null);
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
-                        toolCalls.Add(input.ToolName);
+                        double? durationMs = pendingTimestamps.TryGetValue(input.ToolName, out var startTs)
+                            ? input.Timestamp - startTs
+                            : null;
+
+                        var mcpServerName = input.ToolName.Contains("__")
+                            ? input.ToolName.Split("__", 2)[0]
+                            : null;
+
+                        toolCalls.Add(new ToolCallRecord
+                        {
+                            ToolName = input.ToolName,
+                            ToolArgs = input.ToolArgs,
+                            ToolResult = input.ToolResult,
+                            DurationMs = durationMs,
+                            McpServerName = mcpServerName,
+                        });
+
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },
                 // Auto-respond to ask_user with a simple response
                 OnUserInputRequest = (request, invocation) =>
                 {
+                    Console.WriteLine($"Model requested user input with prompt: {request.Question}");
                     return Task.FromResult(new UserInputResponse
                     {
                         Answer = "Please proceed with your best judgment.",
@@ -68,12 +98,30 @@ public class SessionExecutor : IDisposable
 
             await using var session = await _client.CreateSessionAsync(sessionConfig);
 
+            // Track token usage from AssistantUsageEvent
+            session.On(evt =>
+            {
+                if (evt is AssistantUsageEvent usageEvent)
+                {
+                    tokenUsage.InputTokens += usageEvent.Data.InputTokens ?? 0;
+                    tokenUsage.OutputTokens += usageEvent.Data.OutputTokens ?? 0;
+                    tokenUsage.CacheReadTokens += usageEvent.Data.CacheReadTokens ?? 0;
+                    tokenUsage.CacheWriteTokens += usageEvent.Data.CacheWriteTokens ?? 0;
+                }
+            });
+            if (config.Verbose)
+            {
+                SessionConfigHelper.ConfigureAgentActivityLogging(session);
+            }
+
             // Send prompt and wait for completion
             var messageOptions = new MessageOptions { Prompt = config.Prompt };
+            
             await session.SendAndWaitAsync(messageOptions, config.Timeout);
 
             // Get messages for debugging
             var messages = await session.GetMessagesAsync();
+            // stream version
 
             stopwatch.Stop();
             return new ExecutionResult
@@ -81,7 +129,8 @@ public class SessionExecutor : IDisposable
                 Completed = true,
                 Duration = stopwatch.Elapsed,
                 Messages = messages.Cast<object>().ToList(),
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                TokenUsage = tokenUsage
             };
         }
         catch (Exception ex)
@@ -92,7 +141,8 @@ public class SessionExecutor : IDisposable
                 Completed = false,
                 Error = ex.Message,
                 Duration = stopwatch.Elapsed,
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                TokenUsage = tokenUsage
             };
         }
     }
@@ -106,7 +156,10 @@ public class SessionExecutor : IDisposable
     {
         // Priority: config param > env var > null (let SDK use repo config)
         var path = azsdkPath ?? Environment.GetEnvironmentVariable("AZSDK_MCP_PATH");
-        if (path == null) return null;
+        if (path == null)
+        {
+            return null;
+        }
 
         return new Dictionary<string, object>
         {
@@ -114,8 +167,14 @@ public class SessionExecutor : IDisposable
             {
                 Type = "local",
                 Command = path,
-                Args = ["mcp", "run"],
-                Tools = ["*"]
+                Args = ["mcp"],
+                Tools = ["*"],
+                Env = new Dictionary<string, string>
+                {
+                    // Set any necessary environment variables for the MCP server here
+                    // For example: ["AZURE_SDK_KB_ENDPOINT"] = "http://localhost:8088"
+                    ["AZURE_SDK_KB_ENDPOINT"] = BenchmarkDefaults.DefaultAzureKnowledgeBaseEndpoint
+                }
             }
         };
     }

@@ -1,14 +1,14 @@
 import { ApiIndexSignature, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { ReviewToken, TokenKind } from "../models";
+import { TokenKind } from "../models";
 import { TokenGenerator, GeneratorResult } from "./index";
-import { createToken, processExcerptTokens } from "./helpers";
+import { createToken, processExcerptTokens, TokenCollector } from "./helpers";
 
 function isValid(item: ApiItem): item is ApiIndexSignature {
   return item.kind === ApiItemKind.IndexSignature;
 }
 
 function generate(item: ApiIndexSignature, deprecated?: boolean): GeneratorResult {
-  const tokens: ReviewToken[] = [];
+  const collector = new TokenCollector();
 
   if (item.kind !== ApiItemKind.IndexSignature) {
     throw new Error(
@@ -19,31 +19,37 @@ function generate(item: ApiIndexSignature, deprecated?: boolean): GeneratorResul
   const parameters = item.parameters;
 
   if (item.isReadonly) {
-    tokens.push(createToken(TokenKind.Keyword, "readonly", { hasSuffixSpace: true, deprecated }));
+    collector.push(
+      createToken(TokenKind.Keyword, "readonly", { hasSuffixSpace: true, deprecated }),
+    );
   }
 
-  tokens.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
+  collector.push(createToken(TokenKind.Punctuation, "[", { deprecated }));
 
   if (parameters?.length > 0) {
     parameters.forEach((param, index) => {
-      tokens.push(createToken(TokenKind.Text, param.name, { deprecated }));
-      tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
-      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, tokens, deprecated);
+      collector.push(createToken(TokenKind.Text, param.name, { deprecated }));
+      collector.push(
+        createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }),
+      );
+      processExcerptTokens(param.parameterTypeExcerpt.spannedTokens, collector, deprecated);
 
       if (index < parameters.length - 1) {
-        tokens.push(createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }));
+        collector.push(
+          createToken(TokenKind.Punctuation, ",", { hasSuffixSpace: true, deprecated }),
+        );
       }
     });
   }
 
-  tokens.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
-  tokens.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
+  collector.push(createToken(TokenKind.Punctuation, "]", { deprecated }));
+  collector.push(createToken(TokenKind.Punctuation, ":", { hasSuffixSpace: true, deprecated }));
 
-  processExcerptTokens(item.returnTypeExcerpt.spannedTokens, tokens, deprecated);
+  processExcerptTokens(item.returnTypeExcerpt.spannedTokens, collector, deprecated);
 
-  tokens.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
+  collector.push(createToken(TokenKind.Punctuation, ";", { deprecated }));
 
-  return { tokens };
+  return collector.toResult();
 }
 
 export const indexSignatureTokenGenerator: TokenGenerator<ApiIndexSignature> = {

@@ -7,7 +7,7 @@
 import json
 
 from src._github_manager import GithubManager
-from src._utils import run_prompty
+from src._prompt_runner import run_prompt
 
 
 def create_issue(
@@ -172,7 +172,7 @@ def _check_for_duplicate(plan: dict, recent_issues: list[dict], dedup_prompt_fil
         **dedup_inputs,
         "existing_issues": _format_issues_for_dedup(recent_issues),
     }
-    raw_dedup = run_prompty(folder="mention", filename=dedup_prompt_file, inputs=full_inputs)
+    raw_dedup = run_prompt(folder="mention", filename=dedup_prompt_file, inputs=full_inputs)
     try:
         return json.loads(raw_dedup)
     except json.JSONDecodeError as e:

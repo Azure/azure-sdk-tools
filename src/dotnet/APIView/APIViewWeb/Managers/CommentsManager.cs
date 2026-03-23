@@ -285,7 +285,8 @@ namespace APIViewWeb.Managers
                     Language = review.Language,
                     PackageName = activeApiRevision.PackageName,
                     Code = AgentHelpers.GetCodeLineForElement(activeCodeFile, comment.ElementId),
-                    Comments = commentsForAgent
+                    Comments = commentsForAgent,
+                    SourceCommentId = comment.Id
                 };
 
                 string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";
@@ -695,7 +696,8 @@ namespace APIViewWeb.Managers
                     Language = review.Language,
                     PackageName = activeApiRevision.PackageName,
                     Code = codeLine,
-                    Comments = new List<ApiViewAgentComment> { originalAIComment, feedbackComment }
+                    Comments = new List<ApiViewAgentComment> { originalAIComment, feedbackComment },
+                    SourceCommentId = comment.Id
                 };
 
                 string agentMentionEndPoint = $"{_configuration["CopilotServiceEndpoint"]}/api-review/mention";

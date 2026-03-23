@@ -118,7 +118,7 @@ extends:
                 displayName: "Install Angular CLI"
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(WebClientProjectDirectory)
                 displayName: "Install npm packages"
 
@@ -128,7 +128,7 @@ extends:
                 displayName: "Build client assets"
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Install Client SPA Packages"
 
@@ -189,23 +189,28 @@ extends:
             condition: or(ne(variables['Build.Reason'], 'Manual'), eq(variables['runAsCI'], 'true'))
 
             pool:
-              name: $(WINDOWSPOOL)
-              image: $(WINDOWSVMIMAGE)
-              os: windows
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
 
             steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '$(NodeVersion)'
+                displayName: 'Use NodeJS $(NodeVersion)'
+
               - script: |
                   npm install -g @angular/cli@16.1.8
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Install Angular CLI"
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(WebClientProjectDirectory)
                 displayName: "Install npm packages"
 
               - script: |
-                  npm install
+                  npm ci
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Install Client SPA Packages"
 
@@ -299,20 +304,9 @@ extends:
               #  inputs:
               #    summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
 
-              #- script: >-
-              #    dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj
-              #    --logger trx
-              #  displayName: "Build & Test (Integration)"
-              #  env:
-              #    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              #    DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              #    DOTNET_MULTILEVEL_LOOKUP: 0
-              #    APIVIEW_ENDPOINT: "http://localhost:5000"
-              #    APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
-              #    APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
 
               #- script: |
-              #    npm install
+              #    npm ci
               #  workingDirectory: $(WebClientProjectDirectory)
               #  displayName: "Install Client Dependencies"
 

@@ -21,8 +21,6 @@ from collections import OrderedDict
 from typing import List, Optional
 
 import colorama
-import prompty
-import prompty.azure
 import requests
 import yaml
 from azure.core.exceptions import ClientAuthenticationError
@@ -30,6 +28,7 @@ from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
+from knack.util import CLIError
 from src._apiview import (
     ApiViewClient,
 )
@@ -48,10 +47,11 @@ from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._models import APIViewComment
+from src._prompt_runner import run_prompt
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
 from src._thread_resolution import handle_thread_resolution_request
-from src._utils import get_language_pretty_name, run_prompty
+from src._utils import get_language_pretty_name
 from src.agent._agent import get_readonly_agent, get_readwrite_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -129,7 +129,124 @@ helps[
     short-summary: Commands for managing permissions.
 """
 
+helps[
+    "prompt"
+] = """
+    type: group
+    short-summary: Commands for testing prompt template files.
+"""
+
 # COMMANDS
+
+
+def prompt_test(path: str):
+    """Run a single prompt file with its sample inputs and print the result."""
+    from src._prompt_runner import _execute_prompt_template
+
+    prompty_path = pathlib.Path(path)
+    if not prompty_path.exists():
+        print(f"Error: File '{path}' does not exist.")
+        sys.exit(1)
+    if prompty_path.suffix != ".prompty":
+        print(f"Error: File '{path}' is not a .prompty file.")
+        sys.exit(1)
+
+    print(f"Executing prompt: {path}")
+    print("-" * 60)
+    result = _execute_prompt_template(str(prompty_path))
+    print(result)
+
+
+def prompt_test_all(workers: int = 4):
+    """Smoke-test all prompt files to verify none throw exceptions.
+
+    NOTE: A passing result only means the prompt executed without errors.
+    It does NOT verify that the prompt produces correct or intended output.
+    Use 'avc prompt test -p <file>' to inspect individual outputs.
+    """
+    import glob
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    from src._prompt_runner import _execute_prompt_template
+    from src._retry import retry_with_backoff
+
+    prompts_dir = pathlib.Path(__file__).parent / "prompts"
+    prompty_files = sorted(glob.glob(str(prompts_dir / "**" / "*.prompty"), recursive=True))
+
+    if not prompty_files:
+        print("No .prompty files found.")
+        return
+
+    BOLD = "\033[1m"
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RESET = "\033[0m"
+
+    print(f"{'=' * 60}")
+    print("prompt smoke test")
+    print(f"{'=' * 60}")
+    print(f"{YELLOW}NOTE: A passing result means the prompt executed without errors.")
+    print(f"It does NOT verify that the prompt produces correct or intended output.")
+    print(f"Use 'avc prompt test -p <file>' to inspect individual outputs.{RESET}")
+    print()
+    print(f"{BOLD}collected {len(prompty_files)} prompt files{RESET}")
+    print()
+
+    # Pre-initialize SettingsManager singleton on the main thread to avoid
+    # a race during first-time initialization when running prompts in parallel.
+    SettingsManager()
+
+    results = []
+
+    def _run_one(filepath: str) -> tuple[str, bool, str]:
+        rel = pathlib.Path(filepath).relative_to(pathlib.Path(__file__).parent)
+        try:
+            # Use retry_with_backoff to avoid transient 429/5xx failures
+            # causing flaky smoke tests.
+            retry_with_backoff(lambda: _execute_prompt_template(filepath), description=str(rel))
+            return (str(rel), True, "")
+        except Exception as exc:
+            return (str(rel), False, str(exc))
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        future_to_file = {
+            executor.submit(_run_one, f): f for f in prompty_files
+        }
+        for future in as_completed(future_to_file):
+            rel_path, passed, error = future.result()
+            results.append((rel_path, passed, error))
+            status = f"{GREEN}PASS{RESET}" if passed else f"{RED}FAIL{RESET}"
+            print(f"  {status} {rel_path}")
+
+    # Sort results for consistent display in summary
+    results.sort(key=lambda r: r[0])
+    passed = [r for r in results if r[1]]
+    failed = [r for r in results if not r[1]]
+
+    # Summary
+    print()
+    if failed:
+        print(f"{RED}{BOLD}{'=' * 60}")
+        print("FAILURES")
+        print(f"{'=' * 60}{RESET}")
+        for rel_path, _, error in failed:
+            print(f"  {RED}{rel_path}{RESET}")
+            print(f"    {error}")
+            print()
+
+    print(f"{'=' * 60}")
+    print("smoke test summary")
+    print(f"{'=' * 60}")
+    summary_parts = []
+    if passed:
+        summary_parts.append(f"{GREEN}{len(passed)} passed{RESET}")
+    if failed:
+        summary_parts.append(f"{RED}{len(failed)} failed{RESET}")
+    print(f"{', '.join(summary_parts)}, {len(results)} total")
+
+    if failed:
+        sys.exit(1)
 
 
 def _local_review(
@@ -171,15 +288,18 @@ def _local_review(
         with pathlib.Path(existing_comments).open("r", encoding="utf-8") as f:
             comments_obj = json.load(f)
 
-    reviewer = ApiViewReview(
-        target=target_apiview,
-        base=base_apiview,
-        language=language,
-        outline=outline_text,
-        comments=comments_obj,
-        write_output=True,
-        write_debug_logs=debug_log,
-    )
+    try:
+        reviewer = ApiViewReview(
+            target=target_apiview,
+            base=base_apiview,
+            language=language,
+            outline=outline_text,
+            comments=comments_obj,
+            write_output=True,
+            write_debug_logs=debug_log,
+        )
+    except ValueError as e:
+        raise CLIError(str(e)) from e
     reviewer.run()
     reviewer.close()
 
@@ -275,7 +395,7 @@ def generate_review(
             print(job_info)
             return
         for _ in range(1800):  # up to 30 minutes
-            status_info = review_job_get(job_id)
+            status_info = review_job_get(job_id, remote=True)
             status = status_info.get("status") if status_info else None
             if not status_info:
                 print(f"Error: Could not get status for job {job_id}")
@@ -350,19 +470,27 @@ def review_job_start(
         print(f"Error: {resp.status_code} {resp.text}")
 
 
-def review_job_get(job_id: str):
+def review_job_get(job_id: str, remote: bool = False):
     """Get the status/result of an API review job."""
-    settings = SettingsManager()
-    base_url = settings.get("WEBAPP_ENDPOINT")
-    api_endpoint = f"{base_url}/api-review"
-    url = f"{api_endpoint.rstrip('/')}/{job_id}"
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review"
+        url = f"{api_endpoint.rstrip('/')}/{job_id}"
 
-    headers = _build_auth_header()
-    resp = requests.get(url, headers=headers, timeout=10)
-    if resp.status_code == 200:
-        return resp.json()
+        headers = _build_auth_header()
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            print(f"Error: {resp.status_code} {resp.text}")
     else:
-        print(f"Error: {resp.status_code} {resp.text}")
+        db = DatabaseManager.get_instance()
+        try:
+            job = db.review_jobs.get(job_id)
+            return job
+        except Exception as e:
+            print(f"Error: Job '{job_id}' not found: {e}")
 
 
 def get_all_guidelines(language: str, markdown: bool = False):
@@ -450,23 +578,41 @@ def reindex_search(containers: Optional[list[str]] = None):
     return SearchManager.run_indexers(container_names=containers)
 
 
-def review_summarize(language: str, target: str, base: str = None):
+def review_summarize(language: str, target: str, base: str = None, remote: bool = False):
     """
-    Summarize an API or a diff of two APIs using the deployed API review service.
+    Summarize an API or a diff of two APIs.
     """
-    payload = {"language": language, "target": target}
-    if base:
-        payload["base"] = base
-    settings = SettingsManager()
-    base_url = settings.get("WEBAPP_ENDPOINT")
-    api_endpoint = f"{base_url}/api-review/summarize"
+    if remote:
+        payload = {"language": language, "target": target}
+        if base:
+            payload["base"] = base
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/summarize"
 
-    response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
-    if response.status_code == 200:
-        summary = response.json().get("summary")
-        print(summary)
+        response = requests.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
+        if response.status_code == 200:
+            summary = response.json().get("summary")
+            print(summary)
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
     else:
-        print(f"Error: {response.status_code} - {response.text}")
+        from src._diff import create_diff_with_line_numbers
+
+        with open(target, "r", encoding="utf-8") as f:
+            target_content = f.read()
+
+        pretty_language = get_language_pretty_name(language)
+
+        if base:
+            with open(base, "r", encoding="utf-8") as f:
+                base_content = f.read()
+            content = create_diff_with_line_numbers(old=base_content, new=target_content)
+            summary = run_prompt(folder="summarize", filename="summarize_diff", inputs={"language": pretty_language, "content": content})
+        else:
+            summary = run_prompt(folder="summarize", filename="summarize_api", inputs={"language": pretty_language, "content": target_content})
+
+        print(summary)
 
 
 def handle_agent_chat(
@@ -522,14 +668,14 @@ def handle_agent_chat(
                 if not user_input.strip():
                     continue
                 try:
-                    payload = {"user_input": user_input}
+                    payload = {"userInput": user_input}
                     if current_thread_id:
-                        payload["thread_id"] = current_thread_id
+                        payload["threadId"] = current_thread_id
                     resp = session.post(api_endpoint, json=payload, headers=_build_auth_header(), timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
-                        thread_id_out = data.get("thread_id", current_thread_id)
+                        thread_id_out = data.get("threadId", current_thread_id)
                         print(f"{BOLD_BLUE}Agent:{RESET} {response}\n")
                         current_thread_id = thread_id_out
                     else:
@@ -593,25 +739,26 @@ def handle_agent_chat(
 
 def handle_agent_mention(
     comments_path: str = None,
-    comment_id: str = None,
+    fetch_comment_id: str = None,
     remote: bool = False,
     dry_run: bool = False,
+    source_comment_id: str = None,
 ):
     """
     Handles @mention requests from the agent.
 
     Can be invoked in two ways:
     1. With --comments-path: Load comments from a JSON file
-    2. With --comment-id: Fetch a comment from the database and manufacture a feedback conversation
+    2. With --fetch-comment-id: Fetch a comment from the database and manufacture a feedback conversation
 
-    At least one of --comments-path or --comment-id must be provided.
+    At least one of --comments-path or --fetch-comment-id must be provided.
     """
-    if not comments_path and not comment_id:
-        print("Error: Either --comments-path or --comment-id must be provided.")
+    if not comments_path and not fetch_comment_id:
+        print("Error: Either --comments-path or --fetch-comment-id must be provided.")
         return
 
-    if comments_path and comment_id:
-        print("Error: Only one of --comments-path or --comment-id can be provided, not both.")
+    if comments_path and fetch_comment_id:
+        print("Error: Only one of --comments-path or --fetch-comment-id can be provided, not both.")
         return
 
     comments = []
@@ -619,15 +766,16 @@ def handle_agent_mention(
     package_name = None
     code = None
 
-    if comment_id:
+    if fetch_comment_id:
+        source_comment_id = fetch_comment_id
         environment = os.getenv("ENVIRONMENT_NAME")
         if not environment:
             print("Error: ENVIRONMENT_NAME environment variable is not set. Please set it in your .env file.")
             return
         # Fetch the comment from the database and manufacture a conversation
-        result = get_comment_with_context(comment_id, environment=environment)
+        result = get_comment_with_context(fetch_comment_id, environment=environment)
         if not result:
-            print(f"Comment with ID '{comment_id}' not found in {environment} environment.")
+            print(f"Comment with ID '{fetch_comment_id}' not found in {environment} environment.")
             return
 
         language = result.get("language")
@@ -638,20 +786,41 @@ def handle_agent_mention(
         original_text = original_comment.get("CommentText", "")
 
         if not language:
-            print(f"Could not determine language for comment '{comment_id}'.")
+            print(f"Could not determine language for comment '{fetch_comment_id}'.")
             return
 
         if not feedback_text or feedback_text == "No feedback entries found.":
-            print(f"No feedback associated with comment '{comment_id}'. Nothing to process.")
+            print(f"No feedback associated with comment '{fetch_comment_id}'. Nothing to process.")
             return
 
-        # Manufacture a conversation: the original AI comment followed by the feedback
+        # Manufacture a conversation matching the ApiViewAgentComment dict shape
+        # that the production C# caller sends.
         comments = [
-            f"[APIView Copilot]: {original_text}",
-            f"[Reviewer feedback]: {feedback_text}",
+            {
+                "lineNo": 0,
+                "createdOn": original_comment.get("CreatedOn", ""),
+                "createdBy": original_comment.get("CreatedBy", "APIView Copilot"),
+                "commentText": original_text,
+                "upvotes": len(original_comment.get("Upvotes", [])) if isinstance(original_comment.get("Upvotes"), list) else original_comment.get("Upvotes", 0),
+                "downvotes": len(original_comment.get("Downvotes", [])) if isinstance(original_comment.get("Downvotes"), list) else original_comment.get("Downvotes", 0),
+                "isResolved": original_comment.get("IsResolved", False),
+                "severity": original_comment.get("Severity", ""),
+                "threadId": original_comment.get("ThreadId", ""),
+            },
+            {
+                "lineNo": 0,
+                "createdOn": "",
+                "createdBy": "Reviewer",
+                "commentText": feedback_text,
+                "upvotes": 0,
+                "downvotes": 0,
+                "isResolved": False,
+                "severity": "",
+                "threadId": original_comment.get("ThreadId", ""),
+            },
         ]
 
-        print(f"Processing feedback for comment '{comment_id}':")
+        print(f"Processing feedback for comment '{fetch_comment_id}':")
         print(f"  Language: {language}")
         print(f"  Package: {package_name}")
         print(f"  Original comment: {original_text[:100]}...")
@@ -670,6 +839,7 @@ def handle_agent_mention(
         language = data.get("language", None)
         package_name = data.get("package_name", None)
         code = data.get("code", None)
+        source_comment_id = data.get("source_comment_id", None) or source_comment_id
 
     # Resolve language to canonical and pretty forms
     try:
@@ -684,6 +854,7 @@ def handle_agent_mention(
             "language": pretty_language,
             "packageName": package_name,
             "code": code,
+            "sourceCommentId": source_comment_id,
         }
         print(f"{BOLD_BLUE}=== DRY RUN: Mention Agent Payload ==={RESET}")
         print(json.dumps(payload, indent=2))
@@ -696,7 +867,13 @@ def handle_agent_mention(
         try:
             resp = requests.post(
                 api_endpoint,
-                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                json={
+                    "comments": comments,
+                    "language": language,
+                    "packageName": package_name,
+                    "code": code,
+                    "sourceCommentId": source_comment_id,
+                },
                 headers=_build_auth_header(),
                 timeout=60,
             )
@@ -713,6 +890,7 @@ def handle_agent_mention(
             language=pretty_language,
             package_name=package_name,
             code=code,
+            source_comment_id=source_comment_id,
         )
 
 
@@ -732,6 +910,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
     language = data.get("language", None)
     package_name = data.get("package_name", None)
     code = data.get("code", None)
+    source_comment_id = data.get("source_comment_id", None)
     # Resolve language to canonical and pretty forms
     try:
         apiview_language, pretty_language = resolve_language(language)
@@ -746,7 +925,13 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
         try:
             resp = requests.post(
                 api_endpoint,
-                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                json={
+                    "comments": comments,
+                    "language": language,
+                    "packageName": package_name,
+                    "code": code,
+                    "sourceCommentId": source_comment_id,
+                },
                 headers=_build_auth_header(),
                 timeout=60,
             )
@@ -763,6 +948,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
             language=pretty_language,
             package_name=package_name,
             code=code,
+            source_comment_id=source_comment_id,
         )
 
 
@@ -1491,7 +1677,7 @@ def analyze_comments(language: str, start_date: str, end_date: str, environment:
 
     comment_texts = [comment.comment_text for comment in comments if comment.comment_text]
 
-    theme_output = run_prompty(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
+    theme_output = run_prompt(folder="other", filename="analyze_comment_themes", inputs={"comments": comment_texts})
     print(theme_output)
 
     print(f"Comment count: {len(comment_texts)}")
@@ -1599,6 +1785,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "permissions", "__main__#{}") as g:
             g.command("grant", "grant_permissions")
             g.command("revoke", "revoke_permissions")
+        with CommandGroup(self, "prompt", "__main__#{}") as g:
+            g.command("test", "prompt_test")
+            g.command("test-all", "prompt_test_all")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -1643,13 +1832,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--comments-path", "-c"],
                 default=None,
             )
-            ac.argument(
-                "comment_id",
-                type=str,
-                help="ID of a comment to fetch from the APIView database to process feedback.",
-                options_list=["--comment-id", "-i"],
-                default=None,
-            )
+
             ac.argument(
                 "include_auth",
                 action="store_true",
@@ -1843,6 +2026,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The job ID to poll.",
                 options_list=["--job-id"],
             )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Query the remote API service instead of the local database.",
+            )
         with ArgumentsContext(self, "review summarize") as ac:
             ac.argument(
                 "language",
@@ -1858,6 +2046,11 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API service instead of local processing.",
             )
         with ArgumentsContext(self, "agent") as ac:
             ac.argument(
@@ -1880,10 +2073,24 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "agent mention") as ac:
             ac.argument(
+                "fetch_comment_id",
+                type=str,
+                help="Fetch a comment from the APIView database to process feedback. Also used as --source-comment-id for audit traceability.",
+                options_list=["--fetch-comment-id"],
+                default=None,
+            )
+            ac.argument(
                 "dry_run",
                 help="Print the payload that would be sent to the mention agent without executing it.",
                 options_list=["--dry-run"],
                 action="store_true",
+            )
+            ac.argument(
+                "source_comment_id",
+                type=str,
+                help="The APIView comment ID that triggered this request, recorded on any memories created for audit traceability. Automatically set when --fetch-comment-id is used.",
+                options_list=["--source-comment-id"],
+                default=None,
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
@@ -2066,6 +2273,22 @@ class CliCommandsLoader(CLICommandsLoader):
                 "remote",
                 action="store_true",
                 help="Use the remote API instead of local processing.",
+            )
+        with ArgumentsContext(self, "prompt test") as ac:
+            ac.argument(
+                "path",
+                type=str,
+                options_list=["--path", "-p"],
+                required=True,
+                help="Path to the .prompty file to test.",
+            )
+        with ArgumentsContext(self, "prompt test-all") as ac:
+            ac.argument(
+                "workers",
+                type=int,
+                options_list=["--workers", "-w"],
+                default=4,
+                help="Number of parallel workers for executing prompts (default: 4).",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

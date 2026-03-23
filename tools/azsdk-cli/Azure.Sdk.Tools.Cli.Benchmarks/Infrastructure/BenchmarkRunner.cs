@@ -69,7 +69,8 @@ public class BenchmarkRunner : IDisposable
                 Timeout = scenario.Timeout,
                 AzsdkMcpPath = options.AzsdkMcpPath ?? scenario.AzsdkMcpPath,
                 Model = options.Model ?? BenchmarkDefaults.DefaultModel,
-                OnActivity = onActivity
+                OnActivity = onActivity,
+                Verbose = options.Verbose
             };
             var execResult = await executor.ExecuteAsync(execConfig);
 
@@ -123,6 +124,7 @@ public class BenchmarkRunner : IDisposable
                 stopwatch.Elapsed,
                 passed,
                 validation,
+                execResult.TokenUsage,
                 execResult.Error);
 
             // Determine if cleanup will happen based on policy
@@ -144,7 +146,8 @@ public class BenchmarkRunner : IDisposable
                 ToolCalls = execResult.ToolCalls,
                 WorkspacePath = workspace.RootPath,
                 WorkspaceCleanedUp = willCleanup,
-                Validation = validation
+                Validation = validation,
+                TokenUsage = execResult.TokenUsage
             };
 
             // 7. Cleanup

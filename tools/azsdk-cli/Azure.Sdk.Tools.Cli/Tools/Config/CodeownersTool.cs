@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Codeowners;
+using Azure.Sdk.Tools.Cli.Models.Responses.Codeowners;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
@@ -16,6 +17,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Tools.Core;
+using Azure.Sdk.Tools.Cli.Models.AzureDevOps;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Config
 {
@@ -105,21 +107,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         // Management command options
         private readonly Option<string> githubUserOption = new("--github-user")
         {
-            Description = "GitHub alias to look up",
+            Description = "GitHub alias.",
             Required = false,
+        };
+
+        private readonly Option<string[]> multipleGithubUserOption = new("--github-user")
+        {
+            Description = "GitHub alias(es). Can be specified multiple times.",
+            AllowMultipleArgumentsPerToken = true,
         };
 
         private readonly Option<string[]> labelsOption = new("--label")
         {
             Description = "Label name(s). Can be specified multiple times.",
-            Required = false,
             AllowMultipleArgumentsPerToken = true,
         };
 
         private readonly Option<string> packageOption = new("--package")
         {
             Description = "Package name",
-            Required = false,
         };
 
         private readonly Option<string> pathOption = new("--path", "-p")
@@ -142,6 +148,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         private readonly ICodeownersGenerateHelper codeownersGenerateHelper;
         private readonly ICodeownersManagementHelper codeownersManagementHelper;
         private readonly IGitHelper gitHelper;
+        private readonly IDevOpsService devOpsService;
 
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
@@ -166,18 +173,36 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             Required = true,
         };
 
+        private readonly Option<OwnerType> ownerTypeOption = new("--owner-type")
+        {
+            Description = "Owner type",
+            Required = false,
+        };
+
         // Command names
         private const string updateCodeownersCommandName = "update";
         private const string validateCodeownersEntryCommandName = "validate";
         private const string generateCodeownersCommandName = "generate";
         private const string viewCodeownersCommandName = "view";
         private const string exportSectionCommandName = "export-section";
+        private const string addCodeownersToPackageCommandName = "add-package-owner";
+        private const string addLabelToPackageCommandName = "add-package-label";
+        private const string addLabelOwnerCommandName = "add-label-owner";
+        private const string removeCodeownersToPackageCommandName = "remove-package-owner";
+        private const string removeLabelToPackageCommandName = "remove-package-label";
+        private const string removeLabelOwnerCommandName = "remove-label-owner";
+
 
         // MCP Tool Names
         private const string CodeownerUpdateToolName = "azsdk_engsys_codeowner_update";
         private const string ValidateCodeownersEntryToolName = "azsdk_engsys_validate_codeowners_entry_for_service";
         private const string CodeownerViewToolName = "azsdk_engsys_codeowner_view";
-
+        private const string CodeownerAddPackageOwnerToolName = "azsdk_engsys_codeowner_add_package_owner";
+        private const string CodeownerAddLabelToolName = "azsdk_engsys_codeowner_add_package_label";
+        private const string CodeownerAddLabelOwnerToolName = "azsdk_engsys_codeowner_add_label_owner";
+        private const string CodeownerRemovePackageOwnerToolName = "azsdk_engsys_codeowner_remove_package_owner";
+        private const string CodeownerRemoveLabelToolName = "azsdk_engsys_codeowner_remove_package_label";
+        private const string CodeownerRemoveLabelOwnerToolName = "azsdk_engsys_codeowner_remove_label_owner";
 
         public CodeownersTool(
             IGitHubService githubService,
@@ -186,7 +211,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             ICodeownersValidatorHelper codeownersValidator,
             ICodeownersGenerateHelper codeownersGenerateHelper,
             IGitHelper gitHelper,
-            ICodeownersManagementHelper codeownersManagementHelper
+            ICodeownersManagementHelper codeownersManagementHelper,
+            IDevOpsService devOpsService
         )
         {
             this.githubService = githubService;
@@ -195,6 +221,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             this.codeownersGenerateHelper = codeownersGenerateHelper;
             this.codeownersManagementHelper = codeownersManagementHelper;
             this.gitHelper = gitHelper;
+            this.devOpsService = devOpsService;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
         }
@@ -223,6 +250,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             new(viewCodeownersCommandName, "View CODEOWNERS associations for a user, label, package, or path")
             {
                 githubUserOption, labelsOption, packageOption, pathOption, optionalRepoOption,
+            },
+            new(addCodeownersToPackageCommandName, "Add source owner(s) to a package")
+            {
+                multipleGithubUserOption, packageOption, optionalRepoOption,
+            },
+            new(addLabelToPackageCommandName, "Add PR label(s) to a package")
+            {
+                labelsOption, packageOption, optionalRepoOption,
+            },
+            new(addLabelOwnerCommandName, "Add owner(s) to a label and optional path")
+            {
+                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, optionalRepoOption,
+            },
+            new(removeCodeownersToPackageCommandName, "Remove source owner(s) from a package")
+            {
+                multipleGithubUserOption, packageOption, optionalRepoOption,
+            },
+            new(removeLabelToPackageCommandName, "Remove PR label(s) from a package")
+            {
+                labelsOption, packageOption, optionalRepoOption,
+            },
+            new(removeLabelOwnerCommandName, "Remove owner(s) from a label and optional path")
+            {
+                multipleGithubUserOption, labelsOption, pathOption, ownerTypeOption, optionalRepoOption,
             },
             new(exportSectionCommandName, "Export one or more named sections from a CODEOWNERS file")
             {
@@ -253,7 +304,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     serviceOwnersValue?.ToList() ?? new List<string>(),
                     sourceOwnersValue?.ToList() ?? new List<string>(),
                     isAddingValue,
-                    workingBranchValue ?? "");
+                    workingBranchValue ?? "",
+                    ct);
 
                 return addResult;
             }
@@ -267,7 +319,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var validateResult = await ValidateCodeownersEntryForService(
                     validateRepo ?? "",
                     validateServiceLabel,
-                    validateRepoPath);
+                    validateRepoPath,
+                    ct);
 
                 return validateResult;
             }
@@ -290,7 +343,59 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var package = parseResult.GetValue(packageOption);
                 var path = parseResult.GetValue(pathOption);
                 var repo = parseResult.GetValue(optionalRepoOption);
-                return await ViewCodeowners(user, labels, package, path, repo);
+                return await ViewCodeowners(user, labels, package, path, repo, ct);
+            }
+
+            if (command == addCodeownersToPackageCommandName)
+            {
+                var users = parseResult.GetValue(multipleGithubUserOption);
+                var package = parseResult.GetValue(packageOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                return await AddPackageOwner(users!, package!, repo, ct);
+            }
+
+            if (command == addLabelToPackageCommandName)
+            {
+                var labels = parseResult.GetValue(labelsOption);
+                var package = parseResult.GetValue(packageOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                return await AddPackageLabel(labels!, package!, repo, ct);
+            }
+
+            if (command == addLabelOwnerCommandName)
+            {
+                var users = parseResult.GetValue(multipleGithubUserOption);
+                var labels = parseResult.GetValue(labelsOption);
+                var ownerType = parseResult.GetValue(ownerTypeOption);
+                var path = parseResult.GetValue(pathOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                return await AddLabelOwner(users!, labels!, ownerType!, path, repo, ct);
+            }
+
+            if (command == removeCodeownersToPackageCommandName)
+            {
+                var users = parseResult.GetValue(multipleGithubUserOption);
+                var package = parseResult.GetValue(packageOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                return await RemovePackageOwner(users!, package!, repo, ct);
+            }
+
+            if (command == removeLabelToPackageCommandName)
+            {
+                var labels = parseResult.GetValue(labelsOption);
+                var package = parseResult.GetValue(packageOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                return await RemovePackageLabel(labels!, package!, repo, ct);
+            }
+
+            if (command == removeLabelOwnerCommandName)
+            {
+                var users = parseResult.GetValue(multipleGithubUserOption);
+                var labels = parseResult.GetValue(labelsOption);
+                var ownerType = parseResult.GetValue(ownerTypeOption);
+                var path = parseResult.GetValue(pathOption);
+                var repo = parseResult.GetValue(optionalRepoOption);
+                return await RemoveLabelOwner(users!, labels!, ownerType!, path, repo, ct);
             }
 
             if (command == exportSectionCommandName)
@@ -298,7 +403,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 var codeownersPath = parseResult.GetValue(codeownersPathOption);
                 var sections = parseResult.GetValue(sectionsOption);
                 var output = parseResult.GetValue(outputFilePathOption);
-                return await ExportSection(codeownersPath!, sections!, output!);
+                return await ExportSection(codeownersPath!, sections!, output!, ct);
             }
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
@@ -313,8 +418,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             List<string> serviceOwners = null,
             List<string> sourceOwners = null,
             bool isAdding = false,
-            string workingBranch = "")
-        {
+            string workingBranch = "",
+            CancellationToken ct = default
+        ) {
             try
             {
                 // Validate atleast Service Label or Path.
@@ -329,7 +435,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
                 else if (string.IsNullOrEmpty(workingBranch))
                 {
-                    var codeownersPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "[CODEOWNERS]"))
+                    var codeownersPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "[CODEOWNERS]", ct: ct))
                         ?? new List<PullRequest?>().AsReadOnly();
 
                     foreach (var codeownersPullRequest in codeownersPullRequests)
@@ -345,7 +451,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
 
                 // Get codeowners file contents.
-                var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, workingBranch);
+                var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, workingBranch, ct);
 
                 if (codeownersFileContent == null)
                 {
@@ -376,7 +482,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
 
                 // Validate the modified/created Entry
-                var (validationErrors, codeownersValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry);
+                var (validationErrors, codeownersValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry, ct);
 
                 var codeownersValidationResultMessage = string.Join("\n", codeownersValidationResults.Select(r => r.ToString()));
                 if (!string.IsNullOrEmpty(validationErrors))
@@ -394,7 +500,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     $"Update codeowners entry for {identifier}", // Description for commit message, PR title, and description
                     "update-codeowners-entry",                                             // Branch prefix for the action
                     identifier, // Identifier for the PR
-                    workingBranch);
+                    workingBranch,
+                    ct);
 
                 return new DefaultCommandResponse
                 {
@@ -414,13 +521,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string description, // used for commit message, PR title, and PR description
             string branchPrefix,
             string identifier,
-            string workingBranch)
-        {
+            string workingBranch,
+            CancellationToken ct
+        ) {
             List<string> resultMessages = new();
             var branchName = "";
 
             // Check if we have a working branch from SDK generation
-            if (!string.IsNullOrEmpty(workingBranch) && await githubService.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repo, workingBranch))
+            if (!string.IsNullOrEmpty(workingBranch) && await githubService.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repo, workingBranch, ct))
             {
                 branchName = workingBranch;
                 resultMessages.Add($"Using existing branch: {branchName}");
@@ -429,12 +537,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             {
                 // Create a new branch only if no working branch exists
                 branchName = CreateBranchName(branchPrefix, identifier);
-                var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName, "main");
+                var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName, "main", ct);
                 resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
             }
 
             // After branchName is set
-            var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, branchName);
+            var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, branchName, ct);
 
             if (codeownersFileContent == null)
             {
@@ -444,16 +552,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             var codeownersSha = codeownersFileContent.Sha;
 
             // Use codeownersSha in UpdateFileAsync
-            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
+            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName, ct);
 
-            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description);
+            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description, ct: ct);
             resultMessages.Add($"URL: {prInfoList.Url}");
             resultMessages.AddRange(prInfoList.Messages);
             return resultMessages;
         }
 
         [McpServerTool(Name = ValidateCodeownersEntryToolName), Description("Validates codeowners in a specific repository for a given service or repo path.")]
-        public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null)
+        public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null, CancellationToken ct = default)
         {
             ServiceCodeownersResult response = new() { };
 
@@ -472,7 +580,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 }
 
                 var workingBranch = "";
-                var codeownersPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repoName, "[CODEOWNERS]");
+                var codeownersPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repoName, "[CODEOWNERS]", ct: ct);
 
                 foreach (var codeownersPullRequest in codeownersPullRequests)
                 {
@@ -492,7 +600,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 CodeownersEntry? matchingEntry;
                 try
                 {
-                    var contents = await githubService.GetContentsSingleAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS", workingBranch);
+                    var contents = await githubService.GetContentsSingleAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS", workingBranch, ct);
                     if (contents == null)
                     {
                         response.Message += "Could not retrieve upstream CODEOWNERS (azure-sdk-for-net) for the requested branch.";
@@ -517,7 +625,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 // Validate Owners
                 if (matchingEntry != null)
                 {
-                    var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry);
+                    var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry, ct);
                     string? validationErrors = validationResponse.validationErrors;
                     List<CodeownersValidationResult>? codeownersValidationResults = validationResponse.codeownersValidationResults;
 
@@ -546,14 +654,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             }
         }
 
-        private async Task<List<CodeownersValidationResult>> ValidateOwners(IEnumerable<string> owners)
+        private async Task<List<CodeownersValidationResult>> ValidateOwners(IEnumerable<string> owners, CancellationToken ct)
         {
             var validatedOwners = new List<CodeownersValidationResult>();
 
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
-                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false);
+                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false, ct: ct);
 
                 if (string.IsNullOrEmpty(result.Username))
                 {
@@ -566,11 +674,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             return validatedOwners;
         }
 
-        private async Task<(string validationErrors, List<CodeownersValidationResult> codeownersValidationResults)> ValidateMinimumOwnerRequirements(CodeownersEntry codeownersEntry)
+        private async Task<(string validationErrors, List<CodeownersValidationResult> codeownersValidationResults)> ValidateMinimumOwnerRequirements(CodeownersEntry codeownersEntry, CancellationToken ct)
         {
-            var validatedServiceOwners = await ValidateOwners(codeownersEntry.ServiceOwners);
-            var validatedSourceOwners = await ValidateOwners(codeownersEntry.SourceOwners);
-            var validatedAzureSdkOwners = await ValidateOwners(codeownersEntry.AzureSdkOwners);
+            var validatedServiceOwners = await ValidateOwners(codeownersEntry.ServiceOwners, ct);
+            var validatedSourceOwners = await ValidateOwners(codeownersEntry.SourceOwners, ct);
+            var validatedAzureSdkOwners = await ValidateOwners(codeownersEntry.AzureSdkOwners, ct);
 
             var validServiceOwnersCount = validatedServiceOwners.Count(owner => owner.IsValidCodeOwner);
             var validSourceOwnersCount = validatedSourceOwners.Count(owner => owner.IsValidCodeOwner);
@@ -647,7 +755,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                     };
                 }
 
-                var repo = await gitHelper.GetRepoFullNameAsync(repoRoot);
+                var repo = await gitHelper.GetRepoFullNameAsync(repoRoot, ct: ct);
 
                 var codeownersPath = Path.Combine(repoRoot, ".github", "CODEOWNERS");
                 if (!File.Exists(codeownersPath))
@@ -681,7 +789,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
             string[] labels = null,
             string? package = null,
             string? path = null,
-            string? repo = null)
+            string? repo = null,
+            CancellationToken ct = default
+        )
         {
             try
             {
@@ -698,17 +808,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
                 if (!string.IsNullOrEmpty(githubUser))
                 {
-                    return await codeownersManagementHelper.GetViewByUser(githubUser, repo);
+                    return await codeownersManagementHelper.GetViewByUser(githubUser, repo, ct);
                 }
                 if (hasLabels)
                 {
-                    return await codeownersManagementHelper.GetViewByLabel(labels, repo);
+                    return await codeownersManagementHelper.GetViewByLabel(labels, repo, ct);
                 }
                 if (!string.IsNullOrEmpty(package))
                 {
-                    return await codeownersManagementHelper.GetViewByPackage(package, repo);
+                    return await codeownersManagementHelper.GetViewByPackage(package, repo, ct);
                 }
-                return await codeownersManagementHelper.GetViewByPath(path!, repo);
+                return await codeownersManagementHelper.GetViewByPath(path!, repo, ct);
             }
             catch (Exception ex)
             {
@@ -723,7 +833,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
         public async Task<DefaultCommandResponse> ExportSection(
             string codeownersPath,
             string[] sections,
-            string output)
+            string output, CancellationToken ct)
         {
             if (!File.Exists(codeownersPath))
             {
@@ -733,7 +843,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 };
             }
 
-            var lines = (await File.ReadAllLinesAsync(codeownersPath)).ToList();
+            var lines = (await File.ReadAllLinesAsync(codeownersPath, ct)).ToList();
             var exportedLines = new List<string>();
 
             foreach (var sectionName in sections)
@@ -751,12 +861,241 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
                 exportedLines.AddRange(lines.GetRange(headerStart, sectionEnd - headerStart));
             }
 
-            await File.WriteAllLinesAsync(output, exportedLines);
+            await File.WriteAllLinesAsync(output, exportedLines, ct);
 
             return new DefaultCommandResponse
             {
                 Message = $"Exported {sections.Length} section(s) to {output}"
             };
+        }
+
+        [McpServerTool(Name = CodeownerAddPackageOwnerToolName), Description("Add source owner(s) to a package in CODEOWNERS work items.")]
+        public async Task<CommandResponse> AddPackageOwner(
+            string[] githubUsers,
+            string package,
+            string? repo = null,
+            CancellationToken ct = default
+        )
+        {
+            try
+            {
+                repo = await ResolveRepo(repo, ct);
+                return await codeownersManagementHelper.AddOwnersToPackage(
+                    await FindOrCreateOwnerWorkItems(githubUsers, ct),
+                    package,
+                    repo,
+                    ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error adding package owner(s)");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        [McpServerTool(Name = CodeownerAddLabelToolName), Description("Add PR label(s) to a package in CODEOWNERS work items.")]
+        public async Task<CommandResponse> AddPackageLabel(
+            string[] labels,
+            string package,
+            string? repo = null,
+            CancellationToken ct = default
+        )
+        {
+            try
+            {
+                repo = await ResolveRepo(repo, ct);
+                return await codeownersManagementHelper.AddLabelsToPackage(
+                    await FindLabels(labels, ct),
+                    package,
+                    repo,
+                    ct
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error adding package label(s)");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        [McpServerTool(Name = CodeownerAddLabelOwnerToolName), Description("Add owner(s) to a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label.")]
+        public async Task<CommandResponse> AddLabelOwner(
+            string[] githubUsers,
+            string[] labels,
+            OwnerType ownerType,
+            string? path = null,
+            string? repo = null,
+            CancellationToken ct = default
+        )
+        {
+            try
+            {
+                repo = await ResolveRepo(repo, ct);
+                return await codeownersManagementHelper.AddOwnersAndLabelsToPath(
+                    await FindOrCreateOwnerWorkItems(githubUsers, ct),
+                    await FindLabels(labels, ct),
+                    repo,
+                    path,
+                    ownerType,
+                    ct
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error adding label owner(s)");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        [McpServerTool(Name = CodeownerRemovePackageOwnerToolName), Description("Remove source owner(s) from a package in CODEOWNERS work items.")]
+        public async Task<CommandResponse> RemovePackageOwner(
+            string[] githubUsers,
+            string package,
+            string? repo = null,
+            CancellationToken ct = default
+        )
+        {
+            try
+            {
+                repo = await ResolveRepo(repo, ct);
+                return await codeownersManagementHelper.RemoveOwnersFromPackage(
+                    await GetOwnerWorkItems(githubUsers, ct),
+                    package,
+                    repo,
+                    ct
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error removing package owner(s)");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        [McpServerTool(Name = CodeownerRemoveLabelToolName), Description("Remove PR label(s) from a package in CODEOWNERS work items.")]
+        public async Task<CommandResponse> RemovePackageLabel(
+            string[] labels,
+            string package,
+            string? repo = null,
+            CancellationToken ct = default
+        )
+        {
+            try
+            {
+                repo = await ResolveRepo(repo, ct);
+                return await codeownersManagementHelper.RemoveLabelsFromPackage(
+                    await FindLabels(labels, ct),
+                    package,
+                    repo,
+                    ct
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error removing package label(s)");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        [McpServerTool(Name = CodeownerRemoveLabelOwnerToolName), Description("Remove owner(s) from a label with an optional path in CODEOWNERS work items. Valid ownerType values: service-owner, azsdk-owner, pr-label.")]
+        public async Task<CommandResponse> RemoveLabelOwner(
+            string[] githubUsers,
+            string[] labels,
+            OwnerType ownerType,
+            string? path = null,
+            string? repo = null,
+            CancellationToken ct = default
+        )
+        {
+            try
+            {
+                repo = await ResolveRepo(repo, ct);
+                return await codeownersManagementHelper.RemoveOwnersFromLabelsAndPath(
+                    await GetOwnerWorkItems(githubUsers, ct),
+                    await FindLabels(labels, ct),
+                    repo,
+                    path,
+                    ownerType,
+                    ct
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error removing label owner(s)");
+                return new DefaultCommandResponse { ResponseError = ex.Message };
+            }
+        }
+
+        private async Task<string> ResolveRepo(string? repo, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(repo))
+            {
+                repo = await gitHelper.GetRepoFullNameAsync(
+                    await gitHelper.DiscoverRepoRootAsync(".", ct),
+                    ct: ct
+                );
+                if (string.IsNullOrEmpty(repo))
+                {
+                    throw new InvalidOperationException("Could not infer repository. Use repo to specify it.");
+                }
+            }
+            return repo;
+        }
+
+        private async Task<OwnerWorkItem[]> GetOwnerWorkItems(string[] ownerAliases, CancellationToken ct)
+        {
+            var ownerWorkItems = new List<OwnerWorkItem>();
+            foreach (var alias in ownerAliases)
+            {
+                var ownerWorkItem = await codeownersManagementHelper.FindOwnerByGitHubAlias(alias, ct);
+                if (ownerWorkItem == null)
+                {
+                    throw new Exception($"GitHub alias '{alias}' does not have a corresponding Owner work item in Azure DevOps.");
+                }
+                ownerWorkItems.Add(ownerWorkItem);
+            }
+            return ownerWorkItems.ToArray();
+        }
+
+        private async Task<OwnerWorkItem[]> FindOrCreateOwnerWorkItems(string[] ownerAliases, CancellationToken ct)
+        {
+            var ownerWorkItems = new List<OwnerWorkItem>();
+            foreach (var alias in ownerAliases)
+            {
+                var existing = await codeownersManagementHelper.FindOwnerByGitHubAlias(alias, ct);
+                if (existing != null)
+                {
+                    ownerWorkItems.Add(existing);
+                    continue;
+                }
+
+                var validation = await codeownersValidatorHelper.ValidateCodeOwnerAsync(alias, verbose: false, ct: ct);
+                if (!validation.IsValidCodeOwner)
+                {
+                    throw new InvalidOperationException(
+                        $"GitHub user '{alias}' is not a valid Azure SDK code owner: {validation.Message}");
+                }
+
+                var ownerWi = new OwnerWorkItem { GitHubAlias = alias };
+                var created = await devOpsService.CreateWorkItemAsync(ownerWi, "Owner", alias, ct: ct);
+                ownerWorkItems.Add(WorkItemMappers.MapToOwnerWorkItem(created));
+            }
+            return ownerWorkItems.ToArray();
+        }
+
+        private async Task<LabelWorkItem[]> FindLabels(string[] labels, CancellationToken ct)
+        {
+            var labelWorkItems = new List<LabelWorkItem>();
+            foreach (var label in labels)
+            {
+                var labelWorkItem = await codeownersManagementHelper.FindLabelByName(label, ct);
+                if (labelWorkItem == null)
+                {
+                    throw new InvalidOperationException($"Label '{label}' does not have a corresponding Label Owner work item in Azure DevOps.");
+                }
+                labelWorkItems.Add(labelWorkItem);
+            }
+            return labelWorkItems.ToArray();
         }
     }
 }

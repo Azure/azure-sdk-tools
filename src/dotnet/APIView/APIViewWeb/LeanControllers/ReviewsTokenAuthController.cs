@@ -239,4 +239,62 @@ public class ReviewsTokenAuthController : ControllerBase
             }
         };
     }
+
+    /// <summary>
+    /// Start an automated API review job via the AVC (API View Copilot) service.
+    /// </summary>
+    /// <param name="request">
+    /// JSON body with the following fields:
+    /// - <c>target</c> (required): The API surface text to review. Can be raw text or wrapped in a markdown code block.
+    /// - <c>language</c> (optional if target uses a markdown fence): The language of the API (e.g., "python", "dotnet", "java"). Inferred from the markdown tag if omitted.
+    /// - <c>base</c> (optional): A previous version of the API surface text for diff-based review.
+    /// - <c>outline</c> (optional): A high-level text description of the API for additional context.
+    /// - <c>existingComments</c> (optional): A list of <see cref="ApiViewAgentComment"/> objects (same schema returned by the get-comments endpoints) to provide prior review context.
+    /// </param>
+    /// <returns>A job ID that can be used to poll for results via get-copilot-review-job/{jobId}.</returns>
+    [HttpPost("start-copilot-review-job", Name = "StartCopilotReviewJob")]
+    public async Task<ActionResult<AIReviewJobStartedResponseModel>> StartReviewJob([FromBody] StartReviewJobRequest request)
+    {
+        if (request == null || string.IsNullOrEmpty(request.Target))
+        {
+            return BadRequest("Request body with 'target' field is required.");
+        }
+
+        try
+        {
+            AIReviewJobStartedResponseModel result = await _reviewManager.StartCopilotReviewJobAsync(request);
+            return new LeanJsonResult(result, StatusCodes.Status202Accepted);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error starting review job");
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while starting the review job.");
+        }
+    }
+
+    /// <summary>
+    /// Get the status or result of a review job.
+    /// Returns the current status and, when complete, the review comments.
+    /// </summary>
+    /// <param name="jobId">The unique identifier for the job (obtained from start-copilot-review-job).</param>
+    /// <returns>The job status and results.</returns>
+    [HttpGet("get-copilot-review-job/{jobId}", Name = "GetCopilotReviewJob")]
+    public async Task<ActionResult<AIReviewJobPolledResponseModel>> GetReviewJob([FromRoute] string jobId)
+    {
+        if (string.IsNullOrEmpty(jobId))
+        {
+            return BadRequest("Job ID is required.");
+        }
+
+        try
+        {
+            AIReviewJobPolledResponseModel result = await _reviewManager.GetCopilotReviewJobAsync(jobId);
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting review job status for JobId: {JobId}", jobId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while retrieving the review job status.");
+        }
+    }
 }

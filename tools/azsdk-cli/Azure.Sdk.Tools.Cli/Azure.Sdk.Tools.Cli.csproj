@@ -13,7 +13,7 @@
     <WarningsAsErrors>CA2254</WarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
-    <VersionPrefix>0.6.2</VersionPrefix>
+    <VersionPrefix>0.6.4</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Package metadata -->
@@ -25,7 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.2.0-beta.5" />
-    <PackageReference Include="GitHub.Copilot.SDK" Version="0.1.29" />
+    <PackageReference Include="GitHub.Copilot.SDK" Version="0.1.32" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.5.0" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.79.0" />
@@ -86,5 +86,11 @@
   <Delete Files="$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json" Condition="Exists('$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json')" />
   </Target>
   <!-- END Exclude asp net configs from release archives -->
+
+  <!-- The default auto-bundling breaks CI due to networking/compliance constraints -->
+  <!-- See https://github.com/github/copilot-sdk/pull/494 -->
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'True'">
+    <CopilotSkipCliDownload>true</CopilotSkipCliDownload>
+  </PropertyGroup>
 
 </Project>

@@ -14,9 +14,9 @@ namespace Azure.Sdk.Tools.Cli.Telemetry;
 
 public interface ITelemetryService : IDisposable
 {
-    ValueTask<Activity?> StartActivity(string activityName);
+    ValueTask<Activity?> StartActivity(string activityName, CancellationToken ct);
 
-    ValueTask<Activity?> StartActivity(string activityName, Implementation? clientInfo);
+    ValueTask<Activity?> StartActivity(string activityName, Implementation? clientInfo, CancellationToken ct);
 
     bool? Flush();
 }
@@ -29,6 +29,7 @@ internal class TelemetryService : ITelemetryService
     private readonly IMachineInformationProvider _informationProvider;
     private readonly ILogger<TelemetryService> _logger;
     private readonly TaskCompletionSource _isInitialized = new TaskCompletionSource();
+    private readonly CancellationTokenSource _cts = new();
 
     internal ActivitySource Parent { get; }
 
@@ -50,12 +51,12 @@ internal class TelemetryService : ITelemetryService
         _logger = logger;
         _informationProvider = informationProvider;
 
-        Task.Factory.StartNew(InitializeTagList);
+        Task.Factory.StartNew(() => InitializeTagList(_cts.Token));
     }
 
-    public ValueTask<Activity?> StartActivity(string activityId) => StartActivity(activityId, null);
+    public ValueTask<Activity?> StartActivity(string activityId, CancellationToken ct) => StartActivity(activityId, null, ct);
 
-    public async ValueTask<Activity?> StartActivity(string activityId, Implementation? clientInfo)
+    public async ValueTask<Activity?> StartActivity(string activityId, Implementation? clientInfo, CancellationToken ct)
     {
         if (!_isEnabled)
         {
@@ -105,14 +106,16 @@ internal class TelemetryService : ITelemetryService
 
     public void Dispose()
     {
+        _cts.Cancel();
+        _cts.Dispose();
     }
 
-    private async Task InitializeTagList()
+    private async Task InitializeTagList(CancellationToken ct)
     {
         try
         {
-            var macAddressHash = await _informationProvider.GetMacAddressHash();
-            var deviceId = await _informationProvider.GetOrCreateDeviceId();
+            var macAddressHash = await _informationProvider.GetMacAddressHash(ct);
+            var deviceId = await _informationProvider.GetOrCreateDeviceId(ct);
 
             _tagsList.Add(new(TagName.MacAddressHash, macAddressHash));
             _tagsList.Add(new(TagName.DevDeviceId, deviceId));

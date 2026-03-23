@@ -97,7 +97,7 @@ public class ChangelogContentUpdateTool : LanguageMcpTool
             if (packageInfo?.SdkType == SdkType.Management)
             {
                 // For management-plane packages, execute configured changelog update script
-                var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateChangelogContent);
+                var (configContentType, configValue) = await _specGenSdkConfigHelper.GetConfigurationAsync(sdkRepoRoot, SpecGenSdkConfigType.UpdateChangelogContent, ct);
                 if (configContentType != SpecGenSdkConfigContentType.Unknown && !string.IsNullOrEmpty(configValue))
                 {
                     logger.LogInformation("Found valid configuration for updating changelog content. Executing configured script...");

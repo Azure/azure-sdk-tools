@@ -97,7 +97,8 @@ describe('RevisionPageComponent', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              paramMap: convertToParamMap({ reviewId: 'test' })
+              paramMap: convertToParamMap({ reviewId: 'test' }),
+              queryParamMap: convertToParamMap({ activeApiRevisionId: 'test' })
             }
           }
         },

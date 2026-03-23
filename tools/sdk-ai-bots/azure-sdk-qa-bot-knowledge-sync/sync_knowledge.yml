@@ -123,6 +123,9 @@ extends:
                   AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs-eng.ms"
                   AZURE_SDK_WIKI_PATH: "$(Agent.BuildDirectory)/s/internal.wiki"
 
+                  # GitHub PAT for private repo access
+                  AZURE_SDK_GITHUB_PAT: $(azuresdk-github-pat)
+
                   # Set working directory for temporary files
                   TMPDIR: $(Agent.TempDirectory)
                   HOME: $(Agent.HomeDirectory)

@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using GitHub.Copilot.SDK;
@@ -61,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Interaction
             await using var session = await client.CreateSessionAsync(sessionConfig);
 
             SessionConfigHelper.ConfigureAgentActivityLogging(session);
-            var messageOptions = new MessageOptions { Prompt = buildPrompt(question) };
+            var messageOptions = new MessageOptions { Prompt = BuildPrompt(question) };
 
             var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5));
             if (result == null || result.Data == null || string.IsNullOrEmpty(result.Data.Content))
@@ -70,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Interaction
             }
             return result.Data.Content;
         }
-        private string buildPrompt(string question)
+        private string BuildPrompt(string question)
         {
             var sb = new StringBuilder();
             sb.AppendLine("You are a synthetic customer in a benchmark test. Please answer the question:");

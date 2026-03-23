@@ -69,7 +69,14 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
             SessionConfigHelper.ConfigureAgentActivityLogging(session);
             // Send prompt and wait for completion
             var gitDiff = await context.Workspace.GetGitDiffAsync();
-            var messageOptions = new MessageOptions { Prompt = VerificationPrompt + "\n\n## Typespec Git Diff:\n" + gitDiff };
+
+            var fullPrompt = VerificationPrompt;
+            if (!string.IsNullOrEmpty(gitDiff))
+            {
+                fullPrompt += "\n\n## Typespec Git Diff:\n" + gitDiff;
+            }
+
+            var messageOptions = new MessageOptions { Prompt = fullPrompt };
 
             var result = await session.SendAndWaitAsync(messageOptions, TimeSpan.FromMinutes(5), cancellationToken);
 

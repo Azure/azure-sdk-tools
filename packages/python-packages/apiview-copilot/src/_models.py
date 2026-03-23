@@ -101,6 +101,16 @@ class APIViewComment(BaseModel):
         description="Whether the comment is deleted.",
         alias="IsDeleted",
     )
+    thread_id: Optional[str] = Field(
+        default=None,
+        description="The thread ID grouping this comment with its replies.",
+        alias="ThreadId",
+    )
+    severity: Optional[int] = Field(
+        default=None,
+        description="The severity level of the comment.",
+        alias="Severity",
+    )
 
 
 class Comment(BaseModel):

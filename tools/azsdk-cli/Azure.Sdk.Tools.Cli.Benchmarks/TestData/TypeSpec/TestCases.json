@@ -17,8 +17,8 @@
                 }
             ],
             "verifyPlan": [
-                "1.replace 'v2024_10_01_preview' with `v2025-05-04-preview` in the `Versions` enum and decorate with '@previewVersion'.",
-                "2. Example folders are correctly set up. rename 2024-10-01-preview example folder to '2025-05-04-preview' (e.g., `mv examples/2024-10-01-preview examples/2025-05-04-preview`), update the `api-version` parameter in all example files, and add or modify examples to reflect API changes.",
+                "1. 'v2024_10_01_preview' is replaced with `v2025-05-04-preview` in the `Versions` enum and decorate with '@previewVersion'.",
+                "2. Example folders are correctly set up. 2024-10-01-preview example folder is renamed to '2025-05-04-preview' (e.g., `mv examples/2024-10-01-preview examples/2025-05-04-preview`), update the `api-version` parameter in all example files, and add or modify examples to reflect API changes.",
                 "3. For Any types or properties that were `@added` in the previous preview 2024-10-01-preview should be decorated with `@added` in the new preview 2025-05-04-preview.",
                 "4. For Any types or properties that were `@removed` in the previous preview 2024-10-01-preview should now be decorated with '@removed' in the new preview 2025-05-04-preview."
             ]

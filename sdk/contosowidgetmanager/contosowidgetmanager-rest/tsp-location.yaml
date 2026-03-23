@@ -1,5 +1,0 @@
-directory: specification/contosowidgetmanager/Contoso.WidgetManager
-commit: <replace with your value>
-repo: <replace with your value>
-additionalDirectories: 
-- tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared

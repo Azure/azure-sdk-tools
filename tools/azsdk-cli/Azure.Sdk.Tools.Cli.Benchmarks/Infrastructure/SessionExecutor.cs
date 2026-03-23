@@ -99,7 +99,7 @@ public class SessionExecutor : IDisposable
                     if (_aiCustomer != null)
                     {
                         var result = await _aiCustomer.AskQuestionAsync(request.Question);
-                        if(string.IsNullOrEmpty(result))
+                        if(!string.IsNullOrEmpty(result))
                         {
                             answer = result;
                         }

@@ -37,8 +37,7 @@ public static class AuthoringScenarioLoader
             yield break;
         }
 
-        var jsonFiles = Directory.GetFiles(testDataPath, "*.json", SearchOption.AllDirectories)
-            .Where(f => !f.EndsWith(".schema.json", StringComparison.OrdinalIgnoreCase));
+        var jsonFiles = Directory.GetFiles(testDataPath, "*.json", SearchOption.AllDirectories);
 
         foreach (var jsonFile in jsonFiles)
         {

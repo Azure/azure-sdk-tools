@@ -123,6 +123,27 @@ describe("Verify other utils functions", function () {
       emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
     });
   });
+
+  it("Check updateExistingTspLocation preserves apiVersion from new data", async function () {
+    const tspLocationData = {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+      apiVersion: "2024-01-01",
+    };
+    const newPackageDir = joinPaths(cwd(), "test/examples/sdk/local-spec-sdk");
+    const updatedTspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
+    // Verify that apiVersion is updated from the new data
+    assert.deepEqual(updatedTspLocationData, {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+      entrypointFile: "foo.tsp",
+      apiVersion: "2024-01-01",
+    });
+  });
 });
 
 describe("Verify fs functions", function () {

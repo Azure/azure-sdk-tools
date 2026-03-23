@@ -2,7 +2,7 @@ import { assert } from "chai";
 import { normalizeDirectory, readTspLocation } from "../src/fs.js";
 import { describe, it } from "vitest";
 import { writeTspLocationYaml } from "../src/utils.js";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 
 describe("Verify tsp-location.yaml", function () {
   it("Normalize tsp-location.yaml directories", async function () {
@@ -47,5 +47,43 @@ describe("Verify tsp-location.yaml", function () {
       tspLocation.additionalDirectories?.[0],
       "specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
     );
+  });
+
+  it("Write tsp-location.yaml with apiVersion", async function () {
+    const tspLocation = {
+      directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+      commit: "1234567",
+      repo: "foo",
+      additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+      apiVersion: "2024-01-01",
+    };
+    await writeTspLocationYaml(tspLocation, "./test/examples/");
+
+    const tspLocationFile = await stat("./test/examples/tsp-location.yaml");
+    assert.isTrue(tspLocationFile.isFile());
+
+    const content = await readFile("./test/examples/tsp-location.yaml", "utf8");
+    assert.include(content, "apiVersion: 2024-01-01");
+  });
+
+  it("Verify read tsp-location.yaml with apiVersion", async function () {
+    const tspLocation = await readTspLocation("./test/examples/");
+    assert.equal(tspLocation.directory, "specification/contosowidgetmanager/Contoso.WidgetManager");
+    assert.equal(tspLocation.commit, "1234567");
+    assert.equal(tspLocation.repo, "foo");
+    assert.equal(tspLocation.apiVersion, "2024-01-01");
+  });
+
+  it("Write tsp-location.yaml without apiVersion omits the field", async function () {
+    const tspLocation = {
+      directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+      commit: "1234567",
+      repo: "foo",
+      additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+    };
+    await writeTspLocationYaml(tspLocation, "./test/examples/");
+
+    const content = await readFile("./test/examples/tsp-location.yaml", "utf8");
+    assert.notInclude(content, "apiVersion");
   });
 });

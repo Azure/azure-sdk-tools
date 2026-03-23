@@ -102,6 +102,7 @@ This file should live under the project directory for each service and has the f
 | <a id="commit-anchor"></a> commit | The commit sha for the version of the typespec files you want to generate off of.  This allows us to have idempotence on generation until we opt into pointing at a later version. | true |
 | <a id="repo-anchor"></a> repo | The repo this spec lives in.  This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`.  Note that pr will work locally but not in CI until we add another change to handle token based auth. | true |
 | <a id="emitter-package-json-anchor"></a> emitterPackageJsonPath | An optional path to the emitter package JSON file to use.  This can be a relative path from the repo root or an absolute path.  If not specified, the value used is `eng/emitter-package.json` | false |
+| <a id="apiVersion-anchor"></a> apiVersion | The api-version to pass to the emitter when compiling the TypeSpec project. This ensures SDK regeneration uses the same api-version as the original generation. | false |
 
 Example
 

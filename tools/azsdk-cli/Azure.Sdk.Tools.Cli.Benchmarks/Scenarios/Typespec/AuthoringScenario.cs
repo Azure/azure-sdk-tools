@@ -175,6 +175,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
 
                 // cache the setup changes
                 await workspace.RunCommandAsync("git", "add", ".");
+                await workspace.RunCommandAsync("git", "commit", "-m", $"Setup for scenario '{Name}'");
             }
             if (!string.IsNullOrWhiteSpace(AuthoringSkillPath))
             {

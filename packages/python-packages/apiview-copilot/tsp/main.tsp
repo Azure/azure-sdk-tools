@@ -86,7 +86,7 @@ namespace ApiViewCopilot {
     code: string;
 
     /** The comments in the APIView thread. */
-    comments: ApiViewComment[];
+    comments: string[];
 
     /** The APIView comment ID that triggered this request, for audit traceability. */
     sourceCommentId?: string;
@@ -166,7 +166,7 @@ namespace ApiViewCopilot {
     confidenceScore?: float32;
 
     /** The severity level of the comment */
-    severity?: string;
+    severity?: "SUGGESTION" | "SHOULD" | "MUST" | "QUESTION";
   }
 
   model ApiReviewJobStartResponse {

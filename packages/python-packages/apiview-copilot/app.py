@@ -86,7 +86,18 @@ class ApiReviewJobStatusResponse(BaseModel):
     details: str = None
 
 
-@app.post("/api-review/start", status_code=202)
+class ApiReviewJobStartResponse(BaseModel):
+    """Response model for starting an API review job."""
+
+    job_id: str = Field(..., alias="jobId")
+
+    class Config:
+        """Configuration for Pydantic model."""
+
+        populate_by_name = True
+
+
+@app.post("/api-review/start", status_code=202, response_model=ApiReviewJobStartResponse)
 async def submit_api_review_job(
     job_request: ApiReviewJobRequest,
     _claims=Depends(require_roles(AppRole.WRITER, AppRole.APP_WRITER)),
@@ -131,7 +142,7 @@ async def submit_api_review_job(
 
     # Schedule the job in the background
     asyncio.create_task(run_review_job())
-    return {"job_id": job_id}
+    return ApiReviewJobStartResponse(job_id=job_id)
 
 
 @app.get("/api-review/{job_id}", response_model=ApiReviewJobStatusResponse)
@@ -143,8 +154,8 @@ async def get_api_review_job_status(
     try:
         job = db_manager.review_jobs.get(job_id)
         return job
-    except CosmosResourceNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found")
+    except CosmosResourceNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"Job with id {html.escape(str(job_id))} not found") from exc
 
 
 @app.get("/auth-test")

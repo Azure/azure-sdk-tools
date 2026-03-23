@@ -55,6 +55,15 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
                 }
             };
 
+            // Log the Interaction question and answers if available for late failure analysis
+            if (context.InputQuestionAndAnswers != null && context.InputQuestionAndAnswers.Count > 0)
+            {
+                Console.WriteLine("The Interaction question and answers:" + string.Join(", ", context.InputQuestionAndAnswers.Select(qa => $"{qa.Question}: {qa.Answer}")));
+            } else
+            {
+                Console.WriteLine("No Interaction question and answers during execution.");
+            }
+
             await using var session = await client.CreateSessionAsync(sessionConfig, cancellationToken);
 
             SessionConfigHelper.ConfigureAgentActivityLogging(session);

@@ -172,6 +172,9 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                         await workspace.CopyToWorkspaceAsync(sourcePath, Path.Combine(TspProjectPath, relativePath));
                     }
                 }
+
+                // cache the setup changes
+                await workspace.RunCommandAsync("git", "add", ".");
             }
             if (!string.IsNullOrWhiteSpace(AuthoringSkillPath))
             {

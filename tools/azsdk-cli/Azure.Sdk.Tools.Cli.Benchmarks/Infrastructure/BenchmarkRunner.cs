@@ -100,6 +100,7 @@ public class BenchmarkRunner : IDisposable
                     GitDiff = gitDiff,
                     ToolCalls = execResult.ToolCalls,
                     Messages = execResult.Messages,
+                    InputQuestionAndAnswers = execResult.InputQuestionAndAnswers,
                     ExecutionCompleted = execResult.Completed,
                     ExecutionError = execResult.Error,
                     ScenarioName = scenario.Name

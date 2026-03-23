@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Benchmarks.Interaction;
+
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Models;
 
 /// <summary>
@@ -22,4 +24,7 @@ public class ExecutionResult
 
     /// <summary>Tool calls made during execution (for debugging).</summary>
     public IReadOnlyList<string> ToolCalls { get; init; } = [];
+
+    /// <summary>List of questions asked by the model and the corresponding answers provided during execution.</summary>
+    public IReadOnlyList<QuestionAndAnswer> InputQuestionAndAnswers { get; init; } = [];
 }

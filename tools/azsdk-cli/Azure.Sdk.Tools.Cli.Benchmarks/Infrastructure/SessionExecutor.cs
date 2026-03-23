@@ -25,6 +25,7 @@ public class SessionExecutor : IDisposable
     {
         var stopwatch = Stopwatch.StartNew();
         var toolCalls = new List<string>();
+        var inputQAs = new List<QuestionAndAnswer>();
         if (config.QuestionAndAnswers != null)
         {
             _aiCustomer = new SyntheticAICustomer(config.QuestionAndAnswers);
@@ -90,6 +91,7 @@ public class SessionExecutor : IDisposable
                             answer = result;
                         }
                     }
+                    inputQAs.Add(new QuestionAndAnswer(request.Question, answer));
                     return new UserInputResponse
                     {
                         Answer = answer,
@@ -120,7 +122,8 @@ public class SessionExecutor : IDisposable
                 Completed = true,
                 Duration = stopwatch.Elapsed,
                 Messages = messages.Cast<object>().ToList(),
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                InputQuestionAndAnswers = inputQAs,
             };
         }
         catch (Exception ex)
@@ -131,7 +134,8 @@ public class SessionExecutor : IDisposable
                 Completed = false,
                 Error = ex.Message,
                 Duration = stopwatch.Elapsed,
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                InputQuestionAndAnswers = inputQAs,
             };
         }
     }

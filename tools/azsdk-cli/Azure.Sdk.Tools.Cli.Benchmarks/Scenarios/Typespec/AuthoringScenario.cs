@@ -28,14 +28,17 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         public override string Prompt { get; }
 
         /// <inheritdoc />
-        public override RepoConfig Repo { get;}
+        public override RepoConfig Repo { get; }
 
         /// <inheritdoc />
         public override IReadOnlyList<QuestionAndAnswer>? QuestionAndAnswers { get; }
 
+        /// <inheritdoc />
+        public override IEnumerable<IValidator> Validators { get; }
+
         public string TspProjectPath { get; }
 
-        public IReadOnlyList<string> ToolsToCall { get; set; } = new List<string>(){ "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan"};
+        public IReadOnlyList<string> ToolsToCall { get; set; } = new List<string>() { "azure-typespec-author", "azsdk-azsdk_typespec_generate_authoring_plan" };
 
         /// <summary>
         /// Gets or sets the verification plan for validating the scenario results.
@@ -68,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <param name="questionAndAnswers">Optional list of questions and answers for agent interaction.</param>
         /// <param name="authoringSpecRepo">Optional repository for authoring specs.</param>
         /// <param name="authoringSkillPath">Optional path for authoring skills.</param>
-        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, List<QuestionAndAnswer>? questionAndAnswers = null,string ? authoringSpecRepo = null, string? authoringSkillPath = null)
+        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, List<QuestionAndAnswer>? questionAndAnswers = null, string? authoringSpecRepo = null, string? authoringSkillPath = null)
         {
             Name = name;
             Description = description ?? string.Empty;
@@ -124,6 +127,15 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
                     Ref = "main",
                     SparseCheckoutPaths = [TspProjectPath]
                 };
+            }
+            Validators =
+            [
+                new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", ToolsToCall),
+                new VerifyResultWithAIValidator("Verify results with AI", string.Join("\n", VerifyPlan.ToArray()))
+            ];
+            if (QuestionAndAnswers != null && QuestionAndAnswers.Any())
+            {
+                Validators = Validators.Concat(new[] { new InteractionValidator("Verify interaction") }).ToArray();
             }
             AuthoringSkillPath = authoringSkillPath;
         }
@@ -206,12 +218,5 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             // TODO: Download and Start Azure Knowledge Base locally. Currently we need to manually start the Azure Knowledge Base server locally.
             //await workspace.RunCommandAsync("")
         }
-
-        /// <inheritdoc />
-        public override IEnumerable<IValidator> Validators =>
-        [
-            new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", ToolsToCall),
-            new VerifyResultWithAIValidate("Verify results with AI", string.Join("\n", VerifyPlan.ToArray()))
-        ];
     }
 }

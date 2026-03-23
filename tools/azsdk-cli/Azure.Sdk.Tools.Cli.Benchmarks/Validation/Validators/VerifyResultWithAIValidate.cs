@@ -1,15 +1,18 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using Azure.Sdk.Tools.Cli.Benchmarks.Infrastructure;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using GitHub.Copilot.SDK;
 
 namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
 {
-    public class VerifyResultWithAIValidate : IValidator
+    public class VerifyResultWithAIValidator : IValidator
     {
         public string Name { get; }
 
         public string VerificationPrompt { get; } = string.Empty;
-        public VerifyResultWithAIValidate(string name, string verificationPlan)
+        public VerifyResultWithAIValidator(string name, string verificationPlan)
         {
             Name = name;
             this.VerificationPrompt = "please verify the following plan: " + verificationPlan + "\nprovide the verification result. If all the verification steps are correct, respond with 'Verification successful'. Otherwise, respond with 'Verification failed'";

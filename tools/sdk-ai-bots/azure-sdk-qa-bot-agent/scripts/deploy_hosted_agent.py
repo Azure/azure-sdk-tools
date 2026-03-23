@@ -62,8 +62,6 @@ def main() -> None:
     parser.add_argument("--tag", default=None, help="Image tag (default: git short SHA)")
     parser.add_argument("--appconfig-endpoint", default=os.environ.get("AZURE_APPCONFIG_ENDPOINT"),
                         help="Override App Configuration endpoint")
-    parser.add_argument("--client_id", default=os.environ.get("AZURE_CLIENT_ID"),
-                        help="Override Azure client ID")
     args = parser.parse_args()
 
     asyncio.run(app_config.init())
@@ -71,7 +69,6 @@ def main() -> None:
     registry = cfg("ACR_LOGIN_SERVER")
     project_endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
     appconfig_endpoint = args.appconfig_endpoint
-    client_id = args.client_id
     if not registry:
         sys.exit("ERROR: ACR_LOGIN_SERVER not found in App Configuration")
     if not project_endpoint:
@@ -123,7 +120,8 @@ def main() -> None:
             image=image,
             environment_variables={
                 "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
-                "AZURE_CLIENT_ID": client_id,
+                "UMI_BACKEND_CLIENT_ID": os.environ.get("UMI_BACKEND_CLIENT_ID"),
+                "UMI_FRONTEND_CLIENT_ID": os.environ.get("UMI_FRONTEND_CLIENT_ID"),
             },
         ),
     )

@@ -13,6 +13,7 @@ from azure.identity.aio import AzureCliCredential, ChainedTokenCredential, Manag
 
 _logger = logging.getLogger(__name__)
 _credential: AsyncTokenCredential | None = None
+_frontend_credential: AsyncTokenCredential | None = None
 
 
 def get_credential() -> AsyncTokenCredential:
@@ -21,13 +22,13 @@ def get_credential() -> AsyncTokenCredential:
     if _credential is None:
         credentials: list[AsyncTokenCredential] = []
 
-        client_id = os.environ.get("AZURE_CLIENT_ID")
+        client_id = os.environ.get("UMI_BACKEND_CLIENT_ID")
         if client_id:
             credentials.append(ManagedIdentityCredential(client_id=client_id))
             _logger.info("Managed Identity credential added (client_id=%s)", client_id)
         else:
             credentials.append(ManagedIdentityCredential())
-            _logger.info("AZURE_CLIENT_ID not set; using system-assigned Managed Identity")
+            _logger.info("UMI_BACKEND_CLIENT_ID not set")
 
         credentials.append(AzureCliCredential())
         _logger.info("Azure CLI credential added")
@@ -36,9 +37,32 @@ def get_credential() -> AsyncTokenCredential:
     return _credential
 
 
+def get_frontend_credential() -> AsyncTokenCredential:
+    """Return an async credential that uses the UMI_FRONTEND_CLIENT_ID identity.
+
+    Falls back to the default credential if UMI_FRONTEND_CLIENT_ID is not set.
+    """
+    global _frontend_credential
+    if _frontend_credential is None:
+        frontend_client_id = os.environ.get("UMI_FRONTEND_CLIENT_ID")
+        if frontend_client_id:
+            credentials: list[AsyncTokenCredential] = [
+                ManagedIdentityCredential(client_id=frontend_client_id),
+                AzureCliCredential(),
+            ]
+            _frontend_credential = ChainedTokenCredential(*credentials)
+            _logger.info("Frontend credential created (client_id=%s)", frontend_client_id)
+        else:
+            _logger.warning("UMI_FRONTEND_CLIENT_ID not set")
+    return _frontend_credential
+
+
 async def close_credential() -> None:
     """Close the credential.  Safe to call even if never created."""
-    global _credential
+    global _credential, _frontend_credential
+    if _frontend_credential is not None and _frontend_credential is not _credential:
+        await _frontend_credential.close()
+        _frontend_credential = None
     if _credential is not None:
         await _credential.close()
         _credential = None

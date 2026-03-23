@@ -25,7 +25,7 @@ from azure.keyvault.keys.crypto import SignatureAlgorithm
 from agent_framework_azure_ai import AzureAIClient
 
 from config.app_config import get as cfg
-from utils.azure_credential import get_credential
+from utils.azure_credential import get_frontend_credential
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def _b64url(data: bytes) -> str:
 
 async def _sign_with_keyvault(vault_url: str, key_name: str, digest: bytes) -> bytes:
     """Sign *digest* with the RSA key in Key Vault using RS256."""
-    credential = get_credential()
+    credential = get_frontend_credential()
     key_client = KeyClient(vault_url=vault_url, credential=credential)
     try:
         key = await key_client.get_key(key_name)

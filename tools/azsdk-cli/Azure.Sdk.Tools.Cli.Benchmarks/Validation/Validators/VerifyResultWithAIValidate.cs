@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
 
         public async Task<ValidationResult> ValidateAsync(ValidationContext context, CancellationToken cancellationToken = default)
         {
-            CopilotClient client = new CopilotClient();
+            using CopilotClient client = new CopilotClient();
             var sessionConfig = new SessionConfig
             {
                 WorkingDirectory = context.RepoPath,

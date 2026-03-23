@@ -26,6 +26,7 @@ from evals._util import (
     load_recordings,
     save_recordings,
 )
+from src._credential import warm_up_credential
 from src._settings import SettingsManager
 
 DEFAULT_NUM_RUNS: int = 1
@@ -41,7 +42,7 @@ class ExecutionContext:
             "resource_group_name": self.settings.get("EVALS_RG"),
             "project_name": self.settings.get("EVALS_PROJECT_NAME"),
         }
-        self._credential_kwargs = self._create_credential_kwargs()
+        self.credential_kwargs = self._create_credential_kwargs()
         self._temp_files: list[Path] = []
         self._temp_files_lock = threading.Lock()
 
@@ -65,7 +66,7 @@ class ExecutionContext:
     def in_ci(self) -> bool:
         return bool(os.getenv("TF_BUILD"))
 
-    def _load_test_file(self, test_file: Path) -> dict:
+    def load_test_file(self, test_file: Path) -> dict:
         """Load test file - supports both JSON and YAML formats."""
         try:
             with test_file.open("r", encoding="utf-8") as f:
@@ -145,6 +146,10 @@ class EvaluationRunner:
     def _ensure_context(self):
         if self._context is None:
             self._context = ExecutionContext()
+            # Pre-acquire a token so parallel workers find it cached
+            # instead of all racing to spawn az-cli subprocesses.
+            if not self._context.in_ci():
+                warm_up_credential()
 
     def run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Execute all targets in the discovery result.
@@ -164,8 +169,10 @@ class EvaluationRunner:
     def _run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Run tests in parallel with progress tracking."""
         workflow_count = len(discovery_result.targets)
-        cpu_count = os.cpu_count() or 4
-        max_workers = min(cpu_count * 2, workflow_count)
+        # Limit concurrency to avoid overwhelming credential token
+        # acquisition (AzureCliCredential subprocess calls fail under
+        # heavy parallelism).
+        max_workers = min(4, workflow_count)
         results = []
         total_targets = len(discovery_result.targets)
 
@@ -219,7 +226,7 @@ class EvaluationRunner:
             test_file_paths = []
 
             for test_file in target.test_files:
-                test_case = self._context._load_test_file(test_file)
+                test_case = self._context.load_test_file(test_file)
                 test_file_to_case[test_file] = test_case
                 testcase_id = test_case.get("testcase")
                 if testcase_id:
@@ -300,7 +307,7 @@ class EvaluationRunner:
                 evaluator_config={"metrics": evaluator.evaluator_config},
                 target=evaluator.target_function,
                 fail_on_evaluator_errors=False,
-                **self._context._credential_kwargs,
+                **self._context.credential_kwargs,
             )
             results.append(result)
 
@@ -341,7 +348,7 @@ class EvaluationRunner:
                 passed_tests = []
                 partial_tests = []
                 raw = result.raw_results[0]
-                for filename, eval_result in raw.items():
+                for _, eval_result in raw.items():
                     for res in eval_result["rows"]:
                         testcase = res.get("inputs.testcase", "unknown")
                         score = res.get("outputs.metrics.score")

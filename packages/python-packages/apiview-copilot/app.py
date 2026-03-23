@@ -91,13 +91,16 @@ async def submit_api_review_job(
     if job_request.language not in SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language `{job_request.language}`")
 
-    reviewer = ApiViewReview(
-        language=job_request.language,
-        target=job_request.target,
-        base=job_request.base,
-        outline=job_request.outline,
-        comments=job_request.comments,
-    )
+    try:
+        reviewer = ApiViewReview(
+            language=job_request.language,
+            target=job_request.target,
+            base=job_request.base,
+            outline=job_request.outline,
+            comments=job_request.comments,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     job_id = reviewer.job_id
     db_manager.review_jobs.create(job_id, data={"status": ApiReviewJobStatus.InProgress, "finished": None})
 

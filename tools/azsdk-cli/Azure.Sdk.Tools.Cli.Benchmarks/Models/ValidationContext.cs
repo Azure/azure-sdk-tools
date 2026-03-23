@@ -49,7 +49,7 @@ public class ValidationContext
     /// <summary>
     /// Gets the tool calls made during execution.
     /// </summary>
-    public IReadOnlyList<string> ToolCalls { get; init; } = [];
+    public IReadOnlyList<ToolCallRecord> ToolCalls { get; init; } = [];
 
     /// <summary>
     /// Gets the list of questions asked by the model and the corresponding answers provided during execution.

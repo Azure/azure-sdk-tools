@@ -26,7 +26,8 @@ from azure.ai.agentserver.agentframework import from_agent_framework
 import config.app_config as app_config
 from config.app_config import get as cfg
 from tools.knowledge_tools import KnowledgeTools
-from tools.pipeline_tools import create_ado_mcp_tool
+from tools.ado_mcp_tools import create_ado_mcp_tool
+from tools.github_mcp_tools import create_github_mcp_tool
 from tools.tenant_tools import TenantTools
 from utils.azure_ai_foundry import get_agent_client
 
@@ -47,7 +48,8 @@ async def main() -> None:
     agent_client = get_agent_client()
     instructions = _load_instructions(Path(__file__).parent / "instruction.md")
     knowledge_tools = KnowledgeTools()
-    ado_mcp_tool = create_ado_mcp_tool()
+    ado_mcp_tool = await create_ado_mcp_tool()
+    github_mcp_tool = await create_github_mcp_tool(agent_client)
     tenant_tools = TenantTools()
 
     agent = Agent(
@@ -57,12 +59,12 @@ async def main() -> None:
         tools=[
             knowledge_tools.search_knowledge_base,
             ado_mcp_tool,
+            github_mcp_tool,
             tenant_tools.route_tenant,
         ],
     )
 
-    # model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.1")
-    model = "gpt-5.4"
+    model = cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL")
     logger.info(f"Azure SDK QA Bot Agent running — model: {model}")
 
     server = from_agent_framework(agent)

@@ -31,7 +31,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from utils.azure_ai_foundry import get_project_client
+from utils.azure_ai_foundry import get_openai_client
 
 logger = logging.getLogger(__name__)
 
@@ -138,20 +138,19 @@ async def execute_prompt(
 
     response_format: dict[str, Any] = schema if schema else {"type": "json_object"}
 
-    project_client = get_project_client()
-    async with project_client.get_openai_client() as openai_client:
-        try:
-            response = await openai_client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message},
-                ],
-                response_format=response_format,
-                **kwargs,
-            )
-        except Exception as exc:
-            raise LLMError(f"LLM call failed: {exc}") from exc
+    openai_client = get_openai_client()
+    try:
+        response = await openai_client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+            response_format=response_format,
+            **kwargs,
+        )
+    except Exception as exc:
+        raise LLMError(f"LLM call failed: {exc}") from exc
 
     if not response.choices:
         raise LLMError("LLM returned no choices")

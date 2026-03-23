@@ -13,7 +13,7 @@ The Azure SDK QA Bot Agent helps developers with Azure SDK questions. This proje
   - Azure AI Search
   - Azure Storage
   - Azure OpenAI / Azure AI Foundry
-  - Microsoft Foundry Project (with a chat model deployed, e.g. `gpt-5.1`)
+  - Microsoft Foundry Project (with a chat model deployed, e.g. `gpt-5.4`)
 
 ## Installation and Setup
 

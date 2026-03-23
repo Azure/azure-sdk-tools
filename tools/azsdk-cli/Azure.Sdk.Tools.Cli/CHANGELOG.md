@@ -4,6 +4,8 @@
 
 ### Features Added
 
+- Immplemented version update for Go language service
+
 ### Breaking Changes
 
 ### Bugs Fixed

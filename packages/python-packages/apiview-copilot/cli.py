@@ -28,6 +28,7 @@ from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
+from knack.util import CLIError
 from src._apiview import (
     ApiViewClient,
 )
@@ -287,15 +288,18 @@ def _local_review(
         with pathlib.Path(existing_comments).open("r", encoding="utf-8") as f:
             comments_obj = json.load(f)
 
-    reviewer = ApiViewReview(
-        target=target_apiview,
-        base=base_apiview,
-        language=language,
-        outline=outline_text,
-        comments=comments_obj,
-        write_output=True,
-        write_debug_logs=debug_log,
-    )
+    try:
+        reviewer = ApiViewReview(
+            target=target_apiview,
+            base=base_apiview,
+            language=language,
+            outline=outline_text,
+            comments=comments_obj,
+            write_output=True,
+            write_debug_logs=debug_log,
+        )
+    except ValueError as e:
+        raise CLIError(str(e)) from e
     reviewer.run()
     reviewer.close()
 

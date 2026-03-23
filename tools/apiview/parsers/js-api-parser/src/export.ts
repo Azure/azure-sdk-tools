@@ -27,11 +27,16 @@ async function loadApiJson(fileName: string) {
   };
 }
 
-async function loadMetadata(fileName: string): Promise<Record<string, string> | undefined> {
+async function loadMetadata(
+  fileName: string,
+): Promise<{ crossLanguagePackageId?: string; crossLanguageDefinitionIds?: Record<string, string> } | undefined> {
   try {
     const metadataContent = await readFile(fileName, { encoding: "utf-8" });
     const metadata: CrossLanguageMetadata = JSON.parse(metadataContent);
-    return metadata.crossLanguageDefinitions?.CrossLanguageDefinitionId;
+    return {
+      crossLanguagePackageId: metadata.crossLanguageDefinitions?.CrossLanguagePackageId,
+      crossLanguageDefinitionIds: metadata.crossLanguageDefinitions?.CrossLanguageDefinitionId,
+    };
   } catch (error) {
     console.warn(`Warning: Could not load metadata file ${fileName}:`, String(error));
     return undefined;
@@ -51,9 +56,7 @@ async function main() {
   );
 
   // Load cross-language metadata if provided
-  const crossLanguageDefinitionIds = process.argv[4]
-    ? await loadMetadata(process.argv[4])
-    : undefined;
+  const loadedMetadata = process.argv[4] ? await loadMetadata(process.argv[4]) : undefined;
 
   const result = JSON.stringify(
     generateApiView({
@@ -66,7 +69,8 @@ async function main() {
       },
       dependencies,
       apiModel,
-      crossLanguageDefinitionIds,
+      crossLanguagePackageId: loadedMetadata?.crossLanguagePackageId,
+      crossLanguageDefinitionIds: loadedMetadata?.crossLanguageDefinitionIds,
     }),
   );
 

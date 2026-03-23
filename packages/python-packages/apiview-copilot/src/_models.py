@@ -106,7 +106,7 @@ class APIViewComment(BaseModel):
         description="The thread ID grouping this comment with its replies.",
         alias="ThreadId",
     )
-    severity: Optional[int] = Field(
+    severity: Optional[str] = Field(
         default=None,
         description="The severity level of the comment.",
         alias="Severity",

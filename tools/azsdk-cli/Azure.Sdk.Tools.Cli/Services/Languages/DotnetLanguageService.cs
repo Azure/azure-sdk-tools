@@ -402,6 +402,16 @@ public sealed partial class DotnetLanguageService: LanguageService
                     packageInfo);
             }
 
+            // Only provision ci.yml for client/dataplane SDKs.
+            // Management-plane SDKs use ci.mgmt.yml which is handled separately.
+            if (packageInfo.SdkType == SdkType.Management)
+            {
+                logger.LogInformation("Skipping CI YAML provisioning for management SDK at {PackagePath}", packagePath);
+                return PackageOperationResponse.CreateSuccess(
+                    "CI YAML provisioning skipped for management-plane SDK (ci.mgmt.yml is not yet supported).",
+                    packageInfo);
+            }
+
             var ciYamlPath = Path.Combine(repoRoot, "sdk", serviceDirectory, "ci.yml");
 
             if (!File.Exists(ciYamlPath))

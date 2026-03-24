@@ -9,10 +9,9 @@ The simplest way to get started:
 1. Install this package with `pip install -r requirements.txt` or `pip install -r dev_requirements.txt` if you also need to run evaluations.
 2. Create a `.env` file with the following contents to access the staging environment:
 ```
-AZURE_APP_CONFIG_ENDPOINT="https://avc-appconfig-staging.azconfig.io"
 ENVIRONMENT_NAME="staging"
 ```
-> **Note:** All other settings (Foundry endpoint, project, API keys, Cosmos DB, etc.) are resolved at runtime from Azure App Configuration.
+> **Note:** The App Configuration endpoint is resolved automatically from `ENVIRONMENT_NAME`. All other settings (Foundry endpoint, project, API keys, Cosmos DB, etc.) are resolved at runtime from Azure App Configuration.
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
 4. Generate a review using `avc review generate -l <LANG> -t <PATH_TO_TARGET_FILE> [-b <PATH_TO_BASE_FILE>] [--debug-log] [--remote]`.
 5. Examine the output under `scratch/output/<LANG>/<TEST_FILE>.json`.

@@ -21,6 +21,11 @@ class SettingsManager:
     _instances = {}
     _lock = threading.Lock()
 
+    APP_CONFIG_ENDPOINTS = {
+        "production": "https://avc-appconfig.azconfig.io",
+        "staging": "https://avc-appconfig-staging.azconfig.io",
+    }
+
     def __new__(cls, environment=None):
         env_key = (environment or os.getenv("ENVIRONMENT_NAME") or "").strip().lower()
         if env_key not in cls._instances:
@@ -37,9 +42,6 @@ class SettingsManager:
             if hasattr(self, "_initialized") and self._initialized:
                 return
             self.credential = DefaultAzureCredential()
-            self.app_config_endpoint = os.getenv("AZURE_APP_CONFIG_ENDPOINT")
-            if not self.app_config_endpoint:
-                raise ValueError("AZURE_APP_CONFIG_ENDPOINT must be set in the environment.")
             if environment:
                 self.label = environment.strip().lower()
             else:
@@ -47,6 +49,12 @@ class SettingsManager:
                 if not self.label:
                     raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
                 self.label = self.label.strip().lower()
+            self.app_config_endpoint = self.APP_CONFIG_ENDPOINTS.get(self.label)
+            if not self.app_config_endpoint:
+                raise ValueError(
+                    f"No App Configuration endpoint for environment '{self.label}'. "
+                    f"Valid environments: {', '.join(sorted(self.APP_CONFIG_ENDPOINTS))}"
+                )
             self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
             self._keyvault_clients = {}
             self._cache = {}

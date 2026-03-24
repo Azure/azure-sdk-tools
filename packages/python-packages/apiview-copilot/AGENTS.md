@@ -57,7 +57,7 @@ The review pipeline in `ApiViewReview.run()` follows these stages:
 
 ## Azure Resource Dependencies
 
-- **Azure App Configuration** — Central config store (`AZURE_APP_CONFIG_ENDPOINT` env var, `ENVIRONMENT_NAME` label).
+- **Azure App Configuration** — Central config store (endpoint resolved from `ENVIRONMENT_NAME`).
 - **Azure Key Vault** — Secret storage, referenced from App Configuration.
 - **Azure Cosmos DB** — Guidelines, examples, memories, review jobs, metrics, evals.
 - **Azure AI Search** — Semantic search index for RAG.
@@ -86,7 +86,7 @@ Invoked via `avc` (or `python cli.py`):
 - `avc db link` / `avc db unlink` — Link/unlink knowledge base items.
 - `avc report metrics` — Generate metrics reports.
 - `avc report feedback` / `avc report memory` — Audit feedback and memories.
-- `avc report comment-feedback` / `avc report analyze-comments` — Analyze AI comment quality.
+- `avc report analyze-comments` — Analyze AI comment quality.
 - `avc ops deploy` — Deploy to Azure App Service.
 - `avc ops check` — Health check the deployed service.
 - `avc ops grant` / `avc ops revoke` — Manage Azure RBAC permissions.
@@ -109,8 +109,7 @@ pip install -r dev_requirements.txt
 ```
 
 Required environment variables (typically in `.env`):
-- `AZURE_APP_CONFIG_ENDPOINT` — Azure App Configuration endpoint URL.
-- `ENVIRONMENT_NAME` — Configuration label (e.g., `production`, `staging`).
+- `ENVIRONMENT_NAME` — Configuration label (e.g., `production`, `staging`). The App Configuration endpoint is resolved automatically from this value.
 
 ## Supported Languages
 

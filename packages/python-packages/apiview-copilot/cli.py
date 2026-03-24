@@ -1607,31 +1607,6 @@ def resolve_language_to_canonical(lang: str) -> str:
     return resolve_language(lang)[0]
 
 
-def get_ai_comment_feedback(
-    language: str,
-    start_date: str,
-    end_date: str,
-    exclude: Optional[list[str]] = None,
-    environment: str = "production",
-    output_format: str = "json",
-):
-    """
-    Retrieves AI-generated comments that received feedback within the date range.
-    Filters by Feedback[].SubmittedOn and ChangeHistory[].ChangedOn timestamps.
-    """
-    results = _get_ai_comment_feedback(
-        language=language,
-        start_date=start_date,
-        end_date=end_date,
-        exclude=exclude,
-        environment=environment,
-    )
-    if output_format == "yaml":
-        print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
-    else:
-        print(json.dumps(results, indent=2))
-
-
 def analyze_comments(language: str, start_date: str, end_date: str, environment: str = "production"):
     """
     Analyze APIView comments by language and date window, output count, unique authors, and theme analysis via Prompty.
@@ -1735,7 +1710,9 @@ def audit_feedback(
     start_date: str,
     end_date: str,
     language: Optional[str] = None,
+    exclude: Optional[list[str]] = None,
     environment: str = "production",
+    output_format: str = "json",
 ):
     """
     Retrieve AI comment feedback from APIView between start_date and end_date.
@@ -1745,9 +1722,13 @@ def audit_feedback(
         language=language,
         start_date=start_date,
         end_date=end_date,
+        exclude=exclude,
         environment=environment,
     )
-    print(json.dumps(results, indent=2))
+    if output_format == "yaml":
+        print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    else:
+        print(json.dumps(results, indent=2))
 
 
 def audit_memory(
@@ -1755,6 +1736,7 @@ def audit_memory(
     end_date: str,
     language: Optional[str] = None,
     environment: str = "production",
+    output_format: str = "json",
 ):
     """
     Retrieve memories created between start_date and end_date.
@@ -1778,8 +1760,28 @@ def audit_memory(
     ]
 
     if language:
-        query += " AND c.language = @language"
-        parameters.append({"name": "@language", "value": language})
+        # Build a set of known aliases so we match regardless of how the language
+        # was stored (e.g. "csharp", "dotnet", "C#", "c#").
+        aliases = {language.lower()}
+        try:
+            canonical, pretty = resolve_language(language)
+            aliases.add(canonical.lower())
+            aliases.add(pretty.lower())
+        except ValueError:
+            pass
+        # Also cover common Cosmos-stored forms via the alias table
+        _build_language_alias_table()
+        for alias_key, (canon, _pretty) in _LANGUAGE_ALIAS_TABLE.items():
+            if canon.lower() in aliases or alias_key in aliases:
+                aliases.add(alias_key)
+                aliases.add(canon.lower())
+                aliases.add(_pretty.lower())
+        alias_clauses = []
+        for i, alias in enumerate(sorted(aliases)):
+            param_name = f"@lang_{i}"
+            alias_clauses.append(param_name)
+            parameters.append({"name": param_name, "value": alias})
+        query += f" AND LOWER(c.language) IN ({', '.join(alias_clauses)})"
 
     results = list(
         db_manager.memories.client.query_items(
@@ -1797,7 +1799,10 @@ def audit_memory(
         if "_ts" in item:
             item["created_at"] = datetime.fromtimestamp(item["_ts"], tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    print(json.dumps(results, indent=2))
+    if output_format == "yaml":
+        print(yaml.dump(results, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    else:
+        print(json.dumps(results, indent=2))
 
 
 class CliCommandsLoader(CLICommandsLoader):
@@ -1844,7 +1849,6 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("metrics", "report_metrics")
             g.command("feedback", "audit_feedback")
             g.command("memory", "audit_memory")
-            g.command("comment-feedback", "get_ai_comment_feedback")
             g.command("analyze-comments", "analyze_comments")
         return OrderedDict(self.command_table)
 
@@ -2331,7 +2335,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 nargs="*",
                 help="Languages to exclude from the report (e.g., --exclude Java Go).",
-                options_list=["--exclude", "-x"],
+                options_list=["--exclude"],
                 default=None,
             )
         with ArgumentsContext(self, "ops") as ac:
@@ -2370,40 +2374,29 @@ class CliCommandsLoader(CLICommandsLoader):
                 default="production",
                 choices=["production", "staging"],
             )
-        with ArgumentsContext(self, "report comment-feedback") as ac:
-            ac.argument(
-                "language",
-                type=resolve_language_to_canonical,
-                help="The language to filter by (e.g., python, Go, C#).",
-                options_list=["--language", "-l"],
-            )
-            ac.argument(
-                "start_date",
-                type=str,
-                help="The start date (YYYY-MM-DD).",
-                options_list=["--start-date", "-s"],
-            )
-            ac.argument(
-                "end_date",
-                type=str,
-                help="The end date (YYYY-MM-DD).",
-                options_list=["--end-date", "-e"],
-            )
+        with ArgumentsContext(self, "report feedback") as ac:
             ac.argument(
                 "exclude",
                 type=str,
                 nargs="*",
                 help="Feedback types to exclude. Can be 'good', 'bad', or 'delete'.",
-                options_list=["--exclude", "-x"],
+                options_list=["--exclude"],
                 choices=["good", "bad", "delete"],
             )
             ac.argument(
-                "environment",
+                "output_format",
                 type=str,
-                help="The APIView environment. Defaults to 'production'.",
-                options_list=["--environment"],
-                default="production",
-                choices=["production", "staging"],
+                help="Output format. Defaults to 'json'.",
+                options_list=["--format", "-f"],
+                default="json",
+                choices=["json", "yaml"],
+            )
+        with ArgumentsContext(self, "report memory") as ac:
+            ac.argument(
+                "language",
+                type=str,
+                help="The language to filter by (e.g., python, csharp, C#, typescript).",
+                options_list=["--language", "-l"],
             )
             ac.argument(
                 "output_format",

@@ -33,7 +33,6 @@ pip install -r requirements.txt
 
 Create a `.env` file in the project root with:
 ```
-AZURE_APP_CONFIG_ENDPOINT="https://avc-appconfig-staging.azconfig.io"
 ENVIRONMENT_NAME="staging"
 ```
 

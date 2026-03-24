@@ -43,7 +43,7 @@ async def create_ado_mcp_tool() -> MCPStdioTool:
     return MCPStdioTool(
         name="ado-mcp-tools",
         command="npx",
-        args=["-y", "@azure-devops/mcp", org, "--authentication", "envvar", "--domains", "pipelines", "search"],
+        args=["--no-install", "@azure-devops/mcp", org, "--authentication", "envvar", "--domains", "pipelines", "search"],
         env={**os.environ, "ADO_MCP_AUTH_TOKEN": token.token},
         load_prompts=False,
         description=(

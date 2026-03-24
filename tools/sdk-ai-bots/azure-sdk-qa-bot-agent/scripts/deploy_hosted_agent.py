@@ -137,20 +137,20 @@ def _restore_project_user_assigned_identities(
 
 
 def _wait_for_agent_running(
-    account_name: str, project_name: str, agent_name: str,
+    account_name: str, project_name: str, agent_name: str, agent_version: str,
     timeout: int = 300, poll_interval: int = 10,
 ) -> bool:
     """Poll until the hosted agent reaches a running state."""
-    print(f"Waiting for agent {agent_name} to be running (timeout {timeout}s)...")
+    print(f"Waiting for agent {agent_name} version {agent_version} to be running (timeout {timeout}s)...")
     deadline = time.time() + timeout
     while time.time() < deadline:
         result = _run_quiet([
-            "az", "cognitiveservices", "agent", "show",
+            "az", "cognitiveservices", "agent", "status",
             "--account-name", account_name,
             "--project-name", project_name,
             "--name", agent_name,
-            "--query", "properties.provisioningState",
-            "-o", "tsv",
+            "--agent-version", agent_version,
+            "-o", "json",
         ], shell=True)
         if result.returncode != 0:
             # Command failed — likely project/account not found or not authenticated
@@ -159,14 +159,31 @@ def _wait_for_agent_running(
             print(f"  Ensure you are logged in to the correct subscription and account/project names are correct.")
             print(f"  Account: {account_name}, Project: {project_name}, Agent: {agent_name}")
             return False
-        state = result.stdout.strip().lower()
-        if state in ("running", "succeeded"):
-            print(f"  Agent is {state}.")
-            return True
-        if state in ("failed", "error"):
-            print(f"  Agent entered {state} state.")
+        try:
+            payload = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            print(f"  WARNING: Could not parse agent status payload: {result.stdout.strip()}")
             return False
-        print(f"  Status: {result.stdout.strip()} — retrying in {poll_interval}s...")
+
+        status = str(payload.get("status", "")).lower()
+        container = payload.get("container") or {}
+        container_state = str(container.get("state", "")).lower()
+        provisioning_state = str(container.get("provisioning_state", "")).lower()
+
+        if status in ("running", "succeeded"):
+            print(f"  Agent status is {status} (container={container_state}, provisioning={provisioning_state}).")
+            return True
+        if status in ("failed", "error", "stopped") or provisioning_state in ("failed", "error"):
+            print(
+                "  Agent entered a terminal non-running state "
+                f"(status={status}, container={container_state}, provisioning={provisioning_state})."
+            )
+            return False
+        print(
+            "  Status: "
+            f"status={status}, container={container_state}, provisioning={provisioning_state} "
+            f"— retrying in {poll_interval}s..."
+        )
         time.sleep(poll_interval)
     print(f"  Timed out after {timeout}s.")
     return False
@@ -318,7 +335,7 @@ def main() -> None:
 
     # ── Wait for running, then restore identities and restart ──
     if saved_identities and project_resource_id:
-        if _wait_for_agent_running(account_name, project_name, agent.name):
+        if _wait_for_agent_running(account_name, project_name, agent.name, agent_version):
             print(f"Restoring {len(saved_identities)} user-assigned identities...")
             _restore_project_user_assigned_identities(project_resource_id, saved_identities)
             print("Identities restored successfully.")
@@ -327,7 +344,7 @@ def main() -> None:
             _stop_agent(account_name, project_name, agent.name, agent_version)
             _start_agent(account_name, project_name, agent.name, agent_version)
 
-            if _wait_for_agent_running(account_name, project_name, agent.name):
+            if _wait_for_agent_running(account_name, project_name, agent.name, agent_version):
                 print(f"Done — agent {agent.name} v{agent.version} is running with restored identities.")
             else:
                 print("WARNING: Agent restart did not reach Running state after identities were restored.")

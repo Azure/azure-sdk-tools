@@ -5,11 +5,14 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 
 # Install Node.js tooling required by MCP stdio servers.
-RUN tdnf install -y nodejs npm \
+RUN tdnf install -y nodejs npm ca-certificates \
 	&& node --version \
 	&& npm --version \
 	&& npx --version \
 	&& tdnf clean all
+
+# Preinstall ADO MCP package so runtime does not fetch from npm registry.
+RUN npm install --no-save @azure-devops/mcp
 
 # Install dependencies first (layer caching)
 COPY requirements.txt .

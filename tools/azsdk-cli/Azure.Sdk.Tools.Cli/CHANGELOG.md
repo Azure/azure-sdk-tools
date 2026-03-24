@@ -5,7 +5,7 @@
 ### Features Added
 
 - CLI logging output now gets sent to stderr instead of stdout
-- Simplified CLI log format. Detailed class name formatting is still available via --debug
+- Simplified CLI log format. Detailed class name formatting is still available via `--debug`
 - Improve user cancellation handling
 
 ### Breaking Changes

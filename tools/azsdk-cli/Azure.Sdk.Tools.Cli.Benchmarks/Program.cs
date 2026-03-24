@@ -19,14 +19,14 @@ public class Program
         // list command
         var listCommand = new Command("list", "List all available scenarios");
         var listTagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
-        var listRepoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
+        var listRepoOption = new Option<string[]>("--repo") { Description = "Filter scenarios by repository (can be specified multiple times, e.g., Azure/azure-rest-api-specs or Azure/azure-rest-api-specs:branch)", AllowMultipleArgumentsPerToken = true };
         listCommand.Options.Add(listTagOption);
         listCommand.Options.Add(listRepoOption);
         listCommand.SetAction((parseResult, _) =>
         {
             var tags = parseResult.GetValue(listTagOption);
-            var repo = parseResult.GetValue(listRepoOption);
-            HandleListCommand(tags, repo);
+            var repos = parseResult.GetValue(listRepoOption);
+            HandleListCommand(tags, repos);
             return Task.FromResult(0);
         });
         rootCommand.Subcommands.Add(listCommand);
@@ -47,9 +47,7 @@ public class Program
         var reportOption = new Option<bool>("--report") { Description = "Generate a markdown report after the run completes" };
         var outputOption = new Option<string?>("--output") { Description = "Output file path for the report (used with --report)" };
         var tagOption = new Option<string[]>("--tag") { Description = "Filter scenarios by tag (can be specified multiple times)", AllowMultipleArgumentsPerToken = true };
-        var repoOption = new Option<string?>("--repo") { Description = "Filter scenarios by repository (e.g., Azure/azure-rest-api-specs)" };
-        var authoringSpecRepoOption = new Option<string?>("--authoring-spec-repo") { Description = "The repository containing the authoring skill to override (e.g. Azure/azure-rest-api-specs or Azure/azure-rest-api-specs:<branch>)" };
-        var authoringSkillPathOption = new Option<string?>("--authoring-skill-path") { Description = "The filesystem path of the authoring skill directory to be used." };
+        var repoOption = new Option<string[]>("--repo") { Description = "Filter scenarios by repository (can be specified multiple times). Append :ref to override the branch (e.g., Azure/azure-rest-api-specs:my-branch)", AllowMultipleArgumentsPerToken = true };
 
         runCommand.Arguments.Add(nameArgument);
         runCommand.Options.Add(allOption);
@@ -61,8 +59,6 @@ public class Program
         runCommand.Options.Add(outputOption);
         runCommand.Options.Add(tagOption);
         runCommand.Options.Add(repoOption);
-        runCommand.Options.Add(authoringSpecRepoOption);
-        runCommand.Options.Add(authoringSkillPathOption);
 
         runCommand.SetAction(async (parseResult, _) =>
         {
@@ -75,10 +71,8 @@ public class Program
             var report = parseResult.GetValue(reportOption);
             var output = parseResult.GetValue(outputOption);
             var tags = parseResult.GetValue(tagOption);
-            var repo = parseResult.GetValue(repoOption);
-            var authoringSpecRepo = parseResult.GetValue(authoringSpecRepoOption);
-            var authoringSkillPath = parseResult.GetValue(authoringSkillPathOption);
-            return await HandleRunCommand(name, all, tags, repo, model, cleanup, verbose, parallel, authoringSpecRepo, authoringSkillPath, report, output);
+            var repos = parseResult.GetValue(repoOption);
+            return await HandleRunCommand(name, all, tags, repos, model, cleanup, verbose, parallel, report, output);
         });
         rootCommand.Subcommands.Add(runCommand);
 
@@ -102,9 +96,10 @@ public class Program
         return await rootCommand.Parse(args).InvokeAsync();
     }
 
-    private static void HandleListCommand(string[]? tags, string? repo)
+    private static void HandleListCommand(string[]? tags, string[]? repos)
     {
-        var scenarios = FilterScenarios(ScenarioDiscovery.DiscoverAll(), tags, repo).ToList();
+        var repoOptions = ParseRepoOptions(repos);
+        var scenarios = FilterScenarios(ScenarioDiscovery.DiscoverAll(), tags, repoOptions).ToList();
 
         if (scenarios.Count == 0)
         {
@@ -131,7 +126,7 @@ public class Program
         Console.WriteLine($"\nTotal: {scenarios.Count} scenario(s)");
     }
 
-    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string? repo, string? model, CleanupPolicy cleanup, bool verbose, int parallel, string? authoringSpecRepo, string? authoringSkillPath, bool report, string? output)
+    private static async Task<int> HandleRunCommand(string? name, bool all, string[]? tags, string[]? repos, string? model, CleanupPolicy cleanup, bool verbose, int parallel, bool report, string? output)
     {
         if (string.IsNullOrEmpty(name) && !all)
         {
@@ -147,7 +142,7 @@ public class Program
             return 1;
         }
 
-        if ((tags is { Length: > 0 } || repo != null) && !all)
+        if ((tags is { Length: > 0 } || repos is { Length: > 0 }) && !all)
         {
             Console.WriteLine("Error: --tag and --repo can only be used with --all");
             return 1;
@@ -159,11 +154,14 @@ public class Program
             return 1;
         }
 
+        // Parse --repo for filtering and optional ref override
+        var repoOptions = ParseRepoOptions(repos);
+
         var scenariosToRun = new List<BenchmarkScenario>();
 
         if (all)
         {
-            scenariosToRun.AddRange(FilterScenarios(ScenarioDiscovery.DiscoverAll(authoringSpecRepo, authoringSkillPath), tags, repo));
+            scenariosToRun.AddRange(FilterScenarios(ScenarioDiscovery.DiscoverAll(), tags, repoOptions));
             if (scenariosToRun.Count == 0)
             {
                 var filters = new List<string>();
@@ -172,9 +170,9 @@ public class Program
                     filters.Add($"tag(s): {string.Join(", ", tags)}");
                 }
 
-                if (repo != null)
+                if (repos is { Length: > 0 })
                 {
-                    filters.Add($"repo: {repo}");
+                    filters.Add($"repo(s): {string.Join(", ", repos)}");
                 }
 
                 var message = filters.Count > 0
@@ -186,12 +184,12 @@ public class Program
         }
         else
         {
-            var scenario = ScenarioDiscovery.FindByName(name!, authoringSpecRepo, authoringSkillPath);
+            var scenario = ScenarioDiscovery.FindByName(name!);
             if (scenario == null)
             {
                 Console.WriteLine($"Error: Scenario '{name}' not found.");
                 Console.WriteLine("\nAvailable scenarios:");
-                foreach (var s in ScenarioDiscovery.DiscoverAll(authoringSpecRepo, authoringSkillPath))
+                foreach (var s in ScenarioDiscovery.DiscoverAll())
                 {
                     Console.WriteLine($"  - {s.Name}");
                 }
@@ -219,13 +217,21 @@ public class Program
             Console.WriteLine("  (overridden via --model flag)");
         }
         Console.WriteLine($"Parallelism: {parallel}");
+        if (repoOptions != null)
+        {
+            foreach (var (repoKey, gitRef) in repoOptions.Where(kv => kv.Value != null))
+            {
+                Console.WriteLine($"Ref override: {repoKey} → {gitRef}");
+            }
+        }
         Console.WriteLine();
 
         var options = new BenchmarkOptions
         {
             CleanupPolicy = cleanup,
             Model = model,
-            Verbose = verbose
+            Verbose = verbose,
+            RefOverrides = repoOptions
         };
 
         var results = new ConcurrentBag<(BenchmarkScenario Scenario, BenchmarkResult Result)>();
@@ -305,19 +311,44 @@ public class Program
         return resultsList.All(r => r.Result.Passed) ? 0 : 1;
     }
 
-    private static IEnumerable<BenchmarkScenario> FilterScenarios(IEnumerable<BenchmarkScenario> scenarios, string[]? tags, string? repo)
+    private static IEnumerable<BenchmarkScenario> FilterScenarios(IEnumerable<BenchmarkScenario> scenarios, string[]? tags, Dictionary<string, string?>? repoOptions)
     {
         if (tags is { Length: > 0 })
         {
             scenarios = scenarios.Where(s => tags.Any(t => s.Tags.Contains(t, StringComparer.OrdinalIgnoreCase)));
         }
 
-        if (!string.IsNullOrEmpty(repo))
+        if (repoOptions is { Count: > 0 })
         {
-            scenarios = scenarios.Where(s => $"{s.Repo.Owner}/{s.Repo.Name}".Equals(repo, StringComparison.OrdinalIgnoreCase));
+            scenarios = scenarios.Where(s => repoOptions.ContainsKey($"{s.Repo.Owner}/{s.Repo.Name}"));
         }
 
         return scenarios;
+    }
+
+    /// <summary>
+    /// Parses --repo values into a dictionary keyed by "Owner/Name" with optional ref override values.
+    /// </summary>
+    private static Dictionary<string, string?>? ParseRepoOptions(string[]? repos)
+    {
+        if (repos is not { Length: > 0 })
+        {
+            return null;
+        }
+
+        var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var repo in repos)
+        {
+            if (!RepoConfig.TryParse(repo, out var owner, out var name, out var gitRef))
+            {
+                throw new ArgumentException($"Invalid --repo format: '{repo}'. Expected 'Owner/Name' or 'Owner/Name:Ref'.");
+            }
+
+            result[$"{owner}/{name}"] = gitRef;
+        }
+
+        return result;
     }
 
     private static void PrintResult(BenchmarkResult result)

@@ -84,7 +84,6 @@ namespace Reviews {
      */
     model CopilotReviewJobStartedResponse {
         /** The unique job identifier. Use this to poll for results via get-copilot-review-job. */
-        @encodedName("application/json", "job_id")
         jobId: string;
     }
 

@@ -16,7 +16,7 @@ public static class AuthoringScenarioLoader
     /// Loads all AuthoringScenario instances from JSON files in the TestData directory.
     /// </summary>
     /// <returns>An enumerable of AuthoringScenario instances.</returns>
-    public static IEnumerable<AuthoringScenario> LoadFromJsonFiles(string? authoringSpecRepo = null, string? authoringSkillPath = null)
+    public static IEnumerable<AuthoringScenario> LoadFromJsonFiles()
     {
         // Look for TestData in the source directory, not the build output
         var baseDir = AppContext.BaseDirectory;
@@ -77,8 +77,8 @@ public static class AuthoringScenarioLoader
                     testTspFiles: testCase.TestFiles,
                     toolsToCall: testCase.ToolsToCall,
                     verifyPlan: testCase.VerifyPlan ?? new List<string>(),
-                    authoringSpecRepo: authoringSpecRepo,
-                    authoringSkillPath: authoringSkillPath
+                    authoringSpecRepo: testCase.AuthoringSpecRepo,
+                    authoringSkillPath: testCase.AuthoringSkillPath
                 );
             }
         }
@@ -115,6 +115,12 @@ public static class AuthoringScenarioLoader
 
         [JsonPropertyName("verifyPlan")]
         public List<string>? VerifyPlan { get; set; }
+
+        [JsonPropertyName("authoringSpecRepo")]
+        public string? AuthoringSpecRepo { get; set; }
+
+        [JsonPropertyName("authoringSkillPath")]
+        public string? AuthoringSkillPath { get; set; }
 
     }
 }

@@ -53,8 +53,9 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     protected override string? GetPackageRootFromManifest(string manifestPath)
     {
-        // .NET layout: sdk/{service}/{PackageName}/src/{PackageName}.csproj
-        // We need to go up from src/ to the package root.
+        // .NET layout: sdk/{service}/{folder}/src/{Name}.csproj
+        // The folder name may differ from the package name (e.g., sdk/cognitiveservices/Knowledge.QnAMaker/).
+        // We go up from src/ to return the package root directory.
         var directory = Path.GetDirectoryName(manifestPath);
         if (directory == null)
         {

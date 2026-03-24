@@ -860,6 +860,11 @@ namespace APIViewWeb.Managers
                         file.PackageName = codeFile.PackageName;
                         file.PackageVersion = codeFile.PackageVersion;
                         file.ParserStyle = codeFile.ReviewLines.Count > 0 ? ParserStyle.Tree : ParserStyle.Flat;
+                        using (var hashStream = new MemoryStream())
+                        {
+                            await codeFile.SerializeAsync(hashStream);
+                            file.ContentHash = Convert.ToHexString(SHA256.HashData(hashStream.ToArray())).ToLowerInvariant();
+                        }
                         await _reviewsRepository.UpsertReviewAsync(review);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
@@ -974,6 +979,11 @@ namespace APIViewWeb.Managers
                         if (codeFile.ReviewLines.Count > 0)
                         {
                             file.ParserStyle = ParserStyle.Tree;
+                        }
+                        using (var hashStream = new MemoryStream())
+                        {
+                            await codeFile.SerializeAsync(hashStream);
+                            file.ContentHash = Convert.ToHexString(SHA256.HashData(hashStream.ToArray())).ToLowerInvariant();
                         }
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
                         _telemetryClient.TrackTrace($"Successfully Updated {revision.Language} revision with id {revision.Id}");
@@ -1494,6 +1504,11 @@ namespace APIViewWeb.Managers
                         codeFileDetails.VersionString = languageService.VersionString;
                         codeFileDetails.ParserStyle = ParserStyle.Tree;
                         codeFileDetails.IsConvertedTokenModel = true;
+                        using (var hashStream = new MemoryStream())
+                        {
+                            await codeFile.SerializeAsync(hashStream);
+                            codeFileDetails.ContentHash = Convert.ToHexString(SHA256.HashData(hashStream.ToArray())).ToLowerInvariant();
+                        }
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(revisionModel);
                     }                    
                 }

@@ -49,7 +49,7 @@ avc review get-job --job-id <JOB_ID>
 
 Commands available for working with the Flask app:
 
-- `avc app deploy`: Deploy the Flask app to Azure App Service based on what App Configuration is set in your .env file.
+- `avc ops deploy`: Deploy the Flask app to Azure App Service based on what App Configuration is set in your .env file.
 
 ## Running Evaluations
 
@@ -59,13 +59,11 @@ To run evaluations, see: [evals/README.md](./evals/README.md)
 
 Commands available for querying the search indexes:
 
-- `avc search guidelines`: Search the guidelines for a query.
-- `avc search examples`: Search the examples index for a query.
-- `avc search kb`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
+- `avc kb search`: This searches the examples and guidelines index for a query. It will resolve references and return a `Context` object that is filled into the prompt.
 
 If you would like to search the knowledge base and see the output the way the LLM will see it, you can do the following:
 
-`avc search kb --text "query" -l <LANG> --markdown > context.md`
+`avc kb search --text "query" -l <LANG> --markdown > context.md`
 
 This will dump the results to context.md which you can then view in VSCode with the preview editor.
 
@@ -132,6 +130,8 @@ avc apiview resolve-package --package "cosmos database" --language python
 If you need RBAC permissions to access CosmosDB, you can run the following script:
 `python scripts\apiview_permissions.py`
 
+Alternatively, use `avc ops grant` / `avc ops revoke` for local development permissions.
+
 You must be logged in to the "Azure SDK Engineering System" subscription (`az login`) and have the necessary permissions for this script to succeed.
 
 ## Reporting Metrics
@@ -140,7 +140,7 @@ Report is now available at [PowerBI](https://msit.powerbi.com/groups/3e17dcb0-42
 
 Underneath, we use a script to generate the metrics. You can use the following command:
 ```bash
-avc metrics report -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "production"|"staging"] [--charts] [--exclude <LANG1> <LANG2> ...]
+avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "production"|"staging"] [--charts] [--exclude <LANG1> <LANG2> ...]
 ```
 
 Options:
@@ -153,12 +153,12 @@ Options:
 
 To dump the markdown results to file:
 ```bash
-avc metrics report -s <YYYY-MM-DD> -e <YYYY-MM-DD> --markdown > metrics.md
+avc report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> --markdown > metrics.md
 ```
 
 To generate charts:
 ```bash
-avc metrics report -s 2026-01-01 -e 2026-01-31 --charts
+avc report metrics -s 2026-01-01 -e 2026-01-31 --charts
 ```
 
 This generates four PNG charts in `scratch/charts/`:

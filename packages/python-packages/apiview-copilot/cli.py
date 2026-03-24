@@ -70,7 +70,7 @@ helps[
     "review"
 ] = """
     type: group
-    short-summary: Commands for creating APIView reviews.
+    short-summary: Commands for creating and managing APIView reviews.
 """
 
 helps[
@@ -84,28 +84,28 @@ helps[
     "apiview"
 ] = """
     type: group
-    short-summary: Commands for interacting with APIView.
+    short-summary: Commands for querying APIView data.
 """
 
 helps[
-    "eval"
+    "test"
 ] = """
     type: group
-    short-summary: Commands for APIView Copilot evaluations.
+    short-summary: Commands for development and testing.
 """
 
 helps[
-    "app"
+    "ops"
 ] = """
     type: group
-    short-summary: Commands for the Flask app deployment.
+    short-summary: Commands for deployment and infrastructure.
 """
 
 helps[
-    "search"
+    "kb"
 ] = """
     type: group
-    short-summary: Commands for searching the knowledge base.
+    short-summary: Commands for interacting with the knowledge base.
 """
 
 helps[
@@ -116,58 +116,38 @@ helps[
 """
 
 helps[
-    "metrics"
+    "report"
 ] = """
     type: group
-    short-summary: Commands for reporting metrics.
-"""
-
-helps[
-    "permissions"
-] = """
-    type: group
-    short-summary: Commands for managing permissions.
-"""
-
-helps[
-    "prompt"
-] = """
-    type: group
-    short-summary: Commands for testing prompt template files.
+    short-summary: Commands for analytics, auditing, and reporting.
 """
 
 # COMMANDS
 
 
-def prompt_test(path: str):
-    """Run a single prompt file with its sample inputs and print the result."""
+def prompt_test(path: str = None, workers: int = 4):
+    """Run a prompt file with its sample inputs, or smoke-test all prompts if no path is given."""
     from src._prompt_runner import _execute_prompt_template
 
-    prompty_path = pathlib.Path(path)
-    if not prompty_path.exists():
-        print(f"Error: File '{path}' does not exist.")
-        sys.exit(1)
-    if prompty_path.suffix != ".prompty":
-        print(f"Error: File '{path}' is not a .prompty file.")
-        sys.exit(1)
+    if path:
+        prompty_path = pathlib.Path(path)
+        if not prompty_path.exists():
+            print(f"Error: File '{path}' does not exist.")
+            sys.exit(1)
+        if prompty_path.suffix != ".prompty":
+            print(f"Error: File '{path}' is not a .prompty file.")
+            sys.exit(1)
 
-    print(f"Executing prompt: {path}")
-    print("-" * 60)
-    result = _execute_prompt_template(str(prompty_path))
-    print(result)
+        print(f"Executing prompt: {path}")
+        print("-" * 60)
+        result = _execute_prompt_template(str(prompty_path))
+        print(result)
+        return
 
-
-def prompt_test_all(workers: int = 4):
-    """Smoke-test all prompt files to verify none throw exceptions.
-
-    NOTE: A passing result only means the prompt executed without errors.
-    It does NOT verify that the prompt produces correct or intended output.
-    Use 'avc prompt test -p <file>' to inspect individual outputs.
-    """
+    # No path given — smoke-test all prompts
     import glob
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    from src._prompt_runner import _execute_prompt_template
     from src._retry import retry_with_backoff
 
     prompts_dir = pathlib.Path(__file__).parent / "prompts"
@@ -188,7 +168,7 @@ def prompt_test_all(workers: int = 4):
     print(f"{'=' * 60}")
     print(f"{YELLOW}NOTE: A passing result means the prompt executed without errors.")
     print(f"It does NOT verify that the prompt produces correct or intended output.")
-    print(f"Use 'avc prompt test -p <file>' to inspect individual outputs.{RESET}")
+    print(f"Use 'avc test prompt -p <file>' to inspect individual outputs.{RESET}")
     print()
     print(f"{BOLD}collected {len(prompty_files)} prompt files{RESET}")
     print()
@@ -202,8 +182,6 @@ def prompt_test_all(workers: int = 4):
     def _run_one(filepath: str) -> tuple[str, bool, str]:
         rel = pathlib.Path(filepath).relative_to(pathlib.Path(__file__).parent)
         try:
-            # Use retry_with_backoff to avoid transient 429/5xx failures
-            # causing flaky smoke tests.
             retry_with_backoff(lambda: _execute_prompt_template(filepath), description=str(rel))
             return (str(rel), True, "")
         except Exception as exc:
@@ -505,6 +483,17 @@ def get_all_guidelines(language: str, markdown: bool = False):
         print(md)
     else:
         print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
+def run_pytest(args: str = None):
+    """Run unit tests with pytest."""
+    import subprocess
+
+    cmd = [sys.executable, "-m", "pytest", "tests"]
+    if args:
+        cmd.extend(args.split())
+    result = subprocess.run(cmd, cwd=pathlib.Path(__file__).parent)
+    sys.exit(result.returncode)
 
 
 def extract_document_section(apiview_path: str, size: int, index: int = 1):
@@ -1742,6 +1731,75 @@ def _claims_is_writer(claims: dict) -> bool:
     return ("Write" in token_roles) or ("App.Write" in token_roles)
 
 
+def audit_feedback(
+    start_date: str,
+    end_date: str,
+    language: Optional[str] = None,
+    environment: str = "production",
+):
+    """
+    Retrieve AI comment feedback from APIView between start_date and end_date.
+    If --language is omitted, returns feedback for all languages.
+    """
+    results = _get_ai_comment_feedback(
+        language=language,
+        start_date=start_date,
+        end_date=end_date,
+        environment=environment,
+    )
+    print(json.dumps(results, indent=2))
+
+
+def audit_memory(
+    start_date: str,
+    end_date: str,
+    language: Optional[str] = None,
+    environment: str = "production",
+):
+    """
+    Retrieve memories created between start_date and end_date.
+    If --language is omitted, returns memories for all languages.
+    Uses the Cosmos DB _ts (Unix epoch) field for date filtering.
+    """
+    from datetime import datetime, timezone
+
+    start_ts = int(datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=timezone.utc).timestamp())
+    end_ts = int(
+        datetime.strptime(end_date, "%Y-%m-%d")
+        .replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+        .timestamp()
+    )
+
+    db_manager = DatabaseManager.get_instance(environment=environment)
+    query = "SELECT * FROM c WHERE c._ts >= @start_ts AND c._ts <= @end_ts AND (NOT IS_DEFINED(c.isDeleted) OR c.isDeleted = false)"
+    parameters = [
+        {"name": "@start_ts", "value": start_ts},
+        {"name": "@end_ts", "value": end_ts},
+    ]
+
+    if language:
+        query += " AND c.language = @language"
+        parameters.append({"name": "@language", "value": language})
+
+    results = list(
+        db_manager.memories.client.query_items(
+            query=query,
+            parameters=parameters,
+            enable_cross_partition_query=True,
+        )
+    )
+
+    # Strip Cosmos DB internal fields for cleaner output
+    for item in results:
+        for key in ["_rid", "_self", "_etag", "_attachments"]:
+            item.pop(key, None)
+        # Convert _ts to human-readable date
+        if "_ts" in item:
+            item["created_at"] = datetime.fromtimestamp(item["_ts"], tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    print(json.dumps(results, indent=2))
+
+
 class CliCommandsLoader(CLICommandsLoader):
     """Loader for CLI commands related to APIView and review management."""
 
@@ -1751,8 +1809,6 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
             g.command("get-active-reviews", "get_active_reviews")
-            g.command("get-comment-feedback", "get_ai_comment_feedback")
-            g.command("analyze-comments", "analyze_comments")
             g.command("resolve-package", "resolve_package_info")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
@@ -1764,14 +1820,18 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
             g.command("resolve-thread", "handle_agent_thread_resolution")
-        with CommandGroup(self, "eval", "__main__#{}") as g:
-            g.command("run", "run_evals")
+        with CommandGroup(self, "test", "__main__#{}") as g:
+            g.command("eval", "run_evals")
             g.command("extract-section", "extract_document_section")
-        with CommandGroup(self, "app", "__main__#{}") as g:
+            g.command("prompt", "prompt_test")
+            g.command("pytest", "run_pytest")
+        with CommandGroup(self, "ops", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
             g.command("check", "check_health")
-        with CommandGroup(self, "search", "__main__#{}") as g:
-            g.command("kb", "search_knowledge_base")
+            g.command("grant", "grant_permissions")
+            g.command("revoke", "revoke_permissions")
+        with CommandGroup(self, "kb", "__main__#{}") as g:
+            g.command("search", "search_knowledge_base")
             g.command("reindex", "reindex_search")
             g.command("all-guidelines", "get_all_guidelines")
         with CommandGroup(self, "db", "__main__#{}") as g:
@@ -1780,14 +1840,12 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("purge", "db_purge")
             g.command("link", "db_link")
             g.command("unlink", "db_unlink")
-        with CommandGroup(self, "metrics", "__main__#{}") as g:
-            g.command("report", "report_metrics")
-        with CommandGroup(self, "permissions", "__main__#{}") as g:
-            g.command("grant", "grant_permissions")
-            g.command("revoke", "revoke_permissions")
-        with CommandGroup(self, "prompt", "__main__#{}") as g:
-            g.command("test", "prompt_test")
-            g.command("test-all", "prompt_test_all")
+        with CommandGroup(self, "report", "__main__#{}") as g:
+            g.command("metrics", "report_metrics")
+            g.command("feedback", "audit_feedback")
+            g.command("memory", "audit_memory")
+            g.command("comment-feedback", "get_ai_comment_feedback")
+            g.command("analyze-comments", "analyze_comments")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -1877,7 +1935,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Enable debug logging for the review process. Outputs to `scratch/logs/<LANG>` directory.",
             )
-        with ArgumentsContext(self, "eval") as ac:
+        with ArgumentsContext(self, "test") as ac:
             ac.argument(
                 "test_case",
                 type=str,
@@ -1907,7 +1965,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Save the results to CosmosDB metrics.",
             )
 
-        with ArgumentsContext(self, "eval extract-section") as ac:
+        with ArgumentsContext(self, "test extract-section") as ac:
             ac.argument("size", type=int, help="The size of the section to extract.")
             ac.argument(
                 "index",
@@ -1916,7 +1974,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 default=1,
                 options_list=["--index", "-i"],
             )
-        with ArgumentsContext(self, "eval run") as ac:
+        with ArgumentsContext(self, "test eval") as ac:
             ac.argument(
                 "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
             )
@@ -1943,7 +2001,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Choose whether to show only failing and partial test cases (compact) or to also show passing ones (verbose)",
             )
 
-        with ArgumentsContext(self, "search") as ac:
+        with ArgumentsContext(self, "kb") as ac:
             ac.argument(
                 "path",
                 type=str,
@@ -1977,7 +2035,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The IDs to retrieve.",
                 options_list=["--ids"],
             )
-        with ArgumentsContext(self, "search reindex") as ac:
+        with ArgumentsContext(self, "kb reindex") as ac:
             ac.argument(
                 "containers",
                 type=str,
@@ -2198,7 +2256,121 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Language to filter comments (case-insensitive, e.g., python, Go, C#).",
                 options_list=("--language", "-l"),
             )
-        with ArgumentsContext(self, "apiview get-comment-feedback") as ac:
+        with ArgumentsContext(self, "apiview resolve-package") as ac:
+            ac.argument(
+                "package_query",
+                type=str,
+                help="The package name or description to search for.",
+                options_list=["--package", "-p"],
+            )
+            ac.argument(
+                "language",
+                type=resolve_language_to_canonical,
+                help="The language of the package (e.g., python, Go, C#).",
+                options_list=["--language", "-l"],
+            )
+            ac.argument(
+                "version",
+                type=str,
+                help="Optional version to filter by. If not provided, gets the latest revision.",
+                options_list=["--version", "-v"],
+                default=None,
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "remote",
+                action="store_true",
+                help="Use the remote API instead of local processing.",
+            )
+        with ArgumentsContext(self, "test prompt") as ac:
+            ac.argument(
+                "path",
+                type=str,
+                options_list=["--path", "-p"],
+                help="Path to a .prompty file to test. If omitted, smoke-tests all prompts.",
+            )
+            ac.argument(
+                "workers",
+                type=int,
+                options_list=["--workers", "-w"],
+                default=4,
+                help="Number of parallel workers when testing all prompts (default: 4).",
+            )
+        with ArgumentsContext(self, "test pytest") as ac:
+            ac.argument(
+                "args",
+                type=str,
+                options_list=["--args", "-a"],
+                help="Additional arguments to pass to pytest (e.g. '-k test_name -v').",
+            )
+        with ArgumentsContext(self, "report metrics") as ac:
+            ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")
+            ac.argument("end_date", help="The end date for the metrics report (YYYY-MM-DD).")
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment from which to calculate the metrics report. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
+            ac.argument(
+                "charts",
+                action="store_true",
+                help="Generate PNG charts from the metrics and save to scratch/charts/.",
+            )
+            ac.argument(
+                "exclude",
+                type=str,
+                nargs="*",
+                help="Languages to exclude from the report (e.g., --exclude Java Go).",
+                options_list=["--exclude", "-x"],
+                default=None,
+            )
+        with ArgumentsContext(self, "ops") as ac:
+            ac.argument(
+                "assignee_id",
+                type=str,
+                help="The user ID of the assignee. If not provided, defaults to the current user.",
+                options_list=["--assignee-id", "-a"],
+                default=None,
+            )
+        with ArgumentsContext(self, "report") as ac:
+            ac.argument(
+                "language",
+                type=resolve_language_to_canonical,
+                help="Filter by language (e.g., python, Go, C#). If omitted, returns results for all languages.",
+                options_list=("--language", "-l"),
+                default=None,
+            )
+            ac.argument(
+                "start_date",
+                type=str,
+                help="The start date (YYYY-MM-DD).",
+                options_list=["--start-date", "-s"],
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                help="The end date (YYYY-MM-DD).",
+                options_list=["--end-date", "-e"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
+            )
+        with ArgumentsContext(self, "report comment-feedback") as ac:
             ac.argument(
                 "language",
                 type=resolve_language_to_canonical,
@@ -2240,87 +2412,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--format", "-f"],
                 default="json",
                 choices=["json", "yaml"],
-            )
-        with ArgumentsContext(self, "apiview resolve-package") as ac:
-            ac.argument(
-                "package_query",
-                type=str,
-                help="The package name or description to search for.",
-                options_list=["--package", "-p"],
-            )
-            ac.argument(
-                "language",
-                type=resolve_language_to_canonical,
-                help="The language of the package (e.g., python, Go, C#).",
-                options_list=["--language", "-l"],
-            )
-            ac.argument(
-                "version",
-                type=str,
-                help="Optional version to filter by. If not provided, gets the latest revision.",
-                options_list=["--version", "-v"],
-                default=None,
-            )
-            ac.argument(
-                "environment",
-                type=str,
-                help="The APIView environment. Defaults to 'production'.",
-                options_list=["--environment"],
-                default="production",
-                choices=["production", "staging"],
-            )
-            ac.argument(
-                "remote",
-                action="store_true",
-                help="Use the remote API instead of local processing.",
-            )
-        with ArgumentsContext(self, "prompt test") as ac:
-            ac.argument(
-                "path",
-                type=str,
-                options_list=["--path", "-p"],
-                required=True,
-                help="Path to the .prompty file to test.",
-            )
-        with ArgumentsContext(self, "prompt test-all") as ac:
-            ac.argument(
-                "workers",
-                type=int,
-                options_list=["--workers", "-w"],
-                default=4,
-                help="Number of parallel workers for executing prompts (default: 4).",
-            )
-        with ArgumentsContext(self, "metrics report") as ac:
-            ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")
-            ac.argument("end_date", help="The end date for the metrics report (YYYY-MM-DD).")
-            ac.argument(
-                "environment",
-                type=str,
-                help="The APIView environment from which to calculate the metrics report. Defaults to 'production'.",
-                options_list=["--environment"],
-                default="production",
-                choices=["production", "staging"],
-            )
-            ac.argument(
-                "charts",
-                action="store_true",
-                help="Generate PNG charts from the metrics and save to scratch/charts/.",
-            )
-            ac.argument(
-                "exclude",
-                type=str,
-                nargs="*",
-                help="Languages to exclude from the report (e.g., --exclude Java Go).",
-                options_list=["--exclude", "-x"],
-                default=None,
-            )
-        with ArgumentsContext(self, "permissions") as ac:
-            ac.argument(
-                "assignee_id",
-                type=str,
-                help="The user ID of the assignee. If not provided, defaults to the current user.",
-                options_list=["--assignee-id", "-a"],
-                default=None,
             )
         super(CliCommandsLoader, self).load_arguments(command)
 

@@ -465,7 +465,7 @@ def get_approvers(*, language: str = None, environment: str = "production") -> s
 
 
 def get_ai_comment_feedback(
-    language: str,
+    language: Optional[str],
     start_date: str,
     end_date: str,
     exclude: Optional[list[str]] = None,
@@ -483,7 +483,7 @@ def get_ai_comment_feedback(
     will not be returned.
 
     Args:
-        language: Language to filter by (e.g., 'python', 'java')
+        language: Language to filter by (e.g., 'python', 'java'). If None, returns all languages.
         start_date: Start date in YYYY-MM-DD format (filters by feedback submission time)
         end_date: End date in YYYY-MM-DD format (filters by feedback submission time)
         exclude: List of feedback types to exclude. Can include 'good', 'bad', 'delete'.
@@ -550,8 +550,8 @@ def get_ai_comment_feedback(
         )
         review_lang_map = {r["id"]: get_language_pretty_name(r.get("Language", "")) for r in review_results}
 
-    # Normalize target language
-    target_language = get_language_pretty_name(language).lower()
+    # Normalize target language (None means all languages)
+    target_language = get_language_pretty_name(language).lower() if language else None
 
     # Filter comments by language and feedback presence
     result = []
@@ -559,8 +559,11 @@ def get_ai_comment_feedback(
         # Check language
         review_id = comment.get("ReviewId", "")
         comment_language = review_lang_map.get(review_id, "").lower()
-        if comment_language != target_language:
+        if target_language and comment_language != target_language:
             continue
+
+        # Add language to each result for identification
+        comment["Language"] = review_lang_map.get(review_id, "")
 
         # Determine feedback type based on Upvotes, Downvotes, and IsDeleted
         upvotes = comment.get("Upvotes") or []

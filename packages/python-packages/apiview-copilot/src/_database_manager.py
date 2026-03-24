@@ -46,19 +46,22 @@ class ContainerNames(Enum):
 class DatabaseManager:
     """Manager for Azure Cosmos DB operations."""
 
-    _instance: "DatabaseManager" = None
+    _instances: dict = {}
 
     @classmethod
-    def get_instance(cls, force_new: bool = False) -> "DatabaseManager":
+    def get_instance(cls, force_new: bool = False, environment: str = None) -> "DatabaseManager":
         """
-        Returns a singleton instance of DatabaseManager.
+        Returns a singleton instance of DatabaseManager, keyed by environment.
+        At most two instances exist: one for 'production' and one for 'staging'.
         """
-        if cls._instance is None or force_new:
-            cls._instance = cls()
-        return cls._instance
+        settings = SettingsManager(environment=environment)
+        key = settings.label
+        if key not in cls._instances or force_new:
+            cls._instances[key] = cls(environment=environment)
+        return cls._instances[key]
 
-    def __init__(self):
-        settings = SettingsManager()
+    def __init__(self, environment: str = None):
+        settings = SettingsManager(environment=environment)
         db_name = settings.get("COSMOS_DB_NAME")
         endpoint = settings.get("COSMOS_ENDPOINT")
         credential = get_credential()

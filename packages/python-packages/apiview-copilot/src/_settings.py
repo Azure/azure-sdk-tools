@@ -18,17 +18,18 @@ load_dotenv(override=True)
 
 
 class SettingsManager:
-    _instance = None
+    _instances = {}
     _lock = threading.Lock()
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
+    def __new__(cls, environment=None):
+        env_key = (environment or os.getenv("ENVIRONMENT_NAME") or "").strip().lower()
+        if env_key not in cls._instances:
             with cls._lock:
-                if not cls._instance:
-                    cls._instance = super(SettingsManager, cls).__new__(cls)
-        return cls._instance
+                if env_key not in cls._instances:
+                    cls._instances[env_key] = super(SettingsManager, cls).__new__(cls)
+        return cls._instances[env_key]
 
-    def __init__(self):
+    def __init__(self, environment=None):
         # pylint: disable=access-member-before-definition
         if hasattr(self, "_initialized") and self._initialized:
             return
@@ -39,10 +40,13 @@ class SettingsManager:
             self.app_config_endpoint = os.getenv("AZURE_APP_CONFIG_ENDPOINT")
             if not self.app_config_endpoint:
                 raise ValueError("AZURE_APP_CONFIG_ENDPOINT must be set in the environment.")
-            self.label = os.getenv("ENVIRONMENT_NAME")
-            if not self.label:
-                raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
-            self.label = self.label.strip().lower()
+            if environment:
+                self.label = environment.strip().lower()
+            else:
+                self.label = os.getenv("ENVIRONMENT_NAME")
+                if not self.label:
+                    raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
+                self.label = self.label.strip().lower()
             self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
             self._keyvault_clients = {}
             self._cache = {}

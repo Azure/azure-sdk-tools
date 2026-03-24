@@ -10,8 +10,9 @@ parameters:
       - Name: azure-sdk-for-net
         SetUp:
           - task: UseDotNet@2
+            # .NET 10 is required by Azure SDK for .NET engsys tooling
             inputs:
-              useGlobalJson: true
+              version: 10.0.x
 
         # TODO: Remove when this is ready for production
         DraftPr: true

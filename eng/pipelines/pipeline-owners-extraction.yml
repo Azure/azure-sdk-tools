@@ -139,7 +139,7 @@ stages:
               RepoName: ${{ repo.Name }}
               PushArgs: '-f'
               OpenAsDraft: ${{ repo.DraftPr }}
-              CloseAfterOpenForTesting: ${{ parameters.CloseAfterOpeningForTesting }}
+              CloseAfterOpenForTesting: ${{ repo.CloseAfterOpeningForTesting }}
               PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'
               PRBody: |
                 Updating CODEOWNERS

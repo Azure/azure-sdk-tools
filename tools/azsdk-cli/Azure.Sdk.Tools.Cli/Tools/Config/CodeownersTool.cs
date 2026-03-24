@@ -317,25 +317,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Config
 
             return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
         }
-        private async Task<List<CodeownersValidationResult>> ValidateOwners(IEnumerable<string> owners, CancellationToken ct)
-        {
-            var validatedOwners = new List<CodeownersValidationResult>();
-
-            foreach (var owner in owners)
-            {
-                var username = owner.TrimStart('@');
-                var result = await codeownersValidatorHelper.ValidateCodeOwnerAsync(username, verbose: false, ct: ct);
-
-                if (string.IsNullOrEmpty(result.Username))
-                {
-                    result.Username = username;
-                }
-
-                validatedOwners.Add(result);
-            }
-
-            return validatedOwners;
-        }
 
         /// <summary>
         /// Generates CODEOWNERS file from Azure DevOps work items.

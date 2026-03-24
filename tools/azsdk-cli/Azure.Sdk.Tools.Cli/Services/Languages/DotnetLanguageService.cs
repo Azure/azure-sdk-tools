@@ -119,6 +119,8 @@ public sealed partial class DotnetLanguageService: LanguageService
             PackageName = packageName,
             PackageVersion = packageVersion,
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
+            ServiceDirectory = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
+            ArtifactName = packageName,
             Language = Models.SdkLanguage.DotNet,
             SamplesDirectory = samplesDirectory,
             SdkType = parsedSdkType

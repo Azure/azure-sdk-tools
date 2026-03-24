@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
-using System.Linq;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
 using Azure.Sdk.Tools.Cli.Benchmarks.Scenarios;
 using Azure.Sdk.Tools.Cli.Benchmarks.Validation;
@@ -39,9 +38,12 @@ public class BenchmarkRunner : IDisposable
 
         try
         {
+            // Apply ref overrides to repo config
+            var repo = ApplyRefOverride(scenario.Repo, options.RefOverrides);
+
             // 1. Environment Setup - prepare workspace
             Console.WriteLine($"[Benchmark] Preparing workspace for {scenario.Name}...");
-            workspace = await _workspaceManager.PrepareAsync(scenario.Repo, scenario.Name);
+            workspace = await _workspaceManager.PrepareAsync(repo, scenario.Name);
 
             // 2. Run scenario setup (if any)
             Console.WriteLine($"[Benchmark] Running scenario setup...");
@@ -125,6 +127,7 @@ public class BenchmarkRunner : IDisposable
                 stopwatch.Elapsed,
                 passed,
                 validation,
+                execResult.TokenUsage,
                 execResult.Error);
 
             // Determine if cleanup will happen based on policy
@@ -146,7 +149,8 @@ public class BenchmarkRunner : IDisposable
                 ToolCalls = execResult.ToolCalls,
                 WorkspacePath = workspace.RootPath,
                 WorkspaceCleanedUp = willCleanup,
-                Validation = validation
+                Validation = validation,
+                TokenUsage = execResult.TokenUsage
             };
 
             // 7. Cleanup
@@ -192,5 +196,22 @@ public class BenchmarkRunner : IDisposable
     {
         // WorkspaceManager handles its own cleanup
         GC.SuppressFinalize(this);
+    }
+
+    private static RepoConfig ApplyRefOverride(RepoConfig repo, Dictionary<string, string?>? overrides)
+    {
+        if (overrides == null)
+        {
+            return repo;
+        }
+
+        var key = $"{repo.Owner}/{repo.Name}";
+        if (overrides.TryGetValue(key, out var newRef) && newRef != null)
+        {
+            Console.WriteLine($"[Benchmark] Overriding ref for {key}: {repo.Ref} → {newRef}");
+            return repo.WithRef(newRef);
+        }
+
+        return repo;
     }
 }

@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     continue;
                 }
 
-                if (labels.Any(l => string.Equals(l?.Name, "Created by copilot", StringComparison.OrdinalIgnoreCase)))
+                if (labels.Any(l => string.Equals(l?.Name, Constants.GITHUB_LABEL_CREATED_BY_COPILOT, StringComparison.OrdinalIgnoreCase)))
                 {
                     return true;
                 }

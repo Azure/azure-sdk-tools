@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Services.Languages;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Azure.Sdk.Tools.Cli.CopilotAgents;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages;
 
@@ -31,6 +32,7 @@ internal class DotNetLanguageSpecificChecksTests
         _languageChecks = new DotnetLanguageService(
             _processHelperMock.Object,
             _powerShellHelperMock.Object,
+            Mock.Of<ICopilotAgentRunner>(),
             _gitHelperMock.Object,
             NullLogger<DotnetLanguageService>.Instance,
             _commonValidationHelperMock.Object,

@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         public List<string> TestTspFiles { get; set; } = new List<string>();
 
         public string? AuthoringSpecRepo { get; private set; }
-        public string? AuthoringSkillPath { get; private set; }
+        public string? AuthoringSkillPath { get; set; }
 
         /// <inheritdoc />
         public override string[] Tags => ["typespec", "authoring"];
@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
         /// <param name="questionAndAnswers">Optional list of questions and answers for agent interaction.</param>
         /// <param name="authoringSpecRepo">Optional repository for authoring specs.</param>
         /// <param name="authoringSkillPath">Optional path for authoring skills.</param>
-        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, List<QuestionAndAnswer>? questionAndAnswers = null, string? authoringSpecRepo = null, string? authoringSkillPath = null)
+        public AuthoringScenario(string name, string description, string prompt, string? tspProjectPath, List<string>? testTspFiles = null, List<string>? toolsToCall = null, List<string>? verifyPlan = null, List<QuestionAndAnswer>? questionAndAnswers = null)
         {
             Name = name;
             Description = description ?? string.Empty;
@@ -84,50 +84,13 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             VerifyPlan = verifyPlan ?? new List<string> { "compile the project." };
             TestTspFiles = testTspFiles ?? new List<string>();
             QuestionAndAnswers = questionAndAnswers;
-            if (!string.IsNullOrWhiteSpace(authoringSpecRepo))
+            Repo = new RepoConfig()
             {
-                AuthoringSpecRepo = authoringSpecRepo;
-
-                var _repoStringRegex = new Regex(@"^(?:(?<owner>[^/:\s]+)/)?(?<name>[^/:\s]+)(?::(?<ref>[^:\s]+))?$", RegexOptions.Compiled);
-                var match = _repoStringRegex.Match(authoringSpecRepo.Trim());
-                if (!match.Success)
-                {
-                    throw new ArgumentException(
-                        $"Invalid repository format: '{authoringSpecRepo}'. " +
-                        "Expected formats: 'owner/name', 'owner/name:ref', 'name', or 'name:ref'",
-                        nameof(authoringSpecRepo));
-                }
-
-                var owner = match.Groups["owner"].Success
-                    ? match.Groups["owner"].Value
-                    : "Azure";
-
-                var repoName = match.Groups["owner"].Success ? match.Groups["name"].Value : "azure-rest-api-specs";
-
-                var gitRef = match.Groups["ref"].Success
-                    ? match.Groups["ref"].Value
-                    : "main";
-
-
-                Repo = new RepoConfig()
-                {
-                    Owner = owner,
-                    Name = repoName,
-                    Ref = gitRef,
-                    SparseCheckoutPaths = [TspProjectPath, ".vscode", "eng/common"]
-                };
-            }
-            else
-            {
-                // If no specific authoring spec repo is provided, default to checking out default azure-rest-api-specs repo.
-                Repo = new RepoConfig()
-                {
-                    Owner = "Azure",
-                    Name = "azure-rest-api-specs",
-                    Ref = "main",
-                    SparseCheckoutPaths = [TspProjectPath]
-                };
-            }
+                Owner = "Azure",
+                Name = "azure-rest-api-specs",
+                Ref = "main",
+                SparseCheckoutPaths = [TspProjectPath, ".vscode", "eng/common"]
+            };
             Validators =
             [
                 new ToolAndSkillTriggerValidator("Expected tools and skills were triggered", ToolsToCall),
@@ -135,9 +98,8 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Scenarios.Typespec
             ];
             if (QuestionAndAnswers != null && QuestionAndAnswers.Any())
             {
-                Validators = Validators.Concat(new[] { new InteractionValidator("Verify interaction") }).ToArray();
+                Validators = Validators.Concat([new InteractionValidator("Verify interaction")]).ToArray();
             }
-            AuthoringSkillPath = authoringSkillPath;
         }
 
         /// <inheritdoc />

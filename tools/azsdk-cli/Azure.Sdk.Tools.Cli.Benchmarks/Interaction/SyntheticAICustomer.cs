@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Interaction
 
         public async Task<string> AskQuestionAsync(string question)
         {
-            CopilotClient client = new CopilotClient();
+            var client = new CopilotClient();
             var sessionConfig = new SessionConfig
             {
                 Streaming = true,

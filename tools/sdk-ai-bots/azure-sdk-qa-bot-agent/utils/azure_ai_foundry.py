@@ -4,24 +4,24 @@ Each client is created once on first access and reused for the lifetime of
 the process.
 """
 
-from agent_framework_azure_ai import AzureAIClient
+from agent_framework.azure import AzureOpenAIResponsesClient
 from azure.ai.projects.aio import AIProjectClient
 
 from config.app_config import get as cfg
 from utils.azure_credential import get_credential
 
-_agent_client: AzureAIClient | None = None
+_agent_client: AzureOpenAIResponsesClient | None = None
 _project_client: AIProjectClient | None = None
 _openai_client = None
 
 
-def get_agent_client() -> AzureAIClient:
-    """Return the shared AzureAIClient (created once on first call)."""
+def get_agent_client() -> AzureOpenAIResponsesClient:
+    """Return the shared AzureOpenAIResponsesClient (created once on first call)."""
     global _agent_client
     if _agent_client is None:
-        _agent_client = AzureAIClient(
+        _agent_client = AzureOpenAIResponsesClient(
             project_endpoint=cfg("AI_FOUNDRY_PROJECT_ENDPOINT"),
-            model_deployment_name=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.1"),
+            deployment_name=cfg("AI_FOUNDRY_AGENT_COMPLETION_MODEL", "gpt-5.1"),
             credential=get_credential(),
         )
     return _agent_client

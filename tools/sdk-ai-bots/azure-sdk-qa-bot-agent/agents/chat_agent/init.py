@@ -47,6 +47,8 @@ async def main() -> None:
     """Start the hosted Chat Agent as an HTTP server."""
     await app_config.init()
     agent_client = get_agent_client()
+    # Limit tool-call loop iterations to prevent infinite loops.
+    agent_client.function_invocation_configuration["max_iterations"] = 5
     instructions = _load_instructions(Path(__file__).parent / "instruction.md")
     knowledge_tools = KnowledgeTools()
     azsdk_mcp_tool = await create_azsdk_mcp_tool()

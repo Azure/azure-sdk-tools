@@ -329,7 +329,14 @@ def main() -> None:
             "Make sure you are logged in to the correct subscription."
         )
 
-    # ── Save and remove user-assigned identities before deployment ──
+    # ── Login to ACR, build & push ──
+    acr_name = registry.split(".")[0]
+    print(f"Logging in to ACR: {acr_name}")
+    _run(["az", "acr", "login", "--name", acr_name], shell=True)
+    print(f"Building: {image}")
+    _run(["docker", "build", "--platform", "linux/amd64", "-t", image, "-f", str(dockerfile), str(_PROJECT_DIR)])
+
+    # ── Save and remove user-assigned identities after a successful build ──
     saved_identities = _list_project_user_assigned_identities(project_resource_id)
     if saved_identities:
         print(f"Removing {len(saved_identities)} user-assigned identities before deployment...")
@@ -337,12 +344,6 @@ def main() -> None:
     else:
         print("No user-assigned identities found on the project.")
 
-    # ── Login to ACR, build & push ──
-    acr_name = registry.split(".")[0]
-    print(f"Logging in to ACR: {acr_name}")
-    _run(["az", "acr", "login", "--name", acr_name], shell=True)
-    print(f"Building: {image}")
-    _run(["docker", "build", "--platform", "linux/amd64", "-t", image, "-f", str(dockerfile), str(_PROJECT_DIR)])
     print(f"Pushing: {image}")
     _run(["docker", "push", image])
 

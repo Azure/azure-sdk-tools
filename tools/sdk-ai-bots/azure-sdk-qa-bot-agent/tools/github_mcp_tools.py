@@ -21,7 +21,7 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from azure.keyvault.keys.crypto.aio import CryptographyClient
 from azure.keyvault.keys.crypto import SignatureAlgorithm
-from agent_framework_azure_ai import AzureAIClient
+from agent_framework import BaseChatClient
 
 from config.app_config import get as cfg
 from utils.azure_credential import get_frontend_credential
@@ -200,7 +200,7 @@ def _start_background_token_refresh(
                 return
             logger.info("Refreshing GitHub App installation token...")
             token, new_expires_at = await _get_github_app_token()
-            mcp_tool.authorization = token
+            mcp_tool["headers"]["Authorization"] = f"Bearer {token}"
             expires_at = new_expires_at
             logger.info("GitHub token refreshed, expires at %s", new_expires_at.isoformat())
 
@@ -219,7 +219,7 @@ def _start_background_token_refresh(
 
 # -- public ----------------------------------------------------------------
 
-async def create_github_mcp_tool(client: AzureAIClient):
+async def create_github_mcp_tool(client: BaseChatClient):
     """Create a server-side MCP tool for GitHub with auto-refreshing auth.
 
     Supports two authentication modes (checked in order), both
@@ -233,7 +233,7 @@ async def create_github_mcp_tool(client: AzureAIClient):
        automatic refresh before expiry.
 
     Args:
-        client: The agent client (``AzureAIClient``).
+        client: The agent client.
 
     Config keys (from App Configuration / ``.env``):
 
@@ -246,13 +246,13 @@ async def create_github_mcp_tool(client: AzureAIClient):
     if not token:
         raise RuntimeError("Failed to initialize GitHub MCP token for GitHub MCP auth.")
 
+    headers = {**_GITHUB_MCP_HEADERS, "Authorization": f"Bearer {token}"}
     mcp_tool = client.get_mcp_tool(
         name="github",
         description="The GitHub MCP Server has the ability to read repositories and code files, manage issues and PRs, analyze code, and automate workflows.",
         url=_GITHUB_MCP_URL,
-        authorization=token,
         approval_mode="never_require",
-        headers=_GITHUB_MCP_HEADERS,
+        headers=headers,
     )
 
     if expires_at is None:

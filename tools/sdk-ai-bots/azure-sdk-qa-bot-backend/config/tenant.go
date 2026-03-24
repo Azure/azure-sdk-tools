@@ -44,7 +44,6 @@ var azureTypespecAuthoringSources = []model.Source{
 
 var SourceTopK = map[model.Source]int{
 	model.Source_TypeSpecMigration:              3,
-	model.Source_AzureSDKQAKnowledge:            3,
 	model.Source_StaticTypeSpecToSwaggerMapping: 3,
 	model.Source_AzureOpenapiDiffDocs:           3,
 }

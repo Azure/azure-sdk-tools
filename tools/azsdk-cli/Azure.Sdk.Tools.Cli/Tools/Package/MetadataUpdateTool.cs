@@ -109,9 +109,13 @@ public class MetadataUpdateTool : LanguageMcpTool
                     var packageInfo = await languageService.GetPackageInfo(packagePath, ct);
                     var scriptResult = await _specGenSdkConfigHelper.ExecuteProcessAsync(processOptions, ct, packageInfo, "Package metadata content is updated.", ["Update the version when preparing for a release."]);
 
+                    if (scriptResult.OperationStatus == Models.Status.Failed)
+                    {
+                        return scriptResult;
+                    }
+
                     // After running the configured script, also run language-specific
                     // metadata updates (e.g., CI YAML provisioning) if available.
-                    // Propagate failures from the language-specific update.
                     var updateResult = await languageService.UpdateMetadataAsync(packagePath, ct);
                     if (updateResult.OperationStatus == Models.Status.Failed)
                     {

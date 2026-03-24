@@ -111,7 +111,12 @@ public class MetadataUpdateTool : LanguageMcpTool
 
                     // After running the configured script, also run language-specific
                     // metadata updates (e.g., CI YAML provisioning) if available.
-                    await languageService.UpdateMetadataAsync(packagePath, ct);
+                    // Propagate failures from the language-specific update.
+                    var updateResult = await languageService.UpdateMetadataAsync(packagePath, ct);
+                    if (updateResult.OperationStatus == Models.Status.Failed)
+                    {
+                        return updateResult;
+                    }
 
                     return scriptResult;
                 }

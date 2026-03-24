@@ -424,9 +424,8 @@ public sealed partial class DotnetLanguageService: LanguageService
 
                 logger.LogInformation("Created new ci.yml at {CiYamlPath}", ciYamlPath);
                 return PackageOperationResponse.CreateSuccess(
-                    $"Created ci.yml for service '{serviceDirectory}' with artifact '{packageName}'.",
-                    packageInfo,
-                    result: ciYamlPath);
+                    $"Created ci.yml for service '{serviceDirectory}' with artifact '{packageName}'. CI file path: {ciYamlPath}",
+                    packageInfo);
             }
             else
             {
@@ -436,9 +435,8 @@ public sealed partial class DotnetLanguageService: LanguageService
                 {
                     logger.LogInformation("Artifact '{PackageName}' already exists in {CiYamlPath}", packageName, ciYamlPath);
                     return PackageOperationResponse.CreateSuccess(
-                        $"Artifact '{packageName}' already exists in ci.yml. No changes needed.",
-                        packageInfo,
-                        result: ciYamlPath);
+                        $"Artifact '{packageName}' already exists in ci.yml ({ciYamlPath}). No changes needed.",
+                        packageInfo);
                 }
 
                 var updatedYaml = AddArtifactToCiYaml(existingYaml, packageName);
@@ -453,9 +451,8 @@ public sealed partial class DotnetLanguageService: LanguageService
 
                 logger.LogInformation("Added artifact '{PackageName}' to {CiYamlPath}", packageName, ciYamlPath);
                 return PackageOperationResponse.CreateSuccess(
-                    $"Added artifact '{packageName}' to existing ci.yml.",
-                    packageInfo,
-                    result: ciYamlPath);
+                    $"Added artifact '{packageName}' to existing ci.yml ({ciYamlPath}).",
+                    packageInfo);
             }
         }
         catch (Exception ex)

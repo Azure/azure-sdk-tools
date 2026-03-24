@@ -532,6 +532,147 @@ internal class DotNetLanguageSpecificChecksTests
 
     #endregion
 
+    #region CheckSpelling Tests
+
+    [Test]
+    public async Task CheckSpelling_WithCiScript_Success()
+    {
+        SetupGitRepoDiscovery();
+
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "spell-check-public-api.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("Spell check passed!");
+
+        _powerShellHelperMock
+            .Setup(x => x.Run(
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("spell-check-public-api.ps1")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        try
+        {
+            var result = await _languageChecks.CheckSpelling(_packagePath, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Does.Contain("Spell check passed!"));
+            });
+
+            _powerShellHelperMock.Verify(x => x.Run(
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("spell-check-public-api.ps1") &&
+                    p.Args.Contains("-ServiceDirectory") &&
+                    p.Args.Contains("healthdataaiservices")),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+        finally
+        {
+            try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
+        }
+    }
+
+    [Test]
+    public async Task CheckSpelling_WithCiScript_Failure()
+    {
+        SetupGitRepoDiscovery();
+
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "spell-check-public-api.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+
+        var errorMessage = "Spell check failed: 'Cotnainer' is misspelled.";
+        var processResult = new ProcessResult { ExitCode = 1 };
+        processResult.AppendStdout(errorMessage);
+
+        _powerShellHelperMock
+            .Setup(x => x.Run(
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("spell-check-public-api.ps1")),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        try
+        {
+            var result = await _languageChecks.CheckSpelling(_packagePath, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.CheckStatusDetails, Does.Contain("Cotnainer"));
+                Assert.That(result.ResponseError, Does.Contain("Spelling check failed"));
+            });
+        }
+        finally
+        {
+            try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
+        }
+    }
+
+    [Test]
+    public async Task CheckSpelling_WithCiScript_InvalidPackagePath_ReturnsError()
+    {
+        SetupGitRepoDiscovery();
+
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "spell-check-public-api.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+
+        var invalidPath = Path.Combine(_repoRoot, "not-in-sdk-folder");
+
+        try
+        {
+            var result = await _languageChecks.CheckSpelling(invalidPath, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.ResponseError, Does.Contain("Failed to determine service directory"));
+            });
+
+            _powerShellHelperMock.Verify(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+        finally
+        {
+            try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
+        }
+    }
+
+    [Test]
+    public async Task CheckSpelling_WithoutCiScript_FallsBackToCommonValidation()
+    {
+        SetupGitRepoDiscovery();
+
+        // Ensure the CI script does NOT exist
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "spell-check-public-api.ps1");
+        if (File.Exists(scriptPath))
+        {
+            File.Delete(scriptPath);
+        }
+
+        var expectedResponse = new PackageCheckResponse(0, "cspell check passed");
+        _commonValidationHelperMock
+            .Setup(c => c.CheckSpelling(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        var result = await _languageChecks.CheckSpelling(_packagePath, ct: CancellationToken.None);
+
+        Assert.That(result.ExitCode, Is.EqualTo(0));
+        Assert.That(result.CheckStatusDetails, Does.Contain("cspell check passed"));
+
+        _commonValidationHelperMock.Verify(
+            c => c.CheckSpelling(It.IsAny<string>(), _packagePath, false, It.IsAny<CancellationToken>()),
+            Times.Once);
+
+        _powerShellHelperMock.Verify(x => x.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
     #region HasCustomizations Tests
 
     [Test]

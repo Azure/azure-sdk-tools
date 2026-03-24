@@ -233,6 +233,59 @@ public partial class DotnetLanguageService : LanguageService
         }
     }
 
+    public override async Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    {
+        try
+        {
+            logger.LogInformation("Starting spelling check for .NET project at: {PackagePath}", packagePath);
+
+            var repoRoot = await gitHelper.DiscoverRepoRootAsync(packagePath, ct);
+            var spellCheckScriptPath = Path.Combine(repoRoot, "eng", "scripts", "spell-check-public-api.ps1");
+
+            if (File.Exists(spellCheckScriptPath))
+            {
+                var serviceDirectory = GetServiceDirectoryFromPath(packagePath);
+                if (serviceDirectory == null)
+                {
+                    logger.LogError("Failed to determine service directory from package path: {PackagePath}", packagePath);
+                    return new PackageCheckResponse(1, "", "Failed to determine service directory from the provided package path.");
+                }
+
+                if (fixCheckErrors)
+                {
+                    logger.LogInformation("Fix mode is not supported for CI parity spell check; running read-only check.");
+                }
+
+                var args = new[] { "-ServiceDirectory", serviceDirectory };
+                var options = new PowershellOptions(spellCheckScriptPath, args, workingDirectory: repoRoot, timeout: CodeChecksTimeout);
+                var result = await powershellHelper.Run(options, ct);
+
+                if (result.ExitCode == 0)
+                {
+                    logger.LogInformation("Spelling check completed successfully");
+                    return new PackageCheckResponse(result.ExitCode, result.Output);
+                }
+                else
+                {
+                    logger.LogWarning("Spelling check for package at {PackagePath} failed with exit code {ExitCode}", packagePath, result.ExitCode);
+                    return new PackageCheckResponse(result.ExitCode, result.Output, "Spelling check failed");
+                }
+            }
+            else
+            {
+                logger.LogInformation("CI spell-check script not found at {ScriptPath}, falling back to cspell-based check", spellCheckScriptPath);
+                var relativePath = Path.GetRelativePath(repoRoot, packagePath);
+                var spellingCheckPath = "." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
+                return await commonValidationHelpers.CheckSpelling(spellingCheckPath, packagePath, fixCheckErrors, ct);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error running spelling check at {PackagePath}", packagePath);
+            return new PackageCheckResponse(1, "", $"Error running spelling check: {ex.Message}");
+        }
+    }
+
     public override async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return await commonValidationHelpers.ValidateReadme(packagePath, fixCheckErrors, cancellationToken);

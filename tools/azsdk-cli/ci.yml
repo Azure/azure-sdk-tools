@@ -115,8 +115,6 @@ extends:
                 echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
                 echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
                 echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
-                echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
-                echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
           
           - script: |
               export GOPROXY=https://proxy.golang.org,direct
@@ -131,7 +129,6 @@ extends:
               AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
               AZURE_TENANT_ID: $(AZURE_TENANT_ID)
               AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-              AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
               AZURE_APPCONFIG_ENDPOINT: https://azuresdkqabot-dev-config.azconfig.io
           - task: PowerShell@2
             displayName: 'Run benchmarks'
@@ -139,7 +136,7 @@ extends:
               targetType: 'inline'
               workingDirectory: '$(System.DefaultWorkingDirectory)/$(Build.Repository.Name)/tools/azsdk-cli/Azure.Sdk.Tools.Cli.Benchmarks'
               pwsh: true
-              script: dotnet run -- run --all --parallel 5 --cleanup "always" --authoring-spec-repo "$env:AUTHORING_SPEC_REPO"
+              script: dotnet run -- run --all --parallel 5 --cleanup "always" --repo "$env:AUTHORING_SPEC_REPO"
             env:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1

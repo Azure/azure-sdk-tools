@@ -448,7 +448,7 @@ public sealed partial class DotnetLanguageService: LanguageService
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating CI YAML for package at {PackagePath}", packagePath);
-            return PackageOperationResponse.CreateFailure($"Error updating CI YAML: {ex.Message}");
+            return PackageOperationResponse.CreateFailure($"Error updating CI YAML for package at {packagePath}: {ex.Message}");
         }
     }
 

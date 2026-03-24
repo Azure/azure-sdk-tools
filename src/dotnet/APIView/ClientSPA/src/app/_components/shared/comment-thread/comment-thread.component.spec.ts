@@ -303,6 +303,36 @@ describe('CommentThreadComponent', () => {
       expect(component.threadResolvedStateToggleText).toBe('Show');
       expect(component.threadResolvedStateToggleIcon).toBe('bi-arrows-expand');
     });
+
+    it('should emit the actual comment threadId, not the row grouping key', () => {
+      const emitSpy = vi.spyOn(component.commentResolutionActionEmitter, 'emit');
+
+      // Set up: row's threadId is a grouping key (e.g., elementId for legacy),
+      // but the comment has a different real threadId
+      component.codePanelRowData!.threadId = 'grouping-key-element1';
+      component.codePanelRowData!.comments[0].threadId = 'actual-db-thread-id';
+
+      component.handleThreadResolutionButtonClick('Resolve');
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ threadId: 'actual-db-thread-id' })
+      );
+    });
+
+    it('should emit undefined threadId for legacy comments without threadId', () => {
+      const emitSpy = vi.spyOn(component.commentResolutionActionEmitter, 'emit');
+
+      // Simulate conversations panel where row threadId = elementId (grouping fallback),
+      // but the comment's actual threadId is undefined (legacy)
+      component.codePanelRowData!.threadId = 'element1';
+      component.codePanelRowData!.comments[0].threadId = undefined as any;
+
+      component.handleThreadResolutionButtonClick('Unresolve');
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ threadId: undefined })
+      );
+    });
   });
 
   describe('batch resolution functionality', () => {

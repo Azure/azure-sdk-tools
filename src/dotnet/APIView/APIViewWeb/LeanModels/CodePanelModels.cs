@@ -12,9 +12,15 @@ namespace APIViewWeb.LeanModels
         public IEnumerable<CommentItemModel> Comments { get; set; } = new List<CommentItemModel>();
         public CodeFile activeRevisionCodeFile{ get; set; }
         public CodeFile diffRevisionCodeFile { get; set; }
+        public string ActiveApiRevisionId { get; set; }
+        public string DiffApiRevisionId { get; set; }
         public bool ApplySkipDiff { get; set; }
         public bool SkipDocsWhenDiffing { get; set; }
         public bool IsFirstCodeLineAdded { get; set; } // Used to determine if the first CodePanelRowData of type CodeLine has been added
+        [JsonIgnore]
+        public HashSet<string> ActiveRevisionLineIds { get; set; } = [];
+        [JsonIgnore]
+        public HashSet<string> AddedDiffLineIds { get; set; } = [];
     }
 
     public class CodePanelRowData

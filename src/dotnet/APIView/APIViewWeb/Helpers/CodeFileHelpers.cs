@@ -22,6 +22,8 @@ namespace APIViewWeb.Helpers
         {
             var codePanelData = new CodePanelData();
             var reviewLines = codePanelRawData.activeRevisionCodeFile.ReviewLines;
+            codePanelRawData.ActiveRevisionLineIds = GetLineIds(codePanelRawData.activeRevisionCodeFile.ReviewLines);
+            codePanelRawData.AddedDiffLineIds = [];
 
             // Create root node
             var rootNodeId = "root";
@@ -42,6 +44,7 @@ namespace APIViewWeb.Helpers
                 if (!hasSameApis)
                 {
                     reviewLines = FindDiff(reviewLines, codePanelRawData.diffRevisionCodeFile.ReviewLines);
+                    codePanelRawData.AddedDiffLineIds = GetLineIds(reviewLines, l => l.DiffKind == DiffKind.Added);
                     // Remap nodeIdHashed for documentation to diff adjusted nodeIdHashed so that documentation is correctly listed on review.
                     RemapDocumentationLines(reviewLines, codePanelData.ActiveDocumentationMap);
                     // Remap documentation is diff revision using node hash ID for active revision. We don't need to show documentation if it's node itself is not present in active revision.
@@ -363,10 +366,26 @@ namespace APIViewWeb.Helpers
         {
             var commentRowData = new CodePanelRowData();
             var commentsForRow = new List<CommentItemModel>();
-            if (!string.IsNullOrEmpty(nodeId) && !codePanelRowData.RowClassesObj.Contains("removed"))
+            bool isRemovedRow = codePanelRowData.RowClassesObj.Contains("removed");
+            if (!string.IsNullOrEmpty(nodeId) && !isRemovedRow)
             {
                 codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text can-show";
                 commentsForRow = codePanelRawData.Comments.Where(c => nodeId == c.ElementId).ToList();
+            }
+            else if (!string.IsNullOrEmpty(nodeId) && isRemovedRow)
+            {
+                // Prefer rendering on green when active and removed rows share the same line id.
+                if (!codePanelRawData.AddedDiffLineIds.Contains(nodeId))
+                {
+                    commentsForRow = codePanelRawData.Comments.Where(c => nodeId == c.ElementId).ToList();
+                    codePanelRowData.ToggleCommentsClasses = commentsForRow.Any()
+                        ? "bi bi-chat-right-text show"
+                        : "bi bi-chat-right-text hide";
+                }
+                else
+                {
+                    codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text hide";
+                }
             }
             else
             {
@@ -388,6 +407,29 @@ namespace APIViewWeb.Helpers
                 commentRowData.IsHiddenAPI = codePanelRowData.IsHiddenAPI;
             }
             return commentRowData;
+        }
+
+        private static HashSet<string> GetLineIds(IEnumerable<ReviewLine> lines, Func<ReviewLine, bool> predicate = null)
+        {
+            HashSet<string> lineIds = [];
+            AddLineIds(lines, lineIds, predicate ?? (_ => true));
+            return lineIds;
+        }
+
+        private static void AddLineIds(IEnumerable<ReviewLine> lines, HashSet<string> lineIds, Func<ReviewLine, bool> predicate)
+        {
+            foreach (var line in lines)
+            {
+                if (predicate(line) && !string.IsNullOrEmpty(line.LineId))
+                {
+                    lineIds.Add(line.LineId);
+                }
+
+                if (line.Children?.Count > 0)
+                {
+                    AddLineIds(line.Children, lineIds, predicate);
+                }
+            }
         }
 
         private static void InsertCodePanelRowData(CodePanelData codePanelData, CodePanelRowData rowData, string nodeIdHashed, CodePanelRawData codePanelRawData, CodePanelRowData commentsForRow = null)

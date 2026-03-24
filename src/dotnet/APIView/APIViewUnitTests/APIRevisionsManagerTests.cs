@@ -1706,5 +1706,75 @@ public class APIRevisionsManagerTests
         _mockAPIRevisionsRepository.Verify(x => x.UpsertAPIRevisionAsync(It.Is<APIRevisionListItemModel>(r => r.DiagnosticsHash == "new-hash")), Times.Once);
     }
 
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_OrphanedCommentsWithNoElementId_EachScoredIndependently()
+    {
+        var revision = CreateRevisionForQualityTest();
+        // Orphaned comments: no ThreadId and no ElementId (empty string simulates missing elementId)
+        var comments = new List<CommentItemModel>
+        {
+            CreateComment(CommentSeverity.MustFix, elementId: "", threadId: null),
+            CreateComment(CommentSeverity.ShouldFix, elementId: "", threadId: null),
+            CreateComment(CommentSeverity.ShouldFix, elementId: "", threadId: null)
+        };
+        // Each comment gets a unique Id from IdHelper.GenerateId() in the model constructor
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // Each orphaned comment should be scored independently, not collapsed into one thread
+        // 100 - 20 (MustFix) - 10 (ShouldFix) - 10 (ShouldFix) = 60
+        Assert.Equal(60, result.Score);
+        Assert.Equal(1, result.UnresolvedMustFixCount);
+        Assert.Equal(2, result.UnresolvedShouldFixCount);
+        Assert.Equal(3, result.TotalUnresolvedCount);
+    }
+
+    [Fact]
+    public async Task GetReviewQualityScoreAsync_OrphanedCommentsWithNullElementId_EachScoredIndependently()
+    {
+        var revision = CreateRevisionForQualityTest();
+        // Orphaned comments: no ThreadId and null ElementId
+        var comments = new List<CommentItemModel>
+        {
+            new CommentItemModel
+            {
+                ReviewId = "review-1",
+                APIRevisionId = "rev-1",
+                CommentType = CommentType.APIRevision,
+                Severity = CommentSeverity.MustFix,
+                IsResolved = false,
+                CommentText = "Orphan 1",
+                ElementId = null,
+                ThreadId = null,
+                CreatedOn = DateTime.UtcNow
+            },
+            new CommentItemModel
+            {
+                ReviewId = "review-1",
+                APIRevisionId = "rev-1",
+                CommentType = CommentType.APIRevision,
+                Severity = CommentSeverity.MustFix,
+                IsResolved = false,
+                CommentText = "Orphan 2",
+                ElementId = null,
+                ThreadId = null,
+                CreatedOn = DateTime.UtcNow.AddMinutes(1)
+            }
+        };
+        _mockAPIRevisionsRepository.Setup(x => x.GetAPIRevisionAsync(revision.Id)).ReturnsAsync(revision);
+        _mockCommentsRepository.Setup(x => x.GetCommentsAsync(revision.ReviewId, false, CommentType.APIRevision))
+            .ReturnsAsync(comments);
+
+        var result = await _manager.GetReviewQualityScoreAsync(revision.Id);
+
+        // Both orphaned comments should be scored independently: 100 - 20 - 20 = 60
+        Assert.Equal(60, result.Score);
+        Assert.Equal(2, result.UnresolvedMustFixCount);
+        Assert.Equal(2, result.TotalUnresolvedCount);
+    }
+
     #endregion
 }

@@ -39,7 +39,7 @@ public class DotnetLanguageServicePatchTests
             Mock.Of<IPackageInfoHelper>(),
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
-            Mock.Of<IChangelogHelper>());
+            Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
     }
 
     [TearDown]

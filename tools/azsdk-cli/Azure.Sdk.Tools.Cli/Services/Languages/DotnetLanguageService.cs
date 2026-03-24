@@ -26,6 +26,7 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     private readonly IPowershellHelper powershellHelper;
     private readonly ICopilotAgentRunner copilotAgentRunner;
+    private readonly ICiYamlHelper ciYamlHelper;
 
     public DotnetLanguageService(
         IProcessHelper processHelper,
@@ -37,15 +38,41 @@ public sealed partial class DotnetLanguageService: LanguageService
         IPackageInfoHelper packageInfoHelper,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-        IChangelogHelper changelogHelper)
+        IChangelogHelper changelogHelper,
+        ICiYamlHelper ciYamlHelper)
         : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.powershellHelper = powershellHelper;
         this.copilotAgentRunner = copilotAgentRunner;
+        this.ciYamlHelper = ciYamlHelper;
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
     public override bool IsCustomizedCodeUpdateSupported => true;
+
+    // .NET packages have their main csproj in a src/ subdirectory
+    protected override string[] PackageManifestPatterns => ["*.csproj"];
+
+    protected override string? GetPackageRootFromManifest(string manifestPath)
+    {
+        // .NET layout: sdk/{service}/{PackageName}/src/{PackageName}.csproj
+        // We need to go up from src/ to the package root.
+        var directory = Path.GetDirectoryName(manifestPath);
+        if (directory == null)
+        {
+            return null;
+        }
+
+        var dirName = Path.GetFileName(directory);
+
+        // Only consider csproj files in src/ directories (skip tests/, perf/, samples/, stress/)
+        if (!string.Equals(dirName, "src", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return Path.GetDirectoryName(directory);
+    }
 
     private static readonly string[] separator = new[] { "' '" };
 
@@ -337,6 +364,87 @@ public sealed partial class DotnetLanguageService: LanguageService
             ?? new DotnetCiPipelineYamlParameters();
 
         packageInfo.CiParameters.BuildSnippets = parameters.BuildSnippets;
+    }
+
+    /// <summary>
+    /// Updates package metadata including CI YAML provisioning.
+    /// Creates a new ci.yml if none exists for the service directory,
+    /// or appends the package as an artifact if ci.yml already exists.
+    /// </summary>
+    public override async Task<PackageOperationResponse> UpdateMetadataAsync(string packagePath, CancellationToken ct)
+    {
+        try
+        {
+            var packageInfo = await GetPackageInfo(packagePath, ct);
+            var packageName = packageInfo.PackageName;
+
+            if (string.IsNullOrEmpty(packageName))
+            {
+                return PackageOperationResponse.CreateFailure(
+                    "Could not determine package name from the provided path.",
+                    packageInfo);
+            }
+
+            var repoRoot = packageInfo.RepoRoot;
+            if (string.IsNullOrEmpty(repoRoot))
+            {
+                return PackageOperationResponse.CreateFailure(
+                    "Could not determine repository root from the provided path.",
+                    packageInfo);
+            }
+
+            var serviceDirectory = packageInfo.ServiceName;
+            if (string.IsNullOrEmpty(serviceDirectory))
+            {
+                return PackageOperationResponse.CreateFailure(
+                    "Could not determine service directory from the provided path.",
+                    packageInfo);
+            }
+
+            var ciYamlPath = ciYamlHelper.FindCiYamlPath(repoRoot, serviceDirectory);
+
+            if (ciYamlPath == null)
+            {
+                // Create new ci.yml
+                ciYamlPath = Path.Combine(repoRoot, "sdk", serviceDirectory, "ci.yml");
+                var ciContent = ciYamlHelper.CreateClientCiYaml(serviceDirectory, packageName);
+                await File.WriteAllTextAsync(ciYamlPath, ciContent, ct);
+
+                logger.LogInformation("Created new ci.yml at {CiYamlPath}", ciYamlPath);
+                return PackageOperationResponse.CreateSuccess(
+                    $"Created ci.yml for service '{serviceDirectory}' with artifact '{packageName}'.",
+                    packageInfo,
+                    result: ciYamlPath);
+            }
+            else
+            {
+                // Check if artifact already exists, append if not
+                var existingYaml = await File.ReadAllTextAsync(ciYamlPath, ct);
+                var updatedYaml = ciYamlHelper.AddArtifactToCiYaml(existingYaml, packageName);
+
+                if (updatedYaml == null)
+                {
+                    logger.LogInformation("Artifact '{PackageName}' already exists in {CiYamlPath}", packageName, ciYamlPath);
+                    return PackageOperationResponse.CreateSuccess(
+                        $"Artifact '{packageName}' already exists in ci.yml. No changes needed.",
+                        packageInfo,
+                        result: ciYamlPath);
+                }
+
+                await File.WriteAllTextAsync(ciYamlPath, updatedYaml, ct);
+
+                logger.LogInformation("Added artifact '{PackageName}' to {CiYamlPath}", packageName, ciYamlPath);
+                return PackageOperationResponse.CreateSuccess(
+                    $"Added artifact '{packageName}' to existing ci.yml.",
+                    packageInfo,
+                    result: ciYamlPath);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating CI YAML for package at {PackagePath}", packagePath);
+            return PackageOperationResponse.CreateFailure($"Error updating CI YAML: {ex.Message}");
+        }
     }
 
     public override string? HasCustomizations(string packagePath, CancellationToken ct = default)

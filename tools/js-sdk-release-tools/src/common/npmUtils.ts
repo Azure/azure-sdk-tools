@@ -105,6 +105,7 @@ function ensureTagAvailable(tag: string): boolean {
     const tagCheckCommand = `git show-ref --verify --quiet refs/tags/${tag}`;
     const tagCheckResult = executeCommand(tagCheckCommand);
     if (tagCheckResult && tagCheckResult.code === 0) {
+        logger.info(`Tag ${tag} is already available locally.`);
         return true;
     }
     logger.info(`Tag ${tag} not found locally, attempting to fetch from origin.`);

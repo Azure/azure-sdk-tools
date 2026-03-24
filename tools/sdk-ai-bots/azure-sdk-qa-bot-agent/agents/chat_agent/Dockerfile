@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy shared modules
 COPY config/ ./config/
 COPY models/ ./models/
+COPY prompts/ ./prompts/
 COPY tools/ ./tools/
 COPY utils/ ./utils/
 

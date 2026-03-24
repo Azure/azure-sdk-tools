@@ -189,15 +189,61 @@ def _wait_for_agent_running(
     return False
 
 
+def _wait_for_agent_not_stopping(
+    account_name: str, project_name: str, agent_name: str, agent_version: str,
+    timeout: int = 300, poll_interval: int = 10,
+) -> bool:
+    """Wait until the hosted agent status is no longer 'Stopping'."""
+    print(f"Waiting for agent {agent_name} version {agent_version} to leave Stopping state...")
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        result = _run_quiet([
+            "az", "cognitiveservices", "agent", "status",
+            "--account-name", account_name,
+            "--project-name", project_name,
+            "--name", agent_name,
+            "--agent-version", agent_version,
+            "--query", "status",
+            "-o", "tsv",
+        ], shell=True)
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() if result.stderr else result.stdout.strip()
+            print(f"  WARNING: Failed to query agent status while waiting: {error_msg}")
+            return False
+
+        status = result.stdout.strip().lower()
+        if status != "stopping":
+            print(f"  Agent status is now '{status}'.")
+            return True
+
+        print(f"  Status is still 'stopping' — retrying in {poll_interval}s...")
+        time.sleep(poll_interval)
+
+    print(f"  Timed out after {timeout}s waiting for Stopping to finish.")
+    return False
+
+
 def _start_agent(account_name: str, project_name: str, agent_name: str, agent_version: str) -> None:
     print(f"Starting agent: {agent_name} version {agent_version}")
-    _run([
+
+    # Always ensure the deployment is not in Stopping before start.
+    if not _wait_for_agent_not_stopping(account_name, project_name, agent_name, agent_version):
+        raise RuntimeError("Failed to start agent: deployment remained in Stopping state.")
+
+    start_cmd = [
         "az", "cognitiveservices", "agent", "start",
         "--account-name", account_name,
         "--project-name", project_name,
         "--name", agent_name,
         "--agent-version", agent_version,
-    ], shell=True)
+    ]
+
+    result = _run_quiet(start_cmd, shell=True)
+    if result.returncode == 0:
+        return
+
+    error_msg = (result.stderr or result.stdout or "").strip()
+    raise RuntimeError(f"Failed to start agent: {error_msg}")
 
 
 def _stop_agent(account_name: str, project_name: str, agent_name: str, agent_version: str) -> None:

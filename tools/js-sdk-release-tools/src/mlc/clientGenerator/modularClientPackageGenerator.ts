@@ -66,7 +66,6 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
 
         const ciYamlPath = await createOrUpdateCiYaml(
             relativePackageDirToSdkRoot,
-            options.versionPolicyName,
             npmPackageInfo
         );
         packageResult.path.push(ciYamlPath);

@@ -58,7 +58,6 @@ export interface ModularClientPackageOptions {
     gitCommitId: string;
     skip: boolean;
     repoUrl: string;
-    versionPolicyName: VersionPolicyName;
     local: boolean;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;

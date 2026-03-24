@@ -23,7 +23,7 @@ const (
 	Source_AzureRestAPISpec                Source = "azure_rest_api_specs_wiki"
 	Source_AzureSDKForPython               Source = "azure_sdk_for_python_docs"
 	Source_AzureSDKForPythonWiki           Source = "azure_sdk_for_python_wiki"
-	Source_TypeSpecQA                      Source = "static_typespec_qa"
+	Source_AzureSDKQAKnowledge             Source = "azure_sdk_qa_knowledge"
 	Source_AzureAPIGuidelines              Source = "azure_api_guidelines"
 	Source_AzureResourceManagerRPC         Source = "azure_resource_manager_rpc"
 	Source_TypeSpecMigration               Source = "static_typespec_migration_docs"
@@ -43,7 +43,7 @@ const (
 	Source_AzureSDKForNetDocs              Source = "azure_sdk_for_net_docs"
 	Source_AzureRestAPISpecDocs            Source = "azure_rest_api_specs_docs"
 	Source_AzureOpenapiDiffDocs            Source = "azure_openapi_diff_docs"
-	Source_APISpecViewQA                   Source = "static_api_spec_view_qa"
+
 	Source_TypeSpecAzureResourceManagerLib Source = "typespec-azure-resource-manager-lib"
 )
 

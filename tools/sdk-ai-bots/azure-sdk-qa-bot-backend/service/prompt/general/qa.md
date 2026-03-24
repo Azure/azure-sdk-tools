@@ -103,7 +103,7 @@ Follow this structured approach for all questions:
 - **typespec_azure_docs**: Azure-specific TypeSpec documentation, patterns, and templates for management and data-plane services
 - **typespec_azure_http_specs**: All Azure TypeSpec scenarios that should be supported by client & service generators
 - **typespec_http_specs**: All scenarios that should be supported by client & service generators
-- **static_typespec_qa**: Historical Q&A repository with expert TypeSpec solutions for Azure scenarios
+- **azure_sdk_qa_knowledge**: Curated Q&A knowledge base with expert TypeSpec and API review solutions for Azure scenarios
 - **static_typespec_migration_docs**: TypeSpec migration guides and conversion patterns from OpenAPI/Swagger
 
 ## Azure Guidelines & Standards

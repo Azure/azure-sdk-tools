@@ -645,6 +645,23 @@
           }
         }
       ]
+    },
+    {
+      "repository": {
+        "url": "https://github.com/Azure/azure-sdk-tools.git",
+        "branch": "main",
+        "authType": "public"
+      },
+      "paths": [
+        {
+          "description": "Curated Q&A knowledge base for Azure SDK QA Bot",
+          "path": "/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-sync/knowledge",
+          "folder": "azure_sdk_qa_knowledge",
+          "metadata": {
+            "scope": "branded"
+          }
+        }
+      ]
     }
   ]
 }

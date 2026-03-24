@@ -58,6 +58,8 @@ public class MetadataUpdateToolTests
         // Setup language service to return test package info
         _mockLanguageService.Setup(x => x.GetPackageInfo(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_testPackageInfo);
+        _mockLanguageService.Setup(x => x.UpdateMetadataAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(PackageOperationResponse.CreateSuccess("No package metadata updates need to be performed."));
         _mockLanguageService.Setup(x => x.Language).Returns(SdkLanguage.DotNet);
         _languageServices = new List<LanguageService> { _mockLanguageService.Object };
 

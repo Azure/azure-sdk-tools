@@ -3,6 +3,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.CopilotAgents;
 using Azure.Sdk.Tools.Cli.CopilotAgents.Tools;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -26,7 +27,6 @@ public sealed partial class DotnetLanguageService: LanguageService
 
     private readonly IPowershellHelper powershellHelper;
     private readonly ICopilotAgentRunner copilotAgentRunner;
-    private readonly ICiYamlHelper ciYamlHelper;
 
     public DotnetLanguageService(
         IProcessHelper processHelper,
@@ -38,13 +38,11 @@ public sealed partial class DotnetLanguageService: LanguageService
         IPackageInfoHelper packageInfoHelper,
         IFileHelper fileHelper,
         ISpecGenSdkConfigHelper specGenSdkConfigHelper,
-        IChangelogHelper changelogHelper,
-        ICiYamlHelper ciYamlHelper)
+        IChangelogHelper changelogHelper)
         : base(processHelper, gitHelper, logger, commonValidationHelpers, packageInfoHelper, fileHelper, specGenSdkConfigHelper, changelogHelper)
     {
         this.powershellHelper = powershellHelper;
         this.copilotAgentRunner = copilotAgentRunner;
-        this.ciYamlHelper = ciYamlHelper;
     }
 
     public override SdkLanguage Language { get; } = SdkLanguage.DotNet;
@@ -401,13 +399,11 @@ public sealed partial class DotnetLanguageService: LanguageService
                     packageInfo);
             }
 
-            var ciYamlPath = ciYamlHelper.FindCiYamlPath(repoRoot, serviceDirectory);
+            var ciYamlPath = Path.Combine(repoRoot, "sdk", serviceDirectory, "ci.yml");
 
-            if (ciYamlPath == null)
+            if (!File.Exists(ciYamlPath))
             {
-                // Create new ci.yml
-                ciYamlPath = Path.Combine(repoRoot, "sdk", serviceDirectory, "ci.yml");
-                var ciContent = ciYamlHelper.CreateClientCiYaml(serviceDirectory, packageName);
+                var ciContent = CreateClientCiYaml(serviceDirectory, packageName);
                 await File.WriteAllTextAsync(ciYamlPath, ciContent, ct);
 
                 logger.LogInformation("Created new ci.yml at {CiYamlPath}", ciYamlPath);
@@ -418,17 +414,23 @@ public sealed partial class DotnetLanguageService: LanguageService
             }
             else
             {
-                // Check if artifact already exists, append if not
                 var existingYaml = await File.ReadAllTextAsync(ciYamlPath, ct);
-                var updatedYaml = ciYamlHelper.AddArtifactToCiYaml(existingYaml, packageName);
 
-                if (updatedYaml == null)
+                if (CiYamlHasArtifact(existingYaml, packageName))
                 {
                     logger.LogInformation("Artifact '{PackageName}' already exists in {CiYamlPath}", packageName, ciYamlPath);
                     return PackageOperationResponse.CreateSuccess(
                         $"Artifact '{packageName}' already exists in ci.yml. No changes needed.",
                         packageInfo,
                         result: ciYamlPath);
+                }
+
+                var updatedYaml = AddArtifactToCiYaml(existingYaml, packageName);
+                if (updatedYaml == null)
+                {
+                    return PackageOperationResponse.CreateFailure(
+                        "Could not find Artifacts section in existing ci.yml to append the new package.",
+                        packageInfo);
                 }
 
                 await File.WriteAllTextAsync(ciYamlPath, updatedYaml, ct);
@@ -446,6 +448,93 @@ public sealed partial class DotnetLanguageService: LanguageService
             return PackageOperationResponse.CreateFailure($"Error updating CI YAML: {ex.Message}");
         }
     }
+
+    #region .NET CI YAML provisioning
+
+    private const string DotNetCiYamlTemplate =
+        """
+        # NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+
+        trigger:
+          branches:
+            include:
+            - main
+            - hotfix/*
+            - release/*
+          paths:
+            include:
+            - sdk/{serviceDirectory}/
+
+        pr:
+          branches:
+            include:
+            - main
+            - feature/*
+            - hotfix/*
+            - release/*
+          paths:
+            include:
+            - sdk/{serviceDirectory}/
+
+        extends:
+          template: /eng/pipelines/templates/stages/archetype-sdk-client.yml
+          parameters:
+            ServiceDirectory: {serviceDirectory}
+            ArtifactName: packages
+            Artifacts:
+            - name: {packageName}
+              safeName: {safeName}
+        """;
+
+    private static string CreateClientCiYaml(string serviceDirectory, string packageName)
+    {
+        var safeName = GenerateSafeName(packageName);
+        return DotNetCiYamlTemplate
+            .Replace("{serviceDirectory}", serviceDirectory)
+            .Replace("{packageName}", packageName)
+            .Replace("{safeName}", safeName)
+            + Environment.NewLine;
+    }
+
+    private static string? AddArtifactToCiYaml(string existingYaml, string packageName)
+    {
+        var safeName = GenerateSafeName(packageName);
+        var artifactEntry = $"    - name: {packageName}{Environment.NewLine}      safeName: {safeName}";
+
+        // Find the last artifact entry and insert after it.
+        var lastArtifactMatch = Regex.Match(
+            existingYaml,
+            @"-\s+name:\s+\S+[^\S\r\n]*(?:\r?\n[^\S\r\n]+(?!-\s+name:)\S[^\r\n]*)*",
+            RegexOptions.Multiline | RegexOptions.RightToLeft);
+
+        if (lastArtifactMatch.Success)
+        {
+            var insertPosition = lastArtifactMatch.Index + lastArtifactMatch.Length;
+            return existingYaml.Insert(insertPosition, Environment.NewLine + artifactEntry);
+        }
+
+        // Fallback: look for just "Artifacts:" and append after it
+        var artifactsHeaderMatch = Regex.Match(existingYaml, @"Artifacts:\s*\r?\n");
+        if (artifactsHeaderMatch.Success)
+        {
+            var insertPosition = artifactsHeaderMatch.Index + artifactsHeaderMatch.Length;
+            return existingYaml.Insert(insertPosition, artifactEntry + Environment.NewLine);
+        }
+
+        return null;
+    }
+
+    private static bool CiYamlHasArtifact(string yamlContent, string packageName)
+    {
+        return Regex.IsMatch(yamlContent, $@"-\s+name:\s+{Regex.Escape(packageName)}\s*$", RegexOptions.Multiline);
+    }
+
+    private static string GenerateSafeName(string packageName)
+    {
+        return packageName.Replace(".", "");
+    }
+
+    #endregion
 
     public override string? HasCustomizations(string packagePath, CancellationToken ct = default)
     {

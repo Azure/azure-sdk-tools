@@ -39,7 +39,7 @@ internal class DotNetLanguageSpecificChecksTests
             Mock.Of<IPackageInfoHelper>(),
             Mock.Of<IFileHelper>(),
             Mock.Of<ISpecGenSdkConfigHelper>(),
-            Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
+            Mock.Of<IChangelogHelper>());
 
         _repoRoot = Path.Combine(Path.GetTempPath(), "azure-sdk-for-net");
         _packagePath = Path.Combine(_repoRoot, "sdk", "healthdataaiservices", "Azure.Health.Deidentification");

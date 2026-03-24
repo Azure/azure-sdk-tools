@@ -63,7 +63,7 @@ public class DotNetPackageInfoHelperTests
         CreateTestFile(packagePath, "tests/unit/other.cs", "namespace Test; public class NotASample { }");
 
         var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelper);
-        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
+        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
 
         // Act
         var packageInfo = await helper.GetPackageInfo(packagePath);
@@ -86,7 +86,7 @@ public class DotNetPackageInfoHelperTests
         CreateTestFile(packagePath, "tests/unit/UnitTest.cs", "namespace Test; public class UnitTest { }");
 
         var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelper);
-        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
+        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
 
         // Act
         var packageInfo = await helper.GetPackageInfo(packagePath);
@@ -105,7 +105,7 @@ public class DotNetPackageInfoHelperTests
         CreateTestFile(packagePath, "tests/unit/other.cs", "namespace Test; public class NotASample { }");
 
         var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelper);
-        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
+        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
 
         // Act
         var packageInfo = await helper.GetPackageInfo(packagePath);
@@ -121,7 +121,7 @@ public class DotNetPackageInfoHelperTests
         var (packagePath, gitHelper, processHelper, powershellHelper, commonValidationHelpers) = await CreateTestPackageAsync();
 
         var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelper);
-        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
+        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
 
         // Act
         var packageInfo = await helper.GetPackageInfo(packagePath);
@@ -141,7 +141,7 @@ public class DotNetPackageInfoHelperTests
         CreateTestFile(packagePath, "tests/examples/ExampleSNIPPET.cs", "#region Snippet:AnotherExample\nnamespace Test; public class ExampleSNIPPET { }\n#endregion");
 
         var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelper);
-        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
+        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
 
         // Act
         var packageInfo = await helper.GetPackageInfo(packagePath);
@@ -161,7 +161,7 @@ public class DotNetPackageInfoHelperTests
         CreateTestFile(packagePath, "tests/snippets/BasicSnippet.cs", "#region Snippet:AnotherSnippet\nnamespace Test; public class BasicSnippet { }\n#endregion");
 
         var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelper);
-        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
+        var helper = new DotnetLanguageService(processHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
 
         // Act
         var packageInfo = await helper.GetPackageInfo(packagePath);
@@ -198,7 +198,7 @@ public class DotNetPackageInfoHelperTests
 
         var realProcessHelper = new ProcessHelper(new TestLogger<ProcessHelper>(), Mock.Of<IRawOutputHelper>());
         var packageInfoHelper = new PackageInfoHelper(NullLogger<PackageInfoHelper>.Instance, gitHelper);
-        var helper = new DotnetLanguageService(realProcessHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>(), Mock.Of<ICiYamlHelper>());
+        var helper = new DotnetLanguageService(realProcessHelper, powershellHelper, Mock.Of<ICopilotAgentRunner>(), gitHelper, new TestLogger<DotnetLanguageService>(), commonValidationHelpers, packageInfoHelper, Mock.Of<IFileHelper>(), Mock.Of<ISpecGenSdkConfigHelper>(), Mock.Of<IChangelogHelper>());
 
         // Act
         var packageInfo = await helper.GetPackageInfo(packagePath);

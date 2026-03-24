@@ -19,6 +19,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -888,17 +889,47 @@ namespace APIViewWeb.Managers
         /// <param name="revision"></param>
         /// <param name="renderedCodeFile"></param>
         /// <param name="considerPackageVersion"></param>
+        /// <param name="incomingContentHash"></param>
         /// <returns></returns>
-        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile, bool considerPackageVersion = false)
+        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile, bool considerPackageVersion = false, string incomingContentHash = null)
         {
-            //This will compare and check if new code file content is same as revision in parameter
-            var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            var result = _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+            var revisionFile = revision.Files.SingleOrDefault();
+            var storedHash = revisionFile?.ContentHash;
+            if (storedHash != null && incomingContentHash != null)
+            {
+                // Fast path: O(1) hash comparison, no blob download needed.
+                bool result = storedHash == incomingContentHash;
+                if (considerPackageVersion)
+                    return result && revisionFile.PackageVersion == renderedCodeFile.CodeFile.PackageVersion;
+                return result;
+            }
+
+            // Slow path: download blob and compare (backward compat for revisions without ContentHash).
+            RenderedCodeFile lastRevisionFile;
+            try
+            {
+                lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+            }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException)
+            {
+                _telemetryClient.TrackTrace($"Skipping comparison for revision {revision.Id}: legacy blob format ({ex.GetType().Name})");
+                return false;
+            }
+            bool fileResult = _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
+
+            if (storedHash == null && revisionFile != null)
+            {
+                using var hashStream = new MemoryStream();
+                await lastRevisionFile.CodeFile.SerializeAsync(hashStream);
+                revisionFile.ContentHash = Convert.ToHexString(SHA256.HashData(hashStream.ToArray())).ToLowerInvariant();
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+            }
+
             if (considerPackageVersion)
             {
-                return result && lastRevisionFile.CodeFile.PackageVersion == renderedCodeFile.CodeFile.PackageVersion;
+                return fileResult && lastRevisionFile.CodeFile.PackageVersion == renderedCodeFile.CodeFile.PackageVersion;
             }
-            return result;
+            return fileResult;
         }
 
         /// <summary>

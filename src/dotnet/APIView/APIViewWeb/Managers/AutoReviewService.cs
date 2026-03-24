@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.LeanModels;
@@ -42,12 +43,19 @@ public class AutoReviewService : IAutoReviewService
     {
         // Parse package type once at the beginning
         var parsedPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var result) ? (PackageType?)result : null;
-        
+
         var createNewRevision = true;
         var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
         var apiRevision = default(APIRevisionListItemModel);
         var renderedCodeFile = new RenderedCodeFile(codeFile);
         IEnumerable<APIRevisionListItemModel> apiRevisions = new List<APIRevisionListItemModel>();
+
+        string incomingContentHash;
+        using (var hashStream = new MemoryStream())
+        {
+            await codeFile.SerializeAsync(hashStream);
+            incomingContentHash = Convert.ToHexString(SHA256.HashData(hashStream.ToArray())).ToLowerInvariant();
+        }
 
         if (review != null)
         {
@@ -65,21 +73,21 @@ public class AutoReviewService : IAutoReviewService
 
                 // Delete pending apiRevisions if it is not in approved state before adding new revision
                 // This is to keep only one pending revision since last approval or from initial review revision
-                var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic);
-                if (automaticRevisions.Any())
+                var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic).ToList();
+                if (automaticRevisions.Count > 0)
                 {
                     var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
                     var comments = await _commentsManager.GetCommentsAsync(review.Id);
                     APIRevisionListItemModel latestAutomaticAPIRevision = null;
-
-                    while (automaticRevisionsQueue.Any())
+                    
+                    while (automaticRevisionsQueue.Count > 0)
                     {
                         latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
 
                         // Check if we should keep this revision
                         if (latestAutomaticAPIRevision.IsApproved ||
                             latestAutomaticAPIRevision.IsReleased ||
-                            await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) ||
+                            await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, incomingContentHash: incomingContentHash) ||
                             comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                         {
                             break;
@@ -94,13 +102,13 @@ public class AutoReviewService : IAutoReviewService
                     // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
                     // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
 
-                    bool considerPackageVersion = !String.IsNullOrWhiteSpace(codeFile.PackageVersion);
+                    bool considerPackageVersion = !string.IsNullOrWhiteSpace(codeFile.PackageVersion);
 
                     if (compareAllRevisions)
                     {
                         foreach (var approvedAPIRevision in automaticRevisions.Where(r => r.IsApproved))
                         {
-                            if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile, considerPackageVersion))
+                            if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile, considerPackageVersion, incomingContentHash))
                             {
                                 return (review, approvedAPIRevision);
                             }
@@ -109,7 +117,7 @@ public class AutoReviewService : IAutoReviewService
 
                     // Only reuse latestAutomaticAPIRevision if one was kept
                     if (latestAutomaticAPIRevision != null &&
-                        await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion))
+                        await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile, considerPackageVersion, incomingContentHash))
                     {
                         apiRevision = latestAutomaticAPIRevision;
                         createNewRevision = false;
@@ -133,7 +141,19 @@ public class AutoReviewService : IAutoReviewService
         {
             foreach (var apiRev in apiRevisions)
             {
-                if (await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
+                // Stop early once there is nothing left to carry forward
+                if (apiRevision.IsApproved && apiRevision.HasAutoGeneratedComments)
+                    break;
+
+                // Skip revisions that have nothing worth forwarding — avoids unnecessary comparisons.
+                if (!apiRev.IsApproved && !apiRev.HasAutoGeneratedComments)
+                    continue;
+
+                // Don't carry forward from the revision itself
+                if (apiRev.Id == apiRevision.Id)
+                    continue;
+
+                if (await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile, incomingContentHash: incomingContentHash))
                 {
                     await _apiRevisionsManager.CarryForwardRevisionDataAsync(targetRevision: apiRevision, sourceRevision: apiRev);
                 }

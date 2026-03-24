@@ -381,6 +381,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             var result = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
+
+            if (result.ExitCode != 0 && (result.NextSteps == null || !result.NextSteps.Any()))
+            {
+                result.NextSteps = new List<string>
+                {
+                    "Run with --fix flag to automatically fix spelling errors using AI-assisted corrections",
+                    "Add valid technical terms to the cspell.json dictionary in the package directory",
+                    "Review the spelling errors and fix them manually in source files"
+                };
+            }
+            else if (result.ExitCode == 0 && result.CheckStatusDetails != "noop")
+            {
+                result.NextSteps ??= new List<string>
+                {
+                    "Spelling check passed - no action needed"
+                };
+            }
+
             return result;
         }
 

@@ -8,11 +8,14 @@ parameters:
     type: object
     default:
       - Name: azure-sdk-for-net
-        DraftPr: true
         SetUp:
           - task: UseDotNet@2
             inputs:
               version: '10.0.x'
+
+        # TODO: Remove when this is ready for production
+        DraftPr: true
+        CloseAfterOpeningForTesting: true
 
 stages:
 - stage: Run
@@ -136,8 +139,7 @@ stages:
               RepoName: ${{ repo.Name }}
               PushArgs: '-f'
               OpenAsDraft: ${{ repo.DraftPr }}
-              # TODO: Remove when this is ready for production
-              CloseAfterOpenForTesting: true
+              CloseAfterOpenForTesting: ${{ parameters.CloseAfterOpeningForTesting }}
               PRTitle: '[CODEOWNERS] Automated CODEOWNERS Update'
               PRBody: |
                 Updating CODEOWNERS

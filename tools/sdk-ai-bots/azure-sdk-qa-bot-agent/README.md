@@ -61,6 +61,14 @@ Ensure your Azure identity has the following roles:
    AZURE_APPCONFIG_ENDPOINT=https://azuresdkqabot-dev-config.azconfig.io
    ```
 
+   To test the GitHub MCP tool locally, add a [GitHub personal access token](https://github.com/settings/tokens) to your `.env` file:
+
+   ```
+   GITHUB_TOKEN=ghp_your_token_here
+   ```
+
+   Without this, the agent uses GitHub App JWT authentication via Key Vault, which is only available in production.
+
 5. Log in to Azure:
 
    ```bash

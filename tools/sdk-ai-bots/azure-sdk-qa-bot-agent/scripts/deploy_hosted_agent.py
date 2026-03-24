@@ -13,9 +13,11 @@ Usage:
 
 import argparse
 import asyncio
+import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -45,6 +47,11 @@ def _run(cmd: list[str], **kwargs) -> None:
     subprocess.run(cmd, check=True, **kwargs)
 
 
+def _run_quiet(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
+    """Run a command and return the result without raising on failure."""
+    return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+
+
 def _git_short_sha() -> str:
     try:
         r = subprocess.run(
@@ -54,6 +61,114 @@ def _git_short_sha() -> str:
         return r.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
         return "latest"
+
+
+# ── User-assigned identity management on the AI Foundry project ───────────
+# UMIs are assigned to the *project* resource (not the hosted agent).
+# We need to temporarily remove them before deployment because the
+# hosted agent platform cannot resolve UMIs for ACR image pull.
+
+
+def _list_project_user_assigned_identities(project_resource_id: str) -> list[str]:
+    """Return resource IDs of user-assigned identities on the AI project."""
+    print(f"Listing user-assigned identities on project...")
+    result = _run_quiet([
+        "az", "resource", "show",
+        "--ids", project_resource_id,
+        "--query", "identity.userAssignedIdentities",
+        "-o", "json",
+    ], shell=True)
+    if result.returncode != 0 or not result.stdout.strip():
+        return []
+    try:
+        data = json.loads(result.stdout)
+        if isinstance(data, dict):
+            ids = list(data.keys())
+        else:
+            ids = []
+        if ids:
+            print(f"  Found {len(ids)} user-assigned identities:")
+            for uid in ids:
+                print(f"    {uid}")
+        return ids
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
+def _set_project_identity_type(project_resource_id: str, identity_type: str) -> None:
+    """Set the project identity type (e.g. 'SystemAssigned' or 'SystemAssigned, UserAssigned')."""
+    print(f"  Setting project identity type to: {identity_type}")
+    if identity_type == "SystemAssigned":
+        identity_payload = json.dumps({
+            "type": "SystemAssigned",
+            "userAssignedIdentities": None,
+        })
+        _run([
+            "az", "resource", "update",
+            "--ids", project_resource_id,
+            "--set", f"identity={identity_payload}",
+        ], shell=True)
+        return
+
+    _run([
+        "az", "resource", "update",
+        "--ids", project_resource_id,
+        "--set", f"identity.type={identity_type}",
+    ], shell=True)
+
+
+def _restore_project_user_assigned_identities(
+    project_resource_id: str, identity_ids: list[str],
+) -> None:
+    """Restore user-assigned identities on the AI project."""
+    # Build the identity body: {"type": "SystemAssigned, UserAssigned", "userAssignedIdentities": {"<id>": {}, ...}}
+    umi_dict = {uid: {} for uid in identity_ids}
+    identity_payload = json.dumps({
+        "type": "SystemAssigned, UserAssigned",
+        "userAssignedIdentities": umi_dict,
+    })
+    print(f"  Restoring {len(identity_ids)} user-assigned identities...")
+    _run([
+        "az", "resource", "update",
+        "--ids", project_resource_id,
+        "--set", f"identity={identity_payload}",
+    ], shell=True)
+
+
+def _wait_for_agent_running(
+    account_name: str, project_name: str, agent_name: str,
+    timeout: int = 300, poll_interval: int = 10,
+) -> bool:
+    """Poll until the hosted agent reaches a running state."""
+    print(f"Waiting for agent {agent_name} to be running (timeout {timeout}s)...")
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        result = _run_quiet([
+            "az", "cognitiveservices", "agent", "show",
+            "--account-name", account_name,
+            "--project-name", project_name,
+            "--name", agent_name,
+            "--query", "properties.provisioningState",
+            "-o", "tsv",
+        ], shell=True)
+        if result.returncode != 0:
+            # Command failed — likely project/account not found or not authenticated
+            error_msg = result.stderr.strip() if result.stderr else result.stdout.strip()
+            print(f"  WARNING: Failed to check agent status: {error_msg}")
+            print(f"  Ensure you are logged in to the correct subscription and account/project names are correct.")
+            print(f"  Account: {account_name}, Project: {project_name}, Agent: {agent_name}")
+            return False
+        state = result.stdout.strip().lower()
+        if state in ("running", "succeeded"):
+            print(f"  Agent is {state}.")
+            return True
+        if state in ("failed", "error"):
+            print(f"  Agent entered {state} state.")
+            return False
+        print(f"  Status: {result.stdout.strip()} — retrying in {poll_interval}s...")
+        time.sleep(poll_interval)
+    print(f"  Timed out after {timeout}s.")
+    return False
 
 
 def main() -> None:
@@ -66,15 +181,36 @@ def main() -> None:
 
     asyncio.run(app_config.init())
 
+    # Show current subscription context
+    sub_result = _run_quiet(["az", "account", "show", "--query", "id", "-o", "tsv"], shell=True)
+    if sub_result.returncode == 0:
+        sub_id = sub_result.stdout.strip()
+        print(f"Current subscription: {sub_id}")
+    else:
+        print("WARNING: Could not determine current subscription. Ensure you are logged in: az login")
+
     registry = cfg("ACR_LOGIN_SERVER")
     project_endpoint = cfg("AI_FOUNDRY_PROJECT_ENDPOINT")
     appconfig_endpoint = args.appconfig_endpoint
+    account_name = cfg("AI_FOUNDRY_ACCOUNT_NAME")
+    project_name = cfg("AI_FOUNDRY_PROJECT")
+
     if not registry:
         sys.exit("ERROR: ACR_LOGIN_SERVER not found in App Configuration")
     if not project_endpoint:
         sys.exit("ERROR: AI_FOUNDRY_PROJECT_ENDPOINT not found in App Configuration")
     if not appconfig_endpoint:
         sys.exit("ERROR: AZURE_APPCONFIG_ENDPOINT not set in .env or --appconfig-endpoint")
+    if not account_name or not project_name:
+        sys.exit(
+            "ERROR: AI_FOUNDRY_ACCOUNT_NAME and AI_FOUNDRY_PROJECT "
+            "must be set in App Configuration to start the agent."
+        )
+
+    print(f"Deployment config:")
+    print(f"  Account: {account_name}")
+    print(f"  Project: {project_name}")
+    print(f"  Registry: {registry}")
 
     # Read agent name from agent.yaml metadata
     agent_metadata = _PROJECT_DIR / "agents" / args.agent_name / "agent.yaml"
@@ -92,7 +228,30 @@ def main() -> None:
     image = f"{registry}/{image_name}:{tag}"
     dockerfile = _PROJECT_DIR / "agents" / args.agent_name / "Dockerfile"
 
-    # Login to ACR, build & push
+    # ── Resolve project resource ID ──
+    result = _run_quiet([
+        "az", "resource", "list",
+        "--name", f"{account_name}/{project_name}",
+        "--resource-type", "Microsoft.CognitiveServices/accounts/projects",
+        "--query", "[0].id",
+        "-o", "tsv",
+    ], shell=True)
+    project_resource_id = result.stdout.strip() if result.returncode == 0 else ""
+    if not project_resource_id:
+        sys.exit(
+            f"ERROR: Could not find project '{project_name}' under account '{account_name}'. "
+            "Make sure you are logged in to the correct subscription."
+        )
+
+    # ── Save and remove user-assigned identities before deployment ──
+    saved_identities = _list_project_user_assigned_identities(project_resource_id)
+    if saved_identities:
+        print(f"Removing {len(saved_identities)} user-assigned identities before deployment...")
+        _set_project_identity_type(project_resource_id, "SystemAssigned")
+    else:
+        print("No user-assigned identities found on the project.")
+
+    # ── Login to ACR, build & push ──
     acr_name = registry.split(".")[0]
     print(f"Logging in to ACR: {acr_name}")
     _run(["az", "acr", "login", "--name", acr_name], shell=True)
@@ -101,7 +260,7 @@ def main() -> None:
     print(f"Pushing: {image}")
     _run(["docker", "push", image])
 
-    # Deploy
+    # ── Deploy ──
     print(f"Deploying: {image_name}")
     project = AIProjectClient(
         endpoint=project_endpoint,
@@ -109,33 +268,28 @@ def main() -> None:
         allow_preview=True,
         headers={"Foundry-Features": "HostedAgents=V1Preview"},
     )
-    agent = project.agents.create_version(
-        agent_name=image_name,
-        definition=HostedAgentDefinition(
-            container_protocol_versions=[
-                ProtocolVersionRecord(protocol=AgentProtocol.RESPONSES, version="v1")
-            ],
-            cpu="1",
-            memory="2Gi",
-            image=image,
-            environment_variables={
-                "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
-                "UMI_BACKEND_CLIENT_ID": os.environ.get("UMI_BACKEND_CLIENT_ID"),
-                "UMI_FRONTEND_CLIENT_ID": os.environ.get("UMI_FRONTEND_CLIENT_ID"),
-            },
-        ),
-    )
-    print(f"Created — agent: {agent.name}, version: {agent.version}")
-
-    # Start the new agent version
-    account_name = cfg("AI_FOUNDRY_ACCOUNT_NAME")
-    project_name = cfg("AI_FOUNDRY_PROJECT")
-    if not account_name or not project_name:
-        sys.exit(
-            "ERROR: AI_FOUNDRY_ACCOUNT_NAME and AI_FOUNDRY_PROJECT "
-            "must be set in App Configuration to start the agent."
+    try:
+        agent = project.agents.create_version(
+            agent_name=image_name,
+            definition=HostedAgentDefinition(
+                container_protocol_versions=[
+                    ProtocolVersionRecord(protocol=AgentProtocol.RESPONSES, version="v1")
+                ],
+                cpu="1",
+                memory="2Gi",
+                image=image,
+                environment_variables={
+                    "AZURE_APPCONFIG_ENDPOINT": appconfig_endpoint,
+                    "UMI_BACKEND_CLIENT_ID": os.environ.get("UMI_BACKEND_CLIENT_ID"),
+                    "UMI_FRONTEND_CLIENT_ID": os.environ.get("UMI_FRONTEND_CLIENT_ID"),
+                },
+            ),
         )
+        print(f"Created — agent: {agent.name}, version: {agent.version}")
+    finally:
+        project.close()
 
+    # ── Start the new agent version ──
     print(f"Starting agent: {agent.name} version {agent.version}")
     _run([
         "az", "cognitiveservices", "agent", "start",
@@ -144,7 +298,20 @@ def main() -> None:
         "--name", agent.name,
         "--agent-version", str(agent.version),
     ], shell=True)
-    print(f"Done — agent {agent.name} v{agent.version} is starting.")
+
+    # ── Wait for running, then restore identities ──
+    if saved_identities and project_resource_id:
+        if _wait_for_agent_running(account_name, project_name, agent.name):
+            print(f"Restoring {len(saved_identities)} user-assigned identities...")
+            _restore_project_user_assigned_identities(project_resource_id, saved_identities)
+            print("Identities restored successfully.")
+        else:
+            print("WARNING: Agent did not reach Running state. Identities NOT restored.")
+            print("Restore them manually by re-adding these UMIs to the project:")
+            for umi in saved_identities:
+                print(f"  {umi}")
+    else:
+        print(f"Done — agent {agent.name} v{agent.version} is starting.")
 
 
 if __name__ == "__main__":

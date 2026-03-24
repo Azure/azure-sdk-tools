@@ -20,20 +20,18 @@ def get_credential() -> AsyncTokenCredential:
     """Return the shared async chained credential (created once on first call)."""
     global _credential
     if _credential is None:
-        credentials: list[AsyncTokenCredential] = []
-
         client_id = os.environ.get("UMI_BACKEND_CLIENT_ID")
         if client_id:
-            credentials.append(ManagedIdentityCredential(client_id=client_id))
+            # Production: try Managed Identity first, then CLI as fallback.
+            _credential = ChainedTokenCredential(
+                ManagedIdentityCredential(client_id=client_id),
+                AzureCliCredential(),
+            )
             _logger.info("Managed Identity credential added (client_id=%s)", client_id)
         else:
-            credentials.append(ManagedIdentityCredential())
-            _logger.info("UMI_BACKEND_CLIENT_ID not set")
-
-        credentials.append(AzureCliCredential())
-        _logger.info("Azure CLI credential added")
-
-        _credential = ChainedTokenCredential(*credentials)
+            # Local dev: skip ManagedIdentityCredential to avoid slow IMDS timeouts.
+            _credential = AzureCliCredential()
+            _logger.info("UMI_BACKEND_CLIENT_ID not set, using AzureCliCredential only")
     return _credential
 
 
@@ -46,14 +44,15 @@ def get_frontend_credential() -> AsyncTokenCredential:
     if _frontend_credential is None:
         frontend_client_id = os.environ.get("UMI_FRONTEND_CLIENT_ID")
         if frontend_client_id:
-            credentials: list[AsyncTokenCredential] = [
+            _frontend_credential = ChainedTokenCredential(
                 ManagedIdentityCredential(client_id=frontend_client_id),
                 AzureCliCredential(),
-            ]
-            _frontend_credential = ChainedTokenCredential(*credentials)
+            )
             _logger.info("Frontend credential created (client_id=%s)", frontend_client_id)
         else:
-            _logger.warning("UMI_FRONTEND_CLIENT_ID not set")
+            # Local dev: skip ManagedIdentityCredential to avoid slow IMDS timeouts.
+            _frontend_credential = AzureCliCredential()
+            _logger.warning("UMI_FRONTEND_CLIENT_ID not set, using AzureCliCredential only")
     return _frontend_credential
 
 

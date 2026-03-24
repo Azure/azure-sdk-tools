@@ -4,6 +4,9 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
+# Install Node.js
+RUN tdnf install -y nodejs && tdnf clean all
+
 # Install dependencies first (layer caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

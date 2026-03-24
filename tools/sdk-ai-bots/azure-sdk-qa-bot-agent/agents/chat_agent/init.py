@@ -78,6 +78,7 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
         stream=sys.stdout,
     )
+    
     logger.info("Agent container starting...")
 
     asyncio.run(main())

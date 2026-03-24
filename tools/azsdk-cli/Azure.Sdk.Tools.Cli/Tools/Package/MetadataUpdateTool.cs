@@ -122,6 +122,11 @@ public class MetadataUpdateTool : LanguageMcpTool
                         return updateResult;
                     }
 
+                    if (!string.IsNullOrEmpty(updateResult.Message))
+                    {
+                        scriptResult.Message = $"{scriptResult.Message} {updateResult.Message}";
+                    }
+
                     return scriptResult;
                 }
             }

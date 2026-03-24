@@ -12,7 +12,10 @@
 [CmdletBinding()]
 param(
     [string]$Path = ".github",
-    [switch]$Fix
+    [switch]$Fix,
+    # Restrict to a specific owner category: GitHub, Azure, Microsoft, 3P, Local
+    [ValidateSet("GitHub", "Azure", "Microsoft", "3P", "Local")]
+    [string]$OwnerType
 )
 
 Set-StrictMode -Version Latest
@@ -69,6 +72,19 @@ $refs = foreach ($file in $yamlFiles) {
             [PSCustomObject]@{ File = $relPath; Line = $i + 1; Action = $Matches['action']; Ref = $ref; Category = Get-Category $Matches['action']; IsSha = ($ref -match '^[0-9a-f]{40}$') }
         }
     }
+}
+
+# Map OwnerType to category name for filtering
+$ownerCategoryMap = @{
+    'GitHub'    = 'GitHub owned'
+    'Azure'     = 'Azure/ repo owned'
+    'Microsoft' = 'Microsoft/ repo owned'
+    '3P'        = 'third party'
+    'Local'     = 'local'
+}
+
+if ($OwnerType) {
+    $refs = @($refs | Where-Object Category -eq $ownerCategoryMap[$OwnerType])
 }
 
 if (-not $refs) { Write-Host "No action references found."; exit 0 }

@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
         {
             var triggeredToolsAndSkills = context.ToolCalls;
             var missingTriggers = ToolAndSkillToCheck
-                .Where(toolOrSkill => !triggeredToolsAndSkills.Any(triggered => triggered.Contains(toolOrSkill, StringComparison.OrdinalIgnoreCase)))
+                .Where(toolOrSkill => !triggeredToolsAndSkills.Any(triggered => MatchesToolOrSkill(triggered, toolOrSkill)))
                 .ToList();
             if (missingTriggers.Count == 0)
             {
@@ -28,6 +28,26 @@ namespace Azure.Sdk.Tools.Cli.Benchmarks.Validation.Validators
             }
             return Task.FromResult(ValidationResult.Fail(Name,
                 $"The following tools or skills were expected to be triggered but were not: {string.Join(", ", missingTriggers)}"));
+        }
+        
+        private static bool MatchesToolOrSkill(ToolCallRecord record, string expected)
+        {
+            if (record.ToolName.Contains(expected, StringComparison.OrdinalIgnoreCase))
+            { 
+                return true;
+            }
+
+            // For skill invocations, the ToolName is "skill" and the actual skill name is in ToolArgs
+            if (record.ToolName.Equals("skill", StringComparison.OrdinalIgnoreCase) && record.ToolArgs != null)
+            {
+                var argsString = record.ToolArgs.ToString();
+                if (argsString != null && argsString.Contains(expected, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

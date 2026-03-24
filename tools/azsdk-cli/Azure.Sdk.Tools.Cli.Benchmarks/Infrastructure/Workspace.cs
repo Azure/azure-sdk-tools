@@ -168,15 +168,17 @@ public class Workspace : IDisposable
     /// <param name="duration">The duration of the execution.</param>
     /// <param name="passed">Whether the benchmark passed validation.</param>
     /// <param name="validation">The validation summary (null if no validators were run).</param>
+    /// <param name="tokenUsage">Token usage accumulated during execution (null if not available).</param>
     /// <param name="error">Optional error message if the benchmark failed.</param>
     public async Task WriteExecutionLogAsync(
         string scenarioName,
         IReadOnlyList<object> messages,
-        IReadOnlyList<string> toolCalls,
+        IReadOnlyList<ToolCallRecord> toolCalls,
         string? gitDiff,
         TimeSpan duration,
         bool passed,
         ValidationSummary? validation = null,
+        TokenUsage? tokenUsage = null,
         string? error = null)
     {
         var log = new
@@ -187,6 +189,7 @@ public class Workspace : IDisposable
             Passed = passed,
             Error = error,
             Validation = validation,
+            TokenUsage = tokenUsage,
             ToolCalls = toolCalls,
             Messages = messages,
             GitDiff = gitDiff

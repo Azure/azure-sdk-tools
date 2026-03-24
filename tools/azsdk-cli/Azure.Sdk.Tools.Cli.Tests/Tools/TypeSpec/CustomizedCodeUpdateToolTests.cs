@@ -133,16 +133,20 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task TspFix_BuildFailsFirstTry_PassesOnRetry_ReturnsSuccess()
+    public async Task TspFix_BuildFailsAfterRegen_FallsThroughToPatching()
     {
         var buildCalls = 0;
-        var svc = new ConfigurableLanguageService(buildFunc: () =>
-        {
-            buildCalls++;
-            return buildCalls == 1
-                ? (false, "error: missing import", null)
-                : (true, null, null);
-        });
+        var svc = new ConfigurableLanguageService(
+            buildFunc: () =>
+            {
+                buildCalls++;
+                // First build (after regen) fails, second build (error context / final) passes
+                return buildCalls <= 1
+                    ? (false, "error: missing import", null)
+                    : (true, null, null);
+            },
+            hasCustomizations: true,
+            patchesFunc: () => [new AppliedPatch("test.java", "Fixed import", 1)]);
 
         var (tool, _) = CreateTool(languageService: svc);
         var pkg = CreateTempDir();
@@ -151,8 +155,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed"));
-        Assert.That(buildCalls, Is.EqualTo(2), "Should have attempted build twice");
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
     }
 
     // ========================================================================
@@ -281,14 +284,15 @@ public class CustomizedCodeUpdateToolAutoTests
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
-        Assert.That(result.Success, Is.True);
+        Assert.That(result.Success, Is.False);
         Assert.That(result.Message, Does.Contain("manual intervention"));
     }
 
     [Test]
-    public async Task Classification_EmptyOnSecondIteration_BreaksLoop()
+    public async Task Classification_EmptyOnSecondPass_StillBuildsForContext()
     {
-        // First call returns TSP_APPLICABLE, second call returns empty (nothing more to fix)
+        // First pass returns TSP_APPLICABLE, regen succeeds, build fails.
+        // Second pass (re-classify with build errors) returns empty — no further action.
         var classifyCalls = 0;
         var buildCalls = 0;
         var svc = new ConfigurableLanguageService(buildFunc: () =>
@@ -336,7 +340,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
-        Assert.That(buildCalls, Is.EqualTo(1), "Should have only built once before second classify returned empty");
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice: initial pass + second pass with build context");
+        Assert.That(buildCalls, Is.EqualTo(1), "Should build once after regen");
     }
 
     // ========================================================================
@@ -344,30 +349,72 @@ public class CustomizedCodeUpdateToolAutoTests
     // ========================================================================
 
     [Test]
-    public async Task TspCustomization_AllFail_FirstIteration_ReturnsTypeSpecCustomizationFailed()
+    public async Task TspCustomization_AllFail_ReclassifiedOnSecondPass()
     {
-        var (tool, _) = CreateTool(configureTspCustomization: t =>
-            t.Setup(x => x.ApplyCustomizationAsync(
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string?>(),
-                    It.IsAny<int>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new TypeSpecCustomizationServiceResult
-                {
-                    Success = false,
-                    ChangesSummary = [],
-                    FailureReason = "Could not parse TypeSpec project"
-                }));
+        var classifyCalls = 0;
+        var (tool, _) = CreateTool(
+            configureTspCustomization: t =>
+                t.Setup(x => x.ApplyCustomizationAsync(
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int>(),
+                        It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(new TypeSpecCustomizationServiceResult
+                    {
+                        Success = false,
+                        ChangesSummary = [],
+                        FailureReason = "Could not parse TypeSpec project"
+                    }),
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
+                        {
+                            classifyCalls++;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            if (classifyCalls == 1)
+                            {
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                            Reason = "fixable", Text = "rename X"
+                                        }
+                                    ]
+                                });
+                            }
+                            // Second pass: classifier sees failure context and flags manual intervention
+                            return Task.FromResult(new FeedbackClassificationResponse
+                            {
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "REQUIRES_MANUAL_INTERVENTION",
+                                        Reason = "TSP customization failed, manual fix needed", Text = "rename X"
+                                    }
+                                ]
+                            });
+                        }));
 
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
-        Assert.That(result.Success, Is.False);
-        Assert.That(result.ErrorCode, Is.EqualTo(CustomizedCodeUpdateResponse.KnownErrorCodes.TypeSpecCustomizationFailed));
-        Assert.That(result.Message, Does.Contain("Could not parse TypeSpec project"));
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice: pass 1 + pass 2 after TSP failure");
+        Assert.That(result.NextSteps, Is.Not.Null.And.Count.GreaterThan(0), "Should include manual intervention from second pass");
     }
 
     [Test]
@@ -428,7 +475,7 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task TspRegeneration_Fails_ContinuesLoopAndAppendsContext()
+    public async Task TspRegeneration_Fails_ReclassifiesOnSecondPass()
     {
         var classifyCalls = 0;
         var failingTsp = new MockTspHelper(updateSuccess: false, updateError: "tsp-client failed: exit code 1");
@@ -448,14 +495,29 @@ public class CustomizedCodeUpdateToolAutoTests
                         {
                             classifyCalls++;
                             var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            if (classifyCalls == 1)
+                            {
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                            Reason = "fixable", Text = "rename X"
+                                        }
+                                    ]
+                                });
+                            }
+                            // Second pass: reclassify as manual intervention (emitter issue)
                             return Task.FromResult(new FeedbackClassificationResponse
                             {
                                 Classifications =
                                 [
                                     new FeedbackClassificationResponse.ItemClassificationDetails
                                     {
-                                        ItemId = actualId, Classification = "TSP_APPLICABLE",
-                                        Reason = "fixable", Text = "rename X"
+                                        ItemId = actualId, Classification = "REQUIRES_MANUAL_INTERVENTION",
+                                        Reason = "Emitter issue, cannot be patched", Text = "rename X"
                                     }
                                 ]
                             });
@@ -466,9 +528,95 @@ public class CustomizedCodeUpdateToolAutoTests
 
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
-        // Regen failure should not short-circuit; loop continues for re-classification
-        Assert.That(result.Success, Is.False);
-        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice (maxTries) even when regen fails");
+        // Regen failure → second pass reclassifies as manual intervention
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice: initial + second pass after regen failure");
+        Assert.That(result.NextSteps, Is.Not.Null.And.Count.GreaterThan(0), "Should include manual intervention steps");
+    }
+
+    [Test]
+    public async Task RegenFails_TspCompiled_EmitterIssue_ClassifierGivesManualGuidance()
+    {
+        // TSP fix succeeds (compiles), but regen fails — likely an emitter issue we can't patch.
+        // Second pass classifier should see the regen failure context and flag manual intervention
+        // without retrying, since retries won't fix an emitter problem.
+        var classifyCalls = 0;
+        var buildCalls = 0;
+        string? secondPassContext = null;
+
+        var failingTsp = new MockTspHelper(updateSuccess: false, updateError: "emitter @azure-tools/typespec-java failed: unexpected token");
+        var svc = new ConfigurableLanguageService(buildFunc: () =>
+        {
+            buildCalls++;
+            return (true, null, null);
+        });
+
+        var (tool, _) = CreateTool(
+            languageService: svc,
+            tspHelper: failingTsp,
+            configureClassifier: c =>
+                c.Setup(x => x.ClassifyItemsAsync(
+                        It.IsAny<List<FeedbackItem>>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<string?>(),
+                        It.IsAny<int?>(),
+                        It.IsAny<CancellationToken>()))
+                    .Returns<List<FeedbackItem>, string, string, string?, string?, int?, CancellationToken>(
+                        (items, _, _, _, _, _, _) =>
+                        {
+                            classifyCalls++;
+                            var actualId = items.FirstOrDefault()?.Id ?? "1";
+                            if (classifyCalls == 1)
+                            {
+                                return Task.FromResult(new FeedbackClassificationResponse
+                                {
+                                    Classifications =
+                                    [
+                                        new FeedbackClassificationResponse.ItemClassificationDetails
+                                        {
+                                            ItemId = actualId, Classification = "TSP_APPLICABLE",
+                                            Reason = "rename operation", Text = "rename FooClient to BarClient"
+                                        }
+                                    ]
+                                });
+                            }
+
+                            // Second pass: classifier sees regen failure and determines manual intervention
+                            secondPassContext = items.FirstOrDefault()?.Context;
+                            return Task.FromResult(new FeedbackClassificationResponse
+                            {
+                                Classifications =
+                                [
+                                    new FeedbackClassificationResponse.ItemClassificationDetails
+                                    {
+                                        ItemId = actualId, Classification = "REQUIRES_MANUAL_INTERVENTION",
+                                        Reason = "Emitter issue — cannot resolve via TSP or patching",
+                                        Text = "rename FooClient to BarClient"
+                                    }
+                                ]
+                            });
+                        }));
+
+        var pkg = CreateTempDir();
+        var tspDir = CreateTempDir();
+
+        var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir,
+            customizationRequest: "Rename FooClient to BarClient", ct: CancellationToken.None);
+
+        // Verified: exactly 2 classifier calls (pass 1 + pass 2), no retry loop
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify twice: pass 1 + pass 2 after regen failure");
+
+        // Regen failed so no build in the regen block, but a "build for error context" call should happen
+        Assert.That(buildCalls, Is.EqualTo(1), "Should build once for error context since regen failed");
+
+        // Second pass should have the regen failure context
+        Assert.That(secondPassContext, Does.Contain("Regeneration failed"), "Second pass should see regen failure");
+        Assert.That(secondPassContext, Does.Contain("emitter @azure-tools/typespec-java failed"), "Should include the emitter error details");
+
+        // Result flags manual intervention
+        Assert.That(result.NextSteps, Is.Not.Null.And.Count.GreaterThan(0), "Should include manual intervention steps");
+        Assert.That(result.NextSteps![0], Does.Contain("Emitter issue"));
     }
 
     // ========================================================================
@@ -533,12 +681,12 @@ public class CustomizedCodeUpdateToolAutoTests
     public async Task BuildFails_PatchesApplied_FinalBuildSucceeds_ReturnsSuccess()
     {
         var buildCalls = 0;
-        // TSP loop: 2 builds fail, then falls through to patch pipeline, final build (3rd call) passes
+        // Pass 1: build fails (1st call), falls through to patch pipeline, final build (2nd call) passes
         var svc = new ConfigurableLanguageService(
             buildFunc: () =>
             {
                 buildCalls++;
-                return buildCalls <= 2
+                return buildCalls <= 1
                     ? (false, "error: variable already defined", null)
                     : (true, null, null);
             },
@@ -554,7 +702,7 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
     }
 
@@ -652,7 +800,7 @@ public class CustomizedCodeUpdateToolAutoTests
 
         // Verify the CODE_CUSTOMIZATION route succeeded end-to-end
         Assert.That(result.Success, Is.True);
-        Assert.That(result.Message, Does.Contain("Build passed after repairs"));
+        Assert.That(result.Message, Does.Contain("Build passed after code customization patches."));
         Assert.That(result.AppliedPatches, Is.Not.Null.And.Count.EqualTo(1));
         Assert.That(result.AppliedPatches![0].FilePath, Is.EqualTo("SpeechTranscriptionCustomization.java"));
         Assert.That(result.AppliedPatches[0].ReplacementCount, Is.EqualTo(2));
@@ -672,8 +820,8 @@ public class CustomizedCodeUpdateToolAutoTests
             patchesFunc: () => [new AppliedPatch("test.java", "patch", 1)],
             language: SdkLanguage.Java);
 
-        // TSP loop regen calls succeed (2x), Java regen-after-patches (3rd) fails
-        var failingTspForJavaRegen = new CallCountMockTspHelper(failAfterCall: 2, failError: "regen failed: tsp-client error");
+        // Pass 1 regen call succeeds (1st call), Java regen-after-patches (2nd) fails
+        var failingTspForJavaRegen = new CallCountMockTspHelper(failAfterCall: 1, failError: "regen failed: tsp-client error");
         var (tool, _) = CreateTool(languageService: svc, tspHelper: failingTspForJavaRegen);
         var pkg = CreateTempDir();
         var tspDir = CreateTempDir();
@@ -729,20 +877,14 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task RetryLoop_SecondIteration_FeedbackIncludesContextFromFirstIteration()
+    public async Task SecondPass_FeedbackIncludesBuildErrorContext()
     {
-        // Build fails first time, so second iteration should include context
-        var buildCalls = 0;
+        // TSP fix applied, regen succeeds, build fails → second pass should see build error context
         var classifyCalls = 0;
         string? secondCallContext = null;
 
         var svc = new ConfigurableLanguageService(buildFunc: () =>
-        {
-            buildCalls++;
-            return buildCalls == 1
-                ? (false, "error CS0246: type 'FooClient' not found", null)
-                : (true, null, null);
-        });
+            (false, "error CS0246: type 'FooClient' not found", null));
 
         var (tool, _) = CreateTool(
             languageService: svc,
@@ -783,7 +925,6 @@ public class CustomizedCodeUpdateToolAutoTests
             customizationRequest: "Rename FooClient to BarClient", ct: CancellationToken.None);
 
         Assert.That(classifyCalls, Is.EqualTo(2));
-        Assert.That(secondCallContext, Does.Contain("Iteration 1"));
         Assert.That(secondCallContext, Does.Contain("Typespec changes applied"));
         Assert.That(secondCallContext, Does.Contain("Renamed FooClient to BarClient"));
         Assert.That(secondCallContext, Does.Contain("Build Result"));
@@ -791,8 +932,9 @@ public class CustomizedCodeUpdateToolAutoTests
     }
 
     [Test]
-    public async Task RetryLoop_MaxTriesRespected_DoesNotExceedTwoIterations()
+    public async Task TwoPass_ClassifiesExactlyTwiceAndBuildsOnce()
     {
+        // Build fails after regen → second pass reclassifies with error context
         var buildCalls = 0;
         var classifyCalls = 0;
         var svc = new ConfigurableLanguageService(
@@ -837,8 +979,8 @@ public class CustomizedCodeUpdateToolAutoTests
         var result = await tool.UpdateAsync(packagePath: pkg, tspProjectPath: tspDir, customizationRequest: "test customization", ct: CancellationToken.None);
 
         Assert.That(result.Success, Is.False);
-        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify exactly 2 times (maxTries)");
-        Assert.That(buildCalls, Is.EqualTo(2), "Should build exactly 2 times (maxTries)");
+        Assert.That(classifyCalls, Is.EqualTo(2), "Should classify exactly 2 times (pass 1 + pass 2)");
+        Assert.That(buildCalls, Is.EqualTo(1), "Should build exactly once after regen");
     }
 
     [Test]

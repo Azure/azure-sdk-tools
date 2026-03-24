@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using GitHub.Copilot.SDK;
 using Azure.Sdk.Tools.Cli.Benchmarks.Models;
@@ -22,7 +23,9 @@ public class SessionExecutor : IDisposable
     public async Task<ExecutionResult> ExecuteAsync(ExecutionConfig config)
     {
         var stopwatch = Stopwatch.StartNew();
-        var toolCalls = new List<string>();
+        var toolCalls = new List<ToolCallRecord>();
+        var pendingTimestamps = new Dictionary<string, double>();
+        var tokenUsage = new TokenUsage();
 
         try
         {
@@ -33,7 +36,7 @@ public class SessionExecutor : IDisposable
             _client = new CopilotClient();
 
             // Build MCP server config - try explicit path first, then load from workspace
-            var mcpServers = BuildMcpServers(config.AzsdkMcpPath) 
+            var mcpServers = BuildMcpServers(config.AzsdkMcpPath)
                 ?? await McpConfigLoader.LoadFromWorkspaceAsync(config.WorkingDirectory);
 
             var sessionConfig = new SessionConfig
@@ -56,18 +59,28 @@ public class SessionExecutor : IDisposable
                     {
                         Console.WriteLine($"Model is calling tool: {input.ToolName}");
                         config.OnActivity?.Invoke($"Calling tool: {input.ToolName}");
+                        pendingTimestamps[input.ToolName] = input.Timestamp;
                         return Task.FromResult<PreToolUseHookOutput?>(null);
                     },
                     OnPostToolUse = (input, invocation) =>
                     {
-                        if (input.ToolName == "skill")
+                        double? durationMs = pendingTimestamps.TryGetValue(input.ToolName, out var startTs)
+                            ? input.Timestamp - startTs
+                            : null;
+
+                        var mcpServerName = input.ToolName.Contains("__")
+                            ? input.ToolName.Split("__", 2)[0]
+                            : null;
+
+                        toolCalls.Add(new ToolCallRecord
                         {
-                            toolCalls.Add($"{input.ToolName} {input.ToolArgs?.ToString()}");
-                        }
-                        else
-                        {
-                            toolCalls.Add(input.ToolName);
-                        }
+                            ToolName = input.ToolName,
+                            ToolArgs = input.ToolArgs,
+                            ToolResult = input.ToolResult,
+                            DurationMs = durationMs,
+                            McpServerName = mcpServerName,
+                        });
+
                         return Task.FromResult<PostToolUseHookOutput?>(null);
                     }
                 },
@@ -85,6 +98,17 @@ public class SessionExecutor : IDisposable
 
             await using var session = await _client.CreateSessionAsync(sessionConfig);
 
+            // Track token usage from AssistantUsageEvent
+            session.On(evt =>
+            {
+                if (evt is AssistantUsageEvent usageEvent)
+                {
+                    tokenUsage.InputTokens += usageEvent.Data.InputTokens ?? 0;
+                    tokenUsage.OutputTokens += usageEvent.Data.OutputTokens ?? 0;
+                    tokenUsage.CacheReadTokens += usageEvent.Data.CacheReadTokens ?? 0;
+                    tokenUsage.CacheWriteTokens += usageEvent.Data.CacheWriteTokens ?? 0;
+                }
+            });
             if (config.Verbose)
             {
                 SessionConfigHelper.ConfigureAgentActivityLogging(session);
@@ -105,7 +129,8 @@ public class SessionExecutor : IDisposable
                 Completed = true,
                 Duration = stopwatch.Elapsed,
                 Messages = messages.Cast<object>().ToList(),
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                TokenUsage = tokenUsage
             };
         }
         catch (Exception ex)
@@ -116,7 +141,8 @@ public class SessionExecutor : IDisposable
                 Completed = false,
                 Error = ex.Message,
                 Duration = stopwatch.Elapsed,
-                ToolCalls = toolCalls
+                ToolCalls = toolCalls,
+                TokenUsage = tokenUsage
             };
         }
     }

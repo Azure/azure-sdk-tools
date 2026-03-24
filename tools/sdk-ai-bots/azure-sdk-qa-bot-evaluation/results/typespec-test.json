@@ -1593,6 +1593,104 @@
         "overall_score": NaN
     },
     {
+        "testcase": "change the visibility of property",
+        "expected": {
+            "answer": "You can\u2019t directly \u201cversion\u201d a decorator value in-place, so the ARM/TypeSpec pattern is to model the change by having two properties and using `@removed`, `@added`, and `@renamedFrom` to swap which one is active in that version.\nFor your case (keep `provisioningState` read-only in all versions except `2025-05-04-preview`, where it is `Read` + `Create`), do this:\n```\n/** The available API versions. */\nenum Versions {\n/** 2021-10-01-preview version */\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\nv2021_10_01_preview: \"2021-10-01-preview\",\n/** 2021-11-01 version */\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\nv2021_11_01: \"2021-11-01\",\n/** 2025-05-04-preview version */\n@armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n`2025-05-04-preview`,\n}\n/** Employee properties */\nmodel EmployeeProperties {\n/** Age of employee */\nage?: int32;\n/** City of employee */\ncity?: string;\n/** Profile of employee */\n@encode(\"base64url\")\nprofile?: bytes;\n// Old shape: read-only in all versions EXCEPT 2025-05-04-preview\n@removed(Versions.`2025-05-04-preview`)\n@visibility(Lifecycle.Read)\n@renamedFrom(Versions.`2025-05-04-preview`, \"provisioningState\")\nprovisioningStateReadOnly?: ProvisioningState;\n// New shape: only present in 2025-05-04-preview and later\n@added(Versions.`2025-05-04-preview`)\n@visibility(Lifecycle.Read, Lifecycle.Create)\nprovisioningState?: ProvisioningState;\n}\n```",
+            "references": [
+                {
+                    "title": "Versioning | Simple Scenarios | Adding Decoration to an Existing Type",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Creating stable API version with select properties omitted? | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "Use the add/remove/rename pattern to have different visibility in the new version while keeping older versions unchanged. For 2025-05-04-preview only, model `provisioningState` as two properties:\n\n````typespec\n/** The available API versions. */\nenum Versions {\n  /** 2021-10-01-preview version */\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2021_10_01_preview: \"2021-10-01-preview\",\n\n  /** 2021-11-01 version */\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  v2021_11_01: \"2021-11-01\",\n\n  /** 2025-05-04-preview version */\n  @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)\n  `2025-05-04-preview`,\n}\n\n/** Employee properties */\nmodel EmployeeProperties {\n  /** Age of employee */\n  age?: int32;\n\n  /** City of employee */\n  city?: string;\n\n  /** Profile of employee */\n  @encode(\"base64url\")\n  profile?: bytes;\n\n  // Old version: read\u2011only provisioningState\n  @removed(Versions.`2025-05-04-preview`)\n  @visibility(Lifecycle.Read)\n  @renamedFrom(Versions.`2025-05-04-preview`, \"provisioningState\")\n  provisioningStateOld?: ProvisioningState;\n\n  // New version (2025\u201105\u201104\u2011preview and later): create + read\n  @added(Versions.`2025-05-04-preview`)\n  @visibility(Lifecycle.Create, Lifecycle.Read)\n  provisioningState?: ProvisioningState;\n}\n````\n\nResult:\n- In 2021-10-01-preview and 2021-11-01, the wire property is `provisioningState` with `Lifecycle.Read` only.\n- Starting in 2025-05-04-preview, the wire property is still `provisioningState`, but with `Lifecycle.Create` and `Lifecycle.Read` visibility.\n\nNote: this is the same pattern recommended for changing decorators across versions.",
+            "references": [
+                {
+                    "title": "Versioning | Simple Scenarios | Adding Decoration to an Existing Type",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Creating stable API version with select properties omitted? | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded, directly addresses the question, and includes all relevant details and correct usage patterns as described in the context.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all necessary and relevant information from the ground truth, accurately representing the pattern and implementation details for versioning decorator values. Only minor naming differences exist, which do not affect completeness.",
+        "reference_match": 1.0,
+        "reference_match_result": "pass",
+        "knowledge_match": 0.625,
+        "knowledge_match_result": "fail",
+        "overall_score": 8.625
+    },
+    {
+        "testcase": "How to version a spread property",
+        "expected": {
+            "answer": "add @@added(Employee.MyExampleProperty, Versions.`2025-11-01`);\n```\nmodel Employee is TrackedResource<EmployeeProperties> {\n...ResourceNameParameter<Employee>;\n...MyExampleModel;\n}\n@@added(Employee.MyExampleProperty, Versions.`2025-11-01`);\n```",
+            "references": [
+                {
+                    "title": "Versioning | Simple Scenarios",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                },
+                {
+                    "title": "Converting Existing Specs to Single Active Preview | `@added(T, u)` decorator",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/versioning/arm/uncommon-scenarios/01-converting-specs"
+                },
+                {
+                    "title": "Handling multiple API versions using typespec | answer",
+                    "link": ""
+                }
+            ]
+        },
+        "actual": {
+            "answer": "You can\u2019t directly place a versioning decorator on a spread, but you can version the properties introduced by that spread using an extension decorator on the target model.\n\nPattern:\n1. Keep the spread as-is so the `identity` (or other) property exists on the model at the type level.\n2. Use an `@@added` extension decorator on the concrete property to say it only appears starting in `2025-11-01`.\n\nExample (adapted to your `MyExampleModel`):\n\n````typespec\n/** Employee resource */\nmodel Employee is TrackedResource {\n  ...ResourceNameParameter;\n  ...MyExampleModel;  // introduces, say, property `exampleProp`\n}\n\n// Versioning: only show `exampleProp` starting in 2025-11-01\n@@added(Employee.exampleProp, Versions.`2025-11-01`);\n````\n\nHow this works:\n- The spread `...MyExampleModel` defines `exampleProp` on `Employee` for all versions.\n- `@@added(Employee.exampleProp, Versions.`2025-11-01`)` tells the ARM/TypeSpec versioning system to include that property only from `2025-11-01` onward in the emitted OpenAPI.\n- Earlier API versions remain unchanged; the new properties won\u2019t appear there.\n\nIf `MyExampleModel` introduces multiple properties and you need them all only from `2025-11-01`, repeat the `@@added` line per property:\n\n````typespec\n@@added(Employee.propA, Versions.`2025-11-01`);\n@@added(Employee.propB, Versions.`2025-11-01`);\n@@added(Employee.propC, Versions.`2025-11-01`);\n````\n\nThis keeps your resource envelope correct (using the shared template via spread) while making the new fields visible only in the desired API version, which aligns with Azure ARM versioning guidance.",
+            "references": [
+                {
+                    "title": "How to version a spread property (ManagedServiceIdentityProperty)? | answer",
+                    "link": ""
+                },
+                {
+                    "title": "Versioning | FAQ | How do I version a pattern?",
+                    "link": "https://azure.github.io/typespec-azure/docs/howtos/arm/versioning"
+                }
+            ]
+        },
+        "similarity": 5.0,
+        "gpt_similarity": 5.0,
+        "similarity_result": "pass",
+        "similarity_threshold": 4,
+        "groundedness": 5.0,
+        "gpt_groundedness": 5.0,
+        "groundedness_reason": "The response is fully grounded, accurate, and complete with respect to the context, directly addressing the question and providing correct, detailed guidance and examples.",
+        "groundedness_result": "pass",
+        "groundedness_threshold": 3,
+        "response_completeness": 5.0,
+        "response_completeness_result": "pass",
+        "response_completeness_threshold": 4,
+        "response_completeness_reason": "The response contains all the necessary and relevant information from the ground truth, including the use of @@added for versioning properties introduced by a spread, and provides a clear example and explanation. Minor differences in code details do not affect completeness.",
+        "reference_match": 0.0,
+        "reference_match_result": "fail",
+        "knowledge_match": 0.4827586206896552,
+        "knowledge_match_result": "fail",
+        "overall_score": 7.482758620689655
+    },
+    {
         "testcase": "LRO header return 200",
         "expected": {
             "answer": "Based on ARM RPC guidelines and the TypeSpec ARM templates:\n1.You generally should NOT model \u201csubsequent PUT returns 202\u201d for a resource PUT.\nFor ARM resource PUT, the required pattern is: return `201` for create and `200` for update, and if the operation is long-running you still use `x-ms-long-running-operation: true` and include the appropriate LRO headers.\nReturning `202` for PUT is explicitly called out as an old model and is no longer supported for new resource types/patterns.\n2.If your service returns an async polling header on the `200` response, it\u2019s OK (and often desirable) to specify it \u2014 but only if the operation is actually long-running in that case.\nIn ARM, the LRO \u201cpolling\u201d header is typically `Azure-AsyncOperation` (required for greenfield starting Jan 2025 per RPC contract) and/or `Location` (required for 202 patterns; also commonly used).\nFor PUT LROs, the standard ARM templates already model the correct behavior: `200` and `201` responses with the resource body, and LRO headers on the create response (and depending on template/pattern, can be present when the operation is async).\n3.Recommended way to model this in TypeSpec (preferred over hand-authoring swagger)\nUse the ARM operation template for async PUT, and let the emitter generate the correct OpenAPI, including `x-ms-long-running-operation-options.final-state-via`.\nIf you need `Azure-AsyncOperation` to be the final-state mechanism, use the template that emits that (e.g. `ArmResourceCreateOrUpdateAsync` / `ArmResourceCreateOrReplaceAsync` depending on your chosen semantics).\nExample (management-plane, ARM):\n```\nimport \"@azure-tools/typespec-azure-resource-manager\";\nusing Azure.ResourceManager;\n@armResourceOperations\ninterface ManagedClusters {\n// Pick the template that matches your service\u2019s LRO header behavior.\n// This produces 200/201 + x-ms-long-running-operation and final-state-via azure-async-operation.\ncreateOrUpdate is ArmResourceCreateOrReplaceAsync<ManagedCluster>;\n}\n```\n4.If you truly must keep a 202-on-PUT behavior (brownfield), align it to ARM guidance rather than just documenting the current behavior.\nThe guidance is to fix the service to return `200/201` for PUT (even when async) and rely on LRO headers + provisioningState.\nIf you cannot change runtime behavior immediately, you should discuss with ARM/API review because it conflicts with the current ARM contract guidance for PUT.\n5.About \u201c200 response with async operation header\u201d specifically\nIn OpenAPI/Swagger, you can absolutely define headers on the `200` response. There\u2019s nothing structurally preventing it.\nHowever, the recommended ARM modeling is to use the standard templates so the LRO metadata is consistent (headers + `x-ms-long-running-operation` + `final-state-via`). Don\u2019t invent a one-off pattern unless you have to.\nIf you paste the relevant snippet of your current swagger responses for one of these PUTs (the `responses` block), I can tell you exactly what to change and which TypeSpec template/parameters best match your service behavior (including whether you should be using `ArmResourceCreateOrReplaceAsync` vs `ArmResourceCreateOrUpdateAsync`, and whether you need `Location` and/or `Azure-AsyncOperation`).",
@@ -1661,10 +1759,10 @@
     },
     {
         "average_score": NaN,
-        "total_evals": 33,
-        "similarity_pass_rate": 33,
+        "total_evals": 34,
+        "similarity_pass_rate": 34,
         "groundedness_pass_rate": 23,
-        "response_completeness_pass_rate": 32,
+        "response_completeness_pass_rate": 34,
         "reference_match_pass_rate": 17,
         "knowledge_match_pass_rate": 25,
         "similarity_fail_rate": 1,
